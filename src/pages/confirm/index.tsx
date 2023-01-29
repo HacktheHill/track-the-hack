@@ -1,4 +1,3 @@
-import type { HackerInfo } from "@prisma/client";
 import { type NextPage } from "next";
 import { signIn, signOut, useSession } from "next-auth/react";
 import Head from "next/head";
@@ -7,10 +6,6 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCallback, useState } from "react";
 import { trpc } from "../../utils/api";
-
-function isValidHackerID(id: string) {
-    return (trpc.hackers.get.useQuery({ id }).data as HackerInfo | null) !== null;
-}
 
 const Confirm: NextPage = () => {
     // Get session
@@ -21,6 +16,8 @@ const Confirm: NextPage = () => {
     const id = Array.isArray(router.query.id) ? router.query.id[0] : router.query.id;
 
     // const mutation = trpc.hackers.assign.useMutation();
+
+    const query = trpc.hackers.get.useQuery({ id: id ?? "" }, { enabled: !!id });
 
     const [shirtSize, setShirtSize] = useState("S");
     const [attendanceType, setAttendanceType] = useState("IN_PERSON");
@@ -63,7 +60,7 @@ const Confirm: NextPage = () => {
                 <link rel="icon" href="/favicon.ico" />
             </Head>
             <main className="flex h-screen flex-col items-center justify-center gap-4 bg-gradient bg-no-repeat px-12 text-center">
-                {id && isValidHackerID(id) ? (
+                {query.data ? (
                     <form
                         onSubmit={handleSubmit}
                         className="flex flex-col items-center justify-center gap-4 px-12 text-center"
