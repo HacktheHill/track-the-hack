@@ -17,7 +17,7 @@ const Confirm: NextPage = () => {
     const router = useRouter();
     const { id } = router.query;
 
-    const mutation = trpc.hackers.assign.useMutation();
+    // const mutation = trpc.hackers.assign.useMutation();
 
     const [shirtSize, setShirtSize] = useState("S");
     const [attendanceType, setAttendanceType] = useState("IN_PERSON");
@@ -28,12 +28,12 @@ const Confirm: NextPage = () => {
             return;
         }
 
-        mutation.mutate({
+        /* mutation.mutate({
             id,
             shirtSize,
             attendanceType,
             userId: sessionData.user.id,
-        });
+        }); */
     };
 
     const handleShirtSizeChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {

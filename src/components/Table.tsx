@@ -62,13 +62,14 @@ const Table = () => {
                 firstName: `${i}`,
                 lastName: "Doe",
                 email: "jdoe@example.com",
-            } satisfies Hacker);
+            });
         }
         return data;
     }, []);
 
     const table = useReactTable({
         data,
+        // @ts-expect-error - just for testing
         columns,
         enableColumnResizing: true,
         columnResizeMode: "onChange",
