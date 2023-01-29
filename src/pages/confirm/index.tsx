@@ -9,9 +9,7 @@ import { trpc } from "../../utils/api";
 
 const Confirm: NextPage = () => {
     // Get session
-    const { data: sessionData } = useSession({
-        required: true,
-    });
+    const { data: sessionData } = useSession();
 
     // Get query params
     const router = useRouter();
