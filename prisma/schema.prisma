@@ -46,14 +46,15 @@ model Session {
 }
 
 model User {
-    id            String    @id @default(cuid())
+    id            String       @id @default(cuid())
     name          String?
-    email         String?   @unique
+    email         String?      @unique
     emailVerified DateTime?
     image         String?
+    role          String       @default("HACKER") // HACKER, SPONSOR, ORGANIZER
     accounts      Account[]
     sessions      Session[]
-    role          String    @default("HACKER") // HACKER, SPONSOR, ORGANIZER
+    HackerInfo    HackerInfo[]
 }
 
 model VerificationToken {
@@ -65,7 +66,7 @@ model VerificationToken {
 }
 
 model HackerInfo {
-    submissionID                 String         @id @default(cuid())
+    id                           String         @id @default(cuid()) @map("submissionID")
     preferredLanguage            Language
     email                        String
     firstName                    String
@@ -93,6 +94,10 @@ model HackerInfo {
     lookingForwardTo             String         @db.Text
     formStartDate                DateTime
     formEndDate                  DateTime
+    user                         User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId                       String?
+
+    @@index([userId])
 }
 
 enum Language {

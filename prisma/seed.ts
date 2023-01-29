@@ -79,7 +79,7 @@ async function main() {
 
             await prisma.hackerInfo.upsert({
                 where: {
-                    submissionID: row.submissionID,
+                    id: row.submissionID,
                 },
                 create: data,
                 update: data,
