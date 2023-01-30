@@ -13,6 +13,7 @@ declare module "@prisma/client" {
 		M: "M";
 		L: "L";
 		XL: "XL";
+		XXL: "XXL";
 	}
 	export const AttendanceType: AttendanceType;
 	export const Language: Language;
