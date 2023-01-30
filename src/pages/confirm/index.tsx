@@ -2,7 +2,6 @@ import { type NextPage } from "next";
 import { signIn, signOut, useSession } from "next-auth/react";
 import Head from "next/head";
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCallback, useState } from "react";
 import { trpc } from "../../utils/api";
@@ -21,11 +20,18 @@ const Confirm: NextPage = () => {
 
     const [shirtSize, setShirtSize] = useState("S");
     const [attendanceType, setAttendanceType] = useState("IN_PERSON");
+    const [terms, setTerms] = useState(true);
+    const [validationMessage, setValidationMessage] = useState("");
 
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         if (!sessionData?.user?.id) {
-            void signIn();
+            setValidationMessage("You must be logged in to continue.");
+            return;
+        }
+
+        if (!terms) {
+            setValidationMessage("You must agree to the terms and conditions to continue.");
             return;
         }
 
@@ -42,6 +48,8 @@ const Confirm: NextPage = () => {
             attendanceType,
             userId: sessionData.user.id,
         }); */
+
+        void router.push("https://hackthehill.com");
     };
 
     const handleShirtSizeChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -60,7 +68,7 @@ const Confirm: NextPage = () => {
                 <link rel="icon" href="/favicon.ico" />
             </Head>
             <main className="flex h-screen flex-col items-center justify-center gap-4 bg-gradient bg-no-repeat px-12 text-center">
-                {query.data ? (
+                {query.data || true ? (
                     <form
                         onSubmit={handleSubmit}
                         className="flex flex-col items-center justify-center gap-4 px-12 text-center"
@@ -79,7 +87,7 @@ const Confirm: NextPage = () => {
                         </div>
                         <div className="flex max-w-[20rem] flex-col items-start gap-4">
                             <h3 className="font-[Rubik] text-[clamp(1rem,1vmin,5rem)] font-medium text-dark">
-                                Congratulations for your acceptance to Hack the Hill 2023!
+                                Congratulations {query.data?.firstName} for your acceptance to Hack the Hill 2023!
                             </h3>
                             <p>Please confirm your attendance and T-Shirt size by filling out the form below. </p>
                             <div className="flex items-center justify-center gap-4">
@@ -145,7 +153,7 @@ const Confirm: NextPage = () => {
                                     <p>Signed in as {sessionData.user.email}</p>
                                     <button
                                         type="button"
-                                        className="text-bold hover:bg-#fff m-4 transform cursor-pointer whitespace-nowrap rounded-[100px] border-2 border-[#5c71ad] px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-[Rubik] text-[clamp(1rem,1vmin,5rem)] text-[#5c71ad] shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition hover:bg-white"
+                                        className="text-bold hover:bg-#fff transform cursor-pointer whitespace-nowrap rounded-[100px] border-2 border-[#5c71ad] px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-[Rubik] text-[clamp(1rem,1vmin,5rem)] text-[#5c71ad] shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition hover:bg-white"
                                         onClick={() => void signOut()}
                                     >
                                         Sign Out
@@ -156,35 +164,48 @@ const Confirm: NextPage = () => {
                                     <p>Please sign in to continue</p>
                                     <button
                                         type="button"
-                                        className="text-bold hover:bg-blue m-4 transform cursor-pointer whitespace-nowrap rounded-[100px] border-2 border-[#5c71ad] px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-[Rubik] text-[clamp(1rem,1vmin,5rem)] text-[#5c71ad] shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition hover:bg-white"
+                                        className="text-bold hover:bg-blue transform cursor-pointer whitespace-nowrap rounded-[100px] border-2 border-[#5c71ad] px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-[Rubik] text-[clamp(1rem,1vmin,5rem)] text-[#5c71ad] shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition hover:bg-white"
                                         onClick={() => void signIn()}
                                     >
                                         Sign In
                                     </button>
                                 </>
                             )}
-                            <p>This account will be assigned to your registration.</p>
+                            <p>
+                                This will link your account to your registration. You will be able to edit your
+                                registration later.
+                            </p>
                         </div>
 
-                        <div className="flex flex-row items-center justify-center gap-4">
-                            <input type="checkbox" value="1"></input>
-                            <span className="flex">
-                                <p>Do you accept the</p>
-                                <p>&nbsp;</p>
+                        <div className="flex flex-row items-center justify-center gap-2">
+                            <input
+                                type="checkbox"
+                                id="terms"
+                                name="terms"
+                                checked={terms}
+                                onChange={() => setTerms(!terms)}
+                                className="h-4 w-4 appearance-none rounded border border-[#3f4e77] bg-transparent text-black after:block after:h-full after:w-full after:border-black after:p-0.5 after:leading-[calc(100%*1/2)] after:checked:content-check"
+                            />
+                            <label htmlFor="terms" className="flex-1">
+                                I accept the{" "}
                                 <a href="" target="_blank" className="underline">
                                     Code Of Conduct
+                                </a>{" "}
+                                and{" "}
+                                <a href="" target="_blank" className="underline">
+                                    Media Release
                                 </a>
-                            </span>
+                            </label>
                         </div>
 
-                        <Link href="/">
-                            <button
-                                type="submit"
-                                className="m-4 transform cursor-pointer whitespace-nowrap rounded-[100px] border-0 bg-[#5c71ad] px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-[Rubik] text-[clamp(1rem,1vmin,5rem)] text-white shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition hover:bg-[#3f4e77]"
-                            >
-                                Confirm
-                            </button>
-                        </Link>
+                        {validationMessage && <p className="text-center text-red-500">{validationMessage}</p>}
+
+                        <button
+                            type="submit"
+                            className="m-4 transform cursor-pointer whitespace-nowrap rounded-[100px] border-0 bg-[#5c71ad] px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-[Rubik] text-[clamp(1rem,1vmin,5rem)] text-white shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition hover:bg-[#3f4e77]"
+                        >
+                            Confirm
+                        </button>
                     </form>
                 ) : (
                     <p>Invalid confirmation link. Please use the link from the confirmation email you received.</p>
