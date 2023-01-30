@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/router";
 import { useCallback, useState } from "react";
 import { trpc } from "../../utils/api";
+import { AttendanceType, ShirtSize } from "@prisma/client";
 
 const Confirm: NextPage = () => {
     // Get session
@@ -14,19 +15,25 @@ const Confirm: NextPage = () => {
     const router = useRouter();
     const id = Array.isArray(router.query.id) ? router.query.id[0] : router.query.id;
 
-    // const mutation = trpc.hackers.assign.useMutation();
+    const mutation = trpc.hackers.assign.useMutation();
 
     const query = trpc.hackers.get.useQuery({ id: id ?? "" }, { enabled: !!id });
 
-    const [shirtSize, setShirtSize] = useState("S");
-    const [attendanceType, setAttendanceType] = useState("IN_PERSON");
+    const [shirtSize, setShirtSize] = useState<keyof typeof ShirtSize>(ShirtSize.S);
+    const [attendanceType, setAttendanceType] = useState<keyof typeof AttendanceType>(AttendanceType.IN_PERSON);
     const [terms, setTerms] = useState(true);
     const [validationMessage, setValidationMessage] = useState("");
 
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+            
         if (!sessionData?.user?.id) {
             setValidationMessage("You must be logged in to continue.");
+            return;
+        }
+
+        if (!id) {
+            setValidationMessage("Error: no ID Found");
             return;
         }
 
@@ -35,29 +42,22 @@ const Confirm: NextPage = () => {
             return;
         }
 
-        console.log("Submitting form", {
+        mutation.mutate({
             id,
             shirtSize,
             attendanceType,
             userId: sessionData.user.id,
         });
 
-        /* mutation.mutate({
-            id,
-            shirtSize,
-            attendanceType,
-            userId: sessionData.user.id,
-        }); */
-
         void router.push("https://hackthehill.com");
     };
 
     const handleShirtSizeChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
-        setShirtSize(event.target.value);
+        setShirtSize(event.target.value as keyof typeof ShirtSize);
     }, []);
 
     const handleAttendanceTypeChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-        setAttendanceType(event.target.value);
+        setAttendanceType(event.target.value as keyof typeof AttendanceType);
     }, []);
 
     return (
