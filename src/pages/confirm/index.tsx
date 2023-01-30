@@ -182,7 +182,7 @@ const Confirm: NextPage = () => {
                                 type="submit"
                                 className="m-4 transform cursor-pointer whitespace-nowrap rounded-[100px] border-0 bg-[#5c71ad] px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-[Rubik] text-[clamp(1rem,1vmin,5rem)] text-white shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition hover:bg-[#3f4e77]"
                             >
-                                Submit
+                                Confirm
                             </button>
                         </Link>
                     </form>
