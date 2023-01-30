@@ -171,7 +171,7 @@ const Confirm: NextPage = () => {
                             <span className="flex">
                                 <p>Do you accept the</p>
                                 <p>&nbsp;</p>
-                                <a href="" className="underline">
+                                <a href="" target="_blank" className="underline">
                                     Code Of Conduct
                                 </a>
                             </span>
