@@ -35,6 +35,9 @@ export const authOptions: NextAuthOptions = {
 			clientSecret: env.GOOGLE_CLIENT_SECRET,
 		}),
 	],
+	theme: {
+		logo: "https://hackthehill.com/Logos/hackthehill-logo.svg",
+	},
 };
 
 export default NextAuth(authOptions);
