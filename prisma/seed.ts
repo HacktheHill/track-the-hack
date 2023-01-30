@@ -59,6 +59,8 @@ async function main() {
 		try {
 			const data = {
 				...row,
+				id: row.submissionID,
+				submissionID: undefined,
 				preferredLanguage: Language[row.preferredLanguage as keyof typeof Language],
 				graduationYear: z
 					.number()
