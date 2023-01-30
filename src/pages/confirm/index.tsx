@@ -188,12 +188,12 @@ const Confirm: NextPage = () => {
                             />
                             <label htmlFor="terms" className="flex-1">
                                 I accept the{" "}
-                                <a href="" target="_blank" className="underline">
-                                    Code Of Conduct
-                                </a>{" "}
-                                and{" "}
-                                <a href="" target="_blank" className="underline">
-                                    Media Release
+                                <a
+                                    href="/Hack_the_Hill_2023_waiver_and_terms.pdf"
+                                    target="_blank"
+                                    className="underline"
+                                >
+                                    Code of Conduct, Waiver, and Terms
                                 </a>
                             </label>
                         </div>
