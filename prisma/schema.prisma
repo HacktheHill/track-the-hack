@@ -95,6 +95,7 @@ model HackerInfo {
     lookingForwardTo             String         @db.Text
     formStartDate                DateTime
     formEndDate                  DateTime
+    confirmed                    Boolean        @default(false)
     user                         User?          @relation(fields: [userId], references: [id])
     userId                       String?
 
