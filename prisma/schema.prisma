@@ -95,7 +95,7 @@ model HackerInfo {
     lookingForwardTo             String         @db.Text
     formStartDate                DateTime
     formEndDate                  DateTime
-    user                         User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
+    user                         User?          @relation(fields: [userId], references: [id])
     userId                       String?
 
     @@index([userId])
