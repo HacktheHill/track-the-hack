@@ -166,6 +166,17 @@ const Confirm: NextPage = () => {
                             <p>This account will be assigned to your registration.</p>
                         </div>
 
+                        <div className="flex flex-row items-center justify-center gap-4">
+                            <input type="checkbox" value="1"></input>
+                            <span className="flex">
+                                <p>Do you accept the</p>
+                                <p>&nbsp;</p>
+                                <a href="" className="underline">
+                                    Code Of Conduct
+                                </a>
+                            </span>
+                        </div>
+
                         <Link href="/">
                             <button
                                 type="submit"
