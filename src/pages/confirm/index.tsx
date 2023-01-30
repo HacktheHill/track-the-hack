@@ -143,14 +143,22 @@ const Confirm: NextPage = () => {
                             {sessionData?.user?.id ? (
                                 <>
                                     <p>Signed in as {sessionData.user.email}</p>
-                                    <button type="button" onClick={() => void signOut()}>
+                                    <button
+                                        type="button"
+                                        className="text-bold hover:bg-#fff m-4 transform cursor-pointer whitespace-nowrap rounded-[100px] border-2 border-[#5c71ad] px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-[Rubik] text-[clamp(1rem,1vmin,5rem)] text-[#5c71ad] shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition hover:bg-white"
+                                        onClick={() => void signOut()}
+                                    >
                                         Sign Out
                                     </button>
                                 </>
                             ) : (
                                 <>
                                     <p>Please sign in to continue</p>
-                                    <button type="button" onClick={() => void signIn()}>
+                                    <button
+                                        type="button"
+                                        className="text-bold hover:bg-blue m-4 transform cursor-pointer whitespace-nowrap rounded-[100px] border-2 border-[#5c71ad] px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-[Rubik] text-[clamp(1rem,1vmin,5rem)] text-[#5c71ad] shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition hover:bg-white"
+                                        onClick={() => void signIn()}
+                                    >
                                         Sign In
                                     </button>
                                 </>
