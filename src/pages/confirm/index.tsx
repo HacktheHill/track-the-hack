@@ -40,7 +40,7 @@ const Confirm: NextPage = () => {
 			setShirtSize(query.data.shirtSize ?? ShirtSize.M);
 			setAttendanceType(query.data.attendanceType);
 			setIsSubmitted(query.data.confirmed);
-			if (id && query.data.preferredLanguage !== router.locale) {
+			if (id && query.data.preferredLanguage.toLowerCase() !== router.locale) {
 				void router.push(`/confirm?id=${id}`, undefined, {
 					locale: query.data.preferredLanguage.toLowerCase(),
 				});
