@@ -92,7 +92,7 @@ const Confirm: NextPage = () => {
 					name="description"
 					content="An open source project to track the participants of the Hack the Hill hackathon."
 				/>
-				<link rel="icon" href="/favicon.ico" />
+				<link rel="shortcut icon" href="/favicon.svg" type="image/svg+xml" />
 			</Head>
 			<main className="flex h-screen flex-col items-center justify-center bg-gradient bg-no-repeat px-12 text-center">
 				<form
@@ -105,7 +105,7 @@ const Confirm: NextPage = () => {
 							alt="Hack the Hill logo"
 							width={128}
 							height={128}
-							priority={true}
+							className="h-auto w-auto"
 						/>
 						<h1 className="font-[Coolvetica] text-[clamp(1rem,3.5vmin,5rem)]  font-normal text-dark">
 							Hack the Hill
