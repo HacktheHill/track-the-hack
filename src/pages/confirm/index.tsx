@@ -94,7 +94,7 @@ const Confirm: NextPage = () => {
 				/>
 				<link rel="shortcut icon" href="/favicon.svg" type="image/svg+xml" />
 			</Head>
-			<main className="flex h-screen flex-col items-center justify-center bg-gradient bg-no-repeat text-center">
+			<main className="flex h-screen flex-col items-center justify-center bg-gradient bg-no-repeat text-center supports-[max-height:100cqh]:max-h-[100cqh] supports-[max-height:100svh]:max-h-[100svh]">
 				<form
 					onSubmit={handleSubmit}
 					className="flex flex-col items-center justify-center gap-6 px-12 text-center"
