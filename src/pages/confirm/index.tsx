@@ -209,39 +209,41 @@ const Confirm: NextPage = () => {
 												{t("attendanceType.online")}
 											</label>
 										</div>
-										<div className="flex items-center justify-center gap-6">
-											<label
-												htmlFor="shirtSize"
-												className="whitespace-nowrap text-[clamp(1rem,1vmin,5rem)]"
-											>
-												{t("t-shirt.label")}
-											</label>
-											<div className="rounded-2xl border border-medium py-2 px-4">
-												<select
-													name="shirtSize"
-													id="shirtSize"
-													value={shirtSize}
-													onChange={handleShirtSizeChange}
-													className="w-full border-none bg-transparent text-inherit text-black focus-visible:outline-none"
+										{attendanceType === AttendanceType.IN_PERSON && (
+											<div className="flex items-center justify-center gap-6">
+												<label
+													htmlFor="shirtSize"
+													className="whitespace-nowrap text-[clamp(1rem,1vmin,5rem)]"
 												>
-													<option value="S" className="bg-white">
-														{t("t-shirt.small")}
-													</option>
-													<option value="M" className="bg-white">
-														{t("t-shirt.medium")}
-													</option>
-													<option value="L" className="bg-white">
-														{t("t-shirt.large")}
-													</option>
-													<option value="XL" className="bg-white">
-														{t("t-shirt.x-large")}
-													</option>
-													<option value="XXL" className="bg-white">
-														{t("t-shirt.xx-large")}
-													</option>
-												</select>
+													{t("t-shirt.label")}
+												</label>
+												<div className="rounded-2xl border border-medium py-2 px-4">
+													<select
+														name="shirtSize"
+														id="shirtSize"
+														value={shirtSize}
+														onChange={handleShirtSizeChange}
+														className="w-full border-none bg-transparent text-inherit text-black focus-visible:outline-none"
+													>
+														<option value="S" className="bg-white">
+															{t("t-shirt.small")}
+														</option>
+														<option value="M" className="bg-white">
+															{t("t-shirt.medium")}
+														</option>
+														<option value="L" className="bg-white">
+															{t("t-shirt.large")}
+														</option>
+														<option value="XL" className="bg-white">
+															{t("t-shirt.x-large")}
+														</option>
+														<option value="XXL" className="bg-white">
+															{t("t-shirt.xx-large")}
+														</option>
+													</select>
+												</div>
 											</div>
-										</div>
+										)}
 									</div>
 									<div className="flex flex-col gap-3">
 										<div className="flex flex-row items-center justify-center gap-2">
