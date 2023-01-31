@@ -94,7 +94,7 @@ const Confirm: NextPage = () => {
 				/>
 				<link rel="shortcut icon" href="/favicon.svg" type="image/svg+xml" />
 			</Head>
-			<main className="flex h-screen flex-col items-center justify-center bg-gradient bg-no-repeat px-12 text-center">
+			<main className="flex h-screen flex-col items-center justify-center bg-gradient bg-no-repeat text-center">
 				<form
 					onSubmit={handleSubmit}
 					className="flex flex-col items-center justify-center gap-6 px-12 text-center"
@@ -177,16 +177,13 @@ const Confirm: NextPage = () => {
 												</button>
 											</>
 										) : (
-											<>
-												<p>{t("please-sign-in")}</p>
-												<button
-													type="button"
-													className="hover:bg-blue transform cursor-pointer whitespace-nowrap rounded-normal border-2 border-light px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-[Rubik] text-[clamp(1rem,1vmin,5rem)] text-light shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition hover:bg-white/50"
-													onClick={() => void signIn()}
-												>
-													{t("sign-in")}
-												</button>
-											</>
+											<button
+												type="button"
+												className="hover:bg-blue transform cursor-pointer whitespace-nowrap rounded-normal border-2 border-light px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-[Rubik] text-[clamp(1rem,1vmin,5rem)] text-light shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition hover:bg-white/50"
+												onClick={() => void signIn()}
+											>
+												{t("sign-in")}
+											</button>
 										)}
 									</div>
 									<div className="flex flex-col items-start justify-center gap-3">
