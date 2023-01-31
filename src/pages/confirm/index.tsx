@@ -123,7 +123,7 @@ const Confirm: NextPage = () => {
 					) : (
 						<>
 							{(!id || query.data === null) && <p>{t("invalid-confirmation-link")}</p>}
-							{id && query.isLoading && (
+							{id && query.isLoading && !query.isError && (
 								<div className="flex flex-col items-center justify-center">
 									<svg
 										className="h-10 w-10 animate-spin text-dark"
@@ -136,8 +136,24 @@ const Confirm: NextPage = () => {
 									{t("loading")}
 								</div>
 							)}
-							{query.isError && <p>Error: {query.error.message}</p>}
-							{query.data && (
+							{query.isError && (
+								<>
+									<code>
+										{t("error", {
+											message: query.error.message,
+										})}
+									</code>
+									<a href="mailto:development@hackthehill.com" target="_blank" rel="noreferrer">
+										<button
+											type="button"
+											className="transform cursor-pointer whitespace-nowrap rounded-normal border-2 border-light px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-[Rubik] text-[clamp(1rem,1vmin,5rem)] text-light shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition hover:bg-white/50"
+										>
+											{t("contact-us")}
+										</button>
+									</a>
+								</>
+							)}
+							{query.data && !query.isError && (
 								<div className="flex max-w-[25rem] flex-col items-center gap-6">
 									<h3 className="font-[Rubik] text-[clamp(1rem,1vmin,5rem)] font-medium text-dark">
 										{t("congratulations-for-your-acceptance", {

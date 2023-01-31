@@ -26,5 +26,7 @@
 	"confirm": "Confirmer",
 	"you-must-be-logged-in": "Vous devez être connecté pour continuer.",
 	"error-no-id-found": "Erreur : aucun ID trouvé",
-	"you-must-agree-to-the-terms-and-conditions": "Vous devez accepter les termes et conditions pour continuer."
+	"you-must-agree-to-the-terms-and-conditions": "Vous devez accepter les termes et conditions pour continuer.",
+	"error": "Erreur : {{message}}",
+	"contact-us": "Envoyez-nous un courriel"
 }
