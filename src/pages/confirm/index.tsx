@@ -31,7 +31,7 @@ const Confirm: NextPage = () => {
 
 	const [shirtSize, setShirtSize] = useState<keyof typeof ShirtSize>(ShirtSize.S);
 	const [attendanceType, setAttendanceType] = useState<keyof typeof AttendanceType>(AttendanceType.IN_PERSON);
-	const [terms, setTerms] = useState(true);
+	const [terms, setTerms] = useState(false);
 	const [validationMessage, setValidationMessage] = useState("");
 	const [isSubmitted, setIsSubmitted] = useState(false);
 
