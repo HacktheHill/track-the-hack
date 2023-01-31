@@ -7,7 +7,6 @@
 	"signed-in-as": "Connecté en tant que {{email}}",
 	"sign-in": "Se connecter",
 	"sign-out": "Se déconnecter",
-	"please-sign-in": "Veuillez vous connecter pour continuer",
 	"please-confirm-the-form-below": "Veuillez confirmer votre présence et la taille de votre T-Shirt en remplissant le formulaire ci-dessous",
 	"attendanceType": {
 		"in-person": "En personne à l'Université d'Ottawa",

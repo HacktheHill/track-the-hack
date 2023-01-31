@@ -7,7 +7,6 @@
 	"signed-in-as": "Signed in as {{email}}",
 	"sign-in": "Sign In",
 	"sign-out": "Sign Out",
-	"please-sign-in": "Please sign in to continue",
 	"please-confirm-the-form-below": "Please confirm your attendance and T-Shirt size by filling out the form below.",
 	"attendanceType": {
 		"in-person": "In-Person at the University of Ottawa",
