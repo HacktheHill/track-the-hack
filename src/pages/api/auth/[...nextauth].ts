@@ -37,6 +37,7 @@ export const authOptions: NextAuthOptions = {
 	],
 	theme: {
 		logo: "https://hackthehill.com/Logos/hackthehill-logo.svg",
+		colorScheme: "light",
 	},
 };
 
