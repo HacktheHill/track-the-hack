@@ -20,12 +20,11 @@
 		"x-large": "T-Grand",
 		"xx-large": "TT-Grand"
 	},
-	"terms-and-conditions": "J'accepte le",
-	"terms-and-conditions-link": "Code de Conduite, Renonciation et Conditions",
+	"accept-terms": "J'accepte le <a>Code de Conduite, Renonciation et Conditions</a>.",
 	"confirm": "Confirmer",
 	"you-must-be-logged-in": "Vous devez être connecté pour continuer.",
 	"error-no-id-found": "Erreur : aucun ID trouvé",
-	"you-must-agree-to-the-terms-and-conditions": "Vous devez accepter les termes et conditions pour continuer.",
+	"you-must-accept-terms": "Vous devez accepter les termes et conditions pour continuer.",
 	"error": "Erreur : {{message}}",
 	"contact-us": "Envoyez-nous un courriel"
 }

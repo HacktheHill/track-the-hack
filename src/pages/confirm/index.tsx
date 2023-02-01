@@ -1,7 +1,7 @@
 import { AttendanceType, ShirtSize } from "@prisma/client";
 import { type NextPage } from "next";
 import { signIn, signOut, useSession } from "next-auth/react";
-import { useTranslation } from "next-i18next";
+import { Trans, useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Head from "next/head";
 import Image from "next/image";
@@ -62,7 +62,7 @@ const Confirm: NextPage = () => {
 		}
 
 		if (!terms) {
-			setValidationMessage(t("you-must-agree-to-the-terms-and-conditions"));
+			setValidationMessage(t("you-must-accept-terms"));
 			return;
 		}
 
@@ -269,15 +269,20 @@ const Confirm: NextPage = () => {
 												className="h-4 w-4 appearance-none rounded border border-medium bg-transparent text-black after:block after:h-full after:w-full after:border-black after:p-0.5 after:leading-[calc(100%*1/2)] after:checked:content-check"
 											/>
 											<label htmlFor="terms" className="flex-1">
-												{t("terms-and-conditions")}{" "}
-												<a
-													href="/Hack_the_Hill_2023_waiver_and_terms.pdf"
-													target="_blank"
-													rel="noreferrer"
-													className="underline"
-												>
-													{t("terms-and-conditions-link")}
-												</a>
+												<Trans
+													i18nKey="accept-terms"
+													t={t}
+													components={{
+														a: (
+															<a
+																href="/Hack_the_Hill_2023_waiver_and_terms.pdf"
+																target="_blank"
+																rel="noreferrer"
+																className="underline"
+															/>
+														),
+													}}
+												/>
 											</label>
 										</div>
 										{validationMessage && (
