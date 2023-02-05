@@ -2,7 +2,6 @@
 	"thank-you-for-confirming-your-attendance": "Thank you for confirming your attendance!",
 	"we-look-forward-to-seeing-you": "We look forward to seeing you at Hack the Hill!",
 	"invalid-confirmation-link": "Invalid confirmation link. Please use the link from the confirmation email you received.",
-	"loading": "Loading...",
 	"congratulations-for-your-acceptance": "Congratulations {{name}} for your acceptance to Hack the Hill 2023!",
 	"signed-in-as": "Signed in as {{email}}",
 	"sign-in": "Sign In",
@@ -12,6 +11,7 @@
 		"in-person": "In-Person at the University of Ottawa",
 		"online": "Online on Twitch"
 	},
+	"confirm": "Confirm",
 	"t-shirt": {
 		"label": "T-Shirt size:",
 		"small": "Small",
@@ -21,11 +21,7 @@
 		"xx-large": "XX-Large"
 	},
 	"accept-terms": "I accept the <a>Code of Conduct, Waiver, and Terms</a>.",
-	"confirm": "Confirm",
 	"you-must-be-logged-in": "You must be logged in to continue.",
 	"error-no-id-found": "Error: no ID Found",
 	"you-must-accept-terms": "You must agree to the terms and conditions to continue.",
-	"error": "Error: {{message}}",
-	"contact-us": "Send us an email",
-	"erms": "test"
 }
