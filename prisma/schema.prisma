@@ -98,6 +98,8 @@ model HackerInfo {
     confirmed                    Boolean        @default(false)
     user                         User?          @relation(fields: [userId], references: [id])
     userId                       String?
+    unsubscribed                 Boolean        @default(false)
+    unsubscribeToken             String?        @unique @default(cuid())
 
     @@index([userId])
 }
