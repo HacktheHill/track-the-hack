@@ -2,7 +2,6 @@
 	"thank-you-for-confirming-your-attendance": "Merci d'avoir confirmé votre présence !",
 	"we-look-forward-to-seeing-you": "Nous avons hâte de vous voir à Hack the Hill !",
 	"invalid-confirmation-link": "Lien de confirmation invalide. Veuillez utiliser le lien de l'e-mail de confirmation que vous avez reçu.",
-	"loading": "Chargement en cours...",
 	"congratulations-for-your-acceptance": "Félicitations {{name}} pour votre acceptation à Hack the Hill 2023 !",
 	"signed-in-as": "Connecté en tant que {{email}}",
 	"sign-in": "Se connecter",
@@ -25,6 +24,4 @@
 	"you-must-be-logged-in": "Vous devez être connecté pour continuer.",
 	"error-no-id-found": "Erreur : aucun ID trouvé",
 	"you-must-accept-terms": "Vous devez accepter les termes et conditions pour continuer.",
-	"error": "Erreur : {{message}}",
-	"contact-us": "Envoyez-nous un courriel"
 }
