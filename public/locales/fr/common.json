@@ -1,1 +1,6 @@
-{}
+{
+	"loading": "Chargement en cours...",
+	"error": "Erreur : {{message}}",
+	"contact-us": "Contactez-nous pour de l'aide",
+	"unknown-error": "Erreur inconnue"
+}

@@ -1,1 +1,6 @@
-{}
+{
+	"loading": "Loading...",
+	"error": "Error: {{message}}",
+	"contact-us": "Contact us for help",
+	"unknown-error": "Unknown error"
+}
