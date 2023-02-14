@@ -26,6 +26,9 @@ export const hackerRouter = createTRPCRouter({
 				});
 			}
 		}),
+	all: publicProcedure.query(async ({ ctx }) => {
+		return ctx.prisma.hackerInfo.findMany();
+	}),
 	confirm: protectedProcedure
 		.input(
 			z.object({
