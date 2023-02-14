@@ -2,6 +2,7 @@ import { type Prisma } from "@prisma/client";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
 import { flexRender, getCoreRowModel, getSortedRowModel, useReactTable } from "@tanstack/react-table";
 import React, { useMemo } from "react";
+import { trpc } from "../utils/api";
 
 type Hacker = Prisma.HackerInfoGetPayload<true>;
 
@@ -54,22 +55,10 @@ const Table = () => {
 		[],
 	);
 
-	const data = useMemo(() => {
-		const data = [];
-		for (let i = 0; i < 10; i++) {
-			data.push({
-				id: `${i}`,
-				firstName: `${i}`,
-				lastName: "Doe",
-				email: "jdoe@example.com",
-			});
-		}
-		return data;
-	}, []);
+	const data = trpc.hackers.all.useQuery().data ?? [];
 
 	const table = useReactTable({
 		data,
-		// @ts-expect-error - just for testing
 		columns,
 		enableColumnResizing: true,
 		columnResizeMode: "onChange",
