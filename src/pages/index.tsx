@@ -17,13 +17,13 @@ const Home: NextPage = () => {
 		<App>
 			<RoleSelect />
 
-			<OnlyRole filter={(role: z.infer<typeof roles>) => role === "ORGANIZER"}>
+			<OnlyRole filter={(role: z.infer<typeof roles> | null) => role === "ORGANIZER"}>
 				<OrganizerView />
 			</OnlyRole>
-			<OnlyRole filter={(role: z.infer<typeof roles>) => role === "SPONSOR"}>
+			<OnlyRole filter={(role: z.infer<typeof roles> | null) => role === "SPONSOR"}>
 				<SponsorView />
 			</OnlyRole>
-			<OnlyRole filter={(role: z.infer<typeof roles>) => role === "HACKER"}>
+			<OnlyRole filter={(role: z.infer<typeof roles> | null) => role === "HACKER"}>
 				<HackerView />
 			</OnlyRole>
 		</App>
