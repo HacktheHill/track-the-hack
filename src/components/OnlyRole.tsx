@@ -9,7 +9,7 @@ const OnlyRole = ({
 	filter,
 	children,
 }: {
-	filter: (role: z.infer<typeof roles>) => boolean;
+	filter: (role: z.infer<typeof roles> | null) => boolean;
 	children: React.ReactNode;
 }) => {
 	const { data: sessionData } = useSession();
@@ -26,7 +26,7 @@ const OnlyRole = ({
 	if (query.isLoading) return null;
 	if (query.isError) return <p>Error: {query.error.message}</p>;
 
-	if (filter(query.data!)) return <>{children}</>;
+	if (filter(query.data)) return <>{children}</>;
 
 	return null;
 };
