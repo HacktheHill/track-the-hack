@@ -100,6 +100,8 @@ model HackerInfo {
     userId                       String?
     unsubscribed                 Boolean        @default(false)
     unsubscribeToken             String?        @unique @default(cuid())
+    onlyOnline                   Boolean        @default(false)
+    acceptanceExpiry             DateTime?
 
     @@index([userId])
 }

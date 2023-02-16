@@ -26,7 +26,7 @@ export const hackerRouter = createTRPCRouter({
 				});
 			}
 		}),
-	assign: protectedProcedure
+	confirm: protectedProcedure
 		.input(
 			z.object({
 				id: z.string(),
@@ -44,6 +44,22 @@ export const hackerRouter = createTRPCRouter({
 
 			if (!hacker) {
 				throw new Error("Hacker not found");
+			}
+
+			if (hacker.confirmed) {
+				throw new Error("Hacker already confirmed");
+			}
+
+			if (hacker.userId !== null && hacker.userId !== input.userId) {
+				throw new Error("Hacker already assigned to another account");
+			}
+
+			if (hacker.onlyOnline && input.attendanceType !== AttendanceType.ONLINE) {
+				throw new Error("Hacker can only attend online");
+			}
+
+			if ((hacker.acceptanceExpiry ?? 0) < new Date()) {
+				throw new Error("Hacker acceptance expired");
 			}
 
 			return ctx.prisma.hackerInfo.update({
