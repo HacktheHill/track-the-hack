@@ -4,6 +4,11 @@ import * as fs from "fs";
 import { z } from "zod";
 const prisma = new PrismaClient();
 
+const ACCEPTANCE_EXPIRY = new Date(2023, 1, 19, 0, 0, 0); /* 2023-02-19 */
+
+// List of submission IDs that are allowed to be inserted (we can't insert everything because stuff has been removed and modified since and we don't want to mess up the database)
+const WHITE_LIST = [];
+
 function parseBool(bool: string) {
 	if (bool === "0") {
 		return false;
@@ -19,7 +24,8 @@ function NaNToNull(num: number) {
 }
 
 async function main() {
-	const csvParser = csv({
+	// Read from a CSV file containing registrations
+	const registrations = csv({
 		headers: [
 			"submissionID",
 			"preferredLanguage",
@@ -51,11 +57,12 @@ async function main() {
 			"formEndDate",
 		],
 		trim: true,
+		delimiter: "|",
 	});
+	void fs.createReadStream("prisma/registrations.csv").pipe(registrations);
 
-	void fs.createReadStream("prisma/data.csv").pipe(csvParser);
-
-	void csvParser.subscribe(async (row: Row) => {
+	// Insert any missing rows from the registrations
+	void registrations.subscribe(async (row: RegistrationsRow) => {
 		try {
 			const data = {
 				...row,
@@ -79,19 +86,101 @@ async function main() {
 				formEndDate: z.date().parse(new Date(row.formEndDate ?? "")),
 			};
 
-			await prisma.hackerInfo.upsert({
-				where: {
-					id: row.submissionID,
-				},
-				create: data,
-				update: data,
+			// Check if the row already exists
+			if (
+				await prisma.hackerInfo.findUnique({
+					where: { id: data.id },
+				})
+			) {
+				return;
+			}
+
+			// Check if the row is not in the white list
+			if (!WHITE_LIST.includes(data.id)) {
+				return;
+			}
+
+			console.info(`Inserting row ${data.id}...`);
+
+			await prisma.hackerInfo.create({
+				data,
 			});
 		} catch (error) {
-			console.error(error);
+			console.error(row, error);
 		}
 	});
+	await registrations;
 
-	await csvParser;
+	// Read from a CSV file containing the acceptances email list
+	const emails = csv({
+		headers: ["id", "name", "email", "language"],
+		trim: true,
+	});
+	void fs.createReadStream("prisma/emails.csv").pipe(emails);
+
+	// Update any existing rows with the acceptances email list
+	void emails.subscribe(async (row: EmailsRow) => {
+		try {
+			const data = {
+				id: row.id,
+				acceptanceExpiry: ACCEPTANCE_EXPIRY,
+			};
+
+			// Check if the row doesn't exist
+			if (
+				!(await prisma.hackerInfo.findUnique({
+					where: { id: data.id },
+				}))
+			) {
+				console.error(`Row ${data.id} does not exist`);
+				return;
+			}
+
+			await prisma.hackerInfo.update({
+				where: { id: data.id },
+				data,
+			});
+		} catch (error) {
+			console.error(row, error);
+		}
+	});
+	await emails;
+
+	// Read from a CSV file containing the online-only list
+	const online = csv({
+		headers: ["id", "name", "email", "language"],
+		trim: true,
+	});
+	void fs.createReadStream("prisma/online.csv").pipe(online);
+
+	// Update any existing rows with the online-only list
+	void online.subscribe(async (row: EmailsRow) => {
+		try {
+			const data = {
+				id: row.id,
+				attendanceType: AttendanceType.ONLINE,
+				onlyOnline: true,
+			};
+
+			// Check if the row doesn't exist
+			if (
+				!(await prisma.hackerInfo.findUnique({
+					where: { id: data.id },
+				}))
+			) {
+				console.error(`Row ${data.id} does not exist`);
+				return;
+			}
+
+			await prisma.hackerInfo.update({
+				where: { id: data.id },
+				data,
+			});
+		} catch (error) {
+			console.error(row, error);
+		}
+	});
+	await online;
 }
 
 main()
@@ -104,7 +193,7 @@ main()
 		process.exit(1);
 	});
 
-interface Row {
+interface RegistrationsRow {
 	submissionID: string;
 	preferredLanguage: string;
 	email: string;
@@ -134,3 +223,10 @@ interface Row {
 	formStartDate: string;
 	formEndDate: string;
 }
+
+type EmailsRow = {
+	id: string;
+	name: string;
+	email: string;
+	language: "en" | "fr";
+};

@@ -24,7 +24,7 @@ const Confirm: NextPage = () => {
 	const router = useRouter();
 	const id = [router.query.id].flat()[0];
 
-	const mutation = trpc.hackers.assign.useMutation();
+	const mutation = trpc.hackers.confirm.useMutation();
 
 	const query = trpc.hackers.get.useQuery({ id: id ?? "" }, { enabled: !!id });
 
@@ -36,15 +36,19 @@ const Confirm: NextPage = () => {
 	const [error, setError] = useState("");
 
 	useEffect(() => {
+		if (query.error) setError(query.error.message);
+		if (mutation.error) setError(mutation.error.message);
 		if (query.data) {
+			if ((query.data.acceptanceExpiry ?? 0) < new Date()) {
+				setError(t("acceptance-expired"));
+				return;
+			}
+
 			setShirtSize(query.data.shirtSize ?? ShirtSize.M);
 			setAttendanceType(query.data.attendanceType);
 			setIsSubmitted(query.data.confirmed);
 		}
-		if (query.error) {
-			setError(query.error.message);
-		}
-	}, [query.data, query.error]);
+	}, [query.data, query.error, mutation.error, t]);
 
 	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
@@ -136,26 +140,29 @@ const Confirm: NextPage = () => {
 					</div>
 					<div className="flex flex-col items-start justify-center gap-3">
 						<p>{t("please-confirm-the-form-below")}</p>
-						<div className="flex items-center justify-center gap-2">
-							<input
-								type="radio"
-								id="in-person"
-								name="attendanceType"
-								value={AttendanceType.IN_PERSON}
-								checked={attendanceType === AttendanceType.IN_PERSON}
-								onChange={handleAttendanceTypeChange}
-								className="flex h-4 w-4 appearance-none items-center justify-center rounded-full border border-medium bg-transparent text-black after:m-0.5 after:block after:h-full after:w-full after:border-black after:leading-[calc(100%*3/4)] after:checked:content-check"
-							/>
-							<label htmlFor="in-person" className="whitespace-nowrap text-[clamp(1rem,1vmin,5rem)]">
-								{t("attendanceType.in-person")}
-							</label>
-						</div>
+						{!query.data?.onlyOnline && (
+							<div className="flex items-center justify-center gap-2">
+								<input
+									type="radio"
+									id="in-person"
+									name="attendanceType"
+									value={AttendanceType.IN_PERSON}
+									checked={attendanceType === AttendanceType.IN_PERSON}
+									onChange={handleAttendanceTypeChange}
+									className="flex h-4 w-4 appearance-none items-center justify-center rounded-full border border-medium bg-transparent text-black after:m-0.5 after:block after:h-full after:w-full after:border-black after:leading-[calc(100%*3/4)] after:checked:content-check"
+								/>
+								<label htmlFor="in-person" className="whitespace-nowrap text-[clamp(1rem,1vmin,5rem)]">
+									{t("attendanceType.in-person")}
+								</label>
+							</div>
+						)}
 						<div className="flex items-center justify-center gap-2">
 							<input
 								type="radio"
 								id="online"
 								name="attendanceType"
 								value={AttendanceType.ONLINE}
+								defaultChecked={query.data?.onlyOnline}
 								checked={attendanceType === AttendanceType.ONLINE}
 								onChange={handleAttendanceTypeChange}
 								className="flex h-4 w-4 appearance-none items-center justify-center rounded-full border border-medium bg-transparent text-black after:m-0.5 after:block after:h-full after:w-full after:border-black after:leading-[calc(100%*3/4)] after:checked:content-check"

@@ -40,4 +40,4 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
-prisma/data.csv
+prisma/*.csv

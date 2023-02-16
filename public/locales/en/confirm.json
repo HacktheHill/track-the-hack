@@ -1,27 +1,28 @@
 {
-	"thank-you-for-confirming-your-attendance": "Thank you for confirming your attendance!",
-	"we-look-forward-to-seeing-you": "We look forward to seeing you at Hack the Hill!",
-	"invalid-confirmation-link": "Invalid confirmation link. Please use the link from the confirmation email you received.",
-	"congratulations-for-your-acceptance": "Congratulations {{name}} for your acceptance to Hack the Hill 2023!",
-	"signed-in-as": "Signed in as {{email}}",
-	"sign-in": "Sign In",
-	"sign-out": "Sign Out",
-	"please-confirm-the-form-below": "Please confirm your attendance and T-Shirt size by filling out the form below.",
+	"accept-terms": "I accept the <a>Code of Conduct, Waiver, and Terms</a>.",
+	"acceptance-expired": "This confirmation link has expired. Please contact us if you need help.",
 	"attendanceType": {
 		"in-person": "In-Person at the University of Ottawa",
 		"online": "Online on Twitch"
 	},
 	"confirm": "Confirm",
+	"congratulations-for-your-acceptance": "Congratulations {{name}} for your acceptance to Hack the Hill 2023!",
+	"error-no-id-found": "Error: no ID Found",
+	"invalid-confirmation-link": "Invalid confirmation link. Please use the link from the confirmation email you received.",
+	"please-confirm-the-form-below": "Please confirm your attendance and T-Shirt size by filling out the form below.",
+	"sign-in": "Sign In",
+	"sign-out": "Sign Out",
+	"signed-in-as": "Signed in as {{email}}",
 	"t-shirt": {
 		"label": "T-Shirt size:",
-		"small": "Small",
-		"medium": "Medium",
 		"large": "Large",
+		"medium": "Medium",
+		"small": "Small",
 		"x-large": "X-Large",
 		"xx-large": "XX-Large"
 	},
-	"accept-terms": "I accept the <a>Code of Conduct, Waiver, and Terms</a>.",
-	"you-must-be-logged-in": "You must be logged in to continue.",
-	"error-no-id-found": "Error: no ID Found",
-	"you-must-accept-terms": "You must agree to the terms and conditions to continue."
+	"thank-you-for-confirming-your-attendance": "Thank you for confirming your attendance!",
+	"we-look-forward-to-seeing-you": "We look forward to seeing you at Hack the Hill!",
+	"you-must-accept-terms": "You must agree to the terms and conditions to continue.",
+	"you-must-be-logged-in": "You must be logged in to continue."
 }

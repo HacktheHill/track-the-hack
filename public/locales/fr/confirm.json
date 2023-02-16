@@ -1,27 +1,28 @@
 {
-	"thank-you-for-confirming-your-attendance": "Merci d'avoir confirmé votre présence !",
-	"we-look-forward-to-seeing-you": "Nous avons hâte de vous voir à Hack the Hill !",
-	"invalid-confirmation-link": "Lien de confirmation invalide. Veuillez utiliser le lien de l'e-mail de confirmation que vous avez reçu.",
-	"congratulations-for-your-acceptance": "Félicitations {{name}} pour votre acceptation à Hack the Hill 2023 !",
-	"signed-in-as": "Connecté en tant que {{email}}",
-	"sign-in": "Se connecter",
-	"sign-out": "Se déconnecter",
-	"please-confirm-the-form-below": "Veuillez confirmer votre présence et la taille de votre T-Shirt en remplissant le formulaire ci-dessous",
+	"accept-terms": "J'accepte le <a>Code de Conduite, Renonciation et Conditions</a>.",
+	"acceptance-expired": "Ce lien de confirmation a expiré. \nVeuillez nous contacter si vous avez besoin d'aide.",
 	"attendanceType": {
 		"in-person": "En personne à l'Université d'Ottawa",
 		"online": "En ligne sur Twitch"
 	},
+	"confirm": "Confirmer",
+	"congratulations-for-your-acceptance": "Félicitations {{name}} pour votre acceptation à Hack the Hill 2023 !",
+	"error-no-id-found": "Erreur : aucun ID trouvé",
+	"invalid-confirmation-link": "Lien de confirmation invalide. Veuillez utiliser le lien de l'e-mail de confirmation que vous avez reçu.",
+	"please-confirm-the-form-below": "Veuillez confirmer votre présence et la taille de votre T-Shirt en remplissant le formulaire ci-dessous",
+	"sign-in": "Se connecter",
+	"sign-out": "Se déconnecter",
+	"signed-in-as": "Connecté en tant que {{email}}",
 	"t-shirt": {
 		"label": "Taille du t-shirt :",
-		"small": "Petit",
-		"medium": "Moyen",
 		"large": "Grand",
+		"medium": "Moyen",
+		"small": "Petit",
 		"x-large": "T-Grand",
 		"xx-large": "TT-Grand"
 	},
-	"accept-terms": "J'accepte le <a>Code de Conduite, Renonciation et Conditions</a>.",
-	"confirm": "Confirmer",
-	"you-must-be-logged-in": "Vous devez être connecté pour continuer.",
-	"error-no-id-found": "Erreur : aucun ID trouvé",
-	"you-must-accept-terms": "Vous devez accepter les termes et conditions pour continuer."
+	"thank-you-for-confirming-your-attendance": "Merci d'avoir confirmé votre présence !",
+	"we-look-forward-to-seeing-you": "Nous avons hâte de vous voir à Hack the Hill !",
+	"you-must-accept-terms": "Vous devez accepter les termes et conditions pour continuer.",
+	"you-must-be-logged-in": "Vous devez être connecté pour continuer."
 }
