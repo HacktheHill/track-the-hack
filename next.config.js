@@ -18,7 +18,8 @@ module.exports = {
 const withPWA = require("next-pwa")({
 	dest: "public",
 	register: true,
-	disable: process.env.NODE_ENV === "development",
+	// disable: process.env.NODE_ENV === "development",
+	disable: false,
 });
 
 module.exports = withPWA({
@@ -27,6 +28,21 @@ module.exports = withPWA({
 		dest: "public",
 		register: true,
 		skipWaiting: true,
-		swSrc: "service-worker.js",
 	},
 });
+
+// const nextConfig = {
+// 	reactStrictMode: true,
+// 	swcMinify: true,
+// 	compiler: {
+// 	  removeConsole: process.env.NODE_ENV !== "development",
+// 	},
+//   };
+
+//   const withPWA = require("next-pwa")({
+// 	dest: "public",
+// 	disable: process.env.NODE_ENV === "development",
+// 	register: true,
+//   });
+
+//   module.exports = withPWA(nextConfig);
