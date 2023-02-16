@@ -15,11 +15,18 @@ module.exports = {
 	i18n,
 };
 
-const SWPrecacheWebpackPlugin = require("next-pwa");
+const withPWA = require("next-pwa")({
+	dest: "public",
+	register: true,
+	disable: process.env.NODE_ENV === "development",
+});
 
-// module.exports = withPWA({
-// 	pwa: {
-// 		dest: "public",
-// 		swSrc: "service-worker.js",
-// 	},
-// });
+module.exports = withPWA({
+	reactStrictMode: true,
+	pwa: {
+		dest: "public",
+		register: true,
+		skipWaiting: true,
+		swSrc: "service-worker.js",
+	},
+});
