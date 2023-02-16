@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 const ACCEPTANCE_EXPIRY = new Date(2023, 1, 19, 0, 0, 0); /* 2023-02-19 */
 
 // List of submission IDs that are allowed to be inserted (we can't insert everything because stuff has been removed and modified since and we don't want to mess up the database)
-const WHITE_LIST = [];
+const WHITE_LIST = [] as string[];
 
 function parseBool(bool: string) {
 	if (bool === "0") {
