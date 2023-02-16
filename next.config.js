@@ -15,4 +15,11 @@ module.exports = {
 	i18n,
 };
 
-const withPWA = require("next-pwa");
+const SWPrecacheWebpackPlugin = require("next-pwa");
+
+// module.exports = withPWA({
+// 	pwa: {
+// 		dest: "public",
+// 		swSrc: "service-worker.js",
+// 	},
+// });
