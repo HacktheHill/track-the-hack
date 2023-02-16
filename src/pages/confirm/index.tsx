@@ -138,9 +138,13 @@ const Confirm: NextPage = () => {
 							</button>
 						)}
 					</div>
-					<div className="flex flex-col items-start justify-center gap-3">
-						<p>{t("please-confirm-the-form-below")}</p>
-						{!query.data?.onlyOnline && (
+					{query.data?.onlyOnline ? (
+						<p className="font-[Rubik] text-[clamp(1rem,1vmin,5rem)] font-medium text-dark">
+							{t("only-online")}
+						</p>
+					) : (
+						<div className="flex flex-col items-start justify-center gap-3">
+							<p>{t("please-confirm-the-form-below")}</p>
 							<div className="flex items-center justify-center gap-2">
 								<input
 									type="radio"
@@ -155,55 +159,58 @@ const Confirm: NextPage = () => {
 									{t("attendanceType.in-person")}
 								</label>
 							</div>
-						)}
-						<div className="flex items-center justify-center gap-2">
-							<input
-								type="radio"
-								id="online"
-								name="attendanceType"
-								value={AttendanceType.ONLINE}
-								defaultChecked={query.data?.onlyOnline}
-								checked={attendanceType === AttendanceType.ONLINE}
-								onChange={handleAttendanceTypeChange}
-								className="flex h-4 w-4 appearance-none items-center justify-center rounded-full border border-medium bg-transparent text-black after:m-0.5 after:block after:h-full after:w-full after:border-black after:leading-[calc(100%*3/4)] after:checked:content-check"
-							/>
-							<label htmlFor="online" className="whitespace-nowrap text-[clamp(1rem,1vmin,5rem)]">
-								{t("attendanceType.online")}
-							</label>
-						</div>
-						{attendanceType === AttendanceType.IN_PERSON && (
-							<div className="flex items-center justify-center gap-6">
-								<label htmlFor="shirtSize" className="whitespace-nowrap text-[clamp(1rem,1vmin,5rem)]">
-									{t("t-shirt.label")}
+							<div className="flex items-center justify-center gap-2">
+								<input
+									type="radio"
+									id="online"
+									name="attendanceType"
+									value={AttendanceType.ONLINE}
+									defaultChecked={query.data?.onlyOnline}
+									checked={attendanceType === AttendanceType.ONLINE}
+									onChange={handleAttendanceTypeChange}
+									className="flex h-4 w-4 appearance-none items-center justify-center rounded-full border border-medium bg-transparent text-black after:m-0.5 after:block after:h-full after:w-full after:border-black after:leading-[calc(100%*3/4)] after:checked:content-check"
+								/>
+								<label htmlFor="online" className="whitespace-nowrap text-[clamp(1rem,1vmin,5rem)]">
+									{t("attendanceType.online")}
 								</label>
-								<div className="rounded-2xl border border-medium py-2 px-4">
-									<select
-										name="shirtSize"
-										id="shirtSize"
-										value={shirtSize}
-										onChange={handleShirtSizeChange}
-										className="w-full border-none bg-transparent text-inherit text-black focus-visible:outline-none"
-									>
-										<option value="S" className="bg-white">
-											{t("t-shirt.small")}
-										</option>
-										<option value="M" className="bg-white">
-											{t("t-shirt.medium")}
-										</option>
-										<option value="L" className="bg-white">
-											{t("t-shirt.large")}
-										</option>
-										<option value="XL" className="bg-white">
-											{t("t-shirt.x-large")}
-										</option>
-										<option value="XXL" className="bg-white">
-											{t("t-shirt.xx-large")}
-										</option>
-									</select>
-								</div>
 							</div>
-						)}
-					</div>
+							{attendanceType === AttendanceType.IN_PERSON && (
+								<div className="flex items-center justify-center gap-6">
+									<label
+										htmlFor="shirtSize"
+										className="whitespace-nowrap text-[clamp(1rem,1vmin,5rem)]"
+									>
+										{t("t-shirt.label")}
+									</label>
+									<div className="rounded-2xl border border-medium py-2 px-4">
+										<select
+											name="shirtSize"
+											id="shirtSize"
+											value={shirtSize}
+											onChange={handleShirtSizeChange}
+											className="w-full border-none bg-transparent text-inherit text-black focus-visible:outline-none"
+										>
+											<option value="S" className="bg-white">
+												{t("t-shirt.small")}
+											</option>
+											<option value="M" className="bg-white">
+												{t("t-shirt.medium")}
+											</option>
+											<option value="L" className="bg-white">
+												{t("t-shirt.large")}
+											</option>
+											<option value="XL" className="bg-white">
+												{t("t-shirt.x-large")}
+											</option>
+											<option value="XXL" className="bg-white">
+												{t("t-shirt.xx-large")}
+											</option>
+										</select>
+									</div>
+								</div>
+							)}
+						</div>
+					)}
 					<div className="flex flex-col gap-3">
 						<div className="flex flex-row items-center justify-center gap-2">
 							<input

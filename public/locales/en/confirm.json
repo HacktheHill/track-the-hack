@@ -9,6 +9,7 @@
 	"congratulations-for-your-acceptance": "Congratulations {{name}} for your acceptance to Hack the Hill 2023!",
 	"error-no-id-found": "Error: no ID Found",
 	"invalid-confirmation-link": "Invalid confirmation link. Please use the link from the confirmation email you received.",
+	"only-online": "You have been accepted as an online participant and you will be able to join the event on Twitch. Please confirm your attendance below.",
 	"please-confirm-the-form-below": "Please confirm your attendance and T-Shirt size by filling out the form below.",
 	"sign-in": "Sign In",
 	"sign-out": "Sign Out",
