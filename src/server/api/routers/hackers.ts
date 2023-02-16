@@ -50,7 +50,7 @@ export const hackerRouter = createTRPCRouter({
 				throw new Error("Hacker already confirmed");
 			}
 
-			if (hacker.userId !== null && hacker.userId !== input.userId) {
+			if (hacker.userId && hacker.userId !== input.userId) {
 				throw new Error("Hacker already assigned to another account");
 			}
 
