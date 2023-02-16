@@ -45,7 +45,9 @@ const Confirm: NextPage = () => {
 			}
 
 			setShirtSize(query.data.shirtSize ?? ShirtSize.M);
-			setAttendanceType(query.data.attendanceType);
+			setAttendanceType(
+				query.data.onlyOnline ? AttendanceType.ONLINE : query.data.attendanceType ?? AttendanceType.IN_PERSON,
+			);
 			setIsSubmitted(query.data.confirmed);
 		}
 	}, [query.data, query.error, mutation.error, t]);
@@ -165,7 +167,6 @@ const Confirm: NextPage = () => {
 									id="online"
 									name="attendanceType"
 									value={AttendanceType.ONLINE}
-									defaultChecked={query.data?.onlyOnline}
 									checked={attendanceType === AttendanceType.ONLINE}
 									onChange={handleAttendanceTypeChange}
 									className="flex h-4 w-4 appearance-none items-center justify-center rounded-full border border-medium bg-transparent text-black after:m-0.5 after:block after:h-full after:w-full after:border-black after:leading-[calc(100%*3/4)] after:checked:content-check"
