@@ -1,9 +1,10 @@
 import type { HackerInfo } from "@prisma/client";
-import Head from "next/head";
+import { useTranslation } from "next-i18next";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
-import { useTranslation } from "next-i18next";
+import Head from "./Head";
+import Loading from "./Loading";
 
 type FormPageProps = {
 	children: React.ReactNode;
@@ -34,14 +35,7 @@ const FormPage = ({ children, onSubmit, error, invalid, loading, path, user, tit
 
 	return (
 		<>
-			<Head>
-				<title>Track the Hack | {title}</title>
-				<meta
-					name="description"
-					content="An open source project to track the participants of the Hack the Hill hackathon."
-				/>
-				<link rel="shortcut icon" href="/favicon.svg" type="image/svg+xml" />
-			</Head>
+			<Head title={title} />
 			<main className="flex h-screen flex-col items-center justify-center bg-gradient bg-no-repeat text-center supports-[height:100cqh]:h-[100cqh] supports-[height:100svh]:h-[100svh]">
 				<form onSubmit={onSubmit} className="flex flex-col items-center justify-center gap-6 px-12 text-center">
 					<div className="flex flex-col items-center">
