@@ -7,6 +7,7 @@ import OnlyRole from "../components/OnlyRole";
 
 import { type Prisma } from "@prisma/client";
 import { useEffect } from "react";
+import Loading from "../components/Loading";
 type HackerInfo = Prisma.HackerInfoGetPayload<true>;
 
 const Hacker: NextPage = () => {
@@ -21,14 +22,14 @@ const Hacker: NextPage = () => {
 		}
 	}, [query.data, query.isLoading, router]);
 
-	if (query.isLoading) {
-		return <App>Loading...</App>;
+	if (query.isLoading || !query.data) {
+		return <Loading />;
 	}
 
 	return (
 		<App>
 			<OnlyRole filter={role => role === "SPONSOR" || role === "ORGANIZER"}>
-				<HackerView data={query.data as HackerInfo} />
+				<HackerView data={query.data} />
 			</OnlyRole>
 			<OnlyRole filter={role => role === "HACKER"}>You are not authorized to view this page.</OnlyRole>
 		</App>
