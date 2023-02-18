@@ -6,18 +6,29 @@ import App from "../components/App";
 import OnlyRole from "../components/OnlyRole";
 
 import { type Prisma } from "@prisma/client";
+import { useEffect } from "react";
 type HackerInfo = Prisma.HackerInfoGetPayload<true>;
 
 const Hacker: NextPage = () => {
 	const router = useRouter();
 	const id = router.query.id as string;
 
-	const data = trpc.hackers.get.useQuery({ id: id ?? "" }, { enabled: !!id }).data ?? {};
+	const query = trpc.hackers.get.useQuery({ id: id ?? "" }, { enabled: !!id });
+
+	useEffect(() => {
+		if (!query.isLoading && !query.data) {
+			void router.push("/");
+		}
+	}, [query.data, query.isLoading, router]);
+
+	if (query.isLoading) {
+		return <App>Loading...</App>;
+	}
 
 	return (
 		<App>
 			<OnlyRole filter={role => role === "SPONSOR" || role === "ORGANIZER"}>
-				<HackerView data={data as HackerInfo} />
+				<HackerView data={query.data as HackerInfo} />
 			</OnlyRole>
 			<OnlyRole filter={role => role === "HACKER"}>You are not authorized to view this page.</OnlyRole>
 		</App>
