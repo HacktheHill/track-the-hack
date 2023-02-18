@@ -1,14 +1,12 @@
 import { type NextPage } from "next";
 import { useRouter } from "next/router";
 import { trpc } from "../utils/api";
-import type { z } from "zod";
 
 import App from "../components/App";
 import OnlyRole from "../components/OnlyRole";
 
-import type { roles } from "../utils/common";
 import { type Prisma } from "@prisma/client";
-type Hacker = Prisma.HackerInfoGetPayload<true>;
+type HackerInfo = Prisma.HackerInfoGetPayload<true>;
 
 const Hacker: NextPage = () => {
 	const router = useRouter();
@@ -18,17 +16,15 @@ const Hacker: NextPage = () => {
 
 	return (
 		<App>
-			<OnlyRole filter={(role: z.infer<typeof roles> | null) => role === "SPONSOR" || role === "ORGANIZER"}>
-				<HackerView data={data as Hacker} />
+			<OnlyRole filter={role => role === "SPONSOR" || role === "ORGANIZER"}>
+				<HackerView data={data as HackerInfo} />
 			</OnlyRole>
-			<OnlyRole filter={(role: z.infer<typeof roles> | null) => role === "HACKER"}>
-				You are not authorized to view this page.
-			</OnlyRole>
+			<OnlyRole filter={role => role === "HACKER"}>You are not authorized to view this page.</OnlyRole>
 		</App>
 	);
 };
 
-const HackerView = ({ data }: { data: Hacker }) => {
+const HackerView = ({ data }: { data: HackerInfo }) => {
 	return (
 		<div>
 			<h1 className="font-[Coolvetica] text-[clamp(1rem,3.5vmin,5rem)]  font-normal text-dark">
@@ -36,7 +32,7 @@ const HackerView = ({ data }: { data: Hacker }) => {
 			</h1>
 			{...Object.keys(data).map(key => (
 				<div key={key}>
-					<b>{key}</b>: {(data[key as keyof Hacker] ?? "NULL").toString()}
+					<b>{key}</b>: {(data[key as keyof HackerInfo] ?? "NULL").toString()}
 				</div>
 			))}
 		</div>

@@ -1,13 +1,12 @@
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
-import type { z } from "zod";
 
 import { trpc } from "../utils/api";
-import type { roles } from "../utils/common";
+import type { Role } from "../utils/common";
 
 const RoleSelect = () => {
 	const { data: sessionData } = useSession();
-	const [role, setRole] = useState<z.infer<typeof roles> | null>(null);
+	const [role, setRole] = useState<Role | null>(null);
 
 	const mutation = trpc.users.setRole.useMutation();
 	const query = trpc.users.getRole.useQuery(
@@ -31,7 +30,7 @@ const RoleSelect = () => {
 			id: sessionData?.user?.id ?? "",
 			role: value.toUpperCase(),
 		});
-		setRole(value as z.infer<typeof roles>);
+		setRole(value as Role);
 	};
 
 	return (
