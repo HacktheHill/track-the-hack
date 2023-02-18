@@ -6,7 +6,7 @@ const { i18n } = require("./next-i18next.config.js");
  * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation.
  * This is especially useful for Docker builds.
  */
-!process.env.SKIP_ENV_VALIDATION && (import("./src/env/server.mjs"));
+!process.env.SKIP_ENV_VALIDATION && import("./src/env/server.mjs");
 
 /** @type {import("next").NextConfig} */
 module.exports = {
@@ -14,3 +14,18 @@ module.exports = {
 	swcMinify: true,
 	i18n,
 };
+
+const withPWA = require("next-pwa")({
+	dest: "public",
+	register: true,
+	disable: false,
+});
+
+module.exports = withPWA({
+	reactStrictMode: true,
+	pwa: {
+		dest: "public",
+		register: true,
+		skipWaiting: true,
+	},
+});
