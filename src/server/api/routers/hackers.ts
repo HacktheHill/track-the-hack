@@ -67,7 +67,7 @@ export const hackerRouter = createTRPCRouter({
 					id: input.id,
 				},
 				data: {
-					shirtSize: input.shirtSize,
+					shirtSize: input.attendanceType === AttendanceType.ONLINE ? null : input.shirtSize,
 					attendanceType: input.attendanceType,
 					userId: input.userId,
 					confirmed: true,
