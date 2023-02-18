@@ -16,7 +16,7 @@ const App = ({ children }: { children: React.ReactNode }) => {
 			<Navbar />
 			<main className="p-4">
 				<p>{sessionData && <span>Logged in as {sessionData.user?.name}</span>}</p>
-        <br />
+				<br />
 				{children}
 			</main>
 		</>
