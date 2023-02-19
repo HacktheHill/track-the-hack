@@ -1,8 +1,8 @@
 import type { HackerInfo } from "@prisma/client";
-import { useTranslation } from "next-i18next";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
+import Error from "./Error";
 import Head from "./Head";
 import Loading from "./Loading";
 
@@ -18,8 +18,6 @@ type FormPageProps = {
 };
 
 const FormPage = ({ children, onSubmit, error, invalid, loading, path, user, title }: FormPageProps) => {
-	const { t } = useTranslation("common");
-
 	// Get query params
 	const router = useRouter();
 
@@ -52,23 +50,7 @@ const FormPage = ({ children, onSubmit, error, invalid, loading, path, user, tit
 					</div>
 					{invalid && <p>{invalid}</p>}
 					{!invalid && loading && !error && <Loading />}
-					{error && (
-						<>
-							<code>
-								{t("error", {
-									message: error,
-								})}
-							</code>
-							<a href="mailto:development@hackthehill.com" target="_blank" rel="noreferrer">
-								<button
-									type="button"
-									className="transform cursor-pointer whitespace-nowrap rounded-normal border-2 border-light px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-[Rubik] text-[clamp(1rem,1vmin,5rem)] text-light shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition hover:bg-white/50"
-								>
-									{t("contact-us")}
-								</button>
-							</a>
-						</>
-					)}
+					{error && <Error message={error} />}
 					{!invalid && !error && !loading && (
 						<div className="flex max-w-[25rem] flex-col items-center gap-6">{children}</div>
 					)}
