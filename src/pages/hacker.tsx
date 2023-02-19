@@ -6,8 +6,9 @@ import App from "../components/App";
 import OnlyRole from "../components/OnlyRole";
 
 import { type Prisma } from "@prisma/client";
-import { useEffect } from "react";
+import Error from "../components/Error";
 import Loading from "../components/Loading";
+
 type HackerInfo = Prisma.HackerInfoGetPayload<true>;
 
 const Hacker: NextPage = () => {
@@ -16,14 +17,24 @@ const Hacker: NextPage = () => {
 
 	const query = trpc.hackers.get.useQuery({ id: id ?? "" }, { enabled: !!id });
 
-	useEffect(() => {
-		if (!query.isLoading && !query.data) {
-			void router.push("/");
-		}
-	}, [query.data, query.isLoading, router]);
+	if (query.isLoading || query.data == null) {
+		return (
+			<App>
+				<Loading />
+			</App>
+		);
+	} else if (query.isError) {
+		return (
+			<App>
+				<div className="flex flex-col items-center justify-center gap-4">
+					<Error message={query.error.message} />
+				</div>
+			</App>
+		);
+	}
 
-	if (query.isLoading || !query.data) {
-		return <Loading />;
+	if (query.data == null) {
+		void router.push("/404");
 	}
 
 	return (
