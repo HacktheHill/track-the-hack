@@ -1,3 +1,4 @@
+import { Role } from "@prisma/client";
 import { type NextPage } from "next";
 import { useState } from "react";
 
@@ -13,8 +14,7 @@ const Home: NextPage = () => {
 	return (
 		<App>
 			<RoleSelect />
-
-			<OnlyRole filter={role => role === "ORGANIZER"}>
+			<OnlyRole filter={role => role === Role.ORGANIZER}>
 				<OrganizerView />
 			</OnlyRole>
 			<OnlyRole filter={role => role === "SPONSOR"}>
