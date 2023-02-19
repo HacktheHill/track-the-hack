@@ -1,17 +1,26 @@
-import { type NextPage } from "next";
+import { type Prisma } from "@prisma/client";
+import type { GetStaticProps, NextPage } from "next";
+import { useTranslation } from "next-i18next";
+import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useRouter } from "next/router";
 import { trpc } from "../utils/api";
 
 import App from "../components/App";
-import OnlyRole from "../components/OnlyRole";
-
-import { type Prisma } from "@prisma/client";
 import Error from "../components/Error";
 import Loading from "../components/Loading";
+import OnlyRole from "../components/OnlyRole";
 
 type HackerInfo = Prisma.HackerInfoGetPayload<true>;
 
+export const getStaticProps: GetStaticProps = async ({ locale }) => {
+	return {
+		props: await serverSideTranslations(locale ?? "en", ["common", "hacker"]),
+	};
+};
+
 const Hacker: NextPage = () => {
+	const { t } = useTranslation("hacker");
+
 	const router = useRouter();
 	const [id] = [router.query.id].flat();
 
@@ -42,7 +51,7 @@ const Hacker: NextPage = () => {
 			<OnlyRole filter={role => role === "SPONSOR" || role === "ORGANIZER"}>
 				<HackerView data={query.data} />
 			</OnlyRole>
-			<OnlyRole filter={role => role === "HACKER"}>You are not authorized to view this page.</OnlyRole>
+			<OnlyRole filter={role => role === "HACKER"}>{t("not-authorized-to-view-this-page")}</OnlyRole>
 		</App>
 	);
 };
