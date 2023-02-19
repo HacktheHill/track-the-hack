@@ -9,7 +9,11 @@ export const hackerRouter = createTRPCRouter({
 				.object({
 					id: z.string(),
 				})
-				.or(z.object({ email: z.string() })),
+				.or(
+					z.object({
+						email: z.string(),
+					}),
+				),
 		)
 		.query(async ({ ctx, input }) => {
 			if ("id" in input) {
