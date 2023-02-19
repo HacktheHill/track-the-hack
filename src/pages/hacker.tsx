@@ -12,7 +12,7 @@ type HackerInfo = Prisma.HackerInfoGetPayload<true>;
 
 const Hacker: NextPage = () => {
 	const router = useRouter();
-	const id = router.query.id as string;
+	const [id] = [router.query.id].flat();
 
 	const query = trpc.hackers.get.useQuery({ id: id ?? "" }, { enabled: !!id });
 
