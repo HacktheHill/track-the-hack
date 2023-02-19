@@ -22,7 +22,7 @@ const Confirm: NextPage = () => {
 
 	// Get query params
 	const router = useRouter();
-	const id = [router.query.id].flat()[0];
+	const [id] = [router.query.id].flat();
 
 	const mutation = trpc.hackers.confirm.useMutation();
 
