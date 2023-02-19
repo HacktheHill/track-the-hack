@@ -8,13 +8,6 @@ const { i18n } = require("./next-i18next.config.js");
  */
 !process.env.SKIP_ENV_VALIDATION && import("./src/env/server.mjs");
 
-/** @type {import("next").NextConfig} */
-module.exports = {
-	reactStrictMode: true,
-	swcMinify: true,
-	i18n,
-};
-
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const withPWA = require("next-pwa")({
 	dest: "public",
@@ -29,4 +22,6 @@ module.exports = withPWA({
 		register: true,
 		skipWaiting: true,
 	},
+	swcMinify: true,
+	i18n,
 });
