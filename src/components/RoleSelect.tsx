@@ -1,12 +1,13 @@
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
+import { Role } from "@prisma/client";
+import type { Roles } from "../utils/common";
 
 import { trpc } from "../utils/api";
-import type { Role } from "../utils/common";
 
 const RoleSelect = () => {
 	const { data: sessionData } = useSession();
-	const [role, setRole] = useState<Role | null>(null);
+	const [role, setRole] = useState<Roles | null>(null);
 
 	const mutation = trpc.users.setRole.useMutation();
 	const query = trpc.users.getRole.useQuery(
@@ -30,16 +31,18 @@ const RoleSelect = () => {
 			id: sessionData?.user?.id ?? "",
 			role: value.toUpperCase(),
 		});
-		setRole(value as Role);
+		setRole(value as Roles);
 	};
 
 	return (
 		<div>
 			<label htmlFor="role">Role</label>
 			<select id="role" onChange={handleChange} value={role ?? ""}>
-				<option value="ORGANIZER">Organizer</option>
-				<option value="SPONSOR">Sponsor</option>
-				<option value="HACKER">Hacker</option>
+				{Object.values(Role).map(role => (
+					<option key={role} value={role}>
+						{role}
+					</option>
+				))}
 			</select>
 		</div>
 	);

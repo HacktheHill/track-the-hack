@@ -52,7 +52,7 @@ model User {
     email         String?      @unique
     emailVerified DateTime?
     image         String?
-    role          String       @default("HACKER") // HACKER, SPONSOR, ORGANIZER
+    role          Role         @default(HACKER)
     accounts      Account[]
     sessions      Session[]
     HackerInfo    HackerInfo[]
@@ -122,4 +122,10 @@ enum ShirtSize {
     L
     XL
     XXL
+}
+
+enum Role {
+    HACKER
+    ORGANIZER
+    SPONSOR
 }

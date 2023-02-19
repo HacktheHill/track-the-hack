@@ -1,9 +1,9 @@
 import { useSession } from "next-auth/react";
 
 import { trpc } from "../utils/api";
-import type { Role } from "../utils/common";
+import type { Roles } from "../utils/common";
 
-const OnlyRole = ({ filter, children }: { filter: (role: Role | null) => boolean; children: React.ReactNode }) => {
+const OnlyRole = ({ filter, children }: { filter: (role: Roles | null) => boolean; children: React.ReactNode }) => {
 	const { data: sessionData } = useSession();
 
 	const query = trpc.users.getRole.useQuery(

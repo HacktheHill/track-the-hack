@@ -1,4 +1,4 @@
-import { type Prisma } from "@prisma/client";
+import { Role, type Prisma } from "@prisma/client";
 import type { GetStaticProps, NextPage } from "next";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
@@ -48,7 +48,7 @@ const Hacker: NextPage = () => {
 
 	return (
 		<App>
-			<OnlyRole filter={role => role === "SPONSOR" || role === "ORGANIZER"}>
+			<OnlyRole filter={role => role === Role.SPONSOR || role === Role.ORGANIZER}>
 				<HackerView data={query.data} />
 			</OnlyRole>
 			<OnlyRole filter={role => role === "HACKER"}>{t("not-authorized-to-view-this-page")}</OnlyRole>
