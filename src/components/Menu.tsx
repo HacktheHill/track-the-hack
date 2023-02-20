@@ -7,7 +7,7 @@ const Navbar = () => {
 
 	return (
 		<nav
-			className="sticky top-0 flex gap-8 whitespace-nowrap bg-background1 p-4 text-gray-300"
+			className="sticky top-0 flex gap-8 whitespace-nowrap bg-background1 p-4 text-gray-300 z-10 h-[var(--navbar-height)]"
 			aria-label="Main navigation"
 		>
 			<div className="flex w-auto items-center justify-center font-coolvetica md:w-full">
@@ -48,7 +48,7 @@ const Navbar = () => {
 const BottomMenu = () => {
 	return (
 		<nav
-			className="sticky bottom-0 hidden w-full items-center justify-evenly gap-8 whitespace-nowrap bg-background1 p-4 text-gray-300 md:flex"
+			className="sticky bottom-0 hidden w-full items-center justify-evenly gap-8 whitespace-nowrap bg-background1 p-4 text-gray-300 md:flex h-[var(--navbar-height)]"
 			aria-label="Bottom navigation"
 		>
 			<Link href="/">

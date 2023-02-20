@@ -9,11 +9,11 @@ const App = ({ children, ...rest }: AppProps) => {
 	return (
 		<>
 			<Head />
-			<div className="flex h-screen flex-col">
-				<Navbar />
+			<Navbar />
+			<div className="min-h-[calc(100vh-var(--navbar-height)*2)] flex h-full flex-col">
 				<main {...rest}>{children}</main>
-				<BottomMenu />
 			</div>
+			<BottomMenu />
 		</>
 	);
 };

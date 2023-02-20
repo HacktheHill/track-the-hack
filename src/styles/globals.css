@@ -41,6 +41,10 @@
 	font-display: swap;
 }
 
+:root {
+	--navbar-height: 4.5rem;
+}
+
 *,
 *::before,
 *::after {
