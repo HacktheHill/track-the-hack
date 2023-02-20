@@ -1,4 +1,4 @@
-import Navbar from "../components/Menu";
+import { Navbar, BottomMenu } from "../components/Menu";
 import Head from "./Head";
 
 type AppProps = {
@@ -12,6 +12,7 @@ const App = ({ children, ...rest }: AppProps) => {
 			<div className="flex h-screen flex-col">
 				<Navbar />
 				<main {...rest}>{children}</main>
+				<BottomMenu />
 			</div>
 		</>
 	);
