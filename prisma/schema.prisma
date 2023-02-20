@@ -108,7 +108,8 @@ model HackerInfo {
 
 model Event {
     id          String    @id @default(cuid())
-    time        DateTime
+    start       DateTime
+    end         DateTime
     name        String
     type        EventType
     host        String

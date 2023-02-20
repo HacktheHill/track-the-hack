@@ -1,20 +1,18 @@
-import { useSession } from "next-auth/react";
-
 import Navbar from "../components/Menu";
 import Head from "./Head";
 
-const App = ({ children }: { children: React.ReactNode }) => {
-	const { data: sessionData } = useSession();
+type AppProps = {
+	children: React.ReactNode;
+} & React.HTMLAttributes<HTMLDivElement>;
 
+const App = ({ children, ...rest }: AppProps) => {
 	return (
 		<>
 			<Head />
-			<Navbar />
-			<main className="p-4">
-				<p>{sessionData && <span>Logged in as {sessionData.user?.name}</span>}</p>
-				<br />
-				{children}
-			</main>
+			<div className="flex flex-col h-screen">
+				<Navbar />
+				<main {...rest}>{children}</main>
+			</div>
 		</>
 	);
 };
