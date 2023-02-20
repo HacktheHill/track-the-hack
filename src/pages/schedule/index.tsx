@@ -42,12 +42,12 @@ const Schedule: NextPage = () => {
 	}
 
 	return (
-		<App className="flex-1 bg-gradient-to-b from-background2 to-background1 px-16 py-12">
+		<App className="h-full bg-gradient-to-b from-background2 to-background1 px-16 py-12">
 			<div className="flex flex-col gap-4">
 				{query.data?.map((event, i) => (
 					<Link
 						key={event.id}
-						href={`/schedule/${event.id}`}
+						href={`/schedule/event?id=${event.id}`}
 						className={`flex flex-col items-center justify-center gap-2 rounded-xl p-4 font-[Coolvetica] text-dark ${
 							i % 2 === 0 ? "bg-accent1" : "bg-accent2"
 						}`}
