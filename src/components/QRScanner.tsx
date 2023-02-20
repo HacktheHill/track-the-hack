@@ -14,7 +14,6 @@ const QRScanner = ({ setId }: QRScannerProps) => {
 			video.current,
 			(result: QrScanner.ScanResult) => {
 				setId(result.data);
-				console.log(result.data);
 			},
 			{
 				returnDetailedScanResult: true,

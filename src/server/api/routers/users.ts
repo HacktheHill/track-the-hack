@@ -1,6 +1,8 @@
-import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { Role } from "@prisma/client";
 import { z } from "zod";
 import { roles } from "../../../utils/common";
+import { hasRoles } from "../../../utils/helpers";
+import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const userRouter = createTRPCRouter({
 	// Get the given user's role
@@ -35,10 +37,26 @@ export const userRouter = createTRPCRouter({
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+			const user = await ctx.prisma.user.findUnique({
+				where: {
+					id: userId,
+				},
+			});
+
+			if (!user) {
+				throw new Error("User not found");
+			}
+
 			const role = roles.safeParse(input.role);
 			if (!role.success) {
 				return null;
 			}
+
+			if (!hasRoles(user, [Role.ORGANIZER]) && user.id !== input.id) {
+				throw new Error("You do not have permission to do this");
+			}
+
 			const updatedUser = await ctx.prisma.user.update({
 				where: {
 					id: input.id,
@@ -48,5 +66,41 @@ export const userRouter = createTRPCRouter({
 				},
 			});
 			return updatedUser;
+		}),
+
+	// Get the given user's hacker id
+	getHackerId: protectedProcedure
+		.input(
+			z.object({
+				id: z.string(),
+			}),
+		)
+		.query(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+			const user = await ctx.prisma.user.findUnique({
+				where: {
+					id: userId,
+				},
+			});
+
+			if (!user) {
+				throw new Error("User not found");
+			}
+
+			const hacker = await ctx.prisma.hackerInfo.findFirst({
+				where: {
+					userId: input.id,
+				},
+			});
+
+			if (!hacker) {
+				return null;
+			}
+
+			if (!hasRoles(user, [Role.SPONSOR, Role.ORGANIZER]) && hacker.userId !== user.id) {
+				throw new Error("You do not have permission to do this");
+			}
+
+			return hacker.id;
 		}),
 });

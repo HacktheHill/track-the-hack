@@ -1,9 +1,11 @@
-import { AttendanceType, ShirtSize } from "@prisma/client";
+import { AttendanceType, Role, ShirtSize, type HackerInfo } from "@prisma/client";
 import { z } from "zod";
+import { hasRoles } from "../../../utils/helpers";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 export const hackerRouter = createTRPCRouter({
-	get: publicProcedure
+	// Get a hacker by id or email
+	get: protectedProcedure
 		.input(
 			z
 				.object({
@@ -16,23 +18,64 @@ export const hackerRouter = createTRPCRouter({
 				),
 		)
 		.query(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+			const user = await ctx.prisma.user.findUnique({
+				where: {
+					id: userId,
+				},
+			});
+
+			if (!user) {
+				throw new Error("User not found");
+			}
+
+			let hacker: HackerInfo | null = null;
 			if ("id" in input) {
-				return ctx.prisma.hackerInfo.findUnique({
+				hacker = await ctx.prisma.hackerInfo.findUnique({
 					where: {
 						id: input.id,
 					},
 				});
 			} else if ("email" in input) {
-				return ctx.prisma.hackerInfo.findFirst({
+				hacker = await ctx.prisma.hackerInfo.findFirst({
 					where: {
 						email: input.email,
 					},
 				});
 			}
+
+			if (!hacker) {
+				throw new Error("Hacker not found");
+			}
+
+			if (!hasRoles(user, [Role.SPONSOR, Role.ORGANIZER]) && hacker.userId !== user.id) {
+				throw new Error("You do not have permission to do this");
+			}
+
+			return hacker;
 		}),
-	all: publicProcedure.query(async ({ ctx }) => {
+
+	// Get all hackers
+	all: protectedProcedure.query(async ({ ctx }) => {
+		const userId = ctx.session.user.id;
+		const user = await ctx.prisma.user.findUnique({
+			where: {
+				id: userId,
+			},
+		});
+
+		if (!user) {
+			throw new Error("User not found");
+		}
+
+		if (!hasRoles(user, [Role.SPONSOR, Role.ORGANIZER])) {
+			throw new Error("You do not have permission to do this");
+		}
+
 		return ctx.prisma.hackerInfo.findMany();
 	}),
+
+	// Confirm a hacker's attendance
 	confirm: protectedProcedure
 		.input(
 			z.object({
@@ -81,6 +124,8 @@ export const hackerRouter = createTRPCRouter({
 				},
 			});
 		}),
+
+	// Unsubscribe a hacker from emails
 	unsubscribe: publicProcedure
 		.input(
 			z.object({
