@@ -14,7 +14,7 @@ const Navbar = () => {
 				className="flex gap-8 whitespace-nowrap bg-background1 p-4 text-gray-300 "
 				aria-label="Main navigation"
 			>
-				<div className="flex w-auto items-center justify-center md:w-full">
+				<div className="flex w-auto items-center justify-center font-coolvetica md:w-full">
 					<Link href="/">
 						<Image
 							className="block md:hidden"
@@ -40,14 +40,14 @@ const Navbar = () => {
 				</div>
 
 				<button
-					className="ml-auto flex whitespace-nowrap rounded border border-dark py-2 px-4 text-dark hover:text-dark_nav sm:visible sm:mr-0"
+					className="ml-auto flex whitespace-nowrap rounded border border-dark py-2 px-4 font-coolvetica text-dark hover:text-light sm:visible sm:mr-0"
 					onClick={sessionData ? () => void signOut() : () => void signIn()}
 				>
 					{sessionData ? "Sign out" : "Sign in"}
 				</button>
 			</nav>
 			<nav
-				className="absolute bottom-0 flex hidden w-full items-center justify-evenly gap-8 whitespace-nowrap bg-background1 p-4 text-gray-300 md:flex"
+				className="absolute bottom-0 hidden w-full items-center justify-evenly gap-8 whitespace-nowrap bg-background1 p-4 text-gray-300 md:flex"
 				aria-label="Bottom navigation"
 			>
 				<BottomMenu />
@@ -56,7 +56,7 @@ const Navbar = () => {
 	);
 };
 
-const BottomMenu = ({ navbar }: BottoMenuProps) => {
+const BottomMenu = ({ navbar }: BottomMenuProps) => {
 	return (
 		<>
 			<Link href="/">
@@ -81,19 +81,34 @@ const BottomMenu = ({ navbar }: BottoMenuProps) => {
 const Links = () => {
 	return (
 		<>
-			<Link href="/" className={"ml-5 mr-5 flex items-center text-xl font-bold text-dark hover:text-dark_nav"}>
+			<Link
+				href="/"
+				className={"ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light"}
+			>
 				Home
 			</Link>
-			<Link href="/" className={"ml-5 mr-5 flex items-center text-xl font-bold text-dark hover:text-dark_nav"}>
+			<Link
+				href="/"
+				className={"ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light"}
+			>
 				QR
 			</Link>
-			<Link href="/" className={"ml-5 mr-5 flex items-center text-xl font-bold text-dark hover:text-dark_nav"}>
+			<Link
+				href="/"
+				className={"ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light"}
+			>
 				Schedule
 			</Link>
-			<Link href="/" className={"ml-5 mr-5 flex items-center text-xl font-bold text-dark hover:text-dark_nav"}>
+			<Link
+				href="/"
+				className={"ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light"}
+			>
 				Notifications
 			</Link>
-			<Link href="/" className={"ml-5 mr-5 flex items-center text-xl font-bold text-dark hover:text-dark_nav"}>
+			<Link
+				href="/"
+				className={"ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light"}
+			>
 				Resources
 			</Link>
 		</>
