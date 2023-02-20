@@ -22,7 +22,7 @@ const Navbar = () => {
 
 	return (
 		<>
-			<nav className="flex gap-8 whitespace-nowrap bg-medium_nav p-4 text-gray-300 " aria-label="Main navigation">
+			<nav className="flex gap-8 whitespace-nowrap bg-nav p-4 text-gray-300 " aria-label="Main navigation">
 				<div className="logo flex items-center justify-center">
 					<Link href="/">
 						<Image
@@ -56,7 +56,7 @@ const Navbar = () => {
 				</button>
 			</nav>
 			<nav
-				className="bottom-nav absolute bottom-0 flex hidden w-full items-center justify-evenly gap-8 whitespace-nowrap bg-medium_nav p-4 text-gray-300"
+				className="bottom-nav absolute bottom-0 flex hidden w-full items-center justify-evenly gap-8 whitespace-nowrap bg-nav p-4 text-gray-300"
 				aria-label="Bottom navigation"
 			>
 				<BottomMenu />
