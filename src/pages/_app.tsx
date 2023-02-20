@@ -7,6 +7,7 @@ import { appWithTranslation } from "next-i18next";
 import { trpc } from "../utils/api";
 
 import "../styles/globals.css";
+import "../components/Menu/Menu.css";
 
 const MyApp: AppType<{ session: Session | null }> = ({ Component, pageProps: { session, ...pageProps } }) => {
 	return (
