@@ -1,12 +1,10 @@
 import { signIn, signOut, useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { isExpired } from "../utils/helpers";
 import Image from "next/image";
 
 const Navbar = () => {
 	const { data: sessionData } = useSession();
-	const [open, setOpen] = useState(false);
 
 	return (
 		<>

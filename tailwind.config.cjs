@@ -27,6 +27,7 @@ module.exports = {
 			},
 			fontFamily: {
 				coolvetica: ["Coolvetica", "sans-serif"],
+				rubik: ["Rubik", "sans-serif"],
 			},
 		},
 	},
