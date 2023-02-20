@@ -3,12 +3,12 @@ import type { GetStaticProps, NextPage } from "next";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useRouter } from "next/router";
-import { trpc } from "../utils/api";
+import { trpc } from "../../utils/api";
 
-import App from "../components/App";
-import Error from "../components/Error";
-import Loading from "../components/Loading";
-import OnlyRole from "../components/OnlyRole";
+import App from "../../components/App";
+import Error from "../../components/Error";
+import Loading from "../../components/Loading";
+import OnlyRole from "../../components/OnlyRole";
 
 type HackerInfo = Prisma.HackerInfoGetPayload<true>;
 
