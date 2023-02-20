@@ -106,6 +106,17 @@ model HackerInfo {
     @@index([userId])
 }
 
+model Event {
+    id          String    @id @default(cuid())
+    time        DateTime
+    name        String
+    type        EventType
+    host        String
+    description String
+    room        String
+    tiktok      String?
+}
+
 enum Language {
     EN
     FR
@@ -128,4 +139,11 @@ enum Role {
     HACKER
     ORGANIZER
     SPONSOR
+}
+
+enum EventType {
+    WORKSHOP
+    SOCIAL
+    FOOD
+    CAREER_FAIR
 }
