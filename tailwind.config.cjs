@@ -7,6 +7,9 @@ module.exports = {
 				gradient:
 					"linear-gradient(0deg, rgba(239, 203, 255, 0) 15%, rgba(236, 211, 247, 0.7723) 48.85%, rgba(236, 210, 248, 0.7373) 48.86%, #ebd5f5 63.96%, #bfcbee 80.96%, #bfcbee 81.77%,#abeffa 100%)",
 			},
+			screens: {
+				md: { max: "900px" },
+			},
 			colors: {
 				dark: "#3b4779",
 				medium: "#3f4e77",

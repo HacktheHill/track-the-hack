@@ -1,7 +1,7 @@
 import { signIn, signOut, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { isExpired } from "../../utils/helpers";
+import { isExpired } from "../utils/helpers";
 import Image from "next/image";
 
 const Navbar = () => {
@@ -23,10 +23,10 @@ const Navbar = () => {
 	return (
 		<>
 			<nav className="flex gap-8 whitespace-nowrap bg-nav p-4 text-gray-300 " aria-label="Main navigation">
-				<div className="logo flex items-center justify-center">
+				<div className="flex w-auto items-center justify-center md:w-full">
 					<Link href="/">
 						<Image
-							className="web-logo block"
+							className="block md:hidden"
 							priority
 							src="/assets/hackthehill-logo.svg"
 							height={64}
@@ -34,7 +34,7 @@ const Navbar = () => {
 							alt="Home"
 						/>
 						<Image
-							className="mobile-logo hidden"
+							className="hidden md:block"
 							priority
 							src="/assets/hackthehill-banner.svg"
 							height={238}
@@ -44,7 +44,7 @@ const Navbar = () => {
 					</Link>
 				</div>
 
-				<div className="links flex flex-row">
+				<div className="flex flex-row md:hidden">
 					<Links />
 				</div>
 
@@ -56,7 +56,7 @@ const Navbar = () => {
 				</button>
 			</nav>
 			<nav
-				className="bottom-nav absolute bottom-0 flex hidden w-full items-center justify-evenly gap-8 whitespace-nowrap bg-nav p-4 text-gray-300"
+				className="absolute bottom-0 flex hidden w-full items-center justify-evenly gap-8 whitespace-nowrap bg-nav p-4 text-gray-300 md:flex"
 				aria-label="Bottom navigation"
 			>
 				<BottomMenu />

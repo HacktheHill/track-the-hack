@@ -9,7 +9,7 @@ const App = ({ children, ...rest }: AppProps) => {
 	return (
 		<>
 			<Head />
-			<div className="flex flex-col h-screen">
+			<div className="flex h-screen flex-col">
 				<Navbar />
 				<main {...rest}>{children}</main>
 			</div>
