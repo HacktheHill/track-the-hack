@@ -12,7 +12,7 @@ const Head = ({ title }: HeadProps) => {
 				name="description"
 				content="An open source project to track the participants of the Hack the Hill hackathon."
 			/>
-			<link rel="shortcut icon" href="/favicon.svg" type="image/svg+xml" />
+			<link rel="shortcut icon" href="/icons/favicon.svg" type="image/svg+xml" />
 		</NextHead>
 	);
 };
