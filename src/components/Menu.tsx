@@ -54,7 +54,7 @@ const Navbar = () => {
 	);
 };
 
-const BottomMenu = ({ navbar }: BottomMenuProps) => {
+const BottomMenu = () => {
 	return (
 		<>
 			<Link href="/">
