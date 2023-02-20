@@ -8,21 +8,12 @@ const Navbar = () => {
 	const { data: sessionData } = useSession();
 	const [open, setOpen] = useState(false);
 
-	/*
-	useEffect(() => {
-		const handleResize = () => {
-			if (window.innerWidth > 640) {
-				setOpen(false);
-			}
-		};
-		window.addEventListener("resize", handleResize);
-		return () => window.removeEventListener("resize", handleResize);
-	}, []);
-	*/
-
 	return (
 		<>
-			<nav className="flex gap-8 whitespace-nowrap bg-nav p-4 text-gray-300 " aria-label="Main navigation">
+			<nav
+				className="flex gap-8 whitespace-nowrap bg-background1 p-4 text-gray-300 "
+				aria-label="Main navigation"
+			>
 				<div className="flex w-auto items-center justify-center md:w-full">
 					<Link href="/">
 						<Image
@@ -56,7 +47,7 @@ const Navbar = () => {
 				</button>
 			</nav>
 			<nav
-				className="absolute bottom-0 flex hidden w-full items-center justify-evenly gap-8 whitespace-nowrap bg-nav p-4 text-gray-300 md:flex"
+				className="absolute bottom-0 flex hidden w-full items-center justify-evenly gap-8 whitespace-nowrap bg-background1 p-4 text-gray-300 md:flex"
 				aria-label="Bottom navigation"
 			>
 				<BottomMenu />
@@ -64,34 +55,6 @@ const Navbar = () => {
 		</>
 	);
 };
-/*
-
-type HamburgerProps = {
-	open: boolean;
-};
-
-const Hamburger = ({ open }: HamburgerProps) => {
-	const { data: sessionData } = useSession();
-
-	return (
-		<nav
-			aria-label="Mobile navigation"
-			className={`fixed inset-0 z-10 flex w-screen flex-col flex-wrap items-center justify-center gap-8 bg-gray-800 p-6 text-gray-300 transition duration-500 ${
-				open ? "" : "translate-x-full"
-			}`}
-			aria-hidden={!open}
-		>
-			<Links />
-			<button
-				className="rounded border px-4 py-2 hover:text-white"
-				onClick={sessionData ? () => void signOut() : () => void signIn()}
-			>
-				{sessionData && !isExpired(sessionData?.expires) ? "Sign out" : "Sign in"}
-			</button>
-		</nav>
-	);
-};
-*/
 
 const BottomMenu = ({ navbar }: BottoMenuProps) => {
 	return (
