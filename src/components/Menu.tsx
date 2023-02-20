@@ -10,7 +10,7 @@ const Navbar = () => {
 			className="sticky top-0 z-10 flex h-[var(--navbar-height)] gap-8 whitespace-nowrap bg-background1 p-4 text-gray-300"
 			aria-label="Main navigation"
 		>
-			<div className="flex w-auto items-center justify-center font-coolvetica md:w-full logo_center:absolute">
+			<div className="flex w-auto items-center justify-center font-coolvetica md:w-full logo-center:absolute">
 				<Link href="/">
 					<Image
 						className="block md:hidden"
