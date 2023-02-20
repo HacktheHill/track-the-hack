@@ -22,6 +22,7 @@ export const serverSchema = z.object({
 	GITHUB_CLIENT_SECRET: z.string(),
 	GOOGLE_CLIENT_ID: z.string(),
 	GOOGLE_CLIENT_SECRET: z.string(),
+	DISCORD_WEBHOOK_URL: z.string().url(),
 });
 
 /**
@@ -40,6 +41,7 @@ export const serverEnv = {
 	GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET,
 	GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
 	GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+	DISCORD_WEBHOOK_URL: process.env.DISCORD_WEBHOOK_URL,
 };
 
 /**

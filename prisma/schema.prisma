@@ -132,6 +132,11 @@ model Event {
     tiktok      String?
 }
 
+model Notification {
+    id      String @id @default(cuid())
+    message String
+}
+
 enum Language {
     EN
     FR
