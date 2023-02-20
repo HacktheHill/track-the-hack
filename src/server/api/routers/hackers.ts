@@ -5,7 +5,7 @@ import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 export const hackerRouter = createTRPCRouter({
 	// Get a hacker by id or email
-	get: protectedProcedure
+	get: publicProcedure
 		.input(
 			z
 				.object({
@@ -18,17 +18,6 @@ export const hackerRouter = createTRPCRouter({
 				),
 		)
 		.query(async ({ ctx, input }) => {
-			const userId = ctx.session.user.id;
-			const user = await ctx.prisma.user.findUnique({
-				where: {
-					id: userId,
-				},
-			});
-
-			if (!user) {
-				throw new Error("User not found");
-			}
-
 			let hacker: HackerInfo | null = null;
 			if ("id" in input) {
 				hacker = await ctx.prisma.hackerInfo.findUnique({
@@ -46,10 +35,6 @@ export const hackerRouter = createTRPCRouter({
 
 			if (!hacker) {
 				throw new Error("Hacker not found");
-			}
-
-			if (!hasRoles(user, [Role.SPONSOR, Role.ORGANIZER]) && hacker.userId !== user.id) {
-				throw new Error("You do not have permission to do this");
 			}
 
 			return hacker;
