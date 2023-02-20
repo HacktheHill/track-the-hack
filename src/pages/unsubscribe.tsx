@@ -3,8 +3,8 @@ import { useRouter } from "next/router";
 import type { GetStaticProps, NextPage } from "next/types";
 import { useEffect, useState } from "react";
 import { useTranslation } from "next-i18next";
-import FormPage from "../../components/FormPage";
-import { trpc } from "../../utils/api";
+import FormPage from "../components/FormPage";
+import { trpc } from "../utils/api";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
