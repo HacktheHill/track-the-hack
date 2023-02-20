@@ -42,8 +42,8 @@ const Schedule: NextPage = () => {
 	}
 
 	return (
-		<App className="h-full bg-gradient-to-b from-background2 to-background1 px-16 py-12">
-			<div className="flex flex-col gap-4 ">
+		<App className="flex-1 bg-gradient-to-b from-background2 to-background1 px-16 py-12">
+			<div className="flex flex-col gap-4">
 				{query.data?.map((event, i) => (
 					<Link
 						key={event.id}

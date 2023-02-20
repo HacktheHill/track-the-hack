@@ -1,100 +1,110 @@
 import { signIn, signOut, useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { isExpired } from "../utils/helpers";
 
 const Navbar = () => {
-	const { data: sessionData } = useSession();
-	const [open, setOpen] = useState(false);
-
-	useEffect(() => {
-		const handleResize = () => {
-			if (window.innerWidth > 640) {
-				setOpen(false);
-			}
-		};
-		window.addEventListener("resize", handleResize);
-		return () => window.removeEventListener("resize", handleResize);
-	}, []);
-
-	return (
-		<>
-			<nav className="flex gap-8 whitespace-nowrap bg-gray-800 p-4 text-gray-300" aria-label="Main navigation">
-				<Links navbar={true} />
-				<button
-					className="invisible ml-auto mr-12 flex whitespace-nowrap rounded border py-2 px-4 hover:text-white sm:visible sm:mr-0"
-					onClick={sessionData ? () => void signOut() : () => void signIn()}
-				>
-					{sessionData ? "Sign out" : "Sign in"}
-				</button>
-				<button
-					className="absolute top-6 right-4 z-20 sm:hidden"
-					onClick={() => setOpen(!open)}
-					aria-pressed={open}
-				>
-					<svg className="h-8 w-8 fill-current" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-						<title>Menu</title>
-						<path
-							d="M0 3h20v2H0V3z"
-							className={`origin-top-left transition duration-500 ${
-								open ? "translate-x-1/4 rotate-45" : ""
-							}`}
-						/>
-						<path d="M0 9h20v2H0V9z" className={`transition duration-500 ${open ? "opacity-0" : ""}`} />
-						<path
-							d="M0 15h20v2H0v-2z"
-							className={`origin-bottom-left transition duration-500 ${
-								open ? "translate-x-1/4 -rotate-45" : ""
-							}`}
-						/>
-					</svg>
-				</button>
-			</nav>
-			<Hamburger open={open} />
-		</>
-	);
-};
-
-type HamburgerProps = {
-	open: boolean;
-};
-const Hamburger = ({ open }: HamburgerProps) => {
 	const { data: sessionData } = useSession();
 
 	return (
 		<nav
-			aria-label="Mobile navigation"
-			className={`fixed inset-0 z-10 flex w-screen flex-col flex-wrap items-center justify-center gap-8 bg-gray-800 p-6 text-gray-300 transition duration-500 ${
-				open ? "" : "translate-x-full"
-			}`}
-			aria-hidden={!open}
+			className="sticky top-0 z-10 flex gap-8 whitespace-nowrap bg-background1 p-4 text-gray-300"
+			aria-label="Main navigation"
 		>
-			<Links />
+			<div className="flex w-auto items-center justify-center font-coolvetica md:w-full">
+				<Link href="/">
+					<Image
+						className="block md:hidden"
+						priority
+						src="/assets/hackthehill-logo.svg"
+						height={64}
+						width={64}
+						alt="Home"
+					/>
+					<Image
+						className="hidden md:block"
+						priority
+						src="/assets/hackthehill-banner.svg"
+						height={238}
+						width={238}
+						alt="Home"
+					/>
+				</Link>
+			</div>
+
+			<div className="flex flex-row md:hidden">
+				<Links />
+			</div>
+
 			<button
-				className="rounded border px-4 py-2 hover:text-white"
+				className="right-4 ml-auto flex whitespace-nowrap rounded border border-dark py-2 px-4 font-coolvetica text-dark hover:text-light sm:visible sm:mr-0 logo-center:absolute"
 				onClick={sessionData ? () => void signOut() : () => void signIn()}
 			>
-				{sessionData && !isExpired(sessionData?.expires) ? "Sign out" : "Sign in"}
+				{sessionData ? "Sign out" : "Sign in"}
 			</button>
 		</nav>
 	);
 };
 
-type LinksProps = {
-	navbar?: boolean;
+const BottomMenu = () => {
+	return (
+		<nav
+			className="sticky bottom-0 hidden w-full items-center justify-evenly gap-8 whitespace-nowrap bg-background1 p-4 text-gray-300 md:flex"
+			aria-label="Bottom navigation"
+		>
+			<Link href="/">
+				<Image priority src="/assets/home.svg" height={32} width={32} alt="Home" />
+			</Link>
+			<Link href="/">
+				<Image priority src="/assets/qr.svg" height={32} width={32} alt="QR" />
+			</Link>
+			<Link href="/">
+				<Image priority src="/assets/schedule.svg" height={32} width={32} alt="Schedule" />
+			</Link>
+			<Link href="/">
+				<Image priority src="/assets/notifs.svg" height={32} width={32} alt="Notifs" />
+			</Link>
+			<Link href="/">
+				<Image priority src="/assets/resources.svg" height={32} width={32} alt="Resources" />
+			</Link>
+		</nav>
+	);
 };
-const Links = ({ navbar }: LinksProps) => {
+
+const Links = () => {
 	return (
 		<>
-			<h1 className="flex items-center text-xl font-bold">Track the Hack</h1>
-			<Link href="/" className={`flex items-center hover:text-white ${navbar ? "hidden sm:flex" : ""}`}>
+			<Link
+				href="/"
+				className={"ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light"}
+			>
 				Home
 			</Link>
-			<Link href="/about" className={`flex items-center hover:text-white ${navbar ? "hidden sm:flex" : ""}`}>
-				About
+			<Link
+				href="/"
+				className={"ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light"}
+			>
+				QR
+			</Link>
+			<Link
+				href="/"
+				className={"ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light"}
+			>
+				Schedule
+			</Link>
+			<Link
+				href="/"
+				className={"ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light"}
+			>
+				Notifications
+			</Link>
+			<Link
+				href="/"
+				className={"ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light"}
+			>
+				Resources
 			</Link>
 		</>
 	);
 };
 
-export default Navbar;
+export { Navbar, BottomMenu };
