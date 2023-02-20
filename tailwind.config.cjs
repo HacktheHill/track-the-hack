@@ -9,6 +9,7 @@ module.exports = {
 			},
 			screens: {
 				md: { max: "900px" },
+				logo_center: "600px",
 			},
 			colors: {
 				dark: "#3b4779",
