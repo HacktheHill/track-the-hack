@@ -143,7 +143,7 @@ enum Role {
 }
 
 enum EventType {
-    WORKSHOP
+    GENERAL_WORKSHOP
     SOCIAL
     FOOD
     CAREER_FAIR
