@@ -1,3 +1,4 @@
+import { type Prisma, EventType } from "@prisma/client";
 import { useRouter } from "next/router";
 import App from "../../components/App";
 import Error from "../../components/Error";
@@ -37,7 +38,19 @@ const Event = () => {
 		void router.push("/404");
 	}
 
-	return <App>{JSON.stringify(query.data)}</App>;
+	return (
+		<App>
+			{query.data.map(data => (
+				<EventDisplay key={data.id} {...data} />
+			))}
+		</App>
+	);
+};
+
+type EventProps = Prisma.EventGetPayload<true>;
+
+const EventDisplay = ({ id, name, type, description, start, end, host, room, tiktok }: EventProps) => {
+	return null;
 };
 
 export default Event;
