@@ -48,10 +48,10 @@ const Hacker: NextPage = () => {
 
 	return (
 		<App>
-			<OnlyRole filter={role => role === Role.SPONSOR || role === Role.ORGANIZER}>
+			<OnlyRole roles={[Role.ORGANIZER, Role.SPONSOR]}>
 				<HackerView data={query.data} />
 			</OnlyRole>
-			<OnlyRole filter={role => role === "HACKER"}>{t("not-authorized-to-view-this-page")}</OnlyRole>
+			<OnlyRole roles={[Role.HACKER]}>{t("not-authorized-to-view-this-page")}</OnlyRole>
 		</App>
 	);
 };
@@ -59,7 +59,7 @@ const Hacker: NextPage = () => {
 const HackerView = ({ data }: { data: HackerInfo }) => {
 	return (
 		<div>
-			<h1 className="font-[Coolvetica] text-[clamp(1rem,3.5vmin,5rem)]  font-normal text-dark">
+			<h1 className="font-[Coolvetica] text-[clamp(1rem,3.5vmin,5rem)] font-normal text-dark">
 				{data.firstName} {data.lastName}
 			</h1>
 			{...Object.keys(data).map(key => (

@@ -6,11 +6,11 @@ import type { Roles } from "../utils/common";
 import Error from "./Error";
 
 type OnlyRoleProps = {
-	role: Roles | null;
+	roles: Roles[];
 	children: React.ReactNode;
 };
 
-const OnlyRole = ({ role, children }: OnlyRoleProps) => {
+const OnlyRole = ({ roles, children }: OnlyRoleProps) => {
 	const { data: sessionData } = useSession();
 
 	const query = trpc.users.getRole.useQuery(
@@ -30,7 +30,7 @@ const OnlyRole = ({ role, children }: OnlyRoleProps) => {
 		return <Error message={query.error.message} />;
 	}
 
-	if (query.data === role || (role === null && !query.data)) {
+	if (query.data && roles.includes(query.data)) {
 		return <>{children}</>;
 	}
 
