@@ -1,11 +1,11 @@
 {
-	"theme_color": "#f69435",
-	"background_color": "#f69435",
+	"theme_color": "#3b4779",
+	"background_color": "#3b4779",
 	"display": "standalone",
 	"scope": "/",
 	"start_url": "/",
 	"name": "Track the Hack",
-	"description": "Official application for Hack the Hill",
+	"description": "An open source project to track the participants of the Hack the Hill hackathon.",
 	"short_name": "Track the Hack",
 	"icons": [
 		{
