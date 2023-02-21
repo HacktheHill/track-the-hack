@@ -23,13 +23,13 @@ const Schedule: NextPage = () => {
 
 	if (query.isLoading || query.data == null) {
 		return (
-			<App>
+			<App className="h-full bg-gradient-to-b from-background2 to-background1 px-16 py-12">
 				<Loading />
 			</App>
 		);
 	} else if (query.isError) {
 		return (
-			<App>
+			<App className="h-full bg-gradient-to-b from-background2 to-background1 px-16 py-12">
 				<div className="flex flex-col items-center justify-center gap-4">
 					<Error message={query.error.message} />
 				</div>
