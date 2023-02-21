@@ -6,6 +6,7 @@ module.exports = {
 			backgroundImage: {
 				gradient:
 					"linear-gradient(0deg, rgba(239, 203, 255, 0) 15%, rgba(236, 211, 247, 0.7723) 48.85%, rgba(236, 210, 248, 0.7373) 48.86%, #ebd5f5 63.96%, #bfcbee 80.96%, #bfcbee 81.77%,#abeffa 100%)",
+				gradient1: "linear-gradient(180deg, #5C71AD 0%, #90A1D4 15.1%, #A4B4E2 79.69%, #B2C2ED 96.87%)",
 			},
 			screens: {
 				md: { max: "900px" },
@@ -17,6 +18,7 @@ module.exports = {
 				light: "#5c71ad",
 				background1: "#BFCFF6",
 				background2: "#90A1D4",
+				background3: "#B2CEED",
 				accent1: "#E9D9F2",
 				accent2: "#ABEFFB",
 			},
@@ -29,6 +31,23 @@ module.exports = {
 			fontFamily: {
 				coolvetica: ["Coolvetica", "sans-serif"],
 				rubik: ["Rubik", "sans-serif"],
+			},
+			boxShadow: {
+				navbar: "0 4px 4px rgba(0, 0, 0, 0.25)",
+			},
+			animation: {
+				"snowflake-fall": "snowflake-fall linear infinite",
+				"cloud-drift": "cloud-drift linear infinite alternate",
+			},
+			keyframes: {
+				"snowflake-fall": {
+					"0%": { transform: "translateY(-100vh)" },
+					"100%": { transform: "translateY(100vh)" },
+				},
+				"cloud-drift": {
+					"0%": { transform: "translateX(-100vw)" },
+					"100%": { transform: "translateX(100vw)" },
+				},
 			},
 		},
 	},

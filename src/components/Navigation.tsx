@@ -7,7 +7,7 @@ const Navbar = () => {
 
 	return (
 		<nav
-			className="sticky top-0 z-10 flex gap-8 whitespace-nowrap bg-background1 p-4 text-gray-300"
+			className="sticky top-0 z-10 flex gap-8 whitespace-nowrap border border-b border-dark bg-background1 p-4 text-gray-300 shadow-navbar"
 			aria-label="Main navigation"
 		>
 			<div className="flex w-auto items-center justify-center font-coolvetica md:w-full">
@@ -36,7 +36,7 @@ const Navbar = () => {
 			</div>
 
 			<button
-				className="right-4 ml-auto flex whitespace-nowrap rounded border border-dark py-2 px-4 font-coolvetica text-dark hover:text-light sm:visible sm:mr-0 logo-center:absolute"
+				className="right-4 ml-auto flex whitespace-nowrap rounded border border-dark py-2 px-4 font-coolvetica text-dark bg-background1 transition-colors hover:bg-background3 sm:visible sm:mr-0 logo-center:absolute"
 				onClick={sessionData ? () => void signOut() : () => void signIn()}
 			>
 				{sessionData ? "Sign out" : "Sign in"}

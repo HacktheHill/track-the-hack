@@ -3,7 +3,14 @@ import { useSession } from "next-auth/react";
 import { trpc } from "../utils/api";
 import type { Roles } from "../utils/common";
 
-const OnlyRole = ({ filter, children }: { filter: (role: Roles | null) => boolean; children: React.ReactNode }) => {
+import Error from "./Error";
+
+type OnlyRoleProps = {
+	role: Roles | null;
+	children: React.ReactNode;
+};
+
+const OnlyRole = ({ role, children }: OnlyRoleProps) => {
 	const { data: sessionData } = useSession();
 
 	const query = trpc.users.getRole.useQuery(
@@ -15,10 +22,17 @@ const OnlyRole = ({ filter, children }: { filter: (role: Roles | null) => boolea
 		},
 	);
 
-	if (query.isLoading) return null;
-	if (query.isError) return <p>Error: {query.error.message}</p>;
+	if (query.isLoading && query.isSuccess) {
+		return null;
+	}
 
-	if (filter(query.data)) return <>{children}</>;
+	if (query.isError) {
+		return <Error message={query.error.message} />;
+	}
+
+	if (query.data === role || (role === null && !query.data)) {
+		return <>{children}</>;
+	}
 
 	return null;
 };

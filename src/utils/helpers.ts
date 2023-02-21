@@ -1,5 +1,5 @@
-import { Role, type User } from "@prisma/client";
-import { Roles } from "./common";
+import type { User } from "@prisma/client";
+import type { Roles } from "./common";
 
 /**
  * Checks if a given expiry date is expired
@@ -20,15 +20,33 @@ export const isExpired = (expiry: string) => {
 };
 
 /**
+ * Checks if role matches one of the given roles
+ * @param role Role to check
+ * @param roles Roles to check against
+ * @returns True if role matches one of the given roles
+ * @example
+ * matchesRole(Role.SPONSOR, [Role.ORGANIZER, Role.SPONSOR])
+ * // => true if role is Role.ORGANIZER or Role.SPONSOR
+ * // => false otherwise
+ */
+export const matchesRole = (role: Roles, roles: Roles[]) => {
+	if (!role) {
+		return false;
+	}
+
+	// If the user has at least one of the given roles, return true
+	return roles.some(role => role === role);
+};
+
+/**
  * Checks if user has one of the given roles
  * @param user User to check
  * @param roles Roles to check
  * @returns True if user has one of the given roles
  * @example
- * hasRole(user, [Role.ORGANIZER, Role.SPONSOR])
+ * hasRoles(user, [Role.ORGANIZER, Role.SPONSOR])
  * // => true if user.role is Role.ORGANIZER or Role.SPONSOR
  * // => false otherwise
- * @example
  */
 export const hasRoles = (user: User, roles: Roles[]) => {
 	if (!user) {
