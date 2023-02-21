@@ -42,7 +42,7 @@ const Snowflake = () => {
 			width={size}
 			height={size}
 			alt={"Snowflake"}
-			className="absolute animate-snowflake-fall"
+			className="absolute animate-snowflake-fall opacity-50"
 			style={{
 				top: `${y}%`,
 				left: `${x}%`,
@@ -78,7 +78,7 @@ const Cloud = () => {
 			width={size}
 			height={size}
 			alt={"Cloud"}
-			className="absolute animate-cloud-drift"
+			className="absolute animate-cloud-drift opacity-75"
 			style={{
 				top: `${y}%`,
 				left: `${x}%`,
