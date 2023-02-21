@@ -111,7 +111,7 @@ model Event {
     start       DateTime
     end         DateTime
     name        String
-    type        EventType
+    type        EventType @default(ALL)
     host        String
     description String
     room        String
@@ -143,8 +143,9 @@ enum Role {
 }
 
 enum EventType {
-    GENERAL_WORKSHOP
+    ALL
+    WORKSHOP
     SOCIAL
-    FOOD
     CAREER_FAIR
+    FOOD
 }
