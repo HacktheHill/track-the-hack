@@ -7,11 +7,10 @@ import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { useTranslation } from "next-i18next";
 import { matchesRole } from "../utils/helpers";
+import Image from "next/image";
 
 import App from "../components/App";
 import Weather from "../components/Weather";
-
-import MascotWaving from "../../public/assets/mascot-waving.svg";
 
 import { trpc } from "../utils/api";
 
@@ -49,7 +48,7 @@ const Home: NextPage = () => {
 		<App className="relative flex h-full flex-col items-center justify-center gap-12 bg-gradient1 px-16 py-12">
 			<Weather count={25} type="snowflake" />
 			<Weather count={3} type="cloud" />
-			<MascotWaving className="z-10 h-1/2" />
+			<Image priority className="z-10" src="/assets/mascot-waving.svg" alt="Mascot" width={400} height={400} />
 			<p className="z-10 text-center text-2xl font-bold">{t("welcome")}</p>
 			<button
 				className="z-10 whitespace-nowrap rounded border border-dark bg-background1 py-2 px-4 font-coolvetica text-dark transition-colors hover:bg-background3"
