@@ -56,7 +56,11 @@ const Hacker: NextPage = () => {
 	);
 };
 
-const HackerView = ({ data }: { data: HackerInfo }) => {
+type HackerViewProps = {
+	data: HackerInfo;
+};
+
+const HackerView = ({ data }: HackerViewProps) => {
 	return (
 		<div>
 			<h1 className="font-[Coolvetica] text-[clamp(1rem,3.5vmin,5rem)] font-normal text-dark">
