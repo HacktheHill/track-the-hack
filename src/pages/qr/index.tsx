@@ -1,9 +1,10 @@
 import { Role } from "@prisma/client";
 import type { GetStaticProps } from "next";
+import { useSession } from "next-auth/react";
+import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { useTranslation } from "next-i18next";
 
 import App from "../../components/App";
 import OnlyRole from "../../components/OnlyRole";
@@ -19,13 +20,18 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
 const QR = () => {
 	const router = useRouter();
 	const { t } = useTranslation("qr");
-	const [id, setId] = useState<string | null>(null);
+	const { data: sessionData } = useSession();
 
+	const [id, setId] = useState<string | null>(null);
 	useEffect(() => {
 		if (id) {
 			void router.push(`/hacker?id=${id}`);
 		}
-	}, [id, router]);
+
+		if (sessionData?.user == null) {
+			void router.push("/");
+		}
+	}, [id, router, sessionData?.user]);
 
 	return (
 		<App>
