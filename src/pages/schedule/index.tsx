@@ -135,7 +135,7 @@ type TabsProps = {
 
 const Tabs = ({ tab, setTab }: TabsProps) => {
 	return (
-		<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5  ">
+		<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
 			{[...new Set([tabs.ALL, ...Object.values(tabs)])].map(name => (
 				<Tab key={name} name={name} active={tab} onClick={() => setTab(name)} />
 			))}
