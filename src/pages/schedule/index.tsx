@@ -57,7 +57,7 @@ const Schedule: NextPage = () => {
 
 	return (
 		<App className="flex flex-col gap-4 bg-gradient-to-b from-background2 to-background1 px-20 py-8">
-			<div className="lg:mx-auto lg:w-[860px]">
+			<div className="to-mobile:mx-auto">
 				<Tabs tab={tab} setTab={setTab} />
 				<div className="my-3 flex flex-col gap-4 overflow-y-auto">
 					{query.data
@@ -104,7 +104,7 @@ type TabsProps = {
 
 const Tabs = ({ tab, setTab }: TabsProps) => {
 	return (
-		<div className="grid grid-cols-3 gap-3 md:grid-cols-5  ">
+		<div className="grid grid-cols-2 gap-3 md:grid-cols-5  ">
 			{[...new Set([tabs.ALL, ...Object.values(tabs)])].map(name => (
 				<Tab key={name} name={name} active={tab} onClick={() => setTab(name)} />
 			))}
