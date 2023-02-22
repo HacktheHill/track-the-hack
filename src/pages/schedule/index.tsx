@@ -22,7 +22,7 @@ const tabs = {
 	CAREER_FAIR: "Career Fair",
 	FOOD: "Food",
 	SOCIAL: "Social",
-} as const satisfies Record<EventType, string>;
+} as const satisfies Record<keyof EventType, string>;
 
 type TabsType = (typeof tabs)[keyof typeof tabs];
 

@@ -21,6 +21,7 @@ declare module "@prisma/client" {
 		ORGANIZER: "ORGANIZER";
 	};
 	export type EventType = {
+		ALL: "ALL";
 		WORKSHOP: "WORKSHOP";
 		SOCIAL: "SOCIAL";
 		FOOD: "FOOD";
