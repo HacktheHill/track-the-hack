@@ -18,7 +18,7 @@ const MyApp: AppType<{ session: Session | null }> = ({ Component, pageProps: { s
 		return () => {
 			removeEventListener("onpopstate", handler);
 		};
-	}, []);
+	}, [router]);
 
 	return (
 		<SessionProvider session={session}>
