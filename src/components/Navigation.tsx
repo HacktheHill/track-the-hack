@@ -10,10 +10,10 @@ const Navbar = () => {
 			className="sticky top-0 z-10 flex gap-8 whitespace-nowrap border border-b border-dark bg-background1 p-4 text-gray-300 shadow-navbar"
 			aria-label="Main navigation"
 		>
-			<div className="flex w-auto items-center justify-center font-coolvetica md:w-full">
+			<div className="flex w-full items-center justify-center font-coolvetica md:w-auto">
 				<Link href="/">
 					<Image
-						className="block md:hidden"
+						className="hidden md:block"
 						priority
 						src="/assets/hackthehill-logo.svg"
 						height={64}
@@ -21,7 +21,7 @@ const Navbar = () => {
 						alt="Home"
 					/>
 					<Image
-						className="hidden md:block"
+						className="block md:hidden"
 						priority
 						src="/assets/hackthehill-banner.svg"
 						height={238}
@@ -31,12 +31,12 @@ const Navbar = () => {
 				</Link>
 			</div>
 
-			<div className="flex flex-row md:hidden">
+			<div className="hidden flex-row md:flex">
 				<Links />
 			</div>
 
 			<button
-				className="right-4 ml-auto flex whitespace-nowrap rounded border border-dark bg-background1 py-2 px-4 font-coolvetica text-dark transition-colors hover:bg-background3 sm:visible sm:mr-0 logo-center:absolute"
+				className="right-4 ml-auto flex whitespace-nowrap rounded border border-dark bg-background1 py-2 px-4 font-coolvetica text-dark transition-colors hover:bg-background3 logo-center:absolute sm:visible sm:mr-0"
 				onClick={sessionData ? () => void signOut() : () => void signIn()}
 			>
 				{sessionData ? "Sign out" : "Sign in"}
@@ -48,7 +48,7 @@ const Navbar = () => {
 const BottomMenu = () => {
 	return (
 		<nav
-			className="sticky bottom-0 hidden w-full items-center justify-evenly gap-8 whitespace-nowrap bg-background1 p-4 text-gray-300 md:flex"
+			className="sticky bottom-0 flex w-full items-center justify-evenly gap-8 whitespace-nowrap bg-background1 p-4 text-gray-300 md:hidden"
 			aria-label="Bottom navigation"
 		>
 			<Link href="/">
