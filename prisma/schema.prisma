@@ -55,7 +55,7 @@ model User {
     role          Role         @default(HACKER)
     accounts      Account[]
     sessions      Session[]
-    HackerInfo    HackerInfo[]
+    hackerInfo    HackerInfo[]
 }
 
 model VerificationToken {
@@ -102,21 +102,21 @@ model HackerInfo {
     unsubscribeToken             String?        @unique @default(cuid())
     onlyOnline                   Boolean        @default(false)
     acceptanceExpiry             DateTime?
-    PresenceInfo                 PresenceInfo?
+    presenceInfo                 PresenceInfo?  @relation(fields: [presenceInfoId], references: [id])
+    presenceInfoId               String?        @unique
 
     @@index([userId])
 }
 
 model PresenceInfo {
-    id           String     @id @default(cuid())
-    checkedIn    Boolean    @default(false)
-    breakfast1   Boolean    @default(false)
-    lunch1       Boolean    @default(false)
-    dinner1      Boolean    @default(false)
-    breakfast2   Boolean    @default(false)
-    lunch2       Boolean    @default(false)
-    HackerInfo   HackerInfo @relation(fields: [hackerInfoId], references: [id])
-    hackerInfoId String     @unique
+    id         String      @id @default(cuid())
+    checkedIn  Boolean     @default(false)
+    breakfast1 Boolean     @default(false)
+    lunch1     Boolean     @default(false)
+    dinner1    Boolean     @default(false)
+    breakfast2 Boolean     @default(false)
+    lunch2     Boolean     @default(false)
+    hackerInfo HackerInfo?
 }
 
 model Event {
