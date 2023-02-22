@@ -22,7 +22,7 @@ const QRScanner = ({ setId }: QRScannerProps) => {
 		);
 		void qrScanner.start();
 	});
-	return <video ref={video} width="300" height="300" />;
+	return <video ref={video} className="aspect-square rounded-3xl object-cover" width="300" height="300" />;
 };
 
 export default QRScanner;

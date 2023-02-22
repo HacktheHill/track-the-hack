@@ -7,6 +7,7 @@ module.exports = {
 				gradient:
 					"linear-gradient(0deg, rgba(239, 203, 255, 0) 15%, rgba(236, 211, 247, 0.7723) 48.85%, rgba(236, 210, 248, 0.7373) 48.86%, #ebd5f5 63.96%, #bfcbee 80.96%, #bfcbee 81.77%,#abeffa 100%)",
 				gradient1: "linear-gradient(180deg, #5C71AD 0%, #90A1D4 15.1%, #A4B4E2 79.69%, #B2C2ED 96.87%)",
+				gradient2: "linear-gradient(180deg, #BFCFF6 11.47%, #5C71AD 146.86%)",
 			},
 			screens: {
 				"logo-center": "600px",
