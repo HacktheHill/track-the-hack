@@ -46,63 +46,90 @@ const Navbar = () => {
 };
 
 const BottomMenu = () => {
+	const { data: sessionData } = useSession();
 	return (
 		<nav
 			className="sticky bottom-0 flex w-full items-center justify-evenly gap-8 whitespace-nowrap bg-background1 p-4 text-gray-300 md:hidden"
 			aria-label="Bottom navigation"
 		>
-			<Link href="/">
-				<Image priority src="/assets/home.svg" height={32} width={32} alt="Home" />
-			</Link>
-			<Link href="/qr">
-				<Image priority src="/assets/qr.svg" height={32} width={32} alt="QR" />
-			</Link>
+			{!sessionData?.user && (
+				<Link href="/">
+					<Image priority src="/assets/home.svg" height={32} width={32} alt="Home" />
+				</Link>
+			)}
+			{sessionData?.user && (
+				<Link href="/qr">
+					<Image priority src="/assets/qr.svg" height={32} width={32} alt="QR" />
+				</Link>
+			)}
 			<Link href="/schedule">
 				<Image priority src="/assets/schedule.svg" height={32} width={32} alt="Schedule" />
 			</Link>
-			<Link href="/notifications">
-				<Image priority src="/assets/notifs.svg" height={32} width={32} alt="Notifs" />
-			</Link>
+			{sessionData?.user && (
+				<Link href="/notifications">
+					<Image priority src="/assets/notifs.svg" height={32} width={32} alt="Notifs" />
+				</Link>
+			)}
 			<Link href="/resources">
 				<Image priority src="/assets/resources.svg" height={32} width={32} alt="Resources" />
 			</Link>
+			{sessionData?.user && (
+				<Link href="/hackers">
+					<Image priority src="/assets/list.svg" height={32} width={32} alt="Hackers" />
+				</Link>
+			)}
 		</nav>
 	);
 };
 
 const Links = () => {
+	const { data: sessionData } = useSession();
 	return (
 		<>
-			<Link
-				href="/"
-				className={"ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light"}
-			>
-				Home
-			</Link>
-			<Link
-				href="/qr"
-				className={"ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light"}
-			>
-				QR
-			</Link>
+			{!sessionData?.user && (
+				<Link
+					href="/"
+					className={"ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light"}
+				>
+					Home
+				</Link>
+			)}
+			{sessionData?.user && (
+				<Link
+					href="/qr"
+					className={"ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light"}
+				>
+					QR
+				</Link>
+			)}
 			<Link
 				href="/schedule"
 				className={"ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light"}
 			>
 				Schedule
 			</Link>
-			<Link
-				href="/notifications"
-				className={"ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light"}
-			>
-				Notifications
-			</Link>
+			{sessionData?.user && (
+				<Link
+					href="/notifications"
+					className={"ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light"}
+				>
+					Notifications
+				</Link>
+			)}
 			<Link
 				href="/resources"
 				className={"ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light"}
 			>
 				Resources
 			</Link>
+			{sessionData?.user && (
+				<Link
+					href="/hackers"
+					className={"ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light"}
+				>
+					Hackers
+				</Link>
+			)}
 		</>
 	);
 };

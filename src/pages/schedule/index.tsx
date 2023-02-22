@@ -56,32 +56,34 @@ const Schedule: NextPage = () => {
 	}
 
 	return (
-		<App className="flex flex-col gap-4 bg-gradient-to-b from-background2 to-background1 px-16 py-12">
-			<Tabs tab={tab} setTab={setTab} />
-			<div className="flex flex-col gap-4 overflow-y-auto">
-				{query.data
-					?.filter(event => tabs[event.type] === tab || tab === tabs.ALL)
-					.sort((a, b) => {
-						if (a.start.getTime() === b.start.getTime()) {
-							return a.end.getTime() - b.end.getTime();
-						}
-						return a.start.getTime() - b.start.getTime();
-					})
-					.map((event, i) => (
-						<Link
-							key={event.id}
-							href={`/schedule/event?id=${event.id}`}
-							className={`flex flex-col items-center justify-center gap-2 rounded-xl p-4 font-coolvetica text-dark ${
-								i % 2 === 0 ? "bg-accent1" : "bg-accent2"
-							}`}
-						>
-							<h1 className="text-xl">{event.name}</h1>
-							<p>
-								<Time time={event.start} /> - <Time time={event.end} />
-							</p>
-							<p>{event.room}</p>
-						</Link>
-					))}
+		<App className="flex flex-col gap-4 bg-gradient-to-b from-background2 to-background1 px-16 py-8">
+			<div className="lg:mx-auto lg:w-[900px]">
+				<Tabs tab={tab} setTab={setTab} />
+				<div className="my-3 flex flex-col gap-4 overflow-y-auto">
+					{query.data
+						?.filter(event => tabs[event.type] === tab || tab === tabs.ALL)
+						.sort((a, b) => {
+							if (a.start.getTime() === b.start.getTime()) {
+								return a.end.getTime() - b.end.getTime();
+							}
+							return a.start.getTime() - b.start.getTime();
+						})
+						.map((event, i) => (
+							<Link
+								key={event.id}
+								href={`/schedule/event?id=${event.id}`}
+								className={`flex flex-col items-center justify-center gap-2 rounded-xl p-4 font-coolvetica text-dark ${
+									i % 2 === 0 ? "bg-accent1" : "bg-accent2"
+								}`}
+							>
+								<h1 className="text-xl">{event.name}</h1>
+								<p>
+									<Time time={event.start} /> - <Time time={event.end} />
+								</p>
+								<p>{event.room}</p>
+							</Link>
+						))}
+				</div>
 			</div>
 		</App>
 	);
@@ -102,7 +104,7 @@ type TabsProps = {
 
 const Tabs = ({ tab, setTab }: TabsProps) => {
 	return (
-		<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+		<div className="grid grid-cols-3 gap-3 md:grid-cols-5  ">
 			{[...new Set([tabs.ALL, ...Object.values(tabs)])].map(name => (
 				<Tab key={name} name={name} active={tab} onClick={() => setTab(name)} />
 			))}
@@ -124,7 +126,7 @@ const Tab = ({ name, active, onClick }: TabProps) => {
 			}`}
 			onClick={onClick}
 		>
-			<h1 className="text-center text-xl">{name}</h1>
+			<h1 className="text-l text-center">{name}</h1>
 		</div>
 	);
 };
