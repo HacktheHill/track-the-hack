@@ -2,7 +2,7 @@ import { createTRPCRouter, publicProcedure } from "../trpc";
 import { z } from "zod";
 
 export const eventsRouter = createTRPCRouter({
-	// Get an events
+	// Get event
 	get: publicProcedure
 		.input(
 			z.object({
@@ -10,17 +10,17 @@ export const eventsRouter = createTRPCRouter({
 			}),
 		)
 		.query(async ({ ctx, input }) => {
-			const events = await ctx.prisma.event.findMany({
+			const event = await ctx.prisma.event.findUnique({
 				where: {
 					id: input.id,
 				},
 			});
 
-			if (!events) {
-				throw new Error("No events found");
+			if (!event) {
+				throw new Error("No event found");
 			}
 
-			return events;
+			return event;
 		}),
 
 	// Get all events
