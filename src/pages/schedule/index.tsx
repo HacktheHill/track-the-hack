@@ -121,7 +121,7 @@ type TabProps = {
 const Tab = ({ name, active, onClick }: TabProps) => {
 	return (
 		<div
-			className={`flex flex-row items-center justify-center gap-2 rounded-xl bg-dark p-4 font-[Coolvetica] text-white outline ${
+			className={`flex cursor-pointer flex-row items-center justify-center gap-2 rounded-xl bg-dark p-4 font-[Coolvetica] text-white outline ${
 				name === active ? "outline-4 outline-white" : "outline-0"
 			}`}
 			onClick={onClick}
