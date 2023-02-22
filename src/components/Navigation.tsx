@@ -10,10 +10,10 @@ const Navbar = () => {
 			className="sticky top-0 z-10 flex gap-8 whitespace-nowrap border border-b border-dark bg-background1 p-4 text-gray-300 shadow-navbar"
 			aria-label="Main navigation"
 		>
-			<div className="flex w-full items-center justify-center font-coolvetica md:w-auto">
+			<div className="flex w-full items-center justify-center font-coolvetica to-mobile:w-auto">
 				<Link href="/">
 					<Image
-						className="hidden md:block"
+						className="hidden to-mobile:block"
 						priority
 						src="/assets/hackthehill-logo.svg"
 						height={64}
@@ -21,7 +21,7 @@ const Navbar = () => {
 						alt="Home"
 					/>
 					<Image
-						className="block md:hidden"
+						className="block to-mobile:hidden"
 						priority
 						src="/assets/hackthehill-banner.svg"
 						height={238}
@@ -31,7 +31,7 @@ const Navbar = () => {
 				</Link>
 			</div>
 
-			<div className="hidden flex-row md:flex">
+			<div className="hidden flex-row to-mobile:flex">
 				<Links />
 			</div>
 
@@ -49,7 +49,7 @@ const BottomMenu = () => {
 	const { data: sessionData } = useSession();
 	return (
 		<nav
-			className="sticky bottom-0 flex w-full items-center justify-evenly gap-8 whitespace-nowrap bg-background1 p-4 text-gray-300 md:hidden"
+			className="sticky bottom-0 flex w-full items-center justify-evenly gap-8 whitespace-nowrap bg-background1 p-4 text-gray-300 to-mobile:hidden"
 			aria-label="Bottom navigation"
 		>
 			{!sessionData?.user && (
