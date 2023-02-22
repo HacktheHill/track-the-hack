@@ -9,7 +9,6 @@ module.exports = {
 				gradient1: "linear-gradient(180deg, #5C71AD 0%, #90A1D4 15.1%, #A4B4E2 79.69%, #B2C2ED 96.87%)",
 			},
 			screens: {
-				md: { max: "900px" },
 				"logo-center": "600px",
 			},
 			colors: {
