@@ -102,8 +102,8 @@ model HackerInfo {
     unsubscribeToken             String?        @unique @default(cuid())
     onlyOnline                   Boolean        @default(false)
     acceptanceExpiry             DateTime?
-    presenceInfo                 PresenceInfo?  @relation(fields: [presenceInfoId], references: [id])
-    presenceInfoId               String?        @unique
+    presenceInfo                 PresenceInfo   @relation(fields: [presenceInfoId], references: [id])
+    presenceInfoId               String         @unique
 
     @@index([userId])
 }
