@@ -56,16 +56,22 @@ const Schedule: NextPage = () => {
 	}
 
 	return (
-		<App className="flex h-full flex-col gap-4 bg-gradient-to-b from-background2 to-background1 px-16 py-12">
+		<App className="flex flex-col gap-4 bg-gradient-to-b from-background2 to-background1 px-16 py-12">
 			<Tabs tab={tab} setTab={setTab} />
-			<div className="flex flex-col gap-4">
+			<div className="flex flex-col gap-4 overflow-y-auto">
 				{query.data
 					?.filter(event => tabs[event.type] === tab || tab === tabs.ALL)
+					.sort((a, b) => {
+						if (a.start.getTime() === b.start.getTime()) {
+							return a.end.getTime() - b.end.getTime();
+						}
+						return a.start.getTime() - b.start.getTime();
+					})
 					.map((event, i) => (
 						<Link
 							key={event.id}
 							href={`/schedule/event?id=${event.id}`}
-							className={`flex flex-col items-center justify-center gap-2 rounded-xl p-4 font-[Coolvetica] text-dark ${
+							className={`flex flex-col items-center justify-center gap-2 rounded-xl p-4 font-coolvetica text-dark ${
 								i % 2 === 0 ? "bg-accent1" : "bg-accent2"
 							}`}
 						>
@@ -96,8 +102,7 @@ type TabsProps = {
 
 const Tabs = ({ tab, setTab }: TabsProps) => {
 	return (
-		// 2 on mobile, 3 on tablet, 5 on desktop
-		<div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+		<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
 			{[...new Set([tabs.ALL, ...Object.values(tabs)])].map(name => (
 				<Tab key={name} name={name} active={tab} onClick={() => setTab(name)} />
 			))}
