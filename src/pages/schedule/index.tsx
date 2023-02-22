@@ -1,4 +1,4 @@
-import type { EventType } from "@prisma/client";
+import type { Event, EventType } from "@prisma/client";
 import type { GetStaticProps, NextPage } from "next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Link from "next/link";
@@ -34,6 +34,12 @@ const Schedule: NextPage = () => {
 	});
 
 	const router = useRouter();
+	const { locale } = router;
+
+	let dateLocale = "en-CA";
+	if (locale === "fr") {
+		dateLocale = "fr-CA";
+	}
 
 	if (query.isLoading || query.data == null) {
 		return (
@@ -55,11 +61,13 @@ const Schedule: NextPage = () => {
 		void router.push("/404");
 	}
 
+	let index = 0;
+
 	return (
-		<App className="flex flex-col gap-4 bg-gradient-to-b from-background2 to-background1 px-20 py-8">
-			<div className="to-mobile:mx-auto">
+		<App className="flex h-full flex-col gap-4 bg-gradient-to-b from-background2 to-background1 px-8 py-8 sm:px-20">
+			<div className="flex h-full flex-col gap-4 to-mobile:mx-auto">
 				<Tabs tab={tab} setTab={setTab} />
-				<div className="my-3 flex flex-col gap-4 overflow-y-auto">
+				<div className="flex h-full flex-col gap-4 overflow-y-auto">
 					{query.data
 						?.filter(event => tabs[event.type] === tab || tab === tabs.ALL)
 						.sort((a, b) => {
@@ -68,32 +76,55 @@ const Schedule: NextPage = () => {
 							}
 							return a.start.getTime() - b.start.getTime();
 						})
+						.reduce((acc, event, i, array) => {
+							if (array[i]?.start.getDate() === array[i - 1]?.start.getDate()) {
+								acc[acc.length - 1]?.push(event);
+							} else {
+								acc.push([event]);
+							}
+							return acc;
+						}, [] as Event[][])
 						.map((event, i) => (
-							<Link
-								key={event.id}
-								href={`/schedule/event?id=${event.id}`}
-								className={`flex flex-col items-center justify-center gap-2 rounded-xl p-3 font-coolvetica text-dark ${
-									i % 2 === 0 ? "bg-accent1" : "bg-accent2"
-								}`}
-							>
-								<h1 className="text-xl">{event.name}</h1>
-								<p className="leading-3">
-									<Time time={event.start} /> - <Time time={event.end} />
-								</p>
-								<p>{event.room}</p>
-							</Link>
+							<div key={i} className="flex gap-4">
+								<div className="basis-1/3 rounded-xl p-4 font-[Coolvetica] text-2xl text-white">
+									{event[0]?.start.toLocaleDateString(dateLocale, {
+										month: "short",
+										day: "numeric",
+									})}
+								</div>
+								<div className="flex w-full flex-col gap-4">
+									{event.map(event => {
+										index++;
+										return (
+											<Link
+												key={event.id}
+												href={`/schedule/event?id=${event.id}`}
+												className={`flex flex-col items-center justify-center gap-2 rounded-xl p-3 font-coolvetica text-dark ${
+													index % 2 === 0 ? "bg-accent1" : "bg-accent2"
+												}`}
+											>
+												<h1 className="text-xl">{event.name}</h1>
+												<p className="leading-3">
+													{event.start.toLocaleTimeString(dateLocale, {
+														hour: "numeric",
+														minute: "numeric",
+													})}
+													{" - "}
+													{event.end.toLocaleTimeString(dateLocale, {
+														hour: "numeric",
+														minute: "numeric",
+													})}
+												</p>
+												<p>{event.room}</p>
+											</Link>
+										);
+									})}
+								</div>
+							</div>
 						))}
 				</div>
 			</div>
 		</App>
-	);
-};
-
-const Time = ({ time }: { time: Date }) => {
-	return (
-		<>
-			{time.getHours().toString().padStart(2, "0")}:{time.getMinutes().toString().padStart(2, "0")}
-		</>
 	);
 };
 
@@ -104,7 +135,7 @@ type TabsProps = {
 
 const Tabs = ({ tab, setTab }: TabsProps) => {
 	return (
-		<div className="grid grid-cols-2 gap-3 md:grid-cols-5  ">
+		<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5  ">
 			{[...new Set([tabs.ALL, ...Object.values(tabs)])].map(name => (
 				<Tab key={name} name={name} active={tab} onClick={() => setTab(name)} />
 			))}
@@ -121,7 +152,7 @@ type TabProps = {
 const Tab = ({ name, active, onClick }: TabProps) => {
 	return (
 		<div
-			className={`flex cursor-pointer flex-row items-center justify-center gap-2 rounded-xl bg-dark p-4 font-[Coolvetica] text-white outline ${
+			className={`flex cursor-pointer flex-row items-center justify-center gap-2 rounded-xl bg-dark p-2 font-[Coolvetica] text-white outline sm:p-4 ${
 				name === active ? "outline-4 outline-white" : "outline-0"
 			}`}
 			onClick={onClick}
