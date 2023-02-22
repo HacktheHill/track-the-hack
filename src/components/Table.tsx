@@ -56,6 +56,8 @@ const Table = () => {
 	);
 
 	const data = trpc.hackers.all.useQuery().data ?? [];
+	
+	console.log(data);
 
 	const table = useReactTable({
 		data,
