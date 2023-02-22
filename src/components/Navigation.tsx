@@ -2,12 +2,18 @@ import { signIn, signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 
-const Navbar = () => {
+type NavbarProps = {
+	integrated?: boolean;
+};
+
+const Navbar = ({ integrated }: NavbarProps) => {
 	const { data: sessionData } = useSession();
 
 	return (
 		<nav
-			className="sticky top-0 z-10 flex gap-8 whitespace-nowrap border border-b border-dark bg-background1 p-4 text-gray-300 shadow-navbar"
+			className={`sticky top-0 z-10 flex gap-8 whitespace-nowrap bg-background1 p-4 ${
+				integrated ? "" : "border-b border-dark shadow-navbar"
+			}`}
 			aria-label="Main navigation"
 		>
 			<div className="flex w-full items-center justify-center font-coolvetica to-mobile:w-auto">
@@ -49,7 +55,7 @@ const BottomMenu = () => {
 	const { data: sessionData } = useSession();
 	return (
 		<nav
-			className="sticky bottom-0 flex w-full items-center justify-evenly gap-8 whitespace-nowrap bg-background1 p-4 text-gray-300 to-mobile:hidden"
+			className="sticky bottom-0 flex w-full items-center justify-evenly gap-8 whitespace-nowrap bg-background1 p-4 to-mobile:hidden"
 			aria-label="Bottom navigation"
 		>
 			{!sessionData?.user && (
