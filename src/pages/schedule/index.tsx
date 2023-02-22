@@ -126,7 +126,7 @@ const Tab = ({ name, active, onClick }: TabProps) => {
 			}`}
 			onClick={onClick}
 		>
-			<h1 className="text-l text-center">{name}</h1>
+			<h1 className="text-center text-lg">{name}</h1>
 		</div>
 	);
 };
