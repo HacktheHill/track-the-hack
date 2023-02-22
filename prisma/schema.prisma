@@ -74,9 +74,9 @@ model HackerInfo {
     lastName                     String
     gender                       String
     phoneNumber                  String
-    university                   String
-    studyLevel                   String
-    studyProgram                 String
+    university                   String?
+    studyLevel                   String?
+    studyProgram                 String?
     graduationYear               Int?
     attendanceType               AttendanceType
     attendanceLocation           String
@@ -102,8 +102,21 @@ model HackerInfo {
     unsubscribeToken             String?        @unique @default(cuid())
     onlyOnline                   Boolean        @default(false)
     acceptanceExpiry             DateTime?
+    PresenceInfo                 PresenceInfo?
 
     @@index([userId])
+}
+
+model PresenceInfo {
+    id           String     @id @default(cuid())
+    checkedIn    Boolean    @default(false)
+    breakfast1   Boolean    @default(false)
+    lunch1       Boolean    @default(false)
+    dinner1      Boolean    @default(false)
+    breakfast2   Boolean    @default(false)
+    lunch2       Boolean    @default(false)
+    HackerInfo   HackerInfo @relation(fields: [hackerInfoId], references: [id])
+    hackerInfoId String     @unique
 }
 
 model Event {
