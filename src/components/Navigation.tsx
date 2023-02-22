@@ -48,7 +48,7 @@ const Navbar = () => {
 const BottomMenu = () => {
 	return (
 		<nav
-			className="sticky bottom-0 hidden w-full items-center justify-evenly gap-8 whitespace-nowrap bg-background1 p-4 text-gray-300 md:flex"
+			className="sticky bottom-0 flex w-full items-center justify-evenly gap-8 whitespace-nowrap bg-background1 p-4 text-gray-300 md:hidden"
 			aria-label="Bottom navigation"
 		>
 			<Link href="/">
