@@ -1,4 +1,6 @@
 import { type Prisma, EventType } from "@prisma/client";
+import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/router";
 import App from "../../components/App";
 import Error from "../../components/Error";
@@ -39,10 +41,8 @@ const Event = () => {
 	}
 
 	return (
-		<App>
-			{query.data.map(data => (
-				<EventDisplay key={data.id} {...data} />
-			))}
+		<App className="flex h-full flex-col text-center items-center justify-start gap-4 text-dark bg-background1">
+			<EventDisplay {...query.data} />
 		</App>
 	);
 };
@@ -50,7 +50,42 @@ const Event = () => {
 type EventProps = Prisma.EventGetPayload<true>;
 
 const EventDisplay = ({ id, name, type, description, start, end, host, room, tiktok }: EventProps) => {
-	return null;
+	return (
+		<>
+			<div className="flex flex-col mt-4 font-[Coolvetica]">
+				<h1 className="text-xl">{name}</h1>
+				<p className="text-lg">
+					{start.getHours().toString()}:{start.getMinutes().toString()}&nbsp;-
+					&nbsp;{end.getHours().toString()}:{end.getMinutes().toString()}
+				</p>
+				<p className="text-md">{room}</p>
+			</div>
+			<Image src="" width={300} height={300} alt=""></Image>
+			<div className="flex flex-col font-[Coolvetica]">
+				<h1 className="text-xl">{description}</h1>
+				<p className="text-lg">{type}</p>
+				<p className="text-md">{host}</p>
+			</div>
+			<Link
+				key={id}
+				href={''}
+				target="_blank" 
+				rel="noreferrer"
+				className={`flex flex-col items-center justify-center 
+				gap-2 rounded-xl p-5 px-20 mt-5 font-[Coolvetica] text-dark bg-white`}
+			>
+				<h1 className="text-xl">tiktok video link</h1>
+			</Link>
+			<Link
+				key={id}
+				href={''}
+				className={`flex flex-col items-center justify-center 
+				gap-2 rounded-xl p-5 px-20 font-[Coolvetica] text-dark bg-white`}
+			>
+				<h1 className="text-xl">&nbsp;&nbsp;resources link&nbsp;&nbsp;</h1>
+			</Link>
+		</>
+	);
 };
 
 export default Event;
