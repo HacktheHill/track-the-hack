@@ -86,6 +86,9 @@ async function main() {
 					.parse(NaNToNull(parseInt(row.numberOfPreviousHackathons ?? ""))),
 				formStartDate: z.date().parse(new Date(row.formStartDate ?? "")),
 				formEndDate: z.date().parse(new Date(row.formEndDate ?? "")),
+				presenceInfo: {
+					create: {},
+				},
 			};
 
 			// Check if the row already exists
