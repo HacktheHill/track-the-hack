@@ -56,8 +56,8 @@ const Schedule: NextPage = () => {
 	}
 
 	return (
-		<App className="flex flex-col gap-4 bg-gradient-to-b from-background2 to-background1 px-16 py-8">
-			<div className="lg:mx-auto lg:w-[900px]">
+		<App className="flex flex-col gap-4 bg-gradient-to-b from-background2 to-background1 px-20 py-8">
+			<div className="lg:mx-auto lg:w-[860px]">
 				<Tabs tab={tab} setTab={setTab} />
 				<div className="my-3 flex flex-col gap-4 overflow-y-auto">
 					{query.data
@@ -72,12 +72,12 @@ const Schedule: NextPage = () => {
 							<Link
 								key={event.id}
 								href={`/schedule/event?id=${event.id}`}
-								className={`flex flex-col items-center justify-center gap-2 rounded-xl p-4 font-coolvetica text-dark ${
+								className={`flex flex-col items-center justify-center gap-2 rounded-xl p-3 font-coolvetica text-dark ${
 									i % 2 === 0 ? "bg-accent1" : "bg-accent2"
 								}`}
 							>
 								<h1 className="text-xl">{event.name}</h1>
-								<p>
+								<p className="leading-3">
 									<Time time={event.start} /> - <Time time={event.end} />
 								</p>
 								<p>{event.room}</p>
