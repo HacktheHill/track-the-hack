@@ -125,9 +125,10 @@ model Event {
     end         DateTime
     name        String
     type        EventType @default(ALL)
-    host        String
+    host        String?
     description String
     room        String
+    image       String?
     tiktok      String?
 }
 
