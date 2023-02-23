@@ -79,7 +79,7 @@ model HackerInfo {
     studyProgram                 String?
     graduationYear               Int?
     attendanceType               AttendanceType
-    attendanceLocation           String
+    location                     String @map("attendanceLocation")
     transportationRequired       Boolean
     dietaryRestrictions          String
     accessibilityRequirements    String

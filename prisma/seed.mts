@@ -74,6 +74,8 @@ async function main() {
 					.int()
 					.nullable()
 					.parse(NaNToNull(parseInt(row.graduationYear ?? ""))),
+				location: row.attendanceLocation,
+				attendancelocation: undefined,
 				attendanceType: AttendanceType[row.attendanceType as keyof typeof AttendanceType],
 				transportationRequired: z.boolean().parse(parseBool(row.transportationRequired ?? "")),
 				shirtSize: ShirtSize[row.shirtSize as keyof typeof ShirtSize],
@@ -207,6 +209,7 @@ interface RegistrationsRow {
 	graduationYear: string;
 	attendanceType: string;
 	attendanceLocation: string;
+	location: string;
 	transportationRequired: string;
 	dietaryRestrictions: string;
 	accessibilityRequirements: string;
