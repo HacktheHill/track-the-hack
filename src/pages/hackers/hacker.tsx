@@ -83,6 +83,7 @@ type HackerViewProps = {
 	presenceData: PresenceInfo;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const HackerView = ({ hackerData, presenceData: { id: _, ...presenceData } }: HackerViewProps) => {
 	const router = useRouter();
 	const [id] = [router.query.id].flat();
@@ -93,7 +94,6 @@ const HackerView = ({ hackerData, presenceData: { id: _, ...presenceData } }: Ha
 	const boldClass = "text-left font-bold";
 
 	return (
-		// overflow auto
 		<div className="mx-auto flex max-w-2xl flex-col gap-4 p-4 pt-10 pb-10">
 			<h1 className="self-center font-coolvetica text-4xl font-normal text-dark">
 				{hackerData.firstName} {hackerData.lastName} ({hackerData.gender})
@@ -148,7 +148,7 @@ const HackerView = ({ hackerData, presenceData: { id: _, ...presenceData } }: Ha
 				<b className={boldClass}>Attendance</b>
 				{hackerData.confirmed ? "Confirmed attendance" : "Unconfirmed attendance"} &mdash;{" "}
 				{hackerData.unsubscribed ? "Unsubscribed from emails" : "Subscribed to emails"} &mdash; Attends{" "}
-				{hackerData.attendanceType} at {hackerData.attendanceLocation} with{" "}
+				{hackerData.attendanceType} at {hackerData.location} with{" "}
 				{hackerData.transportationRequired ? "" : "no"} transportation required
 			</p>
 			<p className="flex flex-row flex-wrap gap-4">
@@ -195,11 +195,6 @@ const HackerView = ({ hackerData, presenceData: { id: _, ...presenceData } }: Ha
 					</p>
 				</>
 			</OnlyRole>
-			{/* {...Object.keys(hackerData).map(key => (
-				<div key={key}>
-					<b>{key}</b>: {(hackerData[key as keyof HackerInfo] ?? "NULL").toString()}
-				</div>
-			))} */}
 		</div>
 	);
 };
