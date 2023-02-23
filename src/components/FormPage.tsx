@@ -44,7 +44,7 @@ const FormPage = ({ children, onSubmit, error, invalid, loading, path, user, tit
 							height={128}
 							className="h-auto w-auto"
 						/>
-						<h1 className="font-[Coolvetica] text-[clamp(1rem,3.5vmin,5rem)]  font-normal text-dark">
+						<h1 className="font-coolvetica text-[clamp(1rem,3.5vmin,5rem)]  font-normal text-dark">
 							Hack the Hill
 						</h1>
 					</div>

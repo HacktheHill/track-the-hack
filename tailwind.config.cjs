@@ -11,7 +11,7 @@ module.exports = {
 			},
 			screens: {
 				"logo-center": "600px",
-				"to-mobile": "900px",
+				mobile: "900px",
 			},
 			colors: {
 				dark: "#3b4779",
