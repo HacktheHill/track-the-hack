@@ -24,4 +24,11 @@ module.exports = withPWA({
 	},
 	swcMinify: true,
 	i18n,
+	webpack: config => {
+		config.module.rules.push({
+			test: /\.md$/,
+			use: "raw-loader",
+		});
+		return config;
+	},
 });
