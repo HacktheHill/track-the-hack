@@ -58,11 +58,9 @@ const BottomMenu = () => {
 			className="sticky bottom-0 flex w-full items-center justify-evenly gap-8 whitespace-nowrap bg-background1 p-4 mobile:hidden"
 			aria-label="Bottom navigation"
 		>
-			{!sessionData?.user && (
-				<Link href="/">
-					<Image priority src="/assets/home.svg" height={32} width={32} alt="Home" />
-				</Link>
-			)}
+			<Link href="/">
+				<Image priority src="/assets/home.svg" height={32} width={32} alt="Home" />
+			</Link>
 			{sessionData?.user && (
 				<Link href="/qr">
 					<Image priority src="/assets/qr.svg" height={32} width={32} alt="QR" />
@@ -92,14 +90,9 @@ const Links = () => {
 	const { data: sessionData } = useSession();
 	return (
 		<>
-			{!sessionData?.user && (
-				<Link
-					href="/"
-					className="ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
-				>
-					Home
-				</Link>
-			)}
+			<Link href="/" className="ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light">
+				Home
+			</Link>
 			{sessionData?.user && (
 				<Link
 					href="/qr"
