@@ -1,10 +1,11 @@
-import { useRouter } from "next/router";
-import { trpc } from "../../utils/api";
-import Hacker from "./hacker";
+import type { HackerInfo } from "@prisma/client";
 import type { GetStaticProps } from "next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
-import type { HackerInfo } from "@prisma/client";
 import Link from "next/link";
+import { useRouter } from "next/router";
+import { useState } from "react";
+import { trpc } from "../../utils/api";
+import Hacker from "./hacker";
 
 import App from "../../components/App";
 import Error from "../../components/Error";
@@ -19,6 +20,8 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
 const Hackers = () => {
 	const router = useRouter();
 	const [id] = [router.query.id].flat();
+
+	const [search, setSearch] = useState("");
 
 	const query = trpc.hackers.all.useQuery();
 
@@ -46,18 +49,26 @@ const Hackers = () => {
 		<Hacker />
 	) : (
 		<App className="flex h-full flex-col gap-8 overflow-y-auto bg-gradient-to-b from-background2 to-background1 py-8 px-4 sm:px-20">
-			<Search></Search>
+			<Search setSearch={setSearch} />
 			<div className="to-mobile:mx-auto grid h-full grid-cols-2 flex-col gap-8 overflow-y-auto p-4 sm:grid-cols-2 lg:grid-cols-3">
-				{query.data.map(hacker => (
-					<Card
-						key={hacker.id}
-						id={hacker.id}
-						firstName={hacker.firstName}
-						lastName={hacker.lastName}
-						university={hacker.university}
-						studyProgram={hacker.studyProgram}
-					/>
-				))}
+				{query.data
+					.filter(
+						hacker =>
+							hacker.firstName.toLowerCase().includes(search.toLowerCase()) ||
+							hacker.lastName.toLowerCase().includes(search.toLowerCase()) ||
+							hacker.university?.toLowerCase().includes(search.toLowerCase()) ||
+							hacker.studyProgram?.toLowerCase().includes(search.toLowerCase()),
+					)
+					.map(hacker => (
+						<Card
+							key={hacker.id}
+							id={hacker.id}
+							firstName={hacker.firstName}
+							lastName={hacker.lastName}
+							university={hacker.university}
+							studyProgram={hacker.studyProgram}
+						/>
+					))}
 			</div>
 		</App>
 	);
@@ -78,11 +89,23 @@ const Card = ({ firstName, lastName, university, studyProgram, id }: CardProps) 
 	);
 };
 
-const Search = () => {
+type SearchProps = {
+	setSearch: (search: string) => void;
+};
+
+const Search = ({ setSearch }: SearchProps) => {
+	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+		event.preventDefault();
+		const target = event.target as typeof event.target & {
+			search: { value: string };
+		};
+		setSearch(target.search.value);
+	};
+
 	return (
-		<div className="flex flex-col gap-3.5" id="bubble-table-select">
-			<form onSubmit={event => event.preventDefault()}>
-				<label className="sr-only mb-2 text-sm font-medium">Search</label>
+		<div className="flex flex-col gap-3.5">
+			<form onSubmit={handleSubmit}>
+				<label className="sr-only mb-2 text-sm font-medium" htmlFor="search">Search</label>
 				<div className="relative">
 					<div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
 						<svg
@@ -103,7 +126,8 @@ const Search = () => {
 					</div>
 					<input
 						type="search"
-						id="default-search"
+						id="search"
+						name="search"
 						className="block w-full rounded-lg bg-background1 p-4 pl-10 text-sm"
 						placeholder="Search Hackers"
 						required
