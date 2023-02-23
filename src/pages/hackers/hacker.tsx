@@ -99,8 +99,9 @@ const HackerView = ({ hackerData, presenceData: { id: _, ...presenceData } }: Ha
 				{hackerData.firstName} {hackerData.lastName} ({hackerData.gender})
 			</h1>
 			<p className="self-center">
-				{hackerData.studyLevel} {hackerData.studyProgram} at {hackerData.university} (
-				{hackerData.graduationYear})
+				{hackerData.studyLevel} {hackerData.studyProgram}{" "}
+				{hackerData.university && `at ${hackerData.university}`}{" "}
+				{hackerData.graduationYear && `(${hackerData.graduationYear})`}
 			</p>
 			<OnlyRole roles={[Role.ORGANIZER]}>
 				<div className="grid grid-flow-row grid-cols-2 gap-4 rounded-lg bg-gray-200 p-4">
