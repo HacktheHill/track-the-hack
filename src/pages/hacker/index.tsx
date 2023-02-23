@@ -63,7 +63,7 @@ type HackerViewProps = {
 const HackerView = ({ data }: HackerViewProps) => {
 	return (
 		<div>
-			<h1 className="font-[Coolvetica] text-[clamp(1rem,3.5vmin,5rem)] font-normal text-dark">
+			<h1 className="font-coolvetica text-[clamp(1rem,3.5vmin,5rem)] font-normal text-dark">
 				{data.firstName} {data.lastName}
 			</h1>
 			{...Object.keys(data).map(key => (

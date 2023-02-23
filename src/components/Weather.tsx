@@ -41,7 +41,7 @@ const Snowflake = () => {
 			src="/assets/snowflake.svg"
 			width={size}
 			height={size}
-			alt={"Snowflake"}
+			alt="Snowflake"
 			className="absolute animate-snowflake-fall opacity-50"
 			style={{
 				top: `${y}%`,
@@ -77,7 +77,7 @@ const Cloud = () => {
 			src={`/assets/cloud${number}.svg`}
 			width={size}
 			height={size}
-			alt={"Cloud"}
+			alt="Cloud"
 			className="absolute animate-cloud-drift opacity-75"
 			style={{
 				top: `${y}%`,

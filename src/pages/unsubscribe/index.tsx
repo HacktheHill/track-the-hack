@@ -67,14 +67,14 @@ const Unsubscribe: NextPage = () => {
 			user={query.data ?? null}
 			title={t("unsubscribe")}
 		>
-			<h3 className="font-[Rubik] text-[clamp(1rem,1vmin,5rem)] font-medium text-dark">
+			<h3 className="font-rubik text-[clamp(1rem,1vmin,5rem)] font-medium text-dark">
 				{t("are-you-sure", {
 					email: query.data?.email as string,
 					unsubscribe: (isUnsubscribed ? t("resubscribe") : t("unsubscribe")).toLowerCase(),
 				})}
 			</h3>
 			<button
-				className="cursor-pointer whitespace-nowrap rounded-[100px] border-none bg-light px-[calc(2*clamp(0.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-[Rubik] text-[clamp(1rem,1vmin,5rem)] text-white shadow-md transition-all duration-1000 hover:bg-medium"
+				className="cursor-pointer whitespace-nowrap rounded-[100px] border-none bg-light px-[calc(2*clamp(0.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-rubik text-[clamp(1rem,1vmin,5rem)] text-white shadow-md transition-all duration-1000 hover:bg-medium"
 				disabled={query.isLoading}
 			>
 				{isUnsubscribed ? t("resubscribe") : t("unsubscribe")}

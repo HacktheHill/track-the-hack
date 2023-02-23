@@ -1,4 +1,4 @@
-import type { Event, EventType } from "@prisma/client";
+import type { Event } from "@prisma/client";
 import type { GetStaticProps, NextPage } from "next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Link from "next/link";
@@ -9,6 +9,7 @@ import Error from "../../components/Error";
 import Loading from "../../components/Loading";
 
 import { trpc } from "../../utils/api";
+import { eventTypes } from "./event";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
@@ -16,22 +17,12 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	};
 };
 
-const tabs = {
-	ALL: "All",
-	WORKSHOP: "Workshop",
-	CAREER_FAIR: "Career Fair",
-	FOOD: "Food",
-	SOCIAL: "Social",
-} as const satisfies Record<EventType, string>;
-
-type TabsType = (typeof tabs)[keyof typeof tabs];
+type TabsType = (typeof eventTypes)[keyof typeof eventTypes];
 
 const Schedule: NextPage = () => {
-	const [tab, setTab] = useState<TabsType>(tabs.ALL);
+	const [tab, setTab] = useState<TabsType>(eventTypes.ALL);
 
-	const query = trpc.events.all.useQuery(undefined, {
-		staleTime: 1000 * 60 * 5,
-	});
+	const query = trpc.events.all.useQuery();
 
 	const router = useRouter();
 	const { locale } = router;
@@ -69,9 +60,9 @@ const Schedule: NextPage = () => {
 			integrated={true}
 		>
 			<Tabs tab={tab} setTab={setTab} />
-			<div className="flex h-full w-full max-w-4xl flex-col gap-4 px-8 sm:px-20">
+			<div className="flex h-full w-full max-w-4xl flex-col gap-4 px-4 mobile:px-0">
 				{query.data
-					?.filter(event => tabs[event.type] === tab || tab === tabs.ALL)
+					?.filter(event => eventTypes[event.type] === tab || tab === eventTypes.ALL)
 					.sort((a, b) => {
 						if (a.start.getTime() === b.start.getTime()) {
 							return a.end.getTime() - b.end.getTime();
@@ -88,7 +79,7 @@ const Schedule: NextPage = () => {
 					}, [] as Event[][])
 					.map((event, i) => (
 						<div key={i} className="flex gap-4">
-							<div className="grid basis-1/3 place-content-center rounded-xl bg-dark/50 p-4 font-[Coolvetica] text-2xl text-white">
+							<div className="grid basis-1/3 place-content-center rounded-xl bg-dark/50 p-4 font-coolvetica text-2xl text-white">
 								{event[0]?.start.toLocaleDateString(dateLocale, {
 									month: "short",
 									day: "numeric",
@@ -136,9 +127,9 @@ type TabsProps = {
 
 const Tabs = ({ tab, setTab }: TabsProps) => {
 	return (
-		<div className="sticky top-0 w-full border-b border-dark bg-background1 from-background2 px-8 pt-2 pb-4 shadow-navbar">
-			<div className="mx-auto grid max-w-4xl grid-cols-3 gap-3 sm:grid-cols-5 sm:px-20">
-				{[...new Set([tabs.ALL, ...Object.values(tabs)])].map(name => (
+		<div className="sticky top-0 w-full border-b border-dark bg-background1 from-background2 px-4 pt-2 pb-4 shadow-navbar">
+			<div className="mx-auto grid max-w-4xl grid-cols-3 gap-3 sm:grid-cols-5">
+				{[...new Set([eventTypes.ALL, ...Object.values(eventTypes)])].map(name => (
 					<Tab key={name} name={name} active={tab} onClick={() => setTab(name)} />
 				))}
 			</div>
@@ -155,7 +146,7 @@ type TabProps = {
 const Tab = ({ name, active, onClick }: TabProps) => {
 	return (
 		<div
-			className={`flex cursor-pointer flex-row items-center justify-center gap-2 rounded-xl bg-dark p-2 font-[Coolvetica] text-white outline sm:p-4 ${
+			className={`flex cursor-pointer flex-row items-center justify-center gap-2 rounded-xl bg-dark p-2 font-coolvetica text-white outline sm:p-4 ${
 				name === active ? "outline-4 outline-white" : "outline-0"
 			}`}
 			onClick={onClick}

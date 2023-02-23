@@ -16,10 +16,10 @@ const Navbar = ({ integrated }: NavbarProps) => {
 			}`}
 			aria-label="Main navigation"
 		>
-			<div className="flex w-full items-center justify-center font-coolvetica to-mobile:w-auto">
+			<div className="flex w-full items-center justify-center font-coolvetica mobile:w-auto">
 				<Link href="/">
 					<Image
-						className="hidden to-mobile:block"
+						className="hidden mobile:block"
 						priority
 						src="/assets/hackthehill-logo.svg"
 						height={64}
@@ -27,7 +27,7 @@ const Navbar = ({ integrated }: NavbarProps) => {
 						alt="Home"
 					/>
 					<Image
-						className="block to-mobile:hidden"
+						className="block mobile:hidden"
 						priority
 						src="/assets/hackthehill-banner.svg"
 						height={238}
@@ -37,7 +37,7 @@ const Navbar = ({ integrated }: NavbarProps) => {
 				</Link>
 			</div>
 
-			<div className="hidden flex-row to-mobile:flex">
+			<div className="hidden flex-row mobile:flex">
 				<Links />
 			</div>
 
@@ -55,7 +55,7 @@ const BottomMenu = () => {
 	const { data: sessionData } = useSession();
 	return (
 		<nav
-			className="sticky bottom-0 flex w-full items-center justify-evenly gap-8 whitespace-nowrap bg-background1 p-4 to-mobile:hidden"
+			className="sticky bottom-0 flex w-full items-center justify-evenly gap-8 whitespace-nowrap bg-background1 p-4 mobile:hidden"
 			aria-label="Bottom navigation"
 		>
 			{!sessionData?.user && (
@@ -73,7 +73,7 @@ const BottomMenu = () => {
 			</Link>
 			{sessionData?.user && (
 				<Link href="/notifications">
-					<Image priority src="/assets/notifs.svg" height={32} width={32} alt="Notifs" />
+					<Image priority src="/assets/notifications.svg" height={32} width={32} alt="Notifications" />
 				</Link>
 			)}
 			<Link href="/resources">
@@ -95,7 +95,7 @@ const Links = () => {
 			{!sessionData?.user && (
 				<Link
 					href="/"
-					className={"ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light"}
+					className="ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
 				>
 					Home
 				</Link>
@@ -103,35 +103,35 @@ const Links = () => {
 			{sessionData?.user && (
 				<Link
 					href="/qr"
-					className={"ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light"}
+					className="ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
 				>
 					QR
 				</Link>
 			)}
 			<Link
 				href="/schedule"
-				className={"ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light"}
+				className="ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
 			>
 				Schedule
 			</Link>
 			{sessionData?.user && (
 				<Link
 					href="/notifications"
-					className={"ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light"}
+					className="ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
 				>
 					Notifications
 				</Link>
 			)}
 			<Link
 				href="/resources"
-				className={"ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light"}
+				className="ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
 			>
 				Resources
 			</Link>
 			{sessionData?.user && (
 				<Link
 					href="/hackers"
-					className={"ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light"}
+					className="ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
 				>
 					Hackers
 				</Link>
