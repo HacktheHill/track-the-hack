@@ -42,7 +42,7 @@ const Navbar = ({ integrated }: NavbarProps) => {
 			</div>
 
 			<button
-				className="right-4 ml-auto flex whitespace-nowrap rounded border border-dark bg-background1 py-2 px-4 font-coolvetica text-dark transition-colors hover:bg-background3 logo-center:absolute sm:visible sm:mr-0"
+				className="right-4 ml-auto flex whitespace-nowrap rounded-lg border border-dark bg-background1 py-2 px-4 font-coolvetica text-dark transition-colors hover:bg-background3 logo-center:absolute sm:visible sm:mr-0"
 				onClick={sessionData ? () => void signOut() : () => void signIn()}
 			>
 				{sessionData ? "Sign out" : "Sign in"}
