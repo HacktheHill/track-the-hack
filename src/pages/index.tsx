@@ -8,7 +8,6 @@ import Image from "next/image";
 import App from "../components/App";
 import Weather from "../components/Weather";
 
-
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
 		props: await serverSideTranslations(locale ?? "en", ["common", "index"]),
