@@ -129,7 +129,7 @@ type TabsProps = {
 
 const Tabs = ({ tab, setTab }: TabsProps) => {
 	return (
-		<div className="sticky top-0 w-full border-b border-dark bg-background1 from-background2 px-4 pt-2 pb-4 shadow-navbar">
+		<div className="w-full border-b border-dark bg-background1 px-4 pt-2 pb-4 shadow-navbar">
 			<div className="mx-auto grid max-w-2xl grid-cols-3 gap-3 sm:grid-cols-5">
 				{[...new Set([eventTypes.ALL, ...Object.values(eventTypes)])].map(name => (
 					<Tab key={name} name={name} active={tab} onClick={() => setTab(name)} />
