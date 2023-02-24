@@ -11,7 +11,7 @@ const Navbar = ({ integrated }: NavbarProps) => {
 
 	return (
 		<nav
-			className={`sticky top-0 z-10 flex gap-8 whitespace-nowrap bg-background1 p-4 ${
+			className={`sticky top-0 z-10 flex gap-4 whitespace-nowrap bg-background1 p-4 ${
 				integrated ? "" : "border-b border-dark shadow-navbar"
 			}`}
 			aria-label="Main navigation"
@@ -90,41 +90,41 @@ const Links = () => {
 	const { data: sessionData } = useSession();
 	return (
 		<>
-			<Link href="/" className="ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light">
+			<Link href="/" className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light">
 				Home
 			</Link>
 			{sessionData?.user && (
 				<Link
 					href="/qr"
-					className="ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
+					className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
 				>
 					QR
 				</Link>
 			)}
 			<Link
 				href="/schedule"
-				className="ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
+				className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
 			>
 				Schedule
 			</Link>
 			{sessionData?.user && (
 				<Link
 					href="/notifications"
-					className="ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
+					className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
 				>
 					Notifications
 				</Link>
 			)}
 			<Link
 				href="/resources"
-				className="ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
+				className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
 			>
 				Resources
 			</Link>
 			{sessionData?.user && (
 				<Link
 					href="/hackers"
-					className="ml-5 mr-5 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
+					className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
 				>
 					Hackers
 				</Link>
