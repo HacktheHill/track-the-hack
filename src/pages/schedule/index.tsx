@@ -56,11 +56,11 @@ const Schedule: NextPage = () => {
 
 	return (
 		<App
-			className="flex h-full flex-col items-center gap-4 overflow-y-auto bg-gradient-to-b from-background2 to-background1"
+			className="flex h-full flex-col items-center bg-gradient-to-b from-background2 to-background1"
 			integrated={true}
 		>
 			<Tabs tab={tab} setTab={setTab} />
-			<div className="flex h-full w-full max-w-4xl flex-col gap-4 px-4 mobile:px-0">
+			<div className="flex h-full w-full max-w-4xl flex-col gap-4 overflow-y-auto p-4 mobile:px-0">
 				{query.data
 					?.filter(event => eventTypes[event.type] === tab || tab === eventTypes.ALL)
 					.sort((a, b) => {
