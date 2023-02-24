@@ -129,7 +129,7 @@ const components = {
 		);
 	},
 	code: ({ children, inline, ...props }: ComponentProps) => {
-		const className = inline ? "rounded bg-gray-200 px-2 py-1" : "rounded bg-gray-300 p-4";
+		const className = inline ? "rounded-lg bg-gray-200 px-2 py-1" : "rounded-lg bg-gray-300 p-4";
 		return (
 			<code className={className} {...props}>
 				{children}
@@ -163,7 +163,7 @@ const components = {
 				type={type}
 				checked={checked}
 				disabled={disabled}
-				className="rounded border-2 border-gray-300 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-600"
+				className="rounded-lg border-2 border-gray-300 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-600"
 				{...rest}
 			/>
 		);

@@ -80,7 +80,7 @@ const Schedule: NextPage = () => {
 						}, [] as Event[][])
 						.map((event, i) => (
 							<div key={i} className="flex gap-4">
-								<div className="grid basis-1/3 place-content-center rounded-xl bg-dark/50 p-4 font-coolvetica text-2xl text-white">
+								<div className="grid basis-1/3 place-content-center rounded-lg bg-dark/50 p-4 font-coolvetica text-2xl text-white">
 									{event[0]?.start.toLocaleDateString(dateLocale, {
 										month: "short",
 										day: "numeric",
@@ -93,7 +93,7 @@ const Schedule: NextPage = () => {
 											<Link
 												key={event.id}
 												href={`/schedule/event?id=${event.id}`}
-												className={`flex flex-col items-center justify-center gap-2 rounded-xl p-3 font-coolvetica text-dark ${
+												className={`flex flex-col items-center justify-center gap-2 rounded-lg p-3 font-coolvetica text-dark ${
 													index % 2 === 0 ? "bg-accent1" : "bg-accent2"
 												}`}
 											>
@@ -148,7 +148,7 @@ type TabProps = {
 const Tab = ({ name, active, onClick }: TabProps) => {
 	return (
 		<div
-			className={`flex cursor-pointer flex-row items-center justify-center gap-2 rounded-xl bg-dark p-2 font-coolvetica text-white outline sm:p-4 ${
+			className={`flex cursor-pointer flex-row items-center justify-center gap-2 rounded-lg bg-dark p-2 font-coolvetica text-white outline sm:p-4 ${
 				name === active ? "outline-4 outline-white" : "outline-0"
 			}`}
 			onClick={onClick}
