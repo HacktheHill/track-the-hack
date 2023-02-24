@@ -96,8 +96,8 @@ const Schedule: NextPage = () => {
 												index % 2 === 0 ? "bg-accent1" : "bg-accent2"
 											}`}
 										>
-											<h1 className="text-xl">{event.name}</h1>
-											<p className="leading-3">
+											<h1 className="text-center text-xl">{event.name}</h1>
+											<p className="text-center leading-3">
 												{event.start.toLocaleTimeString(dateLocale, {
 													hour: "numeric",
 													minute: "numeric",

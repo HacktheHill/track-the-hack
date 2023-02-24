@@ -126,7 +126,7 @@ model Event {
     name        String
     type        EventType @default(ALL)
     host        String?
-    description String
+    description String    @db.Text
     room        String
     image       String?
     tiktok      String?
