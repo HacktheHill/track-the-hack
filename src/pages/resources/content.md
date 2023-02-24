@@ -41,6 +41,7 @@ Discord:
 Twitch
 
 Devpost:
+
 Twitter:
 
 Instagram:
@@ -83,15 +84,15 @@ You can participate in one or more challenges. Prizes will be awarded to one pro
 
 ### Best User Experience (UX)
 
-- New products should be accessible and intuitive to use for all kinds of people. User experience does not only have to be limited to graphical user interfaces. The form factor, other sensory information (audio, haptic, etc), and accessibility will also be considered when picking the best UX project. Any project is eligible for this challenge!
+-   New products should be accessible and intuitive to use for all kinds of people. User experience does not only have to be limited to graphical user interfaces. The form factor, other sensory information (audio, haptic, etc), and accessibility will also be considered when picking the best UX project. Any project is eligible for this challenge!
 
 ### Best Developer Experience (DX)
 
-- Improve the software development process with an add-on, extension, game engine, or any tool to make a software developer’s life easier and more efficient!
+-   Improve the software development process with an add-on, extension, game engine, or any tool to make a software developer’s life easier and more efficient!
 
 ### Best Cybersecurity Project
 
-- To compete in this challenge your project can utilize cybersecurity principles, educate users on cybersecurity topics, or improve the security of existing systems. In general, anything relating to cybersecurity can compete in this challenge!
+-   To compete in this challenge your project can utilize cybersecurity principles, educate users on cybersecurity topics, or improve the security of existing systems. In general, anything relating to cybersecurity can compete in this challenge!
 
 ## 📋Judging
 
@@ -99,10 +100,10 @@ Judging will be done live. You have the choice of a live demonstration or showin
 
 ## 📃 Judging procedure
 
-- There will be 1-2 minutes for setting up, 5 minutes for presentations, and 1-2 minute Q&A. If you are unable to make the live presentation or are not present within the first 2 minutes, your Devpost submission will be used to judge your project.
-- We will be cutting presentations after 5 minutes to ensure all teams will be able to present.
-- In-person judging will be done at the CRX venue, rooms will be posted on the schedule. Please wait quietly outside your designated room 5 minutes prior to your assigned timeslot. There will be staff coordinating the queue for judging.
-- Online judging will be done on Zoom, the link can be found on Discord. Each team will be assigned a breakout room number. Please join the meeting 5 minutes earlier, with your name displaying “FIRSTNAME LASTNAME [DEVPOST PROJECT NAME]”. A staff member will move you to the correct breakout room.
+-   There will be 1-2 minutes for setting up, 5 minutes for presentations, and 1-2 minute Q&A. If you are unable to make the live presentation or are not present within the first 2 minutes, your Devpost submission will be used to judge your project.
+-   We will be cutting presentations after 5 minutes to ensure all teams will be able to present.
+-   In-person judging will be done at the CRX venue, rooms will be posted on the schedule. Please wait quietly outside your designated room 5 minutes prior to your assigned timeslot. There will be staff coordinating the queue for judging.
+-   Online judging will be done on Zoom, the link can be found on Discord. Each team will be assigned a breakout room number. Please join the meeting 5 minutes earlier, with your name displaying “FIRSTNAME LASTNAME [DEVPOST PROJECT NAME]”. A staff member will move you to the correct breakout room.
 
 ## 👀Judging criteria
 
@@ -116,11 +117,11 @@ Projects will be submitted on Devpost for all projects, both in-person and onlin
 
 Please make sure your submission follows the rules below:
 
-- Your team must submit your project to Devpost by **9 am EST on Sunday, March 5th** to be considered for judging. Late submissions will not be accepted
-- When submitting your project, you can select as many "themes" and “challenges” as you like to be considered for the prize.
-- You must include a link to your Github repository. Your Github commits will be reviewed during judging to ensure the project was created during the hackathon.
-- Your teammates must also be added to the Devpost submission
-- You must indicate your team’s status (INPERSON, VIRTUAL, HYBRID) in the Devpost
+-   Your team must submit your project to Devpost by **9 am EST on Sunday, March 5th** to be considered for judging. Late submissions will not be accepted
+-   When submitting your project, you can select as many "themes" and “challenges” as you like to be considered for the prize.
+-   You must include a link to your Github repository. Your Github commits will be reviewed during judging to ensure the project was created during the hackathon.
+-   Your teammates must also be added to the Devpost submission
+-   You must indicate your team’s status (INPERSON, VIRTUAL, HYBRID) in the Devpost
 
 ### 🎥(Optional) Video
 
@@ -128,9 +129,9 @@ Teams can submit a video presentation **under 4 minutes**. Your video will be us
 
 Your video can include the following, but are not limited to:
 
-- A demonstration of your project’s functionality
-- An explanation about how your project works and the problem it aims to solve
-- Challenges you faced while making your project
+-   A demonstration of your project’s functionality
+-   An explanation about how your project works and the problem it aims to solve
+-   Challenges you faced while making your project
 
 Optionally your video can be used to present your project to the judges if non of your team is unavailable to present a live presentation.
 
@@ -166,9 +167,9 @@ Need some help with using the Pi Pico or ESP32 for your project? We have put tog
 
 You can get started by watching this 3-minute video
 
-- [https://www.youtube.com/watch?v=noZnOSpcjYY&ab_channel=GitHubTraining%26Guides](https://www.youtube.com/watch?v=noZnOSpcjYY&ab_channel=GitHubTraining%26Guides)
+-   [https://www.youtube.com/watch?v=noZnOSpcjYY&ab_channel=GitHubTraining%26Guides](https://www.youtube.com/watch?v=noZnOSpcjYY&ab_channel=GitHubTraining%26Guides)
 
 Here are additional resources
 
-- [https://docs.github.com/en/get-started/quickstart/hello-world](https://docs.github.com/en/get-started/quickstart/hello-world)
-- [https://docs.github.com/en/get-started](https://docs.github.com/en/get-started)
+-   [https://docs.github.com/en/get-started/quickstart/hello-world](https://docs.github.com/en/get-started/quickstart/hello-world)
+-   [https://docs.github.com/en/get-started](https://docs.github.com/en/get-started)

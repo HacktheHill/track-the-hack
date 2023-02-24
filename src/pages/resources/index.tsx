@@ -2,6 +2,10 @@ import type { NextPage } from "next";
 import Image from "next/image";
 import React from "react";
 import ReactMarkdown from "react-markdown";
+import type { PluggableList } from "react-markdown/lib/react-markdown";
+import remarkToc from "remark-toc";
+import rehypeSlug from "rehype-slug";
+import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import App from "../../components/App";
 import content from "./content.md";
 
@@ -12,57 +16,100 @@ type ComponentProps = {
 };
 
 const components = {
-	h1: ({ children, ...props }: ComponentProps) => (
+	/* eslint-disable  @typescript-eslint/no-unused-vars */
+	h1: ({ children, node, ...props }: ComponentProps) => (
 		<h1 className="my-2 text-4xl font-bold" {...props}>
-			{children}
+			{React.Children.map(children, child => {
+				if (typeof child === "string") {
+					return child;
+				}
+				return React.cloneElement(child as React.ReactElement, {
+					className: "",
+				});
+			})}
 		</h1>
 	),
-	h2: ({ children, ...props }: ComponentProps) => (
+	h2: ({ children, node, ...props }: ComponentProps) => (
 		<h2 className="my-2 text-3xl font-bold" {...props}>
-			{children}
+			{React.Children.map(children, child => {
+				if (typeof child === "string") {
+					return child;
+				}
+				return React.cloneElement(child as React.ReactElement, {
+					className: "",
+				});
+			})}
 		</h2>
 	),
-	h3: ({ children, ...props }: ComponentProps) => (
+	h3: ({ children, node, ...props }: ComponentProps) => (
 		<h3 className="my-2 text-2xl font-bold" {...props}>
-			{children}
+			{React.Children.map(children, child => {
+				if (typeof child === "string") {
+					return child;
+				}
+				return React.cloneElement(child as React.ReactElement, {
+					className: "",
+				});
+			})}
 		</h3>
 	),
-	h4: ({ children, ...props }: ComponentProps) => (
+	h4: ({ children, node, ...props }: ComponentProps) => (
 		<h4 className="my-2 text-xl font-bold" {...props}>
-			{children}
+			{React.Children.map(children, child => {
+				if (typeof child === "string") {
+					return child;
+				}
+				return React.cloneElement(child as React.ReactElement, {
+					className: "",
+				});
+			})}
 		</h4>
 	),
-	h5: ({ children, ...props }: ComponentProps) => (
+	h5: ({ children, node, ...props }: ComponentProps) => (
 		<h5 className="my-2 text-lg font-bold" {...props}>
-			{children}
+			{React.Children.map(children, child => {
+				if (typeof child === "string") {
+					return child;
+				}
+				return React.cloneElement(child as React.ReactElement, {
+					className: "",
+				});
+			})}
 		</h5>
 	),
-	h6: ({ children, ...props }: ComponentProps) => (
+	h6: ({ children, node, ...props }: ComponentProps) => (
 		<h6 className="my-2 text-base font-bold" {...props}>
-			{children}
+			{React.Children.map(children, child => {
+				if (typeof child === "string") {
+					return child;
+				}
+				return React.cloneElement(child as React.ReactElement, {
+					className: "",
+				});
+			})}
 		</h6>
 	),
-	p: ({ children, ...props }: ComponentProps) => (
+	p: ({ children, node, ...props }: ComponentProps) => (
 		<p className="my-2 text-base" {...props}>
 			{children}
 		</p>
 	),
-	a: ({ children, ...props }: ComponentProps) => (
-		<a className="text-blue-900" {...props} target="_blank" rel="noreferrer">
+	a: ({ children, node, ...props }: ComponentProps) => (
+		<a className="text-blue-900" {...props}>
 			{children}
 		</a>
 	),
-	ul: ({ children, ...props }: ComponentProps) => (
+	ul: ({ children, node, ...props }: ComponentProps) => (
 		<ul className="list-disc" {...props}>
 			{children}
 		</ul>
 	),
-	ol: ({ children, ...props }: ComponentProps) => (
+	ol: ({ children, node, ...props }: ComponentProps) => (
 		<ol className="list-decimal" {...props}>
 			{children}
 		</ol>
 	),
-	li: ({ children, ...props }: ComponentProps) => {
+	li: ({ children, node, ...props }: ComponentProps) => {
 		const { checked, className, ...rest } = props as {
 			checked: boolean;
 			className?: "task-list-item";
@@ -82,37 +129,37 @@ const components = {
 			</li>
 		);
 	},
-	blockquote: ({ children, ...props }: ComponentProps) => (
+	blockquote: ({ children, node, ...props }: ComponentProps) => (
 		<blockquote className="border-l-4 border-gray-300 pl-4" {...props}>
 			{children}
 		</blockquote>
 	),
-	table: ({ children, ...props }: ComponentProps) => (
+	table: ({ children, node, ...props }: ComponentProps) => (
 		<table className="table-auto border-collapse border border-gray-300" {...props}>
 			{children}
 		</table>
 	),
-	thead: ({ children, ...props }: ComponentProps) => (
+	thead: ({ children, node, ...props }: ComponentProps) => (
 		<thead className="border-collapse border border-gray-300" {...props}>
 			{children}
 		</thead>
 	),
-	tbody: ({ children, ...props }: ComponentProps) => (
+	tbody: ({ children, node, ...props }: ComponentProps) => (
 		<tbody className="border-collapse border border-gray-300" {...props}>
 			{children}
 		</tbody>
 	),
-	tr: ({ children, ...props }: ComponentProps) => (
+	tr: ({ children, node, ...props }: ComponentProps) => (
 		<tr className="border-collapse border border-gray-300" {...props}>
 			{children}
 		</tr>
 	),
-	th: ({ children, ...props }: ComponentProps) => (
+	th: ({ children, node, ...props }: ComponentProps) => (
 		<th className="border-collapse border border-gray-300" {...props}>
 			{children}
 		</th>
 	),
-	td: ({ children, ...props }: ComponentProps) => {
+	td: ({ children, node, ...props }: ComponentProps) => {
 		const { style, isHeader } = props as {
 			style: React.CSSProperties;
 			isHeader: boolean;
@@ -129,24 +176,24 @@ const components = {
 		);
 	},
 	code: ({ children, inline, ...props }: ComponentProps) => {
-		const className = inline ? "rounded bg-gray-200 px-2 py-1" : "rounded bg-gray-300 p-4";
+		const className = inline ? "rounded-lg bg-gray-200 px-2 py-1" : "rounded-lg bg-gray-300 p-4";
 		return (
 			<code className={className} {...props}>
 				{children}
 			</code>
 		);
 	},
-	em: ({ children, ...props }: ComponentProps) => (
+	em: ({ children, node, ...props }: ComponentProps) => (
 		<em className="italic" {...props}>
 			{children}
 		</em>
 	),
-	strong: ({ children, ...props }: ComponentProps) => (
+	strong: ({ children, node, ...props }: ComponentProps) => (
 		<strong className="font-bold" {...props}>
 			{children}
 		</strong>
 	),
-	del: ({ children, ...props }: ComponentProps) => (
+	del: ({ children, node, ...props }: ComponentProps) => (
 		<del className="line-through" {...props}>
 			{children}
 		</del>
@@ -163,17 +210,40 @@ const components = {
 				type={type}
 				checked={checked}
 				disabled={disabled}
-				className="rounded border-2 border-gray-300 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-600"
+				className="rounded-lg border-2 border-gray-300 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-600"
 				{...rest}
 			/>
 		);
 	},
 };
+/* eslint-enable @typescript-eslint/no-unused-vars */
+
+const plugins = [
+	[
+		remarkToc,
+		{
+			heading: "📖Table of contents",
+		},
+	],
+] as PluggableList;
 
 const Resources: NextPage = () => {
 	return (
 		<App className="flex h-full flex-col gap-4 overflow-y-auto bg-gradient-to-b from-background2 to-background1 py-12">
-			<ReactMarkdown components={components} className="mx-auto w-full max-w-4xl px-4 sm:px-16">
+			<ReactMarkdown
+				components={components}
+				remarkPlugins={plugins}
+				rehypePlugins={[
+					rehypeSlug,
+					[
+						rehypeAutolinkHeadings,
+						{
+							behavior: "wrap",
+						},
+					],
+				]}
+				className="mx-auto w-full max-w-2xl px-4 sm:px-16"
+			>
 				{content}
 			</ReactMarkdown>
 		</App>

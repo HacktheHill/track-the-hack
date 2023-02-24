@@ -31,4 +31,8 @@ module.exports = withPWA({
 		});
 		return config;
 	},
+
+	images: {
+    		domains: ['cdn1.hackthehill.com'],
+  	},
 });

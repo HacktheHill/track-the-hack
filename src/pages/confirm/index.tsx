@@ -39,7 +39,7 @@ const Confirm: NextPage = () => {
 		if (query.error) setError(query.error.message);
 		if (mutation.error) setError(mutation.error.message);
 		if (query.data) {
-			if ((query.data.acceptanceExpiry ?? 0) < new Date()) {
+			if (query.data.confirmed === false && (query.data.acceptanceExpiry ?? 0) < new Date()) {
 				setError(t("acceptance-expired"));
 				return;
 			}
@@ -220,7 +220,7 @@ const Confirm: NextPage = () => {
 								name="terms"
 								checked={terms}
 								onChange={() => setTerms(!terms)}
-								className="h-4 w-4 appearance-none rounded border border-medium bg-transparent text-black after:block after:h-full after:w-full after:border-black after:p-0.5 after:leading-[calc(100%*1/2)] after:checked:content-check"
+								className="h-4 w-4 appearance-none rounded-lg border border-medium bg-transparent text-black after:block after:h-full after:w-full after:border-black after:p-0.5 after:leading-[calc(100%*1/2)] after:checked:content-check"
 							/>
 							<label htmlFor="terms" className="flex-1">
 								<Trans

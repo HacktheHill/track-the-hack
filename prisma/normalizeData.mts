@@ -6,67 +6,66 @@ async function main() {
 	await prisma.hackerInfo.updateMany({
 		where: {
 			university: {
-				equals: "Université d'Ottawa", 
+				equals: "Université d'Ottawa",
 			},
 		},
 		data: {
-			university: "University of Ottawa", 
+			university: "University of Ottawa",
 		},
 	});
 
 	await prisma.hackerInfo.updateMany({
 		where: {
 			university: {
-				equals: "Université Concordia", 
+				equals: "Université Concordia",
 			},
 		},
 		data: {
-			university: "Concordia University", 
-		},
-	});
-
-
-	await prisma.hackerInfo.updateMany({
-		where: {
-			studyLevel: {
-				equals: "Secondary / High School", 
-			},
-		},
-		data: {
-			university: "High School", 
+			university: "Concordia University",
 		},
 	});
 
 	await prisma.hackerInfo.updateMany({
 		where: {
 			studyLevel: {
-				equals: "I'm not currently a student", 
+				equals: "Secondary / High School",
 			},
 		},
 		data: {
-			university: null, 
+			university: "High School",
+		},
+	});
+
+	await prisma.hackerInfo.updateMany({
+		where: {
+			studyLevel: {
+				equals: "I'm not currently a student",
+			},
+		},
+		data: {
+			university: null,
 		},
 	});
 
 	await prisma.hackerInfo.updateMany({
 		where: {
 			university: {
-				contains: "Western"
-			 },
+				contains: "Western",
+			},
 		},
 		data: {
-			university: "Western University", 
+			university: "Western University",
 		},
 	});
 
 	await prisma.hackerInfo.updateMany({
 		where: {
 			university: {
-				contains: "Queen"
-			 },
+				contains: "Queen",
+			},
 		},
 		data: {
-			university: "Queen's University", 
+			university: "Queen's University",
 		},
 	});
 
@@ -75,19 +74,18 @@ async function main() {
 			OR: [
 				{
 					university: {
-						contains: "McGill"
-				 },
+						contains: "McGill",
+					},
 				},
 				{
 					university: {
-						contains: "Mcgill"
-				 },
-				}
-			]
-			
+						contains: "Mcgill",
+					},
+				},
+			],
 		},
 		data: {
-			university: "McGill University", 
+			university: "McGill University",
 		},
 	});
 
@@ -96,100 +94,97 @@ async function main() {
 			OR: [
 				{
 					university: {
-						contains: "Gap"
-				 },
+						contains: "Gap",
+					},
 				},
 				{
 					university: {
-						contains: "Je ne suis pas Etudiante"
-				 },
-				}
-			]
+						contains: "Je ne suis pas Etudiante",
+					},
+				},
+			],
 		},
 		data: {
-			university: null, 
+			university: null,
 		},
 	});
 
 	await prisma.hackerInfo.updateMany({
 		where: {
 			university: {
-				contains: "Conestoga"
-			 },
+				contains: "Conestoga",
+			},
 		},
 		data: {
-			university: "Conestoga College", 
+			university: "Conestoga College",
 		},
 	});
 
 	await prisma.hackerInfo.updateMany({
 		where: {
 			studyLevel: {
-				equals: "Premier cycle", 
+				equals: "Premier cycle",
 			},
 		},
 		data: {
-			studyLevel: "Undergraduate", 
+			studyLevel: "Undergraduate",
 		},
 	});
 
 	await prisma.hackerInfo.updateMany({
 		where: {
 			studyLevel: {
-				equals: "Supérieures", 
+				equals: "Supérieures",
 			},
 		},
 		data: {
-			studyLevel: "Graduate (Masters, PhD)", 
+			studyLevel: "Graduate (Masters, PhD)",
 		},
 	});
 
 	await prisma.hackerInfo.updateMany({
 		where: {
 			studyProgram: {
-				equals: "Génie logiciel", 
+				equals: "Génie logiciel",
 			},
 		},
 		data: {
-			studyProgram: "Software Engineering", 
+			studyProgram: "Software Engineering",
 		},
 	});
 
 	await prisma.hackerInfo.updateMany({
 		where: {
 			studyProgram: {
-				equals: "Génie informatique", 
+				equals: "Génie informatique",
 			},
 		},
 		data: {
-			studyProgram: "Computer Engineering", 
+			studyProgram: "Computer Engineering",
 		},
 	});
 
 	await prisma.hackerInfo.updateMany({
 		where: {
 			studyProgram: {
-				equals: "Génie électrique", 
+				equals: "Génie électrique",
 			},
 		},
 		data: {
-			studyProgram: "Electrical Engineering", 
+			studyProgram: "Electrical Engineering",
 		},
 	});
 
 	await prisma.hackerInfo.updateMany({
 		where: {
 			studyProgram: {
-				equals: "Droit", 
+				equals: "Droit",
 			},
 		},
 		data: {
-			studyProgram: "Law", 
+			studyProgram: "Law",
 		},
 	});
-
-
-
 }
 
 main()

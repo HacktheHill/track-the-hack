@@ -3,9 +3,10 @@ import type { GetStaticProps } from "next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { trpc } from "../../utils/api";
 import Hacker from "./hacker";
+import { debounce } from "../../utils/helpers";
 
 import App from "../../components/App";
 import Error from "../../components/Error";
@@ -22,8 +23,22 @@ const Hackers = () => {
 	const [id] = [router.query.id].flat();
 
 	const [search, setSearch] = useState("");
+	const [columns, setColumns] = useState(3);
 
 	const query = trpc.hackers.all.useQuery();
+
+	const updateColumns = useCallback(() => {
+		setColumns(Math.floor(window.innerWidth / 300));
+	}, []);
+
+	useEffect(() => {
+		const debouncedResizeHandler = debounce(updateColumns, 500);
+
+		window.addEventListener("resize", debouncedResizeHandler);
+		return () => {
+			window.removeEventListener("resize", debouncedResizeHandler);
+		};
+	}, [updateColumns]);
 
 	if (query.isLoading || query.data == null) {
 		return (
@@ -45,34 +60,53 @@ const Hackers = () => {
 		void router.push("/404");
 	}
 
-	const filteredQuery = search.length == 0? query.data
-	:
-	query.data.filter(
-		hacker =>
-			hacker.firstName.toLowerCase().includes(search.toLowerCase()) ||
-			hacker.lastName.toLowerCase().includes(search.toLowerCase()) ||
-			hacker.university?.toLowerCase().includes(search.toLowerCase()) ||
-			hacker.studyProgram?.toLowerCase().includes(search.toLowerCase()),
-	)
+	const filteredQuery =
+		search.length == 0
+			? query.data
+			: query.data.filter(
+					hacker =>
+						hacker.firstName.toLowerCase().includes(search.toLowerCase()) ||
+						hacker.lastName.toLowerCase().includes(search.toLowerCase()) ||
+						hacker.university?.toLowerCase().includes(search.toLowerCase()) ||
+						hacker.studyProgram?.toLowerCase().includes(search.toLowerCase()),
+			  );
 
 	return id ? (
 		<Hacker />
 	) : (
-		<App className="flex h-full flex-col gap-8 overflow-y-auto bg-gradient-to-b from-background2 to-background1 py-8 px-4 sm:px-20">
-			<Search setSearch={setSearch} />
-			<div className="to-mobile:mx-auto overflow-x-hidden grid h-full grid-cols-2 flex-col gap-8 sm:grid-cols-2 lg:grid-cols-3">
-				{filteredQuery
-					.map(hacker => (
-						<Card
-							key={hacker.id}
-							id={hacker.id}
-							firstName={hacker.firstName}
-							lastName={hacker.lastName}
-							university={hacker.university}
-							studyProgram={hacker.studyProgram}
-						/>
-					))}
+		<App
+			className="flex flex-col overflow-y-auto bg-gradient-to-b from-background2 to-background1"
+			integrated={true}
+		>
+			<div className="border-b border-dark bg-background1 pt-2 pb-4 shadow-navbar sm:px-20">
+				<Search setSearch={setSearch} />
 			</div>
+			<div
+				className="to-mobile:mx-auto grid h-fit flex-col gap-4 overflow-x-hidden py-4 sm:px-20"
+				style={{
+					gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+				}}
+			>
+				{filteredQuery.map(hacker => (
+					<Card
+						key={hacker.id}
+						id={hacker.id}
+						firstName={hacker.firstName}
+						lastName={hacker.lastName}
+						university={hacker.university}
+						studyProgram={hacker.studyProgram}
+					/>
+				))}
+			</div>
+			{filteredQuery.length == 0 && (
+				<div className="flex h-full w-full flex-col items-center justify-center gap-4 text-2xl text-dark">
+					<svg className="h-20 w-20" fill="currentColor" viewBox="0 0 24 24">
+						<path d="M10 0h24v24H0z" fill="none" />
+						<path d="M14 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+					</svg>
+					<p>No hackers found</p>
+				</div>
+			)}
 		</App>
 	);
 };
@@ -97,51 +131,33 @@ type SearchProps = {
 };
 
 const Search = ({ setSearch }: SearchProps) => {
-	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-		event.preventDefault();
-		const target = event.target as typeof event.target & {
-			search: { value: string };
-		};
-		setSearch(target.search.value);
-	};
-
 	return (
-		<div className="flex flex-col gap-3.5">
-			<form onSubmit={handleSubmit}>
-				<label className="sr-only mb-2 text-sm font-medium" htmlFor="search">Search</label>
-				<div className="relative">
-					<div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-						<svg
-							aria-hidden="true"
-							className="h-5 w-5"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-							xmlns="http://www.w3.org/2000/svg"
-						>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								strokeWidth="2"
-								d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-							></path>
-						</svg>
-					</div>
-					<input
-						type="search"
-						id="search"
-						name="search"
-						className="block w-full rounded-lg bg-background1 p-4 pl-10 text-sm"
-						placeholder="Search Hackers"
-					/>
-					<button
-						type="submit"
-						className="absolute right-2 bottom-2 rounded-lg bg-dark px-4 py-2 text-sm font-medium text-white hover:bg-medium focus:outline-none focus:ring-4"
-					>
-						Search
-					</button>
-				</div>
-			</form>
+		<div className="relative mx-auto flex max-w-xl flex-col">
+			<div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-dark">
+				<svg
+					aria-hidden="true"
+					className="h-5 w-5"
+					fill="none"
+					stroke="currentColor"
+					viewBox="0 0 24 24"
+					xmlns="http://www.w3.org/2000/svg"
+				>
+					<path
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						strokeWidth="2"
+						d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+					></path>
+				</svg>
+			</div>
+			<input
+				type="search"
+				id="search"
+				name="search"
+				className="block w-full rounded-lg bg-background2 p-4 pl-12 text-sm placeholder:text-dark"
+				placeholder="Search Hackers"
+				onChange={event => setSearch(event.target.value)}
+			/>
 		</div>
 	);
 };
