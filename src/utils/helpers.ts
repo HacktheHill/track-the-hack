@@ -56,3 +56,21 @@ export const hasRoles = (user: User, roles: Roles[]) => {
 	// If the user has at least one of the given roles, return true
 	return roles.some(role => user.role === role);
 };
+
+/**
+ * Debounce function
+ * @param func Function to debounce
+ * @param wait Time to wait before calling function
+ * @returns Debounced function
+ * @example
+ * const debounced = debounce(() => console.log("Hello"), 1000);
+ * debounced();
+ * // => "Hello" will be logged after 1000ms
+ */
+export const debounce = <F extends (...args: unknown[]) => unknown>(func: F, wait: number) => {
+	let timeout: ReturnType<typeof setTimeout>;
+	return (...args: Parameters<F>) => {
+		clearTimeout(timeout);
+		timeout = setTimeout(() => func(...args), wait);
+	};
+};
