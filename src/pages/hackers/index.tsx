@@ -45,33 +45,33 @@ const Hackers = () => {
 		void router.push("/404");
 	}
 
-	const filteredQuery = search.length == 0? query.data
-	:
-	query.data.filter(
-		hacker =>
-			hacker.firstName.toLowerCase().includes(search.toLowerCase()) ||
-			hacker.lastName.toLowerCase().includes(search.toLowerCase()) ||
-			hacker.university?.toLowerCase().includes(search.toLowerCase()) ||
-			hacker.studyProgram?.toLowerCase().includes(search.toLowerCase()),
-	)
+	const filteredQuery =
+		search.length == 0
+			? query.data
+			: query.data.filter(
+					hacker =>
+						hacker.firstName.toLowerCase().includes(search.toLowerCase()) ||
+						hacker.lastName.toLowerCase().includes(search.toLowerCase()) ||
+						hacker.university?.toLowerCase().includes(search.toLowerCase()) ||
+						hacker.studyProgram?.toLowerCase().includes(search.toLowerCase()),
+			  );
 
 	return id ? (
 		<Hacker />
 	) : (
 		<App className="flex h-full flex-col gap-8 overflow-y-auto bg-gradient-to-b from-background2 to-background1 py-8 px-4 sm:px-20">
 			<Search setSearch={setSearch} />
-			<div className="to-mobile:mx-auto overflow-x-hidden grid h-full grid-cols-2 flex-col gap-8 sm:grid-cols-2 lg:grid-cols-3">
-				{filteredQuery
-					.map(hacker => (
-						<Card
-							key={hacker.id}
-							id={hacker.id}
-							firstName={hacker.firstName}
-							lastName={hacker.lastName}
-							university={hacker.university}
-							studyProgram={hacker.studyProgram}
-						/>
-					))}
+			<div className="to-mobile:mx-auto grid h-full grid-cols-2 flex-col gap-8 overflow-x-hidden sm:grid-cols-2 lg:grid-cols-3">
+				{filteredQuery.map(hacker => (
+					<Card
+						key={hacker.id}
+						id={hacker.id}
+						firstName={hacker.firstName}
+						lastName={hacker.lastName}
+						university={hacker.university}
+						studyProgram={hacker.studyProgram}
+					/>
+				))}
 			</div>
 		</App>
 	);
@@ -108,7 +108,9 @@ const Search = ({ setSearch }: SearchProps) => {
 	return (
 		<div className="flex flex-col gap-3.5">
 			<form onSubmit={handleSubmit}>
-				<label className="sr-only mb-2 text-sm font-medium" htmlFor="search">Search</label>
+				<label className="sr-only mb-2 text-sm font-medium" htmlFor="search">
+					Search
+				</label>
 				<div className="relative">
 					<div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
 						<svg
