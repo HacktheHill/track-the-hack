@@ -173,7 +173,7 @@ const components = {
 const Resources: NextPage = () => {
 	return (
 		<App className="flex h-full flex-col gap-4 overflow-y-auto bg-gradient-to-b from-background2 to-background1 py-12">
-			<ReactMarkdown components={components} className="mx-auto w-full max-w-4xl px-4 sm:px-16">
+			<ReactMarkdown components={components} className="mx-auto w-full max-w-2xl px-4 sm:px-16">
 				{content}
 			</ReactMarkdown>
 		</App>
