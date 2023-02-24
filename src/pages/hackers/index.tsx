@@ -3,9 +3,10 @@ import type { GetStaticProps } from "next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { trpc } from "../../utils/api";
 import Hacker from "./hacker";
+import { debounce } from "../../utils/helpers";
 
 import App from "../../components/App";
 import Error from "../../components/Error";
@@ -22,8 +23,22 @@ const Hackers = () => {
 	const [id] = [router.query.id].flat();
 
 	const [search, setSearch] = useState("");
+	const [columns, setColumns] = useState(3);
 
 	const query = trpc.hackers.all.useQuery();
+
+	const updateColumns = useCallback(() => {
+		setColumns(Math.floor(window.innerWidth / 300));
+	}, []);
+
+	useEffect(() => {
+		const debouncedResizeHandler = debounce(updateColumns, 500);
+
+		window.addEventListener("resize", debouncedResizeHandler);
+		return () => {
+			window.removeEventListener("resize", debouncedResizeHandler);
+		};
+	}, [updateColumns]);
 
 	if (query.isLoading || query.data == null) {
 		return (
@@ -66,7 +81,12 @@ const Hackers = () => {
 			<div className="border-b border-dark bg-background1 pt-2 pb-4 shadow-navbar sm:px-20">
 				<Search setSearch={setSearch} />
 			</div>
-			<div className="to-mobile:mx-auto grid h-fit flex-col gap-4 overflow-x-hidden py-4 sm:px-20">
+			<div
+				className="to-mobile:mx-auto grid h-fit flex-col gap-4 overflow-x-hidden py-4 sm:px-20"
+				style={{
+					gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+				}}
+			>
 				{filteredQuery.map(hacker => (
 					<Card
 						key={hacker.id}
