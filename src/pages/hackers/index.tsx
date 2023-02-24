@@ -59,9 +59,13 @@ const Hackers = () => {
 	return id ? (
 		<Hacker />
 	) : (
-		<App className="flex h-full flex-col gap-8 overflow-y-auto bg-gradient-to-b from-background2 to-background1 py-8 px-4 sm:px-20">
-			<Search setSearch={setSearch} />
-			<div className="to-mobile:mx-auto grid h-full grid-cols-2 flex-col gap-8 overflow-x-hidden sm:grid-cols-2 lg:grid-cols-3">
+		<App className="flex flex-col overflow-y-auto bg-gradient-to-b from-background2 to-background1 w-full py-8" integrated={true}>
+			
+			<div className="col-span-2 lg:col-span-3 sticky top-0 w-full border-b border-dark bg-transparent sm:px-20 pt-2 pb-10 shadow-navbar">
+				<Search setSearch={setSearch} />
+			</div>
+			<div className="to-mobile:mx-auto grid h-full grid-cols-2 flex-col gap-8 overflow-x-hidden sm:grid-cols-2 lg:grid-cols-3 sm:px-20 py-8">
+			
 				{filteredQuery.map(hacker => (
 					<Card
 						key={hacker.id}
