@@ -3,8 +3,36 @@
 Welcome to Hack the Hill 2023, here you will find many useful resources to help you complete your project and information about the hackathon. Happy hacking!
 
 ## 📖Table of contents
+- [📖Table of contents](#📖table-of-contents)
+  - [📄Legal Documents](#📄legal-documents)
+  - [📱Socials](#📱socials)
+  - [📣Contact us](#📣contact-us)
+  - [🗓️Schedule and 🗺️Event Venue Map](#🗓️schedule-and-️event-venue-map)
+- [🏅Competition Information](#🏅competition-information)
+  - [💭Themes](#💭themes)
+    - [🗒️“fill in the blank” Management](#🗒️fill-in-the-blank-management)
+    - [🧑‍🏫Education](#🧑education)
+  - [🏅Challenges (and Prizes!)](#🏅challenges-and-prizes)
+    - [Ciena Sponsored Challenge](#ciena-sponsored-challenge)
+    - [Game Jam - CEED Challenge](#game-jam---ceed-challenge)
+    - [Canadian Tire Sponsored Challenge](#canadian-tire-sponsored-challenge)
+    - [Best User Experience (UX)](#best-user-experience-ux)
+    - [Best Developer Experience (DX)](#best-developer-experience-dx)
+    - [Best Cybersecurity Project](#best-cybersecurity-project)
+  - [📋Judging](#📋judging)
+  - [📃 Judging procedure](#📃-judging-procedure)
+  - [👀Judging criteria](#👀judging-criteria)
+  - [⏰Project Submission](#⏰project-submission)
+    - [📏Rules](#📏rules)
+    - [🎥(Optional) Video](#🎥optional-video)
+    - [⌨️Submitting on Devpost](#️️submitting-on-devpost)
+  - [🙋‍♂️Getting Help with Tech Issues🙋‍♀️](#️️getting-help-with-tech-issues️)
+  - [👩‍💻Hackathon project resources🧑‍💻](#💻hackathon-project-resources)
+    - [🖲️Hardware Resources](#️️hardware-resources)
+    - [🌐How to use Github](#🌐how-to-use-github)
+      - [📚Resources](#📚resources)
 
-## 📄Legal Documents
+## 📄Legal Documents 
 
 ## 📱Socials
 
