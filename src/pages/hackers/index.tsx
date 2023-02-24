@@ -97,53 +97,33 @@ type SearchProps = {
 };
 
 const Search = ({ setSearch }: SearchProps) => {
-	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-		event.preventDefault();
-		const target = event.target as typeof event.target & {
-			search: { value: string };
-		};
-		setSearch(target.search.value);
-	};
-
 	return (
-		<div className="flex flex-col gap-3.5">
-			<form onSubmit={handleSubmit}>
-				<label className="sr-only mb-2 text-sm font-medium" htmlFor="search">
-					Search
-				</label>
-				<div className="relative">
-					<div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-						<svg
-							aria-hidden="true"
-							className="h-5 w-5"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-							xmlns="http://www.w3.org/2000/svg"
-						>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								strokeWidth="2"
-								d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-							></path>
-						</svg>
-					</div>
-					<input
-						type="search"
-						id="search"
-						name="search"
-						className="block w-full rounded-lg bg-background1 p-4 pl-10 text-sm"
-						placeholder="Search Hackers"
-					/>
-					<button
-						type="submit"
-						className="absolute right-2 bottom-2 rounded-lg bg-dark px-4 py-2 text-sm font-medium text-white hover:bg-medium focus:outline-none focus:ring-4"
-					>
-						Search
-					</button>
-				</div>
-			</form>
+		<div className="relative mx-auto flex max-w-xl flex-col">
+			<div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-dark">
+				<svg
+					aria-hidden="true"
+					className="h-5 w-5"
+					fill="none"
+					stroke="currentColor"
+					viewBox="0 0 24 24"
+					xmlns="http://www.w3.org/2000/svg"
+				>
+					<path
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						strokeWidth="2"
+						d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+					></path>
+				</svg>
+			</div>
+			<input
+				type="search"
+				id="search"
+				name="search"
+				className="block w-full rounded-lg bg-background2 p-4 pl-12 text-sm placeholder:text-dark"
+				placeholder="Search Hackers"
+				onChange={event => setSearch(event.target.value)}
+			/>
 		</div>
 	);
 };
