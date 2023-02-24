@@ -39,7 +39,7 @@ const Confirm: NextPage = () => {
 		if (query.error) setError(query.error.message);
 		if (mutation.error) setError(mutation.error.message);
 		if (query.data) {
-			if ((query.data.acceptanceExpiry ?? 0) < new Date()) {
+			if (query.data.confirmed === false && (query.data.acceptanceExpiry ?? 0) < new Date()) {
 				setError(t("acceptance-expired"));
 				return;
 			}
