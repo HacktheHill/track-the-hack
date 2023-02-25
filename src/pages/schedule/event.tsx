@@ -79,12 +79,14 @@ const Event = () => {
 			<div className="flex flex-col font-coolvetica text-dark">
 				<h1 className="text-4xl">{name}</h1>
 				<p className="text-lg">
-					{start.toLocaleTimeString(dateLocale, {
+					{start.toLocaleDateString(dateLocale, {
+						weekday: "long",
 						hour: "numeric",
 						minute: "numeric",
 					})}
 					{" - "}
-					{end.toLocaleTimeString(dateLocale, {
+					{end.toLocaleDateString(dateLocale, {
+						weekday: "long",
 						hour: "numeric",
 						minute: "numeric",
 					})}
