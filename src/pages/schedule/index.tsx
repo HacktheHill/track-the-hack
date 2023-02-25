@@ -54,68 +54,87 @@ const Schedule: NextPage = () => {
 
 	let index = 0;
 
+	const events = query.data
+		?.filter(event => eventTypes[event.type] === tab || tab === eventTypes.ALL)
+		.reduce((acc, event) => {
+			if (event.end.getDate() === event.start.getDate()) {
+				acc.push(event);
+			} else {
+				const start = new Date(event.start);
+				const end = new Date(event.end);
+				const days = end.getDate() - start.getDate();
+				for (let i = 0; i <= days; i++) {
+					const newEvent = {
+						...event,
+						start: new Date(start.getFullYear(), start.getMonth(), start.getDate() + i),
+						end: new Date(end.getFullYear(), end.getMonth(), end.getDate() - days + i, 23, 59, 59),
+					};
+					acc.push(newEvent);
+				}
+			}
+			return acc;
+		}, [] as Event[])
+		.sort((a, b) => {
+			if (a.start.getTime() === b.start.getTime()) {
+				return a.end.getTime() - b.end.getTime();
+			}
+			return a.start.getTime() - b.start.getTime();
+		})
+		.reduce((acc, event, i, array) => {
+			if (array[i]?.start.getDate() === array[i - 1]?.start.getDate()) {
+				acc[acc.length - 1]?.push(event);
+			} else {
+				acc.push([event]);
+			}
+			return acc;
+		}, [] as Event[][]);
+
 	return (
 		<App
-			className="flex h-full flex-col items-center bg-gradient-to-b from-background2 to-background1"
+			className="flex h-0 flex-col items-center bg-gradient-to-b from-background2 to-background1"
 			integrated={true}
 		>
 			<Tabs tab={tab} setTab={setTab} />
 			<div className="w-full overflow-y-auto p-4 mobile:px-0">
 				<div className="mx-auto flex max-w-2xl flex-col gap-4">
-					{query.data
-						?.filter(event => eventTypes[event.type] === tab || tab === eventTypes.ALL)
-						.sort((a, b) => {
-							if (a.start.getTime() === b.start.getTime()) {
-								return a.end.getTime() - b.end.getTime();
-							}
-							return a.start.getTime() - b.start.getTime();
-						})
-						.reduce((acc, event, i, array) => {
-							if (array[i]?.start.getDate() === array[i - 1]?.start.getDate()) {
-								acc[acc.length - 1]?.push(event);
-							} else {
-								acc.push([event]);
-							}
-							return acc;
-						}, [] as Event[][])
-						.map((event, i) => (
-							<div key={i} className="flex gap-4">
-								<div className="grid basis-1/3 place-content-center rounded-lg bg-dark/50 p-4 font-coolvetica text-2xl text-white">
-									{event[0]?.start.toLocaleDateString(dateLocale, {
-										month: "short",
-										day: "numeric",
-									})}
-								</div>
-								<div className="flex w-full flex-col gap-4">
-									{event.map(event => {
-										index++;
-										return (
-											<Link
-												key={event.id}
-												href={`/schedule/event?id=${event.id}`}
-												className={`flex flex-col items-center justify-center gap-2 rounded-lg p-3 font-coolvetica text-dark ${
-													index % 2 === 0 ? "bg-accent1" : "bg-accent2"
-												}`}
-											>
-												<h1 className="text-center text-xl">{event.name}</h1>
-												<p className="text-center leading-3">
-													{event.start.toLocaleTimeString(dateLocale, {
-														hour: "numeric",
-														minute: "numeric",
-													})}
-													{" - "}
-													{event.end.toLocaleTimeString(dateLocale, {
-														hour: "numeric",
-														minute: "numeric",
-													})}
-												</p>
-												<p>{event.room}</p>
-											</Link>
-										);
-									})}
-								</div>
+					{events.map((event, i) => (
+						<div key={i} className="flex gap-4">
+							<div className="grid basis-1/3 place-content-center rounded-lg bg-dark/50 p-4 font-coolvetica text-2xl text-white">
+								{event[0]?.start.toLocaleDateString(dateLocale, {
+									month: "short",
+									day: "numeric",
+								})}
 							</div>
-						))}
+							<div className="flex w-full flex-col gap-4">
+								{event.map(event => {
+									index++;
+									return (
+										<Link
+											key={event.id}
+											href={`/schedule/event?id=${event.id}`}
+											className={`flex flex-col items-center justify-center gap-2 rounded-lg p-3 font-coolvetica text-dark ${
+												index % 2 === 0 ? "bg-accent1" : "bg-accent2"
+											}`}
+										>
+											<h1 className="text-center text-xl">{event.name}</h1>
+											<p className="text-center leading-3">
+												{event.start.toLocaleTimeString(dateLocale, {
+													hour: "numeric",
+													minute: "numeric",
+												})}
+												{" - "}
+												{event.end.toLocaleTimeString(dateLocale, {
+													hour: "numeric",
+													minute: "numeric",
+												})}
+											</p>
+											<p>{event.room}</p>
+										</Link>
+									);
+								})}
+							</div>
+						</div>
+					))}
 				</div>
 			</div>
 		</App>
