@@ -2,43 +2,15 @@
 
 Welcome to Hack the Hill 2023, here you will find many useful resources to help you complete your project and information about the hackathon. Happy hacking!
 
-## 📖Table of contents
-- [📖Table of contents](#📖table-of-contents)
-  - [📄Legal Documents](#📄legal-documents)
-  - [📱Socials](#📱socials)
-  - [📣Contact us](#📣contact-us)
-  - [🗓️Schedule and 🗺️Event Venue Map](#🗓️schedule-and-️event-venue-map)
-- [🏅Competition Information](#🏅competition-information)
-  - [💭Themes](#💭themes)
-    - [🗒️“fill in the blank” Management](#🗒️fill-in-the-blank-management)
-    - [🧑‍🏫Education](#🧑education)
-  - [🏅Challenges (and Prizes!)](#🏅challenges-and-prizes)
-    - [Ciena Sponsored Challenge](#ciena-sponsored-challenge)
-    - [Game Jam - CEED Challenge](#game-jam---ceed-challenge)
-    - [Canadian Tire Sponsored Challenge](#canadian-tire-sponsored-challenge)
-    - [Best User Experience (UX)](#best-user-experience-ux)
-    - [Best Developer Experience (DX)](#best-developer-experience-dx)
-    - [Best Cybersecurity Project](#best-cybersecurity-project)
-  - [📋Judging](#📋judging)
-  - [📃 Judging procedure](#📃-judging-procedure)
-  - [👀Judging criteria](#👀judging-criteria)
-  - [⏰Project Submission](#⏰project-submission)
-    - [📏Rules](#📏rules)
-    - [🎥(Optional) Video](#🎥optional-video)
-    - [⌨️Submitting on Devpost](#️️submitting-on-devpost)
-  - [🙋‍♂️Getting Help with Tech Issues🙋‍♀️](#️️getting-help-with-tech-issues️)
-  - [👩‍💻Hackathon project resources🧑‍💻](#💻hackathon-project-resources)
-    - [🖲️Hardware Resources](#️️hardware-resources)
-    - [🌐How to use Github](#🌐how-to-use-github)
-      - [📚Resources](#📚resources)
+## 📖 Table of contents
 
-## 📄Legal Documents 
+## 📄 Legal Documents
 
-## 📱Socials
+## 📱 Socials
 
 Discord:
 
-Twitch
+Twitch:
 
 Devpost:
 
@@ -46,51 +18,48 @@ Twitter:
 
 Instagram:
 
-## 📣Contact us
+## 📣 Contact us
 
 Email: [logistics@hackthehill.com](mailto:logistics@hackthehill.com)
 
-## 🗓️Schedule and 🗺️Event Venue Map
+## 🗺️ Event Venue Map
 
 Events will also be live-streamed on our Twitch channel!
 
 [CRX Guide](https://www.notion.so/CRX-Guide-55152b2e9f3a4bb3b2ba02abb3881f54)
 
-# 🏅Competition Information
+## 🏅 Competition Information
 
 Please read the rules to ensure your project and team is eligible to compete.
 
 [Rules](https://www.notion.so/Rules-c03afed8660d4eb28d26beeaa8269597)
 
-## 💭Themes
-
-Hack the Hill 2023 has
-
-### 🗒️“fill in the blank” Management
-
-### 🧑‍🏫Education
-
-Improve the method with a subject is taught using technology
-
-## 🏅Challenges (and Prizes!)
+## 🏅 Challenges (and Prizes!)
 
 You can participate in one or more challenges. Prizes will be awarded to one project that wins the challenge!
 
-### Ciena Sponsored Challenge
+### Ciena Sponsored Challenge - $1000 Prize
 
-### Game Jam - CEED Challenge
+### E-Commerce Experience Challenge Presented by Canadian Tire - $1000 Prize
 
-### Canadian Tire Sponsored Challenge
+<To be Confirmed>
 
-### Best User Experience (UX)
+Challenge Statement: How can the online retail experience be enhanced for both the customer and the business using hyper-personalization or gamification?
+Challenge description: Canadian Tire and its subsidiaries (e.g. Marks, Sport Chek) sell a variety of different goods from power tools to sports equipment through their online platform. Build a solution that leverages gamification and hyper-personalization to improve the customer experience in online retail.
+
+### Game Jam Challenge Presented by Maker Jam - $1000 Prize
+
+### Maker Con Challenge Presented by Maker Jam - $1000 Prize
+
+### Best User Experience (UX) - $300 Prize
 
 -   New products should be accessible and intuitive to use for all kinds of people. User experience does not only have to be limited to graphical user interfaces. The form factor, other sensory information (audio, haptic, etc), and accessibility will also be considered when picking the best UX project. Any project is eligible for this challenge!
 
-### Best Developer Experience (DX)
+### Best Developer Experience (DX) - $300 Prize
 
 -   Improve the software development process with an add-on, extension, game engine, or any tool to make a software developer’s life easier and more efficient!
 
-### Best Cybersecurity Project
+### Best Cybersecurity Project - $400 Prize
 
 -   To compete in this challenge your project can utilize cybersecurity principles, educate users on cybersecurity topics, or improve the security of existing systems. In general, anything relating to cybersecurity can compete in this challenge!
 
@@ -105,27 +74,27 @@ Judging will be done live. You have the choice of a live demonstration or showin
 -   In-person judging will be done at the CRX venue, rooms will be posted on the schedule. Please wait quietly outside your designated room 5 minutes prior to your assigned timeslot. There will be staff coordinating the queue for judging.
 -   Online judging will be done on Zoom, the link can be found on Discord. Each team will be assigned a breakout room number. Please join the meeting 5 minutes earlier, with your name displaying “FIRSTNAME LASTNAME [DEVPOST PROJECT NAME]”. A staff member will move you to the correct breakout room.
 
-## 👀Judging criteria
+## 👀 Judging criteria
 
 [Judging Criteria](https://www.notion.so/Judging-Criteria-9f26206117ff4e0d9bce4a8070c8f277)
 
-## ⏰Project Submission
+## ⏰ Project Submission
 
 Projects will be submitted on Devpost for all projects, both in-person and online. Your Devpost submission will be viewed by judges and will be made public for everyone to view. This section contains all the information you need to ensure your submission on Devpost meets the requirements. So it is very important that you read this section carefully!
 
-### 📏Rules
+### 📏 Rules
 
 Please make sure your submission follows the rules below:
 
 -   Your team must submit your project to Devpost by **9 am EST on Sunday, March 5th** to be considered for judging. Late submissions will not be accepted
 -   When submitting your project, you can select as many "themes" and “challenges” as you like to be considered for the prize.
--   You must include a link to your Github repository. Your Github commits will be reviewed during judging to ensure the project was created during the hackathon.
+-   You must include a link to your GitHub repository. Your GitHub commits will be reviewed during judging to ensure the project was created during the hackathon.
 -   Your teammates must also be added to the Devpost submission
--   You must indicate your team’s status (INPERSON, VIRTUAL, HYBRID) in the Devpost
+-   You must indicate your team’s status (IN_PERSON, VIRTUAL, HYBRID) in the Devpost
 
-### 🎥(Optional) Video
+### 🎥 (Optional) Video
 
-Teams can submit a video presentation **under 4 minutes**. Your video will be used for judging if you are unavailable to attend the live judging session. Your video can be put on any video-sharing platform including Youtube, Vimeo, Google Drive, etc. Please make sure your video is public.
+Teams can submit a video presentation **under 4 minutes**. Your video will be used for judging if you are unavailable to attend the live judging session. Your video can be put on any video-sharing platform including YouTube, Vimeo, Google Drive, etc. Please make sure your video is public.
 
 Your video can include the following, but are not limited to:
 
@@ -135,7 +104,7 @@ Your video can include the following, but are not limited to:
 
 Optionally your video can be used to present your project to the judges if non of your team is unavailable to present a live presentation.
 
-### ⌨️Submitting on Devpost
+### ⌨️ Submitting on Devpost
 
 [How to enter a submission](https://help.devpost.com/hc/en-us/articles/360054999651-How-to-enter-a-submission)
 
@@ -143,33 +112,33 @@ Watch the video if this is your first time submitting on Devpost!
 
 [https://www.youtube.com/watch?v=vCa7QFFthfU](https://www.youtube.com/watch?v=vCa7QFFthfU)
 
-## 🙋‍♂️Getting Help with Tech Issues🙋‍♀️
+## 🙋‍♂️ Getting Help with Tech Issues 🙋‍♀️
 
 Stuck on a tech issue that you can’t seem to find the right answer on Stackoverflow? We have plenty of mentors to help you overcome those technical hurdles.
 
 To get help online, send a message in #hacking-help and one of our mentors will reach out to help you find a solution to your problem.
 
-To get help in-person, go to CRX`<ROOM NO.>` or ask any of the Hack the Hill staff.
+To get help in-person, go to CRX<ROOM NO.> or ask any of the Hack the Hill staff.
 
-## 👩‍💻Hackathon project resources🧑‍💻
+# 👩‍💻 Hackathon project resources 🧑‍💻
 
-### 🖲️Hardware Resources
+## 🖲️ Hardware Resources
 
 Need some help with using the Pi Pico or ESP32 for your project? We have put together a guide with external resources to get you started!
 
-[Hardware Guide](Hacker%20Info%20-%20Hack%20the%20Hill%205f4ca6caed674004bd5e864f78ddde0f/Hardware%20Guide%208cbf87eecfcf4a5ab95c51a30b9fca16.md)
+[Hardware Guide](https://www.notion.so/Hardware-Guide-8cbf87eecfcf4a5ab95c51a30b9fca16)
 
-### 🌐How to use Github
+## 🌐 How to use GitHub
 
-[Github.com](http://Github.com) must be used to store all your team’s projects. Judges and anyone interested in your project will be viewing the code you store in your Github repository. Github allows everyone to collaborate on the same code by providing version control (similar to viewing edit history in Google Docs). It can help you manage and keep track of the code that your team writes.
+[github.com](http://github.com/) must be used to store all your team’s projects. Judges and anyone interested in your project will be viewing the code you store in your GitHub repository. GitHub allows everyone to collaborate on the same code by providing version control (similar to viewing edit history in Google Docs). It can help you manage and keep track of the code that your team writes.
 
-#### 📚Resources
+### 📚 Resources
 
-You can get started by watching this 3-minute video
+You can get started by watching this 3-minute video:
 
 -   [https://www.youtube.com/watch?v=noZnOSpcjYY&ab_channel=GitHubTraining%26Guides](https://www.youtube.com/watch?v=noZnOSpcjYY&ab_channel=GitHubTraining%26Guides)
 
-Here are additional resources
+Here are additional resources:
 
 -   [https://docs.github.com/en/get-started/quickstart/hello-world](https://docs.github.com/en/get-started/quickstart/hello-world)
 -   [https://docs.github.com/en/get-started](https://docs.github.com/en/get-started)
