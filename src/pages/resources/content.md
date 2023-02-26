@@ -6,6 +6,8 @@ Welcome to Hack the Hill 2023, here you will find many useful resources to help 
 
 ## 📄 Legal Documents
 
+[Privacy Policy for hackers (Canada and outside Canada)](https://s3.us-west-2.amazonaws.com/secure.notion-static.com/16ae5df5-1f38-45cc-b720-8f6e9a3ce46d/HTH_PrivacyPolicy_Combined.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAT73L2G45EIPT3X45%2F20230226%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20230226T214705Z&X-Amz-Expires=86400&X-Amz-Signature=5b3883a366875a9dbf08f0f9cf323cda51dd9c8f38eac84bc653c34b2c4bfe55&X-Amz-SignedHeaders=host&response-content-disposition=filename%3D%22HTH_PrivacyPolicy_Combined.pdf%22&x-id=GetObject)
+
 ## 📱 Socials
 
 Discord:
