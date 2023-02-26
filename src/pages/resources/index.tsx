@@ -222,7 +222,7 @@ const plugins = [
 	[
 		remarkToc,
 		{
-			heading: "📖Table of contents",
+			heading: "📖 Table of contents",
 		},
 	],
 ] as PluggableList;
