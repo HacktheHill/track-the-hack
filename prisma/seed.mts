@@ -4,7 +4,8 @@ import * as fs from "fs";
 import { z } from "zod";
 const prisma = new PrismaClient();
 
-const ACCEPTANCE_EXPIRY = new Date(2023, 1, 19, 0, 0, 0); /* 2023-02-19 */
+/* 2023-03-01 */
+const ACCEPTANCE_EXPIRY = new Date(2023, 2, 1, 0, 0, 0, 0);
 
 // List of submission IDs that are allowed to be inserted (we can't insert everything because stuff has been removed and modified since and we don't want to mess up the database)
 const WHITE_LIST = [] as string[];
@@ -75,7 +76,7 @@ async function main() {
 					.nullable()
 					.parse(NaNToNull(parseInt(row.graduationYear ?? ""))),
 				location: row.attendanceLocation,
-				attendancelocation: undefined,
+				attendanceLocation: undefined,
 				attendanceType: AttendanceType[row.attendanceType as keyof typeof AttendanceType],
 				transportationRequired: z.boolean().parse(parseBool(row.transportationRequired ?? "")),
 				shirtSize: ShirtSize[row.shirtSize as keyof typeof ShirtSize],
@@ -151,7 +152,7 @@ async function main() {
 	});
 	await emails;
 
-	// Read from a CSV file containing the online-only list
+	/* // Read from a CSV file containing the online-only list
 	const online = csv({
 		headers: ["id", "name", "email", "language"],
 		trim: true,
@@ -185,7 +186,7 @@ async function main() {
 			console.error(row, error);
 		}
 	});
-	await online;
+	await online; */
 }
 
 main()
