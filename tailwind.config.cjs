@@ -20,8 +20,10 @@ module.exports = {
 				background1: "#BFCFF6",
 				background2: "#90A1D4",
 				background3: "#B2CEED",
-				accent1: "#E9D9F2",
-				accent2: "#ABEFFB",
+				accent1: "#FFFFFF",
+				accent2: "#BFCFF6",
+				accent3: "#5C71AD",
+				accent4: "#3B4779"
 			},
 			content: {
 				check: `url(data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20512%20512%22%3E%3Cpath%20d%3D%22M470.6%20105.4c12.5%2012.5%2012.5%2032.8%200%2045.3l-256%20256c-12.5%2012.5-32.8%2012.5-45.3%200l-128-128c-12.5-12.5-12.5-32.8%200-45.3s32.8-12.5%2045.3%200L192%20338.7%20425.4%20105.4c12.5-12.5%2032.8-12.5%2045.3%200z%22%2F%3E%3C%2Fsvg%3E)`,
