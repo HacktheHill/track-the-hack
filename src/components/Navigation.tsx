@@ -69,6 +69,9 @@ const BottomMenu = () => {
 			<Link href="/schedule">
 				<Image priority src="/assets/schedule.svg" height={32} width={32} alt="Schedule" />
 			</Link>
+			<Link href="/maps">
+				<Image priority src="/assets/maps.svg" height={32} width={32} alt="Maps" />
+			</Link>
 			<Link href="/resources">
 				<Image priority src="/assets/resources.svg" height={32} width={32} alt="Resources" />
 			</Link>
