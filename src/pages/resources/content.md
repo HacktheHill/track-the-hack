@@ -8,15 +8,19 @@ Welcome to Hack the Hill 2023, here you will find many useful resources to help 
 
 ## 📱 Socials
 
-Discord:
+Discord: [discord.gg/S5DgEvcfh4](https://discord.gg/S5DgEvcfh4)
 
-Twitch:
+Twitch: [twitch.tv/hackthehill](https://twitch.tv/hackthehill)
 
-Devpost:
+Devpost: []()
 
-Twitter:
+Twitter: [twitter.com/hackthehill_](https://twitter.com/hackthehill_)
 
-Instagram:
+Instagram: [instagram.com/hackthehill/](https://www.instagram.com/hackthehill/)
+
+YouTube: [youtube.com/@hackthehill](https://www.instagram.com/hackthehill/)
+
+LinkedIn: [linkedin.com/company/hackthehill/](https://www.linkedin.com/company/hackthehill)
 
 ## 📣 Contact us
 
