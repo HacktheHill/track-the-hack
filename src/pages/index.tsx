@@ -19,15 +19,15 @@ const Home: NextPage = () => {
 	const { data: sessionData } = useSession();
 
 	return (
-		<App className="relative flex flex-col items-center justify-center gap-2 bg-gradient1 px-16 py-12 sm:gap-8">
+		<App className="relative flex flex-col items-center justify-center gap-2 overflow-clip bg-gradient1 px-8 py-6 sm:gap-8 short:px-16 short:py-12">
 			<Weather count={25} type="snowflake" />
 			<Weather count={3} type="cloud" />
 			<Image priority className="z-10" src="/assets/mascot-waving.svg" alt="Mascot" width={225} height={225} />
-			<p className="z-10 text-center text-2xl font-bold">{t("welcome")}</p>
-			<p className="text-l z-10 max-w-xl text-center">{t("description")}</p>
+			<p className="z-10 text-center text-lg font-bold short:text-2xl">{t("welcome")}</p>
+			<p className="z-10 max-w-xl text-center text-sm short:text-base">{t("description")}</p>
 			{!sessionData && (
 				<button
-					className="z-10 whitespace-nowrap rounded-lg border border-dark bg-background1 py-2 px-4 font-coolvetica text-dark transition-colors hover:bg-background3"
+					className="z-10 whitespace-nowrap rounded-lg border border-dark bg-background1 py-2 px-4 font-coolvetica text-sm text-dark transition-colors hover:bg-background3 short:text-base"
 					onClick={() => void signIn()}
 				>
 					{t("get-started")}
