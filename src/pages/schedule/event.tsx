@@ -53,7 +53,7 @@ const Event = () => {
 
 	return (
 		<App
-			className="relative flex h-full w-full flex-col items-center justify-start gap-8 bg-background1 p-8 text-center"
+			className="relative flex h-full w-full flex-col items-center justify-start gap-8 overflow-y-auto bg-background1 p-8 text-center"
 			integrated={true}
 		>
 			<Link key={id} href="/schedule" className="absolute right-4 top-0 text-dark hover:text-light">
@@ -62,16 +62,16 @@ const Event = () => {
 					<path
 						d="M24 0L0 24"
 						stroke="currentColor"
-						stroke-width="2"
-						stroke-linecap="round"
-						stroke-linejoin="round"
+						strokeWidth="2"
+						strokeLinecap="round"
+						strokeLinejoin="round"
 					></path>
 					<path
 						d="M0 0L24 24"
 						stroke="currentColor"
-						stroke-width="2"
-						stroke-linecap="round"
-						stroke-linejoin="round"
+						strokeWidth="2"
+						strokeLinecap="round"
+						strokeLinejoin="round"
 					></path>
 				</svg>
 			</Link>
@@ -91,7 +91,9 @@ const Event = () => {
 						minute: "numeric",
 					})}
 				</p>
-				<p className="text-md">{room}</p>
+				<h3 className="text-md">{room}</h3>
+				{type !== "ALL" && <h3 className="text-md">{eventTypes[type]}</h3>}
+				<h3 className="text-sm">{host}</h3>
 			</div>
 
 			{image && (
@@ -101,9 +103,14 @@ const Event = () => {
 			)}
 
 			<div className="flex flex-col font-coolvetica">
-				<h1 className="text-xl">{description}</h1>
-				<p className="text-md">{type}</p>
-				<p className="text-sm">{host}</p>
+				<p className="text-xl">
+					{description.split("\\n").map((line, i, arr) => (
+						<>
+							{line}
+							{arr.length - 1 !== i && <br />}
+						</>
+					))}
+				</p>
 			</div>
 
 			{tiktok && (
