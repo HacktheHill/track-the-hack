@@ -1,5 +1,6 @@
 import type { Event } from "@prisma/client";
 import type { GetStaticProps, NextPage } from "next";
+import { EventType } from "@prisma/client";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -50,6 +51,21 @@ const Schedule: NextPage = () => {
 
 	if (query.data == null) {
 		void router.push("/404");
+	}
+
+	const eventColor = (eventType: string) => {
+		switch (eventType) {
+			case EventType.WORKSHOP:
+				return "bg-accent1 text-dark";
+			case EventType.CAREER_FAIR:
+				return "bg-accent3 text-white";
+			case EventType.FOOD:
+				return "bg-accent2 text-dark";
+			case EventType.SOCIAL:
+				return "bg-accent4 text-white";
+			default:
+				return "bg-accent1 text-dark";
+		} 
 	}
 
 	let index = 0;
@@ -118,8 +134,8 @@ const Schedule: NextPage = () => {
 										<Link
 											key={event.id}
 											href={`/schedule/event?id=${event.id}`}
-											className={`flex flex-col items-center justify-center gap-2 rounded-lg p-3 font-coolvetica text-dark ${
-												index % 2 === 0 ? "bg-accent1" : "bg-accent2"
+											className={`flex flex-col items-center justify-center gap-2 rounded-lg p-3 font-coolvetica ${
+												eventColor(event.type)
 											}`}
 										>
 											<h1 className="text-center text-xl">{event.name}</h1>
