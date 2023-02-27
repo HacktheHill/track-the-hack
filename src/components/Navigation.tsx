@@ -89,10 +89,7 @@ const Links = () => {
 				Home
 			</Link>
 			{sessionData?.user && (
-				<Link
-					href="/qr"
-					className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
-				>
+				<Link href="/qr" className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light">
 					QR
 				</Link>
 			)}
@@ -101,6 +98,9 @@ const Links = () => {
 				className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
 			>
 				Schedule
+			</Link>
+			<Link href="/maps" className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light">
+				Maps
 			</Link>
 			<Link
 				href="/resources"
