@@ -82,8 +82,14 @@ const Schedule: NextPage = () => {
 				for (let i = 0; i <= days; i++) {
 					const newEvent = {
 						...event,
-						start: new Date(start.getFullYear(), start.getMonth(), start.getDate() + i),
-						end: new Date(end.getFullYear(), end.getMonth(), end.getDate() - days + i, 23, 59, 59),
+						start:
+							i === 0
+								? event.start
+								: new Date(start.getFullYear(), start.getMonth(), start.getDate() + i, 0, 0, 0),
+						end:
+							i === days
+								? event.end
+								: new Date(end.getFullYear(), end.getMonth(), end.getDate() + i, 24, 0, 0),
 					};
 					acc.push(newEvent);
 				}
