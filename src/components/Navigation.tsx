@@ -42,7 +42,7 @@ const Navbar = ({ integrated }: NavbarProps) => {
 			</div>
 
 			<button
-				className="right-4 ml-auto flex whitespace-nowrap rounded-lg border border-dark bg-background1 py-2 px-4 font-coolvetica text-dark transition-colors hover:bg-background3 logo-center:absolute sm:visible sm:mr-0"
+				className="right-4 ml-auto flex whitespace-nowrap rounded-lg border border-dark bg-background1 py-2 px-4 font-coolvetica text-dark transition-colors hover:bg-background3 sm:visible logo-center:absolute"
 				onClick={sessionData ? () => void signOut() : () => void signIn()}
 			>
 				{sessionData ? "Sign out" : "Sign in"}
@@ -55,7 +55,7 @@ const BottomMenu = () => {
 	const { data: sessionData } = useSession();
 	return (
 		<nav
-			className="sticky bottom-0 flex w-full items-center justify-evenly gap-8 whitespace-nowrap bg-background1 p-4 mobile:hidden"
+			className="sticky bottom-0 flex w-full items-center justify-evenly gap-4 whitespace-nowrap bg-background1 p-4 mobile:hidden xs:gap-8"
 			aria-label="Bottom navigation"
 		>
 			<Link href="/">
