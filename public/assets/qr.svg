@@ -1,12 +1,1 @@
-<svg width="667" height="667" viewBox="0 0 667 667" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M285 200.5H194.5V287.5H285V200.5Z" stroke="#5570B2" stroke-width="57" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M466.5 200H376V287H466.5V200Z" stroke="#5570B2" stroke-width="57" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M284.5 386H194V473H284.5V386Z" stroke="#5570B2" stroke-width="57" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M443.5 383H476.5" stroke="#5570B2" stroke-width="57" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M379 378V408.5" stroke="#5570B2" stroke-width="57" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M395.5 474.5H480.5" stroke="#5570B2" stroke-width="57" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M246 105.5H101.5V247.5" stroke="#3D4775" stroke-width="57" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M246.5 572H102V430" stroke="#3D4775" stroke-width="57" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M421 106H565.5V248" stroke="#3D4775" stroke-width="57" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M421 572H565.5V430" stroke="#3D4775" stroke-width="57" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 667 667"><path stroke="#5570B2" stroke-linecap="round" stroke-linejoin="round" stroke-width="57" d="M285 200.5h-90.5v87H285v-87Z"/><path stroke="#5570B2" stroke-linecap="round" stroke-linejoin="round" stroke-width="57" d="M466.5 200H376v87h90.5v-87Z"/><path stroke="#5570B2" stroke-linecap="round" stroke-linejoin="round" stroke-width="57" d="M284.5 386H194v87h90.5v-87Z"/><path stroke="#5570B2" stroke-linecap="round" stroke-linejoin="round" stroke-width="57" d="M443.5 383h33"/><path stroke="#5570B2" stroke-linecap="round" stroke-linejoin="round" stroke-width="57" d="M379 378v30.5"/><path stroke="#5570B2" stroke-linecap="round" stroke-linejoin="round" stroke-width="57" d="M395.5 474.5h85"/><path stroke="#3D4775" stroke-linecap="round" stroke-linejoin="round" stroke-width="57" d="M246 105.5H101.5v142"/><path stroke="#3D4775" stroke-linecap="round" stroke-linejoin="round" stroke-width="57" d="M246.5 572H102V430"/><path stroke="#3D4775" stroke-linecap="round" stroke-linejoin="round" stroke-width="57" d="M421 106h144.5v142"/><path stroke="#3D4775" stroke-linecap="round" stroke-linejoin="round" stroke-width="57" d="M421 572h144.5V430"/></svg>
