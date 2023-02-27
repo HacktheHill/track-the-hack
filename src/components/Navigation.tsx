@@ -69,11 +69,6 @@ const BottomMenu = () => {
 			<Link href="/schedule">
 				<Image priority src="/assets/schedule.svg" height={32} width={32} alt="Schedule" />
 			</Link>
-			{sessionData?.user && (
-				<Link href="/notifications">
-					<Image priority src="/assets/notifications.svg" height={32} width={32} alt="Notifications" />
-				</Link>
-			)}
 			<Link href="/resources">
 				<Image priority src="/assets/resources.svg" height={32} width={32} alt="Resources" />
 			</Link>
@@ -94,10 +89,7 @@ const Links = () => {
 				Home
 			</Link>
 			{sessionData?.user && (
-				<Link
-					href="/qr"
-					className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
-				>
+				<Link href="/qr" className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light">
 					QR
 				</Link>
 			)}
@@ -107,14 +99,9 @@ const Links = () => {
 			>
 				Schedule
 			</Link>
-			{sessionData?.user && (
-				<Link
-					href="/notifications"
-					className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
-				>
-					Notifications
-				</Link>
-			)}
+			<Link href="/maps" className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light">
+				Maps
+			</Link>
 			<Link
 				href="/resources"
 				className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
