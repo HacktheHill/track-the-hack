@@ -52,6 +52,8 @@ model User {
     email         String?      @unique
     emailVerified DateTime?
     image         String?
+    passwordHash  String?
+    salt          String?
     role          Role         @default(HACKER)
     accounts      Account[]
     sessions      Session[]
