@@ -1,11 +1,11 @@
 import type { HackerInfo } from "@prisma/client";
 import type { GetStaticProps } from "next";
+import { useSession } from "next-auth/react";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState } from "react";
 import { trpc } from "../../utils/api";
-import Hacker from "./hacker";
 import { debounce } from "../../utils/helpers";
 
 import App from "../../components/App";
@@ -20,7 +20,7 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
 
 const Hackers = () => {
 	const router = useRouter();
-	const [id] = [router.query.id].flat();
+	const { data: sessionData } = useSession();
 
 	const [search, setSearch] = useState("");
 	const [columns, setColumns] = useState(3);
@@ -40,6 +40,12 @@ const Hackers = () => {
 			window.removeEventListener("resize", debouncedResizeHandler);
 		};
 	}, [updateColumns]);
+
+	useEffect(() => {
+		if (sessionData?.user == null) {
+			void router.push("/");
+		}
+	}, [router, sessionData?.user]);
 
 	if (query.isLoading || query.data == null) {
 		return (
@@ -72,9 +78,7 @@ const Hackers = () => {
 						hacker.studyProgram?.toLowerCase().includes(search.toLowerCase()),
 			  );
 
-	return id ? (
-		<Hacker />
-	) : (
+	return (
 		<App
 			className="flex flex-col overflow-y-auto bg-gradient-to-b from-background2 to-background1"
 			integrated={true}
