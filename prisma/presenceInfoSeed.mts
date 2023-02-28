@@ -1,15 +1,16 @@
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
+// This script hasn't been run yet
+// Instead we are creating new presenceInfos dynamically in the presence tRPC procedure
 async function main() {
 	for (const hackerInfo of await prisma.hackerInfo.findMany()) {
-		await prisma.hackerInfo.update({
-			where: {
-				id: hackerInfo.id,
-			},
+		await prisma.presenceInfo.create({
 			data: {
-				presenceInfo: {
-					create: {},
+				hackerInfo: {
+					connect: {
+						id: hackerInfo.id,
+					},
 				},
 			},
 		});
