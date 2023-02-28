@@ -26,6 +26,7 @@ const QR = () => {
 
 	const [id, setId] = useState<string | null>(null);
 	const [error, setError] = useState(false);
+
 	useEffect(() => {
 		if (id) {
 			void router.push(`/hackers/hacker?id=${id}`);
