@@ -36,11 +36,23 @@ export const presenceRouter = createTRPCRouter({
 				throw new Error("Hacker not found");
 			}
 
-			const presence = await ctx.prisma.presenceInfo.findUnique({
+			let presence = await ctx.prisma.presenceInfo.findUnique({
 				where: {
-					id: hacker.presenceInfoId,
+					hackerInfoId: hacker.id,
 				},
 			});
+
+			if (!presence) {
+				presence = await ctx.prisma.presenceInfo.create({
+					data: {
+						hackerInfo: {
+							connect: {
+								id: hacker.id,
+							},
+						},
+					},
+				});
+			}
 
 			return presence;
 		}),
@@ -77,11 +89,19 @@ export const presenceRouter = createTRPCRouter({
 				throw new Error("Hacker not found");
 			}
 
-			await ctx.prisma.presenceInfo.update({
+			await ctx.prisma.presenceInfo.upsert({
 				where: {
-					id: hacker.presenceInfoId,
+					hackerInfoId: hacker.id,
 				},
-				data: input.presenceInfo,
+				update: input.presenceInfo,
+				create: {
+					...input.presenceInfo,
+					hackerInfo: {
+						connect: {
+							id: hacker.id,
+						},
+					},
+				},
 			});
 		}),
 });
