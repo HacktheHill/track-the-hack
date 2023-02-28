@@ -78,7 +78,7 @@ const Hacker: NextPage = () => {
 
 	return (
 		<App className="mx-auto h-full w-full overflow-y-auto bg-gradient-to-b from-background2 to-background1 px-4 py-12">
-			<div className="flex max-w-2xl flex-col gap-4 mx-auto">
+			<div className="mx-auto flex max-w-2xl flex-col gap-4">
 				<OnlyRole roles={[Role.ORGANIZER, Role.SPONSOR]}>
 					<HackerView hackerData={hackerQuery.data} presenceData={presenceQuery.data} />
 				</OnlyRole>
@@ -94,9 +94,10 @@ type HackerViewProps = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const HackerView = ({ hackerData, presenceData: { id: _, ...presenceData } }: HackerViewProps) => {
+const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presenceData } }: HackerViewProps) => {
 	const router = useRouter();
 	const [id] = [router.query.id].flat();
+
 	const presenceMutation = trpc.presence.update.useMutation();
 	const [presenceState, setPresenceState] = useState(presenceData);
 
@@ -190,9 +191,6 @@ const HackerView = ({ hackerData, presenceData: { id: _, ...presenceData } }: Ha
 					</p>
 					<p className={paragraphClass}>
 						<b className={boldClass}>User ID</b> {hackerData.userId ?? "NULL"}
-					</p>
-					<p className={paragraphClass}>
-						<b className={boldClass}>PresenceInfo ID</b> {hackerData.presenceInfoId ?? "NULL"}
 					</p>
 					<p className={paragraphClass}>
 						<b className={boldClass}>Unsubscribe Token</b> {hackerData.unsubscribeToken ?? "NULL"}
