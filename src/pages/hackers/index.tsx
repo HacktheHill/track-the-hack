@@ -1,5 +1,5 @@
 import type { HackerInfo } from "@prisma/client";
-import type { GetStaticProps } from "next";
+import type { GetStaticProps, NextPage } from "next";
 import { useSession } from "next-auth/react";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Link from "next/link";
@@ -18,7 +18,7 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	};
 };
 
-const Hackers = () => {
+const Hackers: NextPage = () => {
 	const router = useRouter();
 	const { data: sessionData } = useSession();
 
@@ -121,7 +121,7 @@ type CardProps = Pick<HackerInfo, "university" | "firstName" | "lastName" | "stu
 const Card = ({ firstName, lastName, university, studyProgram, id }: CardProps) => {
 	return (
 		<Link
-			href={`/hackers?id=${id}`}
+			href={`/hackers/hacker?id=${id}`}
 			className="block w-full rounded-lg bg-dark p-6 text-white shadow hover:bg-medium"
 		>
 			<h3 className="text-2xl font-bold tracking-tight">{`${firstName} ${lastName}`}</h3>
