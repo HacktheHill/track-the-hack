@@ -32,6 +32,7 @@ const Hackers = () => {
 	}, []);
 
 	useEffect(() => {
+		updateColumns();
 		const debouncedResizeHandler = debounce(updateColumns, 500);
 
 		window.addEventListener("resize", debouncedResizeHandler);
