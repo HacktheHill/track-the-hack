@@ -65,10 +65,8 @@ const Schedule: NextPage = () => {
 				return "bg-accent4 text-white";
 			default:
 				return "bg-accent1 text-dark";
-		} 
-	}
-
-	let index = 0;
+		}
+	};
 
 	const events = query.data
 		?.filter(event => eventTypes[event.type] === tab || tab === eventTypes.ALL)
@@ -129,14 +127,13 @@ const Schedule: NextPage = () => {
 							</div>
 							<div className="flex w-full flex-col gap-4">
 								{event.map(event => {
-									index++;
 									return (
 										<Link
 											key={event.id}
 											href={`/schedule/event?id=${event.id}`}
-											className={`flex flex-col items-center justify-center gap-2 rounded-lg p-3 font-coolvetica ${
-												eventColor(event.type)
-											}`}
+											className={`flex flex-col items-center justify-center gap-2 rounded-lg p-3 font-coolvetica ${eventColor(
+												event.type,
+											)}`}
 										>
 											<h1 className="text-center text-xl">{event.name}</h1>
 											<p className="text-center leading-3">
