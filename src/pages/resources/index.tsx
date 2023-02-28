@@ -1,3 +1,6 @@
+import type { GetStaticProps } from "next";
+import { useTranslation } from "next-i18next";
+import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import type { NextPage } from "next";
 import Image from "next/image";
 import React from "react";
@@ -8,6 +11,12 @@ import rehypeSlug from "rehype-slug";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import App from "../../components/App";
 import content from "./content.md";
+
+export const getStaticProps: GetStaticProps = async ({ locale }) => {
+	return {
+		props: await serverSideTranslations(locale ?? "en", ["common", "resources"]),
+	};
+};
 
 type ComponentProps = {
 	children: React.ReactNode;
@@ -228,8 +237,10 @@ const plugins = [
 ] as PluggableList;
 
 const Resources: NextPage = () => {
+	const { t } = useTranslation("resources");
+
 	return (
-		<App className="flex h-full flex-col gap-4 overflow-y-auto bg-gradient-to-b from-background2 to-background1 py-12">
+		<App className="flex h-full flex-col gap-10 overflow-y-auto bg-gradient-to-b from-background2 to-background1 py-12">
 			<ReactMarkdown
 				components={components}
 				remarkPlugins={plugins}
@@ -246,6 +257,14 @@ const Resources: NextPage = () => {
 			>
 				{content}
 			</ReactMarkdown>
+			<a
+				href="https://discord.gg/8JNxJVMNrF"
+				target="_blank"
+				rel="noreferrer"
+				className="flex justify-center gap-2 self-center rounded-md bg-gray-800 px-4 py-2 text-white hover:bg-gray-700"
+			>
+				{t("join-our-discord-server")}
+			</a>
 		</App>
 	);
 };
