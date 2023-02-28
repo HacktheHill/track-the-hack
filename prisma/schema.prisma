@@ -104,21 +104,21 @@ model HackerInfo {
     unsubscribeToken             String?        @unique @default(cuid())
     onlyOnline                   Boolean        @default(false)
     acceptanceExpiry             DateTime?
-    presenceInfo                 PresenceInfo   @relation(fields: [presenceInfoId], references: [id])
-    presenceInfoId               String         @unique
+    presenceInfo                 PresenceInfo?
 
     @@index([userId])
 }
 
 model PresenceInfo {
-    id         String      @id @default(cuid())
-    checkedIn  Boolean     @default(false)
-    breakfast1 Boolean     @default(false)
-    lunch1     Boolean     @default(false)
-    dinner1    Boolean     @default(false)
-    breakfast2 Boolean     @default(false)
-    lunch2     Boolean     @default(false)
-    hackerInfo HackerInfo?
+    id           String     @id @default(cuid())
+    checkedIn    Boolean    @default(false)
+    breakfast1   Boolean    @default(false)
+    lunch1       Boolean    @default(false)
+    dinner1      Boolean    @default(false)
+    breakfast2   Boolean    @default(false)
+    lunch2       Boolean    @default(false)
+    hackerInfo   HackerInfo @relation(fields: [hackerInfoId], references: [id])
+    hackerInfoId String     @unique
 }
 
 model Event {
