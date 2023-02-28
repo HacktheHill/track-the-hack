@@ -70,7 +70,7 @@ model VerificationToken {
 
 model HackerInfo {
     id                           String         @id @default(cuid()) @map("submissionID")
-    preferredLanguage            Language
+    preferredLanguage            Language       @default(EN)
     email                        String
     firstName                    String
     lastName                     String
@@ -81,7 +81,7 @@ model HackerInfo {
     studyProgram                 String?
     graduationYear               Int?
     attendanceType               AttendanceType @default(IN_PERSON)
-    location                     String         @map("attendanceLocation")
+    location                     String?        @map("attendanceLocation")
     transportationRequired       Boolean        @default(false)
     dietaryRestrictions          String         @default("") @db.Text
     accessibilityRequirements    String         @default("") @db.Text
