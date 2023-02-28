@@ -1,4 +1,5 @@
 import type { EventType } from "@prisma/client";
+import type { NextPage } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -16,7 +17,7 @@ export const eventTypes = {
 	SOCIAL: "Social",
 } as const satisfies Record<EventType, string>;
 
-const Event = () => {
+const Event: NextPage = () => {
 	const router = useRouter();
 	const { locale } = router;
 	const [id] = [router.query.id].flat();
@@ -49,7 +50,7 @@ const Event = () => {
 	}
 
 	const { name, start, end, room, description, type, host, image, tiktok } = query.data;
-	if (!(start instanceof Date) || !(end instanceof Date)) return;
+	if (!(start instanceof Date) || !(end instanceof Date)) return null;
 
 	return (
 		<App
@@ -105,10 +106,10 @@ const Event = () => {
 			<div className="flex flex-col font-coolvetica">
 				<p className="text-xl">
 					{description.split("\\n").map((line, i, arr) => (
-						<>
+						<span key={i}>
 							{line}
 							{arr.length - 1 !== i && <br />}
-						</>
+						</span>
 					))}
 				</p>
 			</div>
