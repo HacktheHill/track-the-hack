@@ -74,29 +74,29 @@ model HackerInfo {
     email                        String
     firstName                    String
     lastName                     String
-    gender                       String
+    gender                       String         @default("Prefer not to say")
     phoneNumber                  String
     university                   String?
     studyLevel                   String?
     studyProgram                 String?
     graduationYear               Int?
-    attendanceType               AttendanceType
+    attendanceType               AttendanceType @default(IN_PERSON)
     location                     String         @map("attendanceLocation")
-    transportationRequired       Boolean
-    dietaryRestrictions          String
-    accessibilityRequirements    String
+    transportationRequired       Boolean        @default(false)
+    dietaryRestrictions          String         @default("") @db.Text
+    accessibilityRequirements    String         @default("") @db.Text
     shirtSize                    ShirtSize?
     emergencyContactName         String
     emergencyContactRelationship String
     emergencyContactPhoneNumber  String
     numberOfPreviousHackathons   Int?
-    linkGithub                   String
-    linkLinkedin                 String
-    linkPersonalSite             String
-    linkResume                   String         @db.Text
-    lookingForwardTo             String         @db.Text
-    formStartDate                DateTime
-    formEndDate                  DateTime
+    linkGithub                   String?
+    linkLinkedin                 String?
+    linkPersonalSite             String?
+    linkResume                   String?        @db.Text
+    lookingForwardTo             String?        @db.Text
+    formStartDate                DateTime?
+    formEndDate                  DateTime?
     confirmed                    Boolean        @default(false)
     user                         User?          @relation(fields: [userId], references: [id])
     userId                       String?
