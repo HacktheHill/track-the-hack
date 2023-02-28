@@ -35,13 +35,13 @@ const Schedule: NextPage = () => {
 
 	if (query.isLoading || query.data == null) {
 		return (
-			<App className="h-full bg-gradient-to-b from-background2 to-background1 px-16 py-12">
+			<App className="h-full bg-gradient3 px-16 py-12">
 				<Loading />
 			</App>
 		);
 	} else if (query.isError) {
 		return (
-			<App className="h-full bg-gradient-to-b from-background2 to-background1 px-16 py-12">
+			<App className="h-full bg-gradient3 px-16 py-12">
 				<div className="flex flex-col items-center justify-center gap-4">
 					<Error message={query.error.message} />
 				</div>
@@ -111,7 +111,7 @@ const Schedule: NextPage = () => {
 
 	return (
 		<App
-			className="flex h-0 flex-col items-center bg-gradient-to-b from-background2 to-background1"
+			className="flex h-0 flex-col items-center bg-gradient3"
 			integrated={true}
 		>
 			<Tabs tab={tab} setTab={setTab} />
