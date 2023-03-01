@@ -104,16 +104,14 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 	const paragraphClass = "flex justify-between gap-4 text-right";
 	const boldClass = "text-left font-bold";
 
-	const keyToLabel: Record<keyof PresenceInfo, string> = {
-		id: "",
-		hackerInfoId: "",
+	const keyToLabel = {
 		checkedIn: "Checked In",
 		breakfast1: "Breakfast March 3rd",
 		lunch1: "Lunch March 3rd",
 		dinner1: "Dinner March 3rd",
 		breakfast2: "Breakfast March 4th",
 		lunch2: "Lunch March 4th",
-	};
+	} as const satisfies Record<keyof Omit<PresenceInfo, "id" | "hackerInfoId">, string>;
 
 	return (
 		<>
@@ -143,7 +141,7 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 									});
 								}}
 							/>{" "}
-							<label htmlFor={key}>{keyToLabel[key as keyof PresenceInfo]}</label>
+							<label htmlFor={key}>{keyToLabel[key as keyof typeof keyToLabel]}</label>
 						</p>
 					))}
 				</div>
