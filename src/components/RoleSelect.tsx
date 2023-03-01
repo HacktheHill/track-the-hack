@@ -7,17 +7,12 @@ import { trpc } from "../utils/api";
 
 const RoleSelect = () => {
 	const { data: sessionData } = useSession();
+	const id = sessionData?.user?.id ?? "";
+
 	const [role, setRole] = useState<Roles | null>(null);
 
+	const query = trpc.users.getRole.useQuery({ id }, { enabled: !!id });
 	const mutation = trpc.users.setRole.useMutation();
-	const query = trpc.users.getRole.useQuery(
-		{
-			id: sessionData?.user?.id ?? "",
-		},
-		{
-			enabled: !!sessionData?.user?.id,
-		},
-	);
 
 	useEffect(() => {
 		if (query.data) {
