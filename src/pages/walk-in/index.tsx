@@ -207,11 +207,11 @@ const WalkIn: NextPage = () => {
 	] as const;
 
 	const patterns = {
-		email: "/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,4}$/",
 		tel: "/^+?d{10,15}$/",
 		url: "/^(https?://)?.+$/",
 		number: "/^d+$/",
-		text: "/^.+$/",
+		email: undefined,
+		text: undefined,
 	} as const;
 
 	return (
