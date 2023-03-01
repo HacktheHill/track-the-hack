@@ -21,13 +21,16 @@ const QRCode = ({ setError, id }: QRCodeProps) => {
 
 	useEffect(() => {
 		async function getQRCode() {
+			// Confirmation QR code for walk-ins
 			if (id) {
 				try {
-					const qr = await qrcode.toDataURL(id);
+					const qr = await qrcode.toDataURL(`${location.origin}/confirm?id=${id}`);
 					setQRCode(qr);
 				} catch (error) {
 					console.error(error);
 				}
+
+				// QR code for hackers
 			} else if (query.data) {
 				try {
 					const qr = await qrcode.toDataURL(query.data);
