@@ -175,6 +175,7 @@ export const hackerRouter = createTRPCRouter({
 			const hacker = await ctx.prisma.hackerInfo.create({
 				data: {
 					...input,
+					walkIn: true,
 				},
 			});
 
