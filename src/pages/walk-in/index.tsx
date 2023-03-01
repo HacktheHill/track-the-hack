@@ -214,7 +214,7 @@ const WalkIn: NextPage = () => {
 						<h3 className="font-rubik text-4xl font-bold text-dark">{t("title")}</h3>
 						<QRCode id={mutation.data?.id} />
 						<button
-							className="cursor-pointer whitespace-nowrap rounded-[100px] border-none bg-light px-8 py-2 font-rubik text-white shadow-md transition-all duration-1000 hover:bg-medium"
+							className="cursor-pointer whitespace-nowrap rounded-[100px] border-none bg-light px-8 py-2 font-rubik text-white shadow-md transition-all duration-1000 hover:bg-background2"
 							onClick={() => setSuccess(false)}
 						>
 							{t("new")}
@@ -233,7 +233,7 @@ const WalkIn: NextPage = () => {
 										<select
 											id={field.name}
 											name={field.name}
-											className="w-full rounded-[100px] border-none bg-background1 px-4 py-2 font-rubik text-dark shadow-md transition-all duration-500 hover:bg-background2"
+											className="w-full rounded-[100px] border-none bg-background1 px-4 py-2 font-rubik text-dark shadow-md transition-all duration-500 hover:bg-background1/50"
 											required={field.required}
 										>
 											<option value="">{t("select")}</option>
@@ -248,7 +248,7 @@ const WalkIn: NextPage = () => {
 											id={field.name}
 											name={field.name}
 											type={field.type}
-											className="w-full rounded-[100px] border-none bg-background1 px-4 py-2 font-rubik text-dark shadow-md transition-all duration-500 hover:bg-background2"
+											className="w-full rounded-[100px] border-none bg-background1 px-4 py-2 font-rubik text-dark shadow-md transition-all duration-500 hover:bg-background1/50"
 											required={field.required}
 										/>
 									)}
