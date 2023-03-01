@@ -206,6 +206,14 @@ const WalkIn: NextPage = () => {
 		},
 	] as const;
 
+	const patterns = {
+		email: "/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,4}$/",
+		tel: "/^+?d{10,15}$/",
+		url: "/^(https?://)?.+$/",
+		number: "/^d+$/",
+		text: "/^.+$/",
+	} as const;
+
 	return (
 		<App className="overflow-y-auto bg-gradient3 p-8 sm:p-12">
 			<OnlyRole roles={[Role.ORGANIZER]}>
@@ -250,6 +258,7 @@ const WalkIn: NextPage = () => {
 											type={field.type}
 											className="w-full rounded-[100px] border-none bg-background1 px-4 py-2 font-rubik text-dark shadow-md transition-all duration-500 hover:bg-background1/50"
 											required={field.required}
+											pattern={patterns[field.type]}
 										/>
 									)}
 								</div>
