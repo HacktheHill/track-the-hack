@@ -2,6 +2,9 @@ import { AttendanceType, Role, ShirtSize, type HackerInfo } from "@prisma/client
 import { z } from "zod";
 import { hasRoles } from "../../../utils/helpers";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+import { walkInSchema } from "../../../utils/common";
+
+const DEFAULT_ACCEPTANCE_EXPIRY = new Date(2023, 2, 4, 5, 0, 0, 0); // 2023-03-04 00:00:00 EST
 
 export const hackerRouter = createTRPCRouter({
 	// Get a hacker by id or email
@@ -146,5 +149,35 @@ export const hackerRouter = createTRPCRouter({
 					unsubscribed: input.unsubscribe,
 				},
 			});
+		}),
+	walkIn: protectedProcedure
+		.input(
+			walkInSchema.extend({
+				acceptanceExpiry: z.date().default(DEFAULT_ACCEPTANCE_EXPIRY),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+			const user = await ctx.prisma.user.findUnique({
+				where: {
+					id: userId,
+				},
+			});
+
+			if (!user) {
+				throw new Error("User not found");
+			}
+
+			if (!hasRoles(user, [Role.ORGANIZER])) {
+				throw new Error("You do not have permission to do this");
+			}
+
+			const hacker = await ctx.prisma.hackerInfo.create({
+				data: {
+					...input,
+				},
+			});
+
+			return hacker;
 		}),
 });

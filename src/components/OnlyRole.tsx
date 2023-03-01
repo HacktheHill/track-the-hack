@@ -12,15 +12,9 @@ type OnlyRoleProps = {
 
 const OnlyRole = ({ roles, children }: OnlyRoleProps) => {
 	const { data: sessionData } = useSession();
+	const id = sessionData?.user?.id ?? "";
 
-	const query = trpc.users.getRole.useQuery(
-		{
-			id: sessionData?.user?.id ?? "",
-		},
-		{
-			enabled: !!sessionData?.user?.id,
-		},
-	);
+	const query = trpc.users.getRole.useQuery({ id }, { enabled: !!id });
 
 	if (query.isLoading && query.isSuccess) {
 		return null;
