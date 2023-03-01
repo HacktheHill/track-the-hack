@@ -1,16 +1,15 @@
-import { useState, useEffect } from "react";
 import { Role, type Prisma } from "@prisma/client";
 import type { GetStaticProps, NextPage } from "next";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useRouter } from "next/router";
+import { useState } from "react";
 import { trpc } from "../../utils/api";
 
 import App from "../../components/App";
 import Error from "../../components/Error";
 import Loading from "../../components/Loading";
 import OnlyRole from "../../components/OnlyRole";
-import { useSession } from "next-auth/react";
 
 type HackerInfo = Prisma.HackerInfoGetPayload<true>;
 type PresenceInfo = Prisma.PresenceInfoGetPayload<true>;
@@ -25,21 +24,21 @@ const Hacker: NextPage = () => {
 	const router = useRouter();
 	const [id] = [router.query.id].flat();
 	const { t } = useTranslation("hacker");
-	const { data: sessionData } = useSession();
 
 	const hackerQuery = trpc.hackers.get.useQuery({ id: id ?? "" }, { enabled: !!id });
 	const presenceQuery = trpc.presence.getFromHackerId.useQuery({ id: id ?? "" }, { enabled: !!id });
 
-	useEffect(() => {
-		if (!id || sessionData?.user == null) {
-			void router.push("/");
-		}
-	}, [id, router, sessionData?.user]);
-
 	if (hackerQuery.isLoading || hackerQuery.data == null) {
 		return (
 			<App className="h-full bg-gradient-to-b from-background2 to-background1 px-16 py-12">
-				<Loading />
+				<OnlyRole roles={[Role.ORGANIZER, Role.SPONSOR]}>
+					<Loading />
+				</OnlyRole>
+				<OnlyRole roles={[Role.HACKER]}>
+					<div className="flex flex-col items-center justify-center gap-4">
+						<Error message="You are not allowed to view this page" />
+					</div>
+				</OnlyRole>
 			</App>
 		);
 	} else if (hackerQuery.isError) {

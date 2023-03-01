@@ -1,4 +1,4 @@
-import type { HackerInfo } from "@prisma/client";
+import { Role, type HackerInfo } from "@prisma/client";
 import type { GetStaticProps, NextPage } from "next";
 import { useSession } from "next-auth/react";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
@@ -11,6 +11,7 @@ import { debounce } from "../../utils/helpers";
 import App from "../../components/App";
 import Error from "../../components/Error";
 import Loading from "../../components/Loading";
+import OnlyRole from "../../components/OnlyRole";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
@@ -50,7 +51,14 @@ const Hackers: NextPage = () => {
 	if (query.isLoading || query.data == null) {
 		return (
 			<App className="h-full bg-gradient-to-b from-background2 to-background1 px-16 py-12">
-				<Loading />
+				<OnlyRole roles={[Role.ORGANIZER, Role.SPONSOR]}>
+					<Loading />
+				</OnlyRole>
+				<OnlyRole roles={[Role.HACKER]}>
+					<div className="flex flex-col items-center justify-center gap-4">
+						<Error message="You are not allowed to view this page" />
+					</div>
+				</OnlyRole>
 			</App>
 		);
 	} else if (query.isError) {
@@ -61,10 +69,6 @@ const Hackers: NextPage = () => {
 				</div>
 			</App>
 		);
-	}
-
-	if (query.data == null) {
-		void router.push("/404");
 	}
 
 	const filteredQuery =
