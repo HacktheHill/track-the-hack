@@ -52,8 +52,8 @@ model User {
     email         String?      @unique
     emailVerified DateTime?
     image         String?
-    passwordHash  String?
-    salt          String?      @db.Text
+    passwordHash  String?      @db.Text
+    salt          String?
     role          Role         @default(HACKER)
     accounts      Account[]
     sessions      Session[]
@@ -104,6 +104,7 @@ model HackerInfo {
     unsubscribeToken             String?        @unique @default(cuid())
     onlyOnline                   Boolean        @default(false)
     acceptanceExpiry             DateTime?
+    walkIn                       Boolean        @default(false)
     presenceInfo                 PresenceInfo?
 
     @@index([userId])
