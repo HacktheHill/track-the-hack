@@ -236,6 +236,7 @@ const WalkIn: NextPage = () => {
 								<div key={field.name} className="flex w-full flex-col items-center gap-2 sm:flex-row">
 									<label htmlFor={field.name} className="flex-[50%] font-rubik text-dark">
 										{t(field.name)}
+										{field.required && <span className="text-red-500"> *</span>}
 									</label>
 									{field.type === "select" ? (
 										<select
