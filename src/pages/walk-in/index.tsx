@@ -1,6 +1,8 @@
 import { Role } from "@prisma/client";
+import { useSession } from "next-auth/react";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
+import { useRouter } from "next/router";
 import type { GetStaticProps, NextPage } from "next/types";
 import { useEffect, useState } from "react";
 
@@ -20,6 +22,8 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
 
 const WalkIn: NextPage = () => {
 	const { t } = useTranslation("walk-in");
+	const { data: sessionData } = useSession();
+	const router = useRouter();
 
 	const mutation = trpc.hackers.walkIn.useMutation();
 
@@ -35,6 +39,15 @@ const WalkIn: NextPage = () => {
 			}
 		}
 	}, [mutation.error, t]);
+
+	useEffect(() => {
+		const timeout = setTimeout(() => {
+			if (sessionData?.user == null) {
+				void router.push("/");
+			}
+		}, 1000);
+		return () => clearTimeout(timeout);
+	}, [router, sessionData?.user]);
 
 	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
