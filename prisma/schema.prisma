@@ -53,7 +53,7 @@ model User {
     emailVerified DateTime?
     image         String?
     passwordHash  String?
-    salt          String?
+    salt          String?      @db.Text
     role          Role         @default(HACKER)
     accounts      Account[]
     sessions      Session[]

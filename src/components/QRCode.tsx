@@ -6,10 +6,11 @@ import { trpc } from "../utils/api";
 import Error from "./Error";
 
 type QRCodeProps = {
-	setError: (error: boolean) => void;
+	setError?: (error: boolean) => void;
+	id?: string;
 };
 
-const QRCode = ({ setError }: QRCodeProps) => {
+const QRCode = ({ setError, id }: QRCodeProps) => {
 	const { data: sessionData } = useSession();
 	const [qrCode, setQRCode] = useState<string | null>(null);
 
@@ -20,7 +21,14 @@ const QRCode = ({ setError }: QRCodeProps) => {
 
 	useEffect(() => {
 		async function getQRCode() {
-			if (query.data) {
+			if (id) {
+				try {
+					const qr = await qrcode.toDataURL(id);
+					setQRCode(qr);
+				} catch (error) {
+					console.error(error);
+				}
+			} else if (query.data) {
 				try {
 					const qr = await qrcode.toDataURL(query.data);
 					setQRCode(qr);
@@ -30,18 +38,18 @@ const QRCode = ({ setError }: QRCodeProps) => {
 			}
 		}
 		void getQRCode();
-	}, [query.data]);
+	}, [id, query.data]);
 
 	if (query.isError) {
-		setError(true);
+		setError?.(true);
 		return <Error message="User not registered" />;
 	}
 
 	if (!qrCode) {
-		setError(true);
+		setError?.(true);
 		return <Error message="Cannot find QR code" />;
 	}
-	setError(false);
+	setError?.(false);
 	return (
 		<Image
 			priority
