@@ -48,19 +48,19 @@ const QRCode = ({ setError, id }: QRCodeProps) => {
 
 	if (query.isError) {
 		setError?.(true);
-		return <Error message="User not registered" />;
+		return <Error message={t("user-not-registered")} />;
 	}
 
 	if (!qrCode) {
 		setError?.(true);
-		return <Error message="Cannot find QR code" />;
+		return <Error message={t("cannot-find-qr-code")} />;
 	}
 	setError?.(false);
 	return (
 		<Image
 			priority
 			src={qrCode}
-			alt="QR Code"
+			alt={t("qr-code-alt")}
 			className="aspect-square rounded-3xl object-cover"
 			width={300}
 			height={300}

@@ -18,7 +18,7 @@ const Navbar = ({ integrated }: NavbarProps) => {
 			className={`sticky top-0 z-10 flex gap-4 whitespace-nowrap bg-background1 p-4 ${
 				integrated ? "" : "border-b border-dark shadow-navbar"
 			}`}
-			aria-label="Main navigation"
+			aria-label={t("main-navigation")}
 		>
 			<div className="flex w-full items-center justify-center font-coolvetica mobile:w-auto">
 				<Link href="/">
@@ -28,7 +28,7 @@ const Navbar = ({ integrated }: NavbarProps) => {
 						src="/assets/hackthehill-logo.svg"
 						height={64}
 						width={64}
-						alt="Home"
+						alt={t("home")}
 					/>
 					<Image
 						className="block mobile:hidden"
@@ -36,7 +36,7 @@ const Navbar = ({ integrated }: NavbarProps) => {
 						src="/assets/hackthehill-banner.svg"
 						height={238}
 						width={238}
-						alt="Home"
+						alt={t("home")}
 					/>
 				</Link>
 			</div>
@@ -49,7 +49,7 @@ const Navbar = ({ integrated }: NavbarProps) => {
 				className="right-4 ml-auto flex whitespace-nowrap rounded-lg border border-dark bg-background1 py-2 px-4 font-coolvetica text-dark transition-colors hover:bg-background3 sm:visible logo-center:absolute"
 				onClick={sessionData ? () => void signOut() : () => void signIn()}
 			>
-				{sessionData ? "Sign out" : "Sign in"}
+				{sessionData ? t("sign-out") : t("sign-in")}
 			</button>
 		</nav>
 	);
@@ -66,26 +66,26 @@ const BottomMenu = () => {
 	return (
 		<nav
 			className="sticky bottom-0 flex w-full items-center justify-evenly gap-4 whitespace-nowrap bg-background1 p-4 mobile:hidden xs:gap-8"
-			aria-label="Bottom navigation"
+			aria-label={t("bottom-navigation")}
 		>
 			<Link href="/">
-				<Image priority src="/assets/home.svg" height={32} width={32} alt="Home" />
+				<Image priority src="/assets/home.svg" height={32} width={32} alt={t("home")} />
 			</Link>
 			{sessionData?.user && hackerQuery.data && (
 				<OnlyRole filter={role => role === Role.HACKER}>
 					<Link href="/qr">
-						<Image priority src="/assets/qr.svg" height={32} width={32} alt="QR" />
+						<Image priority src="/assets/qr.svg" height={32} width={32} alt={t("qr")} />
 					</Link>
 				</OnlyRole>
 			)}
 			<Link href="/schedule">
-				<Image priority src="/assets/schedule.svg" height={32} width={32} alt="Schedule" />
+				<Image priority src="/assets/schedule.svg" height={32} width={32} alt={t("schedule")} />
 			</Link>
 			<Link href="/maps">
-				<Image priority src="/assets/maps.svg" height={32} width={32} alt="Maps" />
+				<Image priority src="/assets/maps.svg" height={32} width={32} alt={t("maps")} />
 			</Link>
 			<Link href="/resources">
-				<Image priority src="/assets/resources.svg" height={32} width={32} alt="Resources" />
+				<Image priority src="/assets/resources.svg" height={32} width={32} alt={t("resources")} />
 			</Link>
 			{sessionData?.user && (
 				<OnlyRole filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
@@ -110,7 +110,7 @@ const Links = () => {
 	return (
 		<>
 			<Link href="/" className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light">
-				Home
+				{t("home")}
 			</Link>
 			{sessionData?.user && hackerQuery.data && (
 				<OnlyRole filter={role => role === Role.HACKER}>
@@ -118,7 +118,7 @@ const Links = () => {
 						href="/qr"
 						className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
 					>
-						QR
+						{t("qr")}
 					</Link>
 				</OnlyRole>
 			)}
@@ -126,16 +126,16 @@ const Links = () => {
 				href="/schedule"
 				className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
 			>
-				Schedule
+				{t("schedule")}
 			</Link>
 			<Link href="/maps" className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light">
-				Maps
+				{t("maps")}
 			</Link>
 			<Link
 				href="/resources"
 				className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
 			>
-				Resources
+				{t("resources")}
 			</Link>
 			{sessionData?.user && (
 				<>
@@ -144,7 +144,7 @@ const Links = () => {
 							href="/hackers"
 							className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
 						>
-							Hackers
+							{t("hackers")}
 						</Link>
 					</OnlyRole>
 					<OnlyRole filter={role => role === Role.ORGANIZER}>
@@ -152,7 +152,7 @@ const Links = () => {
 							href="/walk-in"
 							className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
 						>
-							Walk-In
+							{t("walk-in")}
 						</Link>
 					</OnlyRole>
 				</>
