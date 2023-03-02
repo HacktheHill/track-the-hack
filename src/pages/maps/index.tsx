@@ -1,22 +1,27 @@
 import type { GetStaticProps } from "next";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
-import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
-import App from "../../components/App";
 import Image from "next/image";
+import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
+import App from "../../components/App";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
-		props: await serverSideTranslations(locale ?? "en", ["common", "qr"]),
+		props: await serverSideTranslations(locale ?? "en", ["common", "maps"]),
 	};
 };
 
 const Maps = () => {
+	const { t } = useTranslation("maps");
+
 	const mapsLink = (floor: number) => `https://cdn1.hackthehill.com/crx/floorplan/${floor}.png`;
 	const MAX_FLOORS = 6;
 
 	return (
-		<App className="flex h-0 flex-col items-center bg-gradient-to-b from-background2 to-background1">
+		<App
+			className="flex h-0 flex-col items-center bg-gradient-to-b from-background2 to-background1"
+			title={t("title")}
+		>
 			<div className="w-full justify-center overflow-y-auto mobile:px-0">
 				{
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment

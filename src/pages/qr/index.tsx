@@ -20,8 +20,8 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
 };
 
 const QR = () => {
-	const router = useRouter();
 	const { t } = useTranslation("qr");
+	const router = useRouter();
 	const { data: sessionData } = useSession();
 
 	const [id, setId] = useState<string | null>(null);
@@ -38,7 +38,7 @@ const QR = () => {
 	}, [id, router, sessionData?.user]);
 
 	return (
-		<App className="relative flex h-full flex-col items-center justify-center gap-16 bg-gradient2">
+		<App className="relative flex h-full flex-col items-center justify-center gap-16 bg-gradient2" title={t("title")}>
 			<Weather count={30} type="snowflake" />
 			<div className="flex flex-col items-center gap-6">
 				<OnlyRole roles={[Role.ORGANIZER]}>

@@ -22,8 +22,8 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
 
 const WalkIn: NextPage = () => {
 	const { t } = useTranslation("walk-in");
-	const { data: sessionData } = useSession();
 	const router = useRouter();
+	const { data: sessionData } = useSession();
 
 	const mutation = trpc.hackers.walkIn.useMutation();
 
@@ -215,7 +215,7 @@ const WalkIn: NextPage = () => {
 	} as const;
 
 	return (
-		<App className="overflow-y-auto bg-gradient3 p-8 sm:p-12">
+		<App className="overflow-y-auto bg-gradient3 p-8 sm:p-12" title={t("title")}>
 			<OnlyRole roles={[Role.ORGANIZER]}>
 				{success ? (
 					<div className="flex flex-col items-center gap-8">

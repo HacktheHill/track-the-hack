@@ -1,17 +1,18 @@
 import NextHead from "next/head";
+import { useTranslation } from "next-i18next";
 
 type HeadProps = {
 	title?: string;
+	noIndex?: boolean;
 };
 
-const Head = ({ title }: HeadProps) => {
+const Head = ({ title, noIndex }: HeadProps) => {
+	const { t } = useTranslation("common");
+
 	return (
 		<NextHead>
 			<title>{title ? `${title} | Track the Hack` : "Track the Hack"}</title>
-			<meta
-				name="description"
-				content="An open source project to track the participants of the Hack the Hill hackathon."
-			/>
+			<meta name="description" content={t("description")} />
 			<link rel="shortcut icon" href="/icons/favicon.svg" type="image/svg+xml" />
 			<link rel="manifest" href="/manifest.json" />
 			<link rel="android-chrome" sizes="192x192" href="/icons/android-chrome-192x192.png" />
@@ -36,6 +37,7 @@ const Head = ({ title }: HeadProps) => {
 			<link rel="mstile-310x150" sizes="310x150" href="/icons/mstile-310x150.png" />
 			<link rel="mstile-310x310" sizes="310x310" href="/icons/mstile-310x310.png" />
 			<meta name="theme-color" content="#3b4779" />
+			{noIndex && <meta name="robots" content="noindex" />}
 		</NextHead>
 	);
 };
