@@ -80,8 +80,7 @@ const Hackers: NextPage = () => {
 					hacker =>
 						hacker.university?.toLowerCase().includes(search.toLowerCase()) ||
 						hacker.studyProgram?.toLowerCase().includes(search.toLowerCase()) ||
-						`${hacker.firstName} ${hacker.lastName}`.toLowerCase().includes(search.toLowerCase())
-							
+						`${hacker.firstName} ${hacker.lastName}`.toLowerCase().includes(search.toLowerCase()),
 			  );
 
 	return (
