@@ -132,6 +132,7 @@ model Event {
     description String    @db.Text
     room        String
     image       String?
+    link        String?
     tiktok      String?
 }
 
