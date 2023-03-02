@@ -108,7 +108,7 @@ const Event: NextPage = () => {
 					href={link}
 					target="_blank"
 					rel="noreferrer"
-					className="flex w-fit flex-row items-center justify-center gap-2 rounded-lg bg-white p-3 font-coolvetica text-dark transition-colors duration-200 hover:bg-dark hover:text-light"
+					className="flex whitespace-nowrap rounded-lg border border-dark bg-background1 py-2 px-8 font-coolvetica text-dark transition-colors hover:bg-background3"
 				>
 					{linkText}
 				</Link>
