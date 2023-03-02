@@ -56,7 +56,9 @@ const Navbar = ({ integrated }: NavbarProps) => {
 };
 
 const BottomMenu = () => {
+	const { t } = useTranslation("navbar");
 	const { data: sessionData } = useSession();
+
 	return (
 		<nav
 			className="sticky bottom-0 flex w-full items-center justify-evenly gap-4 whitespace-nowrap bg-background1 p-4 mobile:hidden xs:gap-8"
@@ -91,7 +93,9 @@ const BottomMenu = () => {
 };
 
 const Links = () => {
+	const { t } = useTranslation("navbar");
 	const { data: sessionData } = useSession();
+
 	return (
 		<>
 			<Link href="/" className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light">
