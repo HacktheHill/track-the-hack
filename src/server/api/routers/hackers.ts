@@ -150,6 +150,8 @@ export const hackerRouter = createTRPCRouter({
 				},
 			});
 		}),
+
+	// Create a walk-in hacker
 	walkIn: protectedProcedure
 		.input(
 			walkInSchema.extend({
