@@ -240,7 +240,11 @@ const Resources: NextPage = () => {
 	const { t } = useTranslation("resources");
 
 	return (
-		<App className="flex h-full flex-col gap-10 overflow-y-auto bg-gradient-to-b from-background2 to-background1 py-12">
+		<App
+			className="flex h-full flex-col gap-10 overflow-y-auto bg-gradient-to-b from-background2 to-background1 py-12"
+			noIndex
+			title={t("title")}
+		>
 			<ReactMarkdown
 				components={components}
 				remarkPlugins={plugins}
