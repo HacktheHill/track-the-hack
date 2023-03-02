@@ -7,6 +7,7 @@ import { useRouter } from "next/router";
 import App from "../../components/App";
 import Error from "../../components/Error";
 import Loading from "../../components/Loading";
+import { useTranslation } from "next-i18next";
 
 import { trpc } from "../../utils/api";
 import { eventTypes } from "./event";
@@ -20,10 +21,12 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
 type TabsType = (typeof eventTypes)[keyof typeof eventTypes];
 
 const Schedule: NextPage = () => {
-	const query = trpc.events.all.useQuery();
+	const { t } = useTranslation("schedule");
 
 	const router = useRouter();
 	const { locale } = router;
+
+	const query = trpc.events.all.useQuery();
 
 	let dateLocale = "en-CA";
 	if (locale === "fr") {
@@ -112,7 +115,7 @@ const Schedule: NextPage = () => {
 		}, [] as Event[][]);
 
 	return (
-		<App className="flex h-0 flex-col items-center bg-gradient3" integrated={true}>
+		<App className="flex h-0 flex-col items-center bg-gradient3" integrated={true} title={t("title")}>
 			<Tabs tab={tab} setTab={tab => void router.push(`/schedule?tab=${tab}`)} />
 			<div className="w-full overflow-y-auto p-4 mobile:px-0">
 				<div className="mx-auto flex max-w-2xl flex-col gap-4">

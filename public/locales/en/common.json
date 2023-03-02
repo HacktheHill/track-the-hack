@@ -1,4 +1,5 @@
 {
+	"description": "An open source project to track the participants of the Hack the Hill hackathon.",
 	"loading": "Loading...",
 	"error": "Error: {{message}}",
 	"contact-us": "Contact us for help",

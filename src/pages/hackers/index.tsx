@@ -1,6 +1,7 @@
 import { Role, type HackerInfo } from "@prisma/client";
 import type { GetStaticProps, NextPage } from "next";
 import { useSession } from "next-auth/react";
+import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -20,6 +21,7 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
 };
 
 const Hackers: NextPage = () => {
+	const { t } = useTranslation("hackers");
 	const router = useRouter();
 	const { data: sessionData } = useSession();
 
@@ -86,6 +88,7 @@ const Hackers: NextPage = () => {
 		<App
 			className="flex flex-col overflow-y-auto bg-gradient-to-b from-background2 to-background1"
 			integrated={true}
+			title={t("title")}
 		>
 			<div className="border-b border-dark bg-background1 px-4 pt-2 pb-4 shadow-navbar sm:px-20">
 				<Search setSearch={setSearch} />

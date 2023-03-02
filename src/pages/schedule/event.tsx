@@ -55,6 +55,7 @@ const Event: NextPage = () => {
 	return (
 		<App
 			className="relative flex h-full w-full flex-col items-center justify-start gap-8 overflow-y-auto bg-background1 p-8 text-center"
+			title={name}
 			integrated={true}
 		>
 			<button className="absolute right-4 top-0 text-dark hover:text-light" onClick={() => router.back()}>

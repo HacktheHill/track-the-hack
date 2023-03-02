@@ -7,6 +7,7 @@ type ErrorProps = {
 
 const Error = ({ message }: ErrorProps) => {
 	const { t } = useTranslation("common");
+
 	return (
 		<>
 			<code>

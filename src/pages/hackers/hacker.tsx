@@ -76,7 +76,10 @@ const Hacker: NextPage = () => {
 	}
 
 	return (
-		<App className="mx-auto h-full w-full overflow-y-auto bg-gradient-to-b from-background2 to-background1 px-4 py-12">
+		<App
+			className="mx-auto h-full w-full overflow-y-auto bg-gradient-to-b from-background2 to-background1 px-4 py-12"
+			title={`${hackerQuery.data.firstName} ${hackerQuery.data.lastName}`}
+		>
 			<div className="mx-auto flex max-w-2xl flex-col gap-4">
 				<OnlyRole roles={[Role.ORGANIZER, Role.SPONSOR]}>
 					<HackerView hackerData={hackerQuery.data} presenceData={presenceQuery.data} />
