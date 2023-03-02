@@ -23,24 +23,32 @@ const Maps = () => {
 			title={t("title")}
 		>
 			<div className="w-full justify-center overflow-y-auto mobile:px-0">
-				{
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-					[...Array(MAX_FLOORS)].map((e, i) => (
-						<>
-							<h1 className="py-3 text-center text-xl text-dark">Floor {i}</h1>
+				{[...Array(MAX_FLOORS).keys()].map(i => (
+					<>
+						<h1 className="py-3 text-center text-xl text-dark">
+							{t("floor", {
+								floor: i,
+							})}
+						</h1>
 
-							<TransformWrapper>
-								<div className="mx-auto block">
-									<TransformComponent
-										wrapperStyle={{ display: "block", marginLeft: "auto", marginRight: "auto" }}
-									>
-										<Image width={800} height={400} src={mapsLink(i)} alt={`Floor ${i}`} />
-									</TransformComponent>
-								</div>
-							</TransformWrapper>
-						</>
-					))
-				}
+						<TransformWrapper>
+							<div className="mx-auto block">
+								<TransformComponent
+									wrapperStyle={{ display: "block", marginLeft: "auto", marginRight: "auto" }}
+								>
+									<Image
+										width={800}
+										height={400}
+										src={mapsLink(i)}
+										alt={t("floor", {
+											floor: i,
+										})}
+									/>
+								</TransformComponent>
+							</div>
+						</TransformWrapper>
+					</>
+				))}
 			</div>
 		</App>
 	);

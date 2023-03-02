@@ -1,7 +1,9 @@
 import type { HackerInfo } from "@prisma/client";
+import { useTranslation } from "next-i18next";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
+
 import Error from "./Error";
 import Head from "./Head";
 import Loading from "./Loading";
@@ -18,7 +20,7 @@ type FormPageProps = {
 };
 
 const FormPage = ({ children, onSubmit, error, invalid, loading, path, user, title }: FormPageProps) => {
-	// Get query params
+	const { t } = useTranslation("common");
 	const router = useRouter();
 
 	useEffect(() => {
@@ -39,7 +41,7 @@ const FormPage = ({ children, onSubmit, error, invalid, loading, path, user, tit
 					<div className="flex flex-col items-center">
 						<Image
 							src="https://hackthehill.com/Logos/hackthehill-logo.svg"
-							alt="Hack the Hill logo"
+							alt={t("hack-the-hill-logo-alt")}
 							width={128}
 							height={128}
 							className="h-auto w-auto"
