@@ -1,3 +1,4 @@
 {
-    "title": "Cartes"
+	"title": "Cartes",
+	"floor": "Niveau {floor}"
 }

@@ -3,12 +3,14 @@ import { signIn, signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import OnlyRole from "./OnlyRole";
 import Link from "next/link";
+import { useTranslation } from "next-i18next";
 
 type NavbarProps = {
 	integrated?: boolean;
 };
 
 const Navbar = ({ integrated }: NavbarProps) => {
+	const { t } = useTranslation("navbar");
 	const { data: sessionData } = useSession();
 
 	return (

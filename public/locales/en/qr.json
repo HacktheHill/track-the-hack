@@ -1,5 +1,6 @@
 {
 	"title": "QR Code",
 	"use-qr": "Show this QR code to organizers to check in",
-	"scan-qr": "Ready to scan a QR code"
+	"scan-qr": "Ready to scan a QR code",
+	"mascot-choco-alt": "Hack the Hill mascot with hot chocolate"
 }

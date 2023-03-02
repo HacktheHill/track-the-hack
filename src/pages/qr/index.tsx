@@ -38,7 +38,10 @@ const QR = () => {
 	}, [id, router, sessionData?.user]);
 
 	return (
-		<App className="relative flex h-full flex-col items-center justify-center gap-16 bg-gradient2" title={t("title")}>
+		<App
+			className="relative flex h-full flex-col items-center justify-center gap-16 bg-gradient2"
+			title={t("title")}
+		>
 			<Weather count={30} type="snowflake" />
 			<div className="flex flex-col items-center gap-6">
 				<OnlyRole roles={[Role.ORGANIZER]}>
@@ -55,7 +58,7 @@ const QR = () => {
 					priority
 					className="z-10 -my-4 mx-auto"
 					src="/assets/beaver-hot-choco.svg"
-					alt="Mascot Choco"
+					alt={t("mascot-choco-alt")}
 					width={310}
 					height={300}
 				/>

@@ -58,7 +58,7 @@ const Hackers: NextPage = () => {
 				</OnlyRole>
 				<OnlyRole roles={[Role.HACKER]}>
 					<div className="flex flex-col items-center justify-center gap-4">
-						<Error message="You are not allowed to view this page" />
+						<Error message={t("not-authorized-to-view-this-page")} />
 					</div>
 				</OnlyRole>
 			</App>
