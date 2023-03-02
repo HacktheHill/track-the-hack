@@ -1,0 +1,9 @@
+{
+	"type": {
+		"ALL": "Tout",
+		"WORKSHOP": "Atelier",
+		"CAREER_FAIR": "Salon de l'emploi",
+		"FOOD": "Nourriture",
+		"SOCIAL": "Social"
+	}
+}

@@ -1,0 +1,9 @@
+{
+	"type": {
+		"ALL": "All",
+		"WORKSHOP": "Workshop",
+		"CAREER_FAIR": "Career Fair",
+		"FOOD": "Food",
+		"SOCIAL": "Social"
+	}
+}
