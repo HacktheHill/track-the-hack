@@ -78,13 +78,10 @@ const Hackers: NextPage = () => {
 			? query.data
 			: query.data.filter(
 					hacker =>
-						hacker.firstName.toLowerCase().includes(search.toLowerCase()) ||
-						hacker.lastName.toLowerCase().includes(search.toLowerCase()) ||
 						hacker.university?.toLowerCase().includes(search.toLowerCase()) ||
 						hacker.studyProgram?.toLowerCase().includes(search.toLowerCase()) ||
-						hacker.firstName.toLowerCase().includes(search.toLowerCase()).toString() +
-							" " +
-							hacker.lastName.toLowerCase().includes(search.toLowerCase()).toString(),
+						`${hacker.firstName} ${hacker.lastName}`.toLowerCase().includes(search.toLowerCase())
+							
 			  );
 
 	return (
