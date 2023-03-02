@@ -12,7 +12,6 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
 };
 
 const Maps = () => {
-	const { t } = useTranslation("qr");
 	const mapsLink = (floor: number) => `https://cdn1.hackthehill.com/crx/floorplan/${floor}.png`;
 	const MAX_FLOORS = 6;
 
