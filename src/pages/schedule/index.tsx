@@ -65,8 +65,13 @@ const Schedule: NextPage = () => {
 		}
 	};
 
+	const tab =
+		router.query.tab && Object.values(eventTypes).includes(router.query.tab as TabsType)
+			? (router.query.tab as TabsType)
+			: eventTypes.ALL;
+
 	const events = query.data
-		?.filter(event => eventTypes[event.type] === router.query.tab || router.query.tab === eventTypes.ALL)
+		?.filter(event => eventTypes[event.type] === tab || tab === eventTypes.ALL)
 		.reduce((acc, event) => {
 			if (event.end.getDate() === event.start.getDate()) {
 				acc.push(event);
@@ -105,11 +110,6 @@ const Schedule: NextPage = () => {
 			}
 			return acc;
 		}, [] as Event[][]);
-
-	const tab =
-		router.query.tab && Object.values(eventTypes).includes(router.query.tab as TabsType)
-			? (router.query.tab as TabsType)
-			: eventTypes.ALL;
 
 	return (
 		<App className="flex h-0 flex-col items-center bg-gradient3" integrated={true}>
