@@ -28,46 +28,6 @@ export const userRouter = createTRPCRouter({
 			return null;
 		}),
 
-	// Set the given user's role
-	setRole: protectedProcedure
-		.input(
-			z.object({
-				id: z.string(),
-				role: z.string(),
-			}),
-		)
-		.mutation(async ({ ctx, input }) => {
-			const userId = ctx.session.user.id;
-			const user = await ctx.prisma.user.findUnique({
-				where: {
-					id: userId,
-				},
-			});
-
-			if (!user) {
-				throw new Error("User not found");
-			}
-
-			const role = roles.safeParse(input.role);
-			if (!role.success) {
-				return null;
-			}
-
-			if (!hasRoles(user, [Role.ORGANIZER]) && user.id !== input.id) {
-				throw new Error("You do not have permission to do this");
-			}
-
-			const updatedUser = await ctx.prisma.user.update({
-				where: {
-					id: input.id,
-				},
-				data: {
-					role: role.data,
-				},
-			});
-			return updatedUser;
-		}),
-
 	// Get the given user's hacker id
 	getHackerId: protectedProcedure
 		.input(
