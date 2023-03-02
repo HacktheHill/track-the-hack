@@ -168,7 +168,8 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 			</p>
 			<p className={paragraphClass}>
 				<b className={boldClass}>Attendance</b>
-				{hackerData.confirmed ? "Confirmed attendance" : "Unconfirmed attendance"} &mdash;{" "}
+				{hackerData.confirmed ? "Confirmed attendance" : "Unconfirmed attendance"}
+				{hackerData.walkIn ? " (walk-in)" : ""} &mdash;{" "}
 				{hackerData.unsubscribed ? "Unsubscribed from emails" : "Subscribed to emails"} &mdash; Attends{" "}
 				{hackerData.attendanceType} at {hackerData.location} with{" "}
 				{hackerData.transportationRequired ? "" : "no"} transportation required
