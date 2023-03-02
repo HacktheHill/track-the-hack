@@ -142,6 +142,8 @@ type SearchProps = {
 };
 
 const Search = ({ setSearch }: SearchProps) => {
+	const { t } = useTranslation("hackers");
+
 	return (
 		<div className="relative mx-auto flex max-w-xl flex-col">
 			<div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-dark">
