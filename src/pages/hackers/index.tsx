@@ -87,11 +87,11 @@ const Hackers: NextPage = () => {
 			className="flex flex-col overflow-y-auto bg-gradient-to-b from-background2 to-background1"
 			integrated={true}
 		>
-			<div className="border-b border-dark bg-background1 pt-2 pb-4 shadow-navbar sm:px-20">
+			<div className="border-b border-dark bg-background1 px-4 pt-2 pb-4 shadow-navbar sm:px-20">
 				<Search setSearch={setSearch} />
 			</div>
 			<div
-				className="to-mobile:mx-auto grid h-fit flex-col gap-4 overflow-x-hidden py-4 sm:px-20"
+				className="to-mobile:mx-auto grid h-fit flex-col gap-4 overflow-x-hidden py-4 px-4 sm:px-20"
 				style={{
 					gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
 				}}
