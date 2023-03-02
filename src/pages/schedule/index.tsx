@@ -1,10 +1,9 @@
 import type { Event } from "@prisma/client";
-import type { GetStaticProps, NextPage } from "next";
 import { EventType } from "@prisma/client";
+import type { GetStaticProps, NextPage } from "next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useState } from "react";
 import App from "../../components/App";
 import Error from "../../components/Error";
 import Loading from "../../components/Loading";
@@ -21,8 +20,6 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
 type TabsType = (typeof eventTypes)[keyof typeof eventTypes];
 
 const Schedule: NextPage = () => {
-	const [tab, setTab] = useState<TabsType>(eventTypes.ALL);
-
 	const query = trpc.events.all.useQuery();
 
 	const router = useRouter();
@@ -69,7 +66,7 @@ const Schedule: NextPage = () => {
 	};
 
 	const events = query.data
-		?.filter(event => eventTypes[event.type] === tab || tab === eventTypes.ALL)
+		?.filter(event => eventTypes[event.type] === router.query.tab || router.query.tab === eventTypes.ALL)
 		.reduce((acc, event) => {
 			if (event.end.getDate() === event.start.getDate()) {
 				acc.push(event);
@@ -109,12 +106,14 @@ const Schedule: NextPage = () => {
 			return acc;
 		}, [] as Event[][]);
 
+	const tab =
+		router.query.tab && Object.values(eventTypes).includes(router.query.tab as TabsType)
+			? (router.query.tab as TabsType)
+			: eventTypes.ALL;
+
 	return (
-		<App
-			className="flex h-0 flex-col items-center bg-gradient3"
-			integrated={true}
-		>
-			<Tabs tab={tab} setTab={setTab} />
+		<App className="flex h-0 flex-col items-center bg-gradient3" integrated={true}>
+			<Tabs tab={tab} setTab={tab => void router.push(`/schedule?tab=${tab}`)} />
 			<div className="w-full overflow-y-auto p-4 mobile:px-0">
 				<div className="mx-auto flex max-w-2xl flex-col gap-4">
 					{events.map((event, i) => (
