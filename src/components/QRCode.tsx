@@ -1,8 +1,10 @@
 import { useSession } from "next-auth/react";
+import { useTranslation } from "next-i18next";
 import Image from "next/image";
 import qrcode from "qrcode";
 import { useEffect, useState } from "react";
 import { trpc } from "../utils/api";
+
 import Error from "./Error";
 
 type QRCodeProps = {
@@ -11,6 +13,7 @@ type QRCodeProps = {
 };
 
 const QRCode = ({ setError, id }: QRCodeProps) => {
+	const { t } = useTranslation("qr");
 	const { data: sessionData } = useSession();
 	const [qrCode, setQRCode] = useState<string | null>(null);
 
