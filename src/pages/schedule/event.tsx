@@ -49,7 +49,7 @@ const Event: NextPage = () => {
 		dateLocale = "fr-CA";
 	}
 
-	const { name, start, end, room, description, type, host, image, link, tiktok } = query.data;
+	const { name, start, end, room, description, type, host, image, link, linkText, tiktok } = query.data;
 	if (!(start instanceof Date) || !(end instanceof Date)) return null;
 
 	return (
@@ -108,13 +108,9 @@ const Event: NextPage = () => {
 					href={link}
 					target="_blank"
 					rel="noreferrer"
-					className="flex w-fit flex-row items-center justify-center gap-2 rounded-lg bg-white p-3 font-coolvetica text-dark"
+					className="flex w-fit flex-row items-center justify-center gap-2 rounded-lg bg-white p-3 font-coolvetica text-dark transition-colors duration-200 hover:bg-dark hover:text-light"
 				>
-					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" className="h-6 w-6">
-						<path d="M256 0C114.84 0 0 114.84 0 256s114.84 256 256 256 256-114.84 256-256S397.16 0 256 0zm0 480c-119.1 0-216-96.9-216-216S136.9 40 256 40s216 96.9 216 216-96.9 216-216 216z" />
-						<path d="M256 128c-17.67 0-32 14.33-32 32v96h-32c-17.67 0-32 14.33-32 32s14.33 32 32 32h32v32c0 17.67 14.33 32 32 32s32-14.33 32-32v-32h32c17.67 0 32-14.33 32-32s-14.33-32-32-32h-32v-96c0-17.67-14.33-32-32-32z" />
-					</svg>
-					<p>{link}</p>
+					{linkText}
 				</Link>
 			)}
 
