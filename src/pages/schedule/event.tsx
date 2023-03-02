@@ -40,10 +40,6 @@ const Event: NextPage = () => {
 		);
 	}
 
-	if (query.data == null) {
-		void router.push("/404");
-	}
-
 	let dateLocale = "en-CA";
 	if (locale === "fr") {
 		dateLocale = "fr-CA";
