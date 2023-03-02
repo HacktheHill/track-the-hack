@@ -57,7 +57,7 @@ const Event: NextPage = () => {
 			className="relative flex h-full w-full flex-col items-center justify-start gap-8 overflow-y-auto bg-background1 p-8 text-center"
 			integrated={true}
 		>
-			<Link key={id} href="/schedule" className="absolute right-4 top-0 text-dark hover:text-light">
+			<button className="absolute right-4 top-0 text-dark hover:text-light" onClick={() => router.back()}>
 				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 					<title>Close Event</title>
 					<path
@@ -75,7 +75,7 @@ const Event: NextPage = () => {
 						strokeLinejoin="round"
 					></path>
 				</svg>
-			</Link>
+			</button>
 
 			<div className="flex flex-col font-coolvetica text-dark">
 				<h1 className="text-4xl">{name}</h1>
