@@ -108,20 +108,37 @@ const components = {
 			{children}
 		</a>
 	),
-	ul: ({ children, node, ...props }: ComponentProps) => (
-		<ul className="list-disc" {...props}>
-			{children}
-		</ul>
-	),
-	ol: ({ children, node, ...props }: ComponentProps) => (
-		<ol className="list-decimal" {...props}>
-			{children}
-		</ol>
-	),
+	ul: ({ children, node, ...props }: ComponentProps) => {
+		const { depth, ordered, className, ...rest } = props as {
+			depth: number;
+			ordered: boolean;
+			className?: "contains-task-list";
+		};
+
+		return (
+			<ul className="list-disc" {...rest}>
+				{children}
+			</ul>
+		);
+	},
+	ol: ({ children, node, ...props }: ComponentProps) => {
+		const { depth, ordered, className, ...rest } = props as {
+			depth: number;
+			ordered: boolean;
+			className?: "contains-task-list";
+		};
+
+		return (
+			<ol className="list-decimal" {...rest}>
+				{children}
+			</ol>
+		);
+	},
 	li: ({ children, node, ...props }: ComponentProps) => {
-		const { checked, className, ...rest } = props as {
+		const { checked, className, ordered, ...rest } = props as {
 			checked: boolean;
 			className?: "task-list-item";
+			ordered: boolean;
 		};
 
 		if (className === "task-list-item") {
