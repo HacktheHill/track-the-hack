@@ -133,6 +133,7 @@ model Event {
     room        String
     image       String?
     link        String?
+    linkText    String?
     tiktok      String?
 }
 
