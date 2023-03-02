@@ -1,5 +1,7 @@
+import { Role } from "@prisma/client";
 import { signIn, signOut, useSession } from "next-auth/react";
 import Image from "next/image";
+import OnlyRole from "./OnlyRole";
 import Link from "next/link";
 
 type NavbarProps = {
@@ -76,9 +78,11 @@ const BottomMenu = () => {
 				<Image priority src="/assets/resources.svg" height={32} width={32} alt="Resources" />
 			</Link>
 			{sessionData?.user && (
-				<Link href="/hackers">
-					<Image priority src="/assets/list.svg" height={32} width={32} alt="Hackers" />
-				</Link>
+				<OnlyRole roles={[Role.ORGANIZER, Role.SPONSOR]}>
+					<Link href="/hackers">
+						<Image priority src="/assets/list.svg" height={32} width={32} alt="Hackers" />
+					</Link>
+				</OnlyRole>
 			)}
 		</nav>
 	);
@@ -112,12 +116,14 @@ const Links = () => {
 				Resources
 			</Link>
 			{sessionData?.user && (
-				<Link
-					href="/hackers"
-					className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
-				>
-					Hackers
-				</Link>
+				<OnlyRole roles={[Role.ORGANIZER, Role.SPONSOR]}>
+					<Link
+						href="/hackers"
+						className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
+					>
+						Hackers
+					</Link>
+				</OnlyRole>
 			)}
 		</>
 	);
