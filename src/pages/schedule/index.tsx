@@ -10,15 +10,12 @@ import Loading from "../../components/Loading";
 import { useTranslation } from "next-i18next";
 
 import { trpc } from "../../utils/api";
-import { eventTypes } from "./event";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
-		props: await serverSideTranslations(locale ?? "en", ["common", "schedule"]),
+		props: await serverSideTranslations(locale ?? "en", ["common", "schedule", "event"]),
 	};
 };
-
-type TabsType = (typeof eventTypes)[keyof typeof eventTypes];
 
 const Schedule: NextPage = () => {
 	const { t } = useTranslation("schedule");
@@ -69,12 +66,12 @@ const Schedule: NextPage = () => {
 	};
 
 	const tab =
-		router.query.tab && Object.values(eventTypes).includes(router.query.tab as TabsType)
-			? (router.query.tab as TabsType)
-			: eventTypes.ALL;
+		typeof router.query.tab === "string" && Object.keys(EventType).includes(router.query.tab)
+			? (router.query.tab as EventType)
+			: EventType.ALL;
 
 	const events = query.data
-		?.filter(event => eventTypes[event.type] === tab || tab === eventTypes.ALL)
+		?.filter(event => EventType[event.type] === tab || tab === EventType.ALL)
 		.reduce((acc, event) => {
 			if (event.end.getDate() === event.start.getDate()) {
 				acc.push(event);
@@ -163,37 +160,54 @@ const Schedule: NextPage = () => {
 };
 
 type TabsProps = {
-	tab: TabsType;
-	setTab: (tab: TabsType) => void;
+	tab: EventType;
+	setTab: (tab: EventType) => void;
 };
 
 const Tabs = ({ tab, setTab }: TabsProps) => {
 	return (
 		<div className="w-full border-b border-dark bg-background1 px-4 pt-2 pb-4 shadow-navbar">
 			<div className="mx-auto grid max-w-2xl grid-cols-3 gap-3 sm:grid-cols-5">
-				{[...new Set([eventTypes.ALL, ...Object.values(eventTypes)])].map(name => (
-					<Tab key={name} name={name} active={tab} onClick={() => setTab(name)} />
-				))}
+				{Object.keys(EventType)
+					.sort(a => (a === EventType.ALL ? -1 : 0))
+					.map(type => (
+						<Tab
+							key={type}
+							type={type as keyof typeof EventType}
+							active={tab}
+							onClick={() => setTab(type as keyof typeof EventType)}
+						/>
+					))}
 			</div>
 		</div>
 	);
 };
 
 type TabProps = {
-	name: TabsType;
-	active: TabsType;
+	type: EventType;
+	active: EventType;
 	onClick: () => void;
 };
 
-const Tab = ({ name, active, onClick }: TabProps) => {
+const Tab = ({ type, active, onClick }: TabProps) => {
+	const { t } = useTranslation("event");
+
+	const types = {
+		[EventType.ALL]: t("type.ALL"),
+		[EventType.CAREER_FAIR]: t("type.CAREER_FAIR"),
+		[EventType.FOOD]: t("type.FOOD"),
+		[EventType.SOCIAL]: t("type.SOCIAL"),
+		[EventType.WORKSHOP]: t("type.WORKSHOP"),
+	};
+
 	return (
 		<div
 			className={`flex cursor-pointer flex-row items-center justify-center gap-2 rounded-lg bg-dark p-2 font-coolvetica text-white outline sm:p-4 ${
-				name === active ? "outline-4 outline-white" : "outline-0"
+				type === active ? "outline-4 outline-white" : "outline-0"
 			}`}
 			onClick={onClick}
 		>
-			<h1 className="text-center text-lg">{name}</h1>
+			<h1 className="text-center text-lg">{types[type]}</h1>
 		</div>
 	);
 };
