@@ -1,16 +1,19 @@
-import type { GetStaticProps } from "next";
+import type { GetStaticProps, NextPage } from "next";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
-import type { NextPage } from "next";
 import Image from "next/image";
+import { useRouter } from "next/router";
 import React from "react";
 import ReactMarkdown from "react-markdown";
+
 import type { PluggableList } from "react-markdown/lib/react-markdown";
-import remarkToc from "remark-toc";
-import rehypeSlug from "rehype-slug";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
+import rehypeSlug from "rehype-slug";
+import remarkToc from "remark-toc";
+
 import App from "../../components/App";
-import content from "./content.md";
+import en from "./en.md";
+import fr from "./fr.md";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
@@ -255,6 +258,8 @@ const plugins = [
 
 const Resources: NextPage = () => {
 	const { t } = useTranslation("resources");
+	const router = useRouter();
+	const { locale } = router;
 
 	return (
 		<App
@@ -276,7 +281,7 @@ const Resources: NextPage = () => {
 				]}
 				className="mx-auto w-full max-w-2xl px-4 sm:px-16"
 			>
-				{content}
+				{locale === "fr" ? fr : en}
 			</ReactMarkdown>
 			<a
 				href="https://discord.gg/8JNxJVMNrF"
