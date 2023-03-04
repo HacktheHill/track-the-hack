@@ -108,6 +108,7 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 
 	const keyToLabel = {
 		checkedIn: "Checked In",
+		snacks: "Snacks",
 		breakfast1: "Breakfast March 3rd",
 		lunch1: "Lunch March 3rd",
 		dinner1: "Dinner March 3rd",
