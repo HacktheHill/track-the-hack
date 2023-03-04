@@ -178,6 +178,11 @@ export const hackerRouter = createTRPCRouter({
 				data: {
 					...input,
 					walkIn: true,
+					presenceInfo: {
+						create: {
+							checkedIn: true,
+						},
+					},
 				},
 			});
 
