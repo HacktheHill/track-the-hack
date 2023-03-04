@@ -113,6 +113,7 @@ model HackerInfo {
 model PresenceInfo {
     id           String     @id @default(cuid())
     checkedIn    Boolean    @default(false)
+    snacks       Boolean    @default(false)
     breakfast1   Boolean    @default(false)
     lunch1       Boolean    @default(false)
     dinner1      Boolean    @default(false)
