@@ -208,7 +208,7 @@ const WalkIn: NextPage = () => {
 
 	const patterns = {
 		tel: "/^+?d{10,15}$/",
-		url: "/^(https?://)?.+$/",
+		url: undefined,
 		number: "/^d+$/",
 		email: undefined,
 		text: undefined,
