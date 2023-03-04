@@ -4,7 +4,7 @@ import { hasRoles } from "../../../utils/helpers";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { walkInSchema } from "../../../utils/common";
 
-const DEFAULT_ACCEPTANCE_EXPIRY = new Date(2023, 2, 4, 5, 0, 0, 0); // 2023-03-04 00:00:00 EST
+const DEFAULT_ACCEPTANCE_EXPIRY = new Date(2023, 2, 6, 5, 0, 0, 0); // 2023-03-06 00:00:00 EST
 
 export const hackerRouter = createTRPCRouter({
 	// Get a hacker by id or email
