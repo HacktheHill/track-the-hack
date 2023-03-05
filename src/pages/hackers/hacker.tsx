@@ -116,6 +116,7 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 		redbull: "RedBull",
 		breakfast2: "Breakfast March 5th",
 		lunch2: "Lunch March 5th",
+		lunch22: "Lunch March 5th 2",
 	} as const satisfies Record<keyof Omit<PresenceInfo, "id" | "hackerInfoId">, string>;
 
 	return (
