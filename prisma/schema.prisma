@@ -121,6 +121,7 @@ model PresenceInfo {
     redbull      Boolean    @default(false)
     breakfast2   Boolean    @default(false)
     lunch2       Boolean    @default(false)
+    lunch22      Boolean    @default(false)
     hackerInfo   HackerInfo @relation(fields: [hackerInfoId], references: [id])
     hackerInfoId String     @unique
 }
