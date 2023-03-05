@@ -105,6 +105,7 @@ model HackerInfo {
     onlyOnline                   Boolean        @default(false)
     acceptanceExpiry             DateTime?
     walkIn                       Boolean        @default(false)
+    winner                       Boolean        @default(false)
     presenceInfo                 PresenceInfo?
 
     @@index([userId])
