@@ -33,6 +33,6 @@ module.exports = withPWA({
 	},
 
 	images: {
-    		domains: ['cdn1.hackthehill.com'],
-  	},
+		domains: ["cdn1.hackthehill.com"],
+	},
 });
