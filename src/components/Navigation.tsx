@@ -122,14 +122,24 @@ const Links = () => {
 				Resources
 			</Link>
 			{sessionData?.user && (
-				<OnlyRole roles={[Role.ORGANIZER, Role.SPONSOR]}>
-					<Link
-						href="/hackers"
-						className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
-					>
-						Hackers
-					</Link>
-				</OnlyRole>
+				<>
+					<OnlyRole roles={[Role.ORGANIZER, Role.SPONSOR]}>
+						<Link
+							href="/hackers"
+							className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
+						>
+							Hackers
+						</Link>
+					</OnlyRole>
+					<OnlyRole roles={[Role.ORGANIZER]}>
+						<Link
+							href="/walk-in"
+							className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
+						>
+							Walk-In
+						</Link>
+					</OnlyRole>
+				</>
 			)}
 		</>
 	);
