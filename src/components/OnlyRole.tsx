@@ -6,11 +6,11 @@ import type { Roles } from "../utils/common";
 import Error from "./Error";
 
 type OnlyRoleProps = {
-	roles: Roles[];
+	filter: (role: Roles) => boolean;
 	children: React.ReactNode;
 };
 
-const OnlyRole = ({ roles, children }: OnlyRoleProps) => {
+const OnlyRole = ({ filter, children }: OnlyRoleProps) => {
 	const { data: sessionData } = useSession();
 	const id = sessionData?.user?.id ?? "";
 
@@ -24,7 +24,7 @@ const OnlyRole = ({ roles, children }: OnlyRoleProps) => {
 		return <Error message={query.error.message} />;
 	}
 
-	if (query.data && roles.includes(query.data)) {
+	if (query.data && filter(query.data)) {
 		return <>{children}</>;
 	}
 

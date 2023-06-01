@@ -31,10 +31,10 @@ const Hacker: NextPage = () => {
 	if (hackerQuery.isLoading || hackerQuery.data == null) {
 		return (
 			<App className="h-full bg-gradient-to-b from-background2 to-background1 px-16 py-12">
-				<OnlyRole roles={[Role.ORGANIZER, Role.SPONSOR]}>
+				<OnlyRole filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
 					<Loading />
 				</OnlyRole>
-				<OnlyRole roles={[Role.HACKER]}>
+				<OnlyRole filter={role => role === Role.HACKER}>
 					<div className="flex flex-col items-center justify-center gap-4">
 						<Error message="You are not allowed to view this page" />
 					</div>
@@ -81,10 +81,10 @@ const Hacker: NextPage = () => {
 			title={`${hackerQuery.data.firstName} ${hackerQuery.data.lastName}`}
 		>
 			<div className="mx-auto flex max-w-2xl flex-col gap-4">
-				<OnlyRole roles={[Role.ORGANIZER, Role.SPONSOR]}>
+				<OnlyRole filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
 					<HackerView hackerData={hackerQuery.data} presenceData={presenceQuery.data} />
 				</OnlyRole>
-				<OnlyRole roles={[Role.HACKER]}>{t("not-authorized-to-view-this-page")}</OnlyRole>
+				<OnlyRole filter={role => role === Role.HACKER}>{t("not-authorized-to-view-this-page")}</OnlyRole>
 			</div>
 		</App>
 	);
@@ -129,7 +129,7 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 				{hackerData.university && `at ${hackerData.university}`}{" "}
 				{hackerData.graduationYear && `(${hackerData.graduationYear})`}
 			</p>
-			<OnlyRole roles={[Role.ORGANIZER]}>
+			<OnlyRole filter={role => role === Role.ORGANIZER}>
 				<div className="grid grid-flow-row grid-cols-2 gap-4 rounded-lg bg-background2 p-4">
 					{Object.entries(presenceState).map(([key, value]) => (
 						<p key={key}>
@@ -199,7 +199,7 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 						),
 				)}
 			</p>
-			<OnlyRole roles={[Role.ORGANIZER]}>
+			<OnlyRole filter={role => role === Role.ORGANIZER}>
 				<>
 					<h2 className="self-center font-[Coolvetica] text-2xl font-normal text-dark">Debug Information</h2>
 					<p className={paragraphClass}>

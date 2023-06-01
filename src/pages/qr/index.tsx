@@ -44,11 +44,11 @@ const QR = () => {
 		>
 			<Weather count={30} type="snowflake" />
 			<div className="flex flex-col items-center gap-6">
-				<OnlyRole roles={[Role.ORGANIZER]}>
+				<OnlyRole filter={role => role === Role.ORGANIZER}>
 					<QRScanner setId={setId} />
 					{!error && <p className="z-10 max-w-xl text-center text-lg font-bold text-dark">{t("scan-qr")}</p>}
 				</OnlyRole>
-				<OnlyRole roles={[Role.HACKER]}>
+				<OnlyRole filter={role => role === Role.HACKER}>
 					<QRCode setError={setError} />
 					{!error && <p className="z-10 max-w-xl text-center text-lg font-bold text-dark">{t("use-qr")}</p>}
 				</OnlyRole>
