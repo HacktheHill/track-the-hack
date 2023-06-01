@@ -82,7 +82,7 @@ const BottomMenu = () => {
 				<Image priority src="/assets/resources.svg" height={32} width={32} alt="Resources" />
 			</Link>
 			{sessionData?.user && (
-				<OnlyRole roles={[Role.ORGANIZER, Role.SPONSOR]}>
+				<OnlyRole filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
 					<Link href="/hackers">
 						<Image priority src="/assets/list.svg" height={32} width={32} alt="Hackers" />
 					</Link>
@@ -123,7 +123,7 @@ const Links = () => {
 			</Link>
 			{sessionData?.user && (
 				<>
-					<OnlyRole roles={[Role.ORGANIZER, Role.SPONSOR]}>
+					<OnlyRole filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
 						<Link
 							href="/hackers"
 							className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
@@ -131,7 +131,7 @@ const Links = () => {
 							Hackers
 						</Link>
 					</OnlyRole>
-					<OnlyRole roles={[Role.ORGANIZER]}>
+					<OnlyRole filter={role => role === Role.ORGANIZER}>
 						<Link
 							href="/walk-in"
 							className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light"

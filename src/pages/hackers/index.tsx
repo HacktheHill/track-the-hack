@@ -53,10 +53,10 @@ const Hackers: NextPage = () => {
 	if (query.isLoading || query.data == null) {
 		return (
 			<App className="h-full bg-gradient-to-b from-background2 to-background1 px-16 py-12">
-				<OnlyRole roles={[Role.ORGANIZER, Role.SPONSOR]}>
+				<OnlyRole filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
 					<Loading />
 				</OnlyRole>
-				<OnlyRole roles={[Role.HACKER]}>
+				<OnlyRole filter={role => role === Role.HACKER}>
 					<div className="flex flex-col items-center justify-center gap-4">
 						<Error message={t("not-authorized-to-view-this-page")} />
 					</div>

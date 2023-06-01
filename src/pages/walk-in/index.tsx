@@ -216,7 +216,7 @@ const WalkIn: NextPage = () => {
 
 	return (
 		<App className="overflow-y-auto bg-gradient3 p-8 sm:p-12" title={t("title")}>
-			<OnlyRole roles={[Role.ORGANIZER]}>
+			<OnlyRole filter={role => role === Role.ORGANIZER}>
 				{success ? (
 					<div className="flex flex-col items-center gap-8">
 						<h3 className="font-rubik text-4xl font-bold text-dark">{t("title")}</h3>
@@ -276,7 +276,7 @@ const WalkIn: NextPage = () => {
 					</form>
 				)}
 			</OnlyRole>
-			<OnlyRole roles={[Role.HACKER]}>
+			<OnlyRole filter={role => role === Role.HACKER}>
 				<div className="flex flex-col items-center justify-center gap-4">
 					<Error message={t("not-authorized-to-view-this-page")} />
 				</div>
