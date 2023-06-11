@@ -41,8 +41,10 @@ const WalkIn: NextPage = () => {
 	}, [mutation.error, t]);
 
 	useEffect(() => {
+		console.log("INSIDE WALK-IN REDIRECT");
 		const timeout = setTimeout(() => {
 			if (sessionData?.user == null) {
+				//console.log("performing walk in redirect")
 				void router.push("/");
 			}
 		}, 1000);

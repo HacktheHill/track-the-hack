@@ -1,5 +1,5 @@
 import { Role, type HackerInfo } from "@prisma/client";
-import type { GetStaticProps, NextPage } from "next";
+import type { NextPage } from "next";
 import { useSession } from "next-auth/react";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
@@ -13,12 +13,12 @@ import App from "../../components/App";
 import Error from "../../components/Error";
 import Loading from "../../components/Loading";
 import OnlyRole from "../../components/OnlyRole";
+import type { GetServerSideProps} from "next";
+import { authOptions } from "../api/auth/[...nextauth]";
+import { getServerSession } from "next-auth/next";
+import { PrismaClient } from "@prisma/client";
+import { hackersRedirect } from "../../utils/redirects";
 
-export const getStaticProps: GetStaticProps = async ({ locale }) => {
-	return {
-		props: await serverSideTranslations(locale ?? "en", ["common", "hackers"]),
-	};
-};
 
 const Hackers: NextPage = () => {
 	const { t } = useTranslation("hackers");
@@ -43,12 +43,6 @@ const Hackers: NextPage = () => {
 			window.removeEventListener("resize", debouncedResizeHandler);
 		};
 	}, [updateColumns]);
-
-	useEffect(() => {
-		if (sessionData?.user == null) {
-			void router.push("/");
-		}
-	}, [router, sessionData?.user]);
 
 	if (query.isLoading || query.data == null) {
 		return (
@@ -174,5 +168,15 @@ const Search = ({ setSearch }: SearchProps) => {
 		</div>
 	);
 };
+
+
+export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
+	const props = await hackersRedirect(req, res, locale);
+
+	return {
+	  ...props,
+	};
+  };
+
 
 export default Hackers;
