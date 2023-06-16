@@ -25,6 +25,7 @@ model Account {
     refresh_token            String? @db.Text
     refresh_token_expires_in Int?
     access_token             String? @db.Text
+    ext_expires_in           Int?
     expires_at               Int?
     token_type               String?
     scope                    String?
