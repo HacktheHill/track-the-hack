@@ -68,9 +68,11 @@ const BottomMenu = () => {
 				<Image priority src="/assets/home.svg" height={32} width={32} alt="Home" />
 			</Link>
 			{sessionData?.user && (
-				<Link href="/qr">
-					<Image priority src="/assets/qr.svg" height={32} width={32} alt="QR" />
-				</Link>
+				<OnlyRole roles={[Role.HACKER]}>
+					<Link href="/qr">
+						<Image priority src="/assets/qr.svg" height={32} width={32} alt="QR" />
+					</Link>
+				</OnlyRole>
 			)}
 			<Link href="/schedule">
 				<Image priority src="/assets/schedule.svg" height={32} width={32} alt="Schedule" />
@@ -102,9 +104,14 @@ const Links = () => {
 				Home
 			</Link>
 			{sessionData?.user && (
-				<Link href="/qr" className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light">
-					QR
-				</Link>
+				<OnlyRole roles={[Role.HACKER]}>
+					<Link
+						href="/qr"
+						className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
+					>
+						QR
+					</Link>
+				</OnlyRole>
 			)}
 			<Link
 				href="/schedule"
