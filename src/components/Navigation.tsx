@@ -4,7 +4,8 @@ import Image from "next/image";
 import OnlyRole from "./OnlyRole";
 import Link from "next/link";
 import { useTranslation } from "next-i18next";
-
+import { trpc } from "../utils/api";
+import { useEffect } from "react";
 type NavbarProps = {
 	integrated?: boolean;
 };
@@ -12,7 +13,6 @@ type NavbarProps = {
 const Navbar = ({ integrated }: NavbarProps) => {
 	const { t } = useTranslation("navbar");
 	const { data: sessionData } = useSession();
-
 	return (
 		<nav
 			className={`sticky top-0 z-10 flex gap-4 whitespace-nowrap bg-background1 p-4 ${
@@ -58,6 +58,8 @@ const Navbar = ({ integrated }: NavbarProps) => {
 const BottomMenu = () => {
 	const { t } = useTranslation("navbar");
 	const { data: sessionData } = useSession();
+	const hackerQuery = trpc.users.getHackerId.useQuery({ id: sessionData?.user?.id ?? "" }, { enabled: !!sessionData?.user?.id });
+	console.log(hackerQuery)
 
 	return (
 		<nav
@@ -67,7 +69,7 @@ const BottomMenu = () => {
 			<Link href="/">
 				<Image priority src="/assets/home.svg" height={32} width={32} alt="Home" />
 			</Link>
-			{sessionData?.user && (
+			{sessionData?.user && hackerQuery.data && (
 				<OnlyRole roles={[Role.HACKER]}>
 					<Link href="/qr">
 						<Image priority src="/assets/qr.svg" height={32} width={32} alt="QR" />
@@ -97,13 +99,14 @@ const BottomMenu = () => {
 const Links = () => {
 	const { t } = useTranslation("navbar");
 	const { data: sessionData } = useSession();
-
+	console.log(sessionData)
+	const hackerQuery = trpc.users.getHackerId.useQuery({ id: sessionData?.user?.id ?? "" }, { enabled: !!sessionData?.user?.id });
 	return (
 		<>
 			<Link href="/" className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light">
 				Home
 			</Link>
-			{sessionData?.user && (
+			{sessionData?.user && hackerQuery.data && (
 				<OnlyRole roles={[Role.HACKER]}>
 					<Link
 						href="/qr"
