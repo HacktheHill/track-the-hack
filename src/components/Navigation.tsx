@@ -70,7 +70,7 @@ const BottomMenu = () => {
 				<Image priority src="/assets/home.svg" height={32} width={32} alt="Home" />
 			</Link>
 			{sessionData?.user && hackerQuery.data && (
-				<OnlyRole roles={[Role.HACKER]}>
+				<OnlyRole filter={role => role === Role.HACKER}>
 					<Link href="/qr">
 						<Image priority src="/assets/qr.svg" height={32} width={32} alt="QR" />
 					</Link>
@@ -107,7 +107,7 @@ const Links = () => {
 				Home
 			</Link>
 			{sessionData?.user && hackerQuery.data && (
-				<OnlyRole roles={[Role.HACKER]}>
+				<OnlyRole filter={role => role === Role.HACKER}>
 					<Link
 						href="/qr"
 						className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
