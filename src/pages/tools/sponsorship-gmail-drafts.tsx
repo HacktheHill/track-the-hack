@@ -9,7 +9,6 @@ import { useEffect, useState } from "react";
 import App from "../../components/App";
 import Error from "../../components/Error";
 import OnlyRole from "../../components/OnlyRole";
-import QRCode from "../../components/QRCode";
 
 import { trpc } from "../../utils/api";
 import { sponsorshipGmailDraftsSchema } from "../../utils/common";

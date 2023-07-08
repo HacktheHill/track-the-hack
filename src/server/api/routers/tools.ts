@@ -1,77 +1,28 @@
-import { authenticate } from "@google-cloud/local-auth";
 import { Role } from "@prisma/client";
-import fs from "fs/promises";
 import type { OAuth2Client } from "google-auth-library";
 import type { ImpersonatedJWTInput, JWTInput } from "google-auth-library/build/src/auth/credentials";
-import type { JSONClient } from "google-auth-library/build/src/auth/googleauth";
 import type { gmail_v1 } from "googleapis";
 import { google } from "googleapis";
 import type { AttachmentOptions } from "mimetext";
 import { createMimeMessage } from "mimetext";
-import path from "path";
-import { z } from "zod";
+import { env } from "../../../env/server.mjs";
+import { sponsorshipGmailDraftsSchema } from "../../../utils/common";
 import { hasRoles } from "../../../utils/helpers";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { sponsorshipGmailDraftsSchema } from "../../../utils/common";
-
-// If modifying these scopes, delete token.json
-const SCOPES = ["https://mail.google.com/"];
-
-// The file token.json stores the user's access and refresh tokens, and is created automatically when the authorization flow completes for the first time
-const TOKEN_PATH = path.join(process.cwd(), "google-token.json");
-const CREDENTIALS_PATH = path.join(process.cwd(), "google-credentials.json");
 
 /**
- * Reads previously authorized credentials from the save file
+ * Reads authorized credentials from the environment variables
  *
- * @return {Promise<JSONClient | null>}
+ * @return {OAuth2Client} Credentials
  */
-const loadSavedCredentialsIfExist = async (): Promise<JSONClient | null> => {
-	try {
-		const content = await fs.readFile(TOKEN_PATH, "utf8");
-		const credentials = JSON.parse(content) as JWTInput | ImpersonatedJWTInput;
-		return google.auth.fromJSON(credentials);
-	} catch (error) {
-		return null;
-	}
-};
-
-/**
- * Serializes credentials to a file compatible with GoogleAuth.fromJSON
- *
- * @param {JSONClient} client
- * @return {Promise<void>}
- */
-const saveCredentials = async (client: JSONClient): Promise<void> => {
-	const content = await fs.readFile(CREDENTIALS_PATH, "utf8");
-	const { installed: key } = JSON.parse(content) as CredentialsJSON;
-	const payload = JSON.stringify({
+const loadCredentials = (): OAuth2Client => {
+	const credentials = {
 		type: "authorized_user",
-		client_id: key.client_id,
-		client_secret: key.client_secret,
-		refresh_token: client.credentials.refresh_token,
-	});
-	await fs.writeFile(TOKEN_PATH, payload);
-};
-
-/**
- * Load or request or authorization to call APIs
- *
- * @return {Promise<OAuth2Client>}
- */
-const authorize = async (): Promise<OAuth2Client> => {
-	let client: JSONClient | OAuth2Client | null = await loadSavedCredentialsIfExist();
-	if (client) {
-		return client as OAuth2Client;
-	}
-	client = await authenticate({
-		scopes: SCOPES,
-		keyfilePath: CREDENTIALS_PATH,
-	});
-	if (client.credentials) {
-		await saveCredentials(client as JSONClient);
-	}
-	return client;
+		client_id: env.SPONSORSHIP_GOOGLE_CLIENT_ID,
+		client_secret: env.SPONSORSHIP_GOOGLE_CLIENT_SECRET,
+		refresh_token: env.SPONSORSHIP_GOOGLE_REFRESH_TOKEN,
+	} as JWTInput | ImpersonatedJWTInput;
+	return google.auth.fromJSON(credentials) as OAuth2Client;
 };
 
 /**
@@ -114,7 +65,7 @@ const generateBody = (data: Email): string => {
  * @param {Email} data Email data
  */
 const createDraft = async (data: Email) => {
-	const auth = await authorize();
+	const auth = loadCredentials();
 	const gmail = google.gmail({ version: "v1", auth });
 	const userId = "me";
 
