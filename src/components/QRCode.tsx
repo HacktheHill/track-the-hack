@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { trpc } from "../utils/api";
 
 import Error from "./Error";
+import router from "next/router";
 
 type QRCodeProps = {
 	setError?: (error: boolean) => void;
@@ -45,6 +46,17 @@ const QRCode = ({ setError, id }: QRCodeProps) => {
 		}
 		void getQRCode();
 	}, [id, query.data]);
+
+		// useEffect(() => {
+		// 	// Check if user is unregistered and redirect if necessary
+		// 		if (!query.data) {
+		// 			try {
+		// 				void router.push("/"); // Replace "/" with the desired redirection path
+		// 			} catch (error) {
+		// 				console.error(error);
+		// 			}
+		// 		}
+		// }, [query.data]);
 
 	if (query.isError) {
 		setError?.(true);
