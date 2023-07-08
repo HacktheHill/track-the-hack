@@ -2,7 +2,6 @@ import { Role } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
-import { useRouter } from "next/router";
 import type { GetStaticProps, NextPage } from "next/types";
 import { useEffect, useState } from "react";
 
@@ -22,7 +21,6 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
 
 const WalkIn: NextPage = () => {
 	const { t } = useTranslation("walk-in");
-	const router = useRouter();
 	const { data: sessionData } = useSession();
 
 	const mutation = trpc.hackers.walkIn.useMutation();
@@ -35,15 +33,6 @@ const WalkIn: NextPage = () => {
 			setError(mutation.error.message);
 		}
 	}, [mutation.error, t]);
-
-	useEffect(() => {
-		const timeout = setTimeout(() => {
-			if (sessionData?.user == null) {
-				void router.push("/");
-			}
-		}, 1000);
-		return () => clearTimeout(timeout);
-	}, [router, sessionData?.user]);
 
 	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
@@ -272,11 +261,11 @@ const WalkIn: NextPage = () => {
 					</form>
 				)}
 			</OnlyRole>
-			<OnlyRole filter={role => role === Role.HACKER}>
+			{!sessionData?.user && (
 				<div className="flex flex-col items-center justify-center gap-4">
 					<Error message={t("not-authorized-to-view-this-page")} />
 				</div>
-			</OnlyRole>
+			)}
 		</App>
 	);
 };
