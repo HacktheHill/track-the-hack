@@ -45,6 +45,13 @@ const SponsorshipGmailDrafts: NextPage = () => {
 
 		const data = Object.fromEntries(formData) as Record<string, string | number | undefined>;
 
+		// Remove empty values
+		Object.keys(data).forEach(key => {
+			if (data[key] == null || data[key] === "") {
+				delete data[key];
+			}
+		});
+
 		const parse = sponsorshipGmailDraftsSchema.safeParse(data);
 		if (!parse.success) {
 			setError(t("invalid-form"));
@@ -78,6 +85,18 @@ const SponsorshipGmailDrafts: NextPage = () => {
 					<form onSubmit={handleSubmit} className="flex flex-col items-center gap-8">
 						<h3 className="font-rubik text-4xl font-bold text-dark">{t("title")}</h3>
 						<div className="flex flex-col gap-4">
+							<div className="flex w-full flex-col items-center gap-2 sm:flex-row">
+								<label htmlFor="organizer-name" className="flex-[50%] font-rubik text-dark">
+									{t("organizer-name")}
+								</label>
+								<input
+									id="organizer-name"
+									name="organizerName"
+									type="text"
+									className="w-full rounded-[100px] border-none bg-background1 px-4 py-2 font-rubik text-dark shadow-md transition-all duration-500 hover:bg-background1/50"
+									defaultValue={sessionData?.user?.name ?? ""}
+								/>
+							</div>
 							<div className="flex w-full flex-col items-center gap-2 sm:flex-row">
 								<label htmlFor="company-name" className="flex-[50%] font-rubik text-dark">
 									{t("company-name")}
