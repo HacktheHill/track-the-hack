@@ -1,11 +1,11 @@
 import { Role } from "@prisma/client";
 import { signIn, signOut, useSession } from "next-auth/react";
-import Image from "next/image";
-import OnlyRole from "./OnlyRole";
-import Link from "next/link";
 import { useTranslation } from "next-i18next";
+import Image from "next/image";
+import Link from "next/link";
 import { trpc } from "../utils/api";
-import { useEffect } from "react";
+import OnlyRole from "./OnlyRole";
+
 type NavbarProps = {
 	integrated?: boolean;
 };
@@ -58,8 +58,10 @@ const Navbar = ({ integrated }: NavbarProps) => {
 const BottomMenu = () => {
 	const { t } = useTranslation("navbar");
 	const { data: sessionData } = useSession();
-	const hackerQuery = trpc.users.getHackerId.useQuery({ id: sessionData?.user?.id ?? "" }, { enabled: !!sessionData?.user?.id });
-	console.log(hackerQuery)
+	const hackerQuery = trpc.users.getHackerId.useQuery(
+		{ id: sessionData?.user?.id ?? "" },
+		{ enabled: !!sessionData?.user?.id },
+	);
 
 	return (
 		<nav
@@ -99,8 +101,12 @@ const BottomMenu = () => {
 const Links = () => {
 	const { t } = useTranslation("navbar");
 	const { data: sessionData } = useSession();
-	console.log(sessionData)
-	const hackerQuery = trpc.users.getHackerId.useQuery({ id: sessionData?.user?.id ?? "" }, { enabled: !!sessionData?.user?.id });
+
+	const hackerQuery = trpc.users.getHackerId.useQuery(
+		{ id: sessionData?.user?.id ?? "" },
+		{ enabled: !!sessionData?.user?.id },
+	);
+
 	return (
 		<>
 			<Link href="/" className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light">
@@ -155,4 +161,4 @@ const Links = () => {
 	);
 };
 
-export { Navbar, BottomMenu };
+export { BottomMenu, Navbar };
