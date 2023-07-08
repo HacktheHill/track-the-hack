@@ -2,8 +2,8 @@ import { hackerRouter } from "./routers/hackers";
 import { userRouter } from "./routers/users";
 import { eventsRouter } from "./routers/events";
 import { presenceRouter } from "./routers/presence";
+import { toolsRouter } from "./routers/tools";
 import { createTRPCRouter } from "./trpc";
-import { gmailRouter } from "./routers/tools/gmail";
 
 /**
  * This is the primary router for your server.
@@ -15,7 +15,7 @@ export const appRouter = createTRPCRouter({
 	hackers: hackerRouter,
 	events: eventsRouter,
 	presence: presenceRouter,
-	tools: gmailRouter,
+	tools: toolsRouter,
 });
 
 // export type definition of API

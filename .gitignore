@@ -47,3 +47,7 @@ sw.js
 sw.js.map
 workbox-*.js
 workbox-*.js.map
+
+# Google APIs
+google-credentials.json
+google-token.json
