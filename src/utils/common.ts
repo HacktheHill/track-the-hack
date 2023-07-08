@@ -27,3 +27,8 @@ export const walkInSchema = z.object({
 	linkLinkedin: z.string().optional(),
 	linkPersonalSite: z.string().optional(),
 });
+
+export const sponsorshipGmailDraftsSchema = z.object({
+	companyName: z.string(),
+	companyEmail: z.string().email(),
+});

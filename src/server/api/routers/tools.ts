@@ -10,15 +10,16 @@ import type { AttachmentOptions } from "mimetext";
 import { createMimeMessage } from "mimetext";
 import path from "path";
 import { z } from "zod";
-import { hasRoles } from "../../../../utils/helpers";
-import { createTRPCRouter, protectedProcedure } from "../../trpc";
+import { hasRoles } from "../../../utils/helpers";
+import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { sponsorshipGmailDraftsSchema } from "../../../utils/common";
 
 // If modifying these scopes, delete token.json
 const SCOPES = ["https://mail.google.com/"];
 
 // The file token.json stores the user's access and refresh tokens, and is created automatically when the authorization flow completes for the first time
-const TOKEN_PATH = path.join(process.cwd(), "token.json");
-const CREDENTIALS_PATH = path.join(process.cwd(), "credentials.json");
+const TOKEN_PATH = path.join(process.cwd(), "google-token.json");
+const CREDENTIALS_PATH = path.join(process.cwd(), "google-credentials.json");
 
 /**
  * Reads previously authorized credentials from the save file
@@ -189,44 +190,37 @@ interface CredentialsJSON {
 	};
 }
 
-export const gmailRouter = createTRPCRouter({
-	sponsorshipDraftEmail: protectedProcedure
-		.input(
-			z.object({
-				companyName: z.string(),
-				companyEmail: z.string().email(),
-			}),
-		)
-		.query(async ({ ctx, input }) => {
-			const userId = ctx.session.user.id;
-			const user = await ctx.prisma.user.findUnique({
-				where: {
-					id: userId,
-				},
-			});
+export const toolsRouter = createTRPCRouter({
+	sponsorshipGmailDrafts: protectedProcedure.input(sponsorshipGmailDraftsSchema).mutation(async ({ ctx, input }) => {
+		const userId = ctx.session.user.id;
+		const user = await ctx.prisma.user.findUnique({
+			where: {
+				id: userId,
+			},
+		});
 
-			if (!user) {
-				throw new Error("User not found");
-			}
+		if (!user) {
+			throw new Error("User not found");
+		}
 
-			if (!hasRoles(user, [Role.ORGANIZER])) {
-				throw new Error("You do not have permission to do this");
-			}
+		if (!hasRoles(user, [Role.ORGANIZER])) {
+			throw new Error("You do not have permission to do this");
+		}
 
-			const { name } = user;
+		const { name } = user;
 
-			if (!name) {
-				throw new Error("User does not have a name");
-			}
+		if (!name) {
+			throw new Error("User does not have a name");
+		}
 
-			const { companyName, companyEmail } = input;
+		const { companyName, companyEmail } = input;
 
-			await createDraft({
-				subject: "Hack the Hill 2 Sponsorship",
-				message: getTemplate(companyName, name),
-				labels: ["UNREAD", "2023-24", name],
-				sender: "sponsorship@hackthehill.com",
-				recipient: companyEmail,
-			});
-		}),
+		return createDraft({
+			subject: "Hack the Hill 2 Sponsorship",
+			message: getTemplate(companyName, name),
+			labels: ["UNREAD", "2023-24", name],
+			sender: "sponsorship@hackthehill.com",
+			recipient: companyEmail,
+		});
+	}),
 });

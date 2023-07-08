@@ -32,11 +32,7 @@ const WalkIn: NextPage = () => {
 
 	useEffect(() => {
 		if (mutation.error) {
-			if (mutation.error.message === "invalid-unsubscribe-token") {
-				setError(t("invalid-unsubscribe-token"));
-			} else {
-				setError(mutation.error.message);
-			}
+			setError(mutation.error.message);
 		}
 	}, [mutation.error, t]);
 
