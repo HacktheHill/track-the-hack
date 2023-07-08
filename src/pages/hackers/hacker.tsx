@@ -27,7 +27,7 @@ const Hacker: NextPage = () => {
 
 	const hackerQuery = trpc.hackers.get.useQuery({ id: id ?? "" }, { enabled: !!id });
 	const presenceQuery = trpc.presence.getFromHackerId.useQuery({ id: id ?? "" }, { enabled: !!id });
-
+	console.log(hackerQuery)
 	if (hackerQuery.isLoading || hackerQuery.data == null) {
 		return (
 			<App className="h-full bg-gradient-to-b from-background2 to-background1 px-16 py-12">

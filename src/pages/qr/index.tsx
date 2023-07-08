@@ -53,6 +53,11 @@ const QR = () => {
 					{!error && <p className="z-10 max-w-xl text-center text-lg font-bold text-dark">{t("use-qr")}</p>}
 				</OnlyRole>
 			</div>
+			{error && (
+				<div className="flex h-40 items-center justify-center text-dark">
+					<p>You need to sign in to access the QR page.</p>
+				</div>
+			)}
 			<div className="h-56 w-full bg-light">
 				<Image
 					priority
