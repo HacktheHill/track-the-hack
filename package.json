@@ -11,6 +11,7 @@
 		"format": "prettier --write ."
 	},
 	"dependencies": {
+		"@google-cloud/local-auth": "^2.1.1",
 		"@next-auth/prisma-adapter": "^1.0.5",
 		"@prisma/client": "^4.11.0",
 		"@tanstack/react-query": "^4.24.4",
@@ -19,7 +20,9 @@
 		"@trpc/react-query": "^10.11.0",
 		"@trpc/server": "^10.11.0",
 		"csvtojson": "^2.0.10",
+		"googleapis": "^120.0.0",
 		"i18next": "^22.4.9",
+		"mimetext": "^3.0.15",
 		"next": "13.1.6",
 		"next-auth": "^4.20.1",
 		"next-i18next": "^13.1.5",
