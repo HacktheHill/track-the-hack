@@ -32,9 +32,33 @@ const getLabelIds = async (gmail: gmail_v1.Gmail, labelNames: string[]): Promise
 	const response = await gmail.users.labels.list({
 		userId: "me",
 	});
-	return (
-		response.data.labels?.filter(label => labelNames.includes(label.name ?? "")).map(label => label.id ?? "") ?? []
-	);
+
+	const labels = response.data.labels?.filter(label => {
+		const labelName = label.name?.toLowerCase();
+		if (!labelName) {
+			return false;
+		}
+
+		// Get the first and last segment of the label name, removing any middle segments
+		const segments = labelName.split("/");
+		const [firstSegment, lastSegment] = [segments.at(0), segments.at(-1)];
+
+		// For all of the given labels, check if:
+		return labelNames
+			.map(name => name.toLowerCase())
+			.some(
+				name =>
+					// this existing label is exactly the same as the given label name or
+					name === labelName ||
+					// the last segment of this existing label contains the given label name,
+					(lastSegment?.includes(name) &&
+						// and the first segment of the existing label is exactly the same as any of the given label names.
+						firstSegment &&
+						labelNames.includes(firstSegment)),
+			);
+	});
+
+	return labels?.map(label => label.id).filter((id): id is string => !!id) ?? [];
 };
 
 /**
