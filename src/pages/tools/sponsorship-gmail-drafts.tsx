@@ -100,6 +100,19 @@ const SponsorshipGmailDrafts: NextPage = () => {
 								/>
 							</div>
 							<div className="flex w-full flex-col items-center gap-2 sm:flex-row">
+								<label htmlFor="company-rep-name" className="flex-[50%] font-rubik text-dark">
+									{t("company-rep-name")}
+									<span className="text-red-500"> *</span>
+								</label>
+								<input
+									id="company-rep-name"
+									name="companyRepName"
+									type="text"
+									className="w-full rounded-[100px] border-none bg-background1 px-4 py-2 font-rubik text-dark shadow-md transition-all duration-500 hover:bg-background1/50"
+									required
+								/>
+							</div>
+							<div className="flex w-full flex-col items-center gap-2 sm:flex-row">
 								<label htmlFor="company-name" className="flex-[50%] font-rubik text-dark">
 									{t("company-email")}
 									<span className="text-red-500"> *</span>

@@ -8,6 +8,7 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
  * Get the email template
  *
  * @param companyName Company name
+ * @param companyRepName Company representative's name
  * @param name Organizer's name
  * @returns {string} Email template
  */
@@ -46,7 +47,7 @@ export const toolsRouter = createTRPCRouter({
 			throw new Error("You do not have permission to do this");
 		}
 
-		const { organizerName, companyName, companyEmail } = input;
+		const { organizerName, companyName, companyRepName, companyEmail } = input;
 
 		const name = organizerName ?? user.name;
 
@@ -56,7 +57,7 @@ export const toolsRouter = createTRPCRouter({
 
 		return createDraft({
 			subject: "Hack the Hill 2 Sponsorship",
-			message: getTemplate(companyName, name),
+			message: getTemplate(companyName, companyRepName, name),
 			labels: ["UNREAD", "2023-24", name],
 			sender: "sponsorship@hackthehill.com",
 			recipient: companyEmail,
