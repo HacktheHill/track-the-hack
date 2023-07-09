@@ -16,18 +16,18 @@ const html = (strings: TemplateStringsArray, ...values: string[]): string =>
 /**
  * Get the email template
  *
- * @param companyName Company name
- * @param companyRepName Company representative's name
- * @param name Organizer's name
+ * @param {string} organizerFullName
+ * @param {string} companyName
+ * @param {string} companyRepName
  * @returns {string} Email template
  */
-const getTemplate = (companyName: string, companyRepName: string, name: string): string => html`
+const getTemplate = (organizerFullName: string, companyName: string, companyRepName: string): string => html`
 	<p>Dear ${companyRepName},</p>
 	<p>
-		I hope this email finds you well. My name is ${name}, and as a Sponsorship Coordinator for Hack the Hill 2024, I
-		am thrilled to introduce you to Ottawa's most exciting and innovative hackathon event! With our mission to
-		provide opportunities for students through an annual hackathon, we are reaching out to companies like yours to
-		join us in making this event possible.
+		I hope this email finds you well. My name is ${organizerFullName.split(" ")[0] ?? organizerFullName}, and as a
+		Sponsorship Coordinator for Hack the Hill 2024, I am thrilled to introduce you to Ottawa's most exciting and
+		innovative hackathon event! With our mission to provide opportunities for students through an annual hackathon,
+		we are reaching out to companies like yours to join us in making this event possible.
 	</p>
 	<p>
 		Hack the Hill is an event that will gather up to <strong>1000 passionate North American students</strong> who
@@ -71,7 +71,7 @@ const getTemplate = (companyName: string, companyRepName: string, name: string):
 	<p>Thank you for your time and consideration!</p>
 	<div style="color:#888">
 		<span>--</span><br />
-		<b>${name}</b><br />
+		<b>${organizerFullName}</b><br />
 		<i>Sponsorship Team</i>
 		<div>Hack the Hill</div>
 		<a href="https://hackthehill.com/" target="_blank">Website</a>
@@ -107,9 +107,9 @@ export const toolsRouter = createTRPCRouter({
 			throw new Error("You do not have permission to do this");
 		}
 
-		const { organizerName, companyName, companyRepName, companyEmail } = input;
+		const { organizerFullName, companyName, companyRepName, companyEmail } = input;
 
-		const name = organizerName ?? user.name;
+		const name = organizerFullName ?? user.name;
 
 		if (!name) {
 			throw new Error("Organizer name is required");
@@ -117,7 +117,7 @@ export const toolsRouter = createTRPCRouter({
 
 		return createDraft({
 			subject: "Unleash Innovation: Join Hack the Hill 2024 as a Sponsor!",
-			message: getTemplate(companyName, companyRepName, name),
+			message: getTemplate(name, companyName, companyRepName),
 			labels: ["UNREAD", "2023-24", name],
 			sender: "sponsorship@hackthehill.com",
 			recipient: companyEmail,
