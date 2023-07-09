@@ -14,12 +14,12 @@ import { sponsorshipGmailDraftsSchema } from "../../utils/common";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
-		props: await serverSideTranslations(locale ?? "en", ["common", "tools"]),
+		props: await serverSideTranslations(locale ?? "en", ["common", "sponsorship-gmail-drafts"]),
 	};
 };
 
 const SponsorshipGmailDrafts: NextPage = () => {
-	const { t } = useTranslation("tools");
+	const { t } = useTranslation("sponsorship-gmail-drafts");
 	const { data: sessionData } = useSession();
 
 	const mutation = trpc.tools.sponsorshipGmailDrafts.useMutation();
