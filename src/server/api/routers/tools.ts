@@ -82,7 +82,11 @@ const getTemplate = (companyName: string, companyRepName: string, name: string):
 		&nbsp;|&nbsp;
 		<a href="https://socials.hackthehill.com/linkedin" target="_blank">LinkedIn</a>
 		<br />
-		<img src="https://hackthehill.com/Logos/hackthehill-banner.svg" height="48" />
+		<img
+			src="https://cdn.discordapp.com/attachments/709459333129306244/1034672561369383034/signaturebanner.png"
+			width="200"
+			height="48"
+		/>
 	</div>
 `;
 
