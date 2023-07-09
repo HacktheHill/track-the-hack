@@ -31,5 +31,6 @@ export const walkInSchema = z.object({
 export const sponsorshipGmailDraftsSchema = z.object({
 	organizerName: z.string().optional(),
 	companyName: z.string(),
+	companyRepName: z.string(),
 	companyEmail: z.string().email(),
 });
