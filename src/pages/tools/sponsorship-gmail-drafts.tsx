@@ -75,12 +75,12 @@ const SponsorshipGmailDrafts: NextPage = () => {
 						<h3 className="font-rubik text-4xl font-bold text-dark">{t("title")}</h3>
 						<div className="flex flex-col gap-4">
 							<div className="flex w-full flex-col items-center gap-2 sm:flex-row">
-								<label htmlFor="organizer-name" className="flex-[50%] font-rubik text-dark">
-									{t("organizer-name")}
+								<label htmlFor="organizer-full-name" className="flex-[50%] font-rubik text-dark">
+									{t("organizer-full-name")}
 								</label>
 								<input
-									id="organizer-name"
-									name="organizerName"
+									id="organizer-full-name"
+									name="organizerFullName"
 									type="text"
 									className="w-full rounded-[100px] border-none bg-background1 px-4 py-2 font-rubik text-dark shadow-md transition-all duration-500 hover:bg-background1/50"
 									defaultValue={sessionData?.user?.name ?? ""}
