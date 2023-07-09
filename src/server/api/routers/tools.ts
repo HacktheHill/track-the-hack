@@ -33,7 +33,7 @@ const getTemplate = (companyName: string, companyRepName: string, name: string):
 		Hack the Hill is an event that will gather up to <strong>1000 passionate North American students</strong> who
 		are ready to push the boundaries of software and hardware solutions. We are shaping the future of technology
 		through the joint effort of notable student organizations from both
-		<strong>the University of Ottawa and Carleton University</strong>. From
+		<strong>the University of Ottawa</strong> and <strong>Carleton University</strong>. From
 		<strong>February 2nd to 4th 2024</strong>, we will transform the campus into a hub for new ideas and flourishing
 		projects. This is where ideas come to life, where technology thrives, and where your company's brand can truly
 		shine.
@@ -65,7 +65,7 @@ const getTemplate = (companyName: string, companyRepName: string, name: string):
 		STEM community.
 	</p>
 	<p>
-		<strong>I have attached the sponsorship package link for the hackathon to the email.</strong>If you have any
+		<strong>I have attached the sponsorship package link for the hackathon to the email.</strong> If you have any
 		questions, I am more than willing to provide further information.
 	</p>
 	<p>Thank you for your time and consideration!</p>
