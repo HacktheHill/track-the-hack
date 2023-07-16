@@ -1,26 +1,22 @@
 import { Role, type HackerInfo } from "@prisma/client";
 import type { NextPage } from "next";
-import { useSession } from "next-auth/react";
 import { useTranslation } from "next-i18next";
 import Link from "next/link";
-import { useRouter } from "next/router";
 import { useCallback, useEffect, useState } from "react";
 import { trpc } from "../../utils/api";
 import { debounce } from "../../utils/helpers";
 
+import type { GetServerSideProps } from "next";
+import { getServerSession } from "next-auth/next";
 import App from "../../components/App";
 import Error from "../../components/Error";
 import Loading from "../../components/Loading";
 import OnlyRole from "../../components/OnlyRole";
-import type { GetServerSideProps } from "next";
 import { hackersRedirect } from "../../utils/redirects";
 import { authOptions } from "../api/auth/[...nextauth]";
-import { getServerSession } from "next-auth/next";
 
 const Hackers: NextPage = () => {
 	const { t } = useTranslation("hackers");
-	const router = useRouter();
-	const { data: sessionData } = useSession();
 
 	const [search, setSearch] = useState("");
 	const [columns, setColumns] = useState(3);
