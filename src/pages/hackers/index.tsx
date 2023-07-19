@@ -1,29 +1,22 @@
 import { Role, type HackerInfo } from "@prisma/client";
-import type { GetStaticProps, NextPage } from "next";
-import { useSession } from "next-auth/react";
+import type { NextPage } from "next";
 import { useTranslation } from "next-i18next";
-import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Link from "next/link";
-import { useRouter } from "next/router";
 import { useCallback, useEffect, useState } from "react";
 import { trpc } from "../../utils/api";
 import { debounce } from "../../utils/helpers";
 
+import type { GetServerSideProps } from "next";
+import { getServerSession } from "next-auth/next";
 import App from "../../components/App";
 import Error from "../../components/Error";
 import Loading from "../../components/Loading";
 import OnlyRole from "../../components/OnlyRole";
-
-export const getStaticProps: GetStaticProps = async ({ locale }) => {
-	return {
-		props: await serverSideTranslations(locale ?? "en", ["common", "hackers"]),
-	};
-};
+import { hackersRedirect } from "../../utils/redirects";
+import { authOptions } from "../api/auth/[...nextauth]";
 
 const Hackers: NextPage = () => {
 	const { t } = useTranslation("hackers");
-	const router = useRouter();
-	const { data: sessionData } = useSession();
 
 	const [search, setSearch] = useState("");
 	const [columns, setColumns] = useState(3);
@@ -43,12 +36,6 @@ const Hackers: NextPage = () => {
 			window.removeEventListener("resize", debouncedResizeHandler);
 		};
 	}, [updateColumns]);
-
-	useEffect(() => {
-		if (sessionData?.user == null) {
-			void router.push("/");
-		}
-	}, [router, sessionData?.user]);
 
 	if (query.isLoading || query.data == null) {
 		return (
@@ -173,6 +160,15 @@ const Search = ({ setSearch }: SearchProps) => {
 			/>
 		</div>
 	);
+};
+
+export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
+	const session = await getServerSession(req, res, authOptions);
+	const props = await hackersRedirect(session, locale);
+
+	return {
+		...props,
+	};
 };
 
 export default Hackers;
