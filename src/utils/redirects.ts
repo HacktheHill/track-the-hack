@@ -1,10 +1,14 @@
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { PrismaClient } from "@prisma/client";
-import { Session } from "next-auth";
+import type { Session } from "next-auth";
+import type { SSRConfig } from "next-i18next";
 
 type ServerSideProps = {
-	redirect?: { destination: any; permanent: boolean } | null;
-	props: { [key: string]: any };
+	redirect?: {
+		destination: string;
+		permanent: boolean;
+	};
+	props: SSRConfig;
 };
 
 export async function hackersRedirect(session: Session | null, locale: string | undefined): Promise<ServerSideProps> {
