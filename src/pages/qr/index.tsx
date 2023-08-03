@@ -6,6 +6,10 @@ import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import type { GetServerSideProps } from "next";
+import { getServerSession } from "next-auth/next";
+import { hackersRedirect } from "../../utils/redirects";
+import { authOptions } from "../api/auth/[...nextauth]";
 
 import App from "../../components/App";
 import Weather from "../../components/Weather";
@@ -13,29 +17,33 @@ import OnlyRole from "../../components/OnlyRole";
 import QRCode from "../../components/QRCode";
 import QRScanner from "../../components/QRScanner";
 
-export const getStaticProps: GetStaticProps = async ({ locale }) => {
-	return {
-		props: await serverSideTranslations(locale ?? "en", ["common", "qr"]),
-	};
-};
+// export const getStaticProps: GetStaticProps = async ({ locale }) => {
+// 	return {
+// 		props: await serverSideTranslations(locale ?? "en", ["common", "qr"]),
+// 	};
+// };
 
 const QR = () => {
 	const { t } = useTranslation("qr");
 	const router = useRouter();
-	const { data: sessionData } = useSession();
-
-	const [id, setId] = useState<string | null>(null);
 	const [error, setError] = useState(false);
 
-	useEffect(() => {
-		if (id) {
-			void router.push(`/hackers/hacker?id=${id}`);
-		}
+	//const { data: sessionData } = useSession();
+	//const [id, setId] = useState<string | null>(null);
+	//const [error, setError] = useState(false);
 
-		if (sessionData?.user == null) {
-			void router.push("/");
-		}
-	}, [id, router, sessionData?.user]);
+	// useEffect(() => {
+	// 	if (id) {
+	// 		void router.push(`/hackers/hacker?id=${id}`);
+	// 		console.log("there was an id");
+	// 		console.log("the session data : ", sessionata);
+	// 	}
+
+	// 	if (sessionData?.user == null) {
+	// 		//void router.push("/");
+	// 		console.log("there was no id");
+	// 	}
+	// }, [id, router, sessionData?.user]);
 
 	return (
 		<App
@@ -45,7 +53,11 @@ const QR = () => {
 			<Weather count={30} type="snowflake" />
 			<div className="flex flex-col items-center gap-6">
 				<OnlyRole filter={role => role === Role.ORGANIZER}>
-					<QRScanner setId={setId} />
+					<QRScanner
+						onScan={(data: string) => {
+							router.push(data);
+						}}
+					/>
 					{!error && <p className="z-10 max-w-xl text-center text-lg font-bold text-dark">{t("scan-qr")}</p>}
 				</OnlyRole>
 				<OnlyRole filter={role => role === Role.HACKER}>
@@ -70,6 +82,16 @@ const QR = () => {
 			</div>
 		</App>
 	);
+};
+
+export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
+	console.log("inside server side props");
+	const session = await getServerSession(req, res, authOptions);
+	const props = await hackersRedirect(session, locale);
+
+	return {
+		...props,
+	};
 };
 
 export default QR;
