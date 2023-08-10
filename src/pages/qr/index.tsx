@@ -1,10 +1,7 @@
 import { Role } from "@prisma/client";
-import type { GetStaticProps } from "next";
-import { useSession } from "next-auth/react";
 import { useTranslation } from "next-i18next";
-import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import type { GetServerSideProps } from "next";
 import { getServerSession } from "next-auth/next";
@@ -17,33 +14,10 @@ import OnlyRole from "../../components/OnlyRole";
 import QRCode from "../../components/QRCode";
 import QRScanner from "../../components/QRScanner";
 
-// export const getStaticProps: GetStaticProps = async ({ locale }) => {
-// 	return {
-// 		props: await serverSideTranslations(locale ?? "en", ["common", "qr"]),
-// 	};
-// };
-
 const QR = () => {
 	const { t } = useTranslation("qr");
 	const router = useRouter();
 	const [error, setError] = useState(false);
-
-	//const { data: sessionData } = useSession();
-	//const [id, setId] = useState<string | null>(null);
-	//const [error, setError] = useState(false);
-
-	// useEffect(() => {
-	// 	if (id) {
-	// 		void router.push(`/hackers/hacker?id=${id}`);
-	// 		console.log("there was an id");
-	// 		console.log("the session data : ", sessionata);
-	// 	}
-
-	// 	if (sessionData?.user == null) {
-	// 		//void router.push("/");
-	// 		console.log("there was no id");
-	// 	}
-	// }, [id, router, sessionData?.user]);
 
 	return (
 		<App
@@ -85,7 +59,6 @@ const QR = () => {
 };
 
 export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
-	console.log("inside server side props");
 	const session = await getServerSession(req, res, authOptions);
 	const props = await hackersRedirect(session, locale);
 
