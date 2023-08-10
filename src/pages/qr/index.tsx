@@ -29,7 +29,7 @@ const QR = () => {
 				<OnlyRole filter={role => role === Role.ORGANIZER}>
 					<QRScanner
 						onScan={(data: string) => {
-							router.push(data);
+							void router.push(data);
 						}}
 					/>
 					{!error && <p className="z-10 max-w-xl text-center text-lg font-bold text-dark">{t("scan-qr")}</p>}
