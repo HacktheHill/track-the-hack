@@ -1,6 +1,6 @@
 {
 	"hack-the-hill-logo-alt": "Hack the Hill logo",
-	"description": "An open source project to track the participants of the Hack the Hill hackathon.",
+	"description": "App for tracking the participants of the Hack the Hill hackathon",
 	"loading": "Loading...",
 	"error": "Error: {{message}}",
 	"contact-us": "Contact us for help",
