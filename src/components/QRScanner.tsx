@@ -2,10 +2,10 @@ import QrScanner from "qr-scanner";
 import { useEffect, useRef } from "react";
 
 type QRScannerProps = {
-	setId: (id: string) => void;
+	onScan: (data: string) => void;
 };
 
-const QRScanner = ({ setId }: QRScannerProps) => {
+const QRScanner = (props: QRScannerProps) => {
 	const video = useRef<HTMLVideoElement>(null);
 
 	useEffect(() => {
@@ -13,7 +13,7 @@ const QRScanner = ({ setId }: QRScannerProps) => {
 		const qrScanner = new QrScanner(
 			video.current,
 			(result: QrScanner.ScanResult) => {
-				setId(result.data);
+				props.onScan(result.data);
 			},
 			{
 				returnDetailedScanResult: true,
