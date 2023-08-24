@@ -14,7 +14,7 @@ Track the Hack is a comprehensive event management solution designed to streamli
 
 We appreciate your interest, but please note that we currently do not accept external contributions.
 
-Our contribution guidelines are available at [CONTRIBUTING.md](https://github.com/HacktheHill/.github/blob/main/CONTRIBUTING.md).
+If you're part of the Hack the Hill team, refer to our [Contribution guidelines](https://github.com/HacktheHill/.github/blob/main/CONTRIBUTING.md).
 
 ## Contact
 
