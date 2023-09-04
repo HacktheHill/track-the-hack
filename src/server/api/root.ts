@@ -1,8 +1,9 @@
-import { hackerRouter } from "./routers/hackers";
-import { userRouter } from "./routers/users";
 import { eventsRouter } from "./routers/events";
+import { followRouter } from "./routers/follow";
+import { hackerRouter } from "./routers/hackers";
 import { presenceRouter } from "./routers/presence";
 import { toolsRouter } from "./routers/tools";
+import { userRouter } from "./routers/users";
 import { createTRPCRouter } from "./trpc";
 
 /**
@@ -16,6 +17,7 @@ export const appRouter = createTRPCRouter({
 	events: eventsRouter,
 	presence: presenceRouter,
 	tools: toolsRouter,
+	follow: followRouter,
 });
 
 // export type definition of API
