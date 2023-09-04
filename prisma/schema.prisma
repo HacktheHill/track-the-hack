@@ -25,6 +25,7 @@ model Account {
     refresh_token            String? @db.Text
     refresh_token_expires_in Int?
     access_token             String? @db.Text
+    ext_expires_in           Int?
     expires_at               Int?
     token_type               String?
     scope                    String?
@@ -83,8 +84,8 @@ model HackerInfo {
     attendanceType               AttendanceType @default(IN_PERSON)
     location                     String?        @map("attendanceLocation")
     transportationRequired       Boolean        @default(false)
-    dietaryRestrictions          String         @default("") @db.Text
-    accessibilityRequirements    String         @default("") @db.Text
+    dietaryRestrictions          String         @db.Text
+    accessibilityRequirements    String         @db.Text
     shirtSize                    ShirtSize?
     emergencyContactName         String
     emergencyContactRelationship String
@@ -140,6 +141,11 @@ model Event {
     link        String?
     linkText    String?
     tiktok      String?
+}
+
+model Follow {
+    id    String @id @default(cuid())
+    email String @unique
 }
 
 enum Language {
