@@ -9,6 +9,18 @@ export const followRouter = createTRPCRouter({
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
+			// Check if email is already in the database
+			const exists = await ctx.prisma.follow.findUnique({
+				where: {
+					email: input.email,
+				},
+			});
+
+			if (exists) {
+				throw new Error("Already following");
+			}
+
+			// Create a new follow
 			const follow = await ctx.prisma.follow.create({
 				data: {
 					email: input.email,
