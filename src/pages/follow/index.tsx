@@ -21,6 +21,7 @@ const Follow: NextPage = () => {
 
 	const mutation = trpc.follow.create.useMutation();
 
+	const [follow, setFollow] = useState(false);
 	const [error, setError] = useState("");
 
 	useEffect(() => {
@@ -37,29 +38,36 @@ const Follow: NextPage = () => {
 		mutation.mutate({
 			email,
 		});
+
+		setFollow(true);
 	};
 
 	return (
 		<FormPage
 			onSubmit={handleSubmit}
 			error={error}
-			invalid={!email ? t("invalid") : null}
+			invalid={!email ? t("missing") : null}
 			loading={false}
 			path={"/follow"}
 			user={null}
 			title={t("")}
 		>
 			<h3 className="font-rubik text-[clamp(1rem,1vmin,5rem)] font-medium text-dark">
-				{t("follow", {
-					email: email ?? "",
-				})}
+				{follow && !mutation.isLoading ? t("success", { email }) : t("confirm", { email })}
 			</h3>
-			<button
-				className="cursor-pointer whitespace-nowrap rounded-[100px] border-none bg-light px-[calc(2*clamp(0.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-rubik text-[clamp(1rem,1vmin,5rem)] text-white shadow-md transition-all duration-1000 hover:bg-medium"
-				disabled={mutation.isLoading}
-			>
-				{t("follow")}
-			</button>
+			{follow && !mutation.isLoading ? (
+				<a
+					className="cursor-pointer whitespace-nowrap rounded-[100px] border-none bg-light px-[calc(2*clamp(0.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-rubik text-[clamp(1rem,1vmin,5rem)] text-white shadow-md transition-all duration-1000 hover:bg-medium"
+					href="https://hackthehill.com"
+					rel="noreferrer"
+				>
+					{t("home")}
+				</a>
+			) : (
+				<button className="cursor-pointer whitespace-nowrap rounded-[100px] border-none bg-light px-[calc(2*clamp(0.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-rubik text-[clamp(1rem,1vmin,5rem)] text-white shadow-md transition-all duration-1000 hover:bg-medium">
+					{t("follow")}
+				</button>
+			)}
 		</FormPage>
 	);
 };

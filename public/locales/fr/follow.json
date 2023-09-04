@@ -1,4 +1,8 @@
 {
-    "follow" : "Suivre",
-    "invalid" : "Une erreur s'est produite lors du suivi"
+    "confirm": "Suivre Hack the Hill avec {{email}} ?",
+    "follow" : "Oui",
+    "followed": "Suivi avec {{email}}",
+    "missing": "Adresse courriel manquante",
+    "success" : "Vous suivez maintenant Hack the Hill avec {{email}}",
+    "home": "Retour à l'accueil"
 }
