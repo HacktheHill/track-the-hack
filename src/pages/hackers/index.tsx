@@ -16,17 +16,38 @@ import { hackersRedirect } from "../../utils/redirects";
 import { authOptions } from "../api/auth/[...nextauth]";
 
 const Hackers: NextPage = () => {
+	let {status,isFetching, hasNextPage, ...query} = trpc.hackers.all.useInfiniteQuery(
+		{
+			limit: 50,
+		},
+		{
+			getNextPageParam: (lastPage) => lastPage.nextCursor
+		},
+	);
+
 	const { t } = useTranslation("hackers");
 
 	const [search, setSearch] = useState("");
 	const [columns, setColumns] = useState(3);
-
-	const query = trpc.hackers.all.useQuery();
-
+	
 	const updateColumns = useCallback(() => {
 		setColumns(Math.floor(window.innerWidth / 300));
 	}, []);
 
+
+	const handleScroll = () =>{
+		const div = document?.querySelector(".mainWindow")
+		if(!div) return;
+
+		if (isFetching || !hasNextPage) return;
+
+		// detect if user scrolled to bottom
+		if (div.scrollTop >= div.scrollHeight - div.clientHeight) {
+			query.fetchNextPage();
+		}
+
+	}
+	
 	useEffect(() => {
 		updateColumns();
 		const debouncedResizeHandler = debounce(updateColumns, 500);
@@ -37,7 +58,7 @@ const Hackers: NextPage = () => {
 		};
 	}, [updateColumns]);
 
-	if (query.isLoading || query.data == null) {
+	if (status === 'loading') {
 		return (
 			<App className="h-full bg-gradient-to-b from-background2 to-background1 px-16 py-12">
 				<OnlyRole filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
@@ -50,20 +71,22 @@ const Hackers: NextPage = () => {
 				</OnlyRole>
 			</App>
 		);
-	} else if (query.isError) {
+	} else if (status === 'error') {
 		return (
 			<App className="h-full bg-gradient-to-b from-background2 to-background1 px-16 py-12">
 				<div className="flex flex-col items-center justify-center gap-4">
-					<Error message={query.error.message} />
+					<Error message={query.error} />
 				</div>
 			</App>
 		);
-	}
+	} 
+
+	const hackers = query.data?.pages.map(page => page.results).flat();
 
 	const filteredQuery =
 		search.length == 0
-			? query.data
-			: query.data.filter(
+			? hackers
+			: hackers.filter(
 					hacker =>
 						hacker.university?.toLowerCase().includes(search.toLowerCase()) ||
 						hacker.studyProgram?.toLowerCase().includes(search.toLowerCase()) ||
@@ -80,10 +103,11 @@ const Hackers: NextPage = () => {
 				<Search setSearch={setSearch} />
 			</div>
 			<div
-				className="to-mobile:mx-auto grid h-fit flex-col gap-4 overflow-x-hidden py-4 px-4 sm:px-20"
+				className="mainWindow to-mobile:mx-auto grid h-fit flex-col gap-4 overflow-x-hidden py-4 px-4 sm:px-20"
 				style={{
 					gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
 				}}
+				onScroll={handleScroll}
 			>
 				{filteredQuery.map(hacker => (
 					<Card
