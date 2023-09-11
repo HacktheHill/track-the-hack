@@ -44,24 +44,60 @@ export const hackerRouter = createTRPCRouter({
 		}),
 
 	// Get all hackers
-	all: protectedProcedure.query(async ({ ctx }) => {
-		const userId = ctx.session.user.id;
-		const user = await ctx.prisma.user.findUnique({
-			where: {
-				id: userId,
-			},
-		});
+	all: protectedProcedure
+		.input(
+			z.object({
+				limit: z.number().min(1).max(100),
+				cursor: z.string().nullish(),
+			}).optional(),
+		)
+		.query(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+			const user = await ctx.prisma.user.findUnique({
+				where: {
+					id: userId,
+				},
+			});
 
-		if (!user) {
-			throw new Error("User not found");
-		}
+			if (!user) {
+				throw new Error("User not found");
+			}
 
-		if (!hasRoles(user, [Role.SPONSOR, Role.ORGANIZER])) {
-			throw new Error("You do not have permission to do this");
-		}
+			if (!hasRoles(user, [Role.SPONSOR, Role.ORGANIZER])) {
+				throw new Error("You do not have permission to do this");
+			}
 
-		return ctx.prisma.hackerInfo.findMany();
-	}),
+			//return all hackerInfo if no pagination is needed
+			if(!input) {
+				return await ctx.prisma.hackerInfo.findMany();
+			}
+
+			const { limit, cursor } = input;
+
+			let results;
+
+			results = await ctx.prisma.hackerInfo.findMany({
+				take: limit + 1, // get an extra item at the end which we'll use as next cursor
+				cursor: cursor? { id: cursor }: undefined,
+				orderBy: {
+					id: 'asc',
+				},
+			});
+				
+			let nextCursor: typeof cursor | undefined = undefined;
+			
+			if (results.length > limit) {
+				const nextItem = results.pop();
+				nextCursor = nextItem?.id;
+			}
+
+			return {
+				results,
+				nextCursor
+			};
+	
+
+		}),
 
 	// Confirm a hacker's attendance
 	confirm: protectedProcedure
