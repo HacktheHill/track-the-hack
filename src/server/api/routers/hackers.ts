@@ -69,14 +69,15 @@ export const hackerRouter = createTRPCRouter({
 
 			//return all hackerInfo if no pagination is needed
 			if(!input) {
-				return await ctx.prisma.hackerInfo.findMany();
+				return {
+					results: await ctx.prisma.hackerInfo.findMany(),
+					nextCursor: null
+				}
 			}
 
 			const { limit, cursor } = input;
 
-			let results;
-
-			results = await ctx.prisma.hackerInfo.findMany({
+			const results = await ctx.prisma.hackerInfo.findMany({
 				take: limit + 1, // get an extra item at the end which we'll use as next cursor
 				cursor: cursor? { id: cursor }: undefined,
 				orderBy: {
