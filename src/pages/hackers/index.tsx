@@ -16,7 +16,7 @@ import { hackersRedirect } from "../../utils/redirects";
 import { authOptions } from "../api/auth/[...nextauth]";
 
 const Hackers: NextPage = () => {
-	let {status,isFetching, hasNextPage, ...query} = trpc.hackers.all.useInfiniteQuery(
+	const {status,isFetching, hasNextPage, ...query} = trpc.hackers.all.useInfiniteQuery(
 		{
 			limit: 50,
 		},
@@ -43,7 +43,7 @@ const Hackers: NextPage = () => {
 
 		// detect if user scrolled to bottom
 		if (div.scrollTop >= div.scrollHeight - div.clientHeight) {
-			query.fetchNextPage();
+			void query.fetchNextPage();
 		}
 
 	}
@@ -75,7 +75,7 @@ const Hackers: NextPage = () => {
 		return (
 			<App className="h-full bg-gradient-to-b from-background2 to-background1 px-16 py-12">
 				<div className="flex flex-col items-center justify-center gap-4">
-					<Error message={query.error} />
+					<Error message={query.error?.message ?? ""} />
 				</div>
 			</App>
 		);
@@ -86,7 +86,7 @@ const Hackers: NextPage = () => {
 	const filteredQuery =
 		search.length == 0
 			? hackers
-			: hackers.filter(
+			: hackers?.filter(
 					hacker =>
 						hacker.university?.toLowerCase().includes(search.toLowerCase()) ||
 						hacker.studyProgram?.toLowerCase().includes(search.toLowerCase()) ||
@@ -109,7 +109,7 @@ const Hackers: NextPage = () => {
 				}}
 				onScroll={handleScroll}
 			>
-				{filteredQuery.map(hacker => (
+				{filteredQuery?.map(hacker => (
 					<Card
 						key={hacker.id}
 						id={hacker.id}
@@ -120,7 +120,7 @@ const Hackers: NextPage = () => {
 					/>
 				))}
 			</div>
-			{filteredQuery.length == 0 && (
+			{filteredQuery?.length == 0 && (
 				<div className="flex h-full w-full flex-col items-center justify-center gap-4 text-2xl text-dark">
 					<svg className="h-20 w-20" fill="currentColor" viewBox="0 0 24 24">
 						<path d="M10 0h24v24H0z" fill="none" />
