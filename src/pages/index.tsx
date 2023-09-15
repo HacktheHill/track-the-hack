@@ -27,7 +27,7 @@ const Home: NextPage = () => {
 			<p className="z-10 max-w-xl text-center text-sm short:text-base">{t("description")}</p>
 			{!sessionData && (
 				<button
-					className="z-10 whitespace-nowrap rounded-lg border border-dark bg-background1 py-2 px-4 font-coolvetica text-sm text-dark transition-colors hover:bg-background3 short:text-base"
+					className="z-10 whitespace-nowrap rounded-lg border border-dark bg-background1 px-4 py-2 font-coolvetica text-sm text-dark transition-colors hover:bg-background3 short:text-base"
 					onClick={() => void signIn()}
 				>
 					{t("get-started")}

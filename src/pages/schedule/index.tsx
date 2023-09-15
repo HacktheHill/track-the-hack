@@ -166,7 +166,7 @@ type TabsProps = {
 
 const Tabs = ({ tab, setTab }: TabsProps) => {
 	return (
-		<div className="w-full border-b border-dark bg-background1 px-4 pt-2 pb-4 shadow-navbar">
+		<div className="w-full border-b border-dark bg-background1 px-4 pb-4 pt-2 shadow-navbar">
 			<div className="mx-auto grid max-w-2xl grid-cols-3 gap-3 sm:grid-cols-5">
 				{Object.keys(EventType)
 					.sort(a => (a === EventType.ALL ? -1 : 0))

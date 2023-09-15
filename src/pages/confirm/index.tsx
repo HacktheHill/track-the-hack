@@ -187,13 +187,13 @@ const Confirm: NextPage = () => {
 										>
 											{t("t-shirt.label")}
 										</label>
-										<div className="rounded-2xl border border-medium py-2 px-4">
+										<div className="rounded-2xl border border-medium px-4 py-2">
 											<select
 												name="shirtSize"
 												id="shirtSize"
 												value={shirtSize}
 												onChange={handleShirtSizeChange}
-												className="w-full border-none bg-transparent text-inherit text-black focus-visible:outline-none"
+												className="w-full border-none bg-transparent text-black text-inherit focus-visible:outline-none"
 											>
 												<option value="S" className="bg-white">
 													{t("t-shirt.small")}
