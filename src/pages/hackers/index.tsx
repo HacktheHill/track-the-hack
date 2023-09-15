@@ -16,12 +16,12 @@ import { hackersRedirect } from "../../utils/redirects";
 import { authOptions } from "../api/auth/[...nextauth]";
 
 const Hackers: NextPage = () => {
-	const {status,isFetching, hasNextPage, ...query} = trpc.hackers.all.useInfiniteQuery(
+	const { status, isFetching, hasNextPage, ...query } = trpc.hackers.all.useInfiniteQuery(
 		{
 			limit: 50,
 		},
 		{
-			getNextPageParam: (lastPage) => lastPage.nextCursor
+			getNextPageParam: lastPage => lastPage.nextCursor,
 		},
 	);
 
@@ -29,15 +29,14 @@ const Hackers: NextPage = () => {
 
 	const [search, setSearch] = useState("");
 	const [columns, setColumns] = useState(3);
-	
+
 	const updateColumns = useCallback(() => {
 		setColumns(Math.floor(window.innerWidth / 300));
 	}, []);
 
-
-	const handleScroll = () =>{
-		const div = document?.querySelector(".mainWindow")
-		if(!div) return;
+	const handleScroll = () => {
+		const div = document?.querySelector(".mainWindow");
+		if (!div) return;
 
 		if (isFetching || !hasNextPage) return;
 
@@ -45,9 +44,8 @@ const Hackers: NextPage = () => {
 		if (div.scrollTop >= div.scrollHeight - div.clientHeight) {
 			void query.fetchNextPage();
 		}
+	};
 
-	}
-	
 	useEffect(() => {
 		updateColumns();
 		const debouncedResizeHandler = debounce(updateColumns, 500);
@@ -58,7 +56,7 @@ const Hackers: NextPage = () => {
 		};
 	}, [updateColumns]);
 
-	if (status === 'loading') {
+	if (status === "loading") {
 		return (
 			<App className="h-full bg-gradient-to-b from-background2 to-background1 px-16 py-12">
 				<OnlyRole filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
@@ -71,7 +69,7 @@ const Hackers: NextPage = () => {
 				</OnlyRole>
 			</App>
 		);
-	} else if (status === 'error') {
+	} else if (status === "error") {
 		return (
 			<App className="h-full bg-gradient-to-b from-background2 to-background1 px-16 py-12">
 				<div className="flex flex-col items-center justify-center gap-4">
@@ -79,7 +77,7 @@ const Hackers: NextPage = () => {
 				</div>
 			</App>
 		);
-	} 
+	}
 
 	const hackers = query.data?.pages.map(page => page.results).flat();
 
@@ -99,11 +97,11 @@ const Hackers: NextPage = () => {
 			integrated={true}
 			title={t("title")}
 		>
-			<div className="border-b border-dark bg-background1 px-4 pt-2 pb-4 shadow-navbar sm:px-20">
+			<div className="border-b border-dark bg-background1 px-4 pb-4 pt-2 shadow-navbar sm:px-20">
 				<Search setSearch={setSearch} />
 			</div>
 			<div
-				className="mainWindow to-mobile:mx-auto grid h-fit flex-col gap-4 overflow-x-hidden py-4 px-4 sm:px-20"
+				className="mainWindow to-mobile:mx-auto grid h-fit flex-col gap-4 overflow-x-hidden px-4 py-4 sm:px-20"
 				style={{
 					gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
 				}}
