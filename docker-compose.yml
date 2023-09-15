@@ -9,10 +9,10 @@
 # npx prisma db push
 
 services:
-  hth-dev:
-    image: mysql
-    command: --sql_mode="ONLY_FULL_GROUP_BY,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION"
-    environment:
-      - MYSQL_ROOT_PASSWORD=root
-    ports:
-      - 3306:3306
+    hth-dev:
+        image: mysql
+        command: --sql_mode="ONLY_FULL_GROUP_BY,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION"
+        environment:
+            - MYSQL_ROOT_PASSWORD=root
+        ports:
+            - 3306:3306
