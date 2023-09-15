@@ -46,10 +46,12 @@ export const hackerRouter = createTRPCRouter({
 	// Get all hackers
 	all: protectedProcedure
 		.input(
-			z.object({
-				limit: z.number().min(1).max(100),
-				cursor: z.string().nullish(),
-			}).optional(),
+			z
+				.object({
+					limit: z.number().min(1).max(100),
+					cursor: z.string().nullish(),
+				})
+				.optional(),
 		)
 		.query(async ({ ctx, input }) => {
 			const userId = ctx.session.user.id;
@@ -68,25 +70,25 @@ export const hackerRouter = createTRPCRouter({
 			}
 
 			//return all hackerInfo if no pagination is needed
-			if(!input) {
+			if (!input) {
 				return {
 					results: await ctx.prisma.hackerInfo.findMany(),
-					nextCursor: null
-				}
+					nextCursor: null,
+				};
 			}
 
 			const { limit, cursor } = input;
 
 			const results = await ctx.prisma.hackerInfo.findMany({
 				take: limit + 1, // get an extra item at the end which we'll use as next cursor
-				cursor: cursor? { id: cursor }: undefined,
+				cursor: cursor ? { id: cursor } : undefined,
 				orderBy: {
-					id: 'asc',
+					id: "asc",
 				},
 			});
-				
+
 			let nextCursor: typeof cursor | undefined = undefined;
-			
+
 			if (results.length > limit) {
 				const nextItem = results.pop();
 				nextCursor = nextItem?.id;
@@ -94,10 +96,8 @@ export const hackerRouter = createTRPCRouter({
 
 			return {
 				results,
-				nextCursor
+				nextCursor,
 			};
-	
-
 		}),
 
 	// Confirm a hacker's attendance
