@@ -15,7 +15,7 @@ const ENV_PATH = path.join(process.cwd(), ".env");
  */
 const saveCredentials = async (client: OAuth2Client): Promise<void> => {
 	const content = await fs.readFile(CREDENTIALS_PATH, "utf8");
-	const { installed: key } = JSON.parse(content) as CredentialsJSON;
+	const { web: key } = JSON.parse(content) as CredentialsJSON;
 
 	// Read the existing ENV file and parse its content
 	const envContent = await fs.readFile(ENV_PATH, "utf8");
@@ -53,7 +53,7 @@ const main = async () => {
 void main();
 
 interface CredentialsJSON {
-	installed: {
+	web: {
 		client_id: string;
 		project_id: string;
 		auth_uri: string;
@@ -61,6 +61,5 @@ interface CredentialsJSON {
 		auth_provider_x509_cert_url: string;
 		client_secret: string;
 		redirect_uris: string[];
-		refresh_token: string;
 	};
 }
