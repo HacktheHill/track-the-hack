@@ -69,8 +69,8 @@ const getTemplate = (organizerFullName: string, companyName: string, companyRepN
 		questions, I am more than willing to provide further information.
 	</p>
 	<p>Thank you for your time and consideration!</p>
-	<div style="color:#888">
-		<span>--</span><br />
+	<div>
+		<br />
 		<b>${organizerFullName}</b><br />
 		<i>Sponsorship Team</i>
 		<div>Hack the Hill</div>
@@ -83,9 +83,9 @@ const getTemplate = (organizerFullName: string, companyName: string, companyRepN
 		<a href="https://socials.hackthehill.com/linkedin" target="_blank">LinkedIn</a>
 		<br />
 		<img
-			src="https://cdn.discordapp.com/attachments/709459333129306244/1034672561369383034/signaturebanner.png"
+			src="https://cdn.discordapp.com/attachments/1029229927335206933/1145925786503741532/HtH_Banner_Logo.png"
 			width="200"
-			height="48"
+			height="29"
 		/>
 	</div>
 `;
