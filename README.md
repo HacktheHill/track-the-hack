@@ -6,7 +6,7 @@ Track the Hack is a comprehensive event management solution designed to streamli
 
 1. Clone this repository and navigate to the project directory.
 2. Install the required dependencies by running `npm install`.
-3. Create a `.env` file and configure the database and environment settings as per the provided guidelines.
+3. Copy the `.env.example` file to create a `.env` file and configure the database and environment settings as per the provided guidelines.
 4. Start the development server using `npm run dev`.
 5. Access the application through your web browser at `http://localhost:3000`.
 
