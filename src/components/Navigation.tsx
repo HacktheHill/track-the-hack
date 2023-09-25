@@ -11,7 +11,6 @@ type NavbarProps = {
 };
 
 const Navbar = ({ integrated }: NavbarProps) => {
-	const { t } = useTranslation("navbar");
 	const { data: sessionData } = useSession();
 	return (
 		<nav
@@ -88,11 +87,16 @@ const BottomMenu = () => {
 				<Image priority src="/assets/resources.svg" height={32} width={32} alt="Resources" />
 			</Link>
 			{sessionData?.user && (
-				<OnlyRole filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
-					<Link href="/hackers">
-						<Image priority src="/assets/list.svg" height={32} width={32} alt="Hackers" />
-					</Link>
-				</OnlyRole>
+				<>
+					<OnlyRole filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
+						<Link href="/hackers">
+							<Image priority src="/assets/list.svg" height={32} width={32} alt="Hackers" />
+						</Link>
+					</OnlyRole>
+					<OnlyRole filter={role => role === Role.ORGANIZER}>
+						<Link href="/internal">Internal</Link>
+					</OnlyRole>
+				</>
 			)}
 		</nav>
 	);
@@ -153,6 +157,12 @@ const Links = () => {
 							className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
 						>
 							Walk-In
+						</Link>
+						<Link
+							href="/internal"
+							className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
+						>
+							Internal
 						</Link>
 					</OnlyRole>
 				</>
