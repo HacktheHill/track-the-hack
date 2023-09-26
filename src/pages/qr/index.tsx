@@ -13,6 +13,7 @@ import Weather from "../../components/Weather";
 import OnlyRole from "../../components/OnlyRole";
 import QRCode from "../../components/QRCode";
 import QRScanner from "../../components/QRScanner";
+import PhysicalScanner from "../../components/PhysicalScanner";
 
 const QR = () => {
 	const { t } = useTranslation("qr");
@@ -28,6 +29,11 @@ const QR = () => {
 			<div className="flex flex-col items-center gap-6">
 				<OnlyRole filter={role => role === Role.ORGANIZER}>
 					<QRScanner
+						onScan={(data: string) => {
+							void router.push(data);
+						}}
+					/>
+					<PhysicalScanner
 						onScan={(data: string) => {
 							void router.push(data);
 						}}
