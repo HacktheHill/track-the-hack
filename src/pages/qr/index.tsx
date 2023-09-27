@@ -1,19 +1,20 @@
 import { Role } from "@prisma/client";
-import { useTranslation } from "next-i18next";
-import { useRouter } from "next/router";
-import { useState } from "react";
-import Image from "next/image";
 import type { GetServerSideProps } from "next";
 import { getServerSession } from "next-auth/next";
+import { useTranslation } from "next-i18next";
+import Image from "next/image";
+import { useRouter } from "next/router";
+import { useState } from "react";
 import { hackersRedirect } from "../../utils/redirects";
 import { authOptions } from "../api/auth/[...nextauth]";
 
+import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import App from "../../components/App";
-import Weather from "../../components/Weather";
 import OnlyRole from "../../components/OnlyRole";
+import PhysicalScanner from "../../components/PhysicalScanner";
 import QRCode from "../../components/QRCode";
 import QRScanner from "../../components/QRScanner";
-import PhysicalScanner from "../../components/PhysicalScanner";
+import Weather from "../../components/Weather";
 
 const QR = () => {
 	const { t } = useTranslation("qr");
@@ -47,7 +48,7 @@ const QR = () => {
 			</div>
 			{error && (
 				<div className="flex h-40 items-center justify-center text-dark">
-					<p>You need to sign in to access the QR page.</p>
+					<p>{"sign-in-to-access"}</p>
 				</div>
 			)}
 			<div className="h-56 w-full bg-light">
@@ -69,7 +70,10 @@ export const getServerSideProps: GetServerSideProps = async ({ req, res, locale 
 	const props = await hackersRedirect(session, locale);
 
 	return {
+		props: {
 		...props,
+			...(await serverSideTranslations(locale ?? "en", ["common", "qr"])),
+		},
 	};
 };
 
