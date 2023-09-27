@@ -13,6 +13,7 @@ type NavbarProps = {
 const Navbar = ({ integrated }: NavbarProps) => {
 	const { t } = useTranslation("navbar");
 	const { data: sessionData } = useSession();
+
 	return (
 		<nav
 			className={`sticky top-0 z-10 flex gap-4 whitespace-nowrap bg-background1 p-4 ${
@@ -58,10 +59,13 @@ const Navbar = ({ integrated }: NavbarProps) => {
 const BottomMenu = () => {
 	const { t } = useTranslation("navbar");
 	const { data: sessionData } = useSession();
-	const hackerQuery = trpc.users.getHackerId.useQuery(
+
+	const hackerId = trpc.users.getHackerId.useQuery(
 		{ id: sessionData?.user?.id ?? "" },
 		{ enabled: !!sessionData?.user?.id },
 	);
+
+	const role = trpc.users.getRole.useQuery({ id: sessionData?.user?.id ?? "" }, { enabled: !!sessionData?.user?.id });
 
 	return (
 		<nav
@@ -71,12 +75,10 @@ const BottomMenu = () => {
 			<Link href="/">
 				<Image priority src="/assets/home.svg" height={32} width={32} alt="Home" />
 			</Link>
-			{sessionData?.user && hackerQuery.data && (
-				<OnlyRole filter={role => role === Role.HACKER}>
-					<Link href="/qr">
-						<Image priority src="/assets/qr.svg" height={32} width={32} alt="QR" />
-					</Link>
-				</OnlyRole>
+			{sessionData?.user && ((role.data === Role.HACKER && hackerId.data) || role.data === Role.ORGANIZER) && (
+				<Link href="/qr">
+					<Image priority src="/assets/qr.svg" height={32} width={32} alt="QR" />
+				</Link>
 			)}
 			<Link href="/schedule">
 				<Image priority src="/assets/schedule.svg" height={32} width={32} alt="Schedule" />
@@ -102,25 +104,22 @@ const Links = () => {
 	const { t } = useTranslation("navbar");
 	const { data: sessionData } = useSession();
 
-	const hackerQuery = trpc.users.getHackerId.useQuery(
+	const hackerId = trpc.users.getHackerId.useQuery(
 		{ id: sessionData?.user?.id ?? "" },
 		{ enabled: !!sessionData?.user?.id },
 	);
+
+	const role = trpc.users.getRole.useQuery({ id: sessionData?.user?.id ?? "" }, { enabled: !!sessionData?.user?.id });
 
 	return (
 		<>
 			<Link href="/" className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light">
 				Home
 			</Link>
-			{sessionData?.user && hackerQuery.data && (
-				<OnlyRole filter={role => role === Role.HACKER}>
-					<Link
-						href="/qr"
-						className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
-					>
-						QR
-					</Link>
-				</OnlyRole>
+			{sessionData?.user && ((role.data === Role.HACKER && hackerId.data) || role.data === Role.ORGANIZER) && (
+				<Link href="/qr" className="mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light">
+					QR
+				</Link>
 			)}
 			<Link
 				href="/schedule"
