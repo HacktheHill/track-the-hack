@@ -21,6 +21,10 @@ const QR = () => {
 	const router = useRouter();
 	const [error, setError] = useState(false);
 
+	const onScan = (data: string) => {
+		void router.push(`/hackers/hacker?id=${data}`);
+	};
+
 	return (
 		<App
 			className="relative flex h-full flex-col items-center justify-center gap-16 bg-gradient2"
@@ -29,16 +33,8 @@ const QR = () => {
 			<Weather count={30} type="snowflake" />
 			<div className="flex flex-col items-center gap-6">
 				<OnlyRole filter={role => role === Role.ORGANIZER}>
-					<QRScanner
-						onScan={(data: string) => {
-							void router.push(`/hackers/hacker?id=${data}`);
-						}}
-					/>
-					<PhysicalScanner
-						onScan={(data: string) => {
-							void router.push(`/hackers/hacker?id=${data}`);
-						}}
-					/>
+					<QRScanner onScan={onScan} />
+					<PhysicalScanner onScan={onScan} />
 					{!error && <p className="z-10 max-w-xl text-center text-lg font-bold text-dark">{t("scan-qr")}</p>}
 				</OnlyRole>
 				<OnlyRole filter={role => role === Role.HACKER}>
@@ -71,7 +67,7 @@ export const getServerSideProps: GetServerSideProps = async ({ req, res, locale 
 
 	return {
 		props: {
-		...props,
+			...props,
 			...(await serverSideTranslations(locale ?? "en", ["common", "qr"])),
 		},
 	};
