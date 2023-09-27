@@ -265,3 +265,4 @@ export {
 	CustomAreaChart,
 	CustomBarChart,
 };
+export type { CustomBarListProps };

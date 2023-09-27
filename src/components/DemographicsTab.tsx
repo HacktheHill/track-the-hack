@@ -1,160 +1,55 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 "use client";
 
+import { type Prisma } from "@prisma/client";
+
 import { Card, Grid, Select, SelectItem } from "@tremor/react";
+import type { CustomBarListProps } from "./Tremor_Custom";
 import { CustomBarList, CustomDonutChart, CustomSmallTextCard, CustomAreaChart, CustomBarChart } from "./Tremor_Custom";
 
-const attendeesState = [
-	{
-		title: "Not reviewed",
-		value: 100,
-	},
-	{
-		title: "Not Invited",
-		value: 700,
-	},
-	{
-		title: "Invited: Response Pending",
-		value: 300,
-	},
+interface DemographicsTabProps {
+	hackerData: Prisma.HackerInfoGetPayload<true>[];
+}
 
-	{
-		title: "Invited: Confirmed",
-		value: 672,
-	},
-	{
-		title: "Invited: Denied",
-		value: 50,
-	},
-	{
-		title: "Invited: Expired",
-		value: 50,
-	},
-];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const getNumberPerValue = (data: { name: string; value: number; title: string }[]) => {
+	const valueSet = new Set<string>();
+	data.forEach(datum => valueSet.add(datum.name));
+	const values = Array.from(valueSet);
 
-const Transport = [
-	{
-		title: "Inside Ottawa",
-		value: 100,
-	},
-	{
-		title: "Outside Ottawa - Require Transport",
-		value: 700,
-	},
-	{
-		title: "Outside Ottawa - No Transport",
-		value: 300,
-	},
-	{
-		title: "Online",
-		value: 300,
-	},
-];
+	const valueData: { name: string; value: number; title: string }[] = [];
 
-const PreferedPronouns = [
-	{
-		title: "She/Her",
-		value: 100,
-	},
-	{
-		title: "He/Him",
-		value: 700,
-	},
-	{
-		title: "They/Them",
-		value: 300,
-	},
-	{
-		title: "Prefer Not to Answer",
-		value: 300,
-	},
-];
+	values.forEach(cat => valueData.push({ name: cat, value: 0, title: cat }));
 
-const toplevels = [
-	{ name: "University", value: 900 },
-	{ name: "Bootcamp / Code School", value: 676 },
-	{ name: "College", value: 200 },
-	{ name: "Not currently a student", value: 100 },
-	{ name: "Other", value: 191 },
-];
+	data.forEach(datum => {
+		const catDatum = valueData.filter(valueDatum => valueDatum.name === datum.name)[0];
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		catDatum!.value++;
+	});
 
-const topApplyingSchools = [
-	{ name: "uOttawa", value: 789 },
-	{ name: "Carleton", value: 676 },
-	{ name: "Waterloo", value: 564 },
-	{ name: "Queens", value: 234 },
-	{ name: "u of T", value: 191 },
-	{ name: "Western", value: 100 },
-];
-const topApplyingPrograms = [
-	{ name: "Computer Engineering", value: 500 },
-	{ name: "Computer Science", value: 400 },
-	{ name: "Software Engineering", value: 123 },
-	{ name: "Electrical Engineering", value: 333 },
-	{ name: "Mathematics", value: 20 },
-];
+	return valueData;
+};
 
-const graduatingYears = [
-	{ title: "2022", "Number graduating": 500 },
-	{ title: "2023", "Number graduating": 400 },
-	{ title: "2024", "Number graduating": 123 },
-	{ title: "2025", "Number graduating": 333 },
-	{ title: "2026", "Number graduating": 20 },
-];
+export default function DemographicsTab(props: DemographicsTabProps) {
+	const { hackerData } = props;
+	const demographicsKeysSet = new Set<string>();
+	hackerData.forEach(hacker => {
+		Object.keys(hacker).forEach(key => demographicsKeysSet.add(key));
+	});
+	const demographicsKeys = Array.from(demographicsKeysSet);
 
-const tshirtsize = [
-	{ title: "S", value: 360 },
-	{ title: "M", value: 200 },
-	{ title: "X", value: 123 },
-	{ title: "XL", value: 333 },
-];
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const metricsData: { [key: string]: { title: string; value: any; name: string }[] } = {};
+	demographicsKeys.forEach(key => (metricsData[key] = []));
 
-const FoodRestrictions = [
-	{ name: "Halal", value: 360 },
-	{ name: "Lactose", value: 200 },
-	{ name: "Gluten", value: 123 },
-	{ name: "Vegan", value: 333 },
-	{ name: "Vegan2", value: 2 },
-	{ name: "Vegan3", value: 3 },
-	{ name: "Vegan4", value: 10 },
-];
+	hackerData.forEach(hacker => {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
+		demographicsKeys.forEach(key => metricsData[key]!.push({ title: key, value: hacker[key], name: hacker[key] }));
+	});
 
-const regData = [
-	{
-		title: "Dec 2, 2023",
-		"New Applications": 100,
-		"Acceptances Sent": 0,
-		"RSVP Confirmed": 0,
-		"RSVP Denied": 0,
-		"RSVP Expired": 0,
-	},
-	{
-		title: "Dec 20, 2023",
-		"New Applications": 360,
-		"Acceptances Sent": 600,
-		"RSVP Confirmed": 420,
-		"RSVP Denied": 20,
-		"RSVP Expired": 1,
-	},
-	{
-		title: "January 2, 2023",
-		"New Applications": 0,
-		"Acceptances Sent": 360,
-		"RSVP Confirmed": 360,
-		"RSVP Denied": 70,
-		"RSVP Expired": 50,
-	},
+	const aggregatedMetricsData: { [key: string]: { name: string; value: number; title: string }[] } = {};
+	demographicsKeys.forEach(key => (aggregatedMetricsData[key] = getNumberPerValue(metricsData[key]!)));
 
-	{
-		title: "February 2, 2023",
-		"New Applications": 0,
-		"Acceptances Sent": 0,
-		"RSVP Confirmed": 200,
-		"RSVP Denied": 10,
-		"RSVP Expired": 1000,
-	},
-];
-
-export default function DemographicsTab() {
 	return (
 		<main className="mx-auto max-w-7xl p-4 md:p-10">
 			<Grid numItems={1} className="gap-6">
@@ -174,36 +69,51 @@ export default function DemographicsTab() {
 
 				<Grid numItemsSm={1} numItemsLg={3} className="gap-6">
 					<Card>
-						<CustomDonutChart title="Applications / RSVP" data={attendeesState} />
+						<CustomDonutChart title="Languages" data={aggregatedMetricsData.preferredLanguage!} />
 					</Card>
 					<Card>
-						<CustomDonutChart title="Transport" data={Transport} />
+						<CustomDonutChart title="Transport" data={aggregatedMetricsData.transportationRequired!} />
 					</Card>
 					<Card>
-						<CustomDonutChart title="Preferred Pronouns" data={PreferedPronouns} />
+						<CustomDonutChart title="Preferred Pronouns" data={aggregatedMetricsData.gender!} />
 					</Card>
 					<Card>
-						<CustomBarList title="Top Levels of Study" data={toplevels} limitEntries={5} />
+						<CustomBarList
+							title="Top Levels of Study"
+							data={aggregatedMetricsData.studyLevel as CustomBarListProps["data"]}
+							limitEntries={5}
+						/>
 					</Card>
 					<Card>
-						<CustomBarList title="Top Applying Schools" data={topApplyingSchools} limitEntries={5} />
+						<CustomBarList
+							title="Top Applying Schools"
+							data={aggregatedMetricsData.university as CustomBarListProps["data"]}
+							limitEntries={5}
+						/>
 					</Card>
 					<Card>
-						<CustomBarList title="Top Applying Programs" data={topApplyingPrograms} limitEntries={5} />
+						<CustomBarList
+							title="Top Applying Programs"
+							data={aggregatedMetricsData.studyProgram as CustomBarListProps["data"]}
+							limitEntries={5}
+						/>
 					</Card>
 
 					<Card>
-						<CustomBarChart title="Graduating Years" data={graduatingYears} />
+						<CustomBarChart title="Graduating Years" data={aggregatedMetricsData.graduationYear!} />
 					</Card>
 					<Card>
-						<CustomBarList title="Dietary Restrictions" data={FoodRestrictions} />
+						<CustomBarList
+							title="Dietary Restrictions"
+							data={aggregatedMetricsData.dietaryRestrictions as CustomBarListProps["data"]}
+						/>
 					</Card>
 					<Card>
-						<CustomDonutChart title="T-Shirt Sizes" data={tshirtsize} />
+						<CustomDonutChart title="T-Shirt Sizes" data={aggregatedMetricsData.shirtSize!} />
 					</Card>
 				</Grid>
 				<Card>
-					<CustomAreaChart title="Application Status" data={regData} />
+					<CustomAreaChart title="Application Status" data={aggregatedMetricsData.confirmed!} />
 				</Card>
 			</Grid>
 		</main>

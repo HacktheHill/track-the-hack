@@ -17,6 +17,7 @@ export const hackerInfo = ({ email, firstName, lastName, phoneNumber }: { [key: 
 	}
 
 	return {
+		preferredLanguage: faker.helpers.arrayElement(["EN", "FR"]),
 		email,
 		firstName,
 		lastName,
