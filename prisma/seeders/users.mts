@@ -1,8 +1,9 @@
 import { faker } from "@faker-js/faker";
-import { Role, Language, PrismaClient } from "@prisma/client";
+import { Role } from "@prisma/client";
+import { hackerInfo } from "./hackerInfos.mjs";
 
 //generates dummy users
-let user = () => {
+const user = () => {
 	const firstName = faker.person.firstName();
 	const lastName = faker.person.lastName();
 	const name = `${firstName} ${lastName}`;
@@ -15,16 +16,7 @@ let user = () => {
 		role: Role.HACKER,
 		image: "https://i.pravatar.cc/50",
 		hackerInfo: {
-			create: {
-				firstName,
-				lastName,
-				preferredLanguage: Language.EN,
-				phoneNumber,
-				email,
-				emergencyContactName: "null",
-				emergencyContactRelationship: "null",
-				emergencyContactPhoneNumber: "null",
-			},
+			create: { ...hackerInfo({ email, firstName, lastName, phoneNumber }) },
 		},
 	};
 };
@@ -35,7 +27,7 @@ let user = () => {
  * @returns [] array of users
  */
 function generateUsers(n = 10) {
-	let users = [];
+	const users = [];
 	for (let i = 0; i < n; i++) {
 		users.push(user());
 	}
