@@ -28,6 +28,12 @@ const Hacker: NextPage = () => {
 	const hackerQuery = trpc.hackers.get.useQuery({ id: id ?? "" }, { enabled: !!id });
 	const presenceQuery = trpc.presence.getFromHackerId.useQuery({ id: id ?? "" }, { enabled: !!id });
 
+	
+	//nextId = hackerQuery.data.INDEX;
+	//if nextId exists:
+	//nextHackerQuery = trpc.hackers.get.useQuery({id: nextID})
+	//use nextHackerQuery.data.id in href of next button
+
 	if (hackerQuery.isLoading || hackerQuery.data == null) {
 		return (
 			<App className="h-full bg-gradient-to-b from-background2 to-background1 px-16 py-12">
@@ -82,6 +88,26 @@ const Hacker: NextPage = () => {
 		>
 			<div className="mx-auto flex max-w-2xl flex-col gap-4">
 				<OnlyRole filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
+					<div className="flex justify-between">
+						<a
+							key={"id"}
+							href={"id"}
+							target="_blank"
+							rel="noreferrer"
+							className="flex items-center justify-center gap-2 rounded-md bg-gray-800 px-4 py-2 text-white hover:bg-gray-700"
+						>
+							Previous
+						</a>
+						<a
+							key={"id"}
+							href={"id"}
+							target="_blank"
+							rel="noreferrer"
+							className="flex items-center justify-center gap-2 rounded-md bg-gray-800 px-4 py-2 text-white hover:bg-gray-700"
+						>
+							Next
+						</a>
+					</div>
 					<HackerView hackerData={hackerQuery.data} presenceData={presenceQuery.data} />
 				</OnlyRole>
 				<OnlyRole filter={role => role === Role.HACKER}>{t("not-authorized-to-view-this-page")}</OnlyRole>
