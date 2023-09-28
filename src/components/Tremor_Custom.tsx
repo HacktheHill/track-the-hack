@@ -51,7 +51,7 @@ const defaultColors: TremorDefaultColors = [
 
 interface GetCategoriesFromDataProps {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	data: { title: string; [key: string]: any }[];
+	data: { title?: string; [key: string]: any }[];
 }
 
 const getCategoriesFromData = (data: GetCategoriesFromDataProps["data"]) => {
@@ -233,7 +233,7 @@ const CustomAreaChart: React.FC<CustomAreaChartProps> = ({ title, data }) => {
 interface CustomBarChartProps {
 	title: string;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	data: { title: string; [key: string]: any }[];
+	data: { [key: string]: any }[];
 }
 
 const CustomBarChart: React.FC<CustomBarChartProps> = ({ title, data }) => {

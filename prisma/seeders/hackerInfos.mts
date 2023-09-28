@@ -25,7 +25,7 @@ export const hackerInfo = ({ email, firstName, lastName, phoneNumber }: { [key: 
 		phoneNumber,
 		university: faker.helpers.arrayElement([
 			"University of Ottawa",
-			"carleton University",
+			"Carleton University",
 			"University of Waterloo",
 		]),
 		studyLevel: faker.helpers.arrayElement(["undergraduate", "postgraduate", "masters"]),

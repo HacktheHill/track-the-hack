@@ -11,20 +11,58 @@ interface DemographicsTabProps {
 	hackerData: Prisma.HackerInfoGetPayload<true>[];
 }
 
+const valToStr = (val: boolean | string) => {
+	return val === true || val === false ? (val ? "Yes" : "No") : val ? val.toString() : "";
+};
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const getNumberPerValue = (data: { name: string; value: number; title: string }[]) => {
 	const valueSet = new Set<string>();
-	data.forEach(datum => valueSet.add(datum.name));
+	data.forEach(datum => {
+		if (datum.name !== undefined && datum.name !== null && datum.name !== "") {
+			valueSet.add(datum.name);
+		}
+	});
 	const values = Array.from(valueSet);
 
 	const valueData: { name: string; value: number; title: string }[] = [];
 
-	values.forEach(cat => valueData.push({ name: cat, value: 0, title: cat }));
+	values.forEach(val => valueData.push({ name: valToStr(val), value: 0, title: valToStr(val) }));
 
 	data.forEach(datum => {
-		const catDatum = valueData.filter(valueDatum => valueDatum.name === datum.name)[0];
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		catDatum!.value++;
+		const valueDatum = valueData.filter(valueDatum => valueDatum.name === valToStr(datum.name))[0];
+
+		if (valueDatum) {
+			valueDatum.value++;
+		}
+	});
+
+	return valueData;
+};
+
+const getNumberPerValueBarChart = (data: { name: string; value: number; title: string }[]) => {
+	const valueSet = new Set<string>();
+	data.forEach(datum => {
+		if (datum.name !== undefined && datum.name !== null && datum.name !== "") {
+			valueSet.add(datum.name);
+		}
+	});
+	const values = Array.from(valueSet);
+
+	const valueData: { [key: string]: number }[] = [];
+
+	values.forEach(val => {
+		if (val) {
+			valueData.push({ [valToStr(val)]: 0 });
+		}
+	});
+
+	data.forEach(datum => {
+		const valueDatum = valueData.filter(valueDatum => Object.keys(valueDatum)[0] === valToStr(datum.name))[0];
+
+		if (valueDatum) {
+			valueDatum[datum.name]++;
+		}
 	});
 
 	return valueData;
@@ -72,7 +110,10 @@ export default function DemographicsTab(props: DemographicsTabProps) {
 						<CustomDonutChart title="Languages" data={aggregatedMetricsData.preferredLanguage!} />
 					</Card>
 					<Card>
-						<CustomDonutChart title="Transport" data={aggregatedMetricsData.transportationRequired!} />
+						<CustomDonutChart
+							title="Transport Required"
+							data={aggregatedMetricsData.transportationRequired!}
+						/>
 					</Card>
 					<Card>
 						<CustomDonutChart title="Preferred Pronouns" data={aggregatedMetricsData.gender!} />
@@ -100,7 +141,10 @@ export default function DemographicsTab(props: DemographicsTabProps) {
 					</Card>
 
 					<Card>
-						<CustomBarChart title="Graduating Years" data={aggregatedMetricsData.graduationYear!} />
+						<CustomBarChart
+							title="Graduating Years"
+							data={getNumberPerValueBarChart(metricsData.graduationYear!)}
+						/>
 					</Card>
 					<Card>
 						<CustomBarList
@@ -113,7 +157,7 @@ export default function DemographicsTab(props: DemographicsTabProps) {
 					</Card>
 				</Grid>
 				<Card>
-					<CustomAreaChart title="Application Status" data={aggregatedMetricsData.confirmed!} />
+					<CustomAreaChart title="Application Confirmed" data={aggregatedMetricsData.confirmed!} />
 				</Card>
 			</Grid>
 		</main>
