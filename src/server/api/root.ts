@@ -2,7 +2,7 @@ import { eventsRouter } from "./routers/events";
 import { followRouter } from "./routers/follow";
 import { hackerRouter } from "./routers/hackers";
 import { presenceRouter } from "./routers/presence";
-import { toolsRouter } from "./routers/tools";
+import { sponsorshipRouter } from "./routers/sponsorship";
 import { userRouter } from "./routers/users";
 import { createTRPCRouter } from "./trpc";
 
@@ -16,7 +16,7 @@ export const appRouter = createTRPCRouter({
 	hackers: hackerRouter,
 	events: eventsRouter,
 	presence: presenceRouter,
-	tools: toolsRouter,
+	sponsorshipGmailDrafts: sponsorshipRouter,
 	follow: followRouter,
 });
 
