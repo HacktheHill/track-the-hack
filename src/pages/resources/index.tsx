@@ -17,7 +17,7 @@ import fr from "./fr.md";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
-		props: await serverSideTranslations(locale ?? "en", ["common", "resources"]),
+		props: await serverSideTranslations(locale ?? "en", ["common", "navbar", "resources"]),
 	};
 };
 
