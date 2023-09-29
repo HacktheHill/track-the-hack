@@ -10,7 +10,7 @@ import Weather from "../components/Weather";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
-		props: await serverSideTranslations(locale ?? "en", ["common", "index"]),
+		props: await serverSideTranslations(locale ?? "en", ["common", "navbar", "index"]),
 	};
 };
 

@@ -385,7 +385,7 @@ const templates = [
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
-		props: await serverSideTranslations(locale ?? "en", ["common", "sponsorship-gmail-drafts"]),
+		props: await serverSideTranslations(locale ?? "en", ["common", "navbar", "sponsorship-gmail-drafts"]),
 	};
 };
 
