@@ -393,7 +393,7 @@ const SponsorshipGmailDrafts: NextPage = () => {
 	const { t } = useTranslation("sponsorship-gmail-drafts");
 	const { data: sessionData } = useSession();
 
-	const mutation = trpc.tools.sponsorshipGmailDrafts.useMutation();
+	const mutation = trpc.sponsorshipGmailDrafts.createGmailDraft.useMutation();
 
 	const [error, setError] = useState("");
 	const [copied, setCopied] = useState(false);
