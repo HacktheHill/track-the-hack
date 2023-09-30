@@ -15,6 +15,7 @@ import Loading from "../../components/Loading";
 import OnlyRole from "../../components/OnlyRole";
 import { hackersRedirect } from "../../utils/redirects";
 import { authOptions } from "../api/auth/[...nextauth]";
+import { VehicleModule } from "@faker-js/faker";
 
 const Hackers: NextPage = () => {
 	const { status, isFetching, hasNextPage, ...query } = trpc.hackers.all.useInfiniteQuery(
@@ -29,11 +30,25 @@ const Hackers: NextPage = () => {
 	const { t } = useTranslation("hackers");
 
 	const [search, setSearch] = useState("");
+	const [filter, setFilter] = useState({
+		schools: [],
+		currentLevelsOfStudy: [],
+		programs: [],
+		graduationYears: [],
+		attendanceTypes: [],
+	});
+
+	interface CheckboxOptions {
+		[key: string]: boolean;
+	}
+
 	const [columns, setColumns] = useState(3);
 
 	const updateColumns = useCallback(() => {
 		setColumns(Math.floor(window.innerWidth / 300));
 	}, []);
+
+	const [popupVisible, setPopupVisible] = useState<boolean>(true);
 
 	const handleScroll = () => {
 		const div = document?.querySelector(".mainWindow");
@@ -82,7 +97,7 @@ const Hackers: NextPage = () => {
 
 	const hackers = query.data?.pages.map(page => page.results).flat();
 
-	const filteredQuery =
+	const filteredSearchQuery =
 		search.length == 0
 			? hackers
 			: hackers?.filter(
@@ -93,31 +108,76 @@ const Hackers: NextPage = () => {
 						`${hacker.firstName} ${hacker.lastName}`.toLowerCase().includes(search.toLowerCase()),
 			  );
 
+	const filterOptions: {
+		schools: string[];
+		currentLevelsOfStudy: string[];
+		programs: string[];
+		graduationYears: string[];
+		attendanceTypes: string[];
+	} = {
+		schools: [],
+		currentLevelsOfStudy: [],
+		programs: [],
+		graduationYears: [],
+		attendanceTypes: [],
+	};
+
+	hackers?.forEach(hacker => {
+		hacker.university && !filterOptions.schools.includes(hacker.university)
+			? filterOptions.schools.push(hacker.university)
+			: "";
+		hacker.studyLevel && !filterOptions.currentLevelsOfStudy.includes(hacker.studyLevel)
+			? filterOptions.currentLevelsOfStudy.push(hacker.studyLevel)
+			: "";
+		hacker.studyProgram && !filterOptions.programs.includes(hacker.studyProgram)
+			? filterOptions.programs.push(hacker.studyProgram)
+			: "";
+		hacker.graduationYear && !filterOptions.graduationYears.includes(hacker.graduationYear.toString())
+			? filterOptions.graduationYears.push(hacker.graduationYear.toString())
+			: "";
+		hacker.attendanceType && !filterOptions.attendanceTypes.includes(hacker.attendanceType)
+			? filterOptions.attendanceTypes.push(hacker.attendanceType)
+			: "";
+	});
+
+
 	return (
 		<App className="flex flex-col overflow-y-auto bg-default-gradient" integrated={true} title={t("title")}>
 			<div className="border-b border-dark-color bg-light-quaternary-color px-4 pb-4 pt-2 shadow-navbar sm:px-20">
 				<Search setSearch={setSearch} />
 			</div>
-			<div
-				className="mainWindow to-mobile:mx-auto grid h-fit flex-col gap-4 overflow-x-hidden px-4 py-4 sm:px-20"
-				style={{
-					gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
-				}}
-				onScroll={handleScroll}
-			>
-				{filteredQuery?.map(hacker => (
-					<Card
-						key={hacker.id}
-						id={hacker.id}
-						firstName={hacker.firstName}
-						lastName={hacker.lastName}
-						university={hacker.university}
-						studyProgram={hacker.studyProgram}
-					/>
-				))}
+			<div className="flex flex-row">
+				<div className="w-1/5 ">
+					{popupVisible && (
+						<FilterPopup
+							popupVisible={popupVisible}
+							setPopupVisible={setPopupVisible}
+							// setFilter={setFilter}
+							filterOptions={filterOptions}
+						/>
+					)}
+				</div>
+				<div
+					className="mainWindow to-mobile:mx-auto grid h-fit flex-col gap-4 overflow-x-hidden px-4 py-4 sm:px-20"
+					style={{
+						gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+					}}
+					onScroll={handleScroll}
+				>
+					{filteredSearchQuery?.map(hacker => (
+						<Card
+							key={hacker.id}
+							id={hacker.id}
+							firstName={hacker.firstName}
+							lastName={hacker.lastName}
+							university={hacker.university}
+							studyProgram={hacker.studyProgram}
+						/>
+					))}
+				</div>
 			</div>
-			{filteredQuery?.length == 0 && (
-				<div className="flex h-full w-full flex-col items-center justify-center gap-4 text-2xl text-dark-color">
+			{filteredSearchQuery?.length == 0 && (
+				<div className="flex h-full w-full flex-col items-center justify-center gap-4 text-2xl text-dark">
 					<svg className="h-20 w-20" fill="currentColor" viewBox="0 0 24 24">
 						<path d="M10 0h24v24H0z" fill="none" />
 						<path d="M14 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
@@ -178,6 +238,129 @@ const Search = ({ setSearch }: SearchProps) => {
 				placeholder="Search Hackers"
 				onChange={event => setSearch(event.target.value)}
 			/>
+		</div>
+	);
+};
+
+
+type FilterProps = {
+	popupVisible: boolean;
+	setPopupVisible: (popup: boolean) => void;
+	// setFilter: (filters: {
+	// 	schools: string[];
+	// 	currentLevelsOfStudy: string[];
+	// 	programs: string[];
+	// 	graduationYears: string[];
+	// 	attendanceTypes: string[];
+	// }) => void;
+	filterOptions: {
+		schools: string[];
+		currentLevelsOfStudy: string[];
+		programs: string[];
+		graduationYears: string[];
+		attendanceTypes: string[];
+	};
+};
+
+const FilterPopup = ({
+	popupVisible,
+	setPopupVisible,
+	// setFilter,
+	filterOptions,
+
+}: FilterProps) => {
+
+	return (
+		<div className="flex flex-col  border-dark pl-10 pr-1 pt-5 text-dark">
+			<div className="w-52 text-center">
+				<div className="mb-4 text-xl font-bold">Filter Options</div>
+				<ul>
+					<li className="mb-4">
+						<div className="mb-2 text-left text-lg font-bold text-dark">Level of Study</div>
+						<ul>
+							{filterOptions.currentLevelsOfStudy?.map(option => (
+								<li key={option} className="mb-2 flex items-center justify-between text-dark">
+									<span>
+										{option.charAt(0).toUpperCase()}
+										{option.slice(1)}
+									</span>
+									<input type="checkbox" className="h-6 w-6" />
+								</li>
+							))}
+						</ul>
+					</li>
+					<li>
+						<div className="mb-2 text-left text-lg font-bold text-dark">School</div>
+						<ul>
+							{filterOptions.schools?.map(option => (
+								<li key={option} className="mb-2 flex items-center justify-between text-dark">
+									<span>
+										{option.charAt(0).toUpperCase()}
+										{option.slice(1)}
+									</span>
+									<input type="checkbox" className="h-6 w-6" />
+								</li>
+							))}
+						</ul>
+					</li>
+					<li>
+						<div className="mb-2 text-left text-lg font-bold text-dark">Program</div>
+						<ul>
+							{filterOptions.programs?.map(option => (
+								<li key={option} className="mb-2 flex items-center justify-between text-dark">
+									<span>
+										{option.charAt(0).toUpperCase()}
+										{option.slice(1)}
+									</span>
+									<input type="checkbox" className="h-6 w-6" />
+								</li>
+							))}
+						</ul>
+					</li>
+					<li>
+						<div className="mb-2 text-left text-lg font-bold text-dark">Graduation Year</div>
+						<ul>
+							{filterOptions.graduationYears?.map(option => (
+								<li key={option} className="mb-2 flex items-center justify-between text-dark">
+									<span>{option}</span>
+									<input type="checkbox" className="h-6 w-6" />
+								</li>
+							))}
+						</ul>
+					</li>
+					<li>
+						<div className="mb-2 text-left text-lg font-bold text-dark">Online/In-person</div>
+						<ul>
+							{filterOptions.attendanceTypes?.map(option => (
+								<li key={option} className="mb-2 flex items-center justify-between text-dark">
+									<span>
+										{option.split("_").join(" ").charAt(0)}
+										{option.split("_").join(" ").slice(1).toLowerCase()}
+									</span>
+									<input type="checkbox" className="h-6 w-6" />
+								</li>
+							))}
+						</ul>
+					</li>
+					<li>
+						<div className="mb-2 text-left text-lg font-bold text-dark">Missing Fields</div>
+						<ul>
+							<li className="mb-2 flex items-center justify-between text-dark">
+								<span>GitHub</span>
+								<input type="checkbox" className="h-6 w-6" />
+							</li>
+							<li className="mb-2 flex items-center justify-between text-dark">
+								<span>Personal Website</span>
+								<input type="checkbox" className="h-6 w-6" />
+							</li>
+							<li className="mb-2 flex items-center justify-between text-dark">
+								<span>LinkedIn</span>
+								<input type="checkbox" className="h-6 w-6" />
+							</li>
+						</ul>
+					</li>
+				</ul>
+			</div>
 		</div>
 	);
 };
