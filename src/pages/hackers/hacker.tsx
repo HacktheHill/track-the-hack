@@ -3,7 +3,7 @@ import type { GetStaticProps, NextPage } from "next";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import {useEffect, useState} from "react";
 import { trpc } from "../../utils/api";
 
 import App from "../../components/App";
@@ -105,7 +105,6 @@ type Field = {
 	category: string;
 	options?: string[];
 };
-
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presenceData } }: HackerViewProps) => {
@@ -282,8 +281,21 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 			type: 'text',
 			category: "General Information",
 		},
+		{
+			label: "Linkedin",
+			name: "linkLinkedin",
+			default_value: hackerData.linkLinkedin,
+			type: 'url',
+			category: "Links Information",
+		},
+		{
+			label: "Github",
+			name: "linkGithub",
+			default_value: hackerData.linkGithub,
+			type: 'url',
+			category: "Links Information",
+		}
 	]
-
 	const patterns = {
 		tel: /^\s*(?:\+?(\d{1,3}))?[-. (]*(\d{3})[-. )]*(\d{3})[-. ]*(\d{4})(?: *x(\d+))?\s*$/,
 		url: undefined,
@@ -317,7 +329,7 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 	});
 
 	fields.forEach((item) => {
-		const field = item as Field; 
+		const field = item as Field;
 		if (!groupedData[field.category]) {
 			groupedData[field.category] = [];
 		}
@@ -442,6 +454,49 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 						))}
 					</div>
 				))}
+
+				<p className="flex flex-row flex-wrap gap-4 justify-center">
+					{Object.entries({
+						Resume: hackerData.linkResume,
+						LinkedIn: hackerData.linkLinkedin,
+						GitHub: hackerData.linkGithub,
+						"Personal Website": hackerData.linkPersonalSite,
+					}).map(([key, value]) =>
+							value && (
+								<a
+									key={key}
+									href={value}
+									target="_blank"
+									rel="noreferrer"
+									className="flex items-center justify-center gap-2 rounded-md bg-dark px-4 py-2 text-white hover:bg-gray-700"
+								>
+									{key}
+								</a>
+							)
+					)}
+				</p>
+
+				<OnlyRole filter={role => role === Role.ORGANIZER}>
+					<>
+						<div className="flex justify-center py-4">
+							<h2 className="self-center font-[Coolvetica] text-2xl font-normal text-dark py-4 ">Debug Information</h2>
+						</div>
+						<p className={paragraphClass}>
+							<b className={boldClass}>HackerInfo ID</b> {hackerData.id ?? "NULL"}
+						</p>
+						<p className={paragraphClass}>
+							<b className={boldClass}>User ID</b> {hackerData.userId ?? "NULL"}
+						</p>
+						<p className={paragraphClass}>
+							<b className={boldClass}>Unsubscribe Token</b> {hackerData.unsubscribeToken ?? "NULL"}
+						</p>
+						<p className={paragraphClass}>
+							<b className={boldClass}>Acceptance Expiry</b>{" "}
+							{(hackerData.acceptanceExpiry ?? "NULL").toString()}
+						</p>
+					</>
+				</OnlyRole>
+
 
 
 				{edit && (
