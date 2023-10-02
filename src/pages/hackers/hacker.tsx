@@ -338,7 +338,7 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 
 	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
-		window.location.reload(true);
+		window.location.reload();
 		const formData = new FormData(event.currentTarget)
 		const data = Object.fromEntries(formData) as Record<string, string | number | undefined>;
 		data.id = id;
