@@ -106,6 +106,11 @@ type Field = {
 	options?: string[];
 };
 
+interface Patterns {
+	[key: string]: string | undefined;
+}
+
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presenceData } }: HackerViewProps) => {
 	const router = useRouter();
@@ -296,13 +301,13 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 			category: "Links Information",
 		}
 	]
-	const patterns = {
-		tel: /^\s*(?:\+?(\d{1,3}))?[-. (]*(\d{3})[-. )]*(\d{3})[-. ]*(\d{4})(?: *x(\d+))?\s*$/,
+	const patterns: Patterns = {
+		tel: "^\\s*(?:\\+?(\\d{1,3}))?[-. (]*(\\d{3})[-. )]*(\\d{3})[-. ]*(\\d{4})(?: *x(\\d+))?\\s*$",
 		url: undefined,
-		number: /^\d+$/,
+		number: "^\\d+$",
 		email: undefined,
 		text: undefined,
-	} as const;
+	};
 
 
 	const initialInputValues: Record<string, string> = {};
@@ -448,7 +453,7 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 										onChange={(e) => {
 											handleInputChange(item.name, e.target.value);
 										}}
-										pattern={patterns[item.type]?.toString()}
+										pattern={patterns[item.type]}
 									/>
 								)}
 							</div>
