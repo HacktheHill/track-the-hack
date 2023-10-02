@@ -338,6 +338,7 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 
 	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
+		window.location.reload(true);
 		const formData = new FormData(event.currentTarget)
 		const data = Object.fromEntries(formData) as Record<string, string | number | undefined>;
 		data.id = id;
@@ -455,7 +456,14 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 					</div>
 				))}
 
-				<p className="flex flex-row flex-wrap gap-4 justify-center">
+
+				<div className="flex justify-between gap-8 py-4 ">
+					<input className="rounded-md bg-background2 border border-gray-400 p-2" type="file"/>
+					<button className="bg-dark text-white rounded-md px-4 py-2 ml-2 hover:bg-gray-700">Upload your Resume
+					</button>
+				</div>
+
+				<p className="flex flex-row flex-wrap gap-4 justify-center py-4">
 					{Object.entries({
 						Resume: hackerData.linkResume,
 						LinkedIn: hackerData.linkLinkedin,
@@ -475,6 +483,7 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 							)
 					)}
 				</p>
+
 
 				<OnlyRole filter={role => role === Role.ORGANIZER}>
 					<>
@@ -496,7 +505,6 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 						</p>
 					</>
 				</OnlyRole>
-
 
 
 				{edit && (
