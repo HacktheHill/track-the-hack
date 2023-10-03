@@ -347,8 +347,6 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 		const data = Object.fromEntries(formData) as Record<string, string | number | undefined>;
 		data.id = id;
 
-		console.log(data.linkLinkedin, hackerData.linkLinkedin, data.linkGithub, hackerData.linkGithub)
-		console.log(data.linkLinkedin !== hackerData.linkLinkedin, data.linkGithub !== hackerData.linkGithub)
 		if (data.linkLinkedin !== hackerData.linkLinkedin || data.linkGithub !== hackerData.linkGithub) {
 			window.location.reload();
 		}
