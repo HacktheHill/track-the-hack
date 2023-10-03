@@ -15,6 +15,7 @@ import OnlyRole from "../../components/OnlyRole";
 import { hackersRedirect } from "../../utils/redirects";
 import { authOptions } from "../api/auth/[...nextauth]";
 import { VehicleModule } from "@faker-js/faker";
+import { testing } from "googleapis/build/src/apis/testing";
 
 const Hackers: NextPage = () => {
 	const { status, isFetching, hasNextPage, ...query } = trpc.hackers.all.useInfiniteQuery(
@@ -29,7 +30,13 @@ const Hackers: NextPage = () => {
 	const { t } = useTranslation("hackers");
 
 	const [search, setSearch] = useState("");
-	const [filter, setFilter] = useState({
+	// const [filterQuery, setFilterQuery] = useState([])
+
+	interface Filters {
+		[key: string]: string[];
+	}
+
+	const [filters, setFilters] = useState<Filters>({
 		schools: [],
 		currentLevelsOfStudy: [],
 		programs: [],
@@ -37,17 +44,11 @@ const Hackers: NextPage = () => {
 		attendanceTypes: [],
 	});
 
-	interface CheckboxOptions {
-		[key: string]: boolean;
-	}
-
 	const [columns, setColumns] = useState(3);
 
 	const updateColumns = useCallback(() => {
 		setColumns(Math.floor(window.innerWidth / 300));
 	}, []);
-
-	const [popupVisible, setPopupVisible] = useState<boolean>(true);
 
 	const handleScroll = () => {
 		const div = document?.querySelector(".mainWindow");
@@ -107,6 +108,25 @@ const Hackers: NextPage = () => {
 						`${hacker.firstName} ${hacker.lastName}`.toLowerCase().includes(search.toLowerCase()),
 			  );
 
+	let filterQuery;
+
+	if (filters["currentLevelsOfStudy"]) {
+		for (const f of filters["currentLevelsOfStudy"]) {
+			let temporaryQuery;
+			if (filteredSearchQuery) {
+				temporaryQuery = filteredSearchQuery?.filter(hacker =>
+					hacker.studyLevel?.toLowerCase().includes(f.toLowerCase()),
+				);
+			}
+			if (filterQuery && temporaryQuery) {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+				filterQuery = [...filterQuery, ...temporaryQuery];
+			} else if (temporaryQuery) {
+				filterQuery = [...temporaryQuery];
+			}
+		}
+	}
+
 	const filterOptions: {
 		schools: string[];
 		currentLevelsOfStudy: string[];
@@ -125,8 +145,8 @@ const Hackers: NextPage = () => {
 		hacker.university && !filterOptions.schools.includes(hacker.university)
 			? filterOptions.schools.push(hacker.university)
 			: "";
-		hacker.studyLevel && !filterOptions.currentLevelsOfStudy.includes(hacker.studyLevel)
-			? filterOptions.currentLevelsOfStudy.push(hacker.studyLevel)
+		hacker.studyLevel && !filterOptions.currentLevelsOfStudy.includes(hacker.studyLevel.toLowerCase())
+			? filterOptions.currentLevelsOfStudy.push(hacker.studyLevel.toLowerCase())
 			: "";
 		hacker.studyProgram && !filterOptions.programs.includes(hacker.studyProgram)
 			? filterOptions.programs.push(hacker.studyProgram)
@@ -139,7 +159,6 @@ const Hackers: NextPage = () => {
 			: "";
 	});
 
-
 	return (
 		<App
 			className="flex flex-col overflow-y-auto bg-gradient-to-b from-background2 to-background1"
@@ -151,14 +170,7 @@ const Hackers: NextPage = () => {
 			</div>
 			<div className="flex flex-row">
 				<div className="w-1/5 ">
-					{popupVisible && (
-						<FilterPopup
-							popupVisible={popupVisible}
-							setPopupVisible={setPopupVisible}
-							// setFilter={setFilter}
-							filterOptions={filterOptions}
-						/>
-					)}
+					<FilterPopup filters={filters} setFilters={setFilters} filterOptions={filterOptions} />
 				</div>
 				<div
 					className="mainWindow to-mobile:mx-auto grid h-fit flex-col gap-4 overflow-x-hidden px-4 py-4 sm:px-20"
@@ -167,16 +179,28 @@ const Hackers: NextPage = () => {
 					}}
 					onScroll={handleScroll}
 				>
-					{filteredSearchQuery?.map(hacker => (
-						<Card
-							key={hacker.id}
-							id={hacker.id}
-							firstName={hacker.firstName}
-							lastName={hacker.lastName}
-							university={hacker.university}
-							studyProgram={hacker.studyProgram}
-						/>
-					))}
+					{!filterQuery &&
+						filteredSearchQuery?.map(hacker => (
+							<Card
+								key={hacker.id}
+								id={hacker.id}
+								firstName={hacker.firstName}
+								lastName={hacker.lastName}
+								university={hacker.university}
+								studyProgram={hacker.studyProgram}
+							/>
+						))}
+					{filterQuery &&
+						filterQuery?.map(hacker => (
+							<Card
+								key={hacker.id}
+								id={hacker.id}
+								firstName={hacker.firstName}
+								lastName={hacker.lastName}
+								university={hacker.university}
+								studyProgram={hacker.studyProgram}
+							/>
+						))}
 				</div>
 			</div>
 			{filteredSearchQuery?.length == 0 && (
@@ -245,17 +269,13 @@ const Search = ({ setSearch }: SearchProps) => {
 	);
 };
 
+interface Filters {
+	[key: string]: string[];
+}
 
 type FilterProps = {
-	popupVisible: boolean;
-	setPopupVisible: (popup: boolean) => void;
-	// setFilter: (filters: {
-	// 	schools: string[];
-	// 	currentLevelsOfStudy: string[];
-	// 	programs: string[];
-	// 	graduationYears: string[];
-	// 	attendanceTypes: string[];
-	// }) => void;
+	filters: Filters;
+	setFilters: (filters: Filters) => void;
 	filterOptions: {
 		schools: string[];
 		currentLevelsOfStudy: string[];
@@ -265,13 +285,29 @@ type FilterProps = {
 	};
 };
 
-const FilterPopup = ({
-	popupVisible,
-	setPopupVisible,
-	// setFilter,
-	filterOptions,
+const FilterPopup = ({ filters, setFilters, filterOptions }: FilterProps) => {
+	// interface Filters {
+	// 	[key: string]: string[];
+	// }
 
-}: FilterProps) => {
+	const handleCheckBox = (option: string, filterSection: string) => {
+		const tempFilters = { ...filters };
+		// console.log(tempFilters)
+
+		if (tempFilters[filterSection]?.includes(option)) {
+			const filteredArray = tempFilters[filterSection]?.filter(function (e) {
+				return e !== option;
+			});
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			tempFilters[filterSection] = filteredArray!;
+			if (!tempFilters[filterSection]) {
+				tempFilters[filterSection] = [];
+			}
+		} else {
+			tempFilters[filterSection]?.push(option);
+		}
+		setFilters(tempFilters);
+	};
 
 	return (
 		<div className="flex flex-col  border-dark pl-10 pr-1 pt-5 text-dark">
@@ -283,11 +319,17 @@ const FilterPopup = ({
 						<ul>
 							{filterOptions.currentLevelsOfStudy?.map(option => (
 								<li key={option} className="mb-2 flex items-center justify-between text-dark">
+									<input
+										type="checkbox"
+										className="h-6 w-6"
+										onChange={() => {
+											handleCheckBox(option, "currentLevelsOfStudy");
+										}}
+									/>
 									<span>
 										{option.charAt(0).toUpperCase()}
 										{option.slice(1)}
 									</span>
-									<input type="checkbox" className="h-6 w-6" />
 								</li>
 							))}
 						</ul>
