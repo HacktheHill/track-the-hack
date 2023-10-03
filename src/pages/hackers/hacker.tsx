@@ -343,12 +343,17 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 
 	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
-		window.location.reload();
 		const formData = new FormData(event.currentTarget)
 		const data = Object.fromEntries(formData) as Record<string, string | number | undefined>;
 		data.id = id;
 
-		if (typeof data.graduationYear === "string") {
+		console.log(data.linkLinkedin, hackerData.linkLinkedin, data.linkGithub, hackerData.linkGithub)
+		console.log(data.linkLinkedin !== hackerData.linkLinkedin, data.linkGithub !== hackerData.linkGithub)
+		if (data.linkLinkedin !== hackerData.linkLinkedin || data.linkGithub !== hackerData.linkGithub) {
+			window.location.reload();
+		}
+
+			if (typeof data.graduationYear === "string") {
 			const parsedGraduationYear = parseInt(data.graduationYear);
 			if (!isNaN(parsedGraduationYear)) {
 				data.graduationYear = parsedGraduationYear;
