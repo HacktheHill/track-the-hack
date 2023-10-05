@@ -42,6 +42,68 @@ export const hackerRouter = createTRPCRouter({
 
 			return hacker;
 		}),
+	
+	getNext: publicProcedure
+	.input(
+		z
+			.object({
+				id: z.string(),
+			})
+			.or(
+				z.object({
+					email: z.string(),
+				}),
+			),
+	)
+	.query(async ({ ctx, input }) => {
+		let hacker: HackerInfo | null = null;
+		if ("id" in input) {
+			hacker = await ctx.prisma.hackerInfo.findFirst({
+				take: 1,
+				skip: 1,
+				cursor: {
+					id: input.id,
+				},
+			});
+		}
+
+		if (!hacker) {
+			throw new Error("Hacker not found");
+		}
+
+		return hacker;
+	}),
+
+	getPrev: publicProcedure
+	.input(
+		z
+			.object({
+				id: z.string(),
+			})
+			.or(
+				z.object({
+					email: z.string(),
+				}),
+			),
+	)
+	.query(async ({ ctx, input }) => {
+		let hacker: HackerInfo | null = null;
+		if ("id" in input) {
+			hacker = await ctx.prisma.hackerInfo.findFirst({
+				take: -1,
+				skip: 1,
+				cursor: {
+					id: input.id,
+				},
+			});
+		}
+
+		if (!hacker) {
+			throw new Error("Hacker not found");
+		}
+
+		return hacker;
+	}),
 
 	// Get all hackers
 	all: protectedProcedure
