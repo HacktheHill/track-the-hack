@@ -3,6 +3,7 @@ import { z } from "zod";
 import { hasRoles } from "../../../utils/helpers";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { walkInSchema } from "../../../utils/common";
+import {logAuditEntry} from "../../audit";
 
 const DEFAULT_ACCEPTANCE_EXPIRY = new Date(2023, 2, 6, 5, 0, 0, 0); // 2023-03-06 00:00:00 EST
 
@@ -248,6 +249,16 @@ export const hackerRouter = createTRPCRouter({
 			if (input.id !== userId && !hasRoles(user, [Role.ORGANIZER])) {
 				throw new Error("You do not have permission to do this");
 			}
+
+			// Log the audit like this
+			await logAuditEntry(
+				ctx,
+				userId,
+				'/update-hacker-info',
+				'UpdateHackerInfo',
+				user.name ?? 'Unknown',
+				'Updated hacker information'
+			);	
 
 			const hacker = await ctx.prisma.hackerInfo.update({
 				where: {
