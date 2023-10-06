@@ -37,13 +37,25 @@ model Account {
     @@index([userId])
 }
 
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  timestamp DateTime @default(now())
+  user_id   String
+  author    String   @default("")
+  route     String
+  action    String
+  details   String?
+  user User[]
+
+  @@index([user_id])
+}
+
 model Session {
     id           String   @id @default(cuid())
     sessionToken String   @unique
     userId       String
     expires      DateTime
     user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
     @@index([userId])
 }
 
@@ -59,6 +71,7 @@ model User {
     accounts      Account[]
     sessions      Session[]
     hackerInfo    HackerInfo[]
+    auditLog      AuditLog[]
 }
 
 model VerificationToken {
