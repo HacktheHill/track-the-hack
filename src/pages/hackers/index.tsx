@@ -97,7 +97,7 @@ const Hackers: NextPage = () => {
 
 	const hackers = query.data?.pages.map(page => page.results).flat();
 
-	const filteredSearchQuery =
+	let filteredSearchQuery =
 		search.length == 0
 			? hackers
 			: hackers?.filter(
@@ -108,22 +108,41 @@ const Hackers: NextPage = () => {
 						`${hacker.firstName} ${hacker.lastName}`.toLowerCase().includes(search.toLowerCase()),
 			  );
 
-	let filterQuery;
+	if (filters) {
+		if (filters["currentLevelsOfStudy"] && filters["currentLevelsOfStudy"][0]) {
+			const f = filters["currentLevelsOfStudy"][0];
+			filteredSearchQuery = filteredSearchQuery?.filter(hacker =>
+				hacker.studyLevel?.toLowerCase().includes(f.toLowerCase()),
+			);
+		}
 
-	if (filters["currentLevelsOfStudy"]) {
-		for (const f of filters["currentLevelsOfStudy"]) {
-			let temporaryQuery;
-			if (filteredSearchQuery) {
-				temporaryQuery = filteredSearchQuery?.filter(hacker =>
-					hacker.studyLevel?.toLowerCase().includes(f.toLowerCase()),
-				);
-			}
-			if (filterQuery && temporaryQuery) {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-				filterQuery = [...filterQuery, ...temporaryQuery];
-			} else if (temporaryQuery) {
-				filterQuery = [...temporaryQuery];
-			}
+		if (filters["schools"] && filters["schools"][0]) {
+			const f = filters["schools"][0];
+			filteredSearchQuery = filteredSearchQuery?.filter(hacker =>
+				hacker.university?.toLowerCase().includes(f.toLowerCase()),
+			);
+		}
+
+		if (filters["programs"] && filters["programs"][0]) {
+			const f = filters["programs"][0];
+			filteredSearchQuery = filteredSearchQuery?.filter(hacker =>
+				hacker.studyProgram?.toLowerCase().includes(f.toLowerCase()),
+			);
+		}
+
+		if (filters["graduationYears"] && filters["graduationYears"][0]) {
+			const f = filters["graduationYears"][0];
+			filteredSearchQuery = filteredSearchQuery?.filter(hacker =>
+				hacker.graduationYear?.toString().toLowerCase().includes(f.toLowerCase()),
+			);
+		}
+
+		if (filters["attendanceTypes"] && filters["attendanceTypes"][0]) {
+			const f = filters["attendanceTypes"][0];
+			const isInPerson = f.toLowerCase() == "online" ? "false" : "true";
+			filteredSearchQuery = filteredSearchQuery?.filter(hacker =>
+				hacker.onlyOnline?.toString().toLowerCase().includes(isInPerson),
+			);
 		}
 	}
 
@@ -141,15 +160,81 @@ const Hackers: NextPage = () => {
 		attendanceTypes: [],
 	};
 
+	// if (filters["currentLevelsOfStudy"]) {
+	// 	// console.log(filters["currentLevelsOfStudy"]);
+	// 	for (const f of filters["currentLevelsOfStudy"]) {
+	// 		let temporaryQuery;
+	// 		if (filteredSearchQuery && !filterQuery) {
+	// 			temporaryQuery = filteredSearchQuery?.filter(hacker =>
+	// 				hacker.studyLevel?.toLowerCase().includes(f.toLowerCase()),
+	// 			);
+	// 		}
+	// 		if (filterQuery && temporaryQuery) {
+	// 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+	// 			filterQuery = [...filterQuery, ...temporaryQuery];
+	// 		} else if (temporaryQuery) {
+	// 			filterQuery = [...temporaryQuery];
+	// 		}
+	// 	}
+	// }
+
+	// if (filters["currentLevelsOfStudy"]) {
+	// 	for (const f of filters["currentLevelsOfStudy"]) {
+	// 		let temporaryQuery;
+
+	// 		if (filteredSearchQuery && !filterQuery) {
+	// 			temporaryQuery = filteredSearchQuery?.filter(hacker =>
+	// 				hacker.studyLevel?.toLowerCase().includes(f.toLowerCase()),
+	// 			);
+	// 		} else if (filterQuery) {
+	// 			temporaryQuery = filteredSearchQuery?.filter(hacker =>
+	// 				hacker.studyLevel?.toLowerCase().includes(f.toLowerCase()),
+	// 			);
+	// 		} else {
+	// 			temporaryQuery = hackers?.filter(hacker =>
+	// 				hacker.studyLevel?.toLowerCase().includes(f.toLowerCase()),
+	// 			);
+	// 		}
+
+	// 		if (temporaryQuery) {
+	// 			filterQuery = [...temporaryQuery];
+	// 		}
+	// 	}
+	// }
+
+	// if (filters["schools"]) {
+	// 	for (const f of filters["schools"]) {
+	// 		let temporaryQuery;
+
+	// 		if (filteredSearchQuery && !filterQuery) {
+	// 			temporaryQuery = filteredSearchQuery?.filter(hacker =>
+	// 				hacker.university?.toLowerCase().includes(f.toLowerCase()),
+	// 			);
+	// 		} else if (filterQuery) {
+	// 			temporaryQuery = filteredSearchQuery?.filter(hacker =>
+	// 				hacker.university?.toLowerCase().includes(f.toLowerCase()),
+	// 			);
+	// 		} else {
+	// 			temporaryQuery = hackers?.filter(hacker =>
+	// 				hacker.university?.toLowerCase().includes(f.toLowerCase()),
+	// 			);
+	// 		}
+
+	// 		if (temporaryQuery) {
+	// 			filterQuery = [...temporaryQuery];
+	// 		}
+	// 	}
+	// }
+
 	hackers?.forEach(hacker => {
-		hacker.university && !filterOptions.schools.includes(hacker.university)
-			? filterOptions.schools.push(hacker.university)
+		hacker.university && !filterOptions.schools.includes(hacker.university.toLowerCase())
+			? filterOptions.schools.push(hacker.university.toLowerCase())
 			: "";
 		hacker.studyLevel && !filterOptions.currentLevelsOfStudy.includes(hacker.studyLevel.toLowerCase())
 			? filterOptions.currentLevelsOfStudy.push(hacker.studyLevel.toLowerCase())
 			: "";
-		hacker.studyProgram && !filterOptions.programs.includes(hacker.studyProgram)
-			? filterOptions.programs.push(hacker.studyProgram)
+		hacker.studyProgram && !filterOptions.programs.includes(hacker.studyProgram.toLowerCase())
+			? filterOptions.programs.push(hacker.studyProgram.toLowerCase())
 			: "";
 		hacker.graduationYear && !filterOptions.graduationYears.includes(hacker.graduationYear.toString())
 			? filterOptions.graduationYears.push(hacker.graduationYear.toString())
@@ -179,19 +264,8 @@ const Hackers: NextPage = () => {
 					}}
 					onScroll={handleScroll}
 				>
-					{!filterQuery &&
+					{filteredSearchQuery &&
 						filteredSearchQuery?.map(hacker => (
-							<Card
-								key={hacker.id}
-								id={hacker.id}
-								firstName={hacker.firstName}
-								lastName={hacker.lastName}
-								university={hacker.university}
-								studyProgram={hacker.studyProgram}
-							/>
-						))}
-					{filterQuery &&
-						filterQuery?.map(hacker => (
 							<Card
 								key={hacker.id}
 								id={hacker.id}
@@ -286,27 +360,29 @@ type FilterProps = {
 };
 
 const FilterPopup = ({ filters, setFilters, filterOptions }: FilterProps) => {
-	// interface Filters {
-	// 	[key: string]: string[];
-	// }
+	interface Option {
+		[key: string]: string;
+	}
+
+	const [selectedOption, setSelectedOption] = useState<Option>({
+		schools: "",
+		currentLevelsOfStudy: "",
+		programs: "",
+		graduationYears: "",
+		attendanceTypes: "",
+	});
 
 	const handleCheckBox = (option: string, filterSection: string) => {
-		const tempFilters = { ...filters };
-		// console.log(tempFilters)
-
-		if (tempFilters[filterSection]?.includes(option)) {
-			const filteredArray = tempFilters[filterSection]?.filter(function (e) {
-				return e !== option;
-			});
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			tempFilters[filterSection] = filteredArray!;
-			if (!tempFilters[filterSection]) {
-				tempFilters[filterSection] = [];
-			}
-		} else {
-			tempFilters[filterSection]?.push(option);
+		if (selectedOption[filterSection] == "" || selectedOption[filterSection] != option) {
+			setSelectedOption({ ...selectedOption, [filterSection]: option });
+			const tempFilters = { ...filters, [filterSection]: [] };
+			tempFilters[filterSection] = [option];
+			setFilters(tempFilters);
+		} else if (selectedOption[filterSection] == option) {
+			setSelectedOption({ ...selectedOption, [filterSection]: "" });
+			const tempFilters = { ...filters, [filterSection]: [] };
+			setFilters(tempFilters);
 		}
-		setFilters(tempFilters);
 	};
 
 	return (
@@ -319,17 +395,18 @@ const FilterPopup = ({ filters, setFilters, filterOptions }: FilterProps) => {
 						<ul>
 							{filterOptions.currentLevelsOfStudy?.map(option => (
 								<li key={option} className="mb-2 flex items-center justify-between text-dark">
-									<input
-										type="checkbox"
-										className="h-6 w-6"
-										onChange={() => {
-											handleCheckBox(option, "currentLevelsOfStudy");
-										}}
-									/>
 									<span>
 										{option.charAt(0).toUpperCase()}
 										{option.slice(1)}
 									</span>
+									<input
+										type="checkbox"
+										className="h-6 w-6"
+										checked={selectedOption["currentLevelsOfStudy"] == option}
+										onChange={() => {
+											handleCheckBox(option, "currentLevelsOfStudy");
+										}}
+									/>
 								</li>
 							))}
 						</ul>
@@ -343,7 +420,14 @@ const FilterPopup = ({ filters, setFilters, filterOptions }: FilterProps) => {
 										{option.charAt(0).toUpperCase()}
 										{option.slice(1)}
 									</span>
-									<input type="checkbox" className="h-6 w-6" />
+									<input
+										checked={selectedOption["schools"] == option}
+										onChange={() => {
+											handleCheckBox(option, "schools");
+										}}
+										type="checkbox"
+										className="h-6 w-6"
+									/>
 								</li>
 							))}
 						</ul>
@@ -357,7 +441,14 @@ const FilterPopup = ({ filters, setFilters, filterOptions }: FilterProps) => {
 										{option.charAt(0).toUpperCase()}
 										{option.slice(1)}
 									</span>
-									<input type="checkbox" className="h-6 w-6" />
+									<input
+										checked={selectedOption["programs"] == option}
+										onChange={() => {
+											handleCheckBox(option, "programs");
+										}}
+										type="checkbox"
+										className="h-6 w-6"
+									/>
 								</li>
 							))}
 						</ul>
@@ -365,10 +456,17 @@ const FilterPopup = ({ filters, setFilters, filterOptions }: FilterProps) => {
 					<li>
 						<div className="mb-2 text-left text-lg font-bold text-dark">Graduation Year</div>
 						<ul>
-							{filterOptions.graduationYears?.map(option => (
+							{filterOptions.graduationYears.sort()?.map(option => (
 								<li key={option} className="mb-2 flex items-center justify-between text-dark">
 									<span>{option}</span>
-									<input type="checkbox" className="h-6 w-6" />
+									<input
+										checked={selectedOption["graduationYears"] == option}
+										onChange={() => {
+											handleCheckBox(option, "graduationYears");
+										}}
+										type="checkbox"
+										className="h-6 w-6"
+									/>
 								</li>
 							))}
 						</ul>
@@ -382,7 +480,14 @@ const FilterPopup = ({ filters, setFilters, filterOptions }: FilterProps) => {
 										{option.split("_").join(" ").charAt(0)}
 										{option.split("_").join(" ").slice(1).toLowerCase()}
 									</span>
-									<input type="checkbox" className="h-6 w-6" />
+									<input
+										checked={selectedOption["attendanceTypes"] == option}
+										onChange={() => {
+											handleCheckBox(option, "attendanceTypes");
+										}}
+										type="checkbox"
+										className="h-6 w-6"
+									/>
 								</li>
 							))}
 						</ul>
