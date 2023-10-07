@@ -2,7 +2,7 @@ import { faker } from "@faker-js/faker";
 import { Role } from "@prisma/client";
 import { hackerInfo } from "./hackerInfos.mjs";
 
-//generates dummy users
+// Generates dummy users
 const user = () => {
 	const firstName = faker.person.firstName();
 	const lastName = faker.person.lastName();
@@ -22,7 +22,7 @@ const user = () => {
 };
 
 /**
- * generates an array of users
+ * Generates an array of users
  * @param n number of users to generate
  * @returns [] array of users
  */

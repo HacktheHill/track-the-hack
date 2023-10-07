@@ -16,7 +16,7 @@ type PresenceInfo = Prisma.PresenceInfoGetPayload<true>;
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
-		props: await serverSideTranslations(locale ?? "en", ["common", "hacker"]),
+		props: await serverSideTranslations(locale ?? "en", ["common", "navbar", "hacker"]),
 	};
 };
 

@@ -1,21 +1,13 @@
-async function insertRecords(db: iDatabaseTable, rows: object[]) {
+async function insertRecords(db: any, rows: object[]) {
 	try {
-		rows.map(async row => {
-			await db.create({
+		rows.forEach(row =>
+			db.create({
 				data: row,
-			});
-		});
-	} catch (e) {
-		console.log(e);
+			}),
+		);
+	} catch (error) {
+		console.log(error);
 	}
-}
-
-export interface iDatabaseTable {
-	findMany(fields: object): any;
-	findUnique(criteria: object): any;
-	update(data: object): any;
-	delete(data: object): any;
-	create(data: object): any;
 }
 
 export { insertRecords };

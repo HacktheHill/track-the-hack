@@ -55,7 +55,9 @@ const QRCode = ({ setError, id }: QRCodeProps) => {
 		setError?.(true);
 		return <Error message="Cannot find QR code" />;
 	}
+
 	setError?.(false);
+
 	return (
 		<Image
 			priority
