@@ -21,6 +21,7 @@ import {
 	Divider,
 	AreaChart,
 } from "@tremor/react";
+import type { typeStrKeyAnyVal, typeStrKeyNumVal } from "../utils/types";
 
 type TremorDefaultColors = (
 	| "green"
@@ -50,8 +51,7 @@ const defaultColors: TremorDefaultColors = [
 ];
 
 interface GetCategoriesFromDataProps {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	data: { title?: string; [key: string]: any }[];
+	data: ({ title?: string } & typeStrKeyAnyVal)[];
 }
 
 const getCategoriesFromData = (data: GetCategoriesFromDataProps["data"]) => {
@@ -206,8 +206,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ title, data }) => {
 
 interface CustomAreaChartProps {
 	title: string;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	data: { title: string; [key: string]: any }[];
+	data: (typeStrKeyAnyVal & { date: string })[];
 }
 
 const CustomAreaChart: React.FC<CustomAreaChartProps> = ({ title, data }) => {
@@ -222,7 +221,7 @@ const CustomAreaChart: React.FC<CustomAreaChartProps> = ({ title, data }) => {
 				className="mt-4 h-80"
 				data={data}
 				categories={categories}
-				index="title"
+				index="date"
 				colors={defaultColors}
 				yAxisWidth={60}
 			/>
@@ -232,8 +231,7 @@ const CustomAreaChart: React.FC<CustomAreaChartProps> = ({ title, data }) => {
 
 interface CustomBarChartProps {
 	title: string;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	data: { [key: string]: any }[];
+	data: (typeStrKeyNumVal & { title: string })[];
 }
 
 const CustomBarChart: React.FC<CustomBarChartProps> = ({ title, data }) => {
@@ -247,7 +245,7 @@ const CustomBarChart: React.FC<CustomBarChartProps> = ({ title, data }) => {
 			<BarChart
 				className="mt-6"
 				data={data}
-				index="title"
+				index="name"
 				categories={categories}
 				colors={defaultColors}
 				yAxisWidth={48}

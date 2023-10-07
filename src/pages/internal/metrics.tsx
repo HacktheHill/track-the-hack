@@ -4,7 +4,9 @@ import DemographicsTab from "../../components/DemographicsTab";
 
 import { Role, type Prisma } from "@prisma/client";
 import type { GetStaticProps, NextPage } from "next";
+import { trpc } from "../../utils/api";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
+import { useTranslation } from "next-i18next";
 
 import App from "../../components/App";
 import OnlyRole from "../../components/OnlyRole";
@@ -17,16 +19,23 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	};
 };
 
-interface MetricsProps {
-	hackerData: HackerInfo[];
-}
+const Metrics: NextPage = () => {
+	const { t } = useTranslation("common");
+	const { ...hackerQuery } = trpc.hackers.all.useInfiniteQuery(
+		{
+			limit: 50,
+		},
+		{
+			getNextPageParam: lastPage => lastPage.nextCursor,
+		},
+	);
+	const hackers = hackerQuery.data?.pages.map(page => page.results).flat() as HackerInfo[];
 
-const Metrics: NextPage = ({ hackerData }: MetricsProps) => {
 	return (
 		<App className="mx-auto h-full w-full overflow-y-auto bg-gradient-to-b from-background2 to-background1 px-4 py-12">
 			<div className="mx-auto flex max-w-2xl flex-col gap-4">
-				<OnlyRole filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
-					<MetricsView hackerData={hackerData} />
+				<OnlyRole filter={role => role === Role.ORGANIZER}>
+					<MetricsView hackerData={hackers} />
 				</OnlyRole>
 				<OnlyRole filter={role => role === Role.HACKER}>{t("not-authorized-to-view-this-page")}</OnlyRole>
 			</div>
@@ -35,7 +44,7 @@ const Metrics: NextPage = ({ hackerData }: MetricsProps) => {
 };
 
 type MetricsViewProps = {
-	hackerData: HackerInfo;
+	hackerData: HackerInfo[];
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

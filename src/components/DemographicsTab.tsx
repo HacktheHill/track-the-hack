@@ -1,36 +1,38 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-"use client";
 
 import { type Prisma } from "@prisma/client";
 
 import { Card, Grid, Select, SelectItem } from "@tremor/react";
 import type { CustomBarListProps } from "./Tremor_Custom";
 import { CustomBarList, CustomDonutChart, CustomSmallTextCard, CustomAreaChart, CustomBarChart } from "./Tremor_Custom";
+import type { typeStrKeyNumVal, typeStrKeyAnyVal } from "../utils/types";
 
 interface DemographicsTabProps {
 	hackerData: Prisma.HackerInfoGetPayload<true>[];
 }
 
-const valToStr = (val: boolean | string) => {
+const valToStr = (val: boolean | string | undefined) => {
 	return val === true || val === false ? (val ? "Yes" : "No") : val ? val.toString() : "";
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const getNumberPerValue = (data: { name: string; value: number; title: string }[]) => {
+const getUniqueValuesFromData = (data: { name: string; value: number; title: string }[]) => {
 	const valueSet = new Set<string>();
 	data.forEach(datum => {
 		if (datum.name !== undefined && datum.name !== null && datum.name !== "") {
 			valueSet.add(datum.name);
 		}
 	});
-	const values = Array.from(valueSet);
+	return Array.from(valueSet).sort();
+};
 
+const getNumberPerValue = (data: { name: string; value: number; title: string }[]) => {
 	const valueData: { name: string; value: number; title: string }[] = [];
+	const values = getUniqueValuesFromData(data);
 
 	values.forEach(val => valueData.push({ name: valToStr(val), value: 0, title: valToStr(val) }));
 
 	data.forEach(datum => {
-		const valueDatum = valueData.filter(valueDatum => valueDatum.name === valToStr(datum.name))[0];
+		const valueDatum = valueData.filter(valueDatum => valToStr(valueDatum.name) === valToStr(datum.name))[0];
 
 		if (valueDatum) {
 			valueDatum.value++;
@@ -40,28 +42,47 @@ const getNumberPerValue = (data: { name: string; value: number; title: string }[
 	return valueData;
 };
 
-const getNumberPerValueBarChart = (data: { name: string; value: number; title: string }[]) => {
-	const valueSet = new Set<string>();
-	data.forEach(datum => {
-		if (datum.name !== undefined && datum.name !== null && datum.name !== "") {
-			valueSet.add(datum.name);
-		}
-	});
-	const values = Array.from(valueSet);
-
-	const valueData: { [key: string]: number }[] = [];
+const getNumberPerValueBarChart = (
+	data: { name: string; value: number; title: string }[],
+	getKeyName: (key: string) => string,
+) => {
+	const values = getUniqueValuesFromData(data);
+	const valueData: (typeStrKeyNumVal & { title: string })[] = [];
 
 	values.forEach(val => {
 		if (val) {
-			valueData.push({ [valToStr(val)]: 0 });
+			valueData.push({ [getKeyName(val)]: 0, title: valToStr(val) } as typeStrKeyNumVal & { title: string });
 		}
 	});
 
 	data.forEach(datum => {
-		const valueDatum = valueData.filter(valueDatum => Object.keys(valueDatum)[0] === valToStr(datum.name))[0];
+		const valueDatum = valueData.filter(valueDatum => valueDatum.title === valToStr(datum.name))[0];
 
 		if (valueDatum) {
-			valueDatum[datum.name]++;
+			valueDatum[getKeyName(valToStr(datum.name))]++;
+		}
+	});
+
+	return valueData;
+};
+
+const getNumberPerValueAreaChart = (data: { name: string; value: number; title: string }[]) => {
+	const values = getUniqueValuesFromData(data);
+	const valueData: (typeStrKeyNumVal & { date: string })[] = [];
+
+	values.forEach(val => {
+		if (val) {
+			valueData.push({ [valToStr(val)]: 0, date: "" } as typeStrKeyNumVal & { date: string });
+		}
+	});
+
+	data.forEach(datum => {
+		const valueDatum = valueData.filter(
+			valueDatum => valToStr(Object.keys(valueDatum).filter(key => key !== "date")[0]) === valToStr(datum.name),
+		)[0];
+
+		if (valueDatum) {
+			valueDatum[valToStr(datum.name)]++;
 		}
 	});
 
@@ -80,13 +101,32 @@ export default function DemographicsTab(props: DemographicsTabProps) {
 	const metricsData: { [key: string]: { title: string; value: any; name: string }[] } = {};
 	demographicsKeys.forEach(key => (metricsData[key] = []));
 
-	hackerData.forEach(hacker => {
+	hackerData.forEach((hacker: typeStrKeyAnyVal) => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
 		demographicsKeys.forEach(key => metricsData[key]!.push({ title: key, value: hacker[key], name: hacker[key] }));
 	});
 
-	const aggregatedMetricsData: { [key: string]: { name: string; value: number; title: string }[] } = {};
-	demographicsKeys.forEach(key => (aggregatedMetricsData[key] = getNumberPerValue(metricsData[key]!)));
+	const aggregatedMetricsData: {
+		[key: string]: (typeStrKeyAnyVal & { name?: string; value?: number; title?: string })[];
+	} = {};
+	demographicsKeys.forEach(key => {
+		const barChartKeys = ["graduationYear"];
+		const areaChartKeys = ["confirmed"];
+		const getBarChartKeyName = (key: string) => {
+			switch (key) {
+				case "graduationYear":
+					return (keyName: string) => `Graduates in ${keyName}`;
+			}
+		};
+
+		const aggregateFunc = !barChartKeys.concat(areaChartKeys).includes(key)
+			? getNumberPerValue
+			: barChartKeys.includes(key)
+			? (metricData: { title: string; value: any; name: string }[]) =>
+					getNumberPerValueBarChart(metricData, getBarChartKeyName(key) as (key: string) => string)
+			: getNumberPerValueAreaChart;
+		aggregatedMetricsData[key] = aggregateFunc(metricsData[key]!);
+	});
 
 	return (
 		<main className="mx-auto max-w-7xl p-4 md:p-10">
@@ -107,16 +147,22 @@ export default function DemographicsTab(props: DemographicsTabProps) {
 
 				<Grid numItemsSm={1} numItemsLg={3} className="gap-6">
 					<Card>
-						<CustomDonutChart title="Languages" data={aggregatedMetricsData.preferredLanguage!} />
+						<CustomDonutChart
+							title="Languages"
+							data={aggregatedMetricsData.preferredLanguage! as ReturnType<typeof getNumberPerValue>}
+						/>
 					</Card>
 					<Card>
 						<CustomDonutChart
 							title="Transport Required"
-							data={aggregatedMetricsData.transportationRequired!}
+							data={aggregatedMetricsData.transportationRequired! as ReturnType<typeof getNumberPerValue>}
 						/>
 					</Card>
 					<Card>
-						<CustomDonutChart title="Preferred Pronouns" data={aggregatedMetricsData.gender!} />
+						<CustomDonutChart
+							title="Preferred Pronouns"
+							data={aggregatedMetricsData.gender! as ReturnType<typeof getNumberPerValue>}
+						/>
 					</Card>
 					<Card>
 						<CustomBarList
@@ -143,7 +189,7 @@ export default function DemographicsTab(props: DemographicsTabProps) {
 					<Card>
 						<CustomBarChart
 							title="Graduating Years"
-							data={getNumberPerValueBarChart(metricsData.graduationYear!)}
+							data={aggregatedMetricsData.graduationYear! as ReturnType<typeof getNumberPerValueBarChart>}
 						/>
 					</Card>
 					<Card>
@@ -153,11 +199,18 @@ export default function DemographicsTab(props: DemographicsTabProps) {
 						/>
 					</Card>
 					<Card>
-						<CustomDonutChart title="T-Shirt Sizes" data={aggregatedMetricsData.shirtSize!} />
+						<CustomDonutChart
+							title="T-Shirt Sizes"
+							data={aggregatedMetricsData.shirtSize! as ReturnType<typeof getNumberPerValue>}
+						/>
 					</Card>
 				</Grid>
 				<Card>
-					<CustomAreaChart title="Application Confirmed" data={aggregatedMetricsData.confirmed!} />
+					{/* TODO: Need application date data to complete */}
+					<CustomAreaChart
+						title="Application Confirmed"
+						data={aggregatedMetricsData.confirmed! as ReturnType<typeof getNumberPerValueAreaChart>}
+					/>
 				</Card>
 			</Grid>
 		</main>
