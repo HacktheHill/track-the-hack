@@ -1,8 +1,9 @@
 import { TabGroup, TabList, Tab, TabPanels, TabPanel } from "@tremor/react";
 
 import DemographicsTab from "../../components/DemographicsTab";
+import MainEventTab from "../../components/MainEventTab";
 
-import { Role, type Prisma } from "@prisma/client";
+import { Role, type Prisma, PresenceInfo } from "@prisma/client";
 import type { GetStaticProps, NextPage } from "next";
 import { trpc } from "../../utils/api";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
@@ -29,13 +30,23 @@ const Metrics: NextPage = () => {
 			getNextPageParam: lastPage => lastPage.nextCursor,
 		},
 	);
+	const presenceQuery = trpc.presence.all.useInfiniteQuery(
+		{
+			limit: 50,
+		},
+		{
+			getNextPageParam: lastPage => lastPage.nextCursor,
+		},
+	);
+
 	const hackers = hackerQuery.data?.pages.map(page => page.results).flat() as HackerInfo[];
+	const presences = presenceQuery.data?.pages.map(page => page.results).flat() as PresenceInfo[];
 
 	return (
 		<App className="mx-auto h-full w-full overflow-y-auto bg-gradient-to-b from-background2 to-background1 px-4 py-12">
 			<div className="mx-auto flex max-w-2xl flex-col gap-4">
 				<OnlyRole filter={role => role === Role.ORGANIZER}>
-					<MetricsView hackerData={hackers} />
+					<MetricsView hackerData={hackers} presenceData={presences} />
 				</OnlyRole>
 				<OnlyRole filter={role => role === Role.HACKER}>{t("not-authorized-to-view-this-page")}</OnlyRole>
 			</div>
@@ -45,10 +56,11 @@ const Metrics: NextPage = () => {
 
 type MetricsViewProps = {
 	hackerData: HackerInfo[];
+	presenceData: PresenceInfo[];
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const MetricsView = ({ hackerData }: MetricsViewProps) => {
+export const MetricsView = ({ hackerData, presenceData }: MetricsViewProps) => {
 	return (
 		<main className="mx-auto max-w-7xl p-4 md:p-10">
 			<TabGroup>
@@ -61,9 +73,9 @@ export const MetricsView = ({ hackerData }: MetricsViewProps) => {
 					<TabPanel>
 						<DemographicsTab hackerData={hackerData} />
 					</TabPanel>
-					{/* <TabPanel>
+					<TabPanel>
 						<MainEventTab presenceData={presenceData} />
-					</TabPanel> */}
+					</TabPanel>
 					<TabPanel>Not Integrated...</TabPanel>
 				</TabPanels>
 			</TabGroup>

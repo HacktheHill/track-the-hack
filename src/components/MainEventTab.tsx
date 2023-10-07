@@ -1,5 +1,5 @@
-"use client";
 import { Card, Grid } from "@tremor/react";
+import { type Prisma } from "@prisma/client";
 import { CustomDonutChart, CustomSmallTextCard, EventsTable, InventoryTable } from "./Tremor_Custom";
 
 import { Select, SelectItem } from "@tremor/react";
@@ -88,7 +88,11 @@ const EventsData = [
 	},
 ];
 
-export default function MainEventTab() {
+interface MainEventTabProps {
+	presenceData: Prisma.PresenceInfoGetPayload<true>[];
+}
+
+export default function MainEventTab({ presenceData }: MainEventTabProps) {
 	return (
 		<main className="mx-auto max-w-7xl p-4 md:p-10">
 			<Grid numItems={1} className="gap-6">
