@@ -21,7 +21,7 @@ import {
 	Divider,
 	AreaChart,
 } from "@tremor/react";
-import type { typeStrKeyAnyVal, typeStrKeyNumVal } from "../utils/types";
+import type { StrKeyAnyVal, StrKeyNumVal } from "../utils/types";
 
 type TremorDefaultColors = (
 	| "green"
@@ -51,7 +51,7 @@ const defaultColors: TremorDefaultColors = [
 ];
 
 interface GetCategoriesFromDataProps {
-	data: ({ title?: string } & typeStrKeyAnyVal)[];
+	data: ({ title?: string } & StrKeyAnyVal)[];
 }
 
 const getCategoriesFromData = (data: GetCategoriesFromDataProps["data"]) => {
@@ -206,7 +206,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ title, data }) => {
 
 interface CustomAreaChartProps {
 	title: string;
-	data: (typeStrKeyAnyVal & { date: string })[];
+	data: (StrKeyAnyVal & { date: string })[];
 }
 
 const CustomAreaChart: React.FC<CustomAreaChartProps> = ({ title, data }) => {
@@ -231,7 +231,7 @@ const CustomAreaChart: React.FC<CustomAreaChartProps> = ({ title, data }) => {
 
 interface CustomBarChartProps {
 	title: string;
-	data: (typeStrKeyNumVal & { title: string })[];
+	data: (StrKeyNumVal & { title: string })[];
 }
 
 const CustomBarChart: React.FC<CustomBarChartProps> = ({ title, data }) => {

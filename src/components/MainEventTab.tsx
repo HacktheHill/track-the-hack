@@ -1,8 +1,8 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Card, Grid } from "@tremor/react";
 import { type Prisma } from "@prisma/client";
 import { CustomDonutChart, CustomSmallTextCard, EventsTable, InventoryTable } from "./Tremor_Custom";
-import { getNumberPerValue } from "./DemographicsTab";
-import { type typeStrKeyAnyVal } from "../utils/types";
+import type { AggregatedHackerInfo, AggregatedPresenceInfo } from "../utils/types";
 
 import { Select, SelectItem } from "@tremor/react";
 
@@ -48,120 +48,73 @@ const dinnerDay2 = [
 	},
 ];
 
-const attendeesState = [
-	{
-		title: "RSVP: Checked In",
-		value: 200,
-	},
-	{
-		title: "RSVP: Still Expected",
-		value: 100,
-	},
-	{
-		title: "Walkin: Checked In",
-		value: 20,
-	},
-	{
-		title: "Walkin Remaining",
-		value: 65,
-	},
-];
-
-const EventsData = [
-	{
-		title: "Checkin",
-		state: false,
-		utilization: 100,
-	},
-	{
-		title: "Lunch Day 1",
-		state: false,
-		utilization: 97.2,
-	},
-	{
-		title: "Dinner Day 1",
-		state: true,
-		utilization: 50.32,
-	},
-	{
-		title: "Lunch Day 2",
-		state: false,
-		utilization: 0,
-	},
-];
-
 interface MainEventTabProps {
+	aggregatedHackerData: AggregatedHackerInfo;
+	aggregatedPresenceData: AggregatedPresenceInfo;
+	hackerData: Prisma.HackerInfoGetPayload<true>[];
 	presenceData: Prisma.PresenceInfoGetPayload<true>[];
 }
 
-export default function MainEventTab({ presenceData }: MainEventTabProps) {
-	const presenceKeysSet = new Set<string>();
-	presenceData.forEach(presenceDatum => {
-		Object.keys(presenceDatum).forEach(key => presenceKeysSet.add(key));
-	});
-	const demographicsKeys = Array.from(presenceKeysSet);
+export default function MainEventTab({
+	aggregatedHackerData,
+	aggregatedPresenceData,
+	hackerData,
+	presenceData,
+}: MainEventTabProps) {
+	const totalConfirmedAttendees: number = aggregatedHackerData.confirmed!.filter(
+		dataValue => dataValue.name === "Yes",
+	)[0]!.value as number;
+	const totalCheckedIn = aggregatedPresenceData.checkedIn!.filter(dataValue => dataValue.name === "Yes")[0]!.value;
+	const rsvpStillExpected = totalConfirmedAttendees - totalCheckedIn;
+	const remainingWalkIns = presenceData.filter(presenceDatum => {
+		const matchingHackerInfos = hackerData.filter(hackerDatum => hackerDatum.id === presenceDatum.hackerInfoId);
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const metricsData: { [key: string]: { title: string; value: any; name: string }[] } = {};
-	demographicsKeys.forEach(key => (metricsData[key] = []));
+		if (matchingHackerInfos.length === 0) {
+			return false;
+		}
 
-	presenceData.forEach((presenceDatum: typeStrKeyAnyVal) => {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
-		demographicsKeys.forEach(key =>
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			metricsData[key]?.push({ title: key, value: presenceDatum[key], name: presenceDatum[key] }),
-		);
-	});
+		const hackerInfo = matchingHackerInfos[0];
 
-	const aggregatedMetricsData: {
-		[key: string]: (typeStrKeyAnyVal & { name?: string; value?: number; title?: string })[];
-	} = {};
+		return hackerInfo!.walkIn && !presenceDatum.checkedIn;
+	}).length;
 
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	presenceKeysSet.forEach(key => (aggregatedMetricsData[key] = getNumberPerValue(metricsData[key]!)));
+	const eventsTableData = Object.entries(aggregatedPresenceData)
+		.filter(([key]) =>
+			[
+				"checkedIn",
+				"breakfast1",
+				"lunch1",
+				"dinner1",
+				"snacks",
+				"snacks2",
+				"breakfast2",
+				"lunch2",
+				"lunch22",
+			].includes(key),
+		)
+		.map(([key, datum]) => ({
+			title: key,
+			state: true,
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			utilization: datum.filter(dataValue => dataValue.name === "Yes")[0]!.value / totalConfirmedAttendees,
+		}));
 
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unsafe-assignment
-	// const totalConfirmedAttendees: number = aggregatedMetricsData.confirmed!.value!;
-
-	// const eventsTableData = Object.entries(aggregatedMetricsData)
-	// 	.filter(([key]) =>
-	// 		[
-	// 			"checkedIn",
-	// 			"breakfast1",
-	// 			"lunch1",
-	// 			"dinner1",
-	// 			"snacks",
-	// 			"snacks2",
-	// 			"breakfast2",
-	// 			"lunch2",
-	// 			"lunch22",
-	// 		].includes(key),
-	// 	)
-	// 	.map(([key, datum]) => ({
-	// 		title: key,
-	// 		state: true,
-	// 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	// 		utilization: datum.value! / totalConfirmedAttendees,
-	// 	}));
 	return (
 		<main className="mx-auto max-w-7xl p-4 md:p-10">
 			<Grid numItems={1} className="gap-6">
 				<Grid numItemsSm={3} numItemsLg={4} className="gap-6">
-					<CustomSmallTextCard
-						title="Total Checked In"
-						metric={(attendeesState[0]?.value as number) + (attendeesState[2]?.value as number)}
-					/>
+					<CustomSmallTextCard title="Total Checked In" metric={totalCheckedIn} />
 					<CustomSmallTextCard
 						title="RSVP Still Expected"
-						metric={attendeesState[1]?.value}
+						metric={rsvpStillExpected}
 						// eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-						text={`Checked In ${attendeesState[0]?.value}`}
+						text={`Checked In ${totalCheckedIn}`}
 					/>
 					<CustomSmallTextCard
 						title="Walk ins Remaining"
-						metric={attendeesState[3]?.value}
+						metric={remainingWalkIns}
 						// eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-						text={`Checked In ${attendeesState[2]?.value}`}
+						text={`Checked In ${totalCheckedIn}`}
 					/>
 					<CustomSmallTextCard title="Remaining Capacity" />
 					<CustomSmallTextCard title="Discord User Count" />
@@ -174,7 +127,7 @@ export default function MainEventTab({ presenceData }: MainEventTabProps) {
 						{" "}
 						<CustomDonutChart
 							title="Check In Status"
-							data={aggregatedMetricsData.checkedIn as { title: string; value: number }[]}
+							data={aggregatedPresenceData.checkedIn as { title: string; value: number }[]}
 						/>{" "}
 					</Card>
 					<Card>
@@ -185,7 +138,7 @@ export default function MainEventTab({ presenceData }: MainEventTabProps) {
 					</Card>
 				</Grid>
 				<Card>
-					<EventsTable title="All Event States" data={EventsData} />
+					<EventsTable title="All Event States" data={eventsTableData} />
 				</Card>
 
 				<Card>

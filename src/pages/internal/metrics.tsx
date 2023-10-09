@@ -3,7 +3,7 @@ import { TabGroup, TabList, Tab, TabPanels, TabPanel } from "@tremor/react";
 import DemographicsTab from "../../components/DemographicsTab";
 import MainEventTab from "../../components/MainEventTab";
 
-import { Role, type Prisma, PresenceInfo } from "@prisma/client";
+import { Role, type Prisma, type PresenceInfo, type HackerInfo } from "@prisma/client";
 import type { GetStaticProps, NextPage } from "next";
 import { trpc } from "../../utils/api";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
@@ -11,12 +11,11 @@ import { useTranslation } from "next-i18next";
 
 import App from "../../components/App";
 import OnlyRole from "../../components/OnlyRole";
-
-type HackerInfo = Prisma.HackerInfoGetPayload<true>;
+import { getAggregatedHackerInfo, getAggregatedPresenceInfo } from "../../utils/getAggregatedData";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
-		props: await serverSideTranslations(locale ?? "en", ["common", "hacker"]),
+		props: await serverSideTranslations(locale ?? "en", ["common"]),
 	};
 };
 
@@ -55,8 +54,8 @@ const Metrics: NextPage = () => {
 };
 
 type MetricsViewProps = {
-	hackerData: HackerInfo[];
-	presenceData: PresenceInfo[];
+	hackerData: Prisma.HackerInfoGetPayload<true>[];
+	presenceData: Prisma.PresenceInfoGetPayload<true>[];
 };
 
 export const MetricsView = ({ hackerData, presenceData }: MetricsViewProps) => {
@@ -70,10 +69,15 @@ export const MetricsView = ({ hackerData, presenceData }: MetricsViewProps) => {
 				</TabList>
 				<TabPanels>
 					<TabPanel>
-						<DemographicsTab hackerData={hackerData} />
+						<DemographicsTab aggregatedHackerData={getAggregatedHackerInfo(hackerData)} />
 					</TabPanel>
 					<TabPanel>
-						<MainEventTab presenceData={presenceData} />
+						<MainEventTab
+							aggregatedHackerData={getAggregatedHackerInfo(hackerData)}
+							aggregatedPresenceData={getAggregatedPresenceInfo(presenceData)}
+							hackerData={hackerData}
+							presenceData={presenceData}
+						/>
 					</TabPanel>
 					<TabPanel>Not Integrated...</TabPanel>
 				</TabPanels>

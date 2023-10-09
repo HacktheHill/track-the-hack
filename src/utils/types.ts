@@ -1,14 +1,28 @@
-type typeStrKeyAnyVal = {
+type StrKeyAnyVal = {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	[key: string]: any;
 };
 
-type typeStrKeyStrVal = {
+type StrKeyStrVal = {
 	[key: string]: string;
 };
 
-type typeStrKeyNumVal = {
+type StrKeyNumVal = {
 	[key: string]: number;
 };
 
-export type { typeStrKeyAnyVal, typeStrKeyStrVal, typeStrKeyNumVal };
+type TremorChartData = { name: string; value: number; title: string }[];
+
+type AggregatedHackerInfo = {
+	[key: string]: (StrKeyAnyVal & {
+		name?: string | undefined;
+		value?: number | undefined;
+		title?: string | undefined;
+	})[];
+};
+
+type AggregatedPresenceInfo = {
+	[key: string]: TremorChartData;
+};
+
+export type { StrKeyAnyVal, StrKeyStrVal, StrKeyNumVal, TremorChartData, AggregatedHackerInfo, AggregatedPresenceInfo };
