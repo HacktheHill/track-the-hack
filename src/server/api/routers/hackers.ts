@@ -43,17 +43,13 @@ export const hackerRouter = createTRPCRouter({
 			return hacker;
 		}),
 	
+	// Get next hacker in db from an id
 	getNext: publicProcedure
 	.input(
 		z
 			.object({
 				id: z.string(),
-			})
-			.or(
-				z.object({
-					email: z.string(),
-				}),
-			),
+			}),
 	)
 	.query(async ({ ctx, input }) => {
 		let hacker: HackerInfo | null = null;
@@ -74,17 +70,13 @@ export const hackerRouter = createTRPCRouter({
 		return hacker;
 	}),
 
+	// Get prev hacker in db from an id
 	getPrev: publicProcedure
 	.input(
 		z
 			.object({
 				id: z.string(),
-			})
-			.or(
-				z.object({
-					email: z.string(),
-				}),
-			),
+			}),
 	)
 	.query(async ({ ctx, input }) => {
 		let hacker: HackerInfo | null = null;

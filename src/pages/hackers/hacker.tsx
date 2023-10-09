@@ -31,11 +31,6 @@ const Hacker: NextPage = () => {
 	const nextHackerQuery = trpc.hackers.getNext.useQuery({ id: id ?? "" }, { enabled: !!id });
 	const prevHackerQuery = trpc.hackers.getPrev.useQuery({ id: id ?? "" }, { enabled: !!id });
 
-	//nextId = hackerQuery.data.INDEX;
-	//if nextId exists:
-	//nextHackerQuery = trpc.hackers.get.useQuery({id: nextID})
-	//use nextHackerQuery.data.id in href of next button
-
 	if (hackerQuery.isLoading || hackerQuery.data == null) {
 		return (
 			<App className="h-full bg-gradient-to-b from-background2 to-background1 px-16 py-12">
