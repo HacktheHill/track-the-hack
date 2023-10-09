@@ -1,6 +1,8 @@
 import { Card, Grid } from "@tremor/react";
 import { type Prisma } from "@prisma/client";
 import { CustomDonutChart, CustomSmallTextCard, EventsTable, InventoryTable } from "./Tremor_Custom";
+import { getNumberPerValue } from "./DemographicsTab";
+import { type typeStrKeyAnyVal } from "../utils/types";
 
 import { Select, SelectItem } from "@tremor/react";
 
@@ -93,6 +95,54 @@ interface MainEventTabProps {
 }
 
 export default function MainEventTab({ presenceData }: MainEventTabProps) {
+	const presenceKeysSet = new Set<string>();
+	presenceData.forEach(presenceDatum => {
+		Object.keys(presenceDatum).forEach(key => presenceKeysSet.add(key));
+	});
+	const demographicsKeys = Array.from(presenceKeysSet);
+
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const metricsData: { [key: string]: { title: string; value: any; name: string }[] } = {};
+	demographicsKeys.forEach(key => (metricsData[key] = []));
+
+	presenceData.forEach((presenceDatum: typeStrKeyAnyVal) => {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
+		demographicsKeys.forEach(key =>
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			metricsData[key]?.push({ title: key, value: presenceDatum[key], name: presenceDatum[key] }),
+		);
+	});
+
+	const aggregatedMetricsData: {
+		[key: string]: (typeStrKeyAnyVal & { name?: string; value?: number; title?: string })[];
+	} = {};
+
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	presenceKeysSet.forEach(key => (aggregatedMetricsData[key] = getNumberPerValue(metricsData[key]!)));
+
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unsafe-assignment
+	// const totalConfirmedAttendees: number = aggregatedMetricsData.confirmed!.value!;
+
+	// const eventsTableData = Object.entries(aggregatedMetricsData)
+	// 	.filter(([key]) =>
+	// 		[
+	// 			"checkedIn",
+	// 			"breakfast1",
+	// 			"lunch1",
+	// 			"dinner1",
+	// 			"snacks",
+	// 			"snacks2",
+	// 			"breakfast2",
+	// 			"lunch2",
+	// 			"lunch22",
+	// 		].includes(key),
+	// 	)
+	// 	.map(([key, datum]) => ({
+	// 		title: key,
+	// 		state: true,
+	// 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	// 		utilization: datum.value! / totalConfirmedAttendees,
+	// 	}));
 	return (
 		<main className="mx-auto max-w-7xl p-4 md:p-10">
 			<Grid numItems={1} className="gap-6">
@@ -122,7 +172,10 @@ export default function MainEventTab({ presenceData }: MainEventTabProps) {
 				<Grid numItemsSm={1} numItemsLg={2} className="gap-6">
 					<Card>
 						{" "}
-						<CustomDonutChart title="Check In Status" data={attendeesState} />{" "}
+						<CustomDonutChart
+							title="Check In Status"
+							data={aggregatedMetricsData.checkedIn as { title: string; value: number }[]}
+						/>{" "}
 					</Card>
 					<Card>
 						<CustomDonutChart title="Dinner Day 2" data={dinnerDay2} />

@@ -83,6 +83,22 @@ const Links = ({ bottom }: LinkProps) => {
 							)}
 						</Link>
 					</OnlyRole>
+					<OnlyRole filter={role => role === Role.ORGANIZER}>
+						<Link
+							href="/internal"
+							className={
+								bottom
+									? ""
+									: "mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
+							}
+						>
+							{bottom ? (
+								<Image priority src="/assets/list.svg" height={32} width={32} alt={t("internal")} />
+							) : (
+								t("internal")
+							)}
+						</Link>
+					</OnlyRole>
 				</>
 			)}
 		</>
@@ -94,6 +110,7 @@ type NavbarProps = {
 };
 
 const Navbar = ({ integrated }: NavbarProps) => {
+	const { t } = useTranslation("navbar");
 	const { data: sessionData } = useSession();
 
 	return (

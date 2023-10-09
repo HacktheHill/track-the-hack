@@ -59,7 +59,6 @@ type MetricsViewProps = {
 	presenceData: PresenceInfo[];
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const MetricsView = ({ hackerData, presenceData }: MetricsViewProps) => {
 	return (
 		<main className="mx-auto max-w-7xl p-4 md:p-10">

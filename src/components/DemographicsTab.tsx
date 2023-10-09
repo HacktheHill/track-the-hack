@@ -25,7 +25,7 @@ const getUniqueValuesFromData = (data: { name: string; value: number; title: str
 	return Array.from(valueSet).sort();
 };
 
-const getNumberPerValue = (data: { name: string; value: number; title: string }[]) => {
+export const getNumberPerValue = (data: { name: string; value: number; title: string }[]) => {
 	const valueData: { name: string; value: number; title: string }[] = [];
 	const values = getUniqueValuesFromData(data);
 
@@ -122,7 +122,8 @@ export default function DemographicsTab(props: DemographicsTabProps) {
 		const aggregateFunc = !barChartKeys.concat(areaChartKeys).includes(key)
 			? getNumberPerValue
 			: barChartKeys.includes(key)
-			? (metricData: { title: string; value: any; name: string }[]) =>
+			? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+			  (metricData: { title: string; value: any; name: string }[]) =>
 					getNumberPerValueBarChart(metricData, getBarChartKeyName(key) as (key: string) => string)
 			: getNumberPerValueAreaChart;
 		aggregatedMetricsData[key] = aggregateFunc(metricsData[key]!);
