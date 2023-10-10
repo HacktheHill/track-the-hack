@@ -31,7 +31,12 @@ const Hackers: NextPage = () => {
 	const { t } = useTranslation("hackers");
 
 	const [search, setSearch] = useState("");
-	// const [filterQuery, setFilterQuery] = useState([])
+
+
+	const [sidebarVisible, setSidebarVisible ] = useState(false)
+	function toggleFilter() {
+		setSidebarVisible(!sidebarVisible);
+	}
 
 	interface Filters {
 		[key: string]: string[];
@@ -161,72 +166,6 @@ const Hackers: NextPage = () => {
 		attendanceTypes: [],
 	};
 
-	// if (filters["currentLevelsOfStudy"]) {
-	// 	// console.log(filters["currentLevelsOfStudy"]);
-	// 	for (const f of filters["currentLevelsOfStudy"]) {
-	// 		let temporaryQuery;
-	// 		if (filteredSearchQuery && !filterQuery) {
-	// 			temporaryQuery = filteredSearchQuery?.filter(hacker =>
-	// 				hacker.studyLevel?.toLowerCase().includes(f.toLowerCase()),
-	// 			);
-	// 		}
-	// 		if (filterQuery && temporaryQuery) {
-	// 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-	// 			filterQuery = [...filterQuery, ...temporaryQuery];
-	// 		} else if (temporaryQuery) {
-	// 			filterQuery = [...temporaryQuery];
-	// 		}
-	// 	}
-	// }
-
-	// if (filters["currentLevelsOfStudy"]) {
-	// 	for (const f of filters["currentLevelsOfStudy"]) {
-	// 		let temporaryQuery;
-
-	// 		if (filteredSearchQuery && !filterQuery) {
-	// 			temporaryQuery = filteredSearchQuery?.filter(hacker =>
-	// 				hacker.studyLevel?.toLowerCase().includes(f.toLowerCase()),
-	// 			);
-	// 		} else if (filterQuery) {
-	// 			temporaryQuery = filteredSearchQuery?.filter(hacker =>
-	// 				hacker.studyLevel?.toLowerCase().includes(f.toLowerCase()),
-	// 			);
-	// 		} else {
-	// 			temporaryQuery = hackers?.filter(hacker =>
-	// 				hacker.studyLevel?.toLowerCase().includes(f.toLowerCase()),
-	// 			);
-	// 		}
-
-	// 		if (temporaryQuery) {
-	// 			filterQuery = [...temporaryQuery];
-	// 		}
-	// 	}
-	// }
-
-	// if (filters["schools"]) {
-	// 	for (const f of filters["schools"]) {
-	// 		let temporaryQuery;
-
-	// 		if (filteredSearchQuery && !filterQuery) {
-	// 			temporaryQuery = filteredSearchQuery?.filter(hacker =>
-	// 				hacker.university?.toLowerCase().includes(f.toLowerCase()),
-	// 			);
-	// 		} else if (filterQuery) {
-	// 			temporaryQuery = filteredSearchQuery?.filter(hacker =>
-	// 				hacker.university?.toLowerCase().includes(f.toLowerCase()),
-	// 			);
-	// 		} else {
-	// 			temporaryQuery = hackers?.filter(hacker =>
-	// 				hacker.university?.toLowerCase().includes(f.toLowerCase()),
-	// 			);
-	// 		}
-
-	// 		if (temporaryQuery) {
-	// 			filterQuery = [...temporaryQuery];
-	// 		}
-	// 	}
-	// }
-
 	hackers?.forEach(hacker => {
 		hacker.university && !filterOptions.schools.includes(hacker.university.toLowerCase())
 			? filterOptions.schools.push(hacker.university.toLowerCase())
@@ -246,14 +185,29 @@ const Hackers: NextPage = () => {
 	});
 
 	return (
-		<App className="flex flex-col overflow-y-auto bg-default-gradient" integrated={true} title={t("title")}>
-			<div className="border-b border-dark-color bg-light-quaternary-color px-4 pb-4 pt-2 shadow-navbar sm:px-20">
-				<Search setSearch={setSearch} />
+		<App
+			className="flex flex-col overflow-y-auto bg-gradient-to-b from-background2 to-background1"
+			integrated={true}
+			title={t("title")}
+		>
+			<div className="align-center flex justify-center border-b border-dark bg-background1 pb-4 pt-2 shadow-navbar sm:px-20">
+				<div className="flex">
+					<button
+						className="m-1 mr-3 rounded-xl border-dark bg-background2 px-6 text-sm text-dark"
+						onClick={toggleFilter}
+					>
+						Filters
+					</button>
+					<Search setSearch={setSearch} />
+				</div>
 			</div>
 			<div className="flex flex-row">
-				<div className="w-1/5 ">
-					<FilterPopup filters={filters} setFilters={setFilters} filterOptions={filterOptions} />
-				</div>
+				<FilterPopup
+					filters={filters}
+					setFilters={setFilters}
+					filterOptions={filterOptions}
+					sidebarVisible={sidebarVisible}
+				/>
 				<div
 					className="mainWindow to-mobile:mx-auto grid h-fit flex-col gap-4 overflow-x-hidden px-4 py-4 sm:px-20"
 					style={{
@@ -293,7 +247,7 @@ const Card = ({ firstName, lastName, university, studyProgram, id }: CardProps) 
 	return (
 		<Link
 			href={`/hackers/hacker?id=${id}`}
-			className="hover:bg-medium block w-full rounded-lg bg-medium-primary-color p-6 text-light-color shadow"
+			className="block w-full rounded-lg bg-dark p-6 text-white shadow hover:bg-medium truncate"
 		>
 			<h3 className="text-2xl font-bold tracking-tight">{`${firstName} ${lastName}`}</h3>
 			<p>{university}</p>
@@ -354,9 +308,11 @@ type FilterProps = {
 		graduationYears: string[];
 		attendanceTypes: string[];
 	};
+	sidebarVisible: boolean;
 };
 
-const FilterPopup = ({ filters, setFilters, filterOptions }: FilterProps) => {
+const FilterPopup = ({ filters, setFilters, filterOptions, sidebarVisible }: FilterProps) => {
+	//goes bad after 850px x 894
 	interface Option {
 		[key: string]: string;
 	}
@@ -368,6 +324,10 @@ const FilterPopup = ({ filters, setFilters, filterOptions }: FilterProps) => {
 		graduationYears: "",
 		attendanceTypes: "",
 	});
+
+	// const toggleSidebar = () => {
+	// 	setSidebarVisible(!isSidebarVisible);
+	// };
 
 	const handleCheckBox = (option: string, filterSection: string) => {
 		if (selectedOption[filterSection] == "" || selectedOption[filterSection] != option) {
@@ -383,132 +343,303 @@ const FilterPopup = ({ filters, setFilters, filterOptions }: FilterProps) => {
 	};
 
 	return (
-		<div className="flex flex-col  border-dark pl-10 pr-1 pt-5 text-dark">
-			<div className="w-52 text-center">
-				<div className="mb-4 text-xl font-bold">Filter Options</div>
-				<ul>
-					<li className="mb-4">
-						<div className="mb-2 text-left text-lg font-bold text-dark">Level of Study</div>
+		<>
+			{sidebarVisible && (
+				<div className="ml-10 mt-5 flex flex-col border-dark align-middle text-dark">
+					<div className="z-40 w-60 rounded-lg bg-background1 p-5 text-center ">
+						<div className="mb-4 font-bold lg:text-lg xl:text-xl">Filter Options</div>
 						<ul>
-							{filterOptions.currentLevelsOfStudy?.map(option => (
-								<li key={option} className="mb-2 flex items-center justify-between text-dark">
-									<span>
-										{option.charAt(0).toUpperCase()}
-										{option.slice(1)}
-									</span>
-									<input
-										type="checkbox"
-										className="h-6 w-6"
-										checked={selectedOption["currentLevelsOfStudy"] == option}
-										onChange={() => {
-											handleCheckBox(option, "currentLevelsOfStudy");
-										}}
-									/>
-								</li>
-							))}
-						</ul>
-					</li>
-					<li>
-						<div className="mb-2 text-left text-lg font-bold text-dark">School</div>
-						<ul>
-							{filterOptions.schools?.map(option => (
-								<li key={option} className="mb-2 flex items-center justify-between text-dark">
-									<span>
-										{option.charAt(0).toUpperCase()}
-										{option.slice(1)}
-									</span>
-									<input
-										checked={selectedOption["schools"] == option}
-										onChange={() => {
-											handleCheckBox(option, "schools");
-										}}
-										type="checkbox"
-										className="h-6 w-6"
-									/>
-								</li>
-							))}
-						</ul>
-					</li>
-					<li>
-						<div className="mb-2 text-left text-lg font-bold text-dark">Program</div>
-						<ul>
-							{filterOptions.programs?.map(option => (
-								<li key={option} className="mb-2 flex items-center justify-between text-dark">
-									<span>
-										{option.charAt(0).toUpperCase()}
-										{option.slice(1)}
-									</span>
-									<input
-										checked={selectedOption["programs"] == option}
-										onChange={() => {
-											handleCheckBox(option, "programs");
-										}}
-										type="checkbox"
-										className="h-6 w-6"
-									/>
-								</li>
-							))}
-						</ul>
-					</li>
-					<li>
-						<div className="mb-2 text-left text-lg font-bold text-dark">Graduation Year</div>
-						<ul>
-							{filterOptions.graduationYears.sort()?.map(option => (
-								<li key={option} className="mb-2 flex items-center justify-between text-dark">
-									<span>{option}</span>
-									<input
-										checked={selectedOption["graduationYears"] == option}
-										onChange={() => {
-											handleCheckBox(option, "graduationYears");
-										}}
-										type="checkbox"
-										className="h-6 w-6"
-									/>
-								</li>
-							))}
-						</ul>
-					</li>
-					<li>
-						<div className="mb-2 text-left text-lg font-bold text-dark">Online/In-person</div>
-						<ul>
-							{filterOptions.attendanceTypes?.map(option => (
-								<li key={option} className="mb-2 flex items-center justify-between text-dark">
-									<span>
-										{option.split("_").join(" ").charAt(0)}
-										{option.split("_").join(" ").slice(1).toLowerCase()}
-									</span>
-									<input
-										checked={selectedOption["attendanceTypes"] == option}
-										onChange={() => {
-											handleCheckBox(option, "attendanceTypes");
-										}}
-										type="checkbox"
-										className="h-6 w-6"
-									/>
-								</li>
-							))}
-						</ul>
-					</li>
-					<li>
-						<div className="mb-2 text-left text-lg font-bold text-dark">Missing Fields</div>
-						<ul>
-							<li className="mb-2 flex items-center justify-between text-dark">
-								<span>GitHub</span>
-								<input type="checkbox" className="h-6 w-6" />
+							<li className="mb-4">
+								<div className="mb-2 text-left font-bold text-dark lg:text-base xl:text-lg">
+									Level of Study
+								</div>
+								<ul>
+									{filterOptions.currentLevelsOfStudy?.map(option => (
+										<li key={option} className="mb-2 flex items-center justify-between text-dark">
+											<span>
+												{option.charAt(0).toUpperCase()}
+												{option.slice(1)}
+											</span>
+											<input
+												type="checkbox"
+												className="h-6 w-6"
+												checked={selectedOption["currentLevelsOfStudy"] == option}
+												onChange={() => {
+													handleCheckBox(option, "currentLevelsOfStudy");
+												}}
+											/>
+										</li>
+									))}
+								</ul>
 							</li>
-							<li className="mb-2 flex items-center justify-between text-dark">
-								<span>Personal Website</span>
-								<input type="checkbox" className="h-6 w-6" />
+							<li>
+								<div className="mb-2 text-left font-bold text-dark lg:text-base xl:text-lg">School</div>
+								<ul>
+									{filterOptions.schools?.map(option => (
+										<li key={option} className="mb-2 flex items-center justify-between text-dark">
+											<span>
+												{option.charAt(0).toUpperCase()}
+												{option.slice(1)}
+											</span>
+											<input
+												checked={selectedOption["schools"] == option}
+												onChange={() => {
+													handleCheckBox(option, "schools");
+												}}
+												type="checkbox"
+												className="z-50 h-6 w-6"
+											/>
+										</li>
+									))}
+								</ul>
 							</li>
-							<li className="mb-2 flex items-center justify-between text-dark">
-								<span>LinkedIn</span>
-								<input type="checkbox" className="h-6 w-6" />
+							<li>
+								<div className="mb-2 text-left font-bold text-dark lg:text-base xl:text-lg">
+									Program
+								</div>
+								<ul>
+									{filterOptions.programs?.map(option => (
+										<li key={option} className="mb-2 flex items-center justify-between text-dark">
+											<span>
+												{option.charAt(0).toUpperCase()}
+												{option.slice(1)}
+											</span>
+											<input
+												checked={selectedOption["programs"] == option}
+												onChange={() => {
+													handleCheckBox(option, "programs");
+												}}
+												type="checkbox"
+												className="z-50 h-6 w-6"
+											/>
+										</li>
+									))}
+								</ul>
+							</li>
+							<li>
+								<div className="mb-2 text-left font-bold text-dark lg:text-base xl:text-lg">
+									Graduation Year
+								</div>
+								<ul>
+									{filterOptions.graduationYears.sort()?.map(option => (
+										<li key={option} className="mb-2 flex items-center justify-between text-dark">
+											<span>{option}</span>
+											<input
+												checked={selectedOption["graduationYears"] == option}
+												onChange={() => {
+													handleCheckBox(option, "graduationYears");
+												}}
+												type="checkbox"
+												className="z-50 h-6 w-6"
+											/>
+										</li>
+									))}
+								</ul>
+							</li>
+							<li>
+								<div className="mb-2 text-left font-bold text-dark lg:text-base xl:text-lg">
+									Online/In-person
+								</div>
+								<ul>
+									{filterOptions.attendanceTypes?.map(option => (
+										<li key={option} className="mb-2 flex items-center justify-between text-dark">
+											<span>
+												{option.split("_").join(" ").charAt(0)}
+												{option.split("_").join(" ").slice(1).toLowerCase()}
+											</span>
+											<input
+												checked={selectedOption["attendanceTypes"] == option}
+												onChange={() => {
+													handleCheckBox(option, "attendanceTypes");
+												}}
+												type="checkbox"
+												className="z-50 h-6 w-6"
+											/>
+										</li>
+									))}
+								</ul>
+							</li>
+							<li>
+								<div className="mb-2 text-left font-bold text-dark lg:text-base xl:text-lg">
+									Missing Fields
+								</div>
+								<ul>
+									<li className="mb-2 flex items-center justify-between text-dark">
+										<span>GitHub</span>
+										<input type="checkbox" className="z-50 h-6 w-6" />
+									</li>
+									<li className="mb-2 flex items-center justify-between text-dark">
+										<span>Personal Website</span>
+										<input type="checkbox" className="z-50 h-6 w-6" />
+									</li>
+									<li className="mb-2 flex items-center justify-between text-dark">
+										<span>LinkedIn</span>
+										<input type="checkbox" className="z-50 h-6 w-6" />
+									</li>
+								</ul>
 							</li>
 						</ul>
-					</li>
-				</ul>
-			</div>
-		</div>
+					</div>
+				</div>
+			)}
+			{/* {!sidebarVisible[0] && sidebarVisible[1] && (
+				<div className="max-h-3/4 fixed inset-x-0 top-1/4 mx-auto w-96">
+					<div className="z-40 rounded-lg bg-background1 p-5 text-center">
+						<div className="mb-10 font-bold lg:text-lg xl:text-xl">Filter O</div>
+						<div className="h-54 overflow-y-auto">
+							<ul>
+								<li className="mb-4">
+									<div className="mb-2 text-left font-bold text-dark lg:text-base xl:text-lg">
+										Level of Study
+									</div>
+									<ul>
+										{filterOptions.currentLevelsOfStudy?.map(option => (
+											<li
+												key={option}
+												className="mb-2 flex items-center justify-between text-dark"
+											>
+												<span>
+													{option.charAt(0).toUpperCase()}
+													{option.slice(1)}
+												</span>
+												<input
+													type="checkbox"
+													className="h-6 w-6"
+													checked={selectedOption["currentLevelsOfStudy"] == option}
+													onChange={() => {
+														handleCheckBox(option, "currentLevelsOfStudy");
+													}}
+												/>
+											</li>
+										))}
+									</ul>
+								</li>
+								<li>
+									<div className="mb-2 text-left font-bold text-dark lg:text-base xl:text-lg">
+										School
+									</div>
+									<ul>
+										{filterOptions.schools?.map(option => (
+											<li
+												key={option}
+												className="mb-2 flex items-center justify-between text-dark"
+											>
+												<span>
+													{option.charAt(0).toUpperCase()}
+													{option.slice(1)}
+												</span>
+												<input
+													checked={selectedOption["schools"] == option}
+													onChange={() => {
+														handleCheckBox(option, "schools");
+													}}
+													type="checkbox"
+													className="z-50 h-6 w-6"
+												/>
+											</li>
+										))}
+									</ul>
+								</li>
+								<li>
+									<div className="mb-2 text-left font-bold text-dark lg:text-base xl:text-lg">
+										Program
+									</div>
+									<ul>
+										{filterOptions.programs?.map(option => (
+											<li
+												key={option}
+												className="mb-2 flex items-center justify-between text-dark"
+											>
+												<span>
+													{option.charAt(0).toUpperCase()}
+													{option.slice(1)}
+												</span>
+												<input
+													checked={selectedOption["programs"] == option}
+													onChange={() => {
+														handleCheckBox(option, "programs");
+													}}
+													type="checkbox"
+													className="z-50 h-6 w-6"
+												/>
+											</li>
+										))}
+									</ul>
+								</li>
+								<li>
+									<div className="mb-2 text-left font-bold text-dark lg:text-base xl:text-lg">
+										Graduation Year
+									</div>
+									<ul>
+										{filterOptions.graduationYears.sort()?.map(option => (
+											<li
+												key={option}
+												className="mb-2 flex items-center justify-between text-dark"
+											>
+												<span>{option}</span>
+												<input
+													checked={selectedOption["graduationYears"] == option}
+													onChange={() => {
+														handleCheckBox(option, "graduationYears");
+													}}
+													type="checkbox"
+													className="z-50 h-6 w-6"
+												/>
+											</li>
+										))}
+									</ul>
+								</li>
+								<li>
+									<div className="mb-2 text-left font-bold text-dark lg:text-base xl:text-lg">
+										Online/In-person
+									</div>
+									<ul>
+										{filterOptions.attendanceTypes?.map(option => (
+											<li
+												key={option}
+												className="mb-2 flex items-center justify-between text-dark"
+											>
+												<span>
+													{option.split("_").join(" ").charAt(0)}
+													{option.split("_").join(" ").slice(1).toLowerCase()}
+												</span>
+												<input
+													checked={selectedOption["attendanceTypes"] == option}
+													onChange={() => {
+														handleCheckBox(option, "attendanceTypes");
+													}}
+													type="checkbox"
+													className="z-50 h-6 w-6"
+												/>
+											</li>
+										))}
+									</ul>
+								</li>
+								<li>
+									<div className="mb-2 text-left font-bold text-dark lg:text-base xl:text-lg">
+										Missing Fields
+									</div>
+									<ul>
+										<li className="mb-2 flex items-center justify-between text-dark">
+											<span>GitHub</span>
+											<input type="checkbox" className="z-50 h-6 w-6" />
+										</li>
+										<li className="mb-2 flex items-center justify-between text-dark">
+											<span>Personal Website</span>
+											<input type="checkbox" className="z-50 h-6 w-6" />
+										</li>
+										<li className="mb-2 flex items-center justify-between text-dark">
+											<span>LinkedIn</span>
+											<input type="checkbox" className="z-50 h-6 w-6" />
+										</li>
+									</ul>
+								</li>
+							</ul>
+						</div>
+					</div>
+				</div>
+			)} */}
+		</>
 	);
 };
 
@@ -522,5 +653,6 @@ export const getServerSideProps: GetServerSideProps = async ({ req, res, locale 
 		},
 	};
 };
+
 
 export default Hackers;
