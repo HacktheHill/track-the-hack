@@ -69,7 +69,10 @@ export const MetricsView = ({ hackerData, presenceData }: MetricsViewProps) => {
 				</TabList>
 				<TabPanels>
 					<TabPanel>
-						<DemographicsTab aggregatedHackerData={getAggregatedHackerInfo(hackerData)} />
+						<DemographicsTab
+							aggregatedHackerData={getAggregatedHackerInfo(hackerData)}
+							hackerData={hackerData}
+						/>
 					</TabPanel>
 					<TabPanel>
 						<MainEventTab

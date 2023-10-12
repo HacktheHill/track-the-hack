@@ -1,7 +1,9 @@
 import type { TremorChartData, StrKeyAnyVal, StrKeyNumVal } from "./types";
 import { type Prisma } from "@prisma/client";
 
-const valToStr = (val: boolean | string | undefined) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const valToStr = (val: any): string => {
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 	return val === true || val === false ? (val ? "Yes" : "No") : val ? val.toString() : "";
 };
 
@@ -32,7 +34,7 @@ export const getNumberPerValue = (data: TremorChartData) => {
 	return valueData;
 };
 
-const getNumberPerValueBarChart = (data: TremorChartData, getKeyName: (key: string) => string) => {
+export const getNumberPerValueBarChart = (data: TremorChartData, getKeyName: (key: string) => string) => {
 	const values = getUniqueValuesFromData(data);
 	const valueData: (StrKeyNumVal & { title: string })[] = [];
 
@@ -53,7 +55,7 @@ const getNumberPerValueBarChart = (data: TremorChartData, getKeyName: (key: stri
 	return valueData;
 };
 
-const getNumberPerValueAreaChart = (data: TremorChartData) => {
+export const getNumberPerValueAreaChart = (data: TremorChartData) => {
 	const values = getUniqueValuesFromData(data);
 	const valueData: (StrKeyNumVal & { date: string })[] = [];
 
@@ -76,9 +78,20 @@ const getNumberPerValueAreaChart = (data: TremorChartData) => {
 	return valueData;
 };
 
-export const getAggregatedHackerInfo = (hackerData: Prisma.HackerInfoGetPayload<true>[]) => {
+export const getAggregatedHackerInfo = (
+	hackerData: StrKeyAnyVal[],
+	filterKey?: string,
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	filterVal?: any,
+) => {
+	const filteredHackerData =
+		!!filterKey && !!filterVal
+			? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			  hackerData.filter(hacker => valToStr(hacker[filterKey]!) === valToStr(filterVal))
+			: hackerData;
+
 	const demographicsKeysSet = new Set<string>();
-	hackerData.forEach(hacker => {
+	filteredHackerData.forEach(hacker => {
 		Object.keys(hacker).forEach(key => demographicsKeysSet.add(key));
 	});
 	const demographicsKeys = Array.from(demographicsKeysSet);
@@ -87,7 +100,7 @@ export const getAggregatedHackerInfo = (hackerData: Prisma.HackerInfoGetPayload<
 	const metricsData: { [key: string]: { title: string; value: any; name: string }[] } = {};
 	demographicsKeys.forEach(key => (metricsData[key] = []));
 
-	hackerData.forEach((hacker: StrKeyAnyVal) => {
+	filteredHackerData.forEach((hacker: StrKeyAnyVal) => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-non-null-assertion
 		demographicsKeys.forEach(key => metricsData[key]!.push({ title: key, value: hacker[key], name: hacker[key] }));
 	});

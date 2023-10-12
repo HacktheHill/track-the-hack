@@ -1,70 +1,134 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-
+import React, { useState } from "react";
 import { Card, Grid, Select, SelectItem } from "@tremor/react";
 import type { CustomBarListProps } from "./Tremor_Custom";
 import { CustomBarList, CustomDonutChart, CustomSmallTextCard, CustomAreaChart, CustomBarChart } from "./Tremor_Custom";
 import { type AggregatedHackerInfo } from "../utils/types";
+import type {
+	getNumberPerValue,
+	getNumberPerValueBarChart,
+	getNumberPerValueAreaChart,
+} from "../utils/getAggregatedData";
+import { valToStr, getAggregatedHackerInfo } from "../utils/getAggregatedData";
+import { type StrKeyAnyVal } from "../utils/types";
 
 interface DemographicsTabProps {
 	aggregatedHackerData: AggregatedHackerInfo;
+	hackerData: StrKeyAnyVal[];
 }
 
 export default function DemographicsTab(props: DemographicsTabProps) {
-	const { aggregatedHackerData } = props;
+	const { aggregatedHackerData, hackerData } = props;
+	const [selectedKey, setSelectedKey] = useState("all");
+	const [filteredAggregatedHackerData, setFilteredAggregatedHackerInfo] = useState(aggregatedHackerData);
+
+	const handleOnSelectChange = (key: string) => {
+		setSelectedKey(key);
+		setFilteredAggregatedHackerInfo(getDataByAppType(key));
+	};
+
+	const getNumAppsByValue = (key: string, value: string | number): number => {
+		return hackerData.filter(hackerDatum => valToStr(hackerDatum[key]) === valToStr(value)).length;
+	};
+
+	const confirmedAggregatedHackerData = getAggregatedHackerInfo(hackerData, "confirmed", valToStr(true));
+
+	// TODO: implement the rest of the application types are in the db
+	const getDataByAppType = (appStat: string) => {
+		switch (appStat) {
+			case "all":
+				return aggregatedHackerData;
+			case "confirmed":
+				return confirmedAggregatedHackerData;
+			default:
+				return aggregatedHackerData;
+		}
+	};
+
+	const getNumberOfFilteredHackers = () => {
+		return Object.entries(filteredAggregatedHackerData).reduce(
+			(acc, [, datum]) =>
+				acc +
+				datum.reduce(
+					(acc2, valueDatum) => acc2 + (Object.keys(valueDatum).includes("value") ? valueDatum.value! : 0),
+					0,
+				),
+			0,
+		);
+	};
+
 	return (
 		<main className="mx-auto max-w-7xl p-4 md:p-10">
 			<Grid numItems={1} className="gap-6">
-				<Select>
-					<SelectItem value="1">All Applications</SelectItem>
-					<SelectItem value="3">Group - Selected_Online</SelectItem>
-					<SelectItem value="3">Group - Selected_InPerson_uOttawa</SelectItem>
-					<SelectItem value="2">Accepted</SelectItem>
-					<SelectItem value="3">Confirmed Attending</SelectItem>
+				<Select value={selectedKey} onValueChange={handleOnSelectChange}>
+					<SelectItem value="all">All Applications</SelectItem>
+					<SelectItem value="selected_online">Group - Selected_Online</SelectItem>
+					<SelectItem value="selected_inperson">Group - Selected_InPerson_uOttawa</SelectItem>
+					<SelectItem value="accepted">Accepted</SelectItem>
+					<SelectItem value="confirmed">Confirmed Attending</SelectItem>
 				</Select>
 				<Grid numItemsSm={3} numItemsLg={4} className="gap-6">
-					<CustomSmallTextCard title="Total Applications" metric={2000} text={"Hackers"} />
-					<CustomSmallTextCard title="English / French" metric={"715 / 1200"} text={"Hackers"} />
+					<CustomSmallTextCard title="Total Applications" metric={hackerData.length} text={"Hackers"} />
+					<CustomSmallTextCard
+						title="English / French"
+						metric={`${getNumAppsByValue("preferredLanguage", "EN")} / ${getNumAppsByValue(
+							"preferredLanguage",
+							"FR",
+						)}`}
+						text={"Hackers"}
+					/>
+					{/* TODO: don't hardcode event capacity once it is in the db */}
 					<CustomSmallTextCard title="Est. Event Capacity" metric={"715"} text={"Spots"} />
-					<CustomSmallTextCard title="Hackers in Group" metric={"2000"} text={"Selected"} />
+					<CustomSmallTextCard
+						title="Hackers in Group"
+						metric={getNumberOfFilteredHackers()}
+						text={"Selected"}
+					/>
 				</Grid>
 
 				<Grid numItemsSm={1} numItemsLg={3} className="gap-6">
 					<Card>
 						<CustomDonutChart
 							title="Languages"
-							data={aggregatedHackerData.preferredLanguage! as ReturnType<typeof getNumberPerValue>}
+							data={
+								filteredAggregatedHackerData.preferredLanguage! as ReturnType<typeof getNumberPerValue>
+							}
 						/>
 					</Card>
 					<Card>
 						<CustomDonutChart
 							title="Transport Required"
-							data={aggregatedHackerData.transportationRequired! as ReturnType<typeof getNumberPerValue>}
+							data={
+								filteredAggregatedHackerData.transportationRequired! as ReturnType<
+									typeof getNumberPerValue
+								>
+							}
 						/>
 					</Card>
 					<Card>
 						<CustomDonutChart
 							title="Preferred Pronouns"
-							data={aggregatedHackerData.gender! as ReturnType<typeof getNumberPerValue>}
+							data={filteredAggregatedHackerData.gender! as ReturnType<typeof getNumberPerValue>}
 						/>
 					</Card>
 					<Card>
 						<CustomBarList
 							title="Top Levels of Study"
-							data={aggregatedHackerData.studyLevel as CustomBarListProps["data"]}
+							data={filteredAggregatedHackerData.studyLevel as CustomBarListProps["data"]}
 							limitEntries={5}
 						/>
 					</Card>
 					<Card>
 						<CustomBarList
 							title="Top Applying Schools"
-							data={aggregatedHackerData.university as CustomBarListProps["data"]}
+							data={filteredAggregatedHackerData.university as CustomBarListProps["data"]}
 							limitEntries={5}
 						/>
 					</Card>
 					<Card>
 						<CustomBarList
 							title="Top Applying Programs"
-							data={aggregatedHackerData.studyProgram as CustomBarListProps["data"]}
+							data={filteredAggregatedHackerData.studyProgram as CustomBarListProps["data"]}
 							limitEntries={5}
 						/>
 					</Card>
@@ -72,19 +136,23 @@ export default function DemographicsTab(props: DemographicsTabProps) {
 					<Card>
 						<CustomBarChart
 							title="Graduating Years"
-							data={aggregatedHackerData.graduationYear! as ReturnType<typeof getNumberPerValueBarChart>}
+							data={
+								filteredAggregatedHackerData.graduationYear! as ReturnType<
+									typeof getNumberPerValueBarChart
+								>
+							}
 						/>
 					</Card>
 					<Card>
 						<CustomBarList
 							title="Dietary Restrictions"
-							data={aggregatedHackerData.dietaryRestrictions as CustomBarListProps["data"]}
+							data={filteredAggregatedHackerData.dietaryRestrictions as CustomBarListProps["data"]}
 						/>
 					</Card>
 					<Card>
 						<CustomDonutChart
 							title="T-Shirt Sizes"
-							data={aggregatedHackerData.shirtSize! as ReturnType<typeof getNumberPerValue>}
+							data={filteredAggregatedHackerData.shirtSize! as ReturnType<typeof getNumberPerValue>}
 						/>
 					</Card>
 				</Grid>
@@ -92,7 +160,7 @@ export default function DemographicsTab(props: DemographicsTabProps) {
 					{/* TODO: Need application date data to complete */}
 					<CustomAreaChart
 						title="Application Confirmed"
-						data={aggregatedHackerData.confirmed! as ReturnType<typeof getNumberPerValueAreaChart>}
+						data={filteredAggregatedHackerData.confirmed! as ReturnType<typeof getNumberPerValueAreaChart>}
 					/>
 				</Card>
 			</Grid>
