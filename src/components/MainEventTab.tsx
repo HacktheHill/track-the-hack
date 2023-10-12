@@ -6,6 +6,18 @@ import type { AggregatedHackerInfo, AggregatedPresenceInfo } from "../utils/type
 
 import { Select, SelectItem } from "@tremor/react";
 
+const checkInEvents = [
+	"checkedIn",
+	"breakfast1",
+	"lunch1",
+	"dinner1",
+	"snacks",
+	"snacks2",
+	"breakfast2",
+	"lunch2",
+	"lunch22",
+];
+
 const InventoryData = [
 	{
 		title: "Small Kits",
@@ -61,9 +73,9 @@ export default function MainEventTab({
 	hackerData,
 	presenceData,
 }: MainEventTabProps) {
-	const totalConfirmedAttendees: number = aggregatedHackerData.confirmed!.filter(
-		dataValue => dataValue.name === "Yes",
-	)[0]!.value as number;
+	const totalConfirmedAttendees: number = aggregatedHackerData.confirmed!.filter(dataValue =>
+		Object.keys(dataValue).includes("Yes"),
+	)[0]!.Yes! as number;
 	const totalCheckedIn = aggregatedPresenceData.checkedIn!.filter(dataValue => dataValue.name === "Yes")[0]!.value;
 	const rsvpStillExpected = totalConfirmedAttendees - totalCheckedIn;
 	const remainingWalkIns = presenceData.filter(presenceDatum => {
@@ -79,25 +91,15 @@ export default function MainEventTab({
 	}).length;
 
 	const eventsTableData = Object.entries(aggregatedPresenceData)
-		.filter(([key]) =>
-			[
-				"checkedIn",
-				"breakfast1",
-				"lunch1",
-				"dinner1",
-				"snacks",
-				"snacks2",
-				"breakfast2",
-				"lunch2",
-				"lunch22",
-			].includes(key),
-		)
-		.map(([key, datum]) => ({
-			title: key,
-			state: true,
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			utilization: datum.filter(dataValue => dataValue.name === "Yes")[0]!.value / totalConfirmedAttendees,
-		}));
+		.filter(([key]) => checkInEvents.includes(key))
+		.map(([key, datum]) => {
+			const utilizedEventData = datum.filter(dataValue => dataValue.name === "Yes");
+			return {
+				title: key,
+				state: true, // TODO: not sure how event state (open/closed) will be stored in the db
+				utilization: utilizedEventData.length > 0 ? utilizedEventData[0]!.value / totalConfirmedAttendees : 0,
+			};
+		});
 
 	return (
 		<main className="mx-auto max-w-7xl p-4 md:p-10">
