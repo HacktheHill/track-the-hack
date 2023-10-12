@@ -124,7 +124,7 @@ export default function MainEventTab({
 					</Card>
 					<Card>
 						<CheckInEventsChart
-							title="Meals and Snacks"
+							title="Meals and Snacks Check Ins"
 							// TODO: should show how many people had 0, 1, 2, etc check ins for the event once that info is in the db
 							data={Object.entries(aggregatedPresenceData)
 								.filter(([key]) => key != "checkedIn" && Object.keys(checkInEvents).includes(key))
