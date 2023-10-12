@@ -1,23 +1,28 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Card, Grid } from "@tremor/react";
 import { type Prisma } from "@prisma/client";
-import { CustomDonutChart, CustomSmallTextCard, EventsTable, InventoryTable } from "./Tremor_Custom";
+import {
+	CustomDonutChart,
+	CustomSmallTextCard,
+	CheckInEventsChart,
+	EventsTable,
+	InventoryTable,
+} from "./Tremor_Custom";
 import type { AggregatedHackerInfo, AggregatedPresenceInfo } from "../utils/types";
 
-import { Select, SelectItem } from "@tremor/react";
+const checkInEvents = {
+	checkedIn: "Checked In",
+	breakfast1: "Breakfast 1",
+	lunch1: "Lunch 1",
+	dinner1: "Dinner 1",
+	snacks: "Snacks",
+	snacks2: "Snacks 2",
+	breakfast2: "Breakfast 1",
+	lunch2: "Lunch 2",
+	lunch22: "Lunch 2 2 (Dinner 2?)",
+};
 
-const checkInEvents = [
-	"checkedIn",
-	"breakfast1",
-	"lunch1",
-	"dinner1",
-	"snacks",
-	"snacks2",
-	"breakfast2",
-	"lunch2",
-	"lunch22",
-];
-
+// TODO: remove InventoryData once this data is in the db
 const InventoryData = [
 	{
 		title: "Small Kits",
@@ -42,21 +47,6 @@ const InventoryData = [
 		distributed: 120,
 		forecasted: 400,
 		unallocated: 600,
-	},
-];
-
-const dinnerDay2 = [
-	{
-		title: "First Meal",
-		value: 323,
-	},
-	{
-		title: "Second Meal",
-		value: 150,
-	},
-	{
-		title: "Has not attended",
-		value: 600,
 	},
 ];
 
@@ -91,7 +81,7 @@ export default function MainEventTab({
 	}).length;
 
 	const eventsTableData = Object.entries(aggregatedPresenceData)
-		.filter(([key]) => checkInEvents.includes(key))
+		.filter(([key]) => Object.keys(checkInEvents).includes(key))
 		.map(([key, datum]) => {
 			const utilizedEventData = datum.filter(dataValue => dataValue.name === "Yes");
 			return {
@@ -133,14 +123,19 @@ export default function MainEventTab({
 						/>{" "}
 					</Card>
 					<Card>
-						<CustomDonutChart title="Dinner Day 2" data={dinnerDay2} />
-						<Select>
-							<SelectItem value="1">Dinner Day 2</SelectItem>
-						</Select>
+						<CheckInEventsChart
+							title="Meals and Snacks"
+							// TODO: should show how many people had 0, 1, 2, etc check ins for the event once that info is in the db
+							data={Object.entries(aggregatedPresenceData)
+								.filter(([key]) => key != "checkedIn" && Object.keys(checkInEvents).includes(key))
+								.reduce((acc, [key, datum]) => ({ ...acc, [key]: [...datum] }), {})}
+							selectKeys={Object.keys(checkInEvents)}
+							eventNameMapping={checkInEvents}
+						/>
 					</Card>
 				</Grid>
 				<Card>
-					<EventsTable title="All Event States" data={eventsTableData} />
+					<EventsTable title="All Event States" data={eventsTableData} eventNameMapping={checkInEvents} />
 				</Card>
 
 				<Card>

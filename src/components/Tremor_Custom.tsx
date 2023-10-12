@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
 	Card,
 	Metric,
@@ -20,8 +20,10 @@ import {
 	CategoryBar,
 	Divider,
 	AreaChart,
+	Select,
+	SelectItem,
 } from "@tremor/react";
-import type { StrKeyAnyVal, StrKeyNumVal } from "../utils/types";
+import type { StrKeyAnyVal, StrKeyNumVal, TremorChartData } from "../utils/types";
 
 type TremorDefaultColors = (
 	| "green"
@@ -131,12 +133,43 @@ const CustomSmallTextCard: React.FC<CustomSmallTextCardProps> = ({
 	);
 };
 
+interface CheckInEventsChartProps {
+	title: string;
+	data: { [key: string]: TremorChartData };
+	selectKeys: string[];
+	eventNameMapping: { [key: string]: string };
+}
+
+const CheckInEventsChart: React.FC<CheckInEventsChartProps> = ({ title, data, selectKeys, eventNameMapping }) => {
+	const [selectedKey, setSelectedKey] = useState("");
+	const handleOnChange = (value: string) => {
+		setSelectedKey(value);
+	};
+	return (
+		<>
+			<CustomDonutChart
+				title={title}
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				data={selectedKey ? data[selectedKey]! : data[selectKeys[0]!]!}
+			></CustomDonutChart>
+			<Select value={selectedKey} onValueChange={handleOnChange}>
+				{selectKeys.map((eventKey, idx) => (
+					<SelectItem value={eventKey} key={idx.toString()}>
+						{eventNameMapping[eventKey]}
+					</SelectItem>
+				))}
+			</Select>
+		</>
+	);
+};
+
 interface EventsTableProps {
 	title: string;
 	data: { title: string; state: boolean; utilization: number }[];
+	eventNameMapping: { [key: string]: string };
 }
 
-const EventsTable: React.FC<EventsTableProps> = ({ title, data }) => {
+const EventsTable: React.FC<EventsTableProps> = ({ title, data, eventNameMapping }) => {
 	return (
 		<>
 			<Title>{title}</Title>
@@ -152,7 +185,7 @@ const EventsTable: React.FC<EventsTableProps> = ({ title, data }) => {
 				<TableBody>
 					{data.map(item => (
 						<TableRow key={item.title}>
-							<TableCell>{item.title}</TableCell>
+							<TableCell>{eventNameMapping[item.title]}</TableCell>
 							<TableCell>
 								<Text>
 									{" "}
@@ -257,6 +290,7 @@ const CustomBarChart: React.FC<CustomBarChartProps> = ({ title, data }) => {
 export {
 	CustomDonutChart,
 	CustomSmallTextCard,
+	CheckInEventsChart,
 	EventsTable,
 	InventoryTable,
 	CustomBarList,
