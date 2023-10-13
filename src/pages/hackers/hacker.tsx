@@ -516,17 +516,19 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 
 
 				{edit && (
-					<div className="sticky bottom-0 flex justify-center">
+					<div className="sticky bottom-0 flex justify-center mx-2">
 						<div className="flex bg-gray-800 text-white px-2 py-2 rounded-md transition ease-in-out delay-150">
 							<div className="flex flex-col items-center gap-2">
 								<p className="px-5 py-2">Careful - you have unsaved changes! </p>
 							</div>
-							<button className="px-4 py-2" onClick={resetInputFields}>
-								Reset
-							</button>
-							<button className="py-2 px-4 bg-green-500 rounded-md h-max w-max">
-								<i className='fas fa-user-edit'></i> Save
-							</button>
+							<div className="flex justify-center items-center">
+								<button className="px-4 py-2" onClick={resetInputFields}>
+									Reset
+								</button>
+								<button className="py-2 px-4 bg-green-500 rounded-md h-max w-max">
+									<i className='fas fa-user-edit'></i> Save
+								</button>
+							</div>
 						</div>
 					</div>
 				)}
