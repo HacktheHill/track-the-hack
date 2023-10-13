@@ -11,6 +11,15 @@ import Error from "../../components/Error";
 import OnlyRole from "../../components/OnlyRole";
 import {NextPage} from "next";
 
+interface Log {
+    id: number,
+    action: string,
+    details: string,
+    route: string,
+    timestamp: Date,
+    user_id: number
+}
+
 
 const Logs: NextPage = () => {
 
