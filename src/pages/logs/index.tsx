@@ -14,10 +14,11 @@ import {NextPage} from "next";
 interface Log {
     id: number,
     action: string,
-    details: string,
+    details: string | null,
     route: string,
+    author: string,
     timestamp: Date,
-    user_id: number
+    user_id: string
 }
 
 
@@ -94,7 +95,7 @@ const Logs: NextPage = () => {
                             </tr>
                             </thead>
                             <tbody>
-                            {logsQuery.data.map((log) => (
+                            {logsQuery.data.map((log: Log) => (
                                 <tr className="bg-background1 " key={log.id}>
                                     <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
                                         {log.author ? log.author : "Unknown"}
@@ -135,15 +136,6 @@ const Logs: NextPage = () => {
 };
 
 import React from 'react';
-
-interface Log {
-    id: number,
-    action: string,
-    details: string,
-    route: string
-    timestamp: Date,
-    user_id: number
-}
 
 interface LogCardProps {
     log: Log;
