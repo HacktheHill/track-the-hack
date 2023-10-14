@@ -39,7 +39,7 @@
 		"rehype-slug": "^5.1.0",
 		"remark-toc": "^8.0.1",
 		"superjson": "1.12.2",
-		"zod": "^3.20.6"
+		"zod": "^3.22.3"
 	},
 	"devDependencies": {
 		"@faker-js/faker": "^8.0.2",
