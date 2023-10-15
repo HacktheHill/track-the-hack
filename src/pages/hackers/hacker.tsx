@@ -3,7 +3,7 @@ import type { GetStaticProps, NextPage } from "next";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { trpc } from "../../utils/api";
 
 import App from "../../components/App";
@@ -114,6 +114,7 @@ interface Patterns {
 const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presenceData } }: HackerViewProps) => {
 	const router = useRouter();
 	const [id] = [router.query.id].flat();
+	const { t } = useTranslation("hacker");
 
 	const presenceMutation = trpc.presence.update.useMutation();
 	const [presenceState, setPresenceState] = useState(presenceData);
@@ -137,167 +138,167 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 
 	const fields = [
 		{
-			label: "Gender",
+			label: t("gender"),
 			name: "gender",
 			default_value: hackerData.gender,
 			type: "text",
-			category: "Personal Information",
+			category: t("category_personal_information"),
 		},
 		{
-			label: "First Name",
+			label: t("firstName"),
 			name: "firstName",
 			default_value: hackerData.firstName,
 			type: "text",
-			category: "Personal Information",
+			category: t("category_personal_information"),
 		},
 		{
-			label: "Last Name",
+			label: t("lastName"),
 			name: "lastName",
 			default_value: hackerData.lastName,
 			type: "text",
-			category: "Personal Information",
+			category: t("category_personal_information"),
 		},
 		{
-			label: "University",
+			label: t("university"),
 			name: "university",
 			default_value: hackerData.university,
 			type: "text",
-			category: "Personal Information",
+			category: t("category_personal_information"),
 		},
 		{
-			label: "Study Level",
+			label: t("studyLevel"),
 			name: "studyLevel",
 			default_value: hackerData.studyLevel?.toUpperCase(),
 			type: "text",
-			category: "Personal Information",
+			category: t("category_personal_information"),
 		},
 		{
-			label: "Study Program",
+			label: t("studyProgram"),
 			name: "studyProgram",
 			default_value: hackerData.studyProgram,
 			type: "text",
-			category: "Personal Information",
+			category: t("category_personal_information"),
 		},
 		{
-			label: "Graduation Year",
+			label: t("graduationYear"),
 			name: "graduationYear",
 			default_value: hackerData.graduationYear,
 			type: "number",
-			category: "Personal Information",
+			category: t("category_personal_information"),
 		},
 		{
-			label: "Phone Number",
+			label: t("phoneNumber"),
 			name: "phoneNumber",
 			default_value: hackerData.phoneNumber,
 			type: "tel",
-			category: "Personal Information",
+			category: t("category_personal_information"),
 		},
 		{
-			label: "Email",
+			label: t("email"),
 			name: "email",
 			default_value: hackerData.email,
 			type: "text",
-			category: "Personal Information",
+			category: t("category_personal_information"),
 		},
 		{
-			label: "Emergency Contact Name",
+			label: t("emergencyContactName"),
 			name: "emergencyContactName",
 			default_value: hackerData.emergencyContactName,
 			type: "text",
-			category: "Emergency Contact",
+			category: t("category_emergency_contact"),
 		},
 		{
-			label: "Emergency Contact Relationship",
+			label: t("emergencyContactRelationship"),
 			name: "emergencyContactRelationship",
 			default_value: hackerData.emergencyContactRelationship,
 			type: "text",
-			category: "Emergency Contact",
+			category: t("category_emergency_contact"),
 		},
 		{
-			label: "Emergency Contact Phone Number",
+			label: t("emergencyContactPhoneNumber"),
 			name: "emergencyContactPhoneNumber",
 			default_value: hackerData.emergencyContactPhoneNumber,
 			type: "tel",
-			category: "Emergency Contact",
+			category: t("category_emergency_contact"),
 		},
 		{
-			label: "Dietary Restrictions",
+			label: t("dietaryRestrictions"),
 			name: "dietaryRestrictions",
 			default_value: hackerData.dietaryRestrictions,
 			type: "text",
-			category: "General Information",
+			category: t("category_general_information"),
 		},
 		{
-			label: "Accessibility Requirements",
+			label: t("accessibilityRequirements"),
 			name: "accessibilityRequirements",
 			default_value: hackerData.accessibilityRequirements,
 			type: "text",
-			category: "General Information",
+			category: t("category_general_information"),
 		},
 		{
-			label: "Preferred Language",
+			label: t("preferredLanguage"),
 			name: "preferredLanguage",
 			default_value: hackerData.preferredLanguage,
 			type: "select",
 			options: ["EN", "FR"],
-			category: "General Information",
+			category: t("category_general_information"),
 		},
 		{
-			label: "Shirt Size",
+			label: t("shirtSize"),
 			name: "shirtSize",
 			default_value: hackerData.shirtSize,
 			type: "select",
 			options: ["S", "M", "L", "XL", "XXL"],
-			category: "General Information",
+			category: t("category_general_information"),
 		},
 		{
-			label: "Walk In",
+			label: t("walkIn"),
 			name: "walkIn",
 			default_value: hackerData.walkIn,
 			type: "text",
-			category: "General Information",
+			category: t("category_general_information"),
 		},
 		{
-			label: "Subscribed",
+			label: t("subscribeToMailingList"),
 			name: "subscribed",
 			default_value: hackerData.unsubscribed,
 			type: "text",
-			category: "General Information",
+			category: t("category_general_information"),
 		},
 		{
-			label: "Attendance Type",
+			label: t("attendanceType"),
 			name: "attendanceType",
 			default_value: hackerData.attendanceType,
 			type: "text",
-			category: "General Information",
+			category: t("category_general_information"),
 		},
 		{
-			label: "Location",
+			label: t("location"),
 			name: "location",
 			default_value: hackerData.location,
 			type: "text",
-			category: "General Information",
+			category: t("category_general_information"),
 		},
 		{
-			label: "Transportation Required",
+			label: t("transportationRequired"),
 			name: "transportationRequired",
 			default_value: hackerData.transportationRequired,
 			type: "text",
-			category: "General Information",
+			category: t("category_general_information"),
 		},
 		{
 			label: "Linkedin",
 			name: "linkLinkedin",
 			default_value: hackerData.linkLinkedin,
 			type: "url",
-			category: "Links Information",
+			category: t("category_links_information"),
 		},
 		{
 			label: "Github",
 			name: "linkGithub",
 			default_value: hackerData.linkGithub,
 			type: "url",
-			category: "Links Information",
+			category: t("category_links_information"),
 		},
 	];
 	const patterns: Patterns = {
@@ -309,7 +310,6 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 	};
 
 	const initialInputValues: Record<string, string> = {};
-	const { t } = useTranslation("walk-in");
 	const [inputValues, setInputValues] = useState<{ [key: string]: string }>(initialInputValues);
 	const groupedData: { [key: string]: Field[] } = {};
 	const mutation = trpc.hackers.update.useMutation();
@@ -470,7 +470,7 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 				<div className="flex justify-between gap-8 py-4 ">
 					<input className="rounded-md border border-gray-400 bg-background2 p-2" type="file" />
 					<button className="ml-2 rounded-md bg-dark px-4 py-2 text-white hover:bg-gray-700">
-						Upload your Resume
+						{t("uploadResume")}
 					</button>
 				</div>
 
@@ -521,16 +521,17 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 
 				{edit && (
 					<div className="sticky bottom-0 mx-2 flex justify-center">
-						<div className="flex rounded-md bg-gray-800 px-2 py-2 text-white transition delay-150 ease-in-out">
+						<div className="flex rounded-md bg-dark px-2 py-2 text-white transition delay-150 ease-in-out">
 							<div className="flex flex-col items-center gap-2">
-								<p className="px-5 py-2">Careful - you have unsaved changes! </p>
+								<p className="px-5 py-2">{t("edit_description")}</p>
 							</div>
 							<div className="flex items-center justify-center">
 								<button className="px-4 py-2" onClick={resetInputFields}>
-									Reset
+									{t("edit_reset_button")}
 								</button>
-								<button className="h-max w-max rounded-md bg-green-500 px-4 py-2">
-									<i className="fas fa-user-edit"></i> Save
+								<button className="h-max w-max rounded-md bg-green-700 px-4 py-2">
+									<i className="fas fa-user-edit"></i>
+									{t("edit_save_button")}
 								</button>
 							</div>
 						</div>
