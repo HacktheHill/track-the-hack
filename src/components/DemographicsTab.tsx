@@ -4,13 +4,9 @@ import { Card, Grid, Select, SelectItem } from "@tremor/react";
 import type { CustomBarListProps } from "./Tremor_Custom";
 import { CustomBarList, CustomDonutChart, CustomSmallTextCard, CustomAreaChart, CustomBarChart } from "./Tremor_Custom";
 import { type AggregatedHackerInfo } from "../utils/types";
-import type {
-	getNumberPerValue,
-	getNumberPerValueBarChart,
-	getNumberPerValueAreaChart,
-} from "../utils/getAggregatedData";
+import { getNumberPerValueBarChart, getNumberPerValueAreaChart } from "../utils/getAggregatedData";
 import { valToStr, getAggregatedHackerInfo } from "../utils/getAggregatedData";
-import { type StrKeyAnyVal } from "../utils/types";
+import { type StrKeyAnyVal, type TremorChartData } from "../utils/types";
 
 interface DemographicsTabProps {
 	aggregatedHackerData: AggregatedHackerInfo;
@@ -19,7 +15,7 @@ interface DemographicsTabProps {
 
 export default function DemographicsTab(props: DemographicsTabProps) {
 	const { aggregatedHackerData, hackerData } = props;
-	const [selectedKey, setSelectedKey] = useState("all");
+	const [selectedKey, setSelectedKey] = useState("");
 	const [filteredAggregatedHackerData, setFilteredAggregatedHackerInfo] = useState(aggregatedHackerData);
 
 	const handleOnSelectChange = (key: string) => {
@@ -31,15 +27,18 @@ export default function DemographicsTab(props: DemographicsTabProps) {
 		return hackerData.filter(hackerDatum => valToStr(hackerDatum[key]) === valToStr(value)).length;
 	};
 
-	const confirmedAggregatedHackerData = getAggregatedHackerInfo(hackerData, "confirmed", valToStr(true));
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const filterHackerData = (filterKey: string, filterVal: any) => {
+		return hackerData.filter(hacker => valToStr(hacker[filterKey]!) === valToStr(filterVal));
+	};
 
-	// TODO: implement the rest of the application types are in the db
-	const getDataByAppType = (appStat: string) => {
-		switch (appStat) {
+	// TODO: implement the rest of the application types once they are in the db
+	const getDataByAppType = (applicationType: string) => {
+		switch (applicationType) {
 			case "all":
 				return aggregatedHackerData;
 			case "confirmed":
-				return confirmedAggregatedHackerData;
+				return getAggregatedHackerInfo(filterHackerData("confirmed", valToStr(true)));
 			default:
 				return aggregatedHackerData;
 		}
@@ -77,7 +76,7 @@ export default function DemographicsTab(props: DemographicsTabProps) {
 						)}`}
 						text={"Hackers"}
 					/>
-					{/* TODO: don't hardcode event capacity once it is in the db */}
+					{/* TODO: don't hardcode event capacity once it can be calculated from the db */}
 					<CustomSmallTextCard title="Est. Event Capacity" metric={"715"} text={"Spots"} />
 					<CustomSmallTextCard
 						title="Hackers in Group"
@@ -90,25 +89,19 @@ export default function DemographicsTab(props: DemographicsTabProps) {
 					<Card>
 						<CustomDonutChart
 							title="Languages"
-							data={
-								filteredAggregatedHackerData.preferredLanguage! as ReturnType<typeof getNumberPerValue>
-							}
+							data={filteredAggregatedHackerData.preferredLanguage! as TremorChartData}
 						/>
 					</Card>
 					<Card>
 						<CustomDonutChart
 							title="Transport Required"
-							data={
-								filteredAggregatedHackerData.transportationRequired! as ReturnType<
-									typeof getNumberPerValue
-								>
-							}
+							data={filteredAggregatedHackerData.transportationRequired! as TremorChartData}
 						/>
 					</Card>
 					<Card>
 						<CustomDonutChart
 							title="Preferred Pronouns"
-							data={filteredAggregatedHackerData.gender! as ReturnType<typeof getNumberPerValue>}
+							data={filteredAggregatedHackerData.gender! as TremorChartData}
 						/>
 					</Card>
 					<Card>
@@ -136,11 +129,11 @@ export default function DemographicsTab(props: DemographicsTabProps) {
 					<Card>
 						<CustomBarChart
 							title="Graduating Years"
-							data={
-								filteredAggregatedHackerData.graduationYear! as ReturnType<
-									typeof getNumberPerValueBarChart
-								>
-							}
+							data={getNumberPerValueBarChart(
+								// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+								filteredAggregatedHackerData.graduationYear! as TremorChartData,
+								(keyName: string) => `Graduates in ${keyName}`,
+							)}
 						/>
 					</Card>
 					<Card>
@@ -152,7 +145,7 @@ export default function DemographicsTab(props: DemographicsTabProps) {
 					<Card>
 						<CustomDonutChart
 							title="T-Shirt Sizes"
-							data={filteredAggregatedHackerData.shirtSize! as ReturnType<typeof getNumberPerValue>}
+							data={filteredAggregatedHackerData.shirtSize! as TremorChartData}
 						/>
 					</Card>
 				</Grid>
@@ -160,7 +153,8 @@ export default function DemographicsTab(props: DemographicsTabProps) {
 					{/* TODO: Need application date data to complete */}
 					<CustomAreaChart
 						title="Application Confirmed"
-						data={filteredAggregatedHackerData.confirmed! as ReturnType<typeof getNumberPerValueAreaChart>}
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+						data={getNumberPerValueAreaChart(filteredAggregatedHackerData.confirmed! as TremorChartData)}
 					/>
 				</Card>
 			</Grid>

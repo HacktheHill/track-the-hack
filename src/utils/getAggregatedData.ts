@@ -1,16 +1,22 @@
-import type { TremorChartData, StrKeyAnyVal, StrKeyNumVal } from "./types";
+import type {
+	TremorChartData,
+	StrKeyAnyVal,
+	StrKeyNumVal,
+	AggregatedPresenceInfo,
+	AggregatedHackerInfo,
+} from "./types";
 import { type Prisma } from "@prisma/client";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const valToStr = (val: any): string => {
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-	return val === true || val === false ? (val ? "Yes" : "No") : val ? val.toString() : "";
+	return typeof val === "boolean" ? (val ? "Yes" : "No") : val ? val.toString() : "";
 };
 
 const getUniqueValuesFromData = (data: TremorChartData) => {
 	const valueSet = new Set<string>();
 	data.forEach(datum => {
-		if (datum.name !== undefined && datum.name !== null && datum.name !== "") {
+		if (datum.name) {
 			valueSet.add(datum.name);
 		}
 	});
@@ -78,85 +84,43 @@ export const getNumberPerValueAreaChart = (data: TremorChartData) => {
 	return valueData;
 };
 
-export const getAggregatedHackerInfo = (
-	hackerData: StrKeyAnyVal[],
-	filterKey?: string,
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	filterVal?: any,
-) => {
-	const filteredHackerData =
-		!!filterKey && !!filterVal
-			? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			  hackerData.filter(hacker => valToStr(hacker[filterKey]!) === valToStr(filterVal))
-			: hackerData;
-
-	const demographicsKeysSet = new Set<string>();
-	filteredHackerData.forEach(hacker => {
-		Object.keys(hacker).forEach(key => demographicsKeysSet.add(key));
+export const getMetricsKeysAndData = (data: StrKeyAnyVal[]) => {
+	const metricsKeysSet = new Set<string>();
+	data.forEach(datum => {
+		Object.keys(datum).forEach(key => metricsKeysSet.add(key));
 	});
-	const demographicsKeys = Array.from(demographicsKeysSet);
+	const metricsKeys = Array.from(metricsKeysSet);
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const metricsData: { [key: string]: { title: string; value: any; name: string }[] } = {};
-	demographicsKeys.forEach(key => (metricsData[key] = []));
+	const metricsData: AggregatedPresenceInfo = {};
+	metricsKeys.forEach(key => (metricsData[key] = []));
 
-	filteredHackerData.forEach((hacker: StrKeyAnyVal) => {
+	data.forEach((datum: StrKeyAnyVal) => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-non-null-assertion
-		demographicsKeys.forEach(key => metricsData[key]!.push({ title: key, value: hacker[key], name: hacker[key] }));
+		metricsKeys.forEach(key => metricsData[key]!.push({ title: key, value: 0, name: valToStr(datum[key]) }));
 	});
 
-	const aggregatedHackerInfo: {
-		[key: string]: (StrKeyAnyVal & { name?: string; value?: number; title?: string })[];
-	} = {};
-	demographicsKeys.forEach(key => {
-		const barChartKeys = ["graduationYear"];
-		const areaChartKeys = ["confirmed"];
-		const getBarChartKeyName = (key: string) => {
-			switch (key) {
-				case "graduationYear":
-					return (keyName: string) => `Graduates in ${keyName}`;
-			}
-		};
+	return { metricsKeys, metricsData };
+};
 
-		const aggregateFunc = !barChartKeys.concat(areaChartKeys).includes(key)
-			? getNumberPerValue
-			: barChartKeys.includes(key)
-			? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-			  (metricData: { title: string; value: any; name: string }[]) =>
-					getNumberPerValueBarChart(metricData, getBarChartKeyName(key) as (key: string) => string)
-			: getNumberPerValueAreaChart;
+export const getAggregatedHackerInfo = (hackerData: StrKeyAnyVal[]) => {
+	const aggregatedHackerInfo: AggregatedHackerInfo = {};
+	const { metricsKeys, metricsData } = getMetricsKeysAndData(hackerData);
+
+	metricsKeys.forEach(key => {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		aggregatedHackerInfo[key] = aggregateFunc(metricsData[key]!);
+		aggregatedHackerInfo[key] = getNumberPerValue(metricsData[key]!);
 	});
 
 	return aggregatedHackerInfo;
 };
 
 export const getAggregatedPresenceInfo = (presenceData: Prisma.PresenceInfoGetPayload<true>[]) => {
-	const presenceKeysSet = new Set<string>();
-	presenceData.forEach(presenceDatum => {
-		Object.keys(presenceDatum).forEach(key => presenceKeysSet.add(key));
-	});
-	const presenceKeys = Array.from(presenceKeysSet);
+	const { metricsKeys, metricsData } = getMetricsKeysAndData(presenceData);
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const metricsData: { [key: string]: { title: string; value: any; name: string }[] } = {};
-	presenceKeys.forEach(key => (metricsData[key] = []));
-
-	presenceData.forEach((presenceDatum: StrKeyAnyVal) => {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
-		presenceKeys.forEach(key =>
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			metricsData[key]?.push({ title: key, value: presenceDatum[key], name: presenceDatum[key] }),
-		);
-	});
-
-	const aggregatedPresenceData: {
-		[key: string]: TremorChartData;
-	} = {};
+	const aggregatedPresenceData: AggregatedPresenceInfo = {};
 
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	presenceKeysSet.forEach(key => (aggregatedPresenceData[key] = getNumberPerValue(metricsData[key]!)));
+	metricsKeys.forEach(key => (aggregatedPresenceData[key] = getNumberPerValue(metricsData[key]!)));
 
 	return aggregatedPresenceData;
 };

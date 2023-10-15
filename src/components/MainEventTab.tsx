@@ -63,9 +63,9 @@ export default function MainEventTab({
 	hackerData,
 	presenceData,
 }: MainEventTabProps) {
-	const totalConfirmedAttendees: number = aggregatedHackerData.confirmed!.filter(dataValue =>
-		Object.keys(dataValue).includes("Yes"),
-	)[0]!.Yes! as number;
+	const totalConfirmedAttendees: number = aggregatedHackerData.confirmed!.filter(
+		dataValue => dataValue.name === "Yes",
+	)[0]!.value as number;
 	const totalCheckedIn = aggregatedPresenceData.checkedIn!.filter(dataValue => dataValue.name === "Yes")[0]!.value;
 	const rsvpStillExpected = totalConfirmedAttendees - totalCheckedIn;
 	const remainingWalkIns = presenceData.filter(presenceDatum => {
