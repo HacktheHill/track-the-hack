@@ -133,14 +133,19 @@ const CustomSmallTextCard: React.FC<CustomSmallTextCardProps> = ({
 	);
 };
 
-interface CheckInEventsChartProps {
+interface MultiCheckInEventsChartProps {
 	title: string;
 	data: { [key: string]: TremorChartData };
 	selectKeys: string[];
 	eventNameMapping: { [key: string]: string };
 }
 
-const CheckInEventsChart: React.FC<CheckInEventsChartProps> = ({ title, data, selectKeys, eventNameMapping }) => {
+const MultiCheckInEventsChart: React.FC<MultiCheckInEventsChartProps> = ({
+	title,
+	data,
+	selectKeys,
+	eventNameMapping,
+}) => {
 	const [selectedKey, setSelectedKey] = useState("");
 	const handleOnChange = (value: string) => {
 		setSelectedKey(value);
@@ -290,7 +295,7 @@ const CustomBarChart: React.FC<CustomBarChartProps> = ({ title, data }) => {
 export {
 	CustomDonutChart,
 	CustomSmallTextCard,
-	CheckInEventsChart,
+	MultiCheckInEventsChart,
 	EventsTable,
 	InventoryTable,
 	CustomBarList,
