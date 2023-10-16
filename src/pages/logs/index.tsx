@@ -10,6 +10,8 @@ import Loading from "../../components/Loading";
 import Error from "../../components/Error";
 import OnlyRole from "../../components/OnlyRole";
 import { NextPage } from "next";
+import React from "react";
+
 
 interface Log {
 	id: number;
@@ -121,9 +123,6 @@ const Logs: NextPage = () => {
 		</App>
 	);
 };
-
-import React from "react";
-
 interface LogCardProps {
 	log: Log;
 }
