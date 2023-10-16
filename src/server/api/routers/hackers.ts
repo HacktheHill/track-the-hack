@@ -1,4 +1,6 @@
 import { AttendanceType, Role, ShirtSize, type HackerInfo } from "@prisma/client";
+import { EventEmitter } from "events";
+import { observable } from "@trpc/server/observable";
 import { z } from "zod";
 import { hasRoles } from "../../../utils/helpers";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
@@ -6,7 +8,24 @@ import { walkInSchema } from "../../../utils/common";
 
 const DEFAULT_ACCEPTANCE_EXPIRY = new Date(2023, 2, 6, 5, 0, 0, 0); // 2023-03-06 00:00:00 EST
 
+const ee = new EventEmitter();
+
 export const hackerRouter = createTRPCRouter({
+	onMutation: publicProcedure.subscription(() => {
+		// return an `observable` with a callback which is triggered immediately
+		return observable<HackerInfo>(emit => {
+			const onMutation = (data: HackerInfo) => {
+				// emit data to client
+				emit.next(data);
+			};
+			// trigger `onMutation()` when `add` is triggered in our event emitter
+			ee.on("add", onMutation);
+			// unsubscribe function when client disconnects or stops subscribing
+			return () => {
+				ee.off("add", onMutation);
+			};
+		});
+	}),
 	// Get a hacker by id or email
 	get: publicProcedure
 		.input(
@@ -137,6 +156,8 @@ export const hackerRouter = createTRPCRouter({
 				throw new Error("Hacker acceptance expired");
 			}
 
+			ee.emit("add", hacker);
+
 			return ctx.prisma.hackerInfo.update({
 				where: {
 					id: input.id,
@@ -177,6 +198,8 @@ export const hackerRouter = createTRPCRouter({
 			) {
 				throw new Error("invalid-unsubscribe-token");
 			}
+
+			ee.emit("add", hacker);
 
 			return ctx.prisma.hackerInfo.updateMany({
 				where: {
@@ -222,6 +245,8 @@ export const hackerRouter = createTRPCRouter({
 					},
 				},
 			});
+
+			ee.emit("add", hacker);
 
 			return hacker;
 		}),

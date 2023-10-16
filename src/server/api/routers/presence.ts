@@ -1,9 +1,29 @@
 import { Role } from "@prisma/client";
+import type { HackerInfo, PresenceInfo } from "@prisma/client";
 import { z } from "zod";
+import { EventEmitter } from "events";
+import { observable } from "@trpc/server/observable";
 import { hasRoles } from "../../../utils/helpers";
-import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+
+const ee = new EventEmitter();
 
 export const presenceRouter = createTRPCRouter({
+	onMutation: publicProcedure.subscription(() => {
+		// return an `observable` with a callback which is triggered immediately
+		return observable<HackerInfo>(emit => {
+			const onMutation = (data: HackerInfo) => {
+				// emit data to client
+				emit.next(data);
+			};
+			// trigger `onMutation()` when `add` is triggered in our event emitter
+			ee.on("add", onMutation);
+			// unsubscribe function when client disconnects or stops subscribing
+			return () => {
+				ee.off("add", onMutation);
+			};
+		});
+	}),
 	getFromHackerId: protectedProcedure
 		.input(
 			z.object({
@@ -144,6 +164,8 @@ export const presenceRouter = createTRPCRouter({
 			if (!hacker) {
 				throw new Error("Hacker not found");
 			}
+
+			ee.emit("add", hacker);
 
 			await ctx.prisma.presenceInfo.upsert({
 				where: {

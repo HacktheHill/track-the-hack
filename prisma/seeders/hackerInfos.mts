@@ -1,8 +1,7 @@
 import { faker } from "@faker-js/faker";
 
 // generates dummy hacker's info
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const hackerInfo = ({ email, firstName, lastName, phoneNumber }: { [key: string]: any }) => {
+export const hackerInfo = ({ email, firstName, lastName, phoneNumber }: { [key: string]: string }) => {
 	if (!firstName) {
 		firstName = faker.person.firstName();
 	}
