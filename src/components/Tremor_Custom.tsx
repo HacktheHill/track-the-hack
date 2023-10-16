@@ -244,7 +244,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ title, data }) => {
 
 interface CustomAreaChartProps {
 	title: string;
-	data: (StrKeyAnyVal & { date: string })[];
+	data: (StrKeyAnyVal & { title: string })[];
 }
 
 const CustomAreaChart: React.FC<CustomAreaChartProps> = ({ title, data }) => {
@@ -259,7 +259,7 @@ const CustomAreaChart: React.FC<CustomAreaChartProps> = ({ title, data }) => {
 				className="mt-4 h-80"
 				data={data}
 				categories={categories}
-				index="date"
+				index="title"
 				colors={defaultColors}
 				yAxisWidth={60}
 			/>

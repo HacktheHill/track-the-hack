@@ -32,28 +32,31 @@ export default function DemographicsTab(props: DemographicsTabProps) {
 		return hackerData.filter(hacker => valToStr(hacker[filterKey]!) === valToStr(filterVal));
 	};
 
+	const getConfirmedHackerData = () => {
+		return filterHackerData("confirmed", valToStr(true));
+	};
+
 	// TODO: implement the rest of the application types once they are in the db
 	const getDataByAppType = (applicationType: string) => {
 		switch (applicationType) {
 			case "all":
 				return aggregatedHackerData;
 			case "confirmed":
-				return getAggregatedHackerInfo(filterHackerData("confirmed", valToStr(true)));
+				return getAggregatedHackerInfo(getConfirmedHackerData());
 			default:
 				return aggregatedHackerData;
 		}
 	};
 
 	const getNumberOfFilteredHackers = () => {
-		return Object.entries(filteredAggregatedHackerData).reduce(
-			(acc, [, datum]) =>
-				acc +
-				datum.reduce(
-					(acc2, valueDatum) => acc2 + (Object.keys(valueDatum).includes("value") ? valueDatum.value! : 0),
-					0,
-				),
-			0,
-		);
+		switch (selectedKey) {
+			case "all":
+				return hackerData.length;
+			case "confirmed":
+				return getConfirmedHackerData().length;
+			default:
+				return hackerData.length;
+		}
 	};
 
 	return (
@@ -76,7 +79,7 @@ export default function DemographicsTab(props: DemographicsTabProps) {
 						)}`}
 						text={"Hackers"}
 					/>
-					{/* TODO: don't hardcode event capacity once it can be calculated from the db */}
+					{/* TODO: update event capacity with actual value */}
 					<CustomSmallTextCard title="Est. Event Capacity" metric={"715"} text={"Spots"} />
 					<CustomSmallTextCard
 						title="Hackers in Group"

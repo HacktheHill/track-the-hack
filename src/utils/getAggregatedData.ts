@@ -20,7 +20,9 @@ const getUniqueValuesFromData = (data: TremorChartData) => {
 			valueSet.add(datum.name);
 		}
 	});
-	return Array.from(valueSet).sort();
+
+	const values = Array.from(valueSet).sort();
+	return values;
 };
 
 export const getNumberPerValue = (data: TremorChartData) => {
@@ -54,7 +56,7 @@ export const getNumberPerValueBarChart = (data: TremorChartData, getKeyName: (ke
 		const valueDatum = valueData.filter(valueDatum => valueDatum.title === valToStr(datum.name))[0];
 
 		if (valueDatum) {
-			valueDatum[getKeyName(valToStr(datum.name))]++;
+			valueDatum[getKeyName(valToStr(datum.name))] = datum.value;
 		}
 	});
 
@@ -63,21 +65,22 @@ export const getNumberPerValueBarChart = (data: TremorChartData, getKeyName: (ke
 
 export const getNumberPerValueAreaChart = (data: TremorChartData) => {
 	const values = getUniqueValuesFromData(data);
-	const valueData: (StrKeyNumVal & { date: string })[] = [];
+	const valueData: (StrKeyNumVal & { title: string })[] = [];
 
 	values.forEach(val => {
 		if (val) {
-			valueData.push({ [valToStr(val)]: 0, date: "" } as StrKeyNumVal & { date: string });
+			// TODO: "title" should be the date of the application confirmation
+			valueData.push({ [valToStr(val)]: 0, title: "" } as StrKeyNumVal & { title: string });
 		}
 	});
 
 	data.forEach(datum => {
 		const valueDatum = valueData.filter(
-			valueDatum => valToStr(Object.keys(valueDatum).filter(key => key !== "date")[0]) === valToStr(datum.name),
+			valueDatum => valToStr(Object.keys(valueDatum).filter(key => key !== "title")[0]) === valToStr(datum.name),
 		)[0];
 
 		if (valueDatum) {
-			valueDatum[valToStr(datum.name)]++;
+			valueDatum[valToStr(datum.name)] = datum.value;
 		}
 	});
 
