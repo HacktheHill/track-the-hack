@@ -1,7 +1,7 @@
 import { Prisma, Role } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import { useTranslation } from "next-i18next";
-
+import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import App from "../../components/App";
 
 import { trpc } from "../../utils/api";
@@ -9,9 +9,14 @@ import { useRouter } from "next/router";
 import Loading from "../../components/Loading";
 import Error from "../../components/Error";
 import OnlyRole from "../../components/OnlyRole";
-import { NextPage } from "next";
+import {GetStaticProps, NextPage} from "next";
 import React from "react";
 
+export const getStaticProps: GetStaticProps = async ({ locale }) => {
+	return {
+		props: await serverSideTranslations(locale ?? "en", ["common", "logs"]),
+	};
+};
 
 interface Log {
 	id: number;
@@ -25,18 +30,10 @@ interface Log {
 
 const Logs: NextPage = () => {
 	const router = useRouter();
-	const { t } = useTranslation("schedule");
 	const [id] = [router.query.id].flat();
-	const { locale } = router;
-
 	const logsQuery = trpc.auditLog.getAllTheLogs.useQuery(undefined, { enabled: true });
-
 	const { data: sessionData } = useSession();
-
-	let dateLocale = "en-CA";
-	if (locale === "fr") {
-		dateLocale = "fr-CA";
-	}
+	const { t } = useTranslation("logs");
 
 	if (logsQuery.isLoading || logsQuery.data == null) {
 		return (
@@ -65,8 +62,6 @@ const Logs: NextPage = () => {
 		void router.push("/404");
 	}
 
-	console.log(logsQuery.data);
-
 	return (
 		<App className="overflow-y-auto bg-gradient3 p-8 sm:p-12" title={t("title")}>
 			<OnlyRole filter={role => role === Role.HACKER || role === Role.ORGANIZER}>
@@ -77,19 +72,19 @@ const Logs: NextPage = () => {
 							<thead className="bg-gray-800 text-xs uppercase text-white  ">
 								<tr>
 									<th scope="col" className="px-6 py-3">
-										User
+										{t("user")}
 									</th>
 									<th scope="col" className="px-6 py-3">
-										Action
+										{t("action")}
 									</th>
 									<th scope="col" className="px-6 py-3">
-										Timestamp
+										{t("timestamp")}
 									</th>
 									<th scope="col" className="px-6 py-3">
-										Details
+										{t("details")}
 									</th>
 									<th scope="col" className="px-6 py-3">
-										User ID
+										{t("userid")}
 									</th>
 								</tr>
 							</thead>
@@ -118,8 +113,9 @@ const Logs: NextPage = () => {
 				</div>
 			)}
 			<div className="sticky bottom-0 flex justify-center p-4">
-				<p className="italic text-gray-500">This is a comment for non-dev people.</p>
+				<p className="italic text-gray-500">{t("comment")}</p>
 			</div>
+
 		</App>
 	);
 };

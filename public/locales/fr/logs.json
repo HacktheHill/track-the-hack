@@ -1,0 +1,8 @@
+{
+  "user": "utilisateur",
+  "action": "Action",
+  "timestamp": "Date",
+  "details": "Détails",
+  "userid": "ID de l'utilisateur",
+  "comment": "Il s'agit d'un commentaire pour les personnes qui ne sont pas des développeurs."
+}
