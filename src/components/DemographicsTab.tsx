@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, Grid, Select, SelectItem } from "@tremor/react";
 import type { CustomBarListProps } from "./Tremor_Custom";
 import { CustomBarList, CustomDonutChart, CustomSmallTextCard, CustomAreaChart, CustomBarChart } from "./Tremor_Custom";
@@ -7,6 +7,27 @@ import { getNumberPerValueBarChart, getNumberPerValueAreaChart } from "../utils/
 import { valToStr, getAggregatedHackerInfo } from "../utils/getAggregatedData";
 import { type HackerInfoKey } from "../utils/types";
 import { type HackerInfo } from "@prisma/client";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const filterHackerData = (filterKey: HackerInfoKey, filterVal: any, hackerData: HackerInfo[]) => {
+	return hackerData.filter(hacker => valToStr(hacker[filterKey]) === valToStr(filterVal));
+};
+
+// TODO: implement the rest of the application types once they are in the db
+const getFilteredHackerData = (applicationType: string, hackerData: HackerInfo[]) => {
+	switch (applicationType) {
+		case "all":
+			return hackerData;
+		case "confirmed":
+			return getConfirmedHackerData(hackerData);
+		default:
+			return hackerData;
+	}
+};
+
+const getConfirmedHackerData = (hackerData: HackerInfo[]) => {
+	return filterHackerData("confirmed", valToStr(true), hackerData);
+};
 
 interface DemographicsTabProps {
 	aggregatedHackerData: AggregatedHackerInfo;
@@ -19,34 +40,20 @@ export default function DemographicsTab(props: DemographicsTabProps) {
 	const [filteredHackerData, setFilteredHackerData] = useState(hackerData);
 	const [filteredAggregatedHackerData, setFilteredAggregatedHackerInfo] = useState(aggregatedHackerData);
 
+	useEffect(() => {
+		const newFilteredHackerData = getFilteredHackerData(selectedKey, hackerData);
+		setFilteredHackerData(newFilteredHackerData);
+		setFilteredAggregatedHackerInfo(getAggregatedHackerInfo(newFilteredHackerData));
+	}, [hackerData, selectedKey]);
+
 	const handleOnSelectChange = (key: string) => {
 		setSelectedKey(key);
-		setFilteredHackerData(getFilteredHackerData(key));
+		setFilteredHackerData(getFilteredHackerData(key, hackerData));
 		setFilteredAggregatedHackerInfo(getDataByAppType(key));
 	};
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const filterHackerData = (filterKey: HackerInfoKey, filterVal: any) => {
-		return hackerData.filter(hacker => valToStr(hacker[filterKey]) === valToStr(filterVal));
-	};
-
-	const getConfirmedHackerData = () => {
-		return filterHackerData("confirmed", valToStr(true));
-	};
-
-	// TODO: implement the rest of the application types once they are in the db
-	const getFilteredHackerData = (applicationType: string) => {
-		switch (applicationType) {
-			case "all":
-				return hackerData;
-			case "confirmed":
-				return getConfirmedHackerData();
-			default:
-				return hackerData;
-		}
-	};
 	const getDataByAppType = (applicationType: string) => {
-		return getAggregatedHackerInfo(getFilteredHackerData(applicationType));
+		return getAggregatedHackerInfo(getFilteredHackerData(applicationType, hackerData));
 	};
 
 	const getNumberOfFilteredHackers = () => {
@@ -54,7 +61,7 @@ export default function DemographicsTab(props: DemographicsTabProps) {
 			case "all":
 				return hackerData.length;
 			case "confirmed":
-				return getConfirmedHackerData().length;
+				return getConfirmedHackerData(hackerData).length;
 			default:
 				return hackerData.length;
 		}

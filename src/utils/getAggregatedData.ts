@@ -17,6 +17,7 @@ const getUniqueValuesFromData = (data: TremorChartData) => {
 	});
 
 	const values = Array.from(valueSet).sort((a, b) => {
+		// sorting valToStr(true) before valToStr(false) so the "true" value is green and the other is red in the data charts
 		if ((a === valToStr(true) && b === valToStr(false)) || (a === valToStr(false) && b === valToStr(true))) {
 			return a === valToStr(true) ? -1 : 1;
 		} else {

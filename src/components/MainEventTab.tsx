@@ -9,6 +9,7 @@ import {
 } from "./Tremor_Custom";
 import type { AggregatedHackerInfo, AggregatedPresenceInfo } from "../utils/types";
 
+// TODO: update these with actual event names
 const checkInEventsNameMap = {
 	breakfast1: "Breakfast 1",
 	lunch1: "Lunch 1",
@@ -17,7 +18,7 @@ const checkInEventsNameMap = {
 	snacks2: "Snacks 2",
 	breakfast2: "Breakfast 2",
 	lunch2: "Lunch 2",
-	lunch22: "Lunch 2 2 (Dinner 2?)",
+	lunch22: "Lunch 2 2",
 	redbull: "Redbull",
 };
 

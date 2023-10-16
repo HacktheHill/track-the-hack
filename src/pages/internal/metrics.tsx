@@ -1,4 +1,5 @@
 import { Divider, TabGroup, TabList, Tab, TabPanels, TabPanel } from "@tremor/react";
+import { useEffect, useState } from "react";
 
 import DemographicsTab from "../../components/DemographicsTab";
 import MainEventTab from "../../components/MainEventTab";
@@ -59,6 +60,17 @@ type MetricsViewProps = {
 };
 
 export const MetricsView = ({ hackerData, presenceData }: MetricsViewProps) => {
+	const [aggregatedHackerData, setAggregatedHackerData] = useState(getAggregatedHackerInfo(hackerData));
+	const [aggregatedPresenceData, setAggregatedPresenceData] = useState(getAggregatedPresenceInfo(presenceData));
+
+	useEffect(() => {
+		setAggregatedHackerData(getAggregatedHackerInfo(hackerData));
+	}, [hackerData]);
+
+	useEffect(() => {
+		setAggregatedPresenceData(getAggregatedPresenceInfo(presenceData));
+	}, [presenceData]);
+
 	return (
 		<main className="mx-auto max-w-7xl bg-background1 p-4 md:p-10">
 			<TabGroup>
@@ -70,15 +82,12 @@ export const MetricsView = ({ hackerData, presenceData }: MetricsViewProps) => {
 				<Divider className="ml-10 mr-10 mt-8 w-full"></Divider>
 				<TabPanels>
 					<TabPanel>
-						<DemographicsTab
-							aggregatedHackerData={getAggregatedHackerInfo(hackerData)}
-							hackerData={hackerData}
-						/>
+						<DemographicsTab aggregatedHackerData={aggregatedHackerData} hackerData={hackerData} />
 					</TabPanel>
 					<TabPanel>
 						<MainEventTab
-							aggregatedHackerData={getAggregatedHackerInfo(hackerData)}
-							aggregatedPresenceData={getAggregatedPresenceInfo(presenceData)}
+							aggregatedHackerData={aggregatedHackerData}
+							aggregatedPresenceData={aggregatedPresenceData}
 							hackerData={hackerData}
 							presenceData={presenceData}
 						/>

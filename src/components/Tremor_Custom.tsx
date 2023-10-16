@@ -24,6 +24,7 @@ import {
 	SelectItem,
 } from "@tremor/react";
 import type { StrKeyAnyVal, StrKeyNumVal, TremorChartData } from "../utils/types";
+import { valToStr } from "../utils/getAggregatedData";
 
 type TremorDefaultColors = (
 	| "emerald"
@@ -36,6 +37,7 @@ type TremorDefaultColors = (
 	| "indigo"
 	| "orange"
 )[];
+// emerald and rose must be first and second so the "true" values are green and the "false" ones are red in the data charts
 const defaultColors: TremorDefaultColors = [
 	"emerald",
 	"rose",
@@ -47,6 +49,15 @@ const defaultColors: TremorDefaultColors = [
 	"indigo",
 	"orange",
 ];
+
+const getDefaultColors = (categories: string[]) => {
+	// first colour is red if there is no "true" category
+	if (categories.length === 1 && categories[0] === valToStr(false)) {
+		return defaultColors.slice(1);
+	} else {
+		return defaultColors;
+	}
+};
 
 interface GetCategoriesFromDataProps {
 	data: ({ title?: string } & StrKeyAnyVal)[];
@@ -85,8 +96,14 @@ const CustomDonutChart: React.FC<CustomDonutChartProps> = ({ title, data }) => {
 	return (
 		<div>
 			<Title>{title}</Title>
-			<DonutChart className="mt-6" data={data} category="value" index="title" colors={defaultColors} />
-			<Legend className="mt-3" categories={categories} colors={defaultColors} />
+			<DonutChart
+				className="mt-6"
+				data={data}
+				category="value"
+				index="title"
+				colors={getDefaultColors(categories)}
+			/>
+			<Legend className="mt-3" categories={categories} colors={getDefaultColors(categories)} />
 		</div>
 	);
 };
@@ -200,7 +217,7 @@ const EventsTable: React.FC<EventsTableProps> = ({ title, data, eventNameMapping
 									</Badge>
 								</Text>
 							</TableCell>
-							<TableCell>{item.utilization}%</TableCell>
+							<TableCell>{Math.round(item.utilization * 1000) / 1000}%</TableCell>
 						</TableRow>
 					))}
 				</TableBody>
@@ -263,7 +280,7 @@ const CustomAreaChart: React.FC<CustomAreaChartProps> = ({ title, data }) => {
 				data={data}
 				categories={categories}
 				index="title"
-				colors={defaultColors}
+				colors={getDefaultColors(categories)}
 				yAxisWidth={60}
 			/>
 		</>
@@ -288,7 +305,7 @@ const CustomBarChart: React.FC<CustomBarChartProps> = ({ title, data }) => {
 				data={data}
 				index="name"
 				categories={categories}
-				colors={defaultColors}
+				colors={getDefaultColors(categories)}
 				yAxisWidth={48}
 			/>
 		</>
