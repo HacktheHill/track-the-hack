@@ -123,26 +123,4 @@ const Logs: NextPage = () => {
 		</App>
 	);
 };
-interface LogCardProps {
-	log: Log;
-}
-
-const LogCard: React.FC<LogCardProps> = ({ log }) => {
-	const formattedDate = log.timestamp.toLocaleString();
-
-	return (
-		<div className="h-22 w-30 m-4  flex flex-col justify-center rounded-md bg-background1 p-4 text-gray-800 ">
-			<h1>
-				{log.action} - <span>{formattedDate}</span>
-			</h1>
-			<p className="font-bold">
-				({log.id}) {log.action} - {formattedDate}{" "}
-			</p>
-			<p>
-				Some people {log.details} of id <span>{log.user_id} </span>
-			</p>
-		</div>
-	);
-};
-
 export default Logs;
