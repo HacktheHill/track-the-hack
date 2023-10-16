@@ -36,6 +36,49 @@ const signature = html`
 
 const templates = [
 	{
+		id: "date-availabilities",
+		name: "Intro with Date Availabilities",
+		subject: "Unleash Innovation: Join Hack the Hill 2024 as a Sponsor!",
+		body: html`<p>Hello [companyRepName],</p>
+			<p>
+				I hope this email finds you well. My name is [organizerFullName], and as a Sponsorship Coordinator for
+				Hack the Hill 2024, I am thrilled to introduce you to Ottawa's most exciting and innovative hackathon
+				event! With our mission to provide opportunities for students through an annual hackathon, we are
+				reaching out to companies like yours to join us in making this event possible.
+			</p>
+			<p>
+				Hack the Hill is an event that will run from February 2nd to 4th 2024, along with a series of monthly
+				events throughout the year. We are shaping the future of technology through the joint effort of notable
+				student organizations from both the University of Ottawa and Carleton University.
+			</p>
+			<p>
+				With the help of [companyName], Hack the Hill can push further to provide students with an amazing and
+				productive event. We are confident that our partnership will yield mutually beneficial results - from
+				prominent branding opportunities to direct engagement with participants - we have carefully curated a
+				sponsorship package that will cater to your specific interests:
+			</p>
+			<p>
+				<a
+					href="https://drive.google.com/file/d/1wD9-VEt7WQ98w8MeBwEsF1y7i6JAqQf6/view"
+					role="button"
+					target="_blank"
+					style="display:inline-flex;align-items:center;height:1rem;"
+				>
+					<img
+						src="https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png"
+						style="height: 100%;"
+					/>
+					<strong>Hack the Hill 2024 Sponsorship Package</strong>
+				</a>
+			</p>
+			<p>
+				Feel free to reach out for any further information or to discuss with the team. My current
+				availabilities are:
+			</p>
+			<p>Day, Month at time</p>
+			<p>I look forward to hearing back soon, thank you for your time and consideration!</p>`,
+	},
+	{
 		id: "default-intro",
 		name: "Default Intro",
 		subject: "Unleash Innovation: Join Hack the Hill 2024 as a Sponsor!",
