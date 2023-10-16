@@ -115,11 +115,11 @@ export default function MainEventTab({
 						// eslint-disable-next-line @typescript-eslint/restrict-template-expressions
 						text={`Checked In ${totalCheckedIn}`}
 					/>
-					<CustomSmallTextCard title="Remaining Capacity" />
-					<CustomSmallTextCard title="Discord User Count" />
-					<CustomSmallTextCard title="Live Stream View Count" />
-					<CustomSmallTextCard title="Active App Users" />
-					<CustomSmallTextCard title="QR CODE SCANS" />
+					<CustomSmallTextCard title="Remaining Capacity" /> {/* TODO: implement once in db */}
+					<CustomSmallTextCard title="Discord User Count" /> {/* TODO: implement once in db */}
+					<CustomSmallTextCard title="Live Stream View Count" /> {/* TODO: implement once in db */}
+					<CustomSmallTextCard title="Active App Users" /> {/* TODO: implement once in db */}
+					<CustomSmallTextCard title="QR CODE SCANS" /> {/* TODO: implement once in db */}
 				</Grid>
 				<Grid numItemsSm={1} numItemsLg={2} className="gap-6">
 					<Card>

@@ -16,15 +16,13 @@ interface DemographicsTabProps {
 export default function DemographicsTab(props: DemographicsTabProps) {
 	const { aggregatedHackerData, hackerData } = props;
 	const [selectedKey, setSelectedKey] = useState("all");
+	const [filteredHackerData, setFilteredHackerData] = useState(hackerData);
 	const [filteredAggregatedHackerData, setFilteredAggregatedHackerInfo] = useState(aggregatedHackerData);
 
 	const handleOnSelectChange = (key: string) => {
 		setSelectedKey(key);
+		setFilteredHackerData(getFilteredHackerData(key));
 		setFilteredAggregatedHackerInfo(getDataByAppType(key));
-	};
-
-	const getNumAppsByValue = (key: HackerInfoKey, value: string | number): number => {
-		return hackerData.filter(hackerDatum => valToStr(hackerDatum[key]) === valToStr(value)).length;
 	};
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -37,15 +35,18 @@ export default function DemographicsTab(props: DemographicsTabProps) {
 	};
 
 	// TODO: implement the rest of the application types once they are in the db
-	const getDataByAppType = (applicationType: string) => {
+	const getFilteredHackerData = (applicationType: string) => {
 		switch (applicationType) {
 			case "all":
-				return aggregatedHackerData;
+				return hackerData;
 			case "confirmed":
-				return getAggregatedHackerInfo(getConfirmedHackerData());
+				return getConfirmedHackerData();
 			default:
-				return aggregatedHackerData;
+				return hackerData;
 		}
+	};
+	const getDataByAppType = (applicationType: string) => {
+		return getAggregatedHackerInfo(getFilteredHackerData(applicationType));
 	};
 
 	const getNumberOfFilteredHackers = () => {
@@ -57,6 +58,10 @@ export default function DemographicsTab(props: DemographicsTabProps) {
 			default:
 				return hackerData.length;
 		}
+	};
+
+	const getNumFilteredAppsByValue = (key: HackerInfoKey, value: string | number): number => {
+		return filteredHackerData.filter(hackerDatum => valToStr(hackerDatum[key]) === valToStr(value)).length;
 	};
 
 	return (
@@ -73,11 +78,11 @@ export default function DemographicsTab(props: DemographicsTabProps) {
 					<CustomSmallTextCard title="Total Applications" metric={hackerData.length} text={"Hackers"} />
 					<CustomSmallTextCard
 						title="English / French"
-						metric={`${getNumAppsByValue("preferredLanguage", "EN")} / ${getNumAppsByValue(
+						metric={`${getNumFilteredAppsByValue("preferredLanguage", "EN")} / ${getNumFilteredAppsByValue(
 							"preferredLanguage",
 							"FR",
 						)}`}
-						text={"Hackers"}
+						text={"Hackers in Group"}
 					/>
 					{/* TODO: update event capacity with actual value */}
 					<CustomSmallTextCard title="Est. Event Capacity" metric={"715"} text={"Spots"} />
