@@ -56,7 +56,7 @@ interface GetCategoriesFromDataProps {
 	data: ({ title?: string } & StrKeyAnyVal)[];
 }
 
-const getCategoriesFromData = (data: GetCategoriesFromDataProps["data"]) => {
+const getCategoriesFromData = (data: GetCategoriesFromDataProps["data"], isLikeBarChart = false) => {
 	// Get the categories
 	const allKeys = data.reduce((acc, item) => {
 		Object.keys(item).forEach(key => {
@@ -66,6 +66,11 @@ const getCategoriesFromData = (data: GetCategoriesFromDataProps["data"]) => {
 	}, new Set<string>());
 
 	allKeys.delete("title");
+
+	if (isLikeBarChart) {
+		allKeys.delete("name");
+		allKeys.delete("value");
+	}
 
 	// Convert the Set to an array
 	const keysNotTitle = Array.from(allKeys);
@@ -248,7 +253,7 @@ interface CustomAreaChartProps {
 }
 
 const CustomAreaChart: React.FC<CustomAreaChartProps> = ({ title, data }) => {
-	const categories = getCategoriesFromData(data);
+	const categories = getCategoriesFromData(data, true);
 
 	return (
 		<>
@@ -273,7 +278,7 @@ interface CustomBarChartProps {
 }
 
 const CustomBarChart: React.FC<CustomBarChartProps> = ({ title, data }) => {
-	const categories = getCategoriesFromData(data);
+	const categories = getCategoriesFromData(data, true);
 
 	return (
 		<>

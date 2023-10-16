@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Card, Grid } from "@tremor/react";
 import { type Prisma } from "@prisma/client";
 import {
@@ -63,10 +62,12 @@ export default function MainEventTab({
 	hackerData,
 	presenceData,
 }: MainEventTabProps) {
-	const totalConfirmedAttendees: number = aggregatedHackerData.confirmed!.filter(
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const totalConfirmedAttendees: number = aggregatedHackerData.confirmed.filter(
 		dataValue => dataValue.name === "Yes",
-	)[0]!.value as number;
-	const totalCheckedIn = aggregatedPresenceData.checkedIn!.filter(dataValue => dataValue.name === "Yes")[0]!.value;
+	)[0]!.value;
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const totalCheckedIn = aggregatedPresenceData.checkedIn.filter(dataValue => dataValue.name === "Yes")[0]!.value;
 	const rsvpStillExpected = totalConfirmedAttendees - totalCheckedIn;
 	const remainingWalkIns = presenceData.filter(presenceDatum => {
 		const matchingHackerInfos = hackerData.filter(hackerDatum => hackerDatum.id === presenceDatum.hackerInfoId);
@@ -77,6 +78,7 @@ export default function MainEventTab({
 
 		const hackerInfo = matchingHackerInfos[0];
 
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		return hackerInfo!.walkIn && !presenceDatum.checkedIn;
 	}).length;
 
@@ -91,6 +93,7 @@ export default function MainEventTab({
 			return {
 				title: key,
 				state: true, // TODO: not sure how event state (open/closed) will be stored in the db
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				utilization: utilizedEventData.length > 0 ? utilizedEventData[0]!.value / totalConfirmedAttendees : 0,
 			};
 		});

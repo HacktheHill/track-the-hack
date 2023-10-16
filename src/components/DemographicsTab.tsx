@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import React, { useState } from "react";
 import { Card, Grid, Select, SelectItem } from "@tremor/react";
 import type { CustomBarListProps } from "./Tremor_Custom";
@@ -6,11 +5,12 @@ import { CustomBarList, CustomDonutChart, CustomSmallTextCard, CustomAreaChart, 
 import { type AggregatedHackerInfo } from "../utils/types";
 import { getNumberPerValueBarChart, getNumberPerValueAreaChart } from "../utils/getAggregatedData";
 import { valToStr, getAggregatedHackerInfo } from "../utils/getAggregatedData";
-import { type StrKeyAnyVal, type TremorChartData } from "../utils/types";
+import { type HackerInfoKey } from "../utils/types";
+import { type HackerInfo } from "@prisma/client";
 
 interface DemographicsTabProps {
 	aggregatedHackerData: AggregatedHackerInfo;
-	hackerData: StrKeyAnyVal[];
+	hackerData: HackerInfo[];
 }
 
 export default function DemographicsTab(props: DemographicsTabProps) {
@@ -23,13 +23,13 @@ export default function DemographicsTab(props: DemographicsTabProps) {
 		setFilteredAggregatedHackerInfo(getDataByAppType(key));
 	};
 
-	const getNumAppsByValue = (key: string, value: string | number): number => {
+	const getNumAppsByValue = (key: HackerInfoKey, value: string | number): number => {
 		return hackerData.filter(hackerDatum => valToStr(hackerDatum[key]) === valToStr(value)).length;
 	};
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const filterHackerData = (filterKey: string, filterVal: any) => {
-		return hackerData.filter(hacker => valToStr(hacker[filterKey]!) === valToStr(filterVal));
+	const filterHackerData = (filterKey: HackerInfoKey, filterVal: any) => {
+		return hackerData.filter(hacker => valToStr(hacker[filterKey]) === valToStr(filterVal));
 	};
 
 	const getConfirmedHackerData = () => {
@@ -90,22 +90,16 @@ export default function DemographicsTab(props: DemographicsTabProps) {
 
 				<Grid numItemsSm={1} numItemsLg={3} className="gap-6">
 					<Card>
-						<CustomDonutChart
-							title="Languages"
-							data={filteredAggregatedHackerData.preferredLanguage! as TremorChartData}
-						/>
+						<CustomDonutChart title="Languages" data={filteredAggregatedHackerData.preferredLanguage} />
 					</Card>
 					<Card>
 						<CustomDonutChart
 							title="Transport Required"
-							data={filteredAggregatedHackerData.transportationRequired! as TremorChartData}
+							data={filteredAggregatedHackerData.transportationRequired}
 						/>
 					</Card>
 					<Card>
-						<CustomDonutChart
-							title="Preferred Pronouns"
-							data={filteredAggregatedHackerData.gender! as TremorChartData}
-						/>
+						<CustomDonutChart title="Preferred Pronouns" data={filteredAggregatedHackerData.gender} />
 					</Card>
 					<Card>
 						<CustomBarList
@@ -134,7 +128,7 @@ export default function DemographicsTab(props: DemographicsTabProps) {
 							title="Graduating Years"
 							data={getNumberPerValueBarChart(
 								// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-								filteredAggregatedHackerData.graduationYear! as TremorChartData,
+								filteredAggregatedHackerData.graduationYear,
 								(keyName: string) => `Graduates in ${keyName}`,
 							)}
 						/>
@@ -146,10 +140,7 @@ export default function DemographicsTab(props: DemographicsTabProps) {
 						/>
 					</Card>
 					<Card>
-						<CustomDonutChart
-							title="T-Shirt Sizes"
-							data={filteredAggregatedHackerData.shirtSize! as TremorChartData}
-						/>
+						<CustomDonutChart title="T-Shirt Sizes" data={filteredAggregatedHackerData.shirtSize} />
 					</Card>
 				</Grid>
 				<Card>
@@ -157,7 +148,7 @@ export default function DemographicsTab(props: DemographicsTabProps) {
 					<CustomAreaChart
 						title="Application Confirmed"
 						// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-						data={getNumberPerValueAreaChart(filteredAggregatedHackerData.confirmed! as TremorChartData)}
+						data={getNumberPerValueAreaChart(filteredAggregatedHackerData.confirmed)}
 					/>
 				</Card>
 			</Grid>

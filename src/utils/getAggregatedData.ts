@@ -1,10 +1,5 @@
-import type {
-	TremorChartData,
-	StrKeyAnyVal,
-	StrKeyNumVal,
-	AggregatedPresenceInfo,
-	AggregatedHackerInfo,
-} from "./types";
+import type { TremorChartData, StrKeyNumVal, AggregatedPresenceInfo, AggregatedHackerInfo } from "./types";
+import type { HackerInfo, PresenceInfo } from "@prisma/client";
 import { type Prisma } from "@prisma/client";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -87,40 +82,155 @@ export const getNumberPerValueAreaChart = (data: TremorChartData) => {
 	return valueData;
 };
 
-export const getMetricsKeysAndData = (data: StrKeyAnyVal[]) => {
-	const metricsKeysSet = new Set<string>();
+export function getMetricsKeysAndData<InfoType extends HackerInfo | PresenceInfo>(
+	data: InfoType[],
+	metricsData:
+		| {
+				[key in keyof HackerInfo]: AggregatedHackerInfo[key];
+		  }
+		| {
+				[key in keyof PresenceInfo]: AggregatedPresenceInfo[key];
+		  },
+) {
+	const metricsKeysSet = new Set<keyof InfoType>();
 	data.forEach(datum => {
-		Object.keys(datum).forEach(key => metricsKeysSet.add(key));
+		Object.keys(datum).forEach(key => metricsKeysSet.add(key as keyof (HackerInfo | PresenceInfo)));
 	});
 	const metricsKeys = Array.from(metricsKeysSet);
 
-	const metricsData: AggregatedPresenceInfo = {};
-	metricsKeys.forEach(key => (metricsData[key] = []));
+	metricsKeys.forEach(key => (metricsData[key as keyof (HackerInfo | PresenceInfo)] = []));
 
-	data.forEach((datum: StrKeyAnyVal) => {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-non-null-assertion
-		metricsKeys.forEach(key => metricsData[key]!.push({ title: key, value: 0, name: valToStr(datum[key]) }));
+	data.forEach((datum: HackerInfo | PresenceInfo) => {
+		metricsKeys.forEach(key =>
+			metricsData[key as keyof (HackerInfo | PresenceInfo)].push({
+				title: key.toString(),
+				value: 0,
+				name: valToStr(datum[key as keyof (HackerInfo | PresenceInfo)]),
+			}),
+		);
 	});
 
-	return { metricsKeys, metricsData };
-};
+	return { metricsKeys };
+}
 
-export const getAggregatedHackerInfo = (hackerData: StrKeyAnyVal[]) => {
-	const aggregatedHackerInfo: AggregatedHackerInfo = {};
-	const { metricsKeys, metricsData } = getMetricsKeysAndData(hackerData);
+export const getAggregatedHackerInfo = (hackerData: HackerInfo[]) => {
+	const aggregatedHackerInfo: AggregatedHackerInfo = {
+		id: [],
+		preferredLanguage: [],
+		email: [],
+		firstName: [],
+		lastName: [],
+		gender: [],
+		phoneNumber: [],
+		university: [],
+		studyLevel: [],
+		studyProgram: [],
+		graduationYear: [],
+		attendanceType: [],
+		location: [],
+		transportationRequired: [],
+		dietaryRestrictions: [],
+		accessibilityRequirements: [],
+		shirtSize: [],
+		emergencyContactName: [],
+		emergencyContactRelationship: [],
+		emergencyContactPhoneNumber: [],
+		numberOfPreviousHackathons: [],
+		linkGithub: [],
+		linkLinkedin: [],
+		linkPersonalSite: [],
+		linkResume: [],
+		lookingForwardTo: [],
+		formStartDate: [],
+		formEndDate: [],
+		confirmed: [],
+		userId: [],
+		unsubscribed: [],
+		unsubscribeToken: [],
+		onlyOnline: [],
+		acceptanceExpiry: [],
+		walkIn: [],
+		winner: [],
+	};
+	const metricsData: AggregatedHackerInfo = {
+		id: [],
+		preferredLanguage: [],
+		email: [],
+		firstName: [],
+		lastName: [],
+		gender: [],
+		phoneNumber: [],
+		university: [],
+		studyLevel: [],
+		studyProgram: [],
+		graduationYear: [],
+		attendanceType: [],
+		location: [],
+		transportationRequired: [],
+		dietaryRestrictions: [],
+		accessibilityRequirements: [],
+		shirtSize: [],
+		emergencyContactName: [],
+		emergencyContactRelationship: [],
+		emergencyContactPhoneNumber: [],
+		numberOfPreviousHackathons: [],
+		linkGithub: [],
+		linkLinkedin: [],
+		linkPersonalSite: [],
+		linkResume: [],
+		lookingForwardTo: [],
+		formStartDate: [],
+		formEndDate: [],
+		confirmed: [],
+		userId: [],
+		unsubscribed: [],
+		unsubscribeToken: [],
+		onlyOnline: [],
+		acceptanceExpiry: [],
+		walkIn: [],
+		winner: [],
+	};
+	const { metricsKeys } = getMetricsKeysAndData(hackerData, metricsData);
 
 	metricsKeys.forEach(key => {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		aggregatedHackerInfo[key] = getNumberPerValue(metricsData[key]!);
+		aggregatedHackerInfo[key] = getNumberPerValue(metricsData[key]);
 	});
 
 	return aggregatedHackerInfo;
 };
 
 export const getAggregatedPresenceInfo = (presenceData: Prisma.PresenceInfoGetPayload<true>[]) => {
-	const { metricsKeys, metricsData } = getMetricsKeysAndData(presenceData);
+	const metricsData: AggregatedPresenceInfo = {
+		id: [],
+		checkedIn: [],
+		breakfast1: [],
+		lunch1: [],
+		dinner1: [],
+		snacks: [],
+		snacks2: [],
+		redbull: [],
+		breakfast2: [],
+		lunch2: [],
+		lunch22: [],
+		hackerInfoId: [],
+	};
+	const { metricsKeys } = getMetricsKeysAndData(presenceData, metricsData);
 
-	const aggregatedPresenceData: AggregatedPresenceInfo = {};
+	const aggregatedPresenceData: AggregatedPresenceInfo = {
+		id: [],
+		checkedIn: [],
+		breakfast1: [],
+		lunch1: [],
+		dinner1: [],
+		snacks: [],
+		snacks2: [],
+		redbull: [],
+		breakfast2: [],
+		lunch2: [],
+		lunch22: [],
+		hackerInfoId: [],
+	};
 
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	metricsKeys.forEach(key => (aggregatedPresenceData[key] = getNumberPerValue(metricsData[key]!)));
