@@ -31,7 +31,7 @@ const loadCredentials = (): OAuth2Client => {
  * @return {Promise<threadCredentials>} Thread credentials object with a threadId, threadSubject, and messageId if a thread with the given recipient exists.
  */
  const getExistingThreadCredentials = async (gmail: gmail_v1.Gmail, data: Email): Promise<threadCredentials> => {
-	console.log("Checking for existing thread...")
+	console.info("Checking for existing thread...")
 	// Create an initial threadCredentials object
 	const threadCred: threadCredentials = {
 		threadId: '',
@@ -70,9 +70,8 @@ const loadCredentials = (): OAuth2Client => {
 				// Check if the thread is eligible
 				if (checkThreadCred.threadId && checkThreadCred.threadSubject && checkThreadCred.messageId) {
 					// If the thread has the same labels as the email being sent, return the threadCred object
-					console.log("Checking thread: ", checkThreadCred.threadSubject, " with labels: ", checkThreadCred.sameLabel)
 					if (checkThreadCred.sameLabel){
-						console.log("Found existing thread with same labels!")
+						console.info("Found existing thread with same labels!")
 						return checkThreadCred;
 					}
 					// Otherwise, add the threadCred object to the list of eligible threads
@@ -84,7 +83,7 @@ const loadCredentials = (): OAuth2Client => {
 		// If there are eligible threads, return the latest eligible thread
 		if (eligibleThreads.length > 0) {
 			if (eligibleThreads[0]){
-				console.log("Found existing thread with different labels!")
+				console.info("Found existing thread with different labels!")
 				return eligibleThreads[0];
 			}
 		}
@@ -118,8 +117,6 @@ const loadCredentials = (): OAuth2Client => {
 				// Get the thread subject
 				const headerSubject = headers.find(header => header.name === 'Subject');
 				threadCred.threadSubject = headerSubject?.value ?? '';
-				console.log("Checking message: ", threadCred.threadSubject);
-
 
 				// Set the threadId in the threadCred object
 				threadCred.threadId = message.threadId ?? '';
@@ -127,7 +124,6 @@ const loadCredentials = (): OAuth2Client => {
 				// If the message has the same labels as the email being sent, set the sameLabel property to true
 				const messageLabelIds = message.labelIds ?? [];
 				if (messageLabelIds.length === emailLabelIds.length && emailLabelIds.every(id => messageLabelIds.includes(id))) {
-					console.log("Same labels")
 					threadCred.sameLabel = true;
 				}
 
