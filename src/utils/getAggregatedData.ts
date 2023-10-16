@@ -16,7 +16,13 @@ const getUniqueValuesFromData = (data: TremorChartData) => {
 		}
 	});
 
-	const values = Array.from(valueSet).sort();
+	const values = Array.from(valueSet).sort((a, b) => {
+		if ((a === valToStr(true) && b === valToStr(false)) || (a === valToStr(false) && b === valToStr(true))) {
+			return a === valToStr(true) ? -1 : 1;
+		} else {
+			return a.localeCompare(b);
+		}
+	});
 	return values;
 };
 

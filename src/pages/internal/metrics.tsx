@@ -1,4 +1,4 @@
-import { TabGroup, TabList, Tab, TabPanels, TabPanel } from "@tremor/react";
+import { Divider, TabGroup, TabList, Tab, TabPanels, TabPanel } from "@tremor/react";
 
 import DemographicsTab from "../../components/DemographicsTab";
 import MainEventTab from "../../components/MainEventTab";
@@ -60,13 +60,14 @@ type MetricsViewProps = {
 
 export const MetricsView = ({ hackerData, presenceData }: MetricsViewProps) => {
 	return (
-		<main className="mx-auto max-w-7xl p-4 md:p-10">
+		<main className="mx-auto max-w-7xl bg-background1 p-4 md:p-10">
 			<TabGroup>
-				<TabList className="mt-8">
+				<TabList className="ml-10 mr-10 mt-8 w-full justify-between p-3" variant="solid">
 					<Tab>Hacker Demographics</Tab>
 					<Tab>Main Event</Tab>
 					<Tab>Action Log</Tab>
 				</TabList>
+				<Divider className="ml-10 mr-10 mt-8 w-full"></Divider>
 				<TabPanels>
 					<TabPanel>
 						<DemographicsTab

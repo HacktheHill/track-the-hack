@@ -26,30 +26,26 @@ import {
 import type { StrKeyAnyVal, StrKeyNumVal, TremorChartData } from "../utils/types";
 
 type TremorDefaultColors = (
-	| "green"
-	| "red"
-	| "blue"
-	| "orange"
-	| "purple"
-	| "gray"
-	| "lime"
+	| "emerald"
 	| "rose"
 	| "sky"
+	| "fuchsia"
+	| "lime"
+	| "violet"
 	| "yellow"
 	| "indigo"
+	| "orange"
 )[];
 const defaultColors: TremorDefaultColors = [
-	"green",
-	"red",
-	"blue",
-	"orange",
-	"purple",
-	"gray",
-	"lime",
+	"emerald",
 	"rose",
 	"sky",
+	"fuchsia",
+	"lime",
+	"violet",
 	"yellow",
 	"indigo",
+	"orange",
 ];
 
 interface GetCategoriesFromDataProps {
@@ -199,7 +195,9 @@ const EventsTable: React.FC<EventsTableProps> = ({ title, data, eventNameMapping
 							<TableCell>
 								<Text>
 									{" "}
-									<Badge color={item.state ? "green" : "red"}>{item.state ? "Open" : "Closed"}</Badge>
+									<Badge color={item.state ? "emerald" : "rose"}>
+										{item.state ? "Open" : "Closed"}
+									</Badge>
 								</Text>
 							</TableCell>
 							<TableCell>{item.utilization}%</TableCell>
