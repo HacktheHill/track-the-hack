@@ -16,7 +16,7 @@ const checkInEventsNameMap = {
 	dinner1: "Dinner 1",
 	snacks: "Snacks",
 	snacks2: "Snacks 2",
-	breakfast2: "Breakfast 1",
+	breakfast2: "Breakfast 2",
 	lunch2: "Lunch 2",
 	lunch22: "Lunch 2 2 (Dinner 2?)",
 	redbull: "Redbull",

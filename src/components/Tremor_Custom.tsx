@@ -146,7 +146,7 @@ const MultiCheckInEventsChart: React.FC<MultiCheckInEventsChartProps> = ({
 	selectKeys,
 	eventNameMapping,
 }) => {
-	const [selectedKey, setSelectedKey] = useState("");
+	const [selectedKey, setSelectedKey] = useState(Object.keys(eventNameMapping)[0]);
 	const handleOnChange = (value: string) => {
 		setSelectedKey(value);
 	};

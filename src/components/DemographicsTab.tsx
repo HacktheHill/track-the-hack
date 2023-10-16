@@ -15,7 +15,7 @@ interface DemographicsTabProps {
 
 export default function DemographicsTab(props: DemographicsTabProps) {
 	const { aggregatedHackerData, hackerData } = props;
-	const [selectedKey, setSelectedKey] = useState("");
+	const [selectedKey, setSelectedKey] = useState("all");
 	const [filteredAggregatedHackerData, setFilteredAggregatedHackerInfo] = useState(aggregatedHackerData);
 
 	const handleOnSelectChange = (key: string) => {
