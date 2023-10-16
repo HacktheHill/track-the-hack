@@ -30,48 +30,46 @@ const loadCredentials = (): OAuth2Client => {
  * @param {Email} data Email data
  * @return {Promise<threadCredentials>} Thread credentials object with a threadId, threadSubject, and messageId if a thread with the given recipient exists.
  */
- const getExistingThreadCredentials = async (gmail: gmail_v1.Gmail, data: Email): Promise<threadCredentials> => {
-	console.info("Checking for existing thread...")
+const getExistingThreadCredentials = async (gmail: gmail_v1.Gmail, data: Email): Promise<threadCredentials> => {
+	console.info("Checking for existing thread...");
 	// Create an initial threadCredentials object
 	const threadCred: threadCredentials = {
-		threadId: '',
-		messageId: '',
-		threadSubject: '',
+		threadId: "",
+		messageId: "",
+		threadSubject: "",
 		sameLabel: false,
 	};
 
 	// Get the list of threads with the given recipient
-    const response = await gmail.users.threads.list({
-        userId: "me",
-        q: `to:${data.recipient}`,
-    });
-
+	const response = await gmail.users.threads.list({
+		userId: "me",
+		q: `to:${data.recipient}`,
+	});
 
 	// If there are threads with the given recipient
-    if (response.data.threads && response.data.threads.length > 0) {
+	if (response.data.threads && response.data.threads.length > 0) {
 		const eligibleThreads: threadCredentials[] = [];
 		const labelIds = await getLabelIds(gmail, data.labels);
 
-
-        // Check each thread with the given recipient
+		// Check each thread with the given recipient
 		for (const thread of response.data.threads) {
 			const threadId = thread.id as string;
 			// Get the thread
 			const responseThread = await gmail.users.threads.get({
-				userId: 'me',
+				userId: "me",
 				id: threadId,
-				format: 'metadata',
+				format: "metadata",
 			});
 
 			const messages = responseThread.data.messages;
 			// Check if the thread is eligible and add it to the list of eligible threads
 			if (messages && messages.length > 0) {
-				const checkThreadCred = updateThreadCredentialsFromMessages(labelIds,threadCred,messages);
+				const checkThreadCred = updateThreadCredentialsFromMessages(labelIds, threadCred, messages);
 				// Check if the thread is eligible
 				if (checkThreadCred.threadId && checkThreadCred.threadSubject && checkThreadCred.messageId) {
 					// If the thread has the same labels as the email being sent, return the threadCred object
-					if (checkThreadCred.sameLabel){
-						console.info("Found existing thread with same labels!")
+					if (checkThreadCred.sameLabel) {
+						console.info("Found existing thread with same labels!");
 						return checkThreadCred;
 					}
 					// Otherwise, add the threadCred object to the list of eligible threads
@@ -82,60 +80,66 @@ const loadCredentials = (): OAuth2Client => {
 		}
 		// If there are eligible threads, return the latest eligible thread
 		if (eligibleThreads.length > 0) {
-			if (eligibleThreads[0]){
-				console.info("Found existing thread with different labels!")
+			if (eligibleThreads[0]) {
+				console.info("Found existing thread with different labels!");
 				return eligibleThreads[0];
 			}
 		}
-    }
+	}
 	return threadCred;
-}
+};
 
 /**
- * Update thread credentials based on the headers of messages within a thread based on if the message is a draft or from the recipient. 
- * If the message leave the threadCred object empty. 
+ * Update thread credentials based on the headers of messages within a thread based on if the message is a draft or from the recipient.
+ * If the message leave the threadCred object empty.
  * If the message has the same labels as the email being sent, set the sameLabel property to true.
- * 
+ *
  * @param {string[]} emailLabelIds List of label IDs for the email being sent
  * @param {threadCredentials} threadCred Thread credentials object to be updated
  * @param {gmail_v1.Schema$Message[]} messages List of messages in the thread
  * @return {threadCredentials} Updated thread credentials object with the latest threadId, threadSubject, and messageId
  */
- const updateThreadCredentialsFromMessages = (emailLabelIds: string[],threadCred: threadCredentials, messages: gmail_v1.Schema$Message[]): threadCredentials => {
+const updateThreadCredentialsFromMessages = (
+	emailLabelIds: string[],
+	threadCred: threadCredentials,
+	messages: gmail_v1.Schema$Message[],
+): threadCredentials => {
 	// Reverse the order of the messages so that the most recent message is first
 	messages.reverse();
 	// For each message in the thread
-    for (const message of messages) {
-        const headers = message.payload?.headers;
-        if (headers && headers.length > 0) {
+	for (const message of messages) {
+		const headers = message.payload?.headers;
+		if (headers && headers.length > 0) {
 			// If the message is a draft or from the recipient, skip it
-			if (!message.labelIds?.includes('DRAFT') && !message.labelIds?.includes('SENT')) {
+			if (!message.labelIds?.includes("DRAFT") && !message.labelIds?.includes("SENT")) {
 				// Get the Message-ID header
-				const headerMessageId = headers.find(header => header.name === 'Message-ID');
-				threadCred.messageId = headerMessageId?.value ?? '';
+				const headerMessageId = headers.find(header => header.name === "Message-ID");
+				threadCred.messageId = headerMessageId?.value ?? "";
 
 				// Get the thread subject
-				const headerSubject = headers.find(header => header.name === 'Subject');
-				threadCred.threadSubject = headerSubject?.value ?? '';
+				const headerSubject = headers.find(header => header.name === "Subject");
+				threadCred.threadSubject = headerSubject?.value ?? "";
 
 				// Set the threadId in the threadCred object
-				threadCred.threadId = message.threadId ?? '';
+				threadCred.threadId = message.threadId ?? "";
 
 				// If the message has the same labels as the email being sent, set the sameLabel property to true
 				const messageLabelIds = message.labelIds ?? [];
-				if (messageLabelIds.length === emailLabelIds.length && emailLabelIds.every(id => messageLabelIds.includes(id))) {
+				if (
+					messageLabelIds.length === emailLabelIds.length &&
+					emailLabelIds.every(id => messageLabelIds.includes(id))
+				) {
 					threadCred.sameLabel = true;
 				}
 
 				return threadCred;
 			}
-        }
-    }
-    return threadCred;
-}
+		}
+	}
+	return threadCred;
+};
 
-
-/** 
+/**
  * Get the label IDs for the given label names
  *
  * @param {gmail_v1.Gmail} gmail Gmail API instance
@@ -220,7 +224,7 @@ export const createDraft = async (data: Email) => {
 		requestBody: {
 			message: {
 				raw: generateBody(data, threadCred),
-				threadId: threadCred.threadId,				
+				threadId: threadCred.threadId,
 			},
 		},
 	});
