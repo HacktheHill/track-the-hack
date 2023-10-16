@@ -5,7 +5,7 @@ import { presenceRouter } from "./routers/presence";
 import { toolsRouter } from "./routers/tools";
 import { userRouter } from "./routers/users";
 import { createTRPCRouter } from "./trpc";
-import {auditLogRouter} from "./routers/auditLog";
+import { auditLogRouter } from "./routers/auditLog";
 
 /**
  * This is the primary router for your server.
