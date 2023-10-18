@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Card, Grid, Select, SelectItem } from "@tremor/react";
-import type { CustomBarListProps } from "./Tremor_Custom";
 import { CustomBarList, CustomDonutChart, CustomSmallTextCard, CustomAreaChart, CustomBarChart } from "./Tremor_Custom";
 import { type AggregatedHackerInfo } from "../utils/types";
 import { getNumberPerValueBarChart, getNumberPerValueAreaChart } from "../utils/getAggregatedData";
@@ -116,21 +115,21 @@ export default function DemographicsTab(props: DemographicsTabProps) {
 					<Card>
 						<CustomBarList
 							title="Top Levels of Study"
-							data={filteredAggregatedHackerData.studyLevel as CustomBarListProps["data"]}
+							data={filteredAggregatedHackerData.studyLevel}
 							limitEntries={5}
 						/>
 					</Card>
 					<Card>
 						<CustomBarList
 							title="Top Applying Schools"
-							data={filteredAggregatedHackerData.university as CustomBarListProps["data"]}
+							data={filteredAggregatedHackerData.university}
 							limitEntries={5}
 						/>
 					</Card>
 					<Card>
 						<CustomBarList
 							title="Top Applying Programs"
-							data={filteredAggregatedHackerData.studyProgram as CustomBarListProps["data"]}
+							data={filteredAggregatedHackerData.studyProgram}
 							limitEntries={5}
 						/>
 					</Card>
@@ -148,7 +147,7 @@ export default function DemographicsTab(props: DemographicsTabProps) {
 					<Card>
 						<CustomBarList
 							title="Dietary Restrictions"
-							data={filteredAggregatedHackerData.dietaryRestrictions as CustomBarListProps["data"]}
+							data={filteredAggregatedHackerData.dietaryRestrictions}
 						/>
 					</Card>
 					<Card>
@@ -159,7 +158,6 @@ export default function DemographicsTab(props: DemographicsTabProps) {
 					{/* TODO: Need application date data to complete */}
 					<CustomAreaChart
 						title="Application Confirmed"
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 						data={getNumberPerValueAreaChart(filteredAggregatedHackerData.confirmed)}
 					/>
 				</Card>

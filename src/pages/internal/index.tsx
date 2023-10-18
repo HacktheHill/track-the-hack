@@ -23,7 +23,7 @@ const Internal: NextPage = () => {
 			integrated={true}
 			title={tInternal("title")}
 		>
-			{/* TODO: some kind of menu for selecting internal pages */}
+			{/* TODO: some kind of menu for selecting things in the internal page */}
 			<OnlyRole filter={role => role === Role.ORGANIZER}>
 				<Metrics />
 			</OnlyRole>

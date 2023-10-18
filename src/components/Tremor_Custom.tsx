@@ -64,7 +64,6 @@ interface GetCategoriesFromDataProps {
 }
 
 const getCategoriesFromData = (data: GetCategoriesFromDataProps["data"], isLikeBarChart = false) => {
-	// Get the categories
 	const allKeys = data.reduce((acc, item) => {
 		Object.keys(item).forEach(key => {
 			acc.add(key);
@@ -79,7 +78,6 @@ const getCategoriesFromData = (data: GetCategoriesFromDataProps["data"], isLikeB
 		allKeys.delete("value");
 	}
 
-	// Convert the Set to an array
 	const keysNotTitle = Array.from(allKeys);
 
 	return keysNotTitle;
@@ -135,11 +133,7 @@ interface CustomSmallTextCardProps {
 	text?: string | number;
 }
 
-const CustomSmallTextCard: React.FC<CustomSmallTextCardProps> = ({
-	title,
-	metric = "UKN", // Default value if metric is not provided
-	text = "", // Default value if text is not provided
-}) => {
+const CustomSmallTextCard: React.FC<CustomSmallTextCardProps> = ({ title, metric = "UKN", text = "" }) => {
 	return (
 		<Card>
 			<Title>{title}</Title>
@@ -155,16 +149,16 @@ interface MultiCheckInEventsChartProps {
 	title: string;
 	data: { [key: string]: TremorChartData };
 	selectKeys: string[];
-	eventNameMapping: { [key: string]: string };
+	eventKeyToLabel: { [key: string]: string };
 }
 
 const MultiCheckInEventsChart: React.FC<MultiCheckInEventsChartProps> = ({
 	title,
 	data,
 	selectKeys,
-	eventNameMapping,
+	eventKeyToLabel,
 }) => {
-	const [selectedKey, setSelectedKey] = useState(Object.keys(eventNameMapping)[0]);
+	const [selectedKey, setSelectedKey] = useState(Object.keys(eventKeyToLabel)[0]);
 	const handleOnChange = (value: string) => {
 		setSelectedKey(value);
 	};
@@ -178,7 +172,7 @@ const MultiCheckInEventsChart: React.FC<MultiCheckInEventsChartProps> = ({
 			<Select value={selectedKey} onValueChange={handleOnChange}>
 				{selectKeys.map((eventKey, idx) => (
 					<SelectItem value={eventKey} key={idx.toString()}>
-						{eventNameMapping[eventKey]}
+						{eventKeyToLabel[eventKey]}
 					</SelectItem>
 				))}
 			</Select>
@@ -189,10 +183,10 @@ const MultiCheckInEventsChart: React.FC<MultiCheckInEventsChartProps> = ({
 interface EventsTableProps {
 	title: string;
 	data: { title: string; state: boolean; utilization: number }[];
-	eventNameMapping: { [key: string]: string };
+	eventKeyToLabel: { [key: string]: string };
 }
 
-const EventsTable: React.FC<EventsTableProps> = ({ title, data, eventNameMapping }) => {
+const EventsTable: React.FC<EventsTableProps> = ({ title, data, eventKeyToLabel }) => {
 	return (
 		<>
 			<Title>{title}</Title>
@@ -208,7 +202,7 @@ const EventsTable: React.FC<EventsTableProps> = ({ title, data, eventNameMapping
 				<TableBody>
 					{data.map(item => (
 						<TableRow key={item.title}>
-							<TableCell>{eventNameMapping[item.title]}</TableCell>
+							<TableCell>{eventKeyToLabel[item.title]}</TableCell>
 							<TableCell>
 								<Text>
 									{" "}
@@ -247,7 +241,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ title, data }) => {
 						</Flex>
 						<CategoryBar
 							values={[item.distributed, item.forecasted, item.unallocated]}
-							colors={["red", "yellow", "green"]}
+							colors={["rose", "yellow", "emerald"]}
 							className="mt-3"
 						/>
 					</div>
@@ -256,7 +250,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ title, data }) => {
 			<Legend
 				className="mt-3"
 				categories={["Disturbed", "Forecasted", "Unallocated"]}
-				colors={["red", "yellow", "green"]}
+				colors={["rose", "yellow", "emerald"]}
 			/>
 		</>
 	);

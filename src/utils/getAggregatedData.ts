@@ -208,7 +208,6 @@ export const getAggregatedHackerInfo = (hackerData: HackerInfo[]) => {
 	const { metricsKeys } = getMetricsKeysAndData(hackerData, metricsData);
 
 	metricsKeys.forEach(key => {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		aggregatedHackerInfo[key] = getNumberPerValue(metricsData[key]);
 	});
 

@@ -1,4 +1,5 @@
 import { faker } from "@faker-js/faker";
+import { Language } from "@prisma/client";
 
 // generates dummy hacker's info
 export const hackerInfo = ({ email, firstName, lastName, phoneNumber }: { [key: string]: string }) => {
@@ -16,7 +17,7 @@ export const hackerInfo = ({ email, firstName, lastName, phoneNumber }: { [key: 
 	}
 
 	return {
-		preferredLanguage: faker.helpers.arrayElement(["EN", "FR"]),
+		preferredLanguage: faker.helpers.arrayElement([Language.EN, Language.FR]),
 		email,
 		firstName,
 		lastName,

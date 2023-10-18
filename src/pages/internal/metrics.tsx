@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import DemographicsTab from "../../components/DemographicsTab";
 import MainEventTab from "../../components/MainEventTab";
 
-import { type Prisma } from "@prisma/client";
+import type { HackerInfo, PresenceInfo } from "@prisma/client";
 import type { GetStaticProps, NextPage } from "next";
 import { trpc } from "../../utils/api";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
@@ -48,12 +48,11 @@ const Metrics: NextPage = () => {
 	} else if (hackerStatus === "success" || presenceStatus === "success") {
 		const hackers = hackerQuery.data?.pages.map(page => page.results).flat();
 		const presences = presenceQuery.data?.pages.map(page => page.results).flat();
-		console.log({ presences });
 
 		if (!hackers || !presences) {
 			return (
 				<div className="flex flex-col items-center justify-center gap-4 px-16 py-12">
-					<Error message={!hackers ? "No hackers info?" : "No presence info?"} />
+					<Error message={`No ${!hackers ? "hackers" : ""} ${!presences ? "presences" : ""} info`} />
 				</div>
 			);
 		}
@@ -63,8 +62,8 @@ const Metrics: NextPage = () => {
 };
 
 type MetricsViewProps = {
-	hackerData: Prisma.HackerInfoGetPayload<true>[];
-	presenceData: Prisma.PresenceInfoGetPayload<true>[];
+	hackerData: HackerInfo[];
+	presenceData: PresenceInfo[];
 };
 
 export const MetricsView = ({ hackerData, presenceData }: MetricsViewProps) => {

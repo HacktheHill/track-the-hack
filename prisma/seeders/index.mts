@@ -10,15 +10,15 @@ import { events } from "./events.mjs";
 const prisma = new PrismaClient();
 
 async function main() {
-	// console.log("Creating dummy users...");
+	console.log("Creating dummy users...");
 
-	// const users = generateUsers(10);
-	// await insertRecords(prisma.user, users);
+	const users = generateUsers(10);
+	await insertRecords(prisma.user, users);
 
-	// console.log("Creating dummy hackers info...");
+	console.log("Creating dummy hackers info...");
 
-	// const hackerInfos = generateHackerInfos(10);
-	// await insertRecords(prisma.hackerInfo, hackerInfos);
+	const hackerInfos = generateHackerInfos(10);
+	await insertRecords(prisma.hackerInfo, hackerInfos);
 
 	console.log("Creating dummy presence info...");
 

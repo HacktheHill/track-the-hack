@@ -1,6 +1,5 @@
 import { Card, Grid } from "@tremor/react";
-import type { PresenceInfo } from "@prisma/client";
-import { type Prisma } from "@prisma/client";
+import type { HackerInfo, PresenceInfo } from "@prisma/client";
 import {
 	CustomDonutChart,
 	CustomSmallTextCard,
@@ -52,8 +51,8 @@ const InventoryData = [
 interface MainEventTabProps {
 	aggregatedHackerData: AggregatedHackerInfo;
 	aggregatedPresenceData: AggregatedPresenceInfo;
-	hackerData: Prisma.HackerInfoGetPayload<true>[];
-	presenceData: Prisma.PresenceInfoGetPayload<true>[];
+	hackerData: HackerInfo[];
+	presenceData: PresenceInfo[];
 }
 
 export default function MainEventTab({
@@ -135,7 +134,7 @@ export default function MainEventTab({
 							// TODO: should show how many people had 0, 1, 2, etc check ins for the event once that info is in the db
 							data={multiCheckInEventsData}
 							selectKeys={Object.keys(multiCheckInEventsKeyToLabel).filter(key => key !== "checkedIn")}
-							eventNameMapping={multiCheckInEventsKeyToLabel}
+							eventKeyToLabel={multiCheckInEventsKeyToLabel}
 						/>
 					</Card>
 				</Grid>
@@ -143,7 +142,7 @@ export default function MainEventTab({
 					<EventsTable
 						title="All Event States"
 						data={eventsTableData}
-						eventNameMapping={multiCheckInEventsKeyToLabel}
+						eventKeyToLabel={multiCheckInEventsKeyToLabel}
 					/>
 				</Card>
 
