@@ -1,6 +1,7 @@
 import type { TremorChartData, StrKeyNumVal, AggregatedPresenceInfo, AggregatedHackerInfo } from "./types";
 import type { HackerInfo, PresenceInfo } from "@prisma/client";
 import { type Prisma } from "@prisma/client";
+import { ShirtSize } from "@prisma/client";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const valToStr = (val: any): string => {
@@ -16,10 +17,17 @@ const getUniqueValuesFromData = (data: TremorChartData) => {
 		}
 	});
 
+	const shirtSizes: ShirtSize[] = ["S", "M", "L", "XL", "XXL"];
+
 	const values = Array.from(valueSet).sort((a, b) => {
 		// sorting valToStr(true) before valToStr(false) so the "true" value is green and the other is red in the data charts
 		if ((a === valToStr(true) && b === valToStr(false)) || (a === valToStr(false) && b === valToStr(true))) {
 			return a === valToStr(true) ? -1 : 1;
+			// sort shirt sizes in the given order
+		} else if (shirtSizes.includes(a as ShirtSize) && shirtSizes.includes(b as ShirtSize)) {
+			const idxA = shirtSizes.findIndex(size => size == a);
+			const idxB = shirtSizes.findIndex(size => size == b);
+			return (idxA - idxB) / Math.abs(idxA - idxB);
 		} else {
 			return a.localeCompare(b);
 		}
