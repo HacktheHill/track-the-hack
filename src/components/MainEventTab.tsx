@@ -1,4 +1,5 @@
 import { Card, Grid } from "@tremor/react";
+import type { PresenceInfo } from "@prisma/client";
 import { type Prisma } from "@prisma/client";
 import {
 	CustomDonutChart,
@@ -7,20 +8,18 @@ import {
 	EventsTable,
 	InventoryTable,
 } from "./Tremor_Custom";
+import { keyToLabel } from "../pages/hackers/hacker";
 import type { AggregatedHackerInfo, AggregatedPresenceInfo } from "../utils/types";
 
-// TODO: update these with actual event names
-const checkInEventsNameMap = {
-	breakfast1: "Breakfast 1",
-	lunch1: "Lunch 1",
-	dinner1: "Dinner 1",
-	snacks: "Snacks",
-	snacks2: "Snacks 2",
-	breakfast2: "Breakfast 2",
-	lunch2: "Lunch 2",
-	lunch22: "Lunch 2 2",
+const multiCheckInEventsKeyToLabel = Object.entries({
+	...keyToLabel,
 	redbull: "Redbull",
-};
+})
+	.filter(([key]) => key !== "checkedIn")
+	.reduce((acc, [key, label]) => ({ ...acc, [key]: label }), {}) as Record<
+	keyof Omit<PresenceInfo, "id" | "hackerInfoId" | "checkedIn">,
+	string
+>;
 
 // TODO: remove InventoryData once this data is in the db
 const InventoryData = [
@@ -84,11 +83,11 @@ export default function MainEventTab({
 	}).length;
 
 	const multiCheckInEventsData = Object.entries(aggregatedPresenceData)
-		.filter(([key]) => key !== "checkedIn" && Object.keys(checkInEventsNameMap).includes(key))
+		.filter(([key]) => key !== "checkedIn" && Object.keys(multiCheckInEventsKeyToLabel).includes(key))
 		.reduce((acc, [key, datum]) => ({ ...acc, [key]: [...datum] }), {});
 
 	const eventsTableData = Object.entries(aggregatedPresenceData)
-		.filter(([key]) => Object.keys(checkInEventsNameMap).includes(key))
+		.filter(([key]) => Object.keys(multiCheckInEventsKeyToLabel).includes(key))
 		.map(([key, datum]) => {
 			const utilizedEventData = datum.filter(dataValue => dataValue.name === "Yes");
 			return {
@@ -135,8 +134,8 @@ export default function MainEventTab({
 							title="Multi-Check-In Events"
 							// TODO: should show how many people had 0, 1, 2, etc check ins for the event once that info is in the db
 							data={multiCheckInEventsData}
-							selectKeys={Object.keys(checkInEventsNameMap).filter(key => key !== "checkedIn")}
-							eventNameMapping={checkInEventsNameMap}
+							selectKeys={Object.keys(multiCheckInEventsKeyToLabel).filter(key => key !== "checkedIn")}
+							eventNameMapping={multiCheckInEventsKeyToLabel}
 						/>
 					</Card>
 				</Grid>
@@ -144,7 +143,7 @@ export default function MainEventTab({
 					<EventsTable
 						title="All Event States"
 						data={eventsTableData}
-						eventNameMapping={checkInEventsNameMap}
+						eventNameMapping={multiCheckInEventsKeyToLabel}
 					/>
 				</Card>
 

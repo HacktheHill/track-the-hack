@@ -90,6 +90,19 @@ const Hacker: NextPage = () => {
 	);
 };
 
+export const keyToLabel = {
+	checkedIn: "Checked In",
+	breakfast1: "Breakfast March 4th",
+	lunch1: "Lunch March 4th",
+	dinner1: "Dinner March 4th",
+	snacks: "Snacks",
+	snacks2: "Snacks 2",
+	redbull: "RedBull",
+	breakfast2: "Breakfast March 5th",
+	lunch2: "Lunch March 5th",
+	lunch22: "Lunch March 5th 2",
+} as const satisfies Record<keyof Omit<PresenceInfo, "id" | "hackerInfoId">, string>;
+
 type HackerViewProps = {
 	hackerData: HackerInfo;
 	presenceData: PresenceInfo;
@@ -105,19 +118,6 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 
 	const paragraphClass = "flex justify-between gap-4 text-right";
 	const boldClass = "text-left font-bold";
-
-	const keyToLabel = {
-		checkedIn: "Checked In",
-		breakfast1: "Breakfast March 4th",
-		lunch1: "Lunch March 4th",
-		dinner1: "Dinner March 4th",
-		snacks: "Snacks",
-		snacks2: "Snacks 2",
-		redbull: "RedBull",
-		breakfast2: "Breakfast March 5th",
-		lunch2: "Lunch March 5th",
-		lunch22: "Lunch March 5th 2",
-	} as const satisfies Record<keyof Omit<PresenceInfo, "id" | "hackerInfoId">, string>;
 
 	return (
 		<>

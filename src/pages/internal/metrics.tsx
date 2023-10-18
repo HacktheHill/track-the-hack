@@ -4,25 +4,25 @@ import { useEffect, useState } from "react";
 import DemographicsTab from "../../components/DemographicsTab";
 import MainEventTab from "../../components/MainEventTab";
 
-import { Role, type Prisma, type PresenceInfo, type HackerInfo } from "@prisma/client";
+import { type Prisma } from "@prisma/client";
 import type { GetStaticProps, NextPage } from "next";
 import { trpc } from "../../utils/api";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useTranslation } from "next-i18next";
 
-import App from "../../components/App";
-import OnlyRole from "../../components/OnlyRole";
 import { getAggregatedHackerInfo, getAggregatedPresenceInfo } from "../../utils/getAggregatedData";
+import Loading from "../../components/Loading";
+import Error from "../../components/Error";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
-		props: await serverSideTranslations(locale ?? "en", ["common"]),
+		props: await serverSideTranslations(locale ?? "en", ["common", "internal"]),
 	};
 };
 
 const Metrics: NextPage = () => {
 	const { t } = useTranslation("common");
-	const { ...hackerQuery } = trpc.hackers.all.useInfiniteQuery(
+	const { status: hackerStatus, ...hackerQuery } = trpc.hackers.all.useInfiniteQuery(
 		{
 			limit: 50,
 		},
@@ -30,7 +30,7 @@ const Metrics: NextPage = () => {
 			getNextPageParam: lastPage => lastPage.nextCursor,
 		},
 	);
-	const presenceQuery = trpc.presence.all.useInfiniteQuery(
+	const { status: presenceStatus, ...presenceQuery } = trpc.presence.all.useInfiniteQuery(
 		{
 			limit: 50,
 		},
@@ -39,19 +39,29 @@ const Metrics: NextPage = () => {
 		},
 	);
 
-	const hackers = hackerQuery.data?.pages.map(page => page.results).flat() as HackerInfo[];
-	const presences = presenceQuery.data?.pages.map(page => page.results).flat() as PresenceInfo[];
-
-	return (
-		<App className="mx-auto h-full w-full overflow-y-auto bg-gradient-to-b from-background2 to-background1 px-4 py-12">
-			<div className="mx-auto flex max-w-2xl flex-col gap-4">
-				<OnlyRole filter={role => role === Role.ORGANIZER}>
-					<MetricsView hackerData={hackers} presenceData={presences} />
-				</OnlyRole>
-				<OnlyRole filter={role => role === Role.HACKER}>{t("not-authorized-to-view-this-page")}</OnlyRole>
+	if (hackerStatus === "loading" || presenceStatus === "loading") {
+		return <Loading />;
+	} else if (hackerStatus === "error" || presenceStatus === "error") {
+		return (
+			<div className="x-16 flex h-full flex-col items-center justify-center gap-4 px-16 py-12">
+				<Error message={hackerQuery.error?.message ?? presenceQuery.error?.message ?? ""} />
 			</div>
-		</App>
-	);
+		);
+	} else if (hackerStatus === "success" || presenceStatus === "success") {
+		const hackers = hackerQuery.data?.pages.map(page => page.results).flat();
+		const presences = presenceQuery.data?.pages.map(page => page.results).flat();
+		console.log({ presences });
+
+		if (!hackers || !presences) {
+			return (
+				<div className="flex flex-col items-center justify-center gap-4 px-16 py-12">
+					<Error message={!hackers ? "No hackers info?" : "No presence info?"} />
+				</div>
+			);
+		}
+
+		return <MetricsView hackerData={hackers} presenceData={presences} />;
+	}
 };
 
 type MetricsViewProps = {

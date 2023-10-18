@@ -93,6 +93,7 @@ const Links = ({ bottom }: LinkProps) => {
 							}
 						>
 							{bottom ? (
+								// TODO: update image once we  have an svg
 								<Image priority src="/assets/list.svg" height={32} width={32} alt={t("internal")} />
 							) : (
 								t("internal")
