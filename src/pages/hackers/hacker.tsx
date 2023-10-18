@@ -27,6 +27,9 @@ const Hacker: NextPage = () => {
 
 	const hackerQuery = trpc.hackers.get.useQuery({ id: id ?? "" }, { enabled: !!id });
 	const presenceQuery = trpc.presence.getFromHackerId.useQuery({ id: id ?? "" }, { enabled: !!id });
+	
+	const nextHackerQuery = trpc.hackers.getNext.useQuery({ id: id ?? "" }, { enabled: !!id });
+	const prevHackerQuery = trpc.hackers.getPrev.useQuery({ id: id ?? "" }, { enabled: !!id });
 
 	if (hackerQuery.isLoading || hackerQuery.data == null) {
 		return (
@@ -82,6 +85,24 @@ const Hacker: NextPage = () => {
 		>
 			<div className="mx-auto flex max-w-2xl flex-col gap-4">
 				<OnlyRole filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
+					<div className="flex justify-between">
+						{prevHackerQuery.data ? (<a
+							href={`/hackers/hacker?id=${prevHackerQuery.data.id}`}
+							className="flex items-center justify-center gap-2 rounded-md bg-gray-800 px-4 py-2 text-white hover:bg-gray-700"
+						>
+							Previous
+						</a>
+						) : (
+							<a></a>
+						)}
+						{nextHackerQuery.data && ( <a
+							href={`/hackers/hacker?id=${nextHackerQuery.data.id}`}
+							className="flex items-center justify-center gap-2 rounded-md bg-gray-800 px-4 py-2 text-white hover:bg-gray-700"
+						>
+							Next
+						</a>
+						)}
+					</div>
 					<HackerView hackerData={hackerQuery.data} presenceData={presenceQuery.data} />
 				</OnlyRole>
 				<OnlyRole filter={role => role === Role.HACKER}>{t("not-authorized-to-view-this-page")}</OnlyRole>
