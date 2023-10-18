@@ -8,7 +8,6 @@ import { type Prisma } from "@prisma/client";
 import type { GetStaticProps, NextPage } from "next";
 import { trpc } from "../../utils/api";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
-import { useTranslation } from "next-i18next";
 
 import { getAggregatedHackerInfo, getAggregatedPresenceInfo } from "../../utils/getAggregatedData";
 import Loading from "../../components/Loading";
@@ -21,7 +20,6 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
 };
 
 const Metrics: NextPage = () => {
-	const { t } = useTranslation("common");
 	const { status: hackerStatus, ...hackerQuery } = trpc.hackers.all.useInfiniteQuery(
 		{
 			limit: 50,

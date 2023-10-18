@@ -15,12 +15,13 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
 };
 
 const Internal: NextPage = () => {
-	const { t } = useTranslation(["common", "internal", "navbar"]);
+	const { t: tInternal } = useTranslation("internal");
+	const { t: tCommon } = useTranslation("common");
 	return (
 		<App
 			className="overflow-y-auto bg-gradient-to-b from-background2 to-background1"
 			integrated={true}
-			title={t("title")}
+			title={tInternal("title")}
 		>
 			{/* TODO: some kind of menu for selecting internal pages */}
 			<OnlyRole filter={role => role === Role.ORGANIZER}>
@@ -28,7 +29,7 @@ const Internal: NextPage = () => {
 			</OnlyRole>
 			<OnlyRole filter={role => role !== Role.ORGANIZER}>
 				<div className="flex flex-col items-center justify-center gap-4 px-16 py-12">
-					<Error message={t("not-authorized-to-view-this-page")} />
+					<Error message={tCommon("not-authorized-to-view-this-page")} />
 				</div>
 			</OnlyRole>
 		</App>
