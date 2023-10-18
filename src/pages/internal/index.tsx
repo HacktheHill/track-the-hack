@@ -14,7 +14,7 @@ type PresenceInfo = Prisma.PresenceInfoGetPayload<true>;
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
-		props: await serverSideTranslations(locale ?? "en", ["common"]),
+		props: await serverSideTranslations(locale ?? "en", ["common", "internal", "navbar"]),
 	};
 };
 
@@ -74,8 +74,12 @@ const Internal: NextPage = () => {
 			);
 		}
 
-		// TODO: some kind of menu for selecting internal pages
-		return <MetricsView hackerData={hackers} presenceData={presences} />;
+		return (
+			<App className="overflow-y-auto bg-background1" integrated={true} title={t("title")}>
+				{/* TODO: some kind of menu for selecting internal pages */}
+				<MetricsView hackerData={hackers} presenceData={presences} />;
+			</App>
+		);
 	}
 };
 
