@@ -112,9 +112,6 @@ const Logs: NextPage = () => {
 					<Error message={t("not-authorized-to-view-this-page")} />
 				</div>
 			)}
-			<div className="flex justify-center p-4">
-				<p className="italic text-gray-500">{t("comment")}</p>
-			</div>
 		</App>
 	);
 };
