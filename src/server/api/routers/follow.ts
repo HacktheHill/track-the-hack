@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "../trpc";
+import {logAuditEntry} from "../../audit";
 
 export const followRouter = createTRPCRouter({
 	create: publicProcedure
@@ -19,6 +20,15 @@ export const followRouter = createTRPCRouter({
 			if (exists) {
 				throw new Error("Already following");
 			}
+
+			await logAuditEntry(
+				ctx,
+				input.email,
+				"/follow",
+				"Created a new follow to email",
+				input.email,
+				"New follow created for email: " + input.email,
+			);
 
 			// Create a new follow
 			const follow = await ctx.prisma.follow.create({
