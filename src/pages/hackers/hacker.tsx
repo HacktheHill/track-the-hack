@@ -190,14 +190,14 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 			label: t("phoneNumber"),
 			name: "phoneNumber",
 			default_value: hackerData.phoneNumber,
-			type: "tel",
+			type: "number",
 			category: t("category_personal_information"),
 		},
 		{
 			label: t("email"),
 			name: "email",
 			default_value: hackerData.email,
-			type: "text",
+			type: "email",
 			category: t("category_personal_information"),
 		},
 		{
@@ -218,7 +218,7 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 			label: t("emergencyContactPhoneNumber"),
 			name: "emergencyContactPhoneNumber",
 			default_value: hackerData.emergencyContactPhoneNumber,
-			type: "tel",
+			type: "number",
 			category: t("category_emergency_contact"),
 		},
 		{
@@ -255,21 +255,24 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 			label: t("walkIn"),
 			name: "walkIn",
 			default_value: hackerData.walkIn,
-			type: "text",
+			type: "select",
+			options: ["true", "false"],
 			category: t("category_general_information"),
 		},
 		{
 			label: t("subscribeToMailingList"),
 			name: "subscribed",
 			default_value: hackerData.unsubscribed,
-			type: "text",
+			type: "select",
+			options: ["true", "false"],
 			category: t("category_general_information"),
 		},
 		{
 			label: t("attendanceType"),
 			name: "attendanceType",
 			default_value: hackerData.attendanceType,
-			type: "text",
+			type: "select",
+			options: ["IN_PERSON", "ONLINE"],
 			category: t("category_general_information"),
 		},
 		{
@@ -283,7 +286,8 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 			label: t("transportationRequired"),
 			name: "transportationRequired",
 			default_value: hackerData.transportationRequired,
-			type: "text",
+			type: "select",
+			options: ["true", "false"],
 			category: t("category_general_information"),
 		},
 		{
@@ -521,9 +525,9 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 
 				{edit && (
 					<div className="sticky bottom-0 mx-2 flex justify-center">
-						<div className="flex rounded-md bg-dark px-2 py-2 text-white transition delay-150 ease-in-out">
+						<div className="flex rounded-md bg-dark px-2 py-2 text-white transition delay-150 ease-in-out max-w-md">
 							<div className="flex flex-col items-center gap-2">
-								<p className="px-5 py-2">{t("edit_description")}</p>
+								<p className="px-5 py-2 text-center">{t("edit_description")}</p>
 							</div>
 							<div className="flex items-center justify-center">
 								<button className="px-4 py-2" onClick={resetInputFields}>
@@ -537,6 +541,8 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 						</div>
 					</div>
 				)}
+
+
 			</form>
 		</>
 	);

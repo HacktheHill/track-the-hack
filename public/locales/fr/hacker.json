@@ -28,7 +28,7 @@
 	"category_emergency_contact": "Contact en cas d'urgence",
 	"category_general_information": "Informations générales",
 	"category_links_information": "Liens",
-	"edit_description": "Attention - vous avez des modifications non enregistrées !",
+	"edit_description": "Modifications non enregistrées!",
 	"edit_reset_button": "Réinitialiser",
-	"edit_save_button": "Enregistrer"
+	"edit_save_button": "Sauvegarder"
 }
