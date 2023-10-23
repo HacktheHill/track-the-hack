@@ -45,7 +45,7 @@ const Metrics: NextPage = () => {
 				<Error message={hackerQuery.error?.message ?? presenceQuery.error?.message ?? ""} />
 			</div>
 		);
-	} else if (hackerStatus === "success" || presenceStatus === "success") {
+	} else {
 		const hackers = hackerQuery.data?.pages.map(page => page.results).flat();
 		const presences = presenceQuery.data?.pages.map(page => page.results).flat();
 

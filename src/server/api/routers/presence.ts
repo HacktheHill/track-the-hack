@@ -1,5 +1,5 @@
 import { Role } from "@prisma/client";
-import type { HackerInfo, PresenceInfo } from "@prisma/client";
+import type { HackerInfo } from "@prisma/client";
 import { z } from "zod";
 import { EventEmitter } from "events";
 import { observable } from "@trpc/server/observable";
