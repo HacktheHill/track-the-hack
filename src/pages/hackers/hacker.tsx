@@ -439,7 +439,6 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 											handleInputChange(item.name, e.target.value);
 										}}
 									>
-										<option value="">{t("select")}</option>
 										{item.options?.map(option => (
 											<option key={option} value={option}>
 												{t(option)}
@@ -525,7 +524,7 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 
 				{edit && (
 					<div className="sticky bottom-0 mx-2 flex justify-center">
-						<div className="flex rounded-md bg-dark px-2 py-2 text-white transition delay-150 ease-in-out max-w-md">
+						<div className="flex max-w-md rounded-md bg-dark px-2 py-2 text-white transition delay-150 ease-in-out">
 							<div className="flex flex-col items-center gap-2">
 								<p className="px-5 py-2 text-center">{t("edit_description")}</p>
 							</div>
@@ -541,8 +540,6 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 						</div>
 					</div>
 				)}
-
-
 			</form>
 		</>
 	);
