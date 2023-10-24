@@ -15,8 +15,6 @@ import Loading from "../../components/Loading";
 import OnlyRole from "../../components/OnlyRole";
 import { hackersRedirect } from "../../utils/redirects";
 import { authOptions } from "../api/auth/[...nextauth]";
-import { VehicleModule } from "@faker-js/faker";
-import { testing } from "googleapis/build/src/apis/testing";
 
 const Hackers: NextPage = () => {
 	const { status, isFetching, hasNextPage, ...query } = trpc.hackers.all.useInfiniteQuery(
