@@ -3,6 +3,7 @@ import { useTranslation } from "next-i18next";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import Image from "next/image";
+import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import type { GetServerSideProps } from "next";
 import { getServerSession } from "next-auth/next";
 import { hackersRedirect } from "../../utils/redirects";
@@ -10,13 +11,13 @@ import { authOptions } from "../api/auth/[...nextauth]";
 import { trpc } from "../../utils/api";
 import { useEffect } from "react";
 import Popup from "./popup";
-
+import type { GetStaticProps, NextPage } from "next";
 import App from "../../components/App";
 import Weather from "../../components/Weather";
 import OnlyRole from "../../components/OnlyRole";
 import QRCode from "../../components/QRCode";
 import QRScanner from "../../components/QRScanner";
-
+import { PresenceInfo as PresenceInfoNamespace } from "@prisma/client";
 //Figure out why button isn't showing
 //Figure out trpc mutations
 //Figure out how to get the qr scan to stay scanning
@@ -29,22 +30,15 @@ type HackerViewProps = {
 	presenceData: PresenceInfo;
 };
 
-const QR = (presenceData) => {
+
+const QR = () => {
 	const { t } = useTranslation("qr");
 	const router = useRouter();
 	const [error, setError] = useState(false);
-	const [selectedOption, setSelectedOption] = useState("")
+	const [selectedOption, setSelectedOption] = useState<keyof PresenceInfoNamespace>("breakfast1");
 	const [showPopup, setShowPopup] = useState(false)
 	const [qrData, setQRData]=useState("")
 	const [loaded, setDataLoaded]=useState(false)
-
-
-	const onChange = () => {
-		const e = document.getElementById("eventSignIn")
-		const value = e.value
-		console.log(value)
-		return value
-	}
 
 	useEffect(()=>{
 		if (showPopup && qrData !== ""){
@@ -52,6 +46,7 @@ const QR = (presenceData) => {
 			setDataLoaded(true)
 		}
 	}, [showPopup, qrData])
+
 
 	return (
 		<App
@@ -80,7 +75,10 @@ const QR = (presenceData) => {
 					<p>You need to sign in to access the QR page.</p>
 				</div>
 			)}
-			<select id="eventSignIn" className="flex flex-col items-center bg-dark font-bold text-white text-center w-120 h-10 text-lg rounded p-2" onChange={onChange}>
+			<select id="eventSignIn" onChange={(event) =>  { 
+				setSelectedOption(event.target.value as keyof PresenceInfoNamespace)
+				}} 
+				className="flex flex-col items-center bg-dark font-bold text-white text-center w-120 h-10 text-lg rounded p-2">
 				<option value=''>Select an option</option>
 				<option value="checkedIn">Opening Ceremony</option>
 				<option value="breakfast1">Friday Dinner</option>
@@ -89,7 +87,7 @@ const QR = (presenceData) => {
 				<option value="breakfast2">Saturday Dinner</option>
 				<option value="lunch2">Sunday Lunch</option>
             </select>
-			{loaded && <Popup id={qrData} selectedOption={onChange()} />}
+			{loaded && <Popup id={qrData} selectedOption={selectedOption} />}
 			<div className="h-56 w-full bg-light">
 				<Image
 					priority
@@ -106,10 +104,10 @@ const QR = (presenceData) => {
 
 export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
 	const session = await getServerSession(req, res, authOptions);
-	const props = await hackersRedirect(session, locale);
 
 	return {
-		...props,
+		...(await hackersRedirect(session)),
+		props: await serverSideTranslations(locale ?? "en", ["common", "navbar", "qr"]),
 	};
 };
 

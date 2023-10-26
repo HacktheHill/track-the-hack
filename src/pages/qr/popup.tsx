@@ -1,16 +1,16 @@
-import { Role, type Prisma } from "@prisma/client";
-import { useTranslation } from "next-i18next";
 import { useState } from "react";
-import Image from "next/image";
-import type { GetServerSideProps } from "next";
-import { getServerSession } from "next-auth/next";
-import { hackersRedirect } from "../../utils/redirects";
-import { authOptions } from "../api/auth/[...nextauth]";
 import { trpc } from "../../utils/api";
 import { useEffect } from "react";
 import { useRouter } from "next/router";
+//an interface was added for the props passed to the component
+import type { PresenceInfo as PresenceInfoNamespace } from "@prisma/client";
 
-const Popup = ({ id, selectedOption }) => {
+type popUpProps = {
+	id: string;
+	selectedOption: keyof PresenceInfoNamespace;
+};
+
+const Popup = ({ id, selectedOption } : popUpProps) => {
 
 	const router = useRouter()
     const presenceQuery = trpc.presence.getFromHackerId.useQuery({id: id ?? ""}, {enabled: !!id})
@@ -25,19 +25,24 @@ const Popup = ({ id, selectedOption }) => {
     
 	useEffect(()=>{
 		if (!hackerQuery.isLoading && !presenceQuery.isLoading){
+			
 			if (hackerQuery.data){
 				setFirstName(hackerQuery.data.firstName)
 				setLastName(hackerQuery.data.lastName)
-				setShirt(hackerQuery.data.shirtSize)	
+				//shirt size may be null
+				if(hackerQuery.data.shirtSize)
+					setShirt(hackerQuery.data.shirtSize)	
 			} 
+
 			if (presenceQuery.data){
+				
 				if (presenceQuery.data[selectedOption]===false){
 					setVisibility('bg-[#7cf77c] h-30 w-96 z-30 text-center p-2 rounded text-lg')
 					const updatedPresenceInfo = { ...presenceQuery.data, [selectedOption]: true}
 					console.log(updatedPresenceInfo)
 					presenceMutation.mutate({
 						id: id ?? "",
-						presenceInfo: updatedPresenceInfo
+						presenceInfo: {selectedOption : true}
 					})
 				} else {
 					setVisibility('bg-[#FF0000] h-30 w-96 z-30 text-center p-2 rounded text-lg')
