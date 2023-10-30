@@ -42,7 +42,7 @@ const Popup = ({ id, selectedOption } : popUpProps) => {
 					console.log(updatedPresenceInfo)
 					presenceMutation.mutate({
 						id: id ?? "",
-						presenceInfo: {selectedOption : true}
+						presenceInfo: {[selectedOption] : true}
 					})
 				} else {
 					setVisibility('bg-[#FF0000] h-30 w-96 z-30 text-center p-2 rounded text-lg')
