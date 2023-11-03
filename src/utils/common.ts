@@ -4,6 +4,33 @@ import { Language, Role, ShirtSize } from "@prisma/client";
 export const roles = z.enum([Role.HACKER, Role.SPONSOR, Role.ORGANIZER]);
 export type Roles = z.infer<typeof roles>;
 
+export const applicationInfoSchema = z.object({
+	email: z.string(),
+	firstName: z.string(),
+	lastName: z.string(),
+	phoneNumber: z.string(),
+	age: z.number().min(0),
+	pronouns : z.string(),
+	levelOfStudy: z.string(),
+	school: z.string(),
+	program: z.string(),
+	graduationYear: z.number().min(1900).max(2100),
+	hackathonsAttended: z.number().min(0),
+	inPerson: z.boolean(),
+	isTransportRequired: z.boolean(),
+	dietaryRestrictions: z.string(),
+	shirtSize: z.enum([ShirtSize.S, ShirtSize.M, ShirtSize.L, ShirtSize.XL, ShirtSize.XXL]).default(ShirtSize.M),
+	accessibilityRequirements: z.string(),
+	contactFullName: z.string(),
+	contactRelationship: z.string(),
+	contactPhoneNumber: z.string(),
+	applicationAnswer: z.string(),
+	linkedIn: z.string(),
+	github: z.string(),
+	personalWebsite: z.string(),
+	resumePath: z.string(),
+});
+
 export const walkInSchema = z.object({
 	email: z.string(),
 	firstName: z.string(),

@@ -82,6 +82,29 @@ model VerificationToken {
     @@unique([identifier, token])
 }
 
+model ApplicationInfo {
+    id           String    @id @default(cuid())
+    email        String    @unique
+    firstName    String
+    lastName     String
+    phoneNumber  String
+    age          Int
+    pronouns     String
+    studyLevel   String?
+    university   String?
+    studyProgram String?
+    graduationYear Int?
+    linkGithub   String?
+    linkLinkedin String?
+    linkPersonalSite String?
+    linkResume   String?   @db.Text
+    lookingForwardTo String? @db.Text
+    onlyOnline   Boolean   @default(false)
+    createdAt    DateTime  @default(now())
+    updatedAt    DateTime  @updatedAt
+    status       String    @default("pending")
+}
+
 model HackerInfo {
     id                           String         @id @default(cuid()) @map("submissionID")
     preferredLanguage            Language       @default(EN)
@@ -115,7 +138,7 @@ model HackerInfo {
     user                         User?          @relation(fields: [userId], references: [id])
     userId                       String?
     unsubscribed                 Boolean        @default(false)
-    unsubscribeToken             String?        @unique @default(cuid())
+    unsubscribeToken             String?        @unique
     onlyOnline                   Boolean        @default(false)
     acceptanceExpiry             DateTime?
     walkIn                       Boolean        @default(false)
