@@ -13,7 +13,7 @@ type popUpProps = {
 const Popup = ({ id, selectedOption } : popUpProps) => {
 
 	const router = useRouter()
-    const presenceQuery = trpc.presence.getFromHackerId.useQuery({id: id ?? ""}, {enabled: !!id})
+    	const presenceQuery = trpc.presence.getFromHackerId.useQuery({id: id ?? ""}, {enabled: !!id})
 	const hackerQuery = trpc.hackers.get.useQuery({id: id ?? ""}, {enabled: !!id})
 	const presenceMutation = trpc.presence.update.useMutation();
 
