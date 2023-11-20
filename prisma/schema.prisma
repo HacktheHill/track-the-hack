@@ -165,17 +165,6 @@ model Follow {
   email String @unique
 }
 
-model AuditLog {
-  id        Int      @id @default(autoincrement())
-  timestamp DateTime @default(now())
-  user_id   String
-  route     String
-  action    String
-  details   String?
-  author    String   @default("")
-
-  @@index([user_id])
-}
 
 model AuditLogToUser {
   A Int
