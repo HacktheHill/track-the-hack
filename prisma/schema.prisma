@@ -173,6 +173,12 @@ model AuditLogToUser {
   @@map("_AuditLogToUser")
 }
 
+model Link {
+  id    String @id
+  label String
+  link  String
+}
+
 enum Language {
   EN
   FR
