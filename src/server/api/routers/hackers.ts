@@ -279,4 +279,37 @@ export const hackerRouter = createTRPCRouter({
 
 			return hacker;
 		}),
+
+	// Update a hacker's info
+	update: protectedProcedure
+		.input(
+			walkInSchema.extend({
+				id: z.string(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+			const user = await ctx.prisma.user.findUnique({
+				where: {
+					id: userId,
+				},
+			});
+
+			if (!user) {
+				throw new Error("User not found");
+			}
+
+			if (input.id !== userId && !hasRoles(user, [Role.ORGANIZER])) {
+				throw new Error("You do not have permission to do this");
+			}
+
+			const hacker = await ctx.prisma.hackerInfo.update({
+				where: {
+					id: input.id,
+				},
+				data: input,
+			});
+
+			return hacker;
+		}),
 });
