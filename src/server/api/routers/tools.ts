@@ -3,7 +3,6 @@ import { sponsorshipGmailDraftsSchema } from "../../../utils/common";
 import { hasRoles } from "../../../utils/helpers";
 import { createDraft } from "../../lib/gmail";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-import {logAuditEntry} from "../../audit";
 
 /**
  * HTML template tag
@@ -115,16 +114,6 @@ export const toolsRouter = createTRPCRouter({
 		if (!name) {
 			throw new Error("Organizer name is required");
 		}
-
-		await logAuditEntry(
-			ctx,
-			user.id,
-			"/sponsorship-gmail-drafts",
-			"SponsorshipGmailDrafts",
-			name,
-			"Created sponsorship Gmail drafts for " + name,
-		);
-
 
 		return createDraft({
 			subject: "Unleash Innovation: Join Hack the Hill 2024 as a Sponsor!",

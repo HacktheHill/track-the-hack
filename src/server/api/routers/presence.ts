@@ -2,7 +2,6 @@ import { Role } from "@prisma/client";
 import { z } from "zod";
 import { hasRoles } from "../../../utils/helpers";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-import {logAuditEntry} from "../../audit";
 
 export const presenceRouter = createTRPCRouter({
 	getFromHackerId: protectedProcedure
@@ -53,15 +52,6 @@ export const presenceRouter = createTRPCRouter({
 						},
 					},
 				});
-
-				await logAuditEntry(
-					ctx,
-					user.id,
-					"/presence",
-					"Created a new presence for hacker",
-					hacker.id,
-					"New presence created for hacker: " + hacker.email,
-				)
 			}
 
 			return presence;
@@ -98,15 +88,6 @@ export const presenceRouter = createTRPCRouter({
 			if (!hacker) {
 				throw new Error("Hacker not found");
 			}
-
-			await logAuditEntry(
-				ctx,
-				user.id,
-				"/presence",
-				"Updated presence for hacker",
-				hacker.id,
-				"Presence updated for hacker: " + hacker.email,
-			)
 
 			await ctx.prisma.presenceInfo.upsert({
 				where: {

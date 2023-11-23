@@ -192,15 +192,6 @@ export const hackerRouter = createTRPCRouter({
 				throw new Error("Hacker acceptance expired");
 			}
 
-			await logAuditEntry(
-				ctx,
-				hacker.id,
-				"/confirm",
-				"Confirmed a hacker's attendance",
-				hacker.email,
-				`${hacker.email} confirmed their attendance`,
-			);
-
 			return ctx.prisma.hackerInfo.update({
 				where: {
 					id: input.id,
@@ -242,15 +233,6 @@ export const hackerRouter = createTRPCRouter({
 				throw new Error("invalid-unsubscribe-token");
 			}
 
-			await logAuditEntry(
-				ctx,
-				hacker.id,
-				"/unsubscribe",
-				"Unsubscribed from emails",
-				hacker.email,
-				`${hacker.email} unsubscribed from emails`,
-			);
-
 			return ctx.prisma.hackerInfo.updateMany({
 				where: {
 					email: input.email,
@@ -283,15 +265,6 @@ export const hackerRouter = createTRPCRouter({
 			if (!hasRoles(user, [Role.ORGANIZER])) {
 				throw new Error("You do not have permission to do this");
 			}
-
-			await logAuditEntry(
-				ctx,
-				userId,
-				"/walk-in",
-				"Created a new hacker registration.",
-				user.name ?? "Unknown",
-				`${user.name ? user.name : "Unknown"} created a new walk-in hacker registration.`,
-			);
 
 			const hacker = await ctx.prisma.hackerInfo.create({
 				data: {
@@ -331,6 +304,7 @@ export const hackerRouter = createTRPCRouter({
 				throw new Error("You do not have permission to do this");
 			}
 
+			// Log the audit like this
 			await logAuditEntry(
 				ctx,
 				userId,
