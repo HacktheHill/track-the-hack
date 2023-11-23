@@ -93,10 +93,14 @@ const templates = [
 				Hack the Hill is an event that will gather up to
 				<strong>1000 passionate North American students</strong> who are ready to push the boundaries of
 				software and hardware solutions. We are shaping the future of technology through the joint effort of
-				notable student organizations from both <strong>the University of Ottawa</strong> and
-				<strong>Carleton University</strong>. In the <strong>Fall of 2024</strong>, we will transform the campus
-				into a hub for new ideas and flourishing projects. This is where ideas come to life, where technology
-				thrives, and where your company's brand can truly shine.
+				notable student organizations from both <strong>the University of Ottawa</strong> and <<<<<<<
+				HEAD:src/pages/sponsorship/gmail-drafts.tsx <strong>Carleton University</strong>. In the
+				<strong>Fall of 2024</strong>, we will transform the campus into a hub for new ideas and flourishing
+				projects. This is where ideas come to life, where technology thrives, and where your company's brand can
+				truly shine. ======= <strong>Carleton University</strong>. In the <strong>Fall of 2024</strong>, we will
+				transform the campus into a hub for new ideas and flourishing projects. This is where ideas come to
+				life, where technology thrives, and where your company's brand can truly shine. >>>>>>> 0c9cd59 (chore:
+				update email template dates to fall 2024):src/pages/tools/sponsorship-gmail-drafts.tsx
 			</p>
 			<p>
 				By becoming a sponsor of Hack the Hill, you will be supporting the growth and development of talented
@@ -240,10 +244,17 @@ const templates = [
 				throughout the year.
 			</p>
 			<p>
-				In the Fall of 2024, <strong>we/they</strong> will be hosting about 1,000 participants from across North
-				America who will receive the opportunity to innovate software and hardware solutions. Events like these
-				could not happen without the support of our sponsors.<strong>we/they</strong>
-				encourage you to take a look at the sponsorship package, which I have attached.
+				<<<<<<< HEAD:src/pages/sponsorship/gmail-drafts.tsx In the Fall of 2024, <strong>we/they</strong> will
+				be hosting about 1,000 participants from across North America who will receive the opportunity to
+				innovate software and hardware solutions. Events like these could not happen without the support of our
+				sponsors.<strong>we/they</strong> ======= In the Fall of 2024, <strong>we/they</strong> will be hosting
+				about 1,000 participants from across North America who will receive the opportunity to innovate software
+				and hardware solutions. Events like these could not happen without the support of our sponsors.<strong
+					>we/they</strong
+				>
+				>>>>>>> 0c9cd59 (chore: update email template dates to fall
+				2024):src/pages/tools/sponsorship-gmail-drafts.tsx encourage you to take a look at the sponsorship
+				package, which I have attached.
 				<strong>we/they</strong> are more than happy to answer any questions you may have!
 			</p>
 			<p>Thank you for your time and consideration!</p> `,
@@ -637,23 +648,21 @@ const SponsorshipGmailDrafts: NextPage = () => {
 						/>
 					</div>
 					{customizeTemplate && (
-						<>
-							<div className="flex w-full flex-col items-center gap-2 sm:flex-row">
-								<div className="flex flex-col gap-1">
-									<label htmlFor="custom-template" className="flex-[50%] font-rubik text-dark-color">
-										{t("custom-template")}
-									</label>
-									<small className="w-36 text-xs">{t("custom-template-note")}</small>
-								</div>
-								<textarea
-									id="custom-template"
-									name="customTemplate"
-									className="h-[200px] w-full rounded-md border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
-									onChange={event => setCustomTemplate(event.target.value)}
-									value={customTemplate}
-								/>
+						<div className="flex w-full flex-col items-center gap-2 sm:flex-row">
+							<div className="flex flex-col gap-1">
+								<label htmlFor="custom-template" className="flex-[50%] font-rubik text-dark-color">
+									{t("custom-template")}
+								</label>
+								<small className="w-36 text-xs">{t("custom-template-note")}</small>
 							</div>
-						</>
+							<textarea
+								id="custom-template"
+								name="customTemplate"
+								className="h-[200px] w-full rounded-md border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+								onChange={event => setCustomTemplate(event.target.value)}
+								value={customTemplate}
+							/>
+						</div>
 					)}
 					{error && (
 						<div className="flex flex-col items-center gap-2">
