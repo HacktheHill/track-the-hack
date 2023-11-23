@@ -36,6 +36,52 @@ const signature = html`
 
 const templates = [
 	{
+<<<<<<< Updated upstream:src/pages/tools/sponsorship-gmail-drafts.tsx
+=======
+		id: "date-availabilities",
+		name: "Intro with Date Availabilities",
+		subject: "Unleash Innovation: Join Hack the Hill 2024 as a Sponsor!",
+		body: html`<p>Hello [companyRepName],</p>
+			<p>
+				I hope this email finds you well. My name is [organizerFullName], and as a Sponsorship Coordinator for
+				Hack the Hill 2024, I am thrilled to introduce you to Ottawa's most exciting and innovative hackathon
+				event! With our mission to provide opportunities for students through an annual hackathon, we are
+				reaching out to companies like yours to join us in making this event possible.
+			</p>
+			<p>
+				Hack the Hill is an event that will take place in the Fall of 2024, along with a series of monthly
+				events throughout the year. We are shaping the future of technology through the joint effort of notable
+				student organizations from both the University of Ottawa and Carleton University.
+			</p>
+			<p>
+				With the help of [companyName], Hack the Hill can push further to provide students with an amazing and
+				productive event. We are confident that our partnership will yield mutually beneficial results - from
+				prominent branding opportunities to direct engagement with participants - we have carefully curated a
+				sponsorship package that will cater to your specific interests:
+			</p>
+			<p>
+				<a
+					href="https://drive.google.com/file/d/1wD9-VEt7WQ98w8MeBwEsF1y7i6JAqQf6/view"
+					role="button"
+					target="_blank"
+					style="display:inline-flex;align-items:center;height:1rem;"
+				>
+					<img
+						src="https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png"
+						style="height: 100%;"
+					/>
+					<strong>Hack the Hill 2024 Sponsorship Package</strong>
+				</a>
+			</p>
+			<p>
+				Feel free to reach out for any further information or to discuss with the team. My current
+				availabilities are:
+			</p>
+			<p>Day, Month at time</p>
+			<p>I look forward to hearing back soon, thank you for your time and consideration!</p>`,
+	},
+	{
+>>>>>>> Stashed changes:src/pages/sponsorship/gmail-drafts.tsx
 		id: "default-intro",
 		name: "Default Intro",
 		subject: "Unleash Innovation: Join Hack the Hill 2024 as a Sponsor!",
@@ -51,7 +97,7 @@ const templates = [
 				<strong>1000 passionate North American students</strong> who are ready to push the boundaries of
 				software and hardware solutions. We are shaping the future of technology through the joint effort of
 				notable student organizations from both <strong>the University of Ottawa</strong> and
-				<strong>Carleton University</strong>. From <strong>February 2nd to 4th 2024</strong>, we will transform
+				<strong>Carleton University</strong>. In the <strong>Fall of 2024</strong>, we will transform
 				the campus into a hub for new ideas and flourishing projects. This is where ideas come to life, where
 				technology thrives, and where your company's brand can truly shine.
 			</p>
@@ -197,9 +243,9 @@ const templates = [
 				throughout the year.
 			</p>
 			<p>
-				This year, <strong>we/they</strong> will be hosting about 1,000 participants from across North America
-				who will receive the opportunity to innovate software and hardware solutions from February 2nd to 4th,
-				2024. Events like these could not happen without the support of our sponsors.<strong>we/they</strong>
+				In the Fall of 2024, <strong>we/they</strong> will be hosting about 1,000 participants from across North America
+				who will receive the opportunity to innovate software and hardware solutions. Events like these could 
+				not happen without the support of our sponsors.<strong>we/they</strong>
 				encourage you to take a look at the sponsorship package, which I have attached.
 				<strong>we/they</strong> are more than happy to answer any questions you may have!
 			</p>
