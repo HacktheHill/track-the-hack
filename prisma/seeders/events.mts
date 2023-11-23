@@ -1,4 +1,3 @@
-import { faker } from "@faker-js/faker";
 import { EventType } from "@prisma/client";
 
 const day1 = "2023-08-8";

@@ -17,6 +17,7 @@ async function main() {
 	console.log("Creating dummy events...");
 	await insertRecords(prisma.event, events);
 }
+
 main()
 	.then(async () => {
 		await prisma.$disconnect();
