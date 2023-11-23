@@ -47,7 +47,7 @@ const templates = [
 				reaching out to companies like yours to join us in making this event possible.
 			</p>
 			<p>
-				Hack the Hill is an event that will run from February 2nd to 4th 2024, along with a series of monthly
+				Hack the Hill is an event that will run in the Fall of 2024, along with a series of monthly
 				events throughout the year. We are shaping the future of technology through the joint effort of notable
 				student organizations from both the University of Ottawa and Carleton University.
 			</p>
@@ -94,7 +94,7 @@ const templates = [
 				<strong>1000 passionate North American students</strong> who are ready to push the boundaries of
 				software and hardware solutions. We are shaping the future of technology through the joint effort of
 				notable student organizations from both <strong>the University of Ottawa</strong> and
-				<strong>Carleton University</strong>. From <strong>February 2nd to 4th 2024</strong>, we will transform
+				<strong>Carleton University</strong>. In the <strong>Fall of 2024</strong>, we will transform
 				the campus into a hub for new ideas and flourishing projects. This is where ideas come to life, where
 				technology thrives, and where your company's brand can truly shine.
 			</p>
@@ -240,9 +240,9 @@ const templates = [
 				throughout the year.
 			</p>
 			<p>
-				This year, <strong>we/they</strong> will be hosting about 1,000 participants from across North America
-				who will receive the opportunity to innovate software and hardware solutions from February 2nd to 4th,
-				2024. Events like these could not happen without the support of our sponsors.<strong>we/they</strong>
+				In the Fall of 2024, <strong>we/they</strong> will be hosting about 1,000 participants from across North America
+				who will receive the opportunity to innovate software and hardware solutions. Events like these could 
+				not happen without the support of our sponsors.<strong>we/they</strong>
 				encourage you to take a look at the sponsorship package, which I have attached.
 				<strong>we/they</strong> are more than happy to answer any questions you may have!
 			</p>
