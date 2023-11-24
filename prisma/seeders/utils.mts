@@ -1,14 +1,21 @@
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function insertRecords(db: any, rows: object[]) {
+async function insertRecords(db: iDatabaseTable, rows: object[]) {
 	try {
-		rows.forEach(row =>
-			db.create({
+		rows.map(async row => {
+			await db.create({
 				data: row,
-			}),
-		);
-	} catch (error) {
-		console.log(error);
+			});
+		});
+	} catch (e) {
+		console.log(e);
 	}
+}
+
+export interface iDatabaseTable {
+	findMany(fields: object): any;
+	findUnique(criteria: object): any;
+	update(data: object): any;
+	delete(data: object): any;
+	create(data: object): any;
 }
 
 export { insertRecords };

@@ -3,7 +3,7 @@ import type { GetStaticProps, NextPage } from "next";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { trpc } from "../../utils/api";
 
 import App from "../../components/App";
@@ -18,7 +18,7 @@ type PresenceInfo = Prisma.PresenceInfoGetPayload<true>;
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
-		props: await serverSideTranslations(locale ?? "en", ["common", "navbar", "hacker"]),
+		props: await serverSideTranslations(locale ?? "en", ["common", "hacker"]),
 	};
 };
 
@@ -29,9 +29,6 @@ const Hacker: NextPage = () => {
 
 	const hackerQuery = trpc.hackers.get.useQuery({ id: id ?? "" }, { enabled: !!id });
 	const presenceQuery = trpc.presence.getFromHackerId.useQuery({ id: id ?? "" }, { enabled: !!id });
-
-	const nextHackerQuery = trpc.hackers.getNext.useQuery({ id: id ?? "" }, { enabled: !!id });
-	const prevHackerQuery = trpc.hackers.getPrev.useQuery({ id: id ?? "" }, { enabled: !!id });
 
 	if (hackerQuery.isLoading || hackerQuery.data == null) {
 		return (
@@ -87,26 +84,6 @@ const Hacker: NextPage = () => {
 		>
 			<div className="mx-auto flex max-w-2xl flex-col gap-4">
 				<OnlyRole filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
-					<div className="flex justify-between">
-						{prevHackerQuery.data ? (
-							<a
-								href={`/hackers/hacker?id=${prevHackerQuery.data.id}`}
-								className="flex items-center justify-center gap-2 rounded-md bg-gray-800 px-4 py-2 text-white hover:bg-gray-700"
-							>
-								Previous
-							</a>
-						) : (
-							<a></a>
-						)}
-						{nextHackerQuery.data && (
-							<a
-								href={`/hackers/hacker?id=${nextHackerQuery.data.id}`}
-								className="flex items-center justify-center gap-2 rounded-md bg-gray-800 px-4 py-2 text-white hover:bg-gray-700"
-							>
-								Next
-							</a>
-						)}
-					</div>
 					<HackerView hackerData={hackerQuery.data} presenceData={presenceQuery.data} />
 				</OnlyRole>
 				<OnlyRole filter={role => role === Role.HACKER}>{t("not-authorized-to-view-this-page")}</OnlyRole>
@@ -150,7 +127,6 @@ interface Patterns {
 const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presenceData } }: HackerViewProps) => {
 	const router = useRouter();
 	const [id] = [router.query.id].flat();
-	const { t } = useTranslation("hacker");
 
 	const presenceMutation = trpc.presence.update.useMutation();
 	const [presenceState, setPresenceState] = useState(presenceData);
@@ -174,171 +150,167 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 
 	const fields = [
 		{
-			label: t("gender"),
+			label: "Gender",
 			name: "gender",
 			default_value: hackerData.gender,
 			type: "text",
-			category: t("category_personal_information"),
+			category: "Personal Information",
 		},
 		{
-			label: t("firstName"),
+			label: "First Name",
 			name: "firstName",
 			default_value: hackerData.firstName,
 			type: "text",
-			category: t("category_personal_information"),
+			category: "Personal Information",
 		},
 		{
-			label: t("lastName"),
+			label: "Last Name",
 			name: "lastName",
 			default_value: hackerData.lastName,
 			type: "text",
-			category: t("category_personal_information"),
+			category: "Personal Information",
 		},
 		{
-			label: t("university"),
+			label: "University",
 			name: "university",
 			default_value: hackerData.university,
 			type: "text",
-			category: t("category_personal_information"),
+			category: "Personal Information",
 		},
 		{
-			label: t("studyLevel"),
+			label: "Study Level",
 			name: "studyLevel",
 			default_value: hackerData.studyLevel?.toUpperCase(),
 			type: "text",
-			category: t("category_personal_information"),
+			category: "Personal Information",
 		},
 		{
-			label: t("studyProgram"),
+			label: "Study Program",
 			name: "studyProgram",
 			default_value: hackerData.studyProgram,
 			type: "text",
-			category: t("category_personal_information"),
+			category: "Personal Information",
 		},
 		{
-			label: t("graduationYear"),
+			label: "Graduation Year",
 			name: "graduationYear",
 			default_value: hackerData.graduationYear,
 			type: "number",
-			category: t("category_personal_information"),
+			category: "Personal Information",
 		},
 		{
-			label: t("phoneNumber"),
+			label: "Phone Number",
 			name: "phoneNumber",
 			default_value: hackerData.phoneNumber,
-			type: "number",
-			category: t("category_personal_information"),
+			type: "tel",
+			category: "Personal Information",
 		},
 		{
-			label: t("email"),
+			label: "Email",
 			name: "email",
 			default_value: hackerData.email,
-			type: "email",
-			category: t("category_personal_information"),
+			type: "text",
+			category: "Personal Information",
 		},
 		{
-			label: t("emergencyContactName"),
+			label: "Emergency Contact Name",
 			name: "emergencyContactName",
 			default_value: hackerData.emergencyContactName,
 			type: "text",
-			category: t("category_emergency_contact"),
+			category: "Emergency Contact",
 		},
 		{
-			label: t("emergencyContactRelationship"),
+			label: "Emergency Contact Relationship",
 			name: "emergencyContactRelationship",
 			default_value: hackerData.emergencyContactRelationship,
 			type: "text",
-			category: t("category_emergency_contact"),
+			category: "Emergency Contact",
 		},
 		{
-			label: t("emergencyContactPhoneNumber"),
+			label: "Emergency Contact Phone Number",
 			name: "emergencyContactPhoneNumber",
 			default_value: hackerData.emergencyContactPhoneNumber,
-			type: "number",
-			category: t("category_emergency_contact"),
+			type: "tel",
+			category: "Emergency Contact",
 		},
 		{
-			label: t("dietaryRestrictions"),
+			label: "Dietary Restrictions",
 			name: "dietaryRestrictions",
 			default_value: hackerData.dietaryRestrictions,
 			type: "text",
-			category: t("category_general_information"),
+			category: "General Information",
 		},
 		{
-			label: t("accessibilityRequirements"),
+			label: "Accessibility Requirements",
 			name: "accessibilityRequirements",
 			default_value: hackerData.accessibilityRequirements,
 			type: "text",
-			category: t("category_general_information"),
+			category: "General Information",
 		},
 		{
-			label: t("preferredLanguage"),
+			label: "Preferred Language",
 			name: "preferredLanguage",
 			default_value: hackerData.preferredLanguage,
 			type: "select",
 			options: ["EN", "FR"],
-			category: t("category_general_information"),
+			category: "General Information",
 		},
 		{
-			label: t("shirtSize"),
+			label: "Shirt Size",
 			name: "shirtSize",
 			default_value: hackerData.shirtSize,
 			type: "select",
 			options: ["S", "M", "L", "XL", "XXL"],
-			category: t("category_general_information"),
+			category: "General Information",
 		},
 		{
-			label: t("walkIn"),
+			label: "Walk In",
 			name: "walkIn",
 			default_value: hackerData.walkIn,
-			type: "select",
-			options: ["true", "false"],
-			category: t("category_general_information"),
+			type: "text",
+			category: "General Information",
 		},
 		{
-			label: t("subscribeToMailingList"),
+			label: "Subscribed",
 			name: "subscribed",
 			default_value: hackerData.unsubscribed,
-			type: "select",
-			options: ["true", "false"],
-			category: t("category_general_information"),
+			type: "text",
+			category: "General Information",
 		},
 		{
-			label: t("attendanceType"),
+			label: "Attendance Type",
 			name: "attendanceType",
 			default_value: hackerData.attendanceType,
-			type: "select",
-			options: ["IN_PERSON", "ONLINE"],
-			category: t("category_general_information"),
+			type: "text",
+			category: "General Information",
 		},
 		{
-			label: t("location"),
+			label: "Location",
 			name: "location",
 			default_value: hackerData.location,
 			type: "text",
-			category: t("category_general_information"),
+			category: "General Information",
 		},
 		{
-			label: t("transportationRequired"),
+			label: "Transportation Required",
 			name: "transportationRequired",
 			default_value: hackerData.transportationRequired,
-			type: "select",
-			options: ["true", "false"],
-			category: t("category_general_information"),
+			type: "text",
+			category: "General Information",
 		},
 		{
 			label: "Linkedin",
 			name: "linkLinkedin",
 			default_value: hackerData.linkLinkedin,
 			type: "url",
-			category: t("category_links_information"),
+			category: "Links Information",
 		},
 		{
 			label: "Github",
 			name: "linkGithub",
 			default_value: hackerData.linkGithub,
 			type: "url",
-			category: t("category_links_information"),
+			category: "Links Information",
 		},
 	];
 	const patterns: Patterns = {
@@ -350,6 +322,7 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 	};
 
 	const initialInputValues: Record<string, string> = {};
+	const { t } = useTranslation("walk-in");
 	const [inputValues, setInputValues] = useState<{ [key: string]: string }>(initialInputValues);
 	const groupedData: { [key: string]: Field[] } = {};
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
@@ -479,6 +452,7 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 											handleInputChange(item.name, e.target.value);
 										}}
 									>
+										<option value="">{t("select")}</option>
 										{item.options?.map(option => (
 											<option key={option} value={option}>
 												{t(option)}
@@ -513,7 +487,7 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 				<div className="flex justify-between gap-8 py-4 ">
 					<input className="rounded-md border border-gray-400 bg-background2 p-2" type="file" />
 					<button className="ml-2 rounded-md bg-dark px-4 py-2 text-white hover:bg-gray-700">
-						{t("uploadResume")}
+						Upload your Resume
 					</button>
 				</div>
 
@@ -563,20 +537,17 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 				</OnlyRole>
 
 				{edit && (
-					<div className="sticky bottom-0 mx-2 flex justify-center">
-						<div className="flex max-w-md rounded-md bg-dark px-2 py-2 text-white transition delay-150 ease-in-out">
+					<div className="sticky bottom-0 flex justify-center">
+						<div className="flex rounded-md bg-gray-800 px-2 py-2 text-white transition delay-150 ease-in-out">
 							<div className="flex flex-col items-center gap-2">
-								<p className="px-5 py-2 text-center">{t("edit_description")}</p>
+								<p className="px-5 py-2">Careful - you have unsaved changes! </p>
 							</div>
-							<div className="flex items-center justify-center">
-								<button className="px-4 py-2" onClick={resetInputFields}>
-									{t("edit_reset_button")}
-								</button>
-								<button className="h-max w-max rounded-md bg-green-700 px-4 py-2">
-									<i className="fas fa-user-edit"></i>
-									{t("edit_save_button")}
-								</button>
-							</div>
+							<button className="px-4 py-2" onClick={resetInputFields}>
+								Reset
+							</button>
+							<button className="h-max w-max rounded-md bg-green-500 px-4 py-2">
+								<i className="fas fa-user-edit"></i> Save
+							</button>
 						</div>
 					</div>
 				)}

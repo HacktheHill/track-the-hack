@@ -5,6 +5,7 @@ import { z } from "zod";
 import { hasRoles } from "../../../utils/helpers";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { walkInSchema } from "../../../utils/common";
+import { logAuditEntry } from "../../audit";
 
 const DEFAULT_ACCEPTANCE_EXPIRY = new Date(2023, 2, 6, 5, 0, 0, 0); // 2023-03-06 00:00:00 EST
 
@@ -61,60 +62,6 @@ export const hackerRouter = createTRPCRouter({
 
 			return hacker;
 		}),
-	
-	// Get next hacker in db from an id
-	getNext: publicProcedure
-	.input(
-		z
-			.object({
-				id: z.string(),
-			}),
-	)
-	.query(async ({ ctx, input }) => {
-		let hacker: HackerInfo | null = null;
-		if ("id" in input) {
-			hacker = await ctx.prisma.hackerInfo.findFirst({
-				take: 1,
-				skip: 1,
-				cursor: {
-					id: input.id,
-				},
-			});
-		}
-
-		if (!hacker) {
-			throw new Error("Hacker not found");
-		}
-
-		return hacker;
-	}),
-
-	// Get prev hacker in db from an id
-	getPrev: publicProcedure
-	.input(
-		z
-			.object({
-				id: z.string(),
-			}),
-	)
-	.query(async ({ ctx, input }) => {
-		let hacker: HackerInfo | null = null;
-		if ("id" in input) {
-			hacker = await ctx.prisma.hackerInfo.findFirst({
-				take: -1,
-				skip: 1,
-				cursor: {
-					id: input.id,
-				},
-			});
-		}
-
-		if (!hacker) {
-			throw new Error("Hacker not found");
-		}
-
-		return hacker;
-	}),
 
 	// Get all hackers
 	all: protectedProcedure
@@ -327,6 +274,16 @@ export const hackerRouter = createTRPCRouter({
 			if (input.id !== userId && !hasRoles(user, [Role.ORGANIZER])) {
 				throw new Error("You do not have permission to do this");
 			}
+
+			// Log the audit like this
+			await logAuditEntry(
+				ctx,
+				userId,
+				"/update-hacker-info",
+				"UpdateHackerInfo",
+				user.name ?? "Unknown",
+				"Updated hacker information",
+			);
 
 			const hacker = await ctx.prisma.hackerInfo.update({
 				where: {
