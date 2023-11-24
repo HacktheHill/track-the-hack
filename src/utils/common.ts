@@ -33,4 +33,5 @@ export const sponsorshipGmailDraftsSchema = z.object({
 	companyEmail: z.string().email(),
 	subject: z.string(),
 	emailHTML: z.string(),
+	companyName: z.string(),
 });

@@ -8,7 +8,7 @@ import { trpc } from "../../utils/api";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
-		props: await serverSideTranslations(locale ?? "en", ["common", "navbar", "follow"]),
+		props: await serverSideTranslations(locale ?? "en", ["common", "follow"]),
 	};
 };
 
