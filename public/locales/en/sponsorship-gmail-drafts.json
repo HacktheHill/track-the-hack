@@ -6,12 +6,5 @@
 	"company-name": "Company Name",
 	"company-rep-name": "Company Representative's Name",
 	"company-email": "Company Email",
-	"select-template": "Select Template",
-	"subject": "Subject",
-	"custom-template": "Custom Template",
-	"copy-to-clipboard": "Copy to Clipboard",
-	"copied-to-clipboard": "Copied to Clipboard",
-	"create-draft-email": "Create Draft Email",
-	"created-draft-email": "Created Draft Email",
 	"invalid-form": "Please fill out all required fields correctly."
 }
