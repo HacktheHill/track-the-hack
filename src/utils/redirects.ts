@@ -1,15 +1,17 @@
-import { PrismaClient, Role } from "@prisma/client";
+import { serverSideTranslations } from "next-i18next/serverSideTranslations";
+import { PrismaClient } from "@prisma/client";
 import type { Session } from "next-auth";
+import type { SSRConfig } from "next-i18next";
 
 type ServerSideProps = {
 	redirect?: {
 		destination: string;
 		permanent: boolean;
 	};
-	props?: Record<string, unknown>;
+	props: SSRConfig;
 };
 
-export async function hackersRedirect(session: Session | null): Promise<ServerSideProps> {
+export async function hackersRedirect(session: Session | null, locale: string | undefined): Promise<ServerSideProps> {
 	const prisma = new PrismaClient();
 
 	const user =
@@ -20,31 +22,27 @@ export async function hackersRedirect(session: Session | null): Promise<ServerSi
 			},
 		}));
 
-	if (user && user.role === Role.HACKER) {
-		const hacker = await prisma.hackerInfo.findFirst({
-			where: {
-				userId: user.id,
-			},
-		});
-
-		if (!hacker) {
-			return {
-				redirect: {
-					destination: "/",
-					permanent: false,
-				},
-			};
-		}
-	}
-
 	if (!user) {
 		return {
 			redirect: {
 				destination: "/api/auth/signin",
 				permanent: false,
 			},
+			props: {},
 		};
 	}
 
-	return {};
+	if (user.role !== "ORGANIZER") {
+		return {
+			redirect: {
+				destination: "/",
+				permanent: false,
+			},
+			props: {},
+		};
+	}
+
+	return {
+		props: await serverSideTranslations(locale ?? "en", ["common", "hackers"]),
+	};
 }
