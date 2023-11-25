@@ -58,7 +58,7 @@ const Hackers: NextPage = () => {
 
 	if (status === "loading") {
 		return (
-			<App className="h-full bg-gradient-to-b from-background2 to-background1 px-16 py-12">
+			<App className="h-full bg-default-gradient px-16 py-12">
 				<OnlyRole filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
 					<Loading />
 				</OnlyRole>
@@ -71,7 +71,7 @@ const Hackers: NextPage = () => {
 		);
 	} else if (status === "error") {
 		return (
-			<App className="h-full bg-gradient-to-b from-background2 to-background1 px-16 py-12">
+			<App className="h-full bg-default-gradient px-16 py-12">
 				<div className="flex flex-col items-center justify-center gap-4">
 					<Error message={query.error?.message ?? ""} />
 				</div>
@@ -92,12 +92,8 @@ const Hackers: NextPage = () => {
 			  );
 
 	return (
-		<App
-			className="flex flex-col overflow-y-auto bg-gradient-to-b from-background2 to-background1"
-			integrated={true}
-			title={t("title")}
-		>
-			<div className="border-b border-dark bg-background1 px-4 pb-4 pt-2 shadow-navbar sm:px-20">
+		<App className="flex flex-col overflow-y-auto bg-default-gradient" integrated={true} title={t("title")}>
+			<div className="border-b border-dark-color bg-light-quaternary-color px-4 pb-4 pt-2 shadow-navbar sm:px-20">
 				<Search setSearch={setSearch} />
 			</div>
 			<div
@@ -119,7 +115,7 @@ const Hackers: NextPage = () => {
 				))}
 			</div>
 			{filteredQuery?.length == 0 && (
-				<div className="flex h-full w-full flex-col items-center justify-center gap-4 text-2xl text-dark">
+				<div className="flex h-full w-full flex-col items-center justify-center gap-4 text-2xl text-dark-color">
 					<svg className="h-20 w-20" fill="currentColor" viewBox="0 0 24 24">
 						<path d="M10 0h24v24H0z" fill="none" />
 						<path d="M14 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
@@ -137,7 +133,7 @@ const Card = ({ firstName, lastName, university, studyProgram, id }: CardProps) 
 	return (
 		<Link
 			href={`/hackers/hacker?id=${id}`}
-			className="block w-full rounded-lg bg-dark p-6 text-white shadow hover:bg-medium"
+			className="hover:bg-medium block w-full rounded-lg bg-medium-primary-color p-6 text-white shadow"
 		>
 			<h3 className="text-2xl font-bold tracking-tight">{`${firstName} ${lastName}`}</h3>
 			<p>{university}</p>
@@ -154,8 +150,8 @@ const Search = ({ setSearch }: SearchProps) => {
 	const { t } = useTranslation("hackers");
 
 	return (
-		<div className="relative mx-auto flex max-w-xl flex-col">
-			<div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-dark">
+		<div className="relative mx-auto flex max-w-xl flex-col ">
+			<div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-dark-color">
 				<svg
 					aria-hidden="true"
 					className="h-5 w-5"
@@ -176,7 +172,7 @@ const Search = ({ setSearch }: SearchProps) => {
 				type="search"
 				id="search"
 				name="search"
-				className="block w-full rounded-lg bg-background2 p-4 pl-12 text-sm placeholder:text-dark"
+				className="block w-full rounded-lg bg-light-tertiary-color p-4 pl-12 text-sm placeholder:text-dark-color"
 				placeholder="Search Hackers"
 				onChange={event => setSearch(event.target.value)}
 			/>
