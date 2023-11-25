@@ -4,11 +4,8 @@ module.exports = {
 	theme: {
 		extend: {
 			backgroundImage: {
-				gradient:
-					"linear-gradient(0deg, rgba(239, 203, 255, 0) 15%, rgba(236, 211, 247, 0.7723) 48.85%, rgba(236, 210, 248, 0.7373) 48.86%, #ebd5f5 63.96%, #bfcbee 80.96%, #bfcbee 81.77%,#abeffa 100%)",
-				gradient1: "linear-gradient(180deg, #5C71AD 0%, #90A1D4 15.1%, #A4B4E2 79.69%, #B2C2ED 96.87%)",
-				gradient2: "linear-gradient(180deg, #BFCFF6 11.47%, #5C71AD 146.86%)",
-				gradient3: "linear-gradient(180deg, #90A1D4 80%, #BFCFF6 100%)",
+				"default-gradient": "linear-gradient(#C7734F, #EA8A60, #EE9E6F, #F6BC83)",
+				"medium-gradient": "linear-gradient(#f8cc8d, #dd484d)",
 			},
 			screens: {
 				"logo-center": "600px",
@@ -17,16 +14,17 @@ module.exports = {
 				xs: "400px",
 			},
 			colors: {
-				dark: "#3b4779",
-				medium: "#3f4e77",
-				light: "#5c71ad",
-				background1: "#BFCFF6",
-				background2: "#90A1D4",
-				background3: "#B2CEED",
-				accent1: "#FFFFFF",
-				accent2: "#BFCFF6",
-				accent3: "#5C71AD",
-				accent4: "#3B4779",
+				"light-color": "white",
+				"dark-color": "black",
+				"light-secondary-color": "#fff3b6",
+				"medium-secondary-color": "#f8cc8d",
+				"dark-secondary-color": "#f6bf70",
+				"light-tertiary-color": "#ea885f",
+				"light-primary-color": "#dd484d",
+				"medium-primary-color": "#c11f25",
+				"dark-primary-color": "#84010b",
+				"highlight-color": "#650014",
+				"light-quaternary-color": "#F5C18C",
 			},
 			content: {
 				check: `url(data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20512%20512%22%3E%3Cpath%20d%3D%22M470.6%20105.4c12.5%2012.5%2012.5%2032.8%200%2045.3l-256%20256c-12.5%2012.5-32.8%2012.5-45.3%200l-128-128c-12.5-12.5-12.5-32.8%200-45.3s32.8-12.5%2045.3%200L192%20338.7%20425.4%20105.4c12.5-12.5%2032.8-12.5%2045.3%200z%22%2F%3E%3C%2Fsvg%3E)`,
