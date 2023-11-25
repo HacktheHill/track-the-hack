@@ -18,14 +18,11 @@ const Maps = () => {
 	const MAX_FLOORS = 6;
 
 	return (
-		<App
-			className="flex h-0 flex-col items-center bg-gradient-to-b from-background2 to-background1"
-			title={t("title")}
-		>
+		<App className="flex h-0 flex-col items-center bg-default-gradient" title={t("title")}>
 			<div className="w-full justify-center overflow-y-auto mobile:px-0">
 				{[...Array(MAX_FLOORS).keys()].map(i => (
 					<>
-						<h1 className="py-3 text-center text-xl text-dark">
+						<h1 className="py-3 text-center text-xl text-dark-color">
 							{t("floor", {
 								floor: i,
 							})}

@@ -25,7 +25,11 @@ const Links = ({ bottom }: LinkProps) => {
 		<>
 			<Link
 				href="/"
-				className={bottom ? "" : "mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light"}
+				className={
+					bottom
+						? ""
+						: "mx-4 flex items-center font-coolvetica text-2xl text-dark-primary-color hover:text-light-color"
+				}
 			>
 				{bottom ? <Image priority src="/assets/home.svg" height={32} width={32} alt={t("home")} /> : t("home")}
 			</Link>
@@ -33,7 +37,9 @@ const Links = ({ bottom }: LinkProps) => {
 				<Link
 					href="/qr"
 					className={
-						bottom ? "" : "mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
+						bottom
+							? ""
+							: "mx-4 flex items-center font-coolvetica text-2xl text-dark-primary-color hover:text-light-color"
 					}
 				>
 					{bottom ? <Image priority src="/assets/qr.svg" height={32} width={32} alt={t("qr")} /> : t("qr")}
@@ -41,7 +47,11 @@ const Links = ({ bottom }: LinkProps) => {
 			)}
 			<Link
 				href="/schedule"
-				className={bottom ? "" : "mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light"}
+				className={
+					bottom
+						? ""
+						: "mx-4 flex items-center font-coolvetica text-2xl text-dark-primary-color hover:text-light-color"
+				}
 			>
 				{bottom ? (
 					<Image priority src="/assets/schedule.svg" height={32} width={32} alt={t("schedule")} />
@@ -51,13 +61,21 @@ const Links = ({ bottom }: LinkProps) => {
 			</Link>
 			<Link
 				href="/maps"
-				className={bottom ? "" : "mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light"}
+				className={
+					bottom
+						? ""
+						: "mx-4 flex items-center font-coolvetica text-2xl text-dark-primary-color hover:text-light-color"
+				}
 			>
 				{bottom ? <Image priority src="/assets/maps.svg" height={32} width={32} alt={t("maps")} /> : t("maps")}
 			</Link>
 			<Link
 				href="/resources"
-				className={bottom ? "" : "mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light"}
+				className={
+					bottom
+						? ""
+						: "mx-4 flex items-center font-coolvetica text-2xl text-dark-primary-color hover:text-light-color"
+				}
 			>
 				{bottom ? (
 					<Image priority src="/assets/resources.svg" height={32} width={32} alt="Resources" />
@@ -73,7 +91,7 @@ const Links = ({ bottom }: LinkProps) => {
 							className={
 								bottom
 									? ""
-									: "mx-4 flex items-center font-coolvetica text-2xl text-dark hover:text-light"
+									: "mx-4 flex items-center font-coolvetica text-2xl text-dark-primary-color hover:text-light-color"
 							}
 						>
 							{bottom ? (
@@ -99,8 +117,8 @@ const Navbar = ({ integrated }: NavbarProps) => {
 
 	return (
 		<nav
-			className={`sticky top-0 z-10 flex gap-4 whitespace-nowrap bg-background1 p-4 ${
-				integrated ? "" : "border-b border-dark shadow-navbar"
+			className={`sticky top-0 z-10 flex gap-4 whitespace-nowrap bg-light-quaternary-color p-4 ${
+				integrated ? "" : "border-b border-dark-primary-color shadow-navbar"
 			}`}
 			aria-label={t("navigation")}
 		>
@@ -130,7 +148,7 @@ const Navbar = ({ integrated }: NavbarProps) => {
 			</div>
 
 			<button
-				className="right-4 ml-auto flex whitespace-nowrap rounded-lg border border-dark bg-background1 px-4 py-2 font-coolvetica text-dark transition-colors hover:bg-background3 sm:visible logo-center:absolute"
+				className="hover:bg-light-quaternary right-4 ml-auto flex whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-color transition-colors sm:visible logo-center:absolute"
 				onClick={sessionData ? () => void signOut() : () => void signIn()}
 			>
 				{sessionData ? t("sign-out") : t("sign-in")}
@@ -144,7 +162,7 @@ const BottomMenu = () => {
 
 	return (
 		<nav
-			className="sticky bottom-0 flex w-full items-center justify-evenly gap-4 whitespace-nowrap bg-background1 p-4 mobile:hidden xs:gap-8"
+			className="sticky bottom-0 flex w-full items-center justify-evenly gap-4 whitespace-nowrap bg-light-quaternary-color p-4 mobile:hidden xs:gap-8"
 			aria-label={t("bottom-navigation")}
 		>
 			<Links bottom />

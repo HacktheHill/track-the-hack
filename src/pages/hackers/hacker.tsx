@@ -27,13 +27,13 @@ const Hacker: NextPage = () => {
 
 	const hackerQuery = trpc.hackers.get.useQuery({ id: id ?? "" }, { enabled: !!id });
 	const presenceQuery = trpc.presence.getFromHackerId.useQuery({ id: id ?? "" }, { enabled: !!id });
-	
+
 	const nextHackerQuery = trpc.hackers.getNext.useQuery({ id: id ?? "" }, { enabled: !!id });
 	const prevHackerQuery = trpc.hackers.getPrev.useQuery({ id: id ?? "" }, { enabled: !!id });
 
 	if (hackerQuery.isLoading || hackerQuery.data == null) {
 		return (
-			<App className="h-full bg-gradient-to-b from-background2 to-background1 px-16 py-12">
+			<App className="h-full bg-default-gradient px-16 py-12">
 				<OnlyRole filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
 					<Loading />
 				</OnlyRole>
@@ -46,7 +46,7 @@ const Hacker: NextPage = () => {
 		);
 	} else if (hackerQuery.isError) {
 		return (
-			<App className="h-full bg-gradient-to-b from-background2 to-background1 px-16 py-12">
+			<App className="h-full bg-default-gradient px-16 py-12">
 				<div className="flex flex-col items-center justify-center gap-4">
 					<Error message={hackerQuery.error.message} />
 				</div>
@@ -60,13 +60,13 @@ const Hacker: NextPage = () => {
 
 	if (presenceQuery.isLoading || presenceQuery.data == null) {
 		return (
-			<App className="h-full bg-gradient-to-b from-background2 to-background1 px-16 py-12">
+			<App className="h-full bg-default-gradient px-16 py-12">
 				<Loading />
 			</App>
 		);
 	} else if (presenceQuery.isError) {
 		return (
-			<App className="h-full bg-gradient-to-b from-background2 to-background1 px-16 py-12">
+			<App className="h-full bg-default-gradient px-16 py-12">
 				<div className="flex flex-col items-center justify-center gap-4">
 					<Error message={presenceQuery.error.message} />
 				</div>
@@ -80,27 +80,29 @@ const Hacker: NextPage = () => {
 
 	return (
 		<App
-			className="mx-auto h-full w-full overflow-y-auto bg-gradient-to-b from-background2 to-background1 px-4 py-12"
+			className="mx-auto h-full w-full overflow-y-auto bg-default-gradient px-4 py-12"
 			title={`${hackerQuery.data.firstName} ${hackerQuery.data.lastName}`}
 		>
 			<div className="mx-auto flex max-w-2xl flex-col gap-4">
 				<OnlyRole filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
 					<div className="flex justify-between">
-						{prevHackerQuery.data ? (<a
-							href={`/hackers/hacker?id=${prevHackerQuery.data.id}`}
-							className="flex items-center justify-center gap-2 rounded-md bg-gray-800 px-4 py-2 text-white hover:bg-gray-700"
-						>
-							Previous
-						</a>
+						{prevHackerQuery.data ? (
+							<a
+								href={`/hackers/hacker?id=${prevHackerQuery.data.id}`}
+								className="flex items-center justify-center gap-2 rounded-md bg-gray-800 px-4 py-2 text-white hover:bg-gray-700"
+							>
+								Previous
+							</a>
 						) : (
 							<a></a>
 						)}
-						{nextHackerQuery.data && ( <a
-							href={`/hackers/hacker?id=${nextHackerQuery.data.id}`}
-							className="flex items-center justify-center gap-2 rounded-md bg-gray-800 px-4 py-2 text-white hover:bg-gray-700"
-						>
-							Next
-						</a>
+						{nextHackerQuery.data && (
+							<a
+								href={`/hackers/hacker?id=${nextHackerQuery.data.id}`}
+								className="flex items-center justify-center gap-2 rounded-md bg-gray-800 px-4 py-2 text-white hover:bg-gray-700"
+							>
+								Next
+							</a>
 						)}
 					</div>
 					<HackerView hackerData={hackerQuery.data} presenceData={presenceQuery.data} />
@@ -142,7 +144,7 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 
 	return (
 		<>
-			<h1 className="self-center font-coolvetica text-4xl font-normal text-dark">
+			<h1 className="self-center font-coolvetica text-4xl font-normal text-dark-color">
 				{hackerData.firstName} {hackerData.lastName} ({hackerData.gender})
 			</h1>
 			<p className="self-center">
@@ -151,7 +153,7 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 				{hackerData.graduationYear && `(${hackerData.graduationYear})`}
 			</p>
 			<OnlyRole filter={role => role === Role.ORGANIZER}>
-				<div className="grid grid-flow-row grid-cols-2 gap-4 rounded-lg bg-background2 p-4">
+				<div className="grid grid-flow-row grid-cols-2 gap-4 rounded-lg bg-light-tertiary-color p-4">
 					{Object.entries(presenceState).map(([key, value]) => (
 						<p key={key}>
 							<input
@@ -173,7 +175,7 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 					))}
 				</div>
 			</OnlyRole>
-			<h2 className="self-center font-[Coolvetica] text-2xl font-normal text-dark">General Information</h2>
+			<h2 className="self-center font-[Coolvetica] text-2xl font-normal text-dark-color">General Information</h2>
 			<p className={paragraphClass}>
 				<b className={boldClass}>Contact Information</b> {hackerData.email} &mdash; {hackerData.phoneNumber}
 			</p>
@@ -222,7 +224,9 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 			</p>
 			<OnlyRole filter={role => role === Role.ORGANIZER}>
 				<>
-					<h2 className="self-center font-[Coolvetica] text-2xl font-normal text-dark">Debug Information</h2>
+					<h2 className="self-center font-[Coolvetica] text-2xl font-normal text-dark-color">
+						Debug Information
+					</h2>
 					<p className={paragraphClass}>
 						<b className={boldClass}>HackerInfo ID</b> {hackerData.id ?? "NULL"}
 					</p>
