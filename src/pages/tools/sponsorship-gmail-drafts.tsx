@@ -36,8 +36,7 @@ const signature = html`
 
 const templates = [
 	{
-<<<<<<< Updated upstream:src/pages/tools/sponsorship-gmail-drafts.tsx
-=======
+
 		id: "date-availabilities",
 		name: "Intro with Date Availabilities",
 		subject: "Unleash Innovation: Join Hack the Hill 2024 as a Sponsor!",
@@ -81,7 +80,6 @@ const templates = [
 			<p>I look forward to hearing back soon, thank you for your time and consideration!</p>`,
 	},
 	{
->>>>>>> Stashed changes:src/pages/sponsorship/gmail-drafts.tsx
 		id: "default-intro",
 		name: "Default Intro",
 		subject: "Unleash Innovation: Join Hack the Hill 2024 as a Sponsor!",
