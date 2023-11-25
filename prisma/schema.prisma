@@ -2,39 +2,39 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-    provider = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-    provider     = "mysql"
-    // NOTE: When using postgresql, mysql or sqlserver, uncomment the @db.Text annotations in model Account below
-    // Further reading:
-    // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
-    // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
-    url          = env("DATABASE_URL")
-    relationMode = "prisma"
+  provider     = "mysql"
+  // NOTE: When using postgresql, mysql or sqlserver, uncomment the @db.Text annotations in model Account below
+  // Further reading:
+  // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
+  // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
 }
 
 // Necessary for Next auth
 model Account {
-    id                       String  @id @default(cuid())
-    userId                   String
-    type                     String
-    provider                 String
-    providerAccountId        String
-    refresh_token            String? @db.Text
-    refresh_token_expires_in Int?
-    access_token             String? @db.Text
-    ext_expires_in           Int?
-    expires_at               Int?
-    token_type               String?
-    scope                    String?
-    id_token                 String? @db.Text
-    session_state            String?
-    user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                       String  @id @default(cuid())
+  userId                   String
+  type                     String
+  provider                 String
+  providerAccountId        String
+  refresh_token            String? @db.Text
+  refresh_token_expires_in Int?
+  access_token             String? @db.Text
+  ext_expires_in           Int?
+  expires_at               Int?
+  token_type               String?
+  scope                    String?
+  id_token                 String? @db.Text
+  session_state            String?
+  user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    @@unique([provider, providerAccountId])
-    @@index([userId])
+  @@unique([provider, providerAccountId])
+  @@index([userId])
 }
 
 model AuditLog {
@@ -45,150 +45,151 @@ model AuditLog {
   route     String
   action    String
   details   String?
-  user User[]
+  user      User[]
 
   @@index([user_id])
 }
 
 model Session {
-    id           String   @id @default(cuid())
-    sessionToken String   @unique
-    userId       String
-    expires      DateTime
-    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-    @@index([userId])
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model User {
-    id            String       @id @default(cuid())
-    name          String?
-    email         String?      @unique
-    emailVerified DateTime?
-    image         String?
-    passwordHash  String?      @db.Text
-    salt          String?
-    role          Role         @default(HACKER)
-    accounts      Account[]
-    sessions      Session[]
-    hackerInfo    HackerInfo[]
-    auditLog      AuditLog[]
+  id            String       @id @default(cuid())
+  name          String?
+  email         String?      @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?      @db.Text
+  salt          String?
+  role          Role         @default(HACKER)
+  accounts      Account[]
+  sessions      Session[]
+  hackerInfo    HackerInfo[]
+  auditLog      AuditLog[]
 }
 
 model VerificationToken {
-    identifier String
-    token      String   @unique
-    expires    DateTime
+  identifier String
+  token      String   @unique
+  expires    DateTime
 
-    @@unique([identifier, token])
+  @@unique([identifier, token])
 }
 
 model HackerInfo {
-    id                           String         @id @default(cuid()) @map("submissionID")
-    preferredLanguage            Language       @default(EN)
-    email                        String
-    firstName                    String
-    lastName                     String
-    gender                       String         @default("Prefer not to say")
-    phoneNumber                  String
-    university                   String?
-    studyLevel                   String?
-    studyProgram                 String?
-    graduationYear               Int?
-    attendanceType               AttendanceType @default(IN_PERSON)
-    location                     String?        @map("attendanceLocation")
-    transportationRequired       Boolean        @default(false)
-    dietaryRestrictions          String         @db.Text
-    accessibilityRequirements    String         @db.Text
-    shirtSize                    ShirtSize?
-    emergencyContactName         String
-    emergencyContactRelationship String
-    emergencyContactPhoneNumber  String
-    numberOfPreviousHackathons   Int?
-    linkGithub                   String?
-    linkLinkedin                 String?
-    linkPersonalSite             String?
-    linkResume                   String?        @db.Text
-    lookingForwardTo             String?        @db.Text
-    formStartDate                DateTime?
-    formEndDate                  DateTime?
-    confirmed                    Boolean        @default(false)
-    user                         User?          @relation(fields: [userId], references: [id])
-    userId                       String?
-    unsubscribed                 Boolean        @default(false)
-    unsubscribeToken             String?        @unique @default(cuid())
-    onlyOnline                   Boolean        @default(false)
-    acceptanceExpiry             DateTime?
-    walkIn                       Boolean        @default(false)
-    winner                       Boolean        @default(false)
-    presenceInfo                 PresenceInfo?
+  id                           String         @id @default(cuid()) @map("submissionID")
+  preferredLanguage            Language       @default(EN)
+  email                        String
+  firstName                    String
+  lastName                     String
+  gender                       String         @default("Prefer not to say")
+  phoneNumber                  String
+  university                   String?
+  studyLevel                   String?
+  studyProgram                 String?
+  graduationYear               Int?
+  attendanceType               AttendanceType @default(IN_PERSON)
+  location                     String?        @map("attendanceLocation")
+  transportationRequired       Boolean        @default(false)
+  dietaryRestrictions          String         @db.Text
+  accessibilityRequirements    String         @db.Text
+  shirtSize                    ShirtSize?
+  emergencyContactName         String
+  emergencyContactRelationship String
+  emergencyContactPhoneNumber  String
+  numberOfPreviousHackathons   Int?
+  linkGithub                   String?
+  linkLinkedin                 String?
+  linkPersonalSite             String?
+  linkResume                   String?        @db.Text
+  lookingForwardTo             String?        @db.Text
+  formStartDate                DateTime?
+  formEndDate                  DateTime?
+  confirmed                    Boolean        @default(false)
+  user                         User?          @relation(fields: [userId], references: [id])
+  userId                       String?
+  unsubscribed                 Boolean        @default(false)
+  unsubscribeToken             String?        @unique @default(cuid())
+  onlyOnline                   Boolean        @default(false)
+  acceptanceExpiry             DateTime?
+  walkIn                       Boolean        @default(false)
+  winner                       Boolean        @default(false)
+  presenceInfo                 PresenceInfo?
 
-    @@index([userId])
+  @@index([userId])
 }
 
 model PresenceInfo {
-    id           String     @id @default(cuid())
-    checkedIn    Boolean    @default(false)
-    breakfast1   Boolean    @default(false)
-    lunch1       Boolean    @default(false)
-    dinner1      Boolean    @default(false)
-    snacks       Boolean    @default(false)
-    snacks2      Boolean    @default(false)
-    redbull      Boolean    @default(false)
-    breakfast2   Boolean    @default(false)
-    lunch2       Boolean    @default(false)
-    lunch22      Boolean    @default(false)
-    hackerInfo   HackerInfo @relation(fields: [hackerInfoId], references: [id])
-    hackerInfoId String     @unique
+  id           String     @id @default(cuid())
+  checkedIn    Boolean    @default(false)
+  breakfast1   Boolean    @default(false)
+  lunch1       Boolean    @default(false)
+  dinner1      Boolean    @default(false)
+  snacks       Boolean    @default(false)
+  snacks2      Boolean    @default(false)
+  redbull      Boolean    @default(false)
+  breakfast2   Boolean    @default(false)
+  lunch2       Boolean    @default(false)
+  lunch22      Boolean    @default(false)
+  hackerInfo   HackerInfo @relation(fields: [hackerInfoId], references: [id])
+  hackerInfoId String     @unique
 }
 
 model Event {
-    id          String    @id @default(cuid())
-    start       DateTime
-    end         DateTime
-    name        String
-    type        EventType @default(ALL)
-    host        String?
-    description String    @db.Text
-    room        String
-    image       String?
-    link        String?
-    linkText    String?
-    tiktok      String?
+  id          String    @id @default(cuid())
+  start       DateTime
+  end         DateTime
+  name        String
+  type        EventType @default(ALL)
+  host        String?
+  description String    @db.Text
+  room        String
+  image       String?
+  link        String?
+  linkText    String?
+  tiktok      String?
 }
 
 model Follow {
-    id    String @id @default(cuid())
-    email String @unique
+  id    String @id @default(cuid())
+  email String @unique
 }
 
 enum Language {
-    EN
-    FR
+  EN
+  FR
 }
 
 enum AttendanceType {
-    IN_PERSON
-    ONLINE
+  IN_PERSON
+  ONLINE
 }
 
 enum ShirtSize {
-    S
-    M
-    L
-    XL
-    XXL
+  S
+  M
+  L
+  XL
+  XXL
 }
 
 enum Role {
-    HACKER
-    ORGANIZER
-    SPONSOR
+  HACKER
+  ORGANIZER
+  SPONSOR
 }
 
 enum EventType {
-    ALL
-    WORKSHOP
-    SOCIAL
-    CAREER_FAIR
-    FOOD
+  ALL
+  WORKSHOP
+  SOCIAL
+  CAREER_FAIR
+  FOOD
 }

@@ -1,8 +1,8 @@
 import { faker } from "@faker-js/faker";
 import { Role, Language, PrismaClient } from "@prisma/client";
 
-// Generates dummy users
-const user = () => {
+//generates dummy users
+let user = () => {
 	const firstName = faker.person.firstName();
 	const lastName = faker.person.lastName();
 	const name = `${firstName} ${lastName}`;
@@ -21,23 +21,21 @@ const user = () => {
 				preferredLanguage: Language.EN,
 				phoneNumber,
 				email,
-				emergencyContactName: "",
-				emergencyContactRelationship: "",
-				emergencyContactPhoneNumber: "",
-				dietaryRestrictions: "",
-				accessibilityRequirements: "",
+				emergencyContactName: "null",
+				emergencyContactRelationship: "null",
+				emergencyContactPhoneNumber: "null",
 			},
 		},
 	};
 };
 
 /**
- * Generates an array of users
+ * generates an array of users
  * @param n number of users to generate
  * @returns [] array of users
  */
 function generateUsers(n = 10) {
-	const users = [];
+	let users = [];
 	for (let i = 0; i < n; i++) {
 		users.push(user());
 	}
