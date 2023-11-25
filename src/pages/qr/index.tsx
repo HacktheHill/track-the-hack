@@ -32,7 +32,9 @@ const QR = () => {
 							void router.push(data);
 						}}
 					/>
-					{!error && <p className="z-10 max-w-xl text-center text-lg font-bold text-dark-color">{t("scan-qr")}</p>}
+					{!error && (
+						<p className="z-10 max-w-xl text-center text-lg font-bold text-dark-color">{t("scan-qr")}</p>
+					)}
 				</OnlyRole>
 				<OnlyRole filter={role => role === Role.HACKER}>
 					<QRCode setError={setError} />
@@ -42,13 +44,8 @@ const QR = () => {
 				</OnlyRole>
 			</div>
 			{error && (
-<<<<<<< HEAD
-				<div className="flex h-40 items-center justify-center text-dark-color">
-					<p>{"sign-in-to-access"}</p>
-=======
 				<div className="flex h-40 items-center justify-center text-dark-color">
 					<p>You need to sign in to access the QR page.</p>
->>>>>>> main
 				</div>
 			)}
 			<div className="h-56 w-full bg-light-primary-color">
