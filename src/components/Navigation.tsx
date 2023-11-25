@@ -15,12 +15,12 @@ const Navbar = ({ integrated }: NavbarProps) => {
 	const { data: sessionData } = useSession();
 	return (
 		<nav
-			className={`sticky top-0 z-10 flex gap-4 whitespace-nowrap bg-background1 p-4 ${
-				integrated ? "" : "border-b border-dark shadow-navbar"
+			className={`sticky top-0 z-10 flex gap-4 whitespace-nowrap bg-light-quaternary-color p-4 ${
+				integrated ? "" : "border-b border-dark-primary-color shadow-navbar"
 			}`}
 			aria-label="Main navigation"
 		>
-			<div className="flex w-full items-center justify-center font-coolvetica mobile:w-auto">
+			<div className="flex w-full items-center justify-start font-coolvetica mobile:w-auto mobile:justify-center">
 				<Link href="/">
 					<Image
 						className="hidden mobile:block"
@@ -33,9 +33,9 @@ const Navbar = ({ integrated }: NavbarProps) => {
 					<Image
 						className="block mobile:hidden"
 						priority
-						src="/assets/hackthehill-banner.svg"
-						height={238}
-						width={238}
+						src="/assets/hackthehill-logo.svg"
+						height={64}
+						width={64}
 						alt="Home"
 					/>
 				</Link>
@@ -46,7 +46,7 @@ const Navbar = ({ integrated }: NavbarProps) => {
 			</div>
 
 			<button
-				className="text-dark-primary right-4 ml-auto flex whitespace-nowrap rounded-lg border border-dark bg-background1 px-4 py-2 font-coolvetica  transition-colors hover:bg-background3 sm:visible logo-center:absolute"
+				className="hover:bg-light-quaternary right-4 ml-auto flex whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-color transition-colors sm:visible logo-center:absolute"
 				onClick={sessionData ? () => void signOut() : () => void signIn()}
 			>
 				{sessionData ? "Sign out" : "Sign in"}
@@ -65,7 +65,7 @@ const BottomMenu = () => {
 
 	return (
 		<nav
-			className="sticky bottom-0 flex w-full items-center justify-evenly gap-4 whitespace-nowrap bg-background1 p-4 mobile:hidden xs:gap-8"
+			className="sticky bottom-0 flex w-full items-center justify-evenly gap-4 whitespace-nowrap bg-light-quaternary-color p-4 mobile:hidden xs:gap-8"
 			aria-label="Bottom navigation"
 		>
 			<Link href="/">
@@ -119,7 +119,7 @@ const Links = () => {
 		<>
 			<Link
 				href="/"
-				className="text-dark-primary hover:text-light-color mx-4 flex items-center font-coolvetica  text-2xl"
+				className="mx-4 flex items-center font-coolvetica text-2xl text-dark-primary-color hover:text-light-color"
 			>
 				Home
 			</Link>
@@ -127,7 +127,7 @@ const Links = () => {
 				<OnlyRole filter={role => role === Role.HACKER}>
 					<Link
 						href="/qr"
-						className="text-dark-primary hover:text-light-color mx-4 flex items-center font-coolvetica  text-2xl"
+						className="mx-4 flex items-center font-coolvetica text-2xl text-dark-primary-color hover:text-light-color"
 					>
 						QR
 					</Link>
@@ -135,19 +135,19 @@ const Links = () => {
 			)}
 			<Link
 				href="/schedule"
-				className="text-dark-primary hover:text-light-color mx-4 flex items-center font-coolvetica  text-2xl"
+				className="mx-4 flex items-center font-coolvetica text-2xl text-dark-primary-color hover:text-light-color"
 			>
 				Schedule
 			</Link>
 			<Link
 				href="/maps"
-				className="text-dark-primary hover:text-light-color mx-4 flex items-center font-coolvetica  text-2xl"
+				className="mx-4 flex items-center font-coolvetica text-2xl text-dark-primary-color hover:text-light-color"
 			>
 				Maps
 			</Link>
 			<Link
 				href="/resources"
-				className="text-dark-primary hover:text-light-color mx-4 flex items-center font-coolvetica  text-2xl"
+				className="mx-4 flex items-center font-coolvetica text-2xl text-dark-primary-color hover:text-light-color"
 			>
 				Resources
 			</Link>
@@ -156,7 +156,7 @@ const Links = () => {
 					<OnlyRole filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
 						<Link
 							href="/hackers"
-							className="text-dark-primary hover:text-light-color mx-4 flex items-center font-coolvetica  text-2xl"
+							className="mx-4 flex items-center font-coolvetica text-2xl text-dark-primary-color hover:text-light-color"
 						>
 							Hackers
 						</Link>
@@ -164,15 +164,13 @@ const Links = () => {
 					<OnlyRole filter={role => role === Role.ORGANIZER}>
 						<Link
 							href="/walk-in"
-							className="text-dark-primary hover:text-light-color mx-4 flex items-center font-coolvetica  text-2xl"
+							className="mx-4 flex items-center font-coolvetica text-2xl text-dark-primary-color hover:text-light-color"
 						>
 							Walk-In
 						</Link>
-					</OnlyRole>
-					<OnlyRole filter={role => role === Role.ORGANIZER}>
 						<Link
 							href="/walk-in"
-							className="text-dark-primary hover:text-light-color mx-4 flex items-center font-coolvetica  text-2xl"
+							className="text-dark-primary mx-4 flex items-center font-coolvetica text-2xl  hover:text-light-color"
 						>
 							Internal
 						</Link>

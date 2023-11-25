@@ -100,16 +100,16 @@ const Confirm: NextPage = () => {
 		>
 			{isSubmitted ? (
 				<div className="flex flex-col items-center justify-center gap-6">
-					<h3 className="font-rubik text-[clamp(1rem,1vmin,5rem)] font-medium text-dark">
+					<h3 className="font-rubik text-[clamp(1rem,1vmin,5rem)] font-medium text-dark-color">
 						{t("thank-you-for-confirming-your-attendance")}
 					</h3>
-					<p className="font-rubik text-[clamp(1rem,1vmin,5rem)] font-medium text-dark">
+					<p className="font-rubik text-[clamp(1rem,1vmin,5rem)] font-medium text-dark-color">
 						{t("we-look-forward-to-seeing-you")}
 					</p>
 				</div>
 			) : (
 				<div className="flex max-w-[25rem] flex-col items-center gap-6">
-					<h3 className="font-rubik text-[clamp(1rem,1vmin,5rem)] font-medium text-dark">
+					<h3 className="font-rubik text-[clamp(1rem,1vmin,5rem)] font-medium text-dark-color">
 						{t("congratulations-for-your-acceptance", {
 							name: query.data?.firstName ?? "",
 						})}
@@ -124,7 +124,7 @@ const Confirm: NextPage = () => {
 								</p>
 								<button
 									type="button"
-									className="transform cursor-pointer whitespace-nowrap rounded-normal border-2 border-light px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-rubik text-[clamp(1rem,1vmin,5rem)] text-light shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition hover:bg-white/50"
+									className="transform cursor-pointer whitespace-nowrap rounded-normal border-2 border-light-color px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-rubik text-[clamp(1rem,1vmin,5rem)] text-light-color shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition hover:bg-white/50"
 									onClick={() => void signOut()}
 								>
 									{t("sign-out")}
@@ -133,7 +133,7 @@ const Confirm: NextPage = () => {
 						) : (
 							<button
 								type="button"
-								className="hover:bg-blue transform cursor-pointer whitespace-nowrap rounded-normal border-2 border-light px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-rubik text-[clamp(1rem,1vmin,5rem)] text-light shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition hover:bg-white/50"
+								className="hover:bg-blue transform cursor-pointer whitespace-nowrap rounded-normal border-2 border-light-color px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-rubik text-[clamp(1rem,1vmin,5rem)] text-light-color shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition hover:bg-white/50"
 								onClick={() => void signIn()}
 							>
 								{t("sign-in")}
@@ -142,7 +142,7 @@ const Confirm: NextPage = () => {
 					</div>
 					{query.data?.walkIn === false &&
 						(query.data?.onlyOnline ? (
-							<p className="font-rubik text-[clamp(1rem,1vmin,5rem)] font-medium text-dark">
+							<p className="font-rubik text-[clamp(1rem,1vmin,5rem)] font-medium text-dark-color">
 								{t("only-online")}
 							</p>
 						) : (
@@ -156,7 +156,7 @@ const Confirm: NextPage = () => {
 										value={AttendanceType.IN_PERSON}
 										checked={attendanceType === AttendanceType.IN_PERSON}
 										onChange={handleAttendanceTypeChange}
-										className="flex h-4 w-4 appearance-none items-center justify-center rounded-full border border-medium bg-transparent text-black after:m-0.5 after:block after:h-full after:w-full after:border-black after:leading-[calc(100%*3/4)] after:checked:content-check"
+										className="border-medium flex h-4 w-4 appearance-none items-center justify-center rounded-full border bg-transparent text-black after:m-0.5 after:block after:h-full after:w-full after:border-black after:leading-[calc(100%*3/4)] after:checked:content-check"
 									/>
 									<label
 										htmlFor="in-person"
@@ -173,7 +173,7 @@ const Confirm: NextPage = () => {
 										value={AttendanceType.ONLINE}
 										checked={attendanceType === AttendanceType.ONLINE}
 										onChange={handleAttendanceTypeChange}
-										className="flex h-4 w-4 appearance-none items-center justify-center rounded-full border border-medium bg-transparent text-black after:m-0.5 after:block after:h-full after:w-full after:border-black after:leading-[calc(100%*3/4)] after:checked:content-check"
+										className="border-medium flex h-4 w-4 appearance-none items-center justify-center rounded-full border bg-transparent text-black after:m-0.5 after:block after:h-full after:w-full after:border-black after:leading-[calc(100%*3/4)] after:checked:content-check"
 									/>
 									<label htmlFor="online" className="whitespace-nowrap text-[clamp(1rem,1vmin,5rem)]">
 										{t("attendanceType.online")}
@@ -187,7 +187,7 @@ const Confirm: NextPage = () => {
 										>
 											{t("t-shirt.label")}
 										</label>
-										<div className="rounded-2xl border border-medium px-4 py-2">
+										<div className="border-medium rounded-2xl border px-4 py-2">
 											<select
 												name="shirtSize"
 												id="shirtSize"
@@ -224,7 +224,7 @@ const Confirm: NextPage = () => {
 								name="terms"
 								checked={terms}
 								onChange={() => setTerms(!terms)}
-								className="h-4 w-4 appearance-none rounded-lg border border-medium bg-transparent text-black after:block after:h-full after:w-full after:border-black after:p-0.5 after:leading-[calc(100%*1/2)] after:checked:content-check"
+								className="border-medium h-4 w-4 appearance-none rounded-lg border bg-transparent text-black after:block after:h-full after:w-full after:border-black after:p-0.5 after:leading-[calc(100%*1/2)] after:checked:content-check"
 							/>
 							<label htmlFor="terms" className="flex-1">
 								<Trans
@@ -246,7 +246,7 @@ const Confirm: NextPage = () => {
 						{validationMessage && <p className="text-center text-red-500">{validationMessage}</p>}
 						<button
 							type="submit"
-							className="transform cursor-pointer whitespace-nowrap rounded-normal border-0 bg-light px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-rubik text-[clamp(1rem,1vmin,5rem)] text-white shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition hover:bg-medium"
+							className="hover:bg-medium transform cursor-pointer whitespace-nowrap rounded-normal border-0 bg-light-color px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-rubik text-[clamp(1rem,1vmin,5rem)] text-white shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition"
 						>
 							{t("confirm")}
 						</button>
