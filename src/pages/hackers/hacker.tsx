@@ -32,7 +32,7 @@ const Hacker: NextPage = () => {
 
 	if (hackerQuery.isLoading || hackerQuery.data == null) {
 		return (
-			<App className="h-full bg-gradient-to-b from-background2 to-background1 px-16 py-12">
+			<App className="h-full bg-default-gradient px-16 py-12">
 				<OnlyRole filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
 					<Loading />
 				</OnlyRole>
@@ -45,7 +45,7 @@ const Hacker: NextPage = () => {
 		);
 	} else if (hackerQuery.isError) {
 		return (
-			<App className="h-full bg-gradient-to-b from-background2 to-background1 px-16 py-12">
+			<App className="h-full bg-default-gradient px-16 py-12">
 				<div className="flex flex-col items-center justify-center gap-4">
 					<Error message={hackerQuery.error.message} />
 				</div>
@@ -59,13 +59,13 @@ const Hacker: NextPage = () => {
 
 	if (presenceQuery.isLoading || presenceQuery.data == null) {
 		return (
-			<App className="h-full bg-gradient-to-b from-background2 to-background1 px-16 py-12">
+			<App className="h-full bg-default-gradient px-16 py-12">
 				<Loading />
 			</App>
 		);
 	} else if (presenceQuery.isError) {
 		return (
-			<App className="h-full bg-gradient-to-b from-background2 to-background1 px-16 py-12">
+			<App className="h-full bg-default-gradient px-16 py-12">
 				<div className="flex flex-col items-center justify-center gap-4">
 					<Error message={presenceQuery.error.message} />
 				</div>
@@ -79,7 +79,7 @@ const Hacker: NextPage = () => {
 
 	return (
 		<App
-			className="mx-auto h-full w-full overflow-y-auto bg-gradient-to-b from-background2 to-background1 px-4 py-12"
+			className="mx-auto h-full w-full overflow-y-auto bg-default-gradient px-4 py-12"
 			title={`${hackerQuery.data.firstName} ${hackerQuery.data.lastName}`}
 		>
 			<div className="mx-auto flex max-w-2xl flex-col gap-4">
@@ -380,7 +380,7 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 
 	return (
 		<>
-			<h1 className="self-center font-coolvetica text-4xl font-normal text-dark">
+			<h1 className="self-center font-coolvetica text-4xl font-normal text-dark-color">
 				{hackerData.firstName} {hackerData.lastName} ({hackerData.gender})
 			</h1>
 
@@ -390,7 +390,7 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 				{hackerData.graduationYear && `(${hackerData.graduationYear})`}
 			</p>
 			<OnlyRole filter={role => role === Role.ORGANIZER}>
-				<div className="grid grid-flow-row grid-cols-2 gap-4 rounded-lg bg-background2 p-4">
+				<div className="grid grid-flow-row grid-cols-2 gap-4 rounded-lg bg-light-tertiary-color p-4">
 					{Object.entries(presenceState).map(([key, value]) => (
 						<p key={key}>
 							<input
@@ -418,7 +418,7 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 				{Object.keys(groupedData).map((category, index) => (
 					<div key={index}>
 						<div className="flex justify-center">
-							<h2 className="self-center px-3 py-2 font-[Coolvetica] text-2xl font-normal text-dark">
+							<h2 className="text-dark self-center px-3 py-2 font-[Coolvetica] text-2xl font-normal">
 								{category}
 							</h2>
 						</div>
@@ -429,7 +429,7 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 									<select
 										id={item.name}
 										name={item.name}
-										className="col-md-6 w-[50%] rounded-[100px] border-none bg-background1 px-5 py-2 font-rubik text-dark shadow-md transition-all duration-500 hover:bg-background1/50"
+										className="col-md-6 bg-background1 text-dark hover:bg-background1/50 w-[50%] rounded-[100px] border-none px-5 py-2 font-rubik shadow-md transition-all duration-500"
 										value={inputValues[item.name] || ""}
 										onChange={e => {
 											handleInputChange(item.name, e.target.value);
@@ -447,7 +447,7 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 										id={item.name}
 										name={item.name}
 										type={item.type}
-										className="/50 w-[50%] rounded-[100px] border-none bg-background1 px-4 py-2 font-rubik text-dark shadow-md outline-none	transition-all duration-500 hover:bg-background2"
+										className="/50 bg-background1 text-dark hover:bg-background2 w-[50%] rounded-[100px] border-none px-4 py-2 font-rubik shadow-md	outline-none transition-all duration-500"
 										defaultValue={
 											item.default_value !== null
 												? item.default_value
@@ -468,8 +468,8 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 				))}
 
 				<div className="flex justify-between gap-8 py-4 ">
-					<input className="rounded-md border border-gray-400 bg-background2 p-2" type="file" />
-					<button className="ml-2 rounded-md bg-dark px-4 py-2 text-white hover:bg-gray-700">
+					<input className="bg-background2 rounded-md border border-gray-400 p-2" type="file" />
+					<button className="bg-dark ml-2 rounded-md px-4 py-2 text-white hover:bg-gray-700">
 						Upload your Resume
 					</button>
 				</div>
@@ -488,7 +488,7 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 									href={value}
 									target="_blank"
 									rel="noreferrer"
-									className="flex items-center justify-center gap-2 rounded-md bg-dark px-4 py-2 text-white hover:bg-gray-700"
+									className="bg-dark flex items-center justify-center gap-2 rounded-md px-4 py-2 text-white hover:bg-gray-700"
 								>
 									{key}
 								</a>
@@ -499,7 +499,7 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 				<OnlyRole filter={role => role === Role.ORGANIZER}>
 					<>
 						<div className="flex justify-center py-4">
-							<h2 className="self-center py-4 font-[Coolvetica] text-2xl font-normal text-dark ">
+							<h2 className="text-dark self-center py-4 font-[Coolvetica] text-2xl font-normal ">
 								Debug Information
 							</h2>
 						</div>
