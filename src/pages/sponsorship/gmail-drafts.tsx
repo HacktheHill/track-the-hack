@@ -524,12 +524,12 @@ const SponsorshipGmailDrafts: NextPage = () => {
 	}, [templateID, organizerFullName, companyName, companyRepName, customTemplate, customizeTemplate]);
 
 	return (
-		<App className="overflow-y-auto bg-gradient3 p-8 sm:p-12" title={t("title")}>
+		<App className="bg-default-gradient overflow-y-auto p-8 sm:p-12" title={t("title")}>
 			<OnlyRole filter={role => role === Role.ORGANIZER}>
 				<form onSubmit={handleSubmit} className="m-auto flex w-fit flex-col items-center gap-4">
-					<h3 className="font-rubik text-4xl font-bold text-dark">{t("title")}</h3>
+					<h3 className="text-dark-color font-rubik text-4xl font-bold">{t("title")}</h3>
 					<div className="flex w-full flex-col items-center gap-2 sm:flex-row">
-						<label htmlFor="organizer-full-name" className="flex-[50%] font-rubik text-dark">
+						<label htmlFor="organizer-full-name" className="text-dark-color flex-[50%] font-rubik">
 							{t("organizer-full-name")}
 							<span className="text-red-500"> *</span>
 						</label>
@@ -537,21 +537,21 @@ const SponsorshipGmailDrafts: NextPage = () => {
 							id="organizer-full-name"
 							name="organizerFullName"
 							type="text"
-							className="w-full rounded-[100px] border-none bg-background1 px-4 py-2 font-rubik text-dark shadow-md transition-all duration-500 hover:bg-background1/50"
+							className="text-dark-color w-full rounded-[100px] border-none bg-light-primary-color px-4 py-2 font-rubik shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
 							onChange={event => setOrganizerFullName(event.target.value)}
 							value={organizerFullName}
 							required
 						/>
 					</div>
 					<div className="flex w-full flex-col items-center gap-2 sm:flex-row">
-						<label htmlFor="template" className="flex-[50%] font-rubik text-dark">
+						<label htmlFor="template" className="text-dark-color flex-[50%] font-rubik">
 							{t("select-template")}
 							<span className="text-red-500"> *</span>
 						</label>
 						<select
 							id="template"
 							name="template"
-							className="w-full rounded-[100px] border-none bg-background1 px-4 py-2 font-rubik text-dark shadow-md transition-all duration-500 hover:bg-background1/50"
+							className="text-dark-color w-full rounded-[100px] border-none bg-light-primary-color px-4 py-2 font-rubik shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
 							onChange={event => {
 								setTemplateID(event.target.value);
 								setCustomizeTemplate(event.target.value === "custom");
@@ -576,7 +576,7 @@ const SponsorshipGmailDrafts: NextPage = () => {
 					{!customizeTemplate && (
 						<>
 							<div className="flex w-full flex-col items-center gap-2 sm:flex-row">
-								<label htmlFor="company-name" className="flex-[50%] font-rubik text-dark">
+								<label htmlFor="company-name" className="text-dark-color flex-[50%] font-rubik">
 									{t("company-name")}
 									<span className="text-red-500"> *</span>
 								</label>
@@ -584,14 +584,14 @@ const SponsorshipGmailDrafts: NextPage = () => {
 									id="company-name"
 									name="companyName"
 									type="text"
-									className="w-full rounded-[100px] border-none bg-background1 px-4 py-2 font-rubik text-dark shadow-md transition-all duration-500 hover:bg-background1/50"
+									className="text-dark-color w-full rounded-[100px] border-none bg-light-primary-color px-4 py-2 font-rubik shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
 									onChange={event => setCompanyName(event.target.value)}
 									value={companyName}
 									required
 								/>
 							</div>
 							<div className="flex w-full flex-col items-center gap-2 sm:flex-row">
-								<label htmlFor="company-rep-name" className="flex-[50%] font-rubik text-dark">
+								<label htmlFor="company-rep-name" className="text-dark-color flex-[50%] font-rubik">
 									{t("company-rep-name")}
 									<span className="text-red-500"> *</span>
 								</label>
@@ -599,7 +599,7 @@ const SponsorshipGmailDrafts: NextPage = () => {
 									id="company-rep-name"
 									name="companyRepName"
 									type="text"
-									className="w-full rounded-[100px] border-none bg-background1 px-4 py-2 font-rubik text-dark shadow-md transition-all duration-500 hover:bg-background1/50"
+									className="text-dark-color w-full rounded-[100px] border-none bg-light-primary-color px-4 py-2 font-rubik shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
 									onChange={event => setCompanyRepName(event.target.value)}
 									value={companyRepName}
 									required
@@ -608,7 +608,7 @@ const SponsorshipGmailDrafts: NextPage = () => {
 						</>
 					)}
 					<div className="flex w-full flex-col items-center gap-2 sm:flex-row">
-						<label htmlFor="company-name" className="flex-[50%] font-rubik text-dark">
+						<label htmlFor="company-name" className="text-dark-color flex-[50%] font-rubik">
 							{t("company-email")}
 							<span className="text-red-500"> *</span>
 						</label>
@@ -616,21 +616,21 @@ const SponsorshipGmailDrafts: NextPage = () => {
 							id="company-email"
 							name="companyEmail"
 							type="email"
-							className="w-full rounded-[100px] border-none bg-background1 px-4 py-2 font-rubik text-dark shadow-md transition-all duration-500 hover:bg-background1/50"
+							className="text-dark-color w-full rounded-[100px] border-none bg-light-primary-color px-4 py-2 font-rubik shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
 							onChange={event => setCompanyEmail(event.target.value)}
 							value={companyEmail}
 							required
 						/>
 					</div>
 					<div className="flex w-full flex-col items-center gap-2 sm:flex-row">
-						<label htmlFor="subject" className="flex-[50%] font-rubik text-dark">
+						<label htmlFor="subject" className="text-dark-color flex-[50%] font-rubik">
 							{t("subject")}
 							<span className="text-red-500"> *</span>
 						</label>
 						<input
 							id="subject"
 							name="subject"
-							className="w-full rounded-[100px] border-none bg-background1 px-4 py-2 font-rubik text-dark shadow-md transition-all duration-500 hover:bg-background1/50"
+							className="text-dark-color w-full rounded-[100px] border-none bg-light-primary-color px-4 py-2 font-rubik shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
 							onChange={event => setSubject(event.target.value)}
 							value={subject}
 							required
@@ -640,7 +640,7 @@ const SponsorshipGmailDrafts: NextPage = () => {
 						<>
 							<div className="flex w-full flex-col items-center gap-2 sm:flex-row">
 								<div className="flex flex-col gap-1">
-									<label htmlFor="custom-template" className="flex-[50%] font-rubik text-dark">
+									<label htmlFor="custom-template" className="text-dark-color flex-[50%] font-rubik">
 										{t("custom-template")}
 									</label>
 									<small className="w-36 text-xs">{t("custom-template-note")}</small>
@@ -648,7 +648,7 @@ const SponsorshipGmailDrafts: NextPage = () => {
 								<textarea
 									id="custom-template"
 									name="customTemplate"
-									className="h-[200px] w-full rounded-md border-none bg-background1 px-4 py-2 font-rubik text-dark shadow-md transition-all duration-500 hover:bg-background1/50"
+									className="text-dark-color h-[200px] w-full rounded-md border-none bg-light-primary-color px-4 py-2 font-rubik shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
 									onChange={event => setCustomTemplate(event.target.value)}
 									value={customTemplate}
 								/>
@@ -663,7 +663,7 @@ const SponsorshipGmailDrafts: NextPage = () => {
 					<div className="relative h-[500px] w-full rounded-md bg-white shadow-md" ref={emailPreview}>
 						<button
 							type="button"
-							className="absolute bottom-4 right-4 rounded-[100px] border-none bg-light px-4 py-2 font-rubik text-white shadow-md transition-all duration-1000 hover:bg-medium disabled:hover:bg-light"
+							className="bg-ligh-color hover:bg-medium absolute bottom-4 right-4 rounded-[100px] border-none px-4 py-2 font-rubik text-white shadow-md transition-all duration-1000 disabled:hover:bg-light-color"
 							onClick={() => void copyToClipBoard()}
 							disabled={copied}
 						>
@@ -673,7 +673,7 @@ const SponsorshipGmailDrafts: NextPage = () => {
 					</div>
 					<button
 						type="submit"
-						className="cursor-pointer whitespace-nowrap rounded-[100px] border-none bg-light px-8 py-2 font-rubik text-white shadow-md transition-all duration-1000 hover:bg-medium disabled:hover:bg-light"
+						className="hover:bg-medium cursor-pointer whitespace-nowrap rounded-[100px] border-none bg-light-color px-8 py-2 font-rubik text-white shadow-md transition-all duration-1000 disabled:hover:bg-light-color"
 						disabled={drafted}
 					>
 						{drafted ? t("created-draft-email") : t("create-draft-email")}

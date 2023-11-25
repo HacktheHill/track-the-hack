@@ -21,7 +21,7 @@ const QR = () => {
 
 	return (
 		<App
-			className="relative flex h-full flex-col items-center justify-center gap-16 bg-gradient2"
+			className="relative flex h-full flex-col items-center justify-center gap-16 bg-default-gradient"
 			title={t("title")}
 		>
 			<Weather count={30} type="snowflake" />
@@ -32,19 +32,23 @@ const QR = () => {
 							void router.push(data);
 						}}
 					/>
-					{!error && <p className="z-10 max-w-xl text-center text-lg font-bold text-dark">{t("scan-qr")}</p>}
+					{!error && (
+						<p className="z-10 max-w-xl text-center text-lg font-bold text-dark-color">{t("scan-qr")}</p>
+					)}
 				</OnlyRole>
 				<OnlyRole filter={role => role === Role.HACKER}>
 					<QRCode setError={setError} />
-					{!error && <p className="z-10 max-w-xl text-center text-lg font-bold text-dark">{t("use-qr")}</p>}
+					{!error && (
+						<p className="z-10 max-w-xl text-center text-lg font-bold text-dark-color">{t("use-qr")}</p>
+					)}
 				</OnlyRole>
 			</div>
 			{error && (
-				<div className="flex h-40 items-center justify-center text-dark">
+				<div className="flex h-40 items-center justify-center text-dark-color">
 					<p>You need to sign in to access the QR page.</p>
 				</div>
 			)}
-			<div className="h-56 w-full bg-light">
+			<div className="h-56 w-full bg-light-primary-color">
 				<Image
 					priority
 					className="z-10 -my-4 mx-auto"

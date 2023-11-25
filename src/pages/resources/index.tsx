@@ -263,7 +263,7 @@ const Resources: NextPage = () => {
 
 	return (
 		<App
-			className="flex h-full flex-col gap-10 overflow-y-auto bg-gradient-to-b from-background2 to-background1 py-12"
+			className="flex h-full flex-col gap-10 overflow-y-auto bg-default-gradient  py-12"
 			noIndex
 			title={t("title")}
 		>

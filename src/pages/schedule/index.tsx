@@ -32,13 +32,13 @@ const Schedule: NextPage = () => {
 
 	if (query.isLoading || query.data == null) {
 		return (
-			<App className="h-full bg-gradient3 px-16 py-12">
+			<App className="h-full bg-default-gradient px-16 py-12">
 				<Loading />
 			</App>
 		);
 	} else if (query.isError) {
 		return (
-			<App className="h-full bg-gradient3 px-16 py-12">
+			<App className="h-full bg-default-gradient px-16 py-12">
 				<div className="flex flex-col items-center justify-center gap-4">
 					<Error message={query.error.message} />
 				</div>
@@ -53,15 +53,15 @@ const Schedule: NextPage = () => {
 	const eventColor = (eventType: string) => {
 		switch (eventType) {
 			case EventType.WORKSHOP:
-				return "bg-accent1 text-dark";
+				return "bg-dark-primary-color text-light-color";
 			case EventType.CAREER_FAIR:
-				return "bg-accent3 text-white";
+				return "bg-light-primary-color text-light-color";
 			case EventType.FOOD:
-				return "bg-accent2 text-dark";
+				return "bg-light-tertiary-color text-light-color";
 			case EventType.SOCIAL:
-				return "bg-accent4 text-white";
+				return "bg-medium-primary-color text-light-color";
 			default:
-				return "bg-accent1 text-dark";
+				return "bg-dark-primary-color text-light-color";
 		}
 	};
 
@@ -112,13 +112,13 @@ const Schedule: NextPage = () => {
 		}, [] as Event[][]);
 
 	return (
-		<App className="flex h-0 flex-col items-center bg-gradient3" integrated={true} title={t("title")}>
+		<App className="flex h-0 flex-col items-center bg-default-gradient" integrated={true} title={t("title")}>
 			<Tabs tab={tab} setTab={tab => void router.push(`/schedule?tab=${tab}`)} />
 			<div className="w-full overflow-y-auto p-4 mobile:px-0">
 				<div className="mx-auto flex max-w-2xl flex-col gap-4">
 					{events.map((event, i) => (
 						<div key={i} className="flex gap-4">
-							<div className="grid basis-1/3 place-content-center rounded-lg bg-dark/50 p-4 font-coolvetica text-2xl text-white">
+							<div className="bg-dark/50 grid basis-1/3 place-content-center rounded-lg p-4 font-coolvetica text-2xl text-white">
 								{event[0]?.start.toLocaleDateString(dateLocale, {
 									month: "short",
 									day: "numeric",
@@ -166,7 +166,7 @@ type TabsProps = {
 
 const Tabs = ({ tab, setTab }: TabsProps) => {
 	return (
-		<div className="w-full border-b border-dark bg-background1 px-4 pb-4 pt-2 shadow-navbar">
+		<div className="w-full border-b border-dark-color bg-light-quaternary-color px-4 pb-4 pt-2 shadow-navbar">
 			<div className="mx-auto grid max-w-2xl grid-cols-3 gap-3 sm:grid-cols-5">
 				{Object.keys(EventType)
 					.sort(a => (a === EventType.ALL ? -1 : 0))
@@ -202,7 +202,7 @@ const Tab = ({ type, active, onClick }: TabProps) => {
 
 	return (
 		<div
-			className={`flex cursor-pointer flex-row items-center justify-center gap-2 rounded-lg bg-dark p-2 font-coolvetica text-white outline sm:p-4 ${
+			className={`flex cursor-pointer flex-row items-center justify-center gap-2 rounded-lg bg-dark-color p-2 font-coolvetica text-white outline sm:p-4 ${
 				type === active ? "outline-4 outline-white" : "outline-0"
 			}`}
 			onClick={onClick}
