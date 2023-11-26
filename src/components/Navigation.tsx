@@ -172,7 +172,7 @@ const Links = () => {
 					<OnlyRole filter={role => role === Role.ORGANIZER}>
 						<Link
 							href="/internal"
-							className="hover:text-light mx-4 flex items-center font-coolvetica text-2xl text-dark-primary-color"
+							className="hover:text-light mx-4 flex items-center font-coolvetica text-2xl text-dark-primary-color hover:text-light-color"
 						>
 							Internal
 						</Link>
