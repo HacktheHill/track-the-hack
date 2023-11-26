@@ -18,11 +18,7 @@ const Internal: NextPage = () => {
 	const { t: tInternal } = useTranslation("internal");
 	const { t: tCommon } = useTranslation("common");
 	return (
-		<App
-			className="overflow-y-auto bg-gradient-to-b from-background2 to-background1"
-			integrated={true}
-			title={tInternal("title")}
-		>
+		<App className="overflow-y-auto bg-default-gradient" integrated={true} title={tInternal("title")}>
 			{/* TODO: some kind of menu for selecting things in the internal page */}
 			<OnlyRole filter={role => role === Role.ORGANIZER}>
 				<Metrics />

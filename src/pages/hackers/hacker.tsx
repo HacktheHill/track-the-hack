@@ -435,7 +435,7 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 				{Object.keys(groupedData).map((category, index) => (
 					<div key={index}>
 						<div className="flex justify-center">
-							<h2 className="text-dark self-center px-3 py-2 font-[Coolvetica] text-2xl font-normal">
+							<h2 className="text-dark-primary self-center px-3 py-2 font-[Coolvetica] text-2xl font-normal">
 								{category}
 							</h2>
 						</div>
@@ -446,7 +446,7 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 									<select
 										id={item.name}
 										name={item.name}
-										className="col-md-6 bg-background1 text-dark hover:bg-background1/50 w-[50%] rounded-[100px] border-none px-5 py-2 font-rubik shadow-md transition-all duration-500"
+										className="col-md-6 bg-background1 text-dark-primary hover:bg-background1/50 w-[50%] rounded-[100px] border-none px-5 py-2 font-rubik shadow-md transition-all duration-500"
 										value={inputValues[item.name] || ""}
 										onChange={e => {
 											handleInputChange(item.name, e.target.value);
@@ -464,7 +464,7 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 										id={item.name}
 										name={item.name}
 										type={item.type}
-										className="/50 bg-background1 text-dark hover:bg-background2 w-[50%] rounded-[100px] border-none px-4 py-2 font-rubik shadow-md	outline-none transition-all duration-500"
+										className="/50 bg-background1 text-dark-primary hover:bg-background2 w-[50%] rounded-[100px] border-none px-4 py-2 font-rubik shadow-md	outline-none transition-all duration-500"
 										defaultValue={
 											item.default_value !== null
 												? item.default_value
@@ -516,7 +516,7 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 				<OnlyRole filter={role => role === Role.ORGANIZER}>
 					<>
 						<div className="flex justify-center py-4">
-							<h2 className="text-dark self-center py-4 font-[Coolvetica] text-2xl font-normal ">
+							<h2 className="text-dark-primary self-center py-4 font-[Coolvetica] text-2xl font-normal ">
 								Debug Information
 							</h2>
 						</div>

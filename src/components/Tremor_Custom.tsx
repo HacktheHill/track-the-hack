@@ -26,21 +26,11 @@ import {
 import type { StrKeyAnyVal, StrKeyNumVal, TremorChartData } from "../utils/types";
 import { valToStr } from "../utils/getAggregatedData";
 
-type TremorDefaultColors = (
-	| "emerald"
-	| "rose"
-	| "sky"
-	| "fuchsia"
-	| "lime"
-	| "violet"
-	| "yellow"
-	| "indigo"
-	| "orange"
-)[];
-// emerald and rose must be first and second so the "true" values are green and the "false" ones are red in the data charts
+type TremorDefaultColors = ("green" | "red" | "sky" | "fuchsia" | "lime" | "violet" | "yellow" | "indigo" | "orange")[];
+// green and red must be first and second so the "true" values are green and the "false" ones are red in the data charts
 const defaultColors: TremorDefaultColors = [
-	"emerald",
-	"rose",
+	"green",
+	"red",
 	"sky",
 	"fuchsia",
 	"lime",
@@ -206,9 +196,7 @@ const EventsTable: React.FC<EventsTableProps> = ({ title, data, eventKeyToLabel 
 							<TableCell>
 								<Text>
 									{" "}
-									<Badge color={item.state ? "emerald" : "rose"}>
-										{item.state ? "Open" : "Closed"}
-									</Badge>
+									<Badge color={item.state ? "green" : "red"}>{item.state ? "Open" : "Closed"}</Badge>
 								</Text>
 							</TableCell>
 							<TableCell>{Math.round(item.utilization * 1000) / 1000}%</TableCell>
@@ -241,7 +229,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ title, data }) => {
 						</Flex>
 						<CategoryBar
 							values={[item.distributed, item.forecasted, item.unallocated]}
-							colors={["rose", "yellow", "emerald"]}
+							colors={["red", "yellow", "green"]}
 							className="mt-3"
 						/>
 					</div>
@@ -250,7 +238,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ title, data }) => {
 			<Legend
 				className="mt-3"
 				categories={["Disturbed", "Forecasted", "Unallocated"]}
-				colors={["rose", "yellow", "emerald"]}
+				colors={["red", "yellow", "green"]}
 			/>
 		</>
 	);

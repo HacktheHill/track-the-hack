@@ -168,9 +168,11 @@ const Links = () => {
 						>
 							Walk-In
 						</Link>
+					</OnlyRole>
+					<OnlyRole filter={role => role === Role.ORGANIZER}>
 						<Link
-							href="/walk-in"
-							className="text-dark-primary mx-4 flex items-center font-coolvetica text-2xl  hover:text-light-color"
+							href="/internal"
+							className="hover:text-light mx-4 flex items-center font-coolvetica text-2xl text-dark-primary-color"
 						>
 							Internal
 						</Link>
