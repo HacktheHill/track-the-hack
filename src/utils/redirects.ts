@@ -43,6 +43,6 @@ export async function hackersRedirect(session: Session | null, locale: string | 
 	}
 
 	return {
-		props: await serverSideTranslations(locale ?? "en", ["common", "hackers"]),
+		props: {}
 	};
 }
