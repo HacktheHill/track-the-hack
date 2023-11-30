@@ -528,12 +528,14 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 							<div className="flex flex-col items-center gap-2">
 								<p className="px-5 py-2">Careful - you have unsaved changes! </p>
 							</div>
-							<button className="px-4 py-2" onClick={resetInputFields}>
-								Reset
-							</button>
-							<button className="h-max w-max rounded-md bg-green-500 px-4 py-2">
-								<i className="fas fa-user-edit"></i> Save
-							</button>
+							<div className="flex flex-row items-center gap-2">
+								<button className="px-4 py-2" onClick={resetInputFields}>
+									Reset
+								</button>
+								<button className="h-max w-max rounded-md bg-green-500 px-4 py-2">
+									<i className="fas fa-user-edit"></i> Save
+								</button>
+							</div>
 						</div>
 					</div>
 				)}
