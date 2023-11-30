@@ -1,5 +1,5 @@
 import { Role, type HackerInfo } from "@prisma/client";
-import type { GetStaticProps, NextPage } from "next";
+import type { NextPage } from "next";
 import { useTranslation } from "next-i18next";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
