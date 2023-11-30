@@ -2,6 +2,7 @@ import NextAuth, { type NextAuthOptions } from "next-auth";
 import DiscordProvider from "next-auth/providers/discord";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
+import AuthentikProvider from "next-auth/providers/authentik";
 
 // Prisma adapter for NextAuth, optional and can be removed
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
@@ -34,6 +35,13 @@ export const authOptions: NextAuthOptions = {
 			clientId: env.GOOGLE_CLIENT_ID,
 			clientSecret: env.GOOGLE_CLIENT_SECRET,
 		}),
+		AuthentikProvider({
+			name: "Hack The Hill",
+			clientId: env.AUTHENTIK_ID,
+			clientSecret: env.AUTHENTIK_SECRET,
+			issuer: env.AUTHENTIK_ISSUER,
+			style: { logo: "https://cdn.discordapp.com/attachments/1029229927335206933/1167882053652598804/HtH_Small_White_Logo.svg?ex=6574a7eb&is=656232eb&hm=d58ebc8a128dc922c1792e66649ebda81e23ab9c1cd7b8059a5e90ead10baa46&", bg: "#a8403f", text: "#fff" }
+		})
 	],
 	theme: {
 		logo: "/assets/hackthehill-logo.svg",
