@@ -22,6 +22,7 @@ const Popup = ({ id, selectedOption } : popUpProps) => {
 	const [shirt, setShirt]=useState("")
 	const [visibility, setVisibility] = useState("invisible");
 	const [queriesLoaded, setQueriesLoaded]=useState(false)
+	const [checkedIn,setCheckin]=useState("Hacker successfully checked into this event")
     
 	useEffect(()=>{
 		if (!hackerQuery.isLoading && !presenceQuery.isLoading){
@@ -37,7 +38,7 @@ const Popup = ({ id, selectedOption } : popUpProps) => {
 			if (presenceQuery.data){
 				
 				if (presenceQuery.data[selectedOption]===false){
-					setVisibility('bg-[#7cf77c] h-30 w-96 z-30 text-center p-2 rounded text-lg')
+					setVisibility('bg-[#008000] h-30 w-96 z-30 text-center p-2 rounded text-lg')
 					const updatedPresenceInfo = { ...presenceQuery.data, [selectedOption]: true}
 					console.log("the updated data is", updatedPresenceInfo)
 					presenceMutation.mutate({
@@ -45,7 +46,8 @@ const Popup = ({ id, selectedOption } : popUpProps) => {
 						presenceInfo: {[selectedOption]: true}
 					})
 				} else {
-					setVisibility('bg-[#FF0000] h-30 w-96 z-30 text-center p-2 rounded text-lg')
+					setVisibility('bg-[#8b0000] h-30 w-96 z-30 text-center p-2 rounded text-lg')
+					setCheckin('Hacker has already checked in for this event.')
 				}
 			}
 		}
@@ -63,38 +65,44 @@ const Popup = ({ id, selectedOption } : popUpProps) => {
 			{queriesLoaded && <div>
 				{selectedOption==="checkedIn" && (
 					<div className={visibility}>
-						<h6 className="font-bold">{firstName} {lastName}</h6>
-						<h6 className="font-bold"> Shirt Size: {shirt}</h6>
+						<h6 className="font-bold text-white">{firstName} {lastName}</h6>
+						<h6 className="font-bold text-white"> Shirt Size: {shirt}</h6>
+						<h6 className="font-bold text-white">{checkedIn}</h6>
 						<button className="z-13 bg-white w-1/2 rounded-xl" onClick={()=>{void router.push(`/hackers/hacker?id=${id}`)}}>Go to profile</button>
 					</div>
 				)}
 				{selectedOption==="breakfast1" && (
 					<div className={visibility}>
-						<h6 className="font-bold">{firstName} {lastName}</h6>
+						<h6 className="font-bold text-white">{firstName} {lastName}</h6>
+						<h6 className="font-bold text-white">{checkedIn}</h6>
 						<button className="z-13 bg-white w-1/2 rounded-xl" onClick={()=>{void router.push(`/hackers/hacker?id=${id}`)}}>Go to profile</button>
 					</div>
 				)}
 				{selectedOption==="lunch1" && (
 					<div className={visibility}>
-						<h6 className="font-bold">{firstName} {lastName}</h6>
+						<h6 className="font-bold text-white">{firstName} {lastName}</h6>
+						<h6 className="font-bold text-white">{checkedIn}</h6>
 						<button className="z-13 bg-white w-1/2 rounded-xl" onClick={()=>{void router.push(`/hackers/hacker?id=${id}`)}}>Go to profile</button>
 					</div>
 				)}
 				{selectedOption==="dinner1" && (
 					<div className={visibility}>
-						<h6 className="font-bold">{firstName} {lastName}</h6>
+						<h6 className="font-bold text-white">{firstName} {lastName}</h6>
+						<h6 className="font-bold text-white">{checkedIn}</h6>
 						<button className="z-13 bg-white w-1/2 rounded-xl" onClick={()=>{void router.push(`/hackers/hacker?id=${id}`)}}>Go to profile</button>
 					</div>
 				)}
 				{selectedOption==="breakfast2" && (
 					<div className={visibility}>
-						<h6 className="font-bold">{firstName} {lastName}</h6>
+						<h6 className="font-bold text-white">{firstName} {lastName}</h6>
+						<h6 className="font-bold text-white">{checkedIn}</h6>
 						<button className="z-13 bg-white w-1/2 rounded-xl" onClick={()=>{void router.push(`/hackers/hacker?id=${id}`)}}>Go to profile</button>
 					</div>
 				)}
 				{selectedOption==="lunch2" && (
 					<div className={visibility}>
-						<h6 className="font-bold">{firstName} {lastName}</h6>
+						<h6 className="font-bold text-white">{firstName} {lastName}</h6>
+						<h6 className="font-bold text-white">{checkedIn}</h6>
 						<button className="z-13 bg-white w-1/2 rounded-xl" onClick={()=>{void router.push(`/hackers/hacker?id=${id}`)}}>Go to profile</button>
 					</div>
 				)}					
