@@ -3,15 +3,15 @@ import type { GetStaticProps, NextPage } from "next";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import { trpc } from "../../utils/api";
 
+import { z } from "zod";
 import App from "../../components/App";
 import Error from "../../components/Error";
 import Loading from "../../components/Loading";
 import OnlyRole from "../../components/OnlyRole";
 import { walkInSchema } from "../../utils/common";
-import { z } from "zod";
 
 type HackerInfo = Prisma.HackerInfoGetPayload<true>;
 type PresenceInfo = Prisma.PresenceInfoGetPayload<true>;
@@ -117,11 +117,13 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 
 	const presenceMutation = trpc.presence.update.useMutation();
 	const [presenceState, setPresenceState] = useState(presenceData);
+	const [edit, setEdit] = useState(false);
+
+	const resumeUploadRef = useRef<HTMLInputElement>(null);
 
 	const paragraphClass = "flex justify-between gap-4 text-right py-1.5 ";
 	const boldClass = "text-left font-bold";
 
-	const [edit, setEdit] = useState(false);
 	const keyToLabel = {
 		checkedIn: "Checked In",
 		breakfast1: "Breakfast March 4th",
@@ -300,6 +302,7 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 			category: "Links Information",
 		},
 	];
+
 	const patterns: Patterns = {
 		tel: "^\\s*(?:\\+?(\\d{1,3}))?[-. (]*(\\d{3})[-. )]*(\\d{3})[-. ]*(\\d{4})(?: *x(\\d+))?\\s*$",
 		url: undefined,
@@ -394,7 +397,7 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 					{Object.entries(presenceState).map(([key, value]) => (
 						<p key={key}>
 							<input
-								className="form-checkbox h-3.5 w-5 rounded text-gray-800 accent-[#3b4779] "
+								className="form-checkbox h-3.5 w-5 rounded text-gray-800 accent-dark-primary-color"
 								type="checkbox"
 								key={key}
 								id={key}
@@ -430,7 +433,7 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 										id={item.name}
 										name={item.name}
 										className="col-md-6 bg-background1 text-dark hover:bg-background1/50 w-[50%] rounded-[100px] border-none px-5 py-2 font-rubik shadow-md transition-all duration-500"
-										value={inputValues[item.name] || ""}
+										value={inputValues[item.name] ?? ""}
 										onChange={e => {
 											handleInputChange(item.name, e.target.value);
 										}}
@@ -467,12 +470,12 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 					</div>
 				))}
 
-				<div className="flex justify-between gap-8 py-4 ">
-					<input className="bg-background2 rounded-md border border-gray-400 p-2" type="file" />
-					<button className="bg-dark ml-2 rounded-md px-4 py-2 text-white hover:bg-gray-700">
-						Upload your Resume
-					</button>
-				</div>
+				<input
+					ref={resumeUploadRef}
+					className="bg-background2 rounded-md border border-gray-400 p-2"
+					type="file"
+					accept="application/pdf"
+				/>
 
 				<p className="flex flex-row flex-wrap justify-center gap-4 py-4">
 					{Object.entries({
@@ -488,7 +491,7 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 									href={value}
 									target="_blank"
 									rel="noreferrer"
-									className="bg-dark flex items-center justify-center gap-2 rounded-md px-4 py-2 text-white hover:bg-gray-700"
+									className="flex items-center justify-center gap-2 rounded-md bg-dark-color px-4 py-2 text-white hover:bg-gray-700"
 								>
 									{key}
 								</a>
