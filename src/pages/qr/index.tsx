@@ -70,7 +70,7 @@ export const getServerSideProps: GetServerSideProps = async ({ req, res, locale 
 		props: {
 			...(await hackersRedirect(session, locale)),
 			...(await serverSideTranslations(locale ?? "en", ["qr", "common"])),
-		}
+		},
 	};
 };
 

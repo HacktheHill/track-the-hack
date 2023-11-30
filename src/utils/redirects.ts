@@ -1,4 +1,3 @@
-import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { PrismaClient } from "@prisma/client";
 import type { Session } from "next-auth";
 import type { SSRConfig } from "next-i18next";
@@ -43,6 +42,6 @@ export async function hackersRedirect(session: Session | null, locale: string | 
 	}
 
 	return {
-		props: {}
+		props: {},
 	};
 }
