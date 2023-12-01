@@ -1,18 +1,19 @@
 import { Role } from "@prisma/client";
-import { useTranslation } from "next-i18next";
-import { useRouter } from "next/router";
-import { useState } from "react";
-import Image from "next/image";
 import type { GetServerSideProps } from "next";
 import { getServerSession } from "next-auth/next";
+import { useTranslation } from "next-i18next";
+import Image from "next/image";
+import { useRouter } from "next/router";
+import { useState } from "react";
 import { hackersRedirect } from "../../utils/redirects";
 import { authOptions } from "../api/auth/[...nextauth]";
 
+import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import App from "../../components/App";
-import Weather from "../../components/Weather";
 import OnlyRole from "../../components/OnlyRole";
 import QRCode from "../../components/QRCode";
 import QRScanner from "../../components/QRScanner";
+import Weather from "../../components/Weather";
 
 const QR = () => {
 	const { t } = useTranslation("qr");
@@ -64,10 +65,12 @@ const QR = () => {
 
 export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
 	const session = await getServerSession(req, res, authOptions);
-	const props = await hackersRedirect(session, locale);
 
 	return {
-		...props,
+		props: {
+			...(await hackersRedirect(session, locale)),
+			...(await serverSideTranslations(locale ?? "en", ["qr", "common"])),
+		},
 	};
 };
 

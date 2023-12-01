@@ -8,6 +8,7 @@ import { debounce } from "../../utils/helpers";
 
 import type { GetServerSideProps } from "next";
 import { getServerSession } from "next-auth/next";
+import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import App from "../../components/App";
 import Error from "../../components/Error";
 import Loading from "../../components/Loading";
@@ -182,10 +183,12 @@ const Search = ({ setSearch }: SearchProps) => {
 
 export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
 	const session = await getServerSession(req, res, authOptions);
-	const props = await hackersRedirect(session, locale);
 
 	return {
-		...props,
+		props: {
+			...(await hackersRedirect(session, locale)),
+			...(await serverSideTranslations(locale ?? "en", ["hackers", "common"])),
+		},
 	};
 };
 
