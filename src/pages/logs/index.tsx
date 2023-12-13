@@ -61,6 +61,10 @@ const Logs: NextPage = () => {
 		void router.push("/404");
 	}
 
+	const userProfile = (id: string) => {
+		router.push(`hackers/hacker?id=${id}`)
+	}
+
 	return (
 		<App className="bg-gradient3 overflow-y-auto p-8 sm:p-12" title={t("title")}>
 			<OnlyRole filter={role => role === Role.HACKER || role === Role.ORGANIZER}>
@@ -83,7 +87,10 @@ const Logs: NextPage = () => {
 										{t("details")}
 									</th>
 									<th scope="col" className="px-6 py-3">
-										{t("userid")}
+										{t("id")}
+									</th>
+									<th scope="col" className="px-6 py-3">
+										Details
 									</th>
 								</tr>
 							</thead>
@@ -99,6 +106,19 @@ const Logs: NextPage = () => {
 										<td className="px-6 py-4">{log.timestamp.toLocaleString()}</td>
 										<td className="px-6 py-4">{log.details}</td>
 										<td className="px-6 py-4">{log.user_id}</td>
+										<td className="px-6 py-4">
+											{log.action === "New follow" ? (
+												<p className="px-6 py-4">No Details</p>
+											) : (
+												<button
+													className="cursor-pointer whitespace-nowrap rounded-[100px] border-none bg-light px-8 py-2 font-rubik text-white shadow-md transition-all duration-1000 hover:bg-medium"
+													onClick={() => userProfile(log.user_id)}
+												>
+													Profile
+												</button>
+											)
+											}
+										</td>
 									</tr>
 								))}
 							</tbody>
