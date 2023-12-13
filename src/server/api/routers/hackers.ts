@@ -223,6 +223,7 @@ export const hackerRouter = createTRPCRouter({
 					},
 				},
 			});
+			await logAuditEntry(ctx, hacker.id, "/walk-in", "WalkIn", user.name ?? "Unknown", `${input.firstName} ${input.lastName} walked in.`);
 
 			return hacker;
 		}),
@@ -250,15 +251,46 @@ export const hackerRouter = createTRPCRouter({
 				throw new Error("You do not have permission to do this");
 			}
 
-			// Log the audit like this
-			await logAuditEntry(
-				ctx,
-				userId,
-				"/update-hacker-info",
-				"UpdateHackerInfo",
-				user.name ?? "Unknown",
-				"Updated hacker information",
-			);
+			const hackerdetails = await ctx.prisma.hackerInfo.findUnique({
+				where: {
+					id: input.id,
+				},
+			});
+			const auditEntries: Array<{
+				action: string;
+				entityType: string;
+				userName: string;
+				details: string;
+			}> = [];
+
+
+			for (const key in input) {
+				for (const key2 in hackerdetails) {
+					if (
+						key === key2 &&
+						input[key as keyof typeof input] !== hackerdetails[key2 as keyof typeof hackerdetails] &&
+						input[key as keyof typeof input] !== null &&
+						hackerdetails[key2 as keyof typeof hackerdetails] !== null
+					) {
+						const field = key as keyof typeof input;
+						const before = hackerdetails[key2 as keyof typeof hackerdetails];
+						const after = input[key as keyof typeof input];
+
+						const auditEntry = {
+							action: "/update-hacker-info",
+							entityType: "UpdateHackerInfo",
+							userName: user.name ?? "Unknown",
+							details: `Updated field ${field} from ${String(before)} to ${String(after ? after : "empty")}`,
+						};
+
+						auditEntries.push(auditEntry);
+					}
+				}
+			}
+
+			for (const entry of auditEntries) {
+				await logAuditEntry(ctx, input.id, entry.action, entry.entityType, entry.userName, entry.details);
+			}
 
 			const hacker = await ctx.prisma.hackerInfo.update({
 				where: {

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "../trpc";
+import {logAuditEntry} from "../../audit";
 
 export const followRouter = createTRPCRouter({
 	create: publicProcedure
@@ -30,6 +31,9 @@ export const followRouter = createTRPCRouter({
 			if (!follow) {
 				throw new Error("Follow unsuccessful");
 			}
+
+
+			await logAuditEntry(ctx, follow.id, follow.id, "New follow", follow.email, "New follow with the email: "+ follow.email)
 
 			return follow;
 		}),
