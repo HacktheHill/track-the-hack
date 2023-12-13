@@ -62,7 +62,7 @@ const Logs: NextPage = () => {
 	}
 
 	const userProfile = (id: string) => {
-		router.push(`hackers/hacker?id=${id}`)
+		void router.push(`hackers/hacker?id=${id}`)
 	}
 
 	return (
@@ -112,7 +112,7 @@ const Logs: NextPage = () => {
 											) : (
 												<button
 													className="cursor-pointer whitespace-nowrap rounded-[100px] border-none bg-light px-8 py-2 font-rubik text-white shadow-md transition-all duration-1000 hover:bg-medium"
-													onClick={() => userProfile(log.user_id)}
+													onClick={() => {userProfile(log.user_id)}}
 												>
 													Profile
 												</button>
