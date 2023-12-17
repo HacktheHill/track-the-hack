@@ -3,5 +3,5 @@
   "action": "Action",
   "timestamp": "Timestamp",
   "details": "Details",
-  "userid": "User ID",
+  "id": "ID"
 }

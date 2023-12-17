@@ -1,16 +1,15 @@
-import { Prisma, Role } from "@prisma/client";
+import { Role } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import App from "../../components/App";
 
-import { trpc } from "../../utils/api";
+import type { GetStaticProps, NextPage } from "next";
 import { useRouter } from "next/router";
-import Loading from "../../components/Loading";
 import Error from "../../components/Error";
+import Loading from "../../components/Loading";
 import OnlyRole from "../../components/OnlyRole";
-import {GetStaticProps, NextPage} from "next";
-import React from "react";
+import { trpc } from "../../utils/api";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
@@ -37,7 +36,7 @@ const Logs: NextPage = () => {
 
 	if (logsQuery.isLoading || logsQuery.data == null) {
 		return (
-			<App className="h-full bg-gradient-to-b from-background2 to-background1 px-16 py-12">
+			<App className="from-background2 to-background1 h-full bg-gradient-to-b px-16 py-12">
 				<OnlyRole filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
 					<Loading />
 				</OnlyRole>
@@ -50,7 +49,7 @@ const Logs: NextPage = () => {
 		);
 	} else if (logsQuery.isError) {
 		return (
-			<App className="h-full bg-gradient-to-b from-background2 to-background1 px-16 py-12">
+			<App className="from-background2 to-background1 h-full bg-gradient-to-b px-16 py-12">
 				<div className="flex flex-col items-center justify-center gap-4">
 					<Error message={logsQuery.error.message} />
 				</div>
@@ -62,10 +61,14 @@ const Logs: NextPage = () => {
 		void router.push("/404");
 	}
 
+	const userProfile = (id: string) => {
+		void router.push(`hackers/hacker?id=${id}`)
+	}
+
 	return (
-		<App className="overflow-y-auto bg-gradient3 p-8 sm:p-12" title={t("title")}>
+		<App className="bg-gradient3 overflow-y-auto p-8 sm:p-12" title={t("title")}>
 			<OnlyRole filter={role => role === Role.HACKER || role === Role.ORGANIZER}>
-				<h1 className="py-2 text-center font-rubik text-4xl font-bold text-dark">AuditLogs</h1>
+				<h1 className="text-dark py-2 text-center font-rubik text-4xl font-bold">AuditLogs</h1>
 				<div className="relative overflow-x-auto">
 					<div className="rounded-lg">
 						<table className="w-full rounded-lg text-left text-sm text-gray-500 ">
@@ -84,7 +87,10 @@ const Logs: NextPage = () => {
 										{t("details")}
 									</th>
 									<th scope="col" className="px-6 py-3">
-										{t("userid")}
+										{t("id")}
+									</th>
+									<th scope="col" className="px-6 py-3">
+										Details
 									</th>
 								</tr>
 							</thead>
@@ -100,6 +106,19 @@ const Logs: NextPage = () => {
 										<td className="px-6 py-4">{log.timestamp.toLocaleString()}</td>
 										<td className="px-6 py-4">{log.details}</td>
 										<td className="px-6 py-4">{log.user_id}</td>
+										<td className="px-6 py-4">
+											{log.action === "New follow" ? (
+												<p className="px-6 py-4">No Details</p>
+											) : (
+												<button
+													className="cursor-pointer whitespace-nowrap rounded-[100px] border-none bg-light px-8 py-2 font-rubik text-white shadow-md transition-all duration-1000 hover:bg-medium"
+													onClick={() => {userProfile(log.user_id)}}
+												>
+													Profile
+												</button>
+											)
+											}
+										</td>
 									</tr>
 								))}
 							</tbody>
