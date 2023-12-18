@@ -25,6 +25,8 @@ export const serverSchema = z.object({
 	SPONSORSHIP_GOOGLE_CLIENT_ID: z.string(),
 	SPONSORSHIP_GOOGLE_CLIENT_SECRET: z.string(),
 	SPONSORSHIP_GOOGLE_REFRESH_TOKEN: z.string(),
+	STRIPE_API_KEY: z.string(),
+	STRIPE_WEBHOOKS_ID: z.string(),
 });
 
 /**
@@ -46,6 +48,8 @@ export const serverEnv = {
 	SPONSORSHIP_GOOGLE_CLIENT_ID: process.env.SPONSORSHIP_GOOGLE_CLIENT_ID,
 	SPONSORSHIP_GOOGLE_CLIENT_SECRET: process.env.SPONSORSHIP_GOOGLE_CLIENT_SECRET,
 	SPONSORSHIP_GOOGLE_REFRESH_TOKEN: process.env.SPONSORSHIP_GOOGLE_REFRESH_TOKEN,
+	STRIPE_API_KEY: process.env.STRIPE_API_KEY,
+	STRIPE_WEBHOOKS_ID: process.env.STRIPE_WEBHOOKS_ID,
 };
 
 /**
@@ -54,7 +58,15 @@ export const serverEnv = {
  * To expose them to the client, prefix them with `NEXT_PUBLIC_`.
  */
 export const clientSchema = z.object({
-	// NEXT_PUBLIC_CLIENTVAR: z.string(),
+	NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string(),
+	NEXT_PUBLIC_PRICE_ID_TEST: z.string(),
+	NEXT_PUBLIC_PRICE_ID_STARTUP: z.string(),
+	NEXT_PUBLIC_PRICE_ID_CUSTOM: z.string(),
+	NEXT_PUBLIC_PRICE_ID_MAYOR: z.string(),
+	NEXT_PUBLIC_PRICE_ID_PREMIER: z.string(),
+	NEXT_PUBLIC_PRICE_ID_GOVERNOR: z.string(),
+	NEXT_PUBLIC_PRICE_ID_PRIME_MINISTER: z.string(),
+	NEXT_PUBLIC_REDIRECT_URL: z.string().url(),
 });
 
 /**
@@ -64,5 +76,13 @@ export const clientSchema = z.object({
  * @type {{ [k in keyof z.infer<typeof clientSchema>]: z.infer<typeof clientSchema>[k] | undefined }}
  */
 export const clientEnv = {
-	// NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
+	NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
+	NEXT_PUBLIC_PRICE_ID_TEST: process.env.NEXT_PUBLIC_PRICE_ID_TEST,
+	NEXT_PUBLIC_PRICE_ID_STARTUP: process.env.NEXT_PUBLIC_PRICE_ID_STARTUP,
+	NEXT_PUBLIC_PRICE_ID_CUSTOM: process.env.NEXT_PUBLIC_PRICE_ID_CUSTOM,
+	NEXT_PUBLIC_PRICE_ID_MAYOR: process.env.NEXT_PUBLIC_PRICE_ID_MAYOR,
+	NEXT_PUBLIC_PRICE_ID_PREMIER: process.env.NEXT_PUBLIC_PRICE_ID_PREMIER,
+	NEXT_PUBLIC_PRICE_ID_GOVERNOR: process.env.NEXT_PUBLIC_PRICE_ID_GOVERNOR,
+	NEXT_PUBLIC_PRICE_ID_PRIME_MINISTER: process.env.NEXT_PUBLIC_PRICE_ID_PRIME_MINISTER,
+	NEXT_PUBLIC_REDIRECT_URL: process.env.NEXT_PUBLIC_REDIRECT_URL,
 };

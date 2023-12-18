@@ -156,7 +156,7 @@ const Confirm: NextPage = () => {
 										value={AttendanceType.IN_PERSON}
 										checked={attendanceType === AttendanceType.IN_PERSON}
 										onChange={handleAttendanceTypeChange}
-										className="border-medium flex h-4 w-4 appearance-none items-center justify-center rounded-full border bg-transparent text-black after:m-0.5 after:block after:h-full after:w-full after:border-black after:leading-[calc(100%*3/4)] after:checked:content-check"
+										className="flex h-4 w-4 appearance-none items-center justify-center rounded-full border border-medium bg-transparent text-black after:m-0.5 after:block after:h-full after:w-full after:border-black after:leading-[calc(100%*3/4)] after:checked:content-check"
 									/>
 									<label
 										htmlFor="in-person"
@@ -173,7 +173,7 @@ const Confirm: NextPage = () => {
 										value={AttendanceType.ONLINE}
 										checked={attendanceType === AttendanceType.ONLINE}
 										onChange={handleAttendanceTypeChange}
-										className="border-medium flex h-4 w-4 appearance-none items-center justify-center rounded-full border bg-transparent text-black after:m-0.5 after:block after:h-full after:w-full after:border-black after:leading-[calc(100%*3/4)] after:checked:content-check"
+										className="flex h-4 w-4 appearance-none items-center justify-center rounded-full border border-medium bg-transparent text-black after:m-0.5 after:block after:h-full after:w-full after:border-black after:leading-[calc(100%*3/4)] after:checked:content-check"
 									/>
 									<label htmlFor="online" className="whitespace-nowrap text-[clamp(1rem,1vmin,5rem)]">
 										{t("attendanceType.online")}
@@ -187,7 +187,7 @@ const Confirm: NextPage = () => {
 										>
 											{t("t-shirt.label")}
 										</label>
-										<div className="border-medium rounded-2xl border px-4 py-2">
+										<div className="rounded-2xl border border-medium px-4 py-2">
 											<select
 												name="shirtSize"
 												id="shirtSize"
@@ -224,7 +224,7 @@ const Confirm: NextPage = () => {
 								name="terms"
 								checked={terms}
 								onChange={() => setTerms(!terms)}
-								className="border-medium h-4 w-4 appearance-none rounded-lg border bg-transparent text-black after:block after:h-full after:w-full after:border-black after:p-0.5 after:leading-[calc(100%*1/2)] after:checked:content-check"
+								className="h-4 w-4 appearance-none rounded-lg border border-medium bg-transparent text-black after:block after:h-full after:w-full after:border-black after:p-0.5 after:leading-[calc(100%*1/2)] after:checked:content-check"
 							/>
 							<label htmlFor="terms" className="flex-1">
 								<Trans

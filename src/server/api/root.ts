@@ -5,6 +5,7 @@ import { presenceRouter } from "./routers/presence";
 import { userRouter } from "./routers/users";
 import { createTRPCRouter } from "./trpc";
 import { auditLogRouter } from "./routers/auditLog";
+import { paymentRouter } from "./routers/payment";
 import { sponsorshipRouter } from "./routers/sponsorship";
 
 /**
@@ -20,6 +21,7 @@ export const appRouter = createTRPCRouter({
 	sponsorshipGmailDrafts: sponsorshipRouter,
 	follow: followRouter,
 	auditLog: auditLogRouter,
+	payment: paymentRouter,
 });
 
 // export type definition of API
