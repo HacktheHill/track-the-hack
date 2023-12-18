@@ -4,7 +4,8 @@ import { hasRoles } from "../../../utils/helpers";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { walkInSchema } from "../../../utils/common";
 import { logAuditEntry } from "../../audit";
-
+import { trpc } from "../../../utils/api";
+import createTRPC from "@trpc/server";
 const DEFAULT_ACCEPTANCE_EXPIRY = new Date(2023, 2, 6, 5, 0, 0, 0); // 2023-03-06 00:00:00 EST
 
 export const hackerRouter = createTRPCRouter({
@@ -223,13 +224,21 @@ export const hackerRouter = createTRPCRouter({
 					},
 				},
 			});
-			await logAuditEntry(ctx, hacker.id, "/walk-in", "WalkIn", user.name ?? "Unknown", `${input.firstName} ${input.lastName} walked in.`);
+			await logAuditEntry(
+				ctx,
+				hacker.id,
+				"/walk-in",
+				"WalkIn",
+				user.name ?? "Unknown",
+				`${input.firstName} ${input.lastName} walked in.`,
+			);
 
 			return hacker;
 		}),
 
 	// Update a hacker's info
 	update: protectedProcedure
+
 		.input(
 			walkInSchema.extend({
 				id: z.string(),
@@ -237,6 +246,7 @@ export const hackerRouter = createTRPCRouter({
 		)
 		.mutation(async ({ ctx, input }) => {
 			const userId = ctx.session.user.id;
+
 			const user = await ctx.prisma.user.findUnique({
 				where: {
 					id: userId,
@@ -251,6 +261,24 @@ export const hackerRouter = createTRPCRouter({
 				throw new Error("You do not have permission to do this");
 			}
 
+			// Log the audit like this
+
+			// id: z.number(), // Assuming 'id' is auto-incremented, it should be a number
+			// 	timestamp: z.date(),
+			// 	user_id: z.string(),
+			// 	route: z.string(),
+			// 	author: z.string(),
+			// 	action: z.string(),
+			// 	details: z.string().nullable(),
+
+			await logAuditEntry(
+				ctx,
+				userId,
+				"/update-hacker-info",
+				"UpdateHackerInfo",
+				user.name ?? "Unknown",
+				"Updated hacker information",
+			);
 			const hackerdetails = await ctx.prisma.hackerInfo.findUnique({
 				where: {
 					id: input.id,
@@ -262,7 +290,6 @@ export const hackerRouter = createTRPCRouter({
 				userName: string;
 				details: string;
 			}> = [];
-
 
 			for (const key in input) {
 				for (const key2 in hackerdetails) {
@@ -280,7 +307,9 @@ export const hackerRouter = createTRPCRouter({
 							action: "/update-hacker-info",
 							entityType: "UpdateHackerInfo",
 							userName: user.name ?? "Unknown",
-							details: `Updated field ${field} from ${String(before)} to ${String(after ? after : "empty")}`,
+							details: `Updated field ${field} from ${String(before)} to ${String(
+								after ? after : "empty",
+							)}`,
 						};
 
 						auditEntries.push(auditEntry);
@@ -291,6 +320,17 @@ export const hackerRouter = createTRPCRouter({
 			for (const entry of auditEntries) {
 				await logAuditEntry(ctx, input.id, entry.action, entry.entityType, entry.userName, entry.details);
 			}
+
+			// auditLog.mutation({
+			// 	input: {
+			// 		timestamp: new Date(),
+			// 		user_id: userId,
+			// 		route: '/update-hacker-info',
+			// 		action: 'UpdateHackerInfo',
+			// 		author: user.name ?? 'Unknown',
+			// 		details: 'Updated hacker information'
+			// 	}
+			// });
 
 			const hacker = await ctx.prisma.hackerInfo.update({
 				where: {
