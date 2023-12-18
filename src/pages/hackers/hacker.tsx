@@ -432,8 +432,8 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 									<select
 										id={item.name}
 										name={item.name}
-										className="col-md-6 bg-background1 text-dark hover:bg-background1/50 w-[50%] rounded-[100px] border-none px-5 py-2 font-rubik shadow-md transition-all duration-500"
-										value={inputValues[item.name] ?? ""}
+										className="bg-background1 text-dark hover:bg-background1/50 col-md-6 w-[50%] rounded-[100px] border-none px-5 py-2 font-rubik shadow-md transition-all duration-500"
+										value={inputValues[item.name] || ""}
 										onChange={e => {
 											handleInputChange(item.name, e.target.value);
 										}}
@@ -450,7 +450,7 @@ const HackerView = ({ hackerData, presenceData: { id: _, hackerInfoId, ...presen
 										id={item.name}
 										name={item.name}
 										type={item.type}
-										className="/50 bg-background1 text-dark hover:bg-background2 w-[50%] rounded-[100px] border-none px-4 py-2 font-rubik shadow-md	outline-none transition-all duration-500"
+										className="bg-background1 text-dark hover:bg-background2 /50 w-[50%] rounded-[100px] border-none px-4 py-2 font-rubik shadow-md	outline-none transition-all duration-500"
 										defaultValue={
 											item.default_value !== null
 												? item.default_value
