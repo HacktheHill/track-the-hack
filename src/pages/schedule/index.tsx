@@ -13,7 +13,7 @@ import { trpc } from "../../utils/api";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
-		props: await serverSideTranslations(locale ?? "en", ["common", "schedule", "event"]),
+		props: await serverSideTranslations(locale ?? "en", ["common", "navbar", "schedule", "event"]),
 	};
 };
 
@@ -118,7 +118,7 @@ const Schedule: NextPage = () => {
 				<div className="mx-auto flex max-w-2xl flex-col gap-4">
 					{events.map((event, i) => (
 						<div key={i} className="flex gap-4">
-							<div className="bg-dark/50 grid basis-1/3 place-content-center rounded-lg p-4 font-coolvetica text-2xl text-white">
+							<div className="bg-dark/50 grid basis-1/3 place-content-center rounded-lg p-4 font-coolvetica text-2xl text-light-color">
 								{event[0]?.start.toLocaleDateString(dateLocale, {
 									month: "short",
 									day: "numeric",
@@ -202,8 +202,8 @@ const Tab = ({ type, active, onClick }: TabProps) => {
 
 	return (
 		<div
-			className={`flex cursor-pointer flex-row items-center justify-center gap-2 rounded-lg bg-dark-color p-2 font-coolvetica text-white outline sm:p-4 ${
-				type === active ? "outline-4 outline-white" : "outline-0"
+			className={`flex cursor-pointer flex-row items-center justify-center gap-2 rounded-lg bg-dark-color p-2 font-coolvetica text-light-color outline sm:p-4 ${
+				type === active ? "outline-4 outline-light-color" : "outline-0"
 			}`}
 			onClick={onClick}
 		>

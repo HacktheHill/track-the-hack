@@ -1,45 +1,45 @@
+import type { ChipProps } from "@nextui-org/react";
+import {
+	Button,
+	Chip,
+	Input,
+	Link,
+	Modal,
+	ModalBody,
+	ModalContent,
+	ModalFooter,
+	ModalHeader,
+	Select,
+	SelectItem,
+	Table,
+	TableBody,
+	TableCell,
+	TableColumn,
+	TableHeader,
+	TableRow,
+	Tooltip,
+	User,
+} from "@nextui-org/react";
 import { Role } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import type { GetStaticProps, NextPage } from "next/types";
-import { useEffect, useState } from "react";
-import type { ChipProps } from "@nextui-org/react";
-import {
-	Table,
-	TableHeader,
-	TableColumn,
-	TableBody,
-	TableRow,
-	TableCell,
-	User,
-	Chip,
-	Tooltip,
-	Modal,
-	ModalContent,
-	ModalHeader,
-	ModalBody,
-	ModalFooter,
-	Button,
-	Input,
-	Link,
-	SelectItem,
-	Select,
-} from "@nextui-org/react";
-import EditIcon from "./EditIcon";
+import { useState } from "react";
 import DeleteIcon from "./DeleteIcon";
+import EditIcon from "./EditIcon";
 import EyeIcon from "./EyeIcon";
 import PlusIcon from "./PlusIcon";
 
-import App from "../../components/App";
 import { useRouter } from "next/router";
+import * as React from "react";
+import { z } from "zod";
+import App from "../../components/App";
 import Error from "../../components/Error";
+import Loading from "../../components/Loading";
 import OnlyRole from "../../components/OnlyRole";
 import { trpc } from "../../utils/api";
-import Loading from "../../components/Loading";
-import { AddsponsorshipSchema, sponsorshipSchema } from "../../utils/common";
-import { z } from "zod";
-import * as React from "react";
+import { addSponsorshipSchema, sponsorshipSchema } from "../../utils/common";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
@@ -48,7 +48,6 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
 };
 
 const Sponsors: NextPage = () => {
-	const router = useRouter();
 	const { t } = useTranslation("payment");
 	const { data: sessionData } = useSession();
 
@@ -56,7 +55,7 @@ const Sponsors: NextPage = () => {
 
 	if (companyQuery.isLoading) {
 		return (
-			<App className="from-background2 to-background1 h-full bg-default-gradient px-16 py-12">
+			<App className="h-full bg-default-gradient px-16 py-12">
 				<div className="flex flex-col items-center justify-center gap-4">
 					<Loading />
 				</div>
@@ -66,7 +65,7 @@ const Sponsors: NextPage = () => {
 
 	if (!companyQuery.isLoading && !companyQuery.data) {
 		return (
-			<App className="from-background2 to-background1 h-full bg-default-gradient px-16 py-12">
+			<App className="h-full bg-default-gradient px-16 py-12">
 				<div className="flex flex-col items-center justify-center gap-4">
 					<Error message={"Impossible to load companies"} />
 				</div>
@@ -207,7 +206,7 @@ const SponsorsTable = ({ companyQuery }: { companyQuery: CompanyQueryResult }) =
 		<div>
 			<div className="mb-3 mt-0 flex justify-center">
 				<Button
-					className="bg-dark-primary-color text-white"
+					className="bg-dark-primary-color text-light-color"
 					onClick={() => {
 						setIsModalOpen2(true);
 					}}
@@ -503,9 +502,11 @@ const NewSponsorModal: React.FC<NewSponsorModalProps> = ({ isModalOpen, setIsMod
 				}
 			}
 
-			const parse = AddsponsorshipSchema.extend({
-				id: z.string(),
-			}).safeParse(formData);
+			const parse = addSponsorshipSchema
+				.extend({
+					id: z.string(),
+				})
+				.safeParse(formData);
 
 			if (!parse.success) {
 				setErrorMessage("Please fill all the required fields.");
