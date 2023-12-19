@@ -98,7 +98,7 @@ const Payment: NextPage = () => {
 
 	return (
 		<App className="overflow-y-auto bg-default-gradient p-8 sm:p-12" title={t("title")}>
-			<OnlyRole filter={role => role === Role.HACKER || role === Role.ORGANIZER}>
+			<OnlyRole filter={role => role === Role.SPONSOR || role === Role.ORGANIZER}>
 				<PaymentCard company={companyQuery.data} status={status} />
 			</OnlyRole>
 			{!sessionData?.user && (
