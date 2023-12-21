@@ -660,10 +660,10 @@ const SponsorshipGmailDrafts: NextPage = () => {
 							<p className="text-center font-rubik text-red-500">{error}</p>
 						</div>
 					)}
-					<div className="relative h-[500px] w-full rounded-md bg-white shadow-md" ref={emailPreview}>
+					<div className="relative h-[500px] w-full rounded-md bg-light-color shadow-md" ref={emailPreview}>
 						<button
 							type="button"
-							className="bg-ligh-color hover:bg-medium absolute bottom-4 right-4 rounded-[100px] border-none px-4 py-2 font-rubik text-white shadow-md transition-all duration-1000 disabled:hover:bg-light-color"
+							className="bg-ligh-color hover:bg-medium absolute bottom-4 right-4 rounded-[100px] border-none px-4 py-2 font-rubik text-light-color shadow-md transition-all duration-1000 disabled:hover:bg-light-color"
 							onClick={() => void copyToClipBoard()}
 							disabled={copied}
 						>
@@ -673,7 +673,7 @@ const SponsorshipGmailDrafts: NextPage = () => {
 					</div>
 					<button
 						type="submit"
-						className="hover:bg-medium cursor-pointer whitespace-nowrap rounded-[100px] border-none bg-light-color px-8 py-2 font-rubik text-white shadow-md transition-all duration-1000 disabled:hover:bg-light-color"
+						className="hover:bg-medium cursor-pointer whitespace-nowrap rounded-[100px] border-none bg-light-color px-8 py-2 font-rubik text-light-color shadow-md transition-all duration-1000 disabled:hover:bg-light-color"
 						disabled={drafted}
 					>
 						{drafted ? t("created-draft-email") : t("create-draft-email")}

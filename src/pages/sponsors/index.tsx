@@ -1,45 +1,45 @@
+import type { ChipProps } from "@nextui-org/react";
+import {
+	Button,
+	Chip,
+	Input,
+	Link,
+	Modal,
+	ModalBody,
+	ModalContent,
+	ModalFooter,
+	ModalHeader,
+	Select,
+	SelectItem,
+	Table,
+	TableBody,
+	TableCell,
+	TableColumn,
+	TableHeader,
+	TableRow,
+	Tooltip,
+	User,
+} from "@nextui-org/react";
 import { Role } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import type { GetStaticProps, NextPage } from "next/types";
-import { useEffect, useState } from "react";
-import type { ChipProps } from "@nextui-org/react";
-import {
-	Table,
-	TableHeader,
-	TableColumn,
-	TableBody,
-	TableRow,
-	TableCell,
-	User,
-	Chip,
-	Tooltip,
-	Modal,
-	ModalContent,
-	ModalHeader,
-	ModalBody,
-	ModalFooter,
-	Button,
-	Input,
-	Link,
-	SelectItem,
-	Select,
-} from "@nextui-org/react";
-import EditIcon from "./EditIcon";
+import { useState } from "react";
 import DeleteIcon from "./DeleteIcon";
+import EditIcon from "./EditIcon";
 import EyeIcon from "./EyeIcon";
 import PlusIcon from "./PlusIcon";
 
-import App from "../../components/App";
 import { useRouter } from "next/router";
+import { useCallback } from "react";
+import { z } from "zod";
+import App from "../../components/App";
 import Error from "../../components/Error";
+import Loading from "../../components/Loading";
 import OnlyRole from "../../components/OnlyRole";
 import { trpc } from "../../utils/api";
-import Loading from "../../components/Loading";
-import { AddsponsorshipSchema, sponsorshipSchema } from "../../utils/common";
-import { z } from "zod";
-import * as React from "react";
+import { addSponsorshipSchema, sponsorshipSchema } from "../../utils/common";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
@@ -48,7 +48,6 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
 };
 
 const Sponsors: NextPage = () => {
-	const router = useRouter();
 	const { t } = useTranslation("payment");
 	const { data: sessionData } = useSession();
 
@@ -56,7 +55,7 @@ const Sponsors: NextPage = () => {
 
 	if (companyQuery.isLoading) {
 		return (
-			<App className="from-background2 to-background1 h-full bg-default-gradient px-16 py-12">
+			<App className="h-full bg-default-gradient px-16 py-12">
 				<div className="flex flex-col items-center justify-center gap-4">
 					<Loading />
 				</div>
@@ -66,7 +65,7 @@ const Sponsors: NextPage = () => {
 
 	if (!companyQuery.isLoading && !companyQuery.data) {
 		return (
-			<App className="from-background2 to-background1 h-full bg-default-gradient px-16 py-12">
+			<App className="h-full bg-default-gradient px-16 py-12">
 				<div className="flex flex-col items-center justify-center gap-4">
 					<Error message={"Impossible to load companies"} />
 				</div>
@@ -76,7 +75,7 @@ const Sponsors: NextPage = () => {
 
 	return (
 		<App className="overflow-y-auto bg-default-gradient p-8 sm:p-12" title={t("title")}>
-			<OnlyRole filter={role => role === Role.HACKER || role === Role.ORGANIZER}>
+			<OnlyRole filter={role => role === Role.ORGANIZER}>
 				<SponsorsTable companyQuery={companyQuery} />
 			</OnlyRole>
 			{!sessionData?.user && (
@@ -135,7 +134,7 @@ const SponsorsTable = ({ companyQuery }: { companyQuery: CompanyQueryResult }) =
 		}),
 	);
 
-	const renderCell = React.useCallback((company: Companies, columnKey: string) => {
+	const renderCell = useCallback((company: Companies, columnKey: string) => {
 		const cellValue = (company[columnKey as keyof Companies] as string) || "";
 
 		switch (columnKey) {
@@ -201,13 +200,13 @@ const SponsorsTable = ({ companyQuery }: { companyQuery: CompanyQueryResult }) =
 			default:
 				return cellValue;
 		}
-	}, []);
+	}, [router]);
 
 	return (
 		<div>
 			<div className="mb-3 mt-0 flex justify-center">
 				<Button
-					className="bg-dark-primary-color text-white"
+					className="bg-dark-primary-color text-light-color"
 					onClick={() => {
 						setIsModalOpen2(true);
 					}}
@@ -258,13 +257,7 @@ interface FormData {
 	tier?: string;
 }
 
-const EditModal: React.FC<EditModalProps> = ({
-	isModalOpen,
-	setIsModalOpen,
-	selectedUserId,
-	setSelectedUserId,
-	data,
-}) => {
+const EditModal = ({ isModalOpen, setIsModalOpen, selectedUserId, setSelectedUserId, data }: EditModalProps) => {
 	const mutation = trpc.payment.updateCompany.useMutation();
 	const informations = data.find(user => user.id === selectedUserId);
 
@@ -289,9 +282,9 @@ const EditModal: React.FC<EditModalProps> = ({
 			if (key === "tier" && typeof value === "string") {
 				const newAmount =
 					value === "CUSTOM" || value === "STARTUP"
-						? parseFloat(value as string)
-						: (amount as Record<string, string>)[value]
-						? parseInt((amount as Record<string, string>)[value] || "0")
+						? parseFloat(value)
+						: amount[value as keyof typeof amount]
+						? parseInt(amount[value as keyof typeof amount] ?? "0")
 						: 0;
 				return {
 					...prevFormData,
@@ -444,7 +437,6 @@ const EditModal: React.FC<EditModalProps> = ({
 									color="primary"
 									showAnchorIcon
 									variant="solid"
-									placeholder="Company logo"
 								>
 									Company logo
 								</Button>
@@ -477,7 +469,7 @@ interface NewSponsorModalProps {
 	setIsModalOpen: (isOpen: boolean) => void;
 }
 
-const NewSponsorModal: React.FC<NewSponsorModalProps> = ({ isModalOpen, setIsModalOpen }) => {
+const NewSponsorModal = ({ isModalOpen, setIsModalOpen }: NewSponsorModalProps) => {
 	const mutation = trpc.payment.addCompany.useMutation();
 	const [actualTier, setActualTier] = useState<string | null>(null);
 	const [formData, setFormData] = useState<FormData>({ id: "" });
@@ -498,14 +490,16 @@ const NewSponsorModal: React.FC<NewSponsorModalProps> = ({ isModalOpen, setIsMod
 
 			if (actualTier) {
 				if (actualTier !== "STARTUP" && actualTier !== "CUSTOM") {
-					const tierAmount = (amount as Record<string, string>)[actualTier] as string;
+					const tierAmount = amount[actualTier as keyof typeof amount];
 					formData.amount = parseInt(tierAmount, 10);
 				}
 			}
 
-			const parse = AddsponsorshipSchema.extend({
-				id: z.string(),
-			}).safeParse(formData);
+			const parse = addSponsorshipSchema
+				.extend({
+					id: z.string(),
+				})
+				.safeParse(formData);
 
 			if (!parse.success) {
 				setErrorMessage("Please fill all the required fields.");
@@ -516,7 +510,6 @@ const NewSponsorModal: React.FC<NewSponsorModalProps> = ({ isModalOpen, setIsMod
 				setErrorMessage(null);
 				setActualTier(null);
 				mutation.mutate(parse.data);
-				//window.location.reload();
 			}
 		} catch (error) {
 			console.error("Error updating company:", error);

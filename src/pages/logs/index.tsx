@@ -30,14 +30,13 @@ interface Log {
 
 const Logs: NextPage = () => {
 	const router = useRouter();
-	const [id] = [router.query.id].flat();
 	const logsQuery = trpc.auditLog.getAllTheLogs.useQuery(undefined, { enabled: true });
 	const { data: sessionData } = useSession();
 	const { t } = useTranslation("logs");
 
 	if (logsQuery.isLoading || logsQuery.data == null) {
 		return (
-			<App className="from-background2 to-background1 h-full bg-gradient-to-b px-16 py-12">
+			<App className="h-full bg-default-gradient px-16 py-12">
 				<OnlyRole filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
 					<Loading />
 				</OnlyRole>
@@ -50,7 +49,7 @@ const Logs: NextPage = () => {
 		);
 	} else if (logsQuery.isError) {
 		return (
-			<App className="from-background2 to-background1 h-full bg-gradient-to-b px-16 py-12">
+			<App className="h-full bg-default-gradient px-16 py-12">
 				<div className="flex flex-col items-center justify-center gap-4">
 					<Error message={logsQuery.error.message} />
 				</div>
@@ -69,11 +68,11 @@ const Logs: NextPage = () => {
 	return (
 		<App className="w-full overflow-y-auto bg-default-gradient p-8 sm:p-12" title={t("title")}>
 			<OnlyRole filter={role => role === Role.HACKER || role === Role.ORGANIZER}>
-				<h1 className="text-dark py-2 text-center font-rubik text-4xl font-bold">AuditLogs</h1>
+				<h1 className="text-dark-color py-2 text-center font-rubik text-4xl font-bold">AuditLogs</h1>
 				<div className="relative w-full overflow-scroll">
 					<div className="rounded-lg">
-						<table className="w-full rounded-lg bg-white text-left text-sm text-gray-500">
-							<thead className="bg-gray-800 text-xs uppercase text-white  ">
+						<table className="w-full rounded-lg bg-light-color text-left text-sm text-gray-500">
+							<thead className="bg-gray-800 text-xs uppercase text-light-color  ">
 								<tr>
 									<th scope="col" className="px-6 py-3">
 										{t("user")}
@@ -97,7 +96,7 @@ const Logs: NextPage = () => {
 							</thead>
 							<tbody>
 								{logsQuery.data.map((log: Log) => (
-									<tr className="bg-background1 " key={log.id}>
+									<tr className="bg-default-gradient" key={log.id}>
 										<td className="whitespace-nowrap px-6 py-4 font-medium text-gray-900">
 											{log.author ? log.author : "Unknown"}
 										</td>
@@ -112,7 +111,7 @@ const Logs: NextPage = () => {
 												<p className="px-6 py-4">No Details</p>
 											) : (
 												<button
-													className="cursor-pointer whitespace-nowrap rounded-[100px] border-none bg-light-primary-color px-8 py-2 font-rubik text-white shadow-md transition-all duration-1000 hover:bg-medium-primary-color"
+													className="cursor-pointer whitespace-nowrap rounded-[100px] border-none bg-light-primary-color px-8 py-2 font-rubik text-light-color shadow-md transition-all duration-1000 hover:bg-medium-primary-color"
 													onClick={() => {
 														userProfile(log.user_id);
 													}}
