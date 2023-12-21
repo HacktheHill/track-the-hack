@@ -37,8 +37,6 @@ model Account {
   @@index([userId])
 }
 
-
-
 model Session {
   id           String   @id @default(cuid())
   sessionToken String   @unique
@@ -146,23 +144,10 @@ model Event {
   linkText    String?
 }
 
-model Payment {
-  id           String   @id @default(cuid())
-  company_name String
-  amount       Int
-  reps_name    String
-  tier         Tiers
-  logo         String
-  paid         String
-  date         DateTime
-  invoice      String
-}
-
 model Follow {
   id    String @id @default(cuid())
   email String @unique
 }
-
 
 model AuditLog {
   id        Int      @id @default(autoincrement())
@@ -175,6 +160,18 @@ model AuditLog {
   user      User[]
 
   @@index([user_id])
+}
+
+model Payment {
+  id           String   @id @default(cuid())
+  company_name String
+  amount       Int
+  reps_name    String
+  tier         Tiers
+  logo         String
+  paid         String
+  date         DateTime
+  invoice      String
 }
 
 model Link {

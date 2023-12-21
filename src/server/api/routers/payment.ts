@@ -1,8 +1,6 @@
-import { PrismaClient } from "@prisma/client";
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { z } from "zod";
-import { Tiers } from "@prisma/client";
-import { AddsponsorshipSchema, sponsorshipSchema, walkInSchema } from "../../../utils/common";
+import { addSponsorshipSchema, sponsorshipSchema } from "../../../utils/common";
+import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const paymentRouter = createTRPCRouter({
 	getCompany: protectedProcedure
@@ -58,7 +56,7 @@ export const paymentRouter = createTRPCRouter({
 
 	addCompany: protectedProcedure
 		.input(
-			AddsponsorshipSchema.extend({
+			addSponsorshipSchema.extend({
 				id: z.string(),
 				logo: z.string().default("default_logo_url"),
 				date: z.date().default(() => new Date()),

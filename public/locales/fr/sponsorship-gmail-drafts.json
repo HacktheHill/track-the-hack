@@ -6,5 +6,13 @@
 	"company-name": "Nom de l'entreprise",
 	"company-rep-name": "Nom du représentant de l'entreprise",
 	"company-email": "Courriel de l'entreprise",
+	"select-template": "Sélectionner un modèle",
+	"subject": "Sujet",
+	"custom-template": "Modèle personnalisé",
+	"custom-template-note": "Veuillez noter que toutes les modifications seront perdues si vous changez de modèle ou décochez la case « Personnaliser le modèle ».",
+	"copy-to-clipboard": "Copier dans le presse-papiers",
+	"copied-to-clipboard": "Copié dans le presse-papiers",
+	"create-draft-email": "Créer un brouillon de courriel",
+	"created-draft-email": "Brouillon de courriel créé",
 	"invalid-form": "Veuillez remplir correctement tous les champs obligatoires."
 }
