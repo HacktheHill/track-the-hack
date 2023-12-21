@@ -4,7 +4,7 @@ import { PrismaClient } from "@prisma/client";
 import { Stripe } from "stripe";
 import { env } from "../../env/server.mjs";
 
-const stripe: Stripe = new Stripe(env.STRIPE_API_KEY, {
+const stripe: Stripe = new Stripe(env.STRIPE_SECRET_KEY, {
 	apiVersion: "2023-10-16",
 });
 const prisma = new PrismaClient();
@@ -15,21 +15,16 @@ export const config = {
 	},
 };
 
-type CustomSession = {
-	cancel_url: string;
-	payment_intent: string;
-};
-
 const PaymentWebHook = async (req: NextApiRequest, res: NextApiResponse) => {
 	if (req.method === "POST") {
 		const buf = await buffer(req);
 		const sig = req.headers["stripe-signature"];
 
-		let event: Stripe.Event = {} as Stripe.Event;
-
 		if (typeof sig !== "string" && !Array.isArray(sig)) {
 			return res.status(400).send("Invalid Stripe Signature");
 		}
+
+		let event = {} as Stripe.Event;
 
 		try {
 			event = stripe.webhooks.constructEvent(buf, sig, env.STRIPE_WEBHOOKS_ID);
@@ -38,22 +33,24 @@ const PaymentWebHook = async (req: NextApiRequest, res: NextApiResponse) => {
 				return res.status(400).send(`Webhook Error: ${err.message}`);
 			}
 		}
-		const session = event.data.object as CustomSession;
-		const url: string = session.cancel_url;
 
-		const idMatch = /[\?&]id=([^&]+)/.exec(url);
+		const session = event.data.object as {
+			cancel_url: string;
+			payment_intent: string;
+		};
+
+		const url = new URL(session.cancel_url);
+		const id = url.searchParams.get("id")?.[1] ?? "";
+		if (!id) {
+			console.error("id parameter not found in the URL");
+		}
 
 		const paymentIntentId = session.payment_intent;
 		const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
 
-		if (idMatch) {
-			const id = idMatch[1] || "";
-			if (paymentIntent.status === "succeeded") {
-				console.log("Payment succeeded");
-				await handleCheckoutSession(id, "paid");
-			}
-		} else {
-			console.log("id parameter not found in the URL");
+		if (paymentIntent.status === "succeeded") {
+			console.info("Payment succeeded");
+			await handleCheckoutSession(id, "paid");
 		}
 
 		res.json({ received: true });
@@ -78,5 +75,6 @@ async function handleCheckoutSession(id: string, status: string) {
 			},
 		});
 	}
-	console.log("Payment updated");
+
+	console.info("Payment updated");
 }

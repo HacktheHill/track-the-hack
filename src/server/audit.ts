@@ -1,6 +1,4 @@
-// utils/auditUtils.ts
-
-import { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 
 async function logAuditEntry(
 	ctx: {

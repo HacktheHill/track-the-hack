@@ -1,11 +1,10 @@
 import { AttendanceType, Role, ShirtSize, type HackerInfo } from "@prisma/client";
 import { z } from "zod";
-import { hasRoles } from "../../../utils/helpers";
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { walkInSchema } from "../../../utils/common";
+import { hasRoles } from "../../../utils/helpers";
 import { logAuditEntry } from "../../audit";
-import { trpc } from "../../../utils/api";
-import createTRPC from "@trpc/server";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+
 const DEFAULT_ACCEPTANCE_EXPIRY = new Date(2023, 2, 6, 5, 0, 0, 0); // 2023-03-06 00:00:00 EST
 
 export const hackerRouter = createTRPCRouter({
@@ -44,6 +43,60 @@ export const hackerRouter = createTRPCRouter({
 
 			return hacker;
 		}),
+
+	// Get next hacker in db from an id
+	getNext: publicProcedure
+	.input(
+		z
+			.object({
+				id: z.string(),
+			}),
+	)
+	.query(async ({ ctx, input }) => {
+		let hacker: HackerInfo | null = null;
+		if ("id" in input) {
+			hacker = await ctx.prisma.hackerInfo.findFirst({
+				take: 1,
+				skip: 1,
+				cursor: {
+					id: input.id,
+				},
+			});
+		}
+
+		if (!hacker) {
+			throw new Error("Hacker not found");
+		}
+
+		return hacker;
+	}),
+
+	// Get prev hacker in db from an id
+	getPrev: publicProcedure
+	.input(
+		z
+			.object({
+				id: z.string(),
+			}),
+	)
+	.query(async ({ ctx, input }) => {
+		let hacker: HackerInfo | null = null;
+		if ("id" in input) {
+			hacker = await ctx.prisma.hackerInfo.findFirst({
+				take: -1,
+				skip: 1,
+				cursor: {
+					id: input.id,
+				},
+			});
+		}
+
+		if (!hacker) {
+			throw new Error("Hacker not found");
+		}
+
+		return hacker;
+	}),
 
 	// Get all hackers
 	all: protectedProcedure
@@ -261,16 +314,6 @@ export const hackerRouter = createTRPCRouter({
 				throw new Error("You do not have permission to do this");
 			}
 
-			// Log the audit like this
-
-			// id: z.number(), // Assuming 'id' is auto-incremented, it should be a number
-			// 	timestamp: z.date(),
-			// 	user_id: z.string(),
-			// 	route: z.string(),
-			// 	author: z.string(),
-			// 	action: z.string(),
-			// 	details: z.string().nullable(),
-
 			await logAuditEntry(
 				ctx,
 				userId,
@@ -279,7 +322,7 @@ export const hackerRouter = createTRPCRouter({
 				user.name ?? "Unknown",
 				"Updated hacker information",
 			);
-			const hackerdetails = await ctx.prisma.hackerInfo.findUnique({
+			const hackerDetails = await ctx.prisma.hackerInfo.findUnique({
 				where: {
 					id: input.id,
 				},
@@ -292,15 +335,15 @@ export const hackerRouter = createTRPCRouter({
 			}> = [];
 
 			for (const key in input) {
-				for (const key2 in hackerdetails) {
+				for (const key2 in hackerDetails) {
 					if (
 						key === key2 &&
-						input[key as keyof typeof input] !== hackerdetails[key2 as keyof typeof hackerdetails] &&
+						input[key as keyof typeof input] !== hackerDetails[key2 as keyof typeof hackerDetails] &&
 						input[key as keyof typeof input] !== null &&
-						hackerdetails[key2 as keyof typeof hackerdetails] !== null
+						hackerDetails[key2 as keyof typeof hackerDetails] !== null
 					) {
 						const field = key as keyof typeof input;
-						const before = hackerdetails[key2 as keyof typeof hackerdetails];
+						const before = hackerDetails[key2 as keyof typeof hackerDetails];
 						const after = input[key as keyof typeof input];
 
 						const auditEntry = {
@@ -308,7 +351,7 @@ export const hackerRouter = createTRPCRouter({
 							entityType: "UpdateHackerInfo",
 							userName: user.name ?? "Unknown",
 							details: `Updated field ${field} from ${String(before)} to ${String(
-								after ? after : "empty",
+								after ?? "empty",
 							)}`,
 						};
 
@@ -320,17 +363,6 @@ export const hackerRouter = createTRPCRouter({
 			for (const entry of auditEntries) {
 				await logAuditEntry(ctx, input.id, entry.action, entry.entityType, entry.userName, entry.details);
 			}
-
-			// auditLog.mutation({
-			// 	input: {
-			// 		timestamp: new Date(),
-			// 		user_id: userId,
-			// 		route: '/update-hacker-info',
-			// 		action: 'UpdateHackerInfo',
-			// 		author: user.name ?? 'Unknown',
-			// 		details: 'Updated hacker information'
-			// 	}
-			// });
 
 			const hacker = await ctx.prisma.hackerInfo.update({
 				where: {

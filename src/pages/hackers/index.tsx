@@ -134,7 +134,7 @@ const Card = ({ firstName, lastName, university, studyProgram, id }: CardProps) 
 	return (
 		<Link
 			href={`/hackers/hacker?id=${id}`}
-			className="hover:bg-medium block w-full rounded-lg bg-medium-primary-color p-6 text-white shadow"
+			className="hover:bg-medium block w-full rounded-lg bg-medium-primary-color p-6 text-light-color shadow"
 		>
 			<h3 className="text-2xl font-bold tracking-tight">{`${firstName} ${lastName}`}</h3>
 			<p>{university}</p>
@@ -186,8 +186,8 @@ export const getServerSideProps: GetServerSideProps = async ({ req, res, locale 
 
 	return {
 		props: {
-			...(await hackersRedirect(session, locale)),
-			...(await serverSideTranslations(locale ?? "en", ["hackers", "common"])),
+			...(await hackersRedirect(session)),
+			...(await serverSideTranslations(locale ?? "en", ["hackers", "navbar", "common"])),
 		},
 	};
 };

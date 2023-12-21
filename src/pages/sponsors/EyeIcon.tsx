@@ -1,7 +1,7 @@
 import React from "react";
-import IconSvgProps from "../../utils/types";
+import type IconSvgProps from "../../utils/types";
 
-const EyeIcon: React.FC<IconSvgProps> = ({ size = 20, width, height }, props: IconSvgProps) => (
+const EyeIcon = ({ size = 20, width, height, ...props }: IconSvgProps) => (
 	<svg
 		aria-hidden="true"
 		fill="none"
