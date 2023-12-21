@@ -202,10 +202,14 @@ const Tab = ({ type, active, onClick }: TabProps) => {
 
 	return (
 		<div
-			className={`flex cursor-pointer flex-row items-center justify-center gap-2 rounded-lg bg-dark-color p-2 font-coolvetica text-light-color outline sm:p-4 ${
-				type === active ? "outline-4 outline-light-color" : "outline-0"
-			}`}
+			className={`flex cursor-pointer flex-row items-center justify-center gap-2 rounded-lg bg-dark-color p-2 font-coolvetica text-light-color outline sm:p-4 ${type === active ? "outline-4 outline-light-color" : "outline-0"
+				}`}
 			onClick={onClick}
+			onKeyDown={e => {
+				if (e.key === "Enter") {
+					onClick();
+				}
+			}}
 		>
 			<h1 className="text-center text-lg">{types[type]}</h1>
 		</div>

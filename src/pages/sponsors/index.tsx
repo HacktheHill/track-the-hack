@@ -32,7 +32,7 @@ import EyeIcon from "./EyeIcon";
 import PlusIcon from "./PlusIcon";
 
 import { useRouter } from "next/router";
-import * as React from "react";
+import { useCallback } from "react";
 import { z } from "zod";
 import App from "../../components/App";
 import Error from "../../components/Error";
@@ -134,7 +134,7 @@ const SponsorsTable = ({ companyQuery }: { companyQuery: CompanyQueryResult }) =
 		}),
 	);
 
-	const renderCell = React.useCallback((company: Companies, columnKey: string) => {
+	const renderCell = useCallback((company: Companies, columnKey: string) => {
 		const cellValue = (company[columnKey as keyof Companies] as string) || "";
 
 		switch (columnKey) {
@@ -200,7 +200,7 @@ const SponsorsTable = ({ companyQuery }: { companyQuery: CompanyQueryResult }) =
 			default:
 				return cellValue;
 		}
-	}, []);
+	}, [router]);
 
 	return (
 		<div>
@@ -257,13 +257,7 @@ interface FormData {
 	tier?: string;
 }
 
-const EditModal: React.FC<EditModalProps> = ({
-	isModalOpen,
-	setIsModalOpen,
-	selectedUserId,
-	setSelectedUserId,
-	data,
-}) => {
+const EditModal = ({ isModalOpen, setIsModalOpen, selectedUserId, setSelectedUserId, data }: EditModalProps) => {
 	const mutation = trpc.payment.updateCompany.useMutation();
 	const informations = data.find(user => user.id === selectedUserId);
 
@@ -288,9 +282,9 @@ const EditModal: React.FC<EditModalProps> = ({
 			if (key === "tier" && typeof value === "string") {
 				const newAmount =
 					value === "CUSTOM" || value === "STARTUP"
-						? parseFloat(value as string)
-						: (amount as Record<string, string>)[value]
-						? parseInt((amount as Record<string, string>)[value] || "0")
+						? parseFloat(value)
+						: amount[value as keyof typeof amount]
+						? parseInt(amount[value as keyof typeof amount] ?? "0")
 						: 0;
 				return {
 					...prevFormData,
@@ -443,7 +437,6 @@ const EditModal: React.FC<EditModalProps> = ({
 									color="primary"
 									showAnchorIcon
 									variant="solid"
-									placeholder="Company logo"
 								>
 									Company logo
 								</Button>
@@ -476,7 +469,7 @@ interface NewSponsorModalProps {
 	setIsModalOpen: (isOpen: boolean) => void;
 }
 
-const NewSponsorModal: React.FC<NewSponsorModalProps> = ({ isModalOpen, setIsModalOpen }) => {
+const NewSponsorModal = ({ isModalOpen, setIsModalOpen }: NewSponsorModalProps) => {
 	const mutation = trpc.payment.addCompany.useMutation();
 	const [actualTier, setActualTier] = useState<string | null>(null);
 	const [formData, setFormData] = useState<FormData>({ id: "" });
@@ -497,7 +490,7 @@ const NewSponsorModal: React.FC<NewSponsorModalProps> = ({ isModalOpen, setIsMod
 
 			if (actualTier) {
 				if (actualTier !== "STARTUP" && actualTier !== "CUSTOM") {
-					const tierAmount = (amount as Record<string, string>)[actualTier] as string;
+					const tierAmount = amount[actualTier as keyof typeof amount];
 					formData.amount = parseInt(tierAmount, 10);
 				}
 			}
@@ -517,7 +510,6 @@ const NewSponsorModal: React.FC<NewSponsorModalProps> = ({ isModalOpen, setIsMod
 				setErrorMessage(null);
 				setActualTier(null);
 				mutation.mutate(parse.data);
-				//window.location.reload();
 			}
 		} catch (error) {
 			console.error("Error updating company:", error);

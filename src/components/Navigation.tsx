@@ -66,24 +66,20 @@ const Links = ({ bottom }: LinkProps) => {
 				)}
 			</Link>
 			{sessionData?.user && (
-				<>
-					<OnlyRole filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
-						<Link
-							href="/hackers"
-							className={
-								bottom
-									? ""
-									: "text-dark hover:text-light mx-4 flex items-center font-coolvetica text-2xl"
-							}
-						>
-							{bottom ? (
-								<Image priority src="/assets/list.svg" height={32} width={32} alt={t("hackers")} />
-							) : (
-								t("hackers")
-							)}
-						</Link>
-					</OnlyRole>
-				</>
+				<OnlyRole filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
+					<Link
+						href="/hackers"
+						className={
+							bottom ? "" : "text-dark hover:text-light mx-4 flex items-center font-coolvetica text-2xl"
+						}
+					>
+						{bottom ? (
+							<Image priority src="/assets/list.svg" height={32} width={32} alt={t("hackers")} />
+						) : (
+							t("hackers")
+						)}
+					</Link>
+				</OnlyRole>
 			)}
 		</>
 	);
