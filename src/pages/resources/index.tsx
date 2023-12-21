@@ -4,9 +4,10 @@ import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import React from "react";
+import type { Components } from "react-markdown";
 import ReactMarkdown from "react-markdown";
 
-import type { PluggableList } from "react-markdown/lib/react-markdown";
+import type { PluggableList } from "react-markdown/lib";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeSlug from "rehype-slug";
 import remarkToc from "remark-toc";
@@ -17,7 +18,7 @@ import fr from "./fr.md";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
-		props: await serverSideTranslations(locale ?? "en", ["common", "resources"]),
+		props: await serverSideTranslations(locale ?? "en", ["common", "navbar", "resources"]),
 	};
 };
 
@@ -26,7 +27,6 @@ type ComponentProps = {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	[key: string]: any;
 };
-
 const components = {
 	/* eslint-disable  @typescript-eslint/no-unused-vars */
 	h1: ({ children, node, ...props }: ComponentProps) => (
@@ -106,11 +106,11 @@ const components = {
 			{children}
 		</p>
 	),
-	a: ({ children, node, ...props }: ComponentProps) => (
+	/* a: ({ children, node, ...props }: ComponentProps) => (
 		<a className="text-blue-900" {...props}>
 			{children}
 		</a>
-	),
+	), */
 	ul: ({ children, node, ...props }: ComponentProps) => {
 		const { depth, ordered, className, ...rest } = props as {
 			depth: number;
@@ -158,11 +158,11 @@ const components = {
 			</li>
 		);
 	},
-	blockquote: ({ children, node, ...props }: ComponentProps) => (
+	/* blockquote: ({ children, node, ...props }: ComponentProps) => (
 		<blockquote className="border-l-4 border-gray-300 pl-4" {...props}>
 			{children}
 		</blockquote>
-	),
+	), */
 	table: ({ children, node, ...props }: ComponentProps) => (
 		<table className="table-auto border-collapse border border-gray-300" {...props}>
 			{children}
@@ -244,8 +244,7 @@ const components = {
 			/>
 		);
 	},
-};
-/* eslint-enable @typescript-eslint/no-unused-vars */
+} as Components;
 
 const plugins = [
 	[
@@ -287,7 +286,7 @@ const Resources: NextPage = () => {
 				href="https://discord.gg/8JNxJVMNrF"
 				target="_blank"
 				rel="noreferrer"
-				className="flex justify-center gap-2 self-center rounded-md bg-gray-800 px-4 py-2 text-white hover:bg-gray-700"
+				className="flex justify-center gap-2 self-center rounded-md bg-gray-800 px-4 py-2 text-light-color hover:bg-gray-700"
 			>
 				{t("join-our-discord-server")}
 			</a>

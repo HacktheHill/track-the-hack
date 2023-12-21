@@ -9,7 +9,7 @@ import { NextUIProvider } from "@nextui-org/react";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
-		props: await serverSideTranslations(locale ?? "en", ["common", "index"]),
+		props: await serverSideTranslations(locale ?? "en", ["common", "navbar", "index"]),
 	};
 };
 
@@ -29,7 +29,7 @@ const Home: NextPage = () => {
 					height={225}
 				/>
 				<p className="z-10 text-center text-lg font-bold short:text-2xl">{t("welcome")}</p>
-				<p className="z-10 max-w-xl text-center text-sm short:text-base">{t("description")}</p>
+				<p className="z-10 max-w-xl text-center text-sm short:text-base">{t("explanation")}</p>
 				{!sessionData && (
 					<button
 						className="z-10 whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-color transition-colors hover:bg-light-tertiary-color short:text-base"

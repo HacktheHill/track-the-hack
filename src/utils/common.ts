@@ -33,7 +33,6 @@ export const sponsorshipGmailDraftsSchema = z.object({
 	companyEmail: z.string().email(),
 	subject: z.string(),
 	emailHTML: z.string(),
-	companyName: z.string(),
 });
 
 export const sponsorshipSchema = z.object({
@@ -46,7 +45,7 @@ export const sponsorshipSchema = z.object({
 	paid: z.string().optional(),
 });
 
-export const AddsponsorshipSchema = z.object({
+export const addSponsorshipSchema = z.object({
 	company_name: z.string(),
 	amount: z.number(),
 	reps_name: z.string(),

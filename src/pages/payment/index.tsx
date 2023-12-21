@@ -6,15 +6,15 @@ import type { GetStaticProps, NextPage } from "next/types";
 
 import App from "../../components/App";
 
+import { loadStripe } from "@stripe/stripe-js";
 import { useRouter } from "next/router";
 import Error from "../../components/Error";
 import OnlyRole from "../../components/OnlyRole";
-import { loadStripe } from "@stripe/stripe-js";
 
+import Image from "next/image";
+import Loading from "../../components/Loading";
 import { env } from "../../env/client.mjs";
 import { trpc } from "../../utils/api";
-import Loading from "../../components/Loading";
-import * as React from "react";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
@@ -48,7 +48,7 @@ const Payment: NextPage = () => {
 
 	if (companyQuery.isLoading) {
 		return (
-			<App className="from-background2 to-background1 h-full bg-gradient-to-b px-16 py-12">
+			<App className="h-full bg-default-gradient px-16 py-12">
 				<div className="flex flex-col items-center justify-center gap-4">
 					<Loading />
 				</div>
@@ -58,7 +58,7 @@ const Payment: NextPage = () => {
 
 	if (!idQuery || idQuery.length < 1) {
 		return (
-			<App className="from-background2 to-background1 h-full bg-gradient-to-b px-16 py-12">
+			<App className="h-full bg-default-gradient px-16 py-12">
 				<div className="flex flex-col items-center justify-center gap-4">
 					<Error message={"You need to provide a valid id."} />
 				</div>
@@ -68,7 +68,7 @@ const Payment: NextPage = () => {
 
 	if (!companyQuery.isLoading && !companyQuery.data) {
 		return (
-			<App className="from-background2 to-background1 h-full bg-gradient-to-b px-16 py-12">
+			<App className="h-full bg-default-gradient px-16 py-12">
 				<div className="flex flex-col items-center justify-center gap-4">
 					<Error message={"This company does not exist"} />
 				</div>
@@ -88,7 +88,7 @@ const Payment: NextPage = () => {
 
 	if (status) {
 		return (
-			<App className="from-background2 to-background1 h-full bg-default-gradient px-16 py-12">
+			<App className="h-full bg-default-gradient px-16 py-12">
 				<div className="flex flex-col items-center justify-center gap-4">
 					<PaymentCard company={companyQuery.data} status={status} />
 				</div>
@@ -98,7 +98,7 @@ const Payment: NextPage = () => {
 
 	return (
 		<App className="overflow-y-auto bg-default-gradient p-8 sm:p-12" title={t("title")}>
-			<OnlyRole filter={role => role === Role.HACKER || role === Role.ORGANIZER}>
+			<OnlyRole filter={role => role === Role.SPONSOR || role === Role.ORGANIZER}>
 				<PaymentCard company={companyQuery.data} status={status} />
 			</OnlyRole>
 			{!sessionData?.user && (
@@ -110,57 +110,44 @@ const Payment: NextPage = () => {
 	);
 };
 
-const PaymentCard: React.FC<PaymentCardProps> = ({ company, status }) => {
+const PaymentCard = ({ company, status }: PaymentCardProps) => {
 	const stripePromise = loadStripe(env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
-	const handlePaymentOnClick = () => {
-		handlePayment()
-			.then(() => {
-				console.log("Payment successful");
-			})
-			.catch(err => {
-				console.log(err);
-			});
-	};
-
 	const handlePayment = async () => {
-		const url = `${env.NEXT_PUBLIC_REDIRECT_URL}payment?id=${company.id}`;
+		const url = `${env.NEXT_PUBLIC_STRIPE_REDIRECT_URL}payment?id=${company.id}`;
 
 		try {
 			const stripe = await stripePromise;
 
-			console.log(stripe);
-
-			const price_id: { [key: string]: string } = {
-				Test: env.NEXT_PUBLIC_PRICE_ID_TEST,
+			const price_id = {
 				STARTUP: env.NEXT_PUBLIC_PRICE_ID_STARTUP,
 				MAYOR: env.NEXT_PUBLIC_PRICE_ID_MAYOR,
 				PREMIER: env.NEXT_PUBLIC_PRICE_ID_PREMIER,
 				GOVERNOR: env.NEXT_PUBLIC_PRICE_ID_GOVERNOR,
 				PRIME_MINISTER: env.NEXT_PUBLIC_PRICE_ID_PRIME_MINISTER,
 				CUSTOM: env.NEXT_PUBLIC_PRICE_ID_CUSTOM,
-			};
+			} as Record<string, string>;
 
 			if (stripe) {
 				const { error } = await stripe.redirectToCheckout({
 					lineItems: [
 						{
 							price: price_id[company.tier],
-							quantity: 1,
 						},
 					],
 					mode: "payment",
 					successUrl: url,
 					cancelUrl: url,
 				});
+
 				if (error) {
-					console.log(error);
+					console.error(error);
 				}
 			} else {
-				console.log("Stripe is not available.");
+				console.error("Stripe is not available.");
 			}
 		} catch (err) {
-			console.log(err);
+			console.error(err);
 		}
 	};
 
@@ -169,7 +156,7 @@ const PaymentCard: React.FC<PaymentCardProps> = ({ company, status }) => {
 			{status ? (
 				<div className="flex flex-col justify-center rounded-md bg-light-quaternary-color p-8 text-center">
 					<div className="flex flex-col items-center">
-						<img
+						<Image
 							className="h-48 w-96 object-contain"
 							src="/assets/hackthehill-logo.svg"
 							alt="HackTheHill Logo"
@@ -195,7 +182,7 @@ const PaymentCard: React.FC<PaymentCardProps> = ({ company, status }) => {
 			) : (
 				<div className="flex flex-col justify-center rounded-md bg-light-quaternary-color p-8">
 					<div className="flex flex-col items-center">
-						<img className="m-2 h-48 w-96 object-contain" alt={company.company_name} src={company.logo} />
+						<Image className="m-2 h-48 w-96 object-contain" alt={company.company_name} src={company.logo} />
 					</div>
 					<h1>Thank you for considering your sponsorship of Hack the Hill.</h1>
 					<h1>By submitting the form below, you are making a secure payment via Stripe.</h1>
@@ -214,14 +201,11 @@ const PaymentCard: React.FC<PaymentCardProps> = ({ company, status }) => {
 						</div>
 					</div>
 					<button
-						onClick={handlePaymentOnClick}
-						className="m-3 rounded-md bg-dark-primary-color p-2 text-white"
+						onClick={() => void handlePayment()}
+						className="m-3 rounded-md bg-dark-primary-color p-2 text-light-color"
 					>
 						<b>Checkout</b> with Stripe
 					</button>
-					{`${env.NEXT_PUBLIC_REDIRECT_URL}payment?id=${company.id}`}
-					<br />
-					{"https://ba61-2a09-bac1-14c0-188-00-28a-b0.ngrok-free.app/payment?id=dYWY1qkF"}
 				</div>
 			)}
 		</div>
