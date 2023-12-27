@@ -67,7 +67,7 @@ const Logs: NextPage = () => {
 
 	return (
 		<App className="w-full overflow-y-auto bg-default-gradient p-8 sm:p-12" title={t("title")}>
-			<OnlyRole filter={role => role === Role.HACKER || role === Role.ORGANIZER}>
+			<OnlyRole filter={role => role === Role.ORGANIZER}>
 				<h1 className="text-dark-color py-2 text-center font-rubik text-4xl font-bold">AuditLogs</h1>
 				<div className="relative w-full overflow-scroll">
 					<div className="rounded-lg">
