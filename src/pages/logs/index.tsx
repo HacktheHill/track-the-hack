@@ -25,7 +25,7 @@ interface Log {
 	route: string;
 	author: string;
 	timestamp: Date;
-	user_id: string;
+	userId: string;
 }
 
 const Logs: NextPage = () => {
@@ -105,7 +105,7 @@ const Logs: NextPage = () => {
 										</td>
 										<td className="px-6 py-4">{log.timestamp.toLocaleString()}</td>
 										<td className="px-6 py-4">{log.details}</td>
-										<td className="px-6 py-4">{log.user_id}</td>
+										<td className="px-6 py-4">{log.userId}</td>
 										<td className="px-6 py-4">
 											{log.action === "New follow" ? (
 												<p className="px-6 py-4">No Details</p>
@@ -113,7 +113,7 @@ const Logs: NextPage = () => {
 												<button
 													className="cursor-pointer whitespace-nowrap rounded-[100px] border-none bg-light-primary-color px-8 py-2 font-rubik text-light-color shadow-md transition-all duration-1000 hover:bg-medium-primary-color"
 													onClick={() => {
-														userProfile(log.user_id);
+														userProfile(log.userId);
 													}}
 												>
 													Profile
