@@ -96,9 +96,9 @@ const statusColorMap: Record<string, ChipProps["color"]> = {
 type CompanyQueryResult = {
 	data: {
 		id: string;
-		company_name: string;
+		companyName: string;
 		amount: number;
-		reps_name: string;
+		repName: string;
 		tier: string;
 		logo: string;
 		paid: string;
@@ -107,9 +107,9 @@ type CompanyQueryResult = {
 
 type RawCompanyData = {
 	id: string;
-	company_name: string;
+	companyName: string;
 	amount: number;
-	reps_name: string;
+	repName: string;
 	tier: string;
 	logo: string;
 	paid: string;
@@ -148,7 +148,7 @@ const SponsorsTable = ({ companyQuery }: { companyQuery: CompanyQueryResult }) =
 							base: "bg-red",
 						}}
 					>
-						{company.company_name}
+						{company.companyName}
 					</User>
 				);
 			case "tier":
@@ -374,7 +374,7 @@ const EditModal = ({ isModalOpen, setIsModalOpen, selectedUserId, setSelectedUse
 								<Input label="ID" placeholder={informations.id} isDisabled={true} />
 								<Input
 									label="Company Name"
-									placeholder={informations.company_name}
+									placeholder={informations.companyName}
 									onChange={e => handleInputChange("company_name", e.target.value)}
 								/>
 								<Select
@@ -412,7 +412,7 @@ const EditModal = ({ isModalOpen, setIsModalOpen, selectedUserId, setSelectedUse
 								)}
 								<Input
 									label="Reps Name"
-									placeholder={informations.reps_name}
+									placeholder={informations.repName}
 									onChange={e => handleInputChange("reps_name", e.target.value)}
 								/>
 								<Select

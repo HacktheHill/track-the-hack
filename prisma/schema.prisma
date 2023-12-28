@@ -48,16 +48,15 @@ model Session {
 }
 
 model User {
-  id            String       @id @default(cuid())
-  name          String?
-  email         String?      @unique
-  emailVerified DateTime?
-  image         String?
-  role          Role         @default(HACKER)
-  accounts      Account[]
-  sessions      Session[]
-  hackerInfo    HackerInfo[]
-  auditLog      AuditLog[]
+  id           String       @id @default(cuid())
+  username     String?      @map("name")
+  email        String?      @unique
+  profileImage String?      @map("image")
+  role         Role         @default(HACKER)
+  accounts     Account[]
+  sessions     Session[]
+  hackerInfo   HackerInfo[]
+  auditLog     AuditLog[]
 }
 
 model VerificationToken {
@@ -150,26 +149,26 @@ model Follow {
 model AuditLog {
   id        Int      @id @default(autoincrement())
   timestamp DateTime @default(now())
-  user_id   String
+  userId    String   @map("user_id")
   author    String   @default("")
   route     String
   action    String
   details   String?
   user      User[]
 
-  @@index([user_id])
+  @@index([userId])
 }
 
 model Payment {
-  id           String   @id @default(cuid())
-  company_name String
-  amount       Int
-  reps_name    String
-  tier         Tiers
-  logo         String
-  paid         String
-  date         DateTime
-  invoice      String
+  id          String   @id @default(cuid())
+  companyName String   @map("company_name")
+  repName     String   @map("reps_name")
+  amount      Int
+  tier        Tiers
+  logo        String
+  paid        String
+  date        DateTime
+  invoice     String
 }
 
 model Link {

@@ -24,8 +24,8 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
 
 type Company = {
 	id: string;
-	reps_name: string;
-	company_name: string;
+	repName: string;
+	companyName: string;
 	amount: number;
 	tier: string;
 	logo: string;
@@ -182,14 +182,14 @@ const PaymentCard = ({ company, status }: PaymentCardProps) => {
 			) : (
 				<div className="flex flex-col justify-center rounded-md bg-light-quaternary-color p-8">
 					<div className="flex flex-col items-center">
-						<Image className="m-2 h-48 w-96 object-contain" alt={company.company_name} src={company.logo} />
+						<Image className="m-2 h-48 w-96 object-contain" alt={company.companyName} src={company.logo} />
 					</div>
 					<h1>Thank you for considering your sponsorship of Hack the Hill.</h1>
 					<h1>By submitting the form below, you are making a secure payment via Stripe.</h1>
 					<div className="p-4">
 						<div className="mt-2">
 							<h2 className="text-lg font-semibold">Company Name</h2>
-							<p className="text-gray-700">{company.company_name}</p>
+							<p className="text-gray-700">{company.companyName}</p>
 						</div>
 						<div className="mt-2">
 							<h2 className="text-lg font-semibold">Sponsorship Tier</h2>
