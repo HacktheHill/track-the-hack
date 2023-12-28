@@ -124,7 +124,7 @@ export const presenceRouter = createTRPCRouter({
 									hacker.id,
 									"/presence",
 									"Presence",
-									user.name ?? "Unknown",
+									user.username ?? "Unknown",
 									`${hacker.firstName} ${hacker.lastName} ${key} updated to true.`,
 								);
 							} else {
@@ -133,7 +133,7 @@ export const presenceRouter = createTRPCRouter({
 									hacker.id,
 									"/presence",
 									"Presence",
-									user.name ?? "Unknown",
+									user.username ?? "Unknown",
 									`${hacker.firstName} ${hacker.lastName} ${key} updated to false.`,
 								);
 							}

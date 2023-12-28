@@ -46,9 +46,9 @@ export const sponsorshipSchema = z.object({
 });
 
 export const addSponsorshipSchema = z.object({
-	company_name: z.string(),
+	companyName: z.string(),
 	amount: z.number(),
-	reps_name: z.string(),
+	repName: z.string(),
 	tier: z.enum([Tiers.STARTUP, Tiers.MAYOR, Tiers.PREMIER, Tiers.GOVERNOR, Tiers.PRIME_MINISTER, Tiers.CUSTOM]),
 	paid: z.string(),
 	logo: z.string().optional(),
