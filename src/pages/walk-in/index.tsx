@@ -262,9 +262,7 @@ const WalkIn: NextPage = () => {
 				)}
 			</OnlyRole>
 			{!sessionData?.user && (
-				<div className="flex flex-col items-center justify-center gap-4">
-					<Error message={t("not-authorized-to-view-this-page")} />
-				</div>
+				<Error message={t("not-authorized-to-view-this-page")} />
 			)}
 		</App>
 	);

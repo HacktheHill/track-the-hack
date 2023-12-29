@@ -66,9 +66,7 @@ const Sponsors: NextPage = () => {
 	if (!companyQuery.isLoading && !companyQuery.data) {
 		return (
 			<App className="h-full bg-default-gradient px-16 py-12">
-				<div className="flex flex-col items-center justify-center gap-4">
-					<Error message={"Impossible to load companies"} />
-				</div>
+				<Error message={"Impossible to load companies"} />
 			</App>
 		);
 	}
@@ -79,9 +77,7 @@ const Sponsors: NextPage = () => {
 				<SponsorsTable companyQuery={companyQuery} />
 			</OnlyRole>
 			{!sessionData?.user && (
-				<div className="flex flex-col items-center justify-center gap-4">
-					<Error message={t("not-authorized-to-view-this-page")} />
-				</div>
+				<Error message={t("not-authorized-to-view-this-page")} />
 			)}
 		</App>
 	);

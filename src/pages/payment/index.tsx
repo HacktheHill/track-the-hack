@@ -59,9 +59,7 @@ const Payment: NextPage = () => {
 	if (!idQuery || idQuery.length < 1) {
 		return (
 			<App className="h-full bg-default-gradient px-16 py-12">
-				<div className="flex flex-col items-center justify-center gap-4">
-					<Error message={"You need to provide a valid id."} />
-				</div>
+				<Error message={"You need to provide a valid id."} />
 			</App>
 		);
 	}
@@ -69,9 +67,7 @@ const Payment: NextPage = () => {
 	if (!companyQuery.isLoading && !companyQuery.data) {
 		return (
 			<App className="h-full bg-default-gradient px-16 py-12">
-				<div className="flex flex-col items-center justify-center gap-4">
-					<Error message={"This company does not exist"} />
-				</div>
+				<Error message={"This company does not exist"} />
 			</App>
 		);
 	}
@@ -102,9 +98,7 @@ const Payment: NextPage = () => {
 				<PaymentCard company={companyQuery.data} status={status} />
 			</OnlyRole>
 			{!sessionData?.user && (
-				<div className="flex flex-col items-center justify-center gap-4">
-					<Error message={t("not-authorized-to-view-this-page")} />
-				</div>
+				<Error message={t("not-authorized-to-view-this-page")} />
 			)}
 		</App>
 	);

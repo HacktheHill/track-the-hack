@@ -41,18 +41,14 @@ const Logs: NextPage = () => {
 					<Loading />
 				</OnlyRole>
 				<OnlyRole filter={role => role === Role.HACKER}>
-					<div className="flex flex-col items-center justify-center gap-4">
-						<Error message="You are not allowed to view this page" />
-					</div>
+					<Error message="You are not allowed to view this page" />
 				</OnlyRole>
 			</App>
 		);
 	} else if (logsQuery.isError) {
 		return (
 			<App className="h-full bg-default-gradient px-16 py-12">
-				<div className="flex flex-col items-center justify-center gap-4">
-					<Error message={logsQuery.error.message} />
-				</div>
+				<Error message={logsQuery.error.message} />
 			</App>
 		);
 	}
@@ -128,9 +124,7 @@ const Logs: NextPage = () => {
 				</div>
 			</OnlyRole>
 			{!sessionData?.user && (
-				<div className="flex flex-col items-center justify-center gap-4">
 					<Error message={t("not-authorized-to-view-this-page")} />
-				</div>
 			)}
 		</App>
 	);

@@ -40,18 +40,14 @@ const Hacker: NextPage = () => {
 					<Loading />
 				</OnlyRole>
 				<OnlyRole filter={role => role === Role.HACKER}>
-					<div className="flex flex-col items-center justify-center gap-4">
-						<Error message="You are not allowed to view this page" />
-					</div>
+					<Error message="You are not allowed to view this page" />
 				</OnlyRole>
 			</App>
 		);
 	} else if (hackerQuery.isError) {
 		return (
 			<App className="h-full bg-default-gradient px-16 py-12">
-				<div className="flex flex-col items-center justify-center gap-4">
-					<Error message={hackerQuery.error.message} />
-				</div>
+				<Error message={hackerQuery.error.message} />
 			</App>
 		);
 	}
@@ -69,9 +65,7 @@ const Hacker: NextPage = () => {
 	} else if (presenceQuery.isError) {
 		return (
 			<App className="h-full bg-default-gradient px-16 py-12">
-				<div className="flex flex-col items-center justify-center gap-4">
-					<Error message={presenceQuery.error.message} />
-				</div>
+				<Error message={presenceQuery.error.message} />
 			</App>
 		);
 	}

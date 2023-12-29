@@ -35,9 +35,7 @@ const Event: NextPage = () => {
 	} else if (query.isError) {
 		return (
 			<App className="flex h-full w-full flex-col items-center justify-start gap-8 bg-light-tertiary-color p-8">
-				<div className="flex flex-col items-center justify-center gap-4">
-					<Error message={query.error.message} />
-				</div>
+				<Error message={query.error.message} />
 			</App>
 		);
 	}
