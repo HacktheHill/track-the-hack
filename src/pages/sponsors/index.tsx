@@ -37,7 +37,7 @@ import { z } from "zod";
 import App from "../../components/App";
 import Error from "../../components/Error";
 import Loading from "../../components/Loading";
-import OnlyRole from "../../components/OnlyRole";
+import Filter from "../../components/Filter";
 import { trpc } from "../../utils/api";
 import { addSponsorshipSchema, sponsorshipSchema } from "../../utils/common";
 
@@ -73,9 +73,9 @@ const Sponsors: NextPage = () => {
 
 	return (
 		<App className="overflow-y-auto bg-default-gradient p-8 sm:p-12" title={t("title")}>
-			<OnlyRole filter={role => role === Role.ORGANIZER}>
+			<Filter filter={role => role === Role.ORGANIZER}>
 				<SponsorsTable companyQuery={companyQuery} />
-			</OnlyRole>
+			</Filter>
 			{!sessionData?.user && (
 				<Error message={t("not-authorized-to-view-this-page")} />
 			)}

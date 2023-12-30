@@ -7,7 +7,7 @@ import { createRef, useEffect, useState } from "react";
 
 import App from "../../components/App";
 import Error from "../../components/Error";
-import OnlyRole from "../../components/OnlyRole";
+import Filter from "../../components/Filter";
 
 import { trpc } from "../../utils/api";
 import { sponsorshipGmailDraftsSchema } from "../../utils/common";
@@ -525,7 +525,7 @@ const SponsorshipGmailDrafts: NextPage = () => {
 
 	return (
 		<App className="overflow-y-auto bg-default-gradient p-8 sm:p-12" title={t("title")}>
-			<OnlyRole filter={role => role === Role.ORGANIZER}>
+			<Filter filter={role => role === Role.ORGANIZER}>
 				<form onSubmit={handleSubmit} className="m-auto flex w-fit flex-col items-center gap-4">
 					<h3 className="font-rubik text-4xl font-bold text-dark-color">{t("title")}</h3>
 					<div className="flex w-full flex-col items-center gap-2 sm:flex-row">
@@ -679,7 +679,7 @@ const SponsorshipGmailDrafts: NextPage = () => {
 						{drafted ? t("created-draft-email") : t("create-draft-email")}
 					</button>
 				</form>
-			</OnlyRole>
+			</Filter>
 			{!sessionData?.user && (
 				<Error message={t("not-authorized-to-view-this-page")} />
 			)}

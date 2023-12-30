@@ -10,7 +10,7 @@ import { authOptions } from "../api/auth/[...nextauth]";
 
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import App from "../../components/App";
-import OnlyRole from "../../components/OnlyRole";
+import Filter from "../../components/Filter";
 import PhysicalScanner from "../../components/PhysicalScanner";
 import QRCode from "../../components/QRCode";
 import QRScanner from "../../components/QRScanner";
@@ -32,19 +32,19 @@ const QR = () => {
 		>
 			<Weather count={30} type="snowflake" />
 			<div className="flex flex-col items-center gap-6">
-				<OnlyRole filter={role => role === Role.ORGANIZER}>
+				<Filter filter={role => role === Role.ORGANIZER}>
 					<QRScanner onScan={onScan} />
 					<PhysicalScanner onScan={onScan} />
 					{!error && (
 						<p className="z-10 max-w-xl text-center text-lg font-bold text-dark-color">{t("scan-qr")}</p>
 					)}
-				</OnlyRole>
-				<OnlyRole filter={role => role === Role.HACKER}>
+				</Filter>
+				<Filter filter={role => role === Role.HACKER}>
 					<QRCode setError={setError} />
 					{!error && (
 						<p className="z-10 max-w-xl text-center text-lg font-bold text-dark-color">{t("use-qr")}</p>
 					)}
-				</OnlyRole>
+				</Filter>
 			</div>
 			{error && (
 				<div className="flex h-40 items-center justify-center text-dark-color">

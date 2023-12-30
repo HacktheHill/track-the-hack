@@ -10,7 +10,7 @@ import { z } from "zod";
 import App from "../../components/App";
 import Error from "../../components/Error";
 import Loading from "../../components/Loading";
-import OnlyRole from "../../components/OnlyRole";
+import Filter from "../../components/Filter";
 import { walkInSchema } from "../../utils/common";
 
 type HackerInfo = Prisma.HackerInfoGetPayload<true>;
@@ -36,12 +36,12 @@ const Hacker: NextPage = () => {
 	if (hackerQuery.isLoading || hackerQuery.data == null) {
 		return (
 			<App className="h-full bg-default-gradient px-16 py-12">
-				<OnlyRole filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
+				<Filter filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
 					<Loading />
-				</OnlyRole>
-				<OnlyRole filter={role => role === Role.HACKER}>
+				</Filter>
+				<Filter filter={role => role === Role.HACKER}>
 					<Error message="You are not allowed to view this page" />
-				</OnlyRole>
+				</Filter>
 			</App>
 		);
 	} else if (hackerQuery.isError) {
@@ -80,7 +80,7 @@ const Hacker: NextPage = () => {
 			title={`${hackerQuery.data.firstName} ${hackerQuery.data.lastName}`}
 		>
 			<div className="mx-auto flex max-w-2xl flex-col gap-4">
-				<OnlyRole filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
+				<Filter filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
 					<div className="flex justify-between">
 						{prevHackerQuery.data ? (
 							<a
@@ -102,8 +102,8 @@ const Hacker: NextPage = () => {
 						)}
 					</div>
 					<HackerView hackerData={hackerQuery.data} presenceData={presenceQuery.data} />
-				</OnlyRole>
-				<OnlyRole filter={role => role === Role.HACKER}>{t("not-authorized-to-view-this-page")}</OnlyRole>
+				</Filter>
+				<Filter filter={role => role === Role.HACKER}>{t("not-authorized-to-view-this-page")}</Filter>
 			</div>
 		</App>
 	);
@@ -424,7 +424,7 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 				{hackerData.university && `at ${hackerData.university}`}{" "}
 				{hackerData.graduationYear && `(${hackerData.graduationYear})`}
 			</p>
-			<OnlyRole filter={role => role === Role.ORGANIZER}>
+			<Filter filter={role => role === Role.ORGANIZER}>
 				<div className="grid grid-flow-row grid-cols-2 gap-4 rounded-lg bg-light-tertiary-color p-4">
 					{Object.entries(presenceState).map(([key, value]) => (
 						<p key={key}>
@@ -447,7 +447,7 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 						</p>
 					))}
 				</div>
-			</OnlyRole>
+			</Filter>
 
 			<form onSubmit={handleSubmit}>
 				{Object.keys(groupedData).map((category, index) => (
@@ -526,7 +526,7 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 					)}
 				</p>
 
-				<OnlyRole filter={role => role === Role.ORGANIZER}>
+				<Filter filter={role => role === Role.ORGANIZER}>
 					<>
 						<div className="flex justify-center py-4">
 							<h2 className="self-center py-4 font-[Coolvetica] text-2xl font-normal text-dark-color ">
@@ -547,7 +547,7 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 							{(hackerData.acceptanceExpiry ?? "NULL").toString()}
 						</p>
 					</>
-				</OnlyRole>
+				</Filter>
 
 				{edit && (
 					<div className="sticky bottom-0 mx-2 flex justify-center">

@@ -9,7 +9,7 @@ import App from "../../components/App";
 import { loadStripe } from "@stripe/stripe-js";
 import { useRouter } from "next/router";
 import Error from "../../components/Error";
-import OnlyRole from "../../components/OnlyRole";
+import Filter from "../../components/Filter";
 
 import Image from "next/image";
 import Loading from "../../components/Loading";
@@ -94,9 +94,9 @@ const Payment: NextPage = () => {
 
 	return (
 		<App className="overflow-y-auto bg-default-gradient p-8 sm:p-12" title={t("title")}>
-			<OnlyRole filter={role => role === Role.SPONSOR || role === Role.ORGANIZER}>
+			<Filter filter={role => role === Role.SPONSOR || role === Role.ORGANIZER}>
 				<PaymentCard company={companyQuery.data} status={status} />
-			</OnlyRole>
+			</Filter>
 			{!sessionData?.user && (
 				<Error message={t("not-authorized-to-view-this-page")} />
 			)}
