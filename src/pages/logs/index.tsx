@@ -39,8 +39,6 @@ const Logs: NextPage = () => {
 			<App className="h-full bg-default-gradient px-16 py-12">
 				<Filter filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
 					<Loading />
-				</Filter>
-				<Filter filter={role => role === Role.HACKER}>
 					<Error message="You are not allowed to view this page" />
 				</Filter>
 			</App>
@@ -64,6 +62,7 @@ const Logs: NextPage = () => {
 	return (
 		<App className="w-full overflow-y-auto bg-default-gradient p-8 sm:p-12" title={t("title")}>
 			<Filter filter={role => role === Role.ORGANIZER}>
+				<>
 				<h1 className="text-dark-color py-2 text-center font-rubik text-4xl font-bold">AuditLogs</h1>
 				<div className="relative w-full overflow-scroll">
 					<div className="rounded-lg">
@@ -122,10 +121,9 @@ const Logs: NextPage = () => {
 						</table>
 					</div>
 				</div>
+				</>
+				<Error message={t("not-authorized-to-view-this-page")} />
 			</Filter>
-			{!sessionData?.user && (
-					<Error message={t("not-authorized-to-view-this-page")} />
-			)}
 		</App>
 	);
 };
