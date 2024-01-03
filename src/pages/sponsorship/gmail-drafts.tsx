@@ -680,7 +680,6 @@ const SponsorshipGmailDrafts: NextPage = () => {
 					</button>
 				</form>
 				<Error message={t("not-authorized-to-view-this-page")} />
-			)}
 			</Filter>
 		</App>
 	);
