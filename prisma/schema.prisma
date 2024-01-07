@@ -124,6 +124,7 @@ model PresenceInfo {
   lunch22      Boolean    @default(false)
   hackerInfo   HackerInfo @relation(fields: [hackerInfoId], references: [id])
   hackerInfoId String     @unique
+  wieSignUp    Boolean    @default(false)
 }
 
 model Event {

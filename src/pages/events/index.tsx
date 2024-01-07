@@ -1,6 +1,8 @@
 import type { GetStaticProps, NextPage } from "next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useRouter } from "next/router";
+import { useSession } from "next-auth/react";
+
 import App from "../../components/App";
 import Error from "../../components/Error";
 import Loading from "../../components/Loading";
@@ -28,12 +30,20 @@ const Events: NextPage = () => {
     const { locale } = router;
 
     const query = trpc.events.all.useQuery();
+    const { data: sessionData } = useSession();
+	const id = sessionData?.user?.id ?? "";
 
-    const [isModalOpen, setModalOpen] = useState(false);
+    //check if a hackerinfo exists
+    const hackerInfoID = trpc.users.getHackerId.useQuery({ id });
+    const hackerInfoData = trpc.hackers.get.useQuery({id : hackerInfoID.data ?? ""}, { enabled: !!id });
 
-    const openModal = () => setModalOpen(true);
-    const closeModal = () => setModalOpen(false);
-
+    // if its -1, then no modal is open. If its 0, then the first modal is open, etc.
+    const [isModalOpen, setModalOpen] = useState(-1);
+    const openModal = (n : number) => setModalOpen(n);
+    const closeModal = () => setModalOpen(-1);
+    const presenceQuery = trpc.presence.getFromHackerId.useQuery({ id: hackerInfoID.data ?? "" }, { enabled: !!id });
+    const presenceMutation = trpc.presence.update.useMutation();
+    
     let dateLocale = "en-CA";
     if (locale === "fr") {
         dateLocale = "fr-CA";
@@ -59,176 +69,85 @@ const Events: NextPage = () => {
         void router.push("/404");
     }
 
+    const registerUser = () => {
+        if (hackerInfoID.data) {
+            console.log(hackerInfoID)
+            //set the wieSignUp to true
+            const updatedPresenceInfo = { ...presenceQuery.data, wieSignUp: true };
+            //remove all unwanted keys from prescence
+            const onlyBooleanValues = Object.entries(updatedPresenceInfo)
+            .filter(([key, value]) => typeof value === "boolean")
+            .reduce((obj, [key, value]) => ({ ...obj, [key]: value }), {});
+
+            //update the presence
+            presenceMutation.mutate({ id: hackerInfoID.data ?? "", presenceInfo: onlyBooleanValues });
+            closeModal();
+        }
+        else {
+            void router.push("events/registration");
+        }
+    };
 
     return (
         <App className="flex h-0 flex-col items-center bg-default-gradient" integrated={true} title={t("title")}>
             <div className="w-full overflow-y-auto p-4 mobile:px-0">
                 <h1 className="text-3xl text-center m-3 font-bold">List of Events</h1>
                 <div className="flex flex-wrap flex-col lg:items-start items-center lg:flex-row m-2 p-2 justify-center">
-                    <div className="bg-light-quaternary-color m-2.5 justify-center items-center w-[35vh] rounded overflow-hidden group transition-all border border-transparent hover:border-solid hover:border-white hover:border-2" onClick={openModal}>
-                        <div className="relative overflow-hidden rounded-t group">
-                            <img
-                                src="https://media.wired.com/photos/5955c3573ff99d6b3a1d165c/master/pass/books.jpg"
-                                alt="Books"
-                                className="object-cover w-full h-32"
-                            />
-                            <div className="absolute bottom-0 left-0 right-0 top-0 w-full overflow-hidden bg-fixed" style={{ backgroundColor: 'hsla(0, 0%, 0%, 0.6)' }}>
-                                <div className="flex justify-between p-4">
-                                    <div className="flex flex-col text-white">
-                                        <h1 className="text-xl">Title</h1>
-                                        <h2 className="text-md text-gray-400">Category</h2>
-                                        <p className="text-sm my-3">Location</p>
-                                    </div>
-                                    <div className="flex flex-start justify-start">
-                                        <FontAwesomeIcon icon={faCalendar} style={{ color: "#ffffff" }} />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="flex flex-col m-2">
-                            <h4 className="text-gray-800">Date</h4>
-                            <p>These are the informations about the event, I hope youre going to enjoy this cool event.</p>
-                            <p>Short description</p>
-                        </div>
-                    </div>
-                    <div className="bg-light-quaternary-color m-2.5 justify-center items-center w-[35vh] rounded overflow-hidden group transition-all border border-transparent hover:border-solid hover:border-white hover:border-2" onClick={openModal}>
-                        <div className="relative overflow-hidden rounded-t group">
-                            <img
-                                src="https://media.wired.com/photos/5955c3573ff99d6b3a1d165c/master/pass/books.jpg"
-                                alt="Books"
-                                className="object-cover w-full h-32"
-                            />
-                            <div className="absolute bottom-0 left-0 right-0 top-0 w-full overflow-hidden bg-fixed" style={{ backgroundColor: 'hsla(0, 0%, 0%, 0.6)' }}>
-                                <div className="flex justify-between p-4">
-                                    <div className="flex flex-col text-white">
-                                        <h1 className="text-xl">Title</h1>
-                                        <h2 className="text-md text-gray-400">Category</h2>
-                                        <p className="text-sm my-3">Location</p>
-                                    </div>
-                                    <div className="flex flex-start justify-start">
-                                        <FontAwesomeIcon icon={faCalendar} style={{ color: "#ffffff" }} />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="flex flex-col m-2">
-                            <h4 className="text-gray-800">Date</h4>
-                            <p>These are the informations about the event, I hope youre going to enjoy this cool event.</p>
-                            <p>Short description</p>
-                        </div>
-                    </div>
-                    <div className="bg-light-quaternary-color m-2.5 justify-center items-center w-[35vh] rounded overflow-hidden group transition-all border border-transparent hover:border-solid hover:border-white hover:border-2" onClick={openModal}>
-                        <div className="relative overflow-hidden rounded-t group">
-                            <img
-                                src="https://media.wired.com/photos/5955c3573ff99d6b3a1d165c/master/pass/books.jpg"
-                                alt="Books"
-                                className="object-cover w-full h-32"
-                            />
-                            <div className="absolute bottom-0 left-0 right-0 top-0 w-full overflow-hidden bg-fixed" style={{ backgroundColor: 'hsla(0, 0%, 0%, 0.6)' }}>
-                                <div className="flex justify-between p-4">
-                                    <div className="flex flex-col text-white">
-                                        <h1 className="text-xl">Title</h1>
-                                        <h2 className="text-md text-gray-400">Category</h2>
-                                        <p className="text-sm my-3">Location</p>
-                                    </div>
-                                    <div className="flex flex-start justify-start">
-                                        <FontAwesomeIcon icon={faCalendar} style={{ color: "#ffffff" }} />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="flex flex-col m-2">
-                            <h4 className="text-gray-800">Date</h4>
-                            <p>These are the informations about the event, I hope youre going to enjoy this cool event.</p>
-                            <p>Short description</p>
-                        </div>
-                    </div>
-                    <div className="bg-light-quaternary-color m-2.5 justify-center items-center w-[35vh] rounded overflow-hidden group transition-all border border-transparent hover:border-solid hover:border-white hover:border-2" onClick={openModal}>
-                        <div className="relative overflow-hidden rounded-t group">
-                            <img
-                                src="https://media.wired.com/photos/5955c3573ff99d6b3a1d165c/master/pass/books.jpg"
-                                alt="Books"
-                                className="object-cover w-full h-32"
-                            />
-                            <div className="absolute bottom-0 left-0 right-0 top-0 w-full overflow-hidden bg-fixed" style={{ backgroundColor: 'hsla(0, 0%, 0%, 0.6)' }}>
-                                <div className="flex justify-between p-4">
-                                    <div className="flex flex-col text-white">
-                                        <h1 className="text-xl">Title</h1>
-                                        <h2 className="text-md text-gray-400">Category</h2>
-                                        <p className="text-sm my-3">Location</p>
-                                    </div>
-                                    <div className="flex flex-start justify-start">
-                                        <FontAwesomeIcon icon={faCalendar} style={{ color: "#ffffff" }} />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="flex flex-col m-2">
-                            <h4 className="text-gray-800">Date</h4>
-                            <p>These are the informations about the event, I hope youre going to enjoy this cool event.</p>
-                            <p>Short description</p>
-                        </div>
-                    </div>
-                    <div className="bg-light-quaternary-color m-2.5 justify-center items-center w-[35vh] rounded overflow-hidden group transition-all border border-transparent hover:border-solid hover:border-white hover:border-2" onClick={openModal}>
-                        <div className="relative overflow-hidden rounded-t group">
-                            <img
-                                src="https://media.wired.com/photos/5955c3573ff99d6b3a1d165c/master/pass/books.jpg"
-                                alt="Books"
-                                className="object-cover w-full h-32"
-                            />
-                            <div className="absolute bottom-0 left-0 right-0 top-0 w-full overflow-hidden bg-fixed" style={{ backgroundColor: 'hsla(0, 0%, 0%, 0.6)' }}>
-                                <div className="flex justify-between p-4">
-                                    <div className="flex flex-col text-white">
-                                        <h1 className="text-xl">Title</h1>
-                                        <h2 className="text-md text-gray-400">Category</h2>
-                                        <p className="text-sm my-3">Location</p>
-                                    </div>
-                                    <div className="flex flex-start justify-start">
-                                        <FontAwesomeIcon icon={faCalendar} style={{ color: "#ffffff" }} />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="flex flex-col m-2">
-                            <h4 className="text-gray-800">Date</h4>
-                            <p>These are the informations about the event, I hope youre going to enjoy this cool event.</p>
-                            <p>Short description</p>
-                        </div>
-                    </div>
 
-
-
-
+                    {query.data.map((event, index) => ( 
+                        <div key={index} className="bg-light-quaternary-color m-2.5 justify-center items-center w-[75vh] rounded overflow-hidden group transition-all border border-transparent hover:border-solid hover:border-white hover:border-2" onClick={(e) => {openModal(index)}}>
+                        <div className="relative overflow-hidden rounded-t group">
+                            <img
+                                src="./assets/events/wie-hack-background.png"
+                                alt=""
+                                className="object-cover w-full h-32"
+                            />
+                            <div className="absolute bottom-0 left-0 right-0 top-0 w-full overflow-hidden bg-fixed" style={{ backgroundColor: 'hsla(0, 0%, 0%, 0.6)' }}>
+                                <div className="flex justify-between p-4">
+                                    <div className="flex flex-col text-white">
+                                        <h1 className="text-xl">{event.name}</h1>
+                                        <h2 className="text-md text-gray-400">Hacker Series Event</h2>
+                                        <p className="text-sm my-3">{event.room}</p>
+                                    </div>
+                                    <div className="flex flex-start justify-start">
+                                        <FontAwesomeIcon icon={faCalendar} style={{ color: "#ffffff" }} />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex flex-col m-2">
+                            <h4 className="text-gray-800">{event.start.toLocaleString()}</h4>
+                            <p>{event.description}</p>
+                        </div>
+                    </div>))}
                 </div>
             </div>
-            <Modal isOpen={isModalOpen} onClose={closeModal}>
+            <Modal isOpen={isModalOpen !== -1} onClose={closeModal}>
                 <h1 className="text-2xl font-bold mb-4 text-center m-1.5 p-1.5"></h1>
 
                 <div className="flex lg:flex-row flex-col m-2 ">
                     <div className="flex flex-col justify-center max-w-[70vh] px-1.5">
-                        <h1 className="text-3xl font-bold px-1.5">Father Christmas Grotto at Enys House</h1>
+                        <h1 className="text-3xl font-bold px-1.5">{query.data[isModalOpen]?.name}</h1>
                         <div className="px-1.5">
                             <div className="flex space-x-6 lg:space-x-10 py-2 text-lg">
                                 <div className="flex flex-row items-center">
                                     <FontAwesomeIcon icon={faCalendar} className="mr-2"  />
-                                    <h2>12/14/2034 - 3:50pm</h2>
+                                    <h2>{query.data[isModalOpen]?.start.toLocaleString()}</h2>
                                 </div>
                                 <div className="flex flex-row items-center">
                                     <FontAwesomeIcon icon={faLocationDot} className="mr-2" />
-                                    <h2>uOttawa</h2>
+                                    <h2>{query.data[isModalOpen]?.room}</h2>
                                 </div>
                             </div>
                             <div className="flex flex-col justify-center py-4">
-                                <img className="w-[60%]" src="https://media.wired.com/photos/5955c3573ff99d6b3a1d165c/master/pass/books.jpg" />
+                                <img className="w-[60%]" src="./assets/events/wie-hack-background.png" />
                             </div>
                             <div className="text-md">
                                 <p>
-                                    Enys House welcomes you and your family to meet Father Christmas and his enchanted woodland helpers for a magical festive storytelling experience.
-
-                                    Enys House is transformed into a magical enchanted wonderland filled with festive cheer, family activities and a very special storytelling with Father Christmas himself. Suitable for all ages , a traditional heartfelt Christmas experience for all to enjoy.
+                                    {query.data[isModalOpen]?.description}
                                 </p>
                             </div>
-                            <div className="flex items-center py-4">
+                            {/* <div className="flex items-center py-4">
                                 <div className="flex-1 border-b border-black"></div>
                                 <p className="mx-4">Registration</p>
                                 <div className="flex-1 border-b border-black"></div>
@@ -267,22 +186,22 @@ const Events: NextPage = () => {
                                     <h1 className=" self-center px-3 py-2 text-lg">Question 8</h1>
                                     <input className="/50 bg-background1 text-dark hover:bg-background2 w-[40%] lg:w-[30%] rounded-[100px] border-none px-1 py-1 font-rubik shadow-md	outline-none transition-all duration-500"/>
                                 </div>
-                            </div>
+                            </div> */}
                         </div>
                     </div>
                     <div className="flex flex-col lg:items-center m-3">
-                        <button className="bg-dark-primary-color w-full text-2xlt p-4 rounded text-white">Register to the event</button>
+                        <button className="bg-dark-primary-color w-full text-2xlt p-4 rounded text-white" onClick={registerUser}>Register to the event</button>
                         <div className="flex flex-col text-lg py-4">
-                            <h2 className="text-sm text-gray-700">SHARE THIS EVENT</h2>
+                            <h2 className="text-sm text-gray-700">FOLLOW US</h2>
                             <div className="flex flex-row space-x-5 py-4">
-                                <FontAwesomeIcon icon={faInstagram} />
-                                <FontAwesomeIcon icon={faXTwitter} />
-                                <FontAwesomeIcon icon={faLinkedin} />
-                                <FontAwesomeIcon icon={faLink} />
+                                <a href="https://www.instagram.com/hackthehill/"><FontAwesomeIcon icon={faInstagram} /></a>
+                                <a href="https://twitter.com/hackthehill_"><FontAwesomeIcon icon={faXTwitter} /></a>
+                                <a href="https://www.linkedin.com/company/hackthehill"><FontAwesomeIcon icon={faLinkedin} /></a>
+                                <a href="2024.hackthehill.com"><FontAwesomeIcon icon={faLink} /></a>
                             </div>
                             <h2 className="text-sm text-gray-700">NEED HELP ?</h2>
                             <div className="py-2">
-                                <button className="border-2 border-solid border-black rounded p-3">Contact the event organiser</button>
+                                <a href="mailto:development@hackthehill.com" className="border-2 border-solid border-black rounded p-3">Contact the event organiser</a>
                             </div>
 
                         </div>
