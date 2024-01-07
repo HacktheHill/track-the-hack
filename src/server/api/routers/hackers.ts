@@ -194,6 +194,7 @@ export const hackerRouter = createTRPCRouter({
 		.input(
 			walkInSchema.extend({
 				acceptanceExpiry: z.date().default(DEFAULT_ACCEPTANCE_EXPIRY),
+				userId: z.string().optional(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {

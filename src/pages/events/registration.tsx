@@ -71,12 +71,15 @@ const Registration : NextPage = () => {
 			setError(t("invalid-form"));
 			console.error(parse.error);
 		} else {
-			mutation.mutate(parse.data);
+
+
+
+			mutation.mutate({...parse.data, userId: id});
 			if (!mutation.error) {
 				setError("");
 				setSuccess(true);
 				event.currentTarget.reset();
-				
+
 				void router.back();
 			} else {
 				setError(mutation.error.message);
