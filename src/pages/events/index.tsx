@@ -190,7 +190,9 @@ const Events: NextPage = () => {
                         </div>
                     </div>
                     <div className="flex flex-col lg:items-center m-3">
+                        {!presenceQuery.data?.wieSignUp ? (
                         <button className="bg-dark-primary-color w-full text-2xlt p-4 rounded text-white" onClick={registerUser}>Register to the event</button>
+                        ) : (<button disabled className="bg-dark-primary-color grayscale-50  w-full text-2xlt p-4 rounded text-white opacity-50">You are signed up!</button>)}
                         <div className="flex flex-col text-lg py-4">
                             <h2 className="text-sm text-gray-700">FOLLOW US</h2>
                             <div className="flex flex-row space-x-5 py-4">
