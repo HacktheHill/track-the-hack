@@ -28,6 +28,12 @@ const Registration : NextPage = () => {
 
 	const [error, setError] = useState("");
 	const [success, setSuccess] = useState(false);
+	//const query = trpc.users.getHackerId.useQuery({ id: id ?? "" }, { enabled: !!id });
+		
+	// if (query.data) {
+	// 	void router.back();
+	// }
+
 
 	useEffect(() => {
 		if (mutation.error) {
@@ -37,9 +43,7 @@ const Registration : NextPage = () => {
 
 	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
-
 		const formData = new FormData(event.currentTarget);
-
 		const data = Object.fromEntries(formData) as Record<string, string | number | undefined>;
 
 		if (data.preferredLanguage === "en" || data.preferredLanguage === "fr") {
@@ -74,7 +78,7 @@ const Registration : NextPage = () => {
 
 
 
-			mutation.mutate({...parse.data, userId: id});
+			mutation.mutate({...parse.data, userId: id, isWIEEventSignup: true});
 			if (!mutation.error) {
 				setError("");
 				setSuccess(true);
@@ -215,7 +219,7 @@ const Registration : NextPage = () => {
 								<div key={field.name} className="flex w-full flex-col items-center gap-2 sm:flex-row">
 									<label htmlFor={field.name} className="flex-[50%] font-rubik text-dark-color">
 										{t(field.name)}
-										{field.required && <span className="text-white"> (Required) </span>}
+										{field.required && <span className="text-dark-primary-color"> * </span>}
 									</label>
 									{field.type === "select" ? (
 										<select
@@ -236,7 +240,7 @@ const Registration : NextPage = () => {
 											id={field.name}
 											name={field.name}
 											type={field.type}
-											className="w-full rounded-[100px] border-none bg-light-secondary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-medium-secondary-color"
+											className="w-full rounded-[100px] border-none  bg-light-secondary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-medium-secondary-color"
 											required={field.required}
 											pattern={patterns[field.type]}
 										/>
@@ -249,7 +253,7 @@ const Registration : NextPage = () => {
 								<p className="text-center font-rubik text-red-500">{error}</p>
 							</div>
 						)}
-						<button className="hover:bg-medium cursor-pointer whitespace-nowrap rounded-[100px] border-none bg-light-color px-8 py-2 font-rubik shadow-md transition-all duration-1000">
+						<button className="hover:bg-medium cursor-pointer whitespace-nowrap rounded-[100px] border-none bg-dark-primary-color px-8 py-2 font-rubik shadow-md transition-all duration-1000 text-white">
 							{t("submit")}
 						</button>
 					</form>

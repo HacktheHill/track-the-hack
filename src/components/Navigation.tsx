@@ -78,7 +78,7 @@ const BottomMenu = () => {
 					</Link>
 				</OnlyRole>
 			)}
-			<Link href="/schedule">
+			<Link href="/events">
 				<Image priority src="/assets/schedule.svg" height={32} width={32} alt="Schedule" />
 			</Link>
 			<Link href="/maps">
@@ -126,10 +126,10 @@ const Links = () => {
 				</OnlyRole>
 			)}
 			<Link
-				href="/schedule"
+				href="/events"
 				className="mx-4 flex items-center font-coolvetica text-2xl text-dark-primary-color hover:text-light-color"
 			>
-				Schedule
+				Events
 			</Link>
 			<Link
 				href="/maps"

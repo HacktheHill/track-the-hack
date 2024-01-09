@@ -195,6 +195,7 @@ export const hackerRouter = createTRPCRouter({
 			walkInSchema.extend({
 				acceptanceExpiry: z.date().default(DEFAULT_ACCEPTANCE_EXPIRY),
 				userId: z.string().optional(),
+				isWIEEventSignup: z.boolean().optional(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -213,6 +214,12 @@ export const hackerRouter = createTRPCRouter({
 				throw new Error("You do not have permission to do this");
 			}
 
+			const isWIEEventSignup = input.isWIEEventSignup ?? false
+
+			if(input.isWIEEventSignup !== undefined) {
+				input.isWIEEventSignup = undefined
+			}
+
 			const hacker = await ctx.prisma.hackerInfo.create({
 				data: {
 					...input,
@@ -220,6 +227,7 @@ export const hackerRouter = createTRPCRouter({
 					presenceInfo: {
 						create: {
 							checkedIn: true,
+							wieSignUp: isWIEEventSignup
 						},
 					},
 				},

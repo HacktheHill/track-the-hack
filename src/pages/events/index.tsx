@@ -202,7 +202,7 @@ const Events: NextPage = () => {
                                 <a href="2024.hackthehill.com"><FontAwesomeIcon icon={faLink} /></a>
                             </div>
                             <h2 className="text-sm text-gray-700">NEED HELP ?</h2>
-                            <div className="py-2">
+                            <div className="py-4">
                                 <a href="mailto:development@hackthehill.com" className="border-2 border-solid border-black rounded p-3">Contact the event organiser</a>
                             </div>
 
