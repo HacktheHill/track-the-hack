@@ -74,6 +74,7 @@ model HackerInfo {
   firstName                    String
   lastName                     String
   gender                       String         @default("Prefer not to say")
+  pronouns                     String         @default("Prefer not to say")
   phoneNumber                  String
   university                   String?
   studyLevel                   String?

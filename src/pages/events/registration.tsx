@@ -1,5 +1,5 @@
 import { Role } from "@prisma/client";
-import { useSession } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import type { GetStaticProps, NextPage } from "next/types";
@@ -28,11 +28,18 @@ const Registration : NextPage = () => {
 
 	const [error, setError] = useState("");
 	const [success, setSuccess] = useState(false);
-	//const query = trpc.users.getHackerId.useQuery({ id: id ?? "" }, { enabled: !!id });
+	
+	if(!id) {
+		void signIn();
+	}
+
+
+	const query = trpc.users.getHackerId.useQuery({ id: id ?? "" }, { enabled: !!id });
 		
-	// if (query.data) {
-	// 	void router.back();
-	// }
+	//Hackers with a hacker info should be re-directed to the events page
+	if (query.data) {
+		void router.push('/events');
+	}
 
 
 	useEffect(() => {
@@ -93,6 +100,12 @@ const Registration : NextPage = () => {
 
 	const fields = [
 		{
+			name: "preferredLanguage",
+			type: "select",
+			options: ["en", "fr"],
+			required: false,
+		},
+		{
 			name: "email",
 			type: "email",
 			required: true,
@@ -104,6 +117,11 @@ const Registration : NextPage = () => {
 		},
 		{
 			name: "lastName",
+			type: "text",
+			required: true,
+		},
+		{
+			name: "pronouns",
 			type: "text",
 			required: true,
 		},
@@ -136,12 +154,6 @@ const Registration : NextPage = () => {
 			name: "emergencyContactPhoneNumber",
 			type: "tel",
 			required: true,
-		},
-		{
-			name: "preferredLanguage",
-			type: "select",
-			options: ["en", "fr"],
-			required: false,
 		},
 		{
 			name: "gender",

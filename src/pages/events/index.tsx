@@ -1,7 +1,7 @@
 import type { GetStaticProps, NextPage } from "next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useRouter } from "next/router";
-import { useSession } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 
 import App from "../../components/App";
 import Error from "../../components/Error";
@@ -45,6 +45,7 @@ const Events: NextPage = () => {
     const presenceMutation = trpc.presence.update.useMutation();
     
     let dateLocale = "en-CA";
+
     if (locale === "fr") {
         dateLocale = "fr-CA";
     }
@@ -70,6 +71,10 @@ const Events: NextPage = () => {
     }
 
     const registerUser = () => {
+        if(!id) {
+            void signIn();
+        }
+        
         if (hackerInfoID.data) {
             console.log(hackerInfoID)
             //set the wieSignUp to true

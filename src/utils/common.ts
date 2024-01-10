@@ -9,6 +9,7 @@ export const walkInSchema = z.object({
 	firstName: z.string(),
 	lastName: z.string(),
 	phoneNumber: z.string(),
+	pronouns: z.string(),
 	dietaryRestrictions: z.string(),
 	accessibilityRequirements: z.string(),
 	emergencyContactName: z.string(),
