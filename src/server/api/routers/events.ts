@@ -1,4 +1,4 @@
-import { createTRPCRouter, publicProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { z } from "zod";
 
 export const eventsRouter = createTRPCRouter({
@@ -33,4 +33,20 @@ export const eventsRouter = createTRPCRouter({
 
 		return events;
 	}),
+
+	checkHackers: publicProcedure
+		.input(
+			z.object({
+				id: z.string(),
+			}),
+		)
+		.query(async ({ ctx, input }) => {
+			const hackers = await ctx.prisma.event.findMany({
+				where: {
+					id: input.id,
+				},
+			});
+
+			return hackers;
+		}),
 });

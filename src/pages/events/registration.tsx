@@ -19,28 +19,26 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	};
 };
 
-const Registration : NextPage = () => {
+const Registration: NextPage = () => {
 	const { t } = useTranslation("registration");
 	const { data: sessionData } = useSession();
 	const id = sessionData?.user?.id;
 	const router = useRouter();
 	const mutation = trpc.hackers.walkIn.useMutation();
-
+	const signUpMutation = trpc.users.signUp.useMutation();
 	const [error, setError] = useState("");
 	const [success, setSuccess] = useState(false);
-	
-	if(!id) {
+
+	if (!id) {
 		void signIn();
 	}
 
-
 	const query = trpc.users.getHackerId.useQuery({ id: id ?? "" }, { enabled: !!id });
-		
+
 	//Hackers with a hacker info should be re-directed to the events page
 	if (query.data) {
-		void router.push('/events');
+		void router.push("/events");
 	}
-
 
 	useEffect(() => {
 		if (mutation.error) {
@@ -82,18 +80,21 @@ const Registration : NextPage = () => {
 			setError(t("invalid-form"));
 			console.error(parse.error);
 		} else {
-
-
-
-			mutation.mutate({...parse.data, userId: id, isWIEEventSignup: true});
+			const eventId = router.query.eventId as string;
+			//create and link a hackerInfo
+			mutation.mutate({ ...parse.data, userId: id });
 			if (!mutation.error) {
 				setError("");
 				setSuccess(true);
 				event.currentTarget.reset();
 
-				void router.back();
+				void router.push("/events?eventId=" + eventId);
 			} else {
 				setError(mutation.error.message);
+			}
+
+			if (eventId) {
+				signUpMutation.mutate({ eventId: eventId });
 			}
 		}
 	};
@@ -224,51 +225,51 @@ const Registration : NextPage = () => {
 	return (
 		<App className="overflow-y-auto bg-default-gradient p-8 sm:p-12" title={t("title")}>
 			<OnlyRole filter={role => role === Role.HACKER || role === Role.ORGANIZER}>
-					<form onSubmit={handleSubmit} className="flex flex-col items-center gap-8">
-						<h3 className="font-rubik text-4xl font-bold text-dark-color">{t("title")}</h3>
-						<div className="flex flex-col gap-4">
-							{fields.map(field => (
-								<div key={field.name} className="flex w-full flex-col items-center gap-2 sm:flex-row">
-									<label htmlFor={field.name} className="flex-[50%] font-rubik text-dark-color">
-										{t(field.name)}
-										{field.required && <span className="text-dark-primary-color"> * </span>}
-									</label>
-									{field.type === "select" ? (
-										<select
-											id={field.name}
-											name={field.name}
-											className="w-full rounded-[100px] border-none bg-light-secondary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-medium-secondary-color"
-											required={field.required}
-										>
-											<option value="">{t("select")}</option>
-											{field.options?.map(option => (
-												<option key={option} value={option}>
-													{t(option)}
-												</option>
-											))}
-										</select>
-									) : (
-										<input
-											id={field.name}
-											name={field.name}
-											type={field.type}
-											className="w-full rounded-[100px] border-none  bg-light-secondary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-medium-secondary-color"
-											required={field.required}
-											pattern={patterns[field.type]}
-										/>
-									)}
-								</div>
-							))}
-						</div>
-						{error && (
-							<div className="flex flex-col items-center gap-2">
-								<p className="text-center font-rubik text-red-500">{error}</p>
+				<form onSubmit={handleSubmit} className="flex flex-col items-center gap-8">
+					<h3 className="font-rubik text-4xl font-bold text-dark-color">{t("title")}</h3>
+					<div className="flex flex-col gap-4">
+						{fields.map(field => (
+							<div key={field.name} className="flex w-full flex-col items-center gap-2 sm:flex-row">
+								<label htmlFor={field.name} className="flex-[50%] font-rubik text-dark-color">
+									{t(field.name)}
+									{field.required && <span className="text-dark-primary-color"> * </span>}
+								</label>
+								{field.type === "select" ? (
+									<select
+										id={field.name}
+										name={field.name}
+										className="w-full rounded-[100px] border-none bg-light-secondary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-medium-secondary-color"
+										required={field.required}
+									>
+										<option value="">{t("select")}</option>
+										{field.options?.map(option => (
+											<option key={option} value={option}>
+												{t(option)}
+											</option>
+										))}
+									</select>
+								) : (
+									<input
+										id={field.name}
+										name={field.name}
+										type={field.type}
+										className="w-full rounded-[100px] border-none  bg-light-secondary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-medium-secondary-color"
+										required={field.required}
+										pattern={patterns[field.type]}
+									/>
+								)}
 							</div>
-						)}
-						<button className="hover:bg-medium cursor-pointer whitespace-nowrap rounded-[100px] border-none bg-dark-primary-color px-8 py-2 font-rubik shadow-md transition-all duration-1000 text-white">
-							{t("submit")}
-						</button>
-					</form>
+						))}
+					</div>
+					{error && (
+						<div className="flex flex-col items-center gap-2">
+							<p className="text-center font-rubik text-red-500">{error}</p>
+						</div>
+					)}
+					<button className="hover:bg-medium cursor-pointer whitespace-nowrap rounded-[100px] border-none bg-dark-primary-color px-8 py-2 font-rubik text-white shadow-md transition-all duration-1000">
+						{t("submit")}
+					</button>
+				</form>
 			</OnlyRole>
 			{!sessionData?.user && (
 				<div className="flex flex-col items-center justify-center gap-4">

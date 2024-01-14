@@ -63,4 +63,42 @@ export const userRouter = createTRPCRouter({
 
 			return hacker.id;
 		}),
+
+	signUp: protectedProcedure.input(z.object({ eventId: z.string() })).mutation(async ({ ctx, input }) => {
+		const user = await ctx.prisma.user.update({
+			where: {
+				id: ctx.session.user.id,
+			},
+			data: {
+				event: {
+					connect: {
+						id: input.eventId,
+					},
+				},
+			},
+		});
+
+		return user;
+	}),
+
+	isSignedUp: protectedProcedure.input(z.object({ eventId: z.string() })).query(async ({ ctx, input }) => {
+		const user = await ctx.prisma.user.findUnique({
+			where: {
+				id: ctx.session.user.id,
+			},
+			include: {
+				event: true,
+			},
+		});
+
+		if (!user) {
+			throw new Error("User is not logged in. Cannot query if signed up.");
+		}
+		user.event.map(event => {
+			if (event.id === input.eventId) {
+				return true;
+			}
+		});
+		return false;
+	}),
 });

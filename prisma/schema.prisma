@@ -57,6 +57,7 @@ model User {
   sessions     Session[]
   hackerInfo   HackerInfo[]
   auditLog     AuditLog[]
+  event        Event[]
 }
 
 model VerificationToken {
@@ -141,6 +142,7 @@ model Event {
   image       String?
   link        String?
   linkText    String?
+  registeredUser  User[]
 }
 
 model Follow {

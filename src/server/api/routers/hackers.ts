@@ -194,8 +194,8 @@ export const hackerRouter = createTRPCRouter({
 		.input(
 			walkInSchema.extend({
 				acceptanceExpiry: z.date().default(DEFAULT_ACCEPTANCE_EXPIRY),
+				//if you want to link the hackerInfo to account, add this argument
 				userId: z.string().optional(),
-				isWIEEventSignup: z.boolean().optional(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -214,12 +214,6 @@ export const hackerRouter = createTRPCRouter({
 				throw new Error("You do not have permission to do this");
 			}
 
-			const isWIEEventSignup = input.isWIEEventSignup ?? false
-
-			if(input.isWIEEventSignup !== undefined) {
-				input.isWIEEventSignup = undefined
-			}
-
 			const hacker = await ctx.prisma.hackerInfo.create({
 				data: {
 					...input,
@@ -227,12 +221,19 @@ export const hackerRouter = createTRPCRouter({
 					presenceInfo: {
 						create: {
 							checkedIn: true,
-							wieSignUp: isWIEEventSignup
 						},
 					},
 				},
 			});
-			await logAuditEntry(ctx, hacker.id, "/walk-in", "WalkIn", user.name ?? "Unknown", `${input.firstName} ${input.lastName} walked in.`);
+
+			await logAuditEntry(
+				ctx,
+				hacker.id,
+				"/walk-in",
+				"WalkIn",
+				user.name ?? "Unknown",
+				`${input.firstName} ${input.lastName} walked in.`,
+			);
 
 			return hacker;
 		}),
@@ -272,7 +273,6 @@ export const hackerRouter = createTRPCRouter({
 				details: string;
 			}> = [];
 
-
 			for (const key in input) {
 				for (const key2 in hackerdetails) {
 					if (
@@ -289,7 +289,9 @@ export const hackerRouter = createTRPCRouter({
 							action: "/update-hacker-info",
 							entityType: "UpdateHackerInfo",
 							userName: user.name ?? "Unknown",
-							details: `Updated field ${field} from ${String(before)} to ${String(after ? after : "empty")}`,
+							details: `Updated field ${field} from ${String(before)} to ${String(
+								after ? after : "empty",
+							)}`,
 						};
 
 						auditEntries.push(auditEntry);
