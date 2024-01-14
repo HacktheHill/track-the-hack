@@ -101,4 +101,21 @@ export const userRouter = createTRPCRouter({
 		});
 		return false;
 	}),
+
+	getSignedUpEvents: protectedProcedure.query(async ({ ctx, input }) => {
+		const user = await ctx.prisma.user.findUnique({
+			where: {
+				id: ctx.session.user.id,
+			},
+			include: {
+				event: true,
+			},
+		});
+
+		if (!user) {
+			throw new Error("User is not logged in. Cannot query if signed up.");
+		}
+
+		return user.event;
+	}),
 });

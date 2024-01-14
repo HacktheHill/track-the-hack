@@ -34,11 +34,14 @@ const Events: NextPage = () => {
 
 	//check if a hackerinfo exists
 	const hackerInfoID = trpc.users.getHackerId.useQuery({ id });
-	const hackerInfoData = trpc.hackers.get.useQuery({ id: hackerInfoID.data ?? "" }, { enabled: !!id });
+
 	const signUpMutation = trpc.users.signUp.useMutation();
 	const idInURL = router.query.id ?? "";
 	// if its empty, then no modal is open. If its 0, then the first modal is open, etc.
 	const [modalId, setModalId] = useState(idInURL as string);
+    const eventsUserSignedUpTo = trpc.users.getSignedUpEvents.useQuery()
+
+    const idsOfEventsUserSignedUpTo = eventsUserSignedUpTo?.data?.map(event => event.id);
 
 	const openModal = (eventId: string) => {
 		void router.push(`/events?eventId=${eventId}`);
@@ -48,7 +51,6 @@ const Events: NextPage = () => {
 		void router.push(`/events`);
 		setModalId("");
 	};
-
 	let dateLocale = "en-CA";
 
 	if (locale === "fr") {
@@ -208,7 +210,7 @@ const Events: NextPage = () => {
 							</div>
 						</div>
 						<div className="m-3 flex flex-col lg:items-center">
-							{true ? (
+							{!idsOfEventsUserSignedUpTo?.includes(modalId) ? (
 								<button
 									className="text-2xlt w-full rounded bg-dark-primary-color p-4 text-white"
 									onClick={registerUser}
