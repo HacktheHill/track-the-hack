@@ -196,14 +196,14 @@ const Hackers: NextPage = () => {
 
 	return (
 		<App
-			className="flex flex-col overflow-y-auto bg-gradient-to-b from-background2 to-background1"
+			className="flex flex-col overflow-y-auto bg-default-gradient"
 			integrated={true}
 			title={t("title")}
 		>
-			<div className="align-center flex justify-center border-b border-dark bg-background1 pb-4 pt-2 shadow-navbar sm:px-20">
+			<div className="align-center flex justify-center border-b border-dark-color bg-light-quaternary-color pb-4 pt-2 shadow-navbar sm:px-20">
 				<div className="flex">
 					<button
-						className="m-1 mr-3 rounded-xl border-dark bg-background2 px-6 text-sm text-dark"
+						className="m-1 mr-3 rounded-xl border-dark bg-medium-primary-color px-6 text-sm text-light-color"
 						onClick={toggleFilter}
 					>
 						Filters
@@ -257,7 +257,7 @@ const Card = ({ firstName, lastName, university, studyProgram, id }: CardProps) 
 	return (
 		<Link
 			href={`/hackers/hacker?id=${id}`}
-			className="block w-full rounded-lg bg-dark p-6 text-white shadow hover:bg-medium truncate"
+			className="hover:bg-medium block w-full rounded-lg bg-medium-primary-color p-6 text-light-color shadow hover:bg-medium truncate"
 		>
 			<h3 className="text-2xl font-bold tracking-tight">{`${firstName} ${lastName}`}</h3>
 			<p>{university}</p>
@@ -351,7 +351,7 @@ const FilterOptions = ({ filters, setFilters, filterOptions, sidebarVisible }: F
 		<>
 			{sidebarVisible && (
 				<div className="ml-10 mt-5 flex flex-col border-dark align-middle text-dark">
-					<div className="z-40 w-60 rounded-lg bg-background1 p-5 text-center ">
+					<div className="z-40 w-60 rounded-lg bg-light-quaternary-color border-b border-dark-color p-5 text-center ">
 						<div className="mb-4 font-bold lg:text-lg xl:text-xl">Filter Options</div>
 						<ul>
 							<li className="mb-4">
