@@ -50,6 +50,11 @@ export const hackerRouter = createTRPCRouter({
 				.object({
 					limit: z.number().min(1).max(100),
 					cursor: z.string().nullish(),
+					schools: z.array(z.string()).optional(),
+					currentLevelsOfStudy: z.array(z.string()).optional(),
+					programs: z.array(z.string()).optional(),
+					graduationYears: z.array(z.number()).optional(),
+					attendanceTypes: z.array(z.nativeEnum(AttendanceType)).optional(),
 				})
 				.optional(),
 		)
@@ -77,11 +82,43 @@ export const hackerRouter = createTRPCRouter({
 				};
 			}
 
-			const { limit, cursor } = input;
+			const { limit, cursor, schools, currentLevelsOfStudy, programs, graduationYears, attendanceTypes } = input;
+
+			interface QueryConditions {
+				university?: { in: string[] }| null;
+    			studyLevel?: { in: string[] }| null;
+    			studyProgram?: { in: string[] }| null;
+    			graduationYear?: { in: number[] }| null;
+				attendanceType?: { in: AttendanceType[] };
+			}
+
+			const queryConditions: QueryConditions = {};
+
+			if (schools && schools.length > 0) {
+				queryConditions.university = { in: schools };
+			}
+
+			if (currentLevelsOfStudy && currentLevelsOfStudy.length > 0) {
+				queryConditions.studyLevel = { in: currentLevelsOfStudy };
+			}
+
+			if (programs && programs.length > 0) {
+				queryConditions.studyProgram = { in: programs };
+			}
+
+			if (graduationYears && graduationYears.length > 0) {
+				queryConditions.graduationYear = { in: graduationYears };
+			}
+
+			if (attendanceTypes && attendanceTypes.length > 0) {
+				queryConditions.attendanceType = { in: attendanceTypes };
+			}
+
 
 			const results = await ctx.prisma.hackerInfo.findMany({
 				take: limit + 1, // get an extra item at the end which we'll use as next cursor
 				cursor: cursor ? { id: cursor } : undefined,
+				where: queryConditions,
 				orderBy: {
 					id: "asc",
 				},

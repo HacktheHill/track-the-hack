@@ -16,9 +16,29 @@ import { hackersRedirect } from "../../utils/redirects";
 import { authOptions } from "../api/auth/[...nextauth]";
 
 const Hackers: NextPage = () => {
+	// Randomly threw this error, so i'm disabling it for now
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
+	interface Filters {
+		[key: string]: string[];
+	}
+
+	const [filters, setFilters] = useState<Filters>({
+		schools: [],
+		currentLevelsOfStudy: [],
+		programs: [],
+		graduationYears: [],
+		attendanceTypes: [],
+	});
+
 	const { status, isFetching, hasNextPage, ...query } = trpc.hackers.all.useInfiniteQuery(
 		{
 			limit: 50,
+			schools: filters.schools,
+			currentLevelsOfStudy: filters.currentLevelsOfStudy,
+			programs: filters.programs,
+			graduationsYears: filters.graduationYears,
+			attendanceTypes: filters.attendanceTypes
 		},
 		{
 			getNextPageParam: lastPage => lastPage.nextCursor,
@@ -34,18 +54,6 @@ const Hackers: NextPage = () => {
 	function toggleFilter() {
 		setSidebarVisible(!sidebarVisible);
 	}
-
-	interface Filters {
-		[key: string]: string[];
-	}
-
-	const [filters, setFilters] = useState<Filters>({
-		schools: [],
-		currentLevelsOfStudy: [],
-		programs: [],
-		graduationYears: [],
-		attendanceTypes: [],
-	});
 
 	const [columns, setColumns] = useState(3);
 
@@ -100,7 +108,8 @@ const Hackers: NextPage = () => {
 
 	const hackers = query.data?.pages.map(page => page.results).flat();
 
-	let filteredSearchQuery =
+	// Searching happens here
+	const filteredSearchQuery =
 		search.length == 0
 			? hackers
 			: hackers?.filter(
@@ -111,44 +120,48 @@ const Hackers: NextPage = () => {
 						`${hacker.firstName} ${hacker.lastName}`.toLowerCase().includes(search.toLowerCase()),
 			  );
 
-	if (filters) {
-		if (filters["currentLevelsOfStudy"] && filters["currentLevelsOfStudy"][0]) {
-			const f = filters["currentLevelsOfStudy"][0];
-			filteredSearchQuery = filteredSearchQuery?.filter(hacker =>
-				hacker.studyLevel?.toLowerCase().includes(f.toLowerCase()),
-			);
-		}
+	// Front end filtering happens here, on filters update
+	// Commented out because its moved to backend
+	// if (filters) {
+	// 	if (filters["currentLevelsOfStudy"] && filters["currentLevelsOfStudy"][0]) {
+	// 		const f = filters["currentLevelsOfStudy"][0];
+	// 		filteredSearchQuery = filteredSearchQuery?.filter(hacker =>
+	// 			hacker.studyLevel?.toLowerCase().includes(f.toLowerCase()),
+	// 		);
+	// 	}
 
-		if (filters["schools"] && filters["schools"][0]) {
-			const f = filters["schools"][0];
-			filteredSearchQuery = filteredSearchQuery?.filter(hacker =>
-				hacker.university?.toLowerCase().includes(f.toLowerCase()),
-			);
-		}
+	// 	if (filters["schools"] && filters["schools"][0]) {
+	// 		const f = filters["schools"][0];
+	// 		filteredSearchQuery = filteredSearchQuery?.filter(hacker =>
+	// 			hacker.university?.toLowerCase().includes(f.toLowerCase()),
+	// 		);
+	// 	}
 
-		if (filters["programs"] && filters["programs"][0]) {
-			const f = filters["programs"][0];
-			filteredSearchQuery = filteredSearchQuery?.filter(hacker =>
-				hacker.studyProgram?.toLowerCase().includes(f.toLowerCase()),
-			);
-		}
+	// 	if (filters["programs"] && filters["programs"][0]) {
+	// 		const f = filters["programs"][0];
+	// 		filteredSearchQuery = filteredSearchQuery?.filter(hacker =>
+	// 			hacker.studyProgram?.toLowerCase().includes(f.toLowerCase()),
+	// 		);
+	// 	}
 
-		if (filters["graduationYears"] && filters["graduationYears"][0]) {
-			const f = filters["graduationYears"][0];
-			filteredSearchQuery = filteredSearchQuery?.filter(hacker =>
-				hacker.graduationYear?.toString().toLowerCase().includes(f.toLowerCase()),
-			);
-		}
+	// 	if (filters["graduationYears"] && filters["graduationYears"][0]) {
+	// 		const f = filters["graduationYears"][0];
+	// 		filteredSearchQuery = filteredSearchQuery?.filter(hacker =>
+	// 			hacker.graduationYear?.toString().toLowerCase().includes(f.toLowerCase()),
+	// 		);
+	// 	}
 
-		if (filters["attendanceTypes"] && filters["attendanceTypes"][0]) {
-			const f = filters["attendanceTypes"][0];
-			const isInPerson = f.toLowerCase() == "online" ? "false" : "true";
-			filteredSearchQuery = filteredSearchQuery?.filter(hacker =>
-				hacker.onlyOnline?.toString().toLowerCase().includes(isInPerson),
-			);
-		}
-	}
+	// 	if (filters["attendanceTypes"] && filters["attendanceTypes"][0]) {
+	// 		const f = filters["attendanceTypes"][0];
+	// 		const isInPerson = f.toLowerCase() == "online" ? "false" : "true";
+	// 		filteredSearchQuery = filteredSearchQuery?.filter(hacker =>
+	// 			hacker.onlyOnline?.toString().toLowerCase().includes(isInPerson),
+	// 		);
+	// 	}
+	// }
 
+	// Get the options that the user can filter by
+	// Based on the different values per attribute
 	const filterOptions: {
 		schools: string[];
 		currentLevelsOfStudy: string[];
@@ -162,7 +175,6 @@ const Hackers: NextPage = () => {
 		graduationYears: [],
 		attendanceTypes: [],
 	};
-
 	hackers?.forEach(hacker => {
 		hacker.university && !filterOptions.schools.includes(hacker.university.toLowerCase())
 			? filterOptions.schools.push(hacker.university.toLowerCase())
