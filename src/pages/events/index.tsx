@@ -36,17 +36,25 @@ const Events: NextPage = () => {
 	const hackerInfoID = trpc.users.getHackerId.useQuery({ id });
 
 	const signUpMutation = trpc.users.signUp.useMutation();
-	const idInURL = router.query.id ?? "";
-	// if its empty, then no modal is open. If its 0, then the first modal is open, etc.
-	const [modalId, setModalId] = useState(idInURL as string);
-    const eventsUserSignedUpTo = trpc.users.getSignedUpEvents.useQuery()
+	const idInURL = router.query.eventId ?? "";
 
+	// do not use this hook, use openModal and closeModal instead
+	const [modalId, setModalId] = useState(idInURL as string);
+    
+    useEffect(()=> {
+        if (idInURL) {
+            setModalId(idInURL as string);
+        }
+    }, [idInURL])
+
+    const eventsUserSignedUpTo = trpc.users.getSignedUpEvents.useQuery();
     const idsOfEventsUserSignedUpTo = eventsUserSignedUpTo?.data?.map(event => event.id);
 
 	const openModal = (eventId: string) => {
-		void router.push(`/events?eventId=${eventId}`);
 		setModalId(eventId);
+        void router.push(`/events?eventId=${eventId}`);
 	};
+
 	const closeModal = () => {
 		void router.push(`/events`);
 		setModalId("");
@@ -83,7 +91,6 @@ const Events: NextPage = () => {
 		}
 
 		if (hackerInfoID.data) {
-			console.log(hackerInfoID);
 			signUpMutation.mutate({ eventId: modalId });
 			closeModal();
 		} else {
@@ -142,6 +149,7 @@ const Events: NextPage = () => {
 					)}
 				</div>
 			</div>
+            
 			<Modal isOpen={modalId !== ""} onClose={closeModal}>
 				<div className=" m-2">
 					<h1 className="m-1.5 p-1.5 text-2xl font-bold">
