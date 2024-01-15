@@ -108,7 +108,7 @@ model HackerInfo {
   winner                       Boolean        @default(false)
   user                         User?          @relation(fields: [userId], references: [id])
   presenceInfo                 PresenceInfo?
-
+  responses                    Response[]
   @@index([userId])
 }
 
@@ -143,6 +143,25 @@ model Event {
   link        String?
   linkText    String?
   registeredUser  User[]
+  questions Question[]
+}
+
+model Question {
+  id String @id @default(cuid())
+  hackerInfoId String
+  eventId String
+  event Event @relation(fields: [eventId], references: [id])
+  responses Response[]
+}
+
+model Response {
+  id String @id @default(cuid())
+  hackerInfoId String
+  questionId String
+  question Question@relation(fields: [questionId], references: [id])
+  hackerInfo HackerInfo@relation(fields: [hackerInfoId], references: [id])
+  @@index([questionId])
+  @@index([hackerInfoId])
 }
 
 model Follow {
