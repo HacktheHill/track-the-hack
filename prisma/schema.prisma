@@ -148,10 +148,12 @@ model Event {
 
 model Question {
   id String @id @default(cuid())
-  hackerInfoId String
   eventId String
+  question String @db.Text
   event Event @relation(fields: [eventId], references: [id])
   responses Response[]
+  wordMax     Int @default(250)
+  wordMinimum Int @default(10)
 }
 
 model Response {
@@ -160,8 +162,9 @@ model Response {
   questionId String
   question Question@relation(fields: [questionId], references: [id])
   hackerInfo HackerInfo@relation(fields: [hackerInfoId], references: [id])
-  @@index([questionId])
+  response String @db.Text
   @@index([hackerInfoId])
+  @@index([questionId])
 }
 
 model Follow {
