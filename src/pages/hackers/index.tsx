@@ -17,9 +17,6 @@ import { hackersRedirect } from "../../utils/redirects";
 import { authOptions } from "../api/auth/[...nextauth]";
 
 const Hackers: NextPage = () => {
-	// Randomly threw this error, so i'm disabling it for now
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-
 	interface Filters {
 		[key: string]: string[];
 	}
@@ -48,15 +45,14 @@ const Hackers: NextPage = () => {
 
 	const { t } = useTranslation("hackers");
 
+	const [sidebarVisible, setSidebarVisible] = useState(false);
+
 	const [search, setSearch] = useState("");
+	const [columns, setColumns] = useState(3);
 
-
-	const [sidebarVisible, setSidebarVisible ] = useState(false)
 	function toggleFilter() {
 		setSidebarVisible(!sidebarVisible);
 	}
-
-	const [columns, setColumns] = useState(3);
 
 	const updateColumns = useCallback(() => {
 		setColumns(Math.floor(window.innerWidth / 300));
@@ -75,6 +71,7 @@ const Hackers: NextPage = () => {
 	};
 
 	useEffect(() => {
+		
 		updateColumns();
 		const debouncedResizeHandler = debounce(updateColumns, 500);
 
@@ -83,6 +80,26 @@ const Hackers: NextPage = () => {
 			window.removeEventListener("resize", debouncedResizeHandler);
 		};
 	}, [updateColumns]);
+
+	let filterBy: {
+		schools: string[];
+		currentLevelsOfStudy: string[];
+		programs: string[];
+		graduationYears: string[];
+		attendanceTypes: string[];
+	} = {
+		schools: [],
+		currentLevelsOfStudy: [],
+		programs: [],
+		graduationYears: [],
+		attendanceTypes: [],
+	};
+
+	const { data: data } = trpc.hackers.filterOptions.useQuery();
+
+		if (data) {
+			filterBy = data.filterOptions;
+		}
 
 	if (status === "loading") {
 		return (
@@ -109,101 +126,23 @@ const Hackers: NextPage = () => {
 
 	const hackers = query.data?.pages.map(page => page.results).flat();
 
-	// Searching happens here
-	const filteredSearchQuery =
+	const filteredQuery =
 		search.length == 0
 			? hackers
 			: hackers?.filter(
 					hacker =>
 						hacker.university?.toLowerCase().includes(search.toLowerCase()) ||
 						hacker.studyProgram?.toLowerCase().includes(search.toLowerCase()) ||
-						hacker.email?.toLowerCase().includes(search.toLowerCase()) ||
 						`${hacker.firstName} ${hacker.lastName}`.toLowerCase().includes(search.toLowerCase()),
-			  );
-
-	// Front end filtering happens here, on filters update
-	// Commented out because its moved to backend
-	// if (filters) {
-	// 	if (filters["currentLevelsOfStudy"] && filters["currentLevelsOfStudy"][0]) {
-	// 		const f = filters["currentLevelsOfStudy"][0];
-	// 		filteredSearchQuery = filteredSearchQuery?.filter(hacker =>
-	// 			hacker.studyLevel?.toLowerCase().includes(f.toLowerCase()),
-	// 		);
-	// 	}
-
-	// 	if (filters["schools"] && filters["schools"][0]) {
-	// 		const f = filters["schools"][0];
-	// 		filteredSearchQuery = filteredSearchQuery?.filter(hacker =>
-	// 			hacker.university?.toLowerCase().includes(f.toLowerCase()),
-	// 		);
-	// 	}
-
-	// 	if (filters["programs"] && filters["programs"][0]) {
-	// 		const f = filters["programs"][0];
-	// 		filteredSearchQuery = filteredSearchQuery?.filter(hacker =>
-	// 			hacker.studyProgram?.toLowerCase().includes(f.toLowerCase()),
-	// 		);
-	// 	}
-
-	// 	if (filters["graduationYears"] && filters["graduationYears"][0]) {
-	// 		const f = filters["graduationYears"][0];
-	// 		filteredSearchQuery = filteredSearchQuery?.filter(hacker =>
-	// 			hacker.graduationYear?.toString().toLowerCase().includes(f.toLowerCase()),
-	// 		);
-	// 	}
-
-	// 	if (filters["attendanceTypes"] && filters["attendanceTypes"][0]) {
-	// 		const f = filters["attendanceTypes"][0];
-	// 		const isInPerson = f.toLowerCase() == "online" ? "false" : "true";
-	// 		filteredSearchQuery = filteredSearchQuery?.filter(hacker =>
-	// 			hacker.onlyOnline?.toString().toLowerCase().includes(isInPerson),
-	// 		);
-	// 	}
-	// }
-
-	// Get the options that the user can filter by
-	// Based on the different values per attribute
-	const filterOptions: {
-		schools: string[];
-		currentLevelsOfStudy: string[];
-		programs: string[];
-		graduationYears: string[];
-		attendanceTypes: string[];
-	} = {
-		schools: [],
-		currentLevelsOfStudy: [],
-		programs: [],
-		graduationYears: [],
-		attendanceTypes: [],
-	};
-	hackers?.forEach(hacker => {
-		hacker.university && !filterOptions.schools.includes(hacker.university.toLowerCase())
-			? filterOptions.schools.push(hacker.university.toLowerCase())
-			: "";
-		hacker.studyLevel && !filterOptions.currentLevelsOfStudy.includes(hacker.studyLevel.toLowerCase())
-			? filterOptions.currentLevelsOfStudy.push(hacker.studyLevel.toLowerCase())
-			: "";
-		hacker.studyProgram && !filterOptions.programs.includes(hacker.studyProgram.toLowerCase())
-			? filterOptions.programs.push(hacker.studyProgram.toLowerCase())
-			: "";
-		hacker.graduationYear && !filterOptions.graduationYears.includes(hacker.graduationYear.toString())
-			? filterOptions.graduationYears.push(hacker.graduationYear.toString())
-			: "";
-		hacker.attendanceType && !filterOptions.attendanceTypes.includes(hacker.attendanceType)
-			? filterOptions.attendanceTypes.push(hacker.attendanceType)
-			: "";
-	});
+				);
 
 	return (
-		<App
-			className="flex flex-col overflow-y-auto bg-default-gradient"
-			integrated={true}
-			title={t("title")}
-		>
-			<div className="align-center flex justify-center border-b border-dark-color bg-light-quaternary-color pb-4 pt-2 shadow-navbar sm:px-20">
+		// 2 <App>s based on whether or not sidebar is visible is made because the scroll to bottom wouldnt be detected when the filter sidebar was on
+		<> {sidebarVisible && <App className="mainWindow flex flex-col overflow-y-auto bg-default-gradient" integrated={true} title={t("title")}  onScroll={handleScroll}>
+			<div className="border-b border-dark-color bg-light-quaternary-color px-4 pb-4 pt-2 shadow-navbar sm:px-20">
 				<div className="flex">
 					<button
-						className="m-1 mr-3 rounded-xl border-dark bg-medium-primary-color px-6 text-sm text-light-color"
+						className="border-dark m-1 mr-3 rounded-xl bg-medium-primary-color px-6 text-sm text-light-color"
 						onClick={toggleFilter}
 					>
 						Filters
@@ -211,22 +150,20 @@ const Hackers: NextPage = () => {
 					<Search setSearch={setSearch} />
 				</div>
 			</div>
-			<div className="flex flex-row">
-				<FilterOptions
-					filters={filters}
-					setFilters={setFilters}
-					filterOptions={filterOptions}
-					sidebarVisible={sidebarVisible}
-				/>
-				<div
-					className="mainWindow to-mobile:mx-auto grid h-fit flex-col gap-4 overflow-x-hidden px-4 py-4 sm:px-20"
-					style={{
-						gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
-					}}
-					onScroll={handleScroll}
-				>
-					{filteredSearchQuery &&
-						filteredSearchQuery?.map(hacker => (
+				<div className="flex flex-row">
+					<FilterOptions
+						filters={filters}
+						setFilters={setFilters}
+						filterOptions={filterBy}
+						sidebarVisible={sidebarVisible}
+					/>
+					<div
+						className="to-mobile:mx-auto grid h-fit flex-col gap-4 overflow-x-hidden px-4 py-4 sm:px-20"
+						style={{
+							gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+						}}
+					>
+						{filteredQuery?.map(hacker => (
 							<Card
 								key={hacker.id}
 								id={hacker.id}
@@ -236,10 +173,10 @@ const Hackers: NextPage = () => {
 								studyProgram={hacker.studyProgram}
 							/>
 						))}
+					</div>
 				</div>
-			</div>
-			{filteredSearchQuery?.length == 0 && (
-				<div className="flex h-full w-full flex-col items-center justify-center gap-4 text-2xl text-dark">
+			{filteredQuery?.length == 0 && (
+				<div className="flex h-full w-full flex-col items-center justify-center gap-4 text-2xl text-dark-color">
 					<svg className="h-20 w-20" fill="currentColor" viewBox="0 0 24 24">
 						<path d="M10 0h24v24H0z" fill="none" />
 						<path d="M14 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
@@ -248,6 +185,47 @@ const Hackers: NextPage = () => {
 				</div>
 			)}
 		</App>
+		}{!sidebarVisible && <App className="flex flex-col overflow-y-auto bg-default-gradient" integrated={true} title={t("title")}>
+		<div className="border-b border-dark-color bg-light-quaternary-color px-4 pb-4 pt-2 shadow-navbar sm:px-20">
+			<div className="flex">
+				<button
+					className="border-dark m-1 mr-3 rounded-xl bg-medium-primary-color px-6 text-sm text-light-color"
+					onClick={toggleFilter}
+				>
+					Filters
+				</button>
+				<Search setSearch={setSearch} />
+			</div>
+		</div>
+				<div
+					className="mainWindow to-mobile:mx-auto grid h-fit flex-col gap-4 overflow-x-hidden px-4 py-4 sm:px-20"
+					style={{
+						gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+					}}
+					onScroll={handleScroll}
+				>
+					{filteredQuery?.map(hacker => (
+						<Card
+							key={hacker.id}
+							id={hacker.id}
+							firstName={hacker.firstName}
+							lastName={hacker.lastName}
+							university={hacker.university}
+							studyProgram={hacker.studyProgram}
+						/>
+					))}
+				</div>
+		{filteredQuery?.length == 0 && (
+			<div className="flex h-full w-full flex-col items-center justify-center gap-4 text-2xl text-dark-color">
+				<svg className="h-20 w-20" fill="currentColor" viewBox="0 0 24 24">
+					<path d="M10 0h24v24H0z" fill="none" />
+					<path d="M14 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+				</svg>
+				<p>No hackers found</p>
+			</div>
+		)}
+	</App>
+	}</>
 	);
 };
 
@@ -257,7 +235,7 @@ const Card = ({ firstName, lastName, university, studyProgram, id }: CardProps) 
 	return (
 		<Link
 			href={`/hackers/hacker?id=${id}`}
-			className="hover:bg-medium block w-full rounded-lg bg-medium-primary-color p-6 text-light-color shadow hover:bg-medium truncate"
+			className="hover:bg-medium block w-full rounded-lg bg-medium-primary-color p-6 text-light-color shadow"
 		>
 			<h3 className="text-2xl font-bold tracking-tight">{`${firstName} ${lastName}`}</h3>
 			<p>{university}</p>
@@ -322,18 +300,19 @@ type FilterProps = {
 };
 
 const FilterOptions = ({ filters, setFilters, filterOptions, sidebarVisible }: FilterProps) => {
-	interface Option {
-		[key: string]: string;
-	}
+	// interface Option {
+	// 	[key: string]: string;
+	// }
 
-	const [selectedOption, setSelectedOption] = useState<Option>({
-		schools: "",
-		currentLevelsOfStudy: "",
-		programs: "",
-		graduationYears: "",
-		attendanceTypes: "",
-	});
+	// const [selectedOption, setSelectedOption] = useState<Option>({
+	// 	schools: "",
+	// 	currentLevelsOfStudy: "",
+	// 	programs: "",
+	// 	graduationYears: "",
+	// 	attendanceTypes: "",
+	// });
 
+	/*
 	const handleCheckBox = (option: string, filterSection: string) => {
 		if (selectedOption[filterSection] == "" || selectedOption[filterSection] != option) {
 			setSelectedOption({ ...selectedOption, [filterSection]: option });
@@ -346,21 +325,43 @@ const FilterOptions = ({ filters, setFilters, filterOptions, sidebarVisible }: F
 			setFilters(tempFilters);
 		}
 	};
+	*/
+
+	const handleCheckBox = (option: string, filterSection: string) => {
+		if (filters[filterSection]?.[0] === option) {
+			const tempFilters = { ...filters, [filterSection]: [] };
+			setFilters(tempFilters);
+		} else {
+			const tempFilters = { ...filters, [filterSection]: [option] };
+			setFilters(tempFilters);
+		}
+	};
+	
+	
+
+	// for (const f in filters) {
+	// 	console.log("!!!!!!!!!!")
+	// 	console.log(f)
+	// 	console.log("!!!!!!!!!!")
+	// 	if (f[0]) {
+	// 		setSelectedOption({ ...selectedOption, [f]: option });
+	// 	}
+	// }
 
 	return (
 		<>
 			{sidebarVisible && (
-				<div className="ml-10 mt-5 flex flex-col border-dark align-middle text-dark">
-					<div className="z-40 w-60 rounded-lg bg-light-quaternary-color border-b border-dark-color p-5 text-center ">
+				<div className="border-dark text-dark ml-10 mt-5 flex flex-col align-middle">
+					<div className="z-40 w-60 rounded-lg border-b border-dark-color bg-light-quaternary-color p-5 text-center ">
 						<div className="mb-4 font-bold lg:text-lg xl:text-xl">Filter Options</div>
 						<ul>
 							<li className="mb-4">
-								<div className="mb-2 text-left font-bold text-dark lg:text-base xl:text-lg">
+								<div className="text-dark mb-2 text-left font-bold lg:text-base xl:text-lg">
 									Level of Study
 								</div>
 								<ul>
 									{filterOptions.currentLevelsOfStudy?.map(option => (
-										<li key={option} className="mb-2 flex items-center justify-between text-dark">
+										<li key={option} className="text-dark mb-2 flex items-center justify-between">
 											<span>
 												{option.charAt(0).toUpperCase()}
 												{option.slice(1)}
@@ -368,7 +369,7 @@ const FilterOptions = ({ filters, setFilters, filterOptions, sidebarVisible }: F
 											<input
 												type="checkbox"
 												className="h-6 w-6"
-												checked={selectedOption["currentLevelsOfStudy"] == option}
+												checked={filters["currentLevelsOfStudy"] ? filters["currentLevelsOfStudy"][0] == option : false }
 												onChange={() => {
 													handleCheckBox(option, "currentLevelsOfStudy");
 												}}
@@ -378,16 +379,16 @@ const FilterOptions = ({ filters, setFilters, filterOptions, sidebarVisible }: F
 								</ul>
 							</li>
 							<li>
-								<div className="mb-2 text-left font-bold text-dark lg:text-base xl:text-lg">School</div>
+								<div className="text-dark mb-2 text-left font-bold lg:text-base xl:text-lg">School</div>
 								<ul>
 									{filterOptions.schools?.map(option => (
-										<li key={option} className="mb-2 flex items-center justify-between text-dark">
+										<li key={option} className="text-dark mb-2 flex items-center justify-between">
 											<span>
 												{option.charAt(0).toUpperCase()}
 												{option.slice(1)}
 											</span>
 											<input
-												checked={selectedOption["schools"] == option}
+												checked={filters["schools"] ? filters["schools"][0] == option : false }
 												onChange={() => {
 													handleCheckBox(option, "schools");
 												}}
@@ -399,18 +400,18 @@ const FilterOptions = ({ filters, setFilters, filterOptions, sidebarVisible }: F
 								</ul>
 							</li>
 							<li>
-								<div className="mb-2 text-left font-bold text-dark lg:text-base xl:text-lg">
+								<div className="text-dark mb-2 text-left font-bold lg:text-base xl:text-lg">
 									Program
 								</div>
 								<ul>
 									{filterOptions.programs?.map(option => (
-										<li key={option} className="mb-2 flex items-center justify-between text-dark">
+										<li key={option} className="text-dark mb-2 flex items-center justify-between">
 											<span>
 												{option.charAt(0).toUpperCase()}
 												{option.slice(1)}
 											</span>
 											<input
-												checked={selectedOption["programs"] == option}
+												checked={filters["programs"] ? filters["programs"][0] == option : false }
 												onChange={() => {
 													handleCheckBox(option, "programs");
 												}}
@@ -422,15 +423,15 @@ const FilterOptions = ({ filters, setFilters, filterOptions, sidebarVisible }: F
 								</ul>
 							</li>
 							<li>
-								<div className="mb-2 text-left font-bold text-dark lg:text-base xl:text-lg">
+								<div className="text-dark mb-2 text-left font-bold lg:text-base xl:text-lg">
 									Graduation Year
 								</div>
 								<ul>
 									{filterOptions.graduationYears.sort()?.map(option => (
-										<li key={option} className="mb-2 flex items-center justify-between text-dark">
+										<li key={option} className="text-dark mb-2 flex items-center justify-between">
 											<span>{option}</span>
 											<input
-												checked={selectedOption["graduationYears"] == option}
+												checked={filters["graduationYears"] ? filters["graduationYears"][0] == option : false }
 												onChange={() => {
 													handleCheckBox(option, "graduationYears");
 												}}
@@ -442,18 +443,18 @@ const FilterOptions = ({ filters, setFilters, filterOptions, sidebarVisible }: F
 								</ul>
 							</li>
 							<li>
-								<div className="mb-2 text-left font-bold text-dark lg:text-base xl:text-lg">
+								<div className="text-dark mb-2 text-left font-bold lg:text-base xl:text-lg">
 									Online/In-person
 								</div>
 								<ul>
 									{filterOptions.attendanceTypes?.map(option => (
-										<li key={option} className="mb-2 flex items-center justify-between text-dark">
+										<li key={option} className="text-dark mb-2 flex items-center justify-between">
 											<span>
 												{option.split("_").join(" ").charAt(0)}
 												{option.split("_").join(" ").slice(1).toLowerCase()}
 											</span>
 											<input
-												checked={selectedOption["attendanceTypes"] == option}
+												checked={filters["attendanceTypes"] ? filters["attendanceTypes"][0] == option : false }
 												onChange={() => {
 													handleCheckBox(option, "attendanceTypes");
 												}}
@@ -482,6 +483,5 @@ export const getServerSideProps: GetServerSideProps = async ({ req, res, locale 
 		},
 	};
 };
-
 
 export default Hackers;
