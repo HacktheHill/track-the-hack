@@ -93,7 +93,7 @@ const Registration: NextPage = () => {
 		});
 		const hackerInfoParse = walkInSchema.safeParse(hackerInfoResponses);
 		const applicationParseResult = z.object(applicationParse).safeParse(applicationResponses);
-
+		
 		
 
 
@@ -159,7 +159,7 @@ const Registration: NextPage = () => {
 		{
 			name: "location",
 			type: "text",
-			required: false,
+			required: true,
 		},
 		{
 			name: "pronouns",
