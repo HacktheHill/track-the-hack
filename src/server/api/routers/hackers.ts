@@ -200,7 +200,7 @@ export const hackerRouter = createTRPCRouter({
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
-			const userId = ctx.session.user.id;
+			const userId = ctx.session?.user?.id;
 			const user = await ctx.prisma.user.findUnique({
 				where: {
 					id: userId,
@@ -211,9 +211,6 @@ export const hackerRouter = createTRPCRouter({
 				throw new Error("User not found");
 			}
 
-			if (!hasRoles(user, [Role.ORGANIZER])) {
-				throw new Error("You do not have permission to do this");
-			}
 			// List of keys to remove
 			const questionIdsToResponses = input.questionIdsToResponses;
 			delete input["questionIdsToResponses"]
