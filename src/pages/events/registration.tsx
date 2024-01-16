@@ -12,7 +12,7 @@ import QRCode from "../../components/QRCode";
 import { useRouter } from "next/router";
 import { trpc } from "../../utils/api";
 import { walkInSchema } from "../../utils/common";
-
+import z from "zod";
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
 		props: await serverSideTranslations(locale ?? "en", ["common", "registration"]),
@@ -24,27 +24,26 @@ const Registration: NextPage = () => {
 	const { data: sessionData } = useSession();
 	const id = sessionData?.user?.id;
 	const router = useRouter();
-	const mutation = trpc.hackers.walkIn.useMutation();
+	const eventId = router.query.eventId as string;
 	const signUpMutation = trpc.users.signUp.useMutation();
+	const questionMutation = trpc.response.createMany.useMutation();
+	const mutation = trpc.hackers.walkIn.useMutation();
 	const [error, setError] = useState("");
 	const [success, setSuccess] = useState(false);
-
-	if (!id) {
-		void signIn();
-	}
-
-	const query = trpc.users.getHackerId.useQuery({ id: id ?? "" }, { enabled: !!id });
-
+	const hackerIdQuery = trpc.users.getHackerId.useQuery({ id: id ?? "" }, { enabled: !!id });
+	const applicationQuestions = trpc.question.all.useQuery({eventId: eventId}, { enabled: !!eventId });
+	
 	//Hackers with a hacker info should be re-directed to the events page
-	if (query.data) {
-		void router.push("/events");
-	}
+	// if (hackerIdQuery.data) {
+	// 	void router.push("/events");
+	// }
 
 	useEffect(() => {
-		if (mutation.error) {
-			setError(mutation.error.message);
+
+		if(sessionData === null) {	
+			void signIn();
 		}
-	}, [mutation.error, t]);
+	}, [t, sessionData]);
 
 	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
@@ -74,27 +73,58 @@ const Registration: NextPage = () => {
 				data.numberOfPreviousHackathons = undefined;
 			}
 		}
+		
+		const applicationParse : Record<string, z.ZodString>= {};
+		applicationQuestions.data?.map(question => {
+			applicationParse[question.id] = z.string();
+		});
+		
+		const hackerInfoResponses : Record<string, string | number | undefined> = {}
+		const applicationResponses : Record<string, string | number | undefined> = {}
+		const idsOfApplicationQuestions = applicationQuestions.data?.map(item => item.id);
 
-		const parse = walkInSchema.safeParse(data);
-		if (!parse.success) {
-			setError(t("invalid-form"));
-			console.error(parse.error);
-		} else {
-			const eventId = router.query.eventId as string;
-			//create and link a hackerInfo
-			mutation.mutate({ ...parse.data, userId: id });
-			if (!mutation.error) {
-				setError("");
-				setSuccess(true);
-				event.currentTarget.reset();
-
-				void router.push("/events?eventId=" + eventId);
-			} else {
-				setError(mutation.error.message);
+		Object.entries(data).forEach(([key, value]) => {
+			if(idsOfApplicationQuestions?.includes(key)) {
+				applicationResponses[key] = value;
 			}
+			else {
+				hackerInfoResponses[key] = value;
+			}
+		});
+		const hackerInfoParse = walkInSchema.safeParse(hackerInfoResponses);
+		const applicationParseResult = z.object(applicationParse).safeParse(applicationResponses);
 
-			if (eventId) {
-				signUpMutation.mutate({ eventId: eventId });
+		
+
+
+		if(hackerIdQuery.data) {
+			if (!applicationParseResult.success) {
+				setError(t("invalid-form"));
+				console.error(t("error"));
+			} else {
+				questionMutation.mutate({questionIdsToResponses: applicationParseResult.data, hackerInfoId: mutation.data?.id ?? ""});
+				//void router.push("/events?eventId=" + eventId);
+				if (eventId) {
+					signUpMutation.mutate({ eventId: eventId });
+				}
+			}
+		} else {
+			if (!hackerInfoParse.success || !applicationParseResult.success) {
+				setError(t("invalid-form"));
+				console.error(t("error"));
+			} else {
+				//create and link a hackerInfo
+				mutation.mutate({...hackerInfoParse.data, userId: id, questionIdsToResponses: applicationParseResult.data});
+				console.log(`hello1 ${mutation.data?.id ?? ""}`)
+				if(!mutation.isError) {
+					setError("");
+					setSuccess(true);
+					event.currentTarget.reset();
+					if (eventId) {
+						signUpMutation.mutate({ eventId: eventId });
+					}
+					void router.push("/events?eventId=" + eventId);
+				}	
 			}
 		}
 	};
@@ -122,9 +152,24 @@ const Registration: NextPage = () => {
 			required: true,
 		},
 		{
+			name: "university",
+			type: "text",
+			required: true,
+		},
+		{
+			name: "location",
+			type: "text",
+			required: false,
+		},
+		{
 			name: "pronouns",
 			type: "text",
 			required: true,
+		},
+		{
+			name: "gender",
+			type: "text",
+			required: false,
 		},
 		{
 			name: "phoneNumber",
@@ -157,16 +202,6 @@ const Registration: NextPage = () => {
 			required: true,
 		},
 		{
-			name: "gender",
-			type: "text",
-			required: false,
-		},
-		{
-			name: "university",
-			type: "text",
-			required: false,
-		},
-		{
 			name: "studyLevel",
 			type: "text",
 			required: false,
@@ -179,11 +214,6 @@ const Registration: NextPage = () => {
 		{
 			name: "graduationYear",
 			type: "number",
-			required: false,
-		},
-		{
-			name: "location",
-			type: "text",
 			required: false,
 		},
 		{
@@ -221,16 +251,20 @@ const Registration: NextPage = () => {
 		email: undefined,
 		text: undefined,
 	} as const;
-
+	console.log(eventId);
+	
 	return (
 		<App className="overflow-y-auto bg-default-gradient p-8 sm:p-12" title={t("title")}>
-			<OnlyRole filter={role => role === Role.HACKER || role === Role.ORGANIZER}>
 				<form onSubmit={handleSubmit} className="flex flex-col items-center gap-8">
-					<h3 className="font-rubik text-4xl font-bold text-dark-color">{t("title")}</h3>
+					<div>	
+					{!hackerIdQuery.data && (<>
 					<div className="flex flex-col gap-4">
+					<h3 className="font-rubik text-4xl font-bold text-dark-color">{t("title")}</h3>
+					<p className="py-8 text-xl">{t("subtitle")}</p>
 						{fields.map(field => (
 							<div key={field.name} className="flex w-full flex-col items-center gap-2 sm:flex-row">
 								<label htmlFor={field.name} className="flex-[50%] font-rubik text-dark-color">
+									
 									{t(field.name)}
 									{field.required && <span className="text-dark-primary-color"> * </span>}
 								</label>
@@ -260,6 +294,30 @@ const Registration: NextPage = () => {
 								)}
 							</div>
 						))}
+						</div>
+						</>)}
+					
+						<h3 className="font-rubik text-4xl font-bold text-dark-color text-center pt-8">{t("application")}</h3>
+						<p className="py-8 text-xl">{t("applicationInstructions")}</p>
+						{
+							
+							applicationQuestions.data?.map(question => (
+								<div key={question.id} className="flex w-full flex-col items-center gap-2 sm:flex-row">
+									<label htmlFor={question.id} className="flex-[50%] font-rubik text-dark-color">
+										{question.question}
+										{true && <span className="text-dark-primary-color"> * </span>}
+										<b className="bold block">{`(${question.wordMinimum} - ${question.wordMax} words)`}</b>
+										
+									</label>
+									<textarea
+										id={question.id}
+										name={question.id}
+										className="w-full m-4 rounded-[25px] border-none  bg-light-secondary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-medium-secondary-color"
+										required={true}
+									/>
+								</div>
+							))
+						}
 					</div>
 					{error && (
 						<div className="flex flex-col items-center gap-2">
@@ -270,12 +328,6 @@ const Registration: NextPage = () => {
 						{t("submit")}
 					</button>
 				</form>
-			</OnlyRole>
-			{!sessionData?.user && (
-				<div className="flex flex-col items-center justify-center gap-4">
-					<Error message={t("not-authorized-to-view-this-page")} />
-				</div>
-			)}
 		</App>
 	);
 };

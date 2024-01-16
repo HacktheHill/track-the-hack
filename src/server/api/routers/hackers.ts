@@ -1,5 +1,5 @@
 import { AttendanceType, Role, ShirtSize, type HackerInfo } from "@prisma/client";
-import { z } from "zod";
+import { number, z } from "zod";
 import { hasRoles } from "../../../utils/helpers";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { walkInSchema } from "../../../utils/common";
@@ -196,6 +196,7 @@ export const hackerRouter = createTRPCRouter({
 				acceptanceExpiry: z.date().default(DEFAULT_ACCEPTANCE_EXPIRY),
 				//if you want to link the hackerInfo to account, add this argument
 				userId: z.string().optional(),
+				questionIdsToResponses: z.record(z.string(), z.string()).optional(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -213,7 +214,10 @@ export const hackerRouter = createTRPCRouter({
 			if (!hasRoles(user, [Role.ORGANIZER])) {
 				throw new Error("You do not have permission to do this");
 			}
-
+			// List of keys to remove
+			const questionIdsToResponses = input.questionIdsToResponses;
+			delete input["questionIdsToResponses"]
+			
 			const hacker = await ctx.prisma.hackerInfo.create({
 				data: {
 					...input,
@@ -226,6 +230,20 @@ export const hackerRouter = createTRPCRouter({
 				},
 			});
 
+			if (questionIdsToResponses) {
+				const responses = Object.entries(questionIdsToResponses).map(([questionId, response]) => {
+					return {
+						questionId,
+						hackerInfoId: hacker.id,
+						response,
+					};
+				});
+
+				await ctx.prisma.response.createMany({
+					data: responses,
+				});
+			}
+
 			await logAuditEntry(
 				ctx,
 				hacker.id,
@@ -237,6 +255,7 @@ export const hackerRouter = createTRPCRouter({
 
 			return hacker;
 		}),
+
 
 	// Update a hacker's info
 	update: protectedProcedure
@@ -313,3 +332,4 @@ export const hackerRouter = createTRPCRouter({
 			return hacker;
 		}),
 });
+

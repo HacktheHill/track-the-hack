@@ -86,16 +86,12 @@ const Events: NextPage = () => {
 	}
 
 	const registerUser = () => {
-		if (!id) {
+		if (!sessionData?.user) {
 			void signIn();
 		}
+		//regardless if you have hacker ID or not, you will need to fill out questions.
+		void router.push("events/registration/?eventId=" + modalId);
 
-		if (hackerInfoID.data) {
-			signUpMutation.mutate({ eventId: modalId });
-			closeModal();
-		} else {
-			void router.push("events/registration/?eventId=" + modalId);
-		}
 	};
 
 	//To make event info display in the modal, we need a way to access the event info with the event id

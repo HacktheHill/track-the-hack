@@ -1,11 +1,14 @@
 {
 	"title": "Inscription",
+	"subtitle": "Veuillez remplir le formulaire suivant pour vous inscrire à l'événement",
+	"application": "Application",
 	"submit": "Soumettre",
 	"new": "Nouveau",
 	"select": "Sélectionner",
 	"email": "Courriel",
 	"firstName": "Prénom",
 	"lastName": "Nom de famille",
+	"pronouns": "Pronoms",
 	"phoneNumber": "Numéro de téléphone",
 	"dietaryRestrictions": "Restrictions alimentaires",
 	"accessibilityRequirements": "Exigences d'accessibilité",
@@ -20,11 +23,12 @@
 	"studyLevel": "Niveau d'études",
 	"studyProgram": "Programme d'études",
 	"graduationYear": "Année de graduation",
-	"location": "Emplacement",
+	"location": "Ville",
 	"shirtSize": "Taille de chemise",
 	"numberOfPreviousHackathons": "Nombre de hackathons précédents",
 	"linkGithub": "Lien vers Github",
 	"linkLinkedin": "Lien vers LinkedIn",
 	"linkPersonalSite": "Lien vers le site personnel",
-	"invalid-form": "Veuillez remplir tous les champs requis correctement."
+	"invalid-form": "Veuillez remplir tous les champs requis correctement.",
+	"applicationInstructions" : "Veuillez répondre aux questions suivantes pour compléter votre candidature."
 }

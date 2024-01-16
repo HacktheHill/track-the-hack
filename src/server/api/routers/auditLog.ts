@@ -10,7 +10,7 @@ export const auditLogRouter = createTRPCRouter({
 			z.object({
 				id: z.number(), // Assuming 'id' is auto-incremented, it should be a number
 				timestamp: z.date(),
-				user_id: z.string(),
+				userId: z.string(),
 				route: z.string(),
 				author: z.string(),
 				action: z.string(),
@@ -22,7 +22,7 @@ export const auditLogRouter = createTRPCRouter({
 				data: {
 					id: input.id,
 					timestamp: input.timestamp,
-					user_id: input.user_id,
+					userId: input.userId,
 					route: input.route,
 					author: input.author,
 					action: input.action,
