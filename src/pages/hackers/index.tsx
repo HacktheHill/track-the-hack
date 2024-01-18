@@ -300,32 +300,6 @@ type FilterProps = {
 };
 
 const FilterOptions = ({ filters, setFilters, filterOptions, sidebarVisible }: FilterProps) => {
-	// interface Option {
-	// 	[key: string]: string;
-	// }
-
-	// const [selectedOption, setSelectedOption] = useState<Option>({
-	// 	schools: "",
-	// 	currentLevelsOfStudy: "",
-	// 	programs: "",
-	// 	graduationYears: "",
-	// 	attendanceTypes: "",
-	// });
-
-	/*
-	const handleCheckBox = (option: string, filterSection: string) => {
-		if (selectedOption[filterSection] == "" || selectedOption[filterSection] != option) {
-			setSelectedOption({ ...selectedOption, [filterSection]: option });
-			const tempFilters = { ...filters, [filterSection]: [] };
-			tempFilters[filterSection] = [option];
-			setFilters(tempFilters);
-		} else if (selectedOption[filterSection] == option) {
-			setSelectedOption({ ...selectedOption, [filterSection]: "" });
-			const tempFilters = { ...filters, [filterSection]: [] };
-			setFilters(tempFilters);
-		}
-	};
-	*/
 
 	const handleCheckBox = (option: string, filterSection: string) => {
 		if (filters[filterSection]?.[0] === option) {
@@ -337,16 +311,6 @@ const FilterOptions = ({ filters, setFilters, filterOptions, sidebarVisible }: F
 		}
 	};
 	
-	
-
-	// for (const f in filters) {
-	// 	console.log("!!!!!!!!!!")
-	// 	console.log(f)
-	// 	console.log("!!!!!!!!!!")
-	// 	if (f[0]) {
-	// 		setSelectedOption({ ...selectedOption, [f]: option });
-	// 	}
-	// }
 
 	return (
 		<>

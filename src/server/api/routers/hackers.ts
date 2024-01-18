@@ -192,6 +192,7 @@ export const hackerRouter = createTRPCRouter({
 			};
 		}),
 
+		// get of all the options you can filter the hackers by
 		filterOptions: protectedProcedure
 		.query(async ({ ctx, input }) => {
 			const userId = ctx.session.user.id;
@@ -223,7 +224,6 @@ export const hackerRouter = createTRPCRouter({
 				attendanceTypes: [],
 			};
 
-			//return all hackerInfo if no pagination is needed
 			const hackers = await ctx.prisma.hackerInfo.findMany()
 
 			hackers?.forEach(hacker => {
