@@ -1,6 +1,4 @@
-// utils/auditUtils.ts
-
-import { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 
 async function logAuditEntry(
 	ctx: {
@@ -16,7 +14,7 @@ async function logAuditEntry(
 		await ctx.prisma.auditLog.create({
 			data: {
 				timestamp: new Date(),
-				user_id: userId,
+				userId: userId,
 				route,
 				action,
 				author,

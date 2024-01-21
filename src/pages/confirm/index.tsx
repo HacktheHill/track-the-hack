@@ -124,7 +124,7 @@ const Confirm: NextPage = () => {
 								</p>
 								<button
 									type="button"
-									className="transform cursor-pointer whitespace-nowrap rounded-normal border-2 border-light-color px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-rubik text-[clamp(1rem,1vmin,5rem)] text-light-color shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition hover:bg-white/50"
+									className="transform cursor-pointer whitespace-nowrap rounded-normal border-2 border-light-color px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-rubik text-[clamp(1rem,1vmin,5rem)] text-light-color shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition hover:bg-light-color/50"
 									onClick={() => void signOut()}
 								>
 									{t("sign-out")}
@@ -133,7 +133,7 @@ const Confirm: NextPage = () => {
 						) : (
 							<button
 								type="button"
-								className="hover:bg-blue transform cursor-pointer whitespace-nowrap rounded-normal border-2 border-light-color px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-rubik text-[clamp(1rem,1vmin,5rem)] text-light-color shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition hover:bg-white/50"
+								className="hover:bg-blue transform cursor-pointer whitespace-nowrap rounded-normal border-2 border-light-color px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-rubik text-[clamp(1rem,1vmin,5rem)] text-light-color shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition hover:bg-light-color/50"
 								onClick={() => void signIn()}
 							>
 								{t("sign-in")}
@@ -156,7 +156,7 @@ const Confirm: NextPage = () => {
 										value={AttendanceType.IN_PERSON}
 										checked={attendanceType === AttendanceType.IN_PERSON}
 										onChange={handleAttendanceTypeChange}
-										className="border-medium flex h-4 w-4 appearance-none items-center justify-center rounded-full border bg-transparent text-black after:m-0.5 after:block after:h-full after:w-full after:border-black after:leading-[calc(100%*3/4)] after:checked:content-check"
+										className="flex h-4 w-4 appearance-none items-center justify-center rounded-full border-medium bg-transparent text-black after:m-0.5 after:block after:h-full after:w-full after:border-black after:leading-[calc(100%*3/4)] after:checked:content-check"
 									/>
 									<label
 										htmlFor="in-person"
@@ -173,7 +173,7 @@ const Confirm: NextPage = () => {
 										value={AttendanceType.ONLINE}
 										checked={attendanceType === AttendanceType.ONLINE}
 										onChange={handleAttendanceTypeChange}
-										className="border-medium flex h-4 w-4 appearance-none items-center justify-center rounded-full border bg-transparent text-black after:m-0.5 after:block after:h-full after:w-full after:border-black after:leading-[calc(100%*3/4)] after:checked:content-check"
+										className="flex h-4 w-4 appearance-none items-center justify-center rounded-full border border-medium bg-transparent text-black after:m-0.5 after:block after:h-full after:w-full after:border-black after:leading-[calc(100%*3/4)] after:checked:content-check"
 									/>
 									<label htmlFor="online" className="whitespace-nowrap text-[clamp(1rem,1vmin,5rem)]">
 										{t("attendanceType.online")}
@@ -187,7 +187,7 @@ const Confirm: NextPage = () => {
 										>
 											{t("t-shirt.label")}
 										</label>
-										<div className="border-medium rounded-2xl border px-4 py-2">
+										<div className="rounded-2xl border border-medium px-4 py-2">
 											<select
 												name="shirtSize"
 												id="shirtSize"
@@ -195,19 +195,19 @@ const Confirm: NextPage = () => {
 												onChange={handleShirtSizeChange}
 												className="w-full border-none bg-transparent text-black text-inherit focus-visible:outline-none"
 											>
-												<option value="S" className="bg-white">
+												<option value="S" className="bg-light-color">
 													{t("t-shirt.small")}
 												</option>
-												<option value="M" className="bg-white">
+												<option value="M" className="bg-light-color">
 													{t("t-shirt.medium")}
 												</option>
-												<option value="L" className="bg-white">
+												<option value="L" className="bg-light-color">
 													{t("t-shirt.large")}
 												</option>
-												<option value="XL" className="bg-white">
+												<option value="XL" className="bg-light-color">
 													{t("t-shirt.x-large")}
 												</option>
-												<option value="XXL" className="bg-white">
+												<option value="XXL" className="bg-light-color">
 													{t("t-shirt.xx-large")}
 												</option>
 											</select>
@@ -224,7 +224,7 @@ const Confirm: NextPage = () => {
 								name="terms"
 								checked={terms}
 								onChange={() => setTerms(!terms)}
-								className="border-medium h-4 w-4 appearance-none rounded-lg border bg-transparent text-black after:block after:h-full after:w-full after:border-black after:p-0.5 after:leading-[calc(100%*1/2)] after:checked:content-check"
+								className="h-4 w-4 appearance-none rounded-lg border border-medium bg-transparent text-black after:block after:h-full after:w-full after:border-black after:p-0.5 after:leading-[calc(100%*1/2)] after:checked:content-check"
 							/>
 							<label htmlFor="terms" className="flex-1">
 								<Trans
@@ -246,7 +246,7 @@ const Confirm: NextPage = () => {
 						{validationMessage && <p className="text-center text-red-500">{validationMessage}</p>}
 						<button
 							type="submit"
-							className="hover:bg-medium transform cursor-pointer whitespace-nowrap rounded-normal border-0 bg-light-color px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-rubik text-[clamp(1rem,1vmin,5rem)] text-white shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition"
+							className="hover:bg-medium transform cursor-pointer whitespace-nowrap rounded-normal border-0 bg-light-color px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-rubik text-[clamp(1rem,1vmin,5rem)] text-light-color shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition"
 						>
 							{t("confirm")}
 						</button>

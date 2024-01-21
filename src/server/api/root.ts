@@ -1,11 +1,12 @@
+import { auditLogRouter } from "./routers/auditLog";
 import { eventsRouter } from "./routers/events";
 import { followRouter } from "./routers/follow";
 import { hackerRouter } from "./routers/hackers";
+import { paymentRouter } from "./routers/payment";
 import { presenceRouter } from "./routers/presence";
+import { sponsorshipRouter } from "./routers/sponsorship";
 import { userRouter } from "./routers/users";
 import { createTRPCRouter } from "./trpc";
-import { auditLogRouter } from "./routers/auditLog";
-import { sponsorshipRouter } from "./routers/sponsorship";
 
 /**
  * This is the primary router for your server.
@@ -18,8 +19,10 @@ export const appRouter = createTRPCRouter({
 	events: eventsRouter,
 	presence: presenceRouter,
 	sponsorshipGmailDrafts: sponsorshipRouter,
+	sponsorship: sponsorshipRouter,
 	follow: followRouter,
 	auditLog: auditLogRouter,
+	payment: paymentRouter,
 });
 
 // export type definition of API

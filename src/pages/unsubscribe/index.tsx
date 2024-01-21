@@ -74,7 +74,7 @@ const Unsubscribe: NextPage = () => {
 				})}
 			</h3>
 			<button
-				className="hover:bg-medium cursor-pointer whitespace-nowrap rounded-[100px] border-none bg-light-color px-[calc(2*clamp(0.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-rubik text-[clamp(1rem,1vmin,5rem)] text-white shadow-md transition-all duration-1000"
+				className="hover:bg-medium cursor-pointer whitespace-nowrap rounded-[100px] border-none bg-light-color px-[calc(2*clamp(0.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-rubik text-[clamp(1rem,1vmin,5rem)] text-light-color shadow-md transition-all duration-1000"
 				disabled={query.isLoading}
 			>
 				{isUnsubscribed ? t("resubscribe") : t("unsubscribe")}

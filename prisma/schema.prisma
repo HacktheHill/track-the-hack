@@ -25,29 +25,16 @@ model Account {
   refresh_token            String? @db.Text
   refresh_token_expires_in Int?
   access_token             String? @db.Text
-  ext_expires_in           Int?
   expires_at               Int?
   token_type               String?
   scope                    String?
   id_token                 String? @db.Text
   session_state            String?
+  ext_expires_in           Int?
   user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@index([userId])
-}
-
-model AuditLog {
-  id        Int      @id @default(autoincrement())
-  timestamp DateTime @default(now())
-  user_id   String
-  author    String   @default("")
-  route     String
-  action    String
-  details   String?
-  user      User[]
-
-  @@index([user_id])
 }
 
 model Session {
@@ -61,18 +48,15 @@ model Session {
 }
 
 model User {
-  id            String       @id @default(cuid())
-  name          String?
-  email         String?      @unique
-  emailVerified DateTime?
-  image         String?
-  passwordHash  String?      @db.Text
-  salt          String?
-  role          Role         @default(HACKER)
-  accounts      Account[]
-  sessions      Session[]
-  hackerInfo    HackerInfo[]
-  auditLog      AuditLog[]
+  id           String       @id @default(cuid())
+  username     String?      @map("name")
+  email        String?      @unique
+  profileImage String?      @map("image")
+  role         Role         @default(HACKER)
+  accounts     Account[]
+  sessions     Session[]
+  hackerInfo   HackerInfo[]
+  auditLog     AuditLog[]
 }
 
 model VerificationToken {
@@ -113,7 +97,6 @@ model HackerInfo {
   formStartDate                DateTime?
   formEndDate                  DateTime?
   confirmed                    Boolean        @default(false)
-  user                         User?          @relation(fields: [userId], references: [id])
   userId                       String?
   unsubscribed                 Boolean        @default(false)
   unsubscribeToken             String?        @unique @default(cuid())
@@ -121,6 +104,7 @@ model HackerInfo {
   acceptanceExpiry             DateTime?
   walkIn                       Boolean        @default(false)
   winner                       Boolean        @default(false)
+  user                         User?          @relation(fields: [userId], references: [id])
   presenceInfo                 PresenceInfo?
 
   @@index([userId])
@@ -151,15 +135,46 @@ model Event {
   host        String?
   description String    @db.Text
   room        String
+  tiktok      String?
   image       String?
   link        String?
   linkText    String?
-  tiktok      String?
 }
 
 model Follow {
   id    String @id @default(cuid())
   email String @unique
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  timestamp DateTime @default(now())
+  userId    String   @map("user_id")
+  author    String   @default("")
+  route     String
+  action    String
+  details   String?
+  user      User[]
+
+  @@index([userId])
+}
+
+model Payment {
+  id          String   @id @default(cuid())
+  companyName String   @map("company_name")
+  repName     String   @map("reps_name")
+  amount      Int
+  tier        Tiers
+  logo        String
+  paid        String
+  date        DateTime
+  invoice     String
+}
+
+model Link {
+  id    String @id
+  label String
+  link  String
 }
 
 enum Language {
@@ -192,4 +207,13 @@ enum EventType {
   SOCIAL
   CAREER_FAIR
   FOOD
+}
+
+enum Tiers {
+  STARTUP
+  MAYOR
+  PREMIER
+  GOVERNOR
+  PRIME_MINISTER
+  CUSTOM
 }

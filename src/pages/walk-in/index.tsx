@@ -207,7 +207,7 @@ const WalkIn: NextPage = () => {
 						<h3 className="font-rubik text-4xl font-bold text-dark-color">{t("title")}</h3>
 						<QRCode id={mutation.data?.id} />
 						<button
-							className="cursor-pointer whitespace-nowrap rounded-[100px] border-none bg-light-color px-8 py-2 font-rubik text-white shadow-md transition-all duration-1000 hover:bg-medium-primary-color"
+							className="cursor-pointer whitespace-nowrap rounded-[100px] border-none bg-light-color px-8 py-2 font-rubik text-light-color shadow-md transition-all duration-1000 hover:bg-medium-primary-color"
 							onClick={() => setSuccess(false)}
 						>
 							{t("new")}
@@ -255,7 +255,7 @@ const WalkIn: NextPage = () => {
 								<p className="text-center font-rubik text-red-500">{error}</p>
 							</div>
 						)}
-						<button className="hover:bg-medium cursor-pointer whitespace-nowrap rounded-[100px] border-none bg-light-color px-8 py-2 font-rubik text-white shadow-md transition-all duration-1000">
+						<button className="hover:bg-medium cursor-pointer whitespace-nowrap rounded-[100px] border-none bg-light-color px-8 py-2 font-rubik text-light-color shadow-md transition-all duration-1000">
 							{t("submit")}
 						</button>
 					</form>
