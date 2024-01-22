@@ -47,18 +47,6 @@ model Session {
   @@index([userId])
 }
 
-model User {
-  id           String       @id @default(cuid())
-  username     String?      @map("name")
-  email        String?      @unique
-  profileImage String?      @map("image")
-  role         Role         @default(HACKER)
-  accounts     Account[]
-  sessions     Session[]
-  hackerInfo   HackerInfo[]
-  auditLog     AuditLog[]
-}
-
 model VerificationToken {
   identifier String
   token      String   @unique
@@ -67,63 +55,71 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-model HackerInfo {
-  id                           String         @id @default(cuid()) @map("submissionID")
-  preferredLanguage            Language       @default(EN)
-  email                        String
-  firstName                    String
-  lastName                     String
-  gender                       String         @default("Prefer not to say")
-  phoneNumber                  String
-  university                   String?
-  studyLevel                   String?
-  studyProgram                 String?
-  graduationYear               Int?
-  attendanceType               AttendanceType @default(IN_PERSON)
-  location                     String?        @map("attendanceLocation")
-  transportationRequired       Boolean        @default(false)
-  dietaryRestrictions          String         @db.Text
-  accessibilityRequirements    String         @db.Text
-  shirtSize                    ShirtSize?
-  emergencyContactName         String
-  emergencyContactRelationship String
-  emergencyContactPhoneNumber  String
-  numberOfPreviousHackathons   Int?
-  linkGithub                   String?
-  linkLinkedin                 String?
-  linkPersonalSite             String?
-  linkResume                   String?        @db.Text
-  lookingForwardTo             String?        @db.Text
-  formStartDate                DateTime?
-  formEndDate                  DateTime?
-  confirmed                    Boolean        @default(false)
-  userId                       String?
-  unsubscribed                 Boolean        @default(false)
-  unsubscribeToken             String?        @unique @default(cuid())
-  onlyOnline                   Boolean        @default(false)
-  acceptanceExpiry             DateTime?
-  walkIn                       Boolean        @default(false)
-  winner                       Boolean        @default(false)
-  user                         User?          @relation(fields: [userId], references: [id])
-  presenceInfo                 PresenceInfo?
-
-  @@index([userId])
+model User {
+  id       String       @id @default(cuid())
+  username     String?      @map("name")
+  email        String?      @unique
+  profileImage String?      @map("image")
+  role         Role         @default(HACKER)
+  accounts     Account[]
+  sessions     Session[]
+  auditLog     AuditLog[]
+  hacker       Hacker?   
+  organizer    Organizer?  
+  sponsor      Sponsor?    
 }
 
-model PresenceInfo {
+model Hacker {
+  id           String      @id @default(cuid())
+  user         User        @relation(fields: [userId],references: [id]) 
+  userId       String      @unique
+  personalInfo PersonalInfo?
+  education    Education?
+  emergency    EmergencyContact?
+  preferences  Preferences? 
+  socials      Socials?
+  events       Event[]
+  presences    Presence[]
+  responses    Response[]
+  tags         Tag[]
+}
+
+model Sponsor {
   id           String     @id @default(cuid())
-  checkedIn    Boolean    @default(false)
-  breakfast1   Boolean    @default(false)
-  lunch1       Boolean    @default(false)
-  dinner1      Boolean    @default(false)
-  snacks       Boolean    @default(false)
-  snacks2      Boolean    @default(false)
-  redbull      Boolean    @default(false)
-  breakfast2   Boolean    @default(false)
-  lunch2       Boolean    @default(false)
-  lunch22      Boolean    @default(false)
-  hackerInfo   HackerInfo @relation(fields: [hackerInfoId], references: [id])
-  hackerInfoId String     @unique
+  personalInfo  PersonalInfo?
+  user  User @relation(fields: [userId], references: [id])
+  userId String    @unique   
+}
+
+model Organizer {
+  id           String     @id @default(cuid())
+  personalInfo   PersonalInfo?
+  user  User @relation(fields: [userId], references: [id])
+  userId String    @unique        
+}
+
+model Question {
+  id String @id @default(cuid())
+  question String @db.Text
+  event Event @relation(fields: [eventId], references: [id])
+  eventId String
+  responses Response[]
+  wordMax     Int @default(250)
+  wordMinimum Int @default(10)
+
+  @@index([eventId])
+}
+
+model Response {
+  responseId String @id @default(cuid())
+  hacker Hacker @relation(fields: [hackerId], references: [id])
+  hackerId String 
+  question Question @relation(fields: [questionId], references: [id])
+  questionId String
+  response String @db.Text
+
+  @@index([questionId])
+  @@index([hackerId])
 }
 
 model Event {
@@ -139,6 +135,105 @@ model Event {
   image       String?
   link        String?
   linkText    String?
+  hacker      Hacker[]
+  questions   Question[]
+  tags        Tag[]
+}
+
+model Presence {
+  id String @id @default(cuid())
+  hacker Hacker @relation(fields: [hackerId], references: [id])
+  hackerId String
+  presenceTypes PresenceType[]
+
+  @@index([hackerId])
+}
+
+//If the there exists a relation between PresenceType and Presence, then the Hacker it belongs to is ch
+model PresenceType {
+  id String @id @default(cuid())
+  presence Presence[]
+  name String
+}
+
+model PersonalInfo {
+  id                           String         @id @default(cuid())
+  preferredLanguage            Language       @default(EN)
+  email                        String
+  firstName                    String
+  lastName                     String
+  gender                       String         @default("Prefer not to say")
+  phoneNumber                  String
+  city                         String?       
+  hacker                       Hacker?         @relation(fields: [hackerId], references: [id])
+  hackerId                     String?         @unique      
+  sponsor                      Sponsor?       @relation(fields: [sponsorId], references: [id])
+  sponsorId                    String?        @unique
+  organizer                    Organizer?     @relation(fields: [organizerId], references: [id] )
+  organizerId                  String?        @unique
+}
+
+model Education {
+  id                           String         @id @default(cuid())
+  university                   String?
+  studyLevel                   String?
+  studyProgram                 String?
+  graduationYear               Int?
+  Hacker                       Hacker?        @relation(fields: [hackerId], references: [id]) 
+  hackerId                     String?        @unique
+}
+
+model EmergencyContact {
+  id                           String         @id @default(cuid())
+  name                         String?
+  phoneNumber                  String?
+  relationship                 String?
+  Hacker                       Hacker?        @relation(fields: [hackerId], references: [id]) 
+  hackerId                     String?        @unique
+}
+
+model Socials {
+  id                           String         @id @default(cuid())
+  hackerId                     String?        @unique
+  github                       String?
+  linkedin                     String?
+  personalSite                 String?
+  Hacker                       Hacker?        @relation(fields: [hackerId], references: [id], map: "hacker_emergency_contact_fk") 
+}
+
+model Preferences {
+  id                           String         @id @default(cuid())
+  dietaryRestrictions          String?        @db.Text
+  accessibilityRequirements    String?        @db.Text
+  transportationRequired       Boolean        @default(false)
+  attendanceType               AttendanceType @default(IN_PERSON)
+  shirtSize                    ShirtSize?
+  hacker                     Hacker?        @relation(fields: [hackerId], references: [id])
+  hackerId                   String?        @unique
+}
+
+model EmailUnsubscribe {
+  id                           String         @id @default(cuid())
+  unsubscribed                 Boolean        @default(false)
+  unsubscribeToken             String?        @unique @default(cuid())
+}
+
+model MiscellaneousInfo {
+  id                           String         @id @default(cuid())
+  numberOfPreviousHackathons   Int?
+  acceptanceExpiry             DateTime?
+  walkIn                       Boolean        @default(false)
+  waiver                       Boolean        @default(false)
+}
+
+//Can be used to add statuses/tags to hackers related to an event (winner of X challenge, accepted into X event, waitlisted on X event, etc...)
+model Tag {
+  id                           String         @id @default(cuid())
+  value                        String
+  event                        Event?    @relation(fields: [eventId], references: [id])
+  eventId                      String?       @unique
+  hacker                       Hacker    @relation(fields: [hackerId], references: [id])
+  hackerId                     String
 }
 
 model Follow {
@@ -149,7 +244,7 @@ model Follow {
 model AuditLog {
   id        Int      @id @default(autoincrement())
   timestamp DateTime @default(now())
-  userId    String   @map("user_id")
+  userId    String   
   author    String   @default("")
   route     String
   action    String
@@ -161,8 +256,8 @@ model AuditLog {
 
 model Payment {
   id          String   @id @default(cuid())
-  companyName String   @map("company_name")
-  repName     String   @map("reps_name")
+  companyName String   
+  repName     String   
   amount      Int
   tier        Tiers
   logo        String
