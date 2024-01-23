@@ -37,7 +37,7 @@ import { z } from "zod";
 import App from "../../components/App";
 import Error from "../../components/Error";
 import Loading from "../../components/Loading";
-import OnlyRole from "../../components/OnlyRole";
+import Filter from "../../components/Filter";
 import { trpc } from "../../utils/api";
 import { addSponsorshipSchema, sponsorshipSchema } from "../../utils/common";
 
@@ -66,23 +66,17 @@ const Sponsors: NextPage = () => {
 	if (!companyQuery.isLoading && !companyQuery.data) {
 		return (
 			<App className="h-full bg-default-gradient px-16 py-12">
-				<div className="flex flex-col items-center justify-center gap-4">
-					<Error message={"Impossible to load companies"} />
-				</div>
+				<Error message={"Impossible to load companies"} />
 			</App>
 		);
 	}
 
 	return (
 		<App className="overflow-y-auto bg-default-gradient p-8 sm:p-12" title={t("title")}>
-			<OnlyRole filter={role => role === Role.ORGANIZER}>
+			<Filter filter={role => role === Role.ORGANIZER}>
 				<SponsorsTable companyQuery={companyQuery} />
-			</OnlyRole>
-			{!sessionData?.user && (
-				<div className="flex flex-col items-center justify-center gap-4">
-					<Error message={t("not-authorized-to-view-this-page")} />
-				</div>
-			)}
+				<Error message={t("not-authorized-to-view-this-page")} />
+			</Filter>
 		</App>
 	);
 };

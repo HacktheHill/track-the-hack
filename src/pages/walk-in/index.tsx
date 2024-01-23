@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 
 import App from "../../components/App";
 import Error from "../../components/Error";
-import OnlyRole from "../../components/OnlyRole";
+import Filter from "../../components/Filter";
 import QRCode from "../../components/QRCode";
 
 import { trpc } from "../../utils/api";
@@ -201,7 +201,7 @@ const WalkIn: NextPage = () => {
 
 	return (
 		<App className="overflow-y-auto bg-default-gradient p-8 sm:p-12" title={t("title")}>
-			<OnlyRole filter={role => role === Role.ORGANIZER}>
+			<Filter filter={role => role === Role.ORGANIZER}>
 				{success ? (
 					<div className="flex flex-col items-center gap-8">
 						<h3 className="font-rubik text-4xl font-bold text-dark-color">{t("title")}</h3>
@@ -260,12 +260,8 @@ const WalkIn: NextPage = () => {
 						</button>
 					</form>
 				)}
-			</OnlyRole>
-			{!sessionData?.user && (
-				<div className="flex flex-col items-center justify-center gap-4">
-					<Error message={t("not-authorized-to-view-this-page")} />
-				</div>
-			)}
+				<Error message={t("not-authorized-to-view-this-page")} />
+			</Filter>
 		</App>
 	);
 };

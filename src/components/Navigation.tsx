@@ -4,7 +4,7 @@ import { useTranslation } from "next-i18next";
 import Image from "next/image";
 import Link from "next/link";
 import { trpc } from "../utils/api";
-import OnlyRole from "./OnlyRole";
+import Filter from "./Filter";
 
 type LinkProps = {
 	bottom?: boolean;
@@ -66,7 +66,7 @@ const Links = ({ bottom }: LinkProps) => {
 				)}
 			</Link>
 			{sessionData?.user && (
-				<OnlyRole filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
+				<Filter filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
 					<Link
 						href="/hackers"
 						className={
@@ -79,7 +79,7 @@ const Links = ({ bottom }: LinkProps) => {
 							t("hackers")
 						)}
 					</Link>
-				</OnlyRole>
+				</Filter>
 			)}
 		</>
 	);

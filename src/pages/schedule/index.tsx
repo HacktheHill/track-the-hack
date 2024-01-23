@@ -39,9 +39,7 @@ const Schedule: NextPage = () => {
 	} else if (query.isError) {
 		return (
 			<App className="h-full bg-default-gradient px-16 py-12">
-				<div className="flex flex-col items-center justify-center gap-4">
-					<Error message={query.error.message} />
-				</div>
+				<Error message={query.error.message} />
 			</App>
 		);
 	}

@@ -1,3 +1,4 @@
+import { Children } from "react";
 import { useSession } from "next-auth/react";
 
 import { trpc } from "../utils/api";
@@ -5,12 +6,12 @@ import type { Roles } from "../utils/common";
 
 import Error from "./Error";
 
-type OnlyRoleProps = {
+type FilterProps = {
 	filter: (role: Roles) => boolean;
 	children: React.ReactNode;
 };
 
-const OnlyRole = ({ filter, children }: OnlyRoleProps) => {
+const Filter = ({ filter, children }: FilterProps) => {
 	const { data: sessionData } = useSession();
 	const id = sessionData?.user?.id ?? "";
 
@@ -28,7 +29,12 @@ const OnlyRole = ({ filter, children }: OnlyRoleProps) => {
 		return <>{children}</>;
 	}
 
+	const childrenArray = Children.toArray(children);
+	if (query.data && !filter(query.data) && childrenArray.length >= 2) {
+	  return <>{childrenArray[1]}</>;
+	}
+
 	return null;
 };
 
-export default OnlyRole;
+export default Filter;

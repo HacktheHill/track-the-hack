@@ -9,7 +9,7 @@ import App from "../../components/App";
 import { loadStripe } from "@stripe/stripe-js";
 import { useRouter } from "next/router";
 import Error from "../../components/Error";
-import OnlyRole from "../../components/OnlyRole";
+import Filter from "../../components/Filter";
 
 import Image from "next/image";
 import Loading from "../../components/Loading";
@@ -59,9 +59,7 @@ const Payment: NextPage = () => {
 	if (!idQuery || idQuery.length < 1) {
 		return (
 			<App className="h-full bg-default-gradient px-16 py-12">
-				<div className="flex flex-col items-center justify-center gap-4">
-					<Error message={"You need to provide a valid id."} />
-				</div>
+				<Error message={"You need to provide a valid id."} />
 			</App>
 		);
 	}
@@ -69,9 +67,7 @@ const Payment: NextPage = () => {
 	if (!companyQuery.isLoading && !companyQuery.data) {
 		return (
 			<App className="h-full bg-default-gradient px-16 py-12">
-				<div className="flex flex-col items-center justify-center gap-4">
-					<Error message={"This company does not exist"} />
-				</div>
+				<Error message={"This company does not exist"} />
 			</App>
 		);
 	}
@@ -98,14 +94,10 @@ const Payment: NextPage = () => {
 
 	return (
 		<App className="overflow-y-auto bg-default-gradient p-8 sm:p-12" title={t("title")}>
-			<OnlyRole filter={role => role === Role.SPONSOR || role === Role.ORGANIZER}>
+			<Filter filter={role => role === Role.SPONSOR || role === Role.ORGANIZER}>
 				<PaymentCard company={companyQuery.data} status={status} />
-			</OnlyRole>
-			{!sessionData?.user && (
-				<div className="flex flex-col items-center justify-center gap-4">
-					<Error message={t("not-authorized-to-view-this-page")} />
-				</div>
-			)}
+				<Error message={t("not-authorized-to-view-this-page")} />
+			</Filter>
 		</App>
 	);
 };
