@@ -1,4 +1,4 @@
-import { Role } from "@prisma/client";
+import { Role } from "../../../utils/common";
 import { z } from "zod";
 import { hasRoles } from "../../../utils/helpers";
 import { createTRPCRouter, protectedProcedure } from "../trpc";

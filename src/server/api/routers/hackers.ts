@@ -24,15 +24,19 @@ export const hackerRouter = createTRPCRouter({
 		.query(async ({ ctx, input }) => {
 			let hacker: HackerInfo | null = null;
 			if ("id" in input) {
-				hacker = await ctx.prisma.hackerInfo.findUnique({
+				hacker = await ctx.prisma.hacker.findUnique({
 					where: {
 						id: input.id,
 					},
 				});
 			} else if ("email" in input) {
-				hacker = await ctx.prisma.hackerInfo.findFirst({
+				if(input.)
+				hacker = await ctx.prisma.hacker.findFirst({
 					where: {
 						email: input.email,
+					},
+					include: {
+						presenceInfo: true,
 					},
 				});
 			}
@@ -82,7 +86,7 @@ export const hackerRouter = createTRPCRouter({
 	.query(async ({ ctx, input }) => {
 		let hacker: HackerInfo | null = null;
 		if ("id" in input) {
-			hacker = await ctx.prisma.hackerInfo.findFirst({
+			hacker = await ctx.prisma.hacker.findFirst({
 				take: -1,
 				skip: 1,
 				cursor: {

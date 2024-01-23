@@ -1,4 +1,4 @@
-import { Role } from "@prisma/client";
+import { Role } from "../../utils/common";
 import type { GetServerSideProps } from "next";
 import { getServerSession } from "next-auth/next";
 import { useTranslation } from "next-i18next";

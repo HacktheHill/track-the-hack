@@ -1,4 +1,4 @@
-import { Role } from "@prisma/client";
+import { Role } from "../utils/common";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { useTranslation } from "next-i18next";
 import Image from "next/image";

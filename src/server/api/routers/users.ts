@@ -1,6 +1,5 @@
-import { Role } from "@prisma/client";
 import { z } from "zod";
-import { roles } from "../../../utils/common";
+import { Roles } from "../../../utils/common";
 import { hasRoles } from "../../../utils/helpers";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
@@ -17,14 +16,26 @@ export const userRouter = createTRPCRouter({
 				where: {
 					id: input.id,
 				},
+				include: {
+					hacker: true,
+					organizer: true,
+					sponsor: true,
+				},
 			});
 			if (!user) {
 				return null;
 			}
-			const role = roles.safeParse(user.role);
-			if (role.success) {
-				return role.data;
+			
+			if(user.hacker) {
+				return "HACKER";
 			}
+			if(user.organizer) {
+				return "ORGANIZER";
+			}
+			if(user.sponsor) {
+				return "SPONSOR";
+			}
+
 			return null;
 		}),
 

@@ -48,13 +48,24 @@ export const matchesRole = (role: Roles, roles: Roles[]) => {
  * // => true if user.role is Role.ORGANIZER or Role.SPONSOR
  * // => false otherwise
  */
-export const hasRoles = (user: User, roles: Roles[]) => {
+export const hasRoles = (user: User, roles: string[]) => {
 	if (!user) {
 		return false;
 	}
 
-	// If the user has at least one of the given roles, return true
-	return roles.some(role => user.role === role);
+	roles.forEach(role => {
+		if (user.hackerId && role === "HACKER") {
+			return true;
+		}
+		if (user.organizerId && role === "ORGANIZER") {
+			return true;
+		}
+		if (user.sponsorId && role === "SPONSOR") {
+			return true;
+		}
+	});
+	
+	return false;
 };
 
 /**

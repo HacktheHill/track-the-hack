@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { Role, Language, PrismaClient } from "@prisma/client";
+import { Language, PrismaClient } from "@prisma/client";
 
 // Generates dummy users
 const user = () => {
@@ -12,7 +12,6 @@ const user = () => {
 	return {
 		name,
 		email,
-		role: Role.HACKER,
 		image: "https://i.pravatar.cc/50",
 		hackerInfo: {
 			create: {

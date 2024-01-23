@@ -1,4 +1,4 @@
-import { Role } from "@prisma/client";
+import { Role } from "../../../utils/common";
 import { sponsorshipGmailDraftsSchema } from "../../../utils/common";
 import { hasRoles } from "../../../utils/helpers";
 import { createDraft } from "../../lib/gmail";
