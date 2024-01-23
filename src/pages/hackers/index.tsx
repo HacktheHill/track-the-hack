@@ -12,7 +12,7 @@ import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import App from "../../components/App";
 import Error from "../../components/Error";
 import Loading from "../../components/Loading";
-import OnlyRole from "../../components/OnlyRole";
+import Filter from "../../components/Filter";
 import { hackersRedirect } from "../../utils/redirects";
 import { authOptions } from "../api/auth/[...nextauth]";
 
@@ -60,22 +60,16 @@ const Hackers: NextPage = () => {
 	if (status === "loading") {
 		return (
 			<App className="h-full bg-default-gradient px-16 py-12">
-				<OnlyRole filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
+				<Filter filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
 					<Loading />
-				</OnlyRole>
-				<OnlyRole filter={role => role === Role.HACKER}>
-					<div className="flex flex-col items-center justify-center gap-4">
-						<Error message={t("not-authorized-to-view-this-page")} />
-					</div>
-				</OnlyRole>
+					<Error message={t("not-authorized-to-view-this-page")} />
+				</Filter>
 			</App>
 		);
 	} else if (status === "error") {
 		return (
 			<App className="h-full bg-default-gradient px-16 py-12">
-				<div className="flex flex-col items-center justify-center gap-4">
-					<Error message={query.error?.message ?? ""} />
-				</div>
+				<Error message={query.error?.message ?? ""} />
 			</App>
 		);
 	}

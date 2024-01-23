@@ -9,7 +9,7 @@ const Error = ({ message }: ErrorProps) => {
 	const { t } = useTranslation("common");
 
 	return (
-		<>
+		<div className="flex flex-col items-center justify-center gap-4">
 			<code>
 				{t("error", {
 					message,
@@ -23,7 +23,7 @@ const Error = ({ message }: ErrorProps) => {
 					{t("contact-us")}
 				</button>
 			</Link>
-		</>
+		</div>
 	);
 };
 
