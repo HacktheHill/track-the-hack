@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Roles } from "../../../utils/common";
+import { Role } from "../../../utils/common";
 import { hasRoles } from "../../../utils/helpers";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
@@ -58,9 +58,9 @@ export const userRouter = createTRPCRouter({
 				throw new Error("User not found");
 			}
 
-			const hacker = await ctx.prisma.hackerInfo.findFirst({
+			const hacker = await ctx.prisma.hacker.findFirst({
 				where: {
-					userId: input.id,
+					id: input.id,
 				},
 			});
 
@@ -68,7 +68,7 @@ export const userRouter = createTRPCRouter({
 				return null;
 			}
 
-			if (!hasRoles(user, [Role.SPONSOR, Role.ORGANIZER]) && hacker.userId !== user.id) {
+			if (!hasRoles(user, [Role.SPONSOR, Role.ORGANIZER]) && hacker.id !== user.id) {
 				throw new Error("You do not have permission to do this");
 			}
 
