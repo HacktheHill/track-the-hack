@@ -29,7 +29,15 @@ export const hackerRouter = createTRPCRouter({
 					where: {
 						id: input.id,
 					},
-					
+					include: {
+						user: true,       
+						personalInfo: true, 
+						education: true,    
+						emergency: true,   
+						preferences: true,   
+						socials: true,      
+						miscellaneousInfo: true,   
+					},	
 				});
 			} else if ("email" in input) {
 				
@@ -38,7 +46,17 @@ export const hackerRouter = createTRPCRouter({
 						email: input.email,
 					},
 					include: {
-						hacker: true,
+						hacker: {
+							include: {
+								user: true,       
+								personalInfo: true, 
+								education: true,    
+								emergency: true,   
+								preferences: true,   
+								socials: true,      
+								miscellaneousInfo: true,   
+							},
+						},
 					},
 				});
 
@@ -71,6 +89,15 @@ export const hackerRouter = createTRPCRouter({
 				cursor: {
 					id: input.id,
 				},
+				include: {
+					user: true,       
+					personalInfo: true, 
+					education: true,    
+					emergency: true,   
+					preferences: true,   
+					socials: true,      
+					miscellaneousInfo: true,        
+				},
 			});
 		}
 
@@ -99,8 +126,13 @@ export const hackerRouter = createTRPCRouter({
 					id: input.id,
 				},
 				include: {
-					personalInfo: true,
-
+					user: true,       
+					personalInfo: true, 
+					education: true,    
+					emergency: true,   
+					preferences: true,   
+					socials: true,      
+					miscellaneousInfo: true,   
 				},
 			});
 		}
@@ -141,7 +173,19 @@ export const hackerRouter = createTRPCRouter({
 			//return all hackers if no pagination is needed
 			if (!input) {
 				return {
-					results: await ctx.prisma.hacker.findMany(),
+					results: await ctx.prisma.hacker.findMany(
+						{
+							include: {					
+								user: true,       
+								personalInfo: true, 
+								education: true,    
+								emergency: true,   
+								preferences: true,   
+								socials: true,      
+								miscellaneousInfo: true,   
+							}
+						}
+					),
 					nextCursor: null,
 				};
 			}
@@ -153,6 +197,15 @@ export const hackerRouter = createTRPCRouter({
 				cursor: cursor ? { id: cursor } : undefined,
 				orderBy: {
 					id: "asc",
+				},
+				include: {
+					user: true,       
+					personalInfo: true, 
+					education: true,    
+					emergency: true,   
+					preferences: true,   
+					socials: true,      
+					miscellaneousInfo: true,   
 				},
 			});
 
@@ -182,10 +235,13 @@ export const hackerRouter = createTRPCRouter({
 					id: input.id,
 				},
 				include: {
-					personalInfo: true,
-					miscellaneousInfo: true,
-					preferences: true,
-					user: true,
+					user: true,       
+					personalInfo: true, 
+					education: true,    
+					emergency: true,   
+					preferences: true,   
+					socials: true,      
+					miscellaneousInfo: true,   
 				}
 			});
 			
@@ -276,7 +332,7 @@ export const hackerRouter = createTRPCRouter({
 					}
 				}
 			});
-
+			
 			if (!person) {
 				throw new Error("PersonalInfo with given email not found");
 			}
@@ -295,9 +351,9 @@ export const hackerRouter = createTRPCRouter({
 				throw new Error("Tokens provided are incorrect");
 			}
 
-			return ctx.prisma.hacker.updateMany({
+			return ctx.prisma.emailUnsubscribe.updateMany({
 				where: {
-					email: input.email,
+					id: person.hacker.preferences?.emailUnsubscribe?.id,
 				},
 				data: {
 					unsubscribed: input.unsubscribe,
@@ -328,17 +384,59 @@ export const hackerRouter = createTRPCRouter({
 				throw new Error("You do not have permission to do this");
 			}
 
-			const hacker = await ctx.prisma.hackerInfo.create({
+			const hacker = await ctx.prisma.hacker.create({
 				data: {
-					...input,
-					walkIn: true,
-					presenceInfo: {
-						create: {
-							checkedIn: true,
-						},
+				  user: {
+					connect: {
+					  // Connect the following info to the user
+					  id: userId,
 					},
+				  },
+				  personalInfo: {
+					create: {
+					  // Add personalInfo data  
+						
+					},
+				  },
+				  education: {
+					create: {
+					  // Add education data  
+					},
+				  },
+				  emergency: {
+					create: {
+					  // Add emergency contact data  
+					},
+				  },
+				  preferences: {
+					create: {
+					  // Add preferences data  
+					},
+				  },
+				  socials: {
+					create: {
+					  // Add socials data  
+					},
+				  },
+				  miscellaneousInfo: {
+					create: {
+					  // Add miscellaneousInfo data  
+					},
+				  },
+				  events: {
+					// You can add events data  
+				  },
+				  presences: {
+					// You can add presences data  
+				  },
+				  responses: {
+					// You can add responses data  
+				  },
+				  tags: {
+					// You can add tags data  
+				  },
 				},
-			});
+			  });
 			await logAuditEntry(
 				ctx,
 				hacker.id,

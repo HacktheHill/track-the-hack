@@ -81,7 +81,7 @@ const Hackers: NextPage = () => {
 	}
 
 	const hackers = query.data?.pages.map(page => page.results).flat();
-
+	
 	const filteredQuery =
 		search.length == 0
 			? hackers

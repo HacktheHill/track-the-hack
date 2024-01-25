@@ -14,7 +14,7 @@ import OnlyRole from "../../components/OnlyRole";
 import {Role, walkInSchema } from "../../utils/common";
 
 type Hacker = Prisma.HackerGetPayload<true>;
-type PresenceGetPayload = Prisma.PresenceGetPayload<true>;
+type Presence = Prisma.PresenceGetPayload<true>;
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {

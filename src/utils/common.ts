@@ -6,7 +6,7 @@ export const Role = {HACKER : "HACKER", ORGANIZER : "ORGANIZER", SPONSOR : "SPON
 export type Roles = {HACKER : "HACKER", ORGANIZER : "ORGANIZER", SPONSOR : "SPONSOR"};
 export const Tag = {CONFIRMED : "CONFIRMED"}
 
-
+//TO-DO: Replace all instances of Walk-in with the other Info schemas
 export const walkInSchema = z.object({
 	email: z.string(),
 	firstName: z.string(),
@@ -30,6 +30,53 @@ export const walkInSchema = z.object({
 	linkLinkedin: z.string().optional(),
 	linkPersonalSite: z.string().optional(),
 });
+
+export const personalInfoSchema = z.object({
+	preferredLanguage: z.enum([Language.EN, Language.FR]).default(Language.EN),
+	email: z.string(),
+	firstName: z.string(),
+	lastName: z.string(),
+	gender: z.string().default("Prefer not to say"),
+	phoneNumber: z.string(),
+	city: z.string().nullable(),
+	hackerId: z.string().nullable().optional(), // Assuming hackerId can be optional
+	sponsorId: z.string().nullable().optional(), // Assuming sponsorId can be optional
+	organizerId: z.string().nullable().optional(), // Assuming organizerId can be optional
+});
+
+const emergencyContactSchema = z.object({
+	name: z.string().nullable(),
+	phoneNumber: z.string().nullable(),
+	relationship: z.string().nullable(),
+	hackerId: z.string().nullable().optional(), // Assuming hackerId can be optional
+  });
+
+export const educationSchema = z.object({
+	university: z.string().nullable(),
+	studyLevel: z.string().nullable(),
+	studyProgram: z.string().nullable(),
+	graduationYear: z.number().nullable(),
+	hackerId: z.string().nullable().optional(), // Assuming hackerId can be optional
+});
+  
+const SocialsSchema = z.object({
+	hackerId: z.string().nullable().optional(), // Assuming hackerId can be optional
+	github: z.string().nullable(),
+	linkedin: z.string().nullable(),
+	personalSite: z.string().nullable(),
+});
+
+const PreferencesSchema = z.object({
+  id: z.string().optional(),
+  dietaryRestrictions: z.string().nullable(),
+  accessibilityRequirements: z.string().nullable(),
+  transportationRequired: z.boolean().default(false),
+  attendanceType: z.enum(["IN_PERSON"]).default("IN_PERSON"),
+  shirtSize: z.enum([ShirtSize.S, ShirtSize.M, ShirtSize.L, ShirtSize.XL, ShirtSize.XXL]).default(ShirtSize.M),
+  hackerId: z.string().nullable().optional(),
+  emailUnsubscribeId: z.string().nullable(),
+});
+
 
 export const sponsorshipGmailDraftsSchema = z.object({
 	organizerFullName: z.string(),
