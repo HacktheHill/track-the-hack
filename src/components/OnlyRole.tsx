@@ -1,12 +1,10 @@
 import { useSession } from "next-auth/react";
 
 import { trpc } from "../utils/api";
-import type { Roles } from "../utils/common";
-
 import Error from "./Error";
 
 type OnlyRoleProps = {
-	filter: (role: Roles) => boolean;
+	filter: (role: string) => boolean;
 	children: React.ReactNode;
 };
 

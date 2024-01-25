@@ -4,7 +4,9 @@ import { Language, ShirtSize, Tiers } from "@prisma/client";
 
 export const Role = {HACKER : "HACKER", ORGANIZER : "ORGANIZER", SPONSOR : "SPONSOR"};
 export type Roles = {HACKER : "HACKER", ORGANIZER : "ORGANIZER", SPONSOR : "SPONSOR"};
-console.log()
+export const Tag = {CONFIRMED : "CONFIRMED"}
+
+
 export const walkInSchema = z.object({
 	email: z.string(),
 	firstName: z.string(),

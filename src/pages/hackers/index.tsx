@@ -1,11 +1,11 @@
-import { Role, type HackerInfo } from "@prisma/client";
+import {type Hacker } from "@prisma/client";
 import type { NextPage } from "next";
 import { useTranslation } from "next-i18next";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { trpc } from "../../utils/api";
 import { debounce } from "../../utils/helpers";
-
+import { Role } from "../../utils/common";
 import type { GetServerSideProps } from "next";
 import { getServerSession } from "next-auth/next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";

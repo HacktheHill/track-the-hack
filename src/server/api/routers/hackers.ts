@@ -1,9 +1,10 @@
-import { AttendanceType, Role, ShirtSize, type HackerInfo } from "@prisma/client";
+import { AttendanceType, ShirtSize, type Hacker } from "@prisma/client";
 import { z } from "zod";
-import { walkInSchema } from "../../../utils/common";
+import { walkInSchema, Role, Tag } from "../../../utils/common";
 import { hasRoles } from "../../../utils/helpers";
 import { logAuditEntry } from "../../audit";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+
 
 const DEFAULT_ACCEPTANCE_EXPIRY = new Date(2023, 2, 6, 5, 0, 0, 0); // 2023-03-06 00:00:00 EST
 
@@ -22,23 +23,28 @@ export const hackerRouter = createTRPCRouter({
 				),
 		)
 		.query(async ({ ctx, input }) => {
-			let hacker: HackerInfo | null = null;
+			let hacker: Hacker | null = null;
 			if ("id" in input) {
 				hacker = await ctx.prisma.hacker.findUnique({
 					where: {
 						id: input.id,
 					},
+					
 				});
 			} else if ("email" in input) {
-				if(input.)
-				hacker = await ctx.prisma.hacker.findFirst({
+				
+				const personalInfo = await ctx.prisma.personalInfo.findFirst({
 					where: {
 						email: input.email,
 					},
 					include: {
-						presenceInfo: true,
+						hacker: true,
 					},
 				});
+
+				if (personalInfo) {
+					hacker = personalInfo.hacker;
+				}
 			}
 
 			if (!hacker) {
@@ -57,9 +63,9 @@ export const hackerRouter = createTRPCRouter({
 			}),
 	)
 	.query(async ({ ctx, input }) => {
-		let hacker: HackerInfo | null = null;
+		let hacker: Hacker | null = null;
 		if ("id" in input) {
-			hacker = await ctx.prisma.hackerInfo.findFirst({
+			hacker = await ctx.prisma.hacker.findFirst({
 				take: 1,
 				skip: 1,
 				cursor: {
@@ -84,13 +90,17 @@ export const hackerRouter = createTRPCRouter({
 			}),
 	)
 	.query(async ({ ctx, input }) => {
-		let hacker: HackerInfo | null = null;
+		let hacker: Hacker | null = null;
 		if ("id" in input) {
 			hacker = await ctx.prisma.hacker.findFirst({
 				take: -1,
 				skip: 1,
 				cursor: {
 					id: input.id,
+				},
+				include: {
+					personalInfo: true,
+
 				},
 			});
 		}
@@ -128,17 +138,17 @@ export const hackerRouter = createTRPCRouter({
 				throw new Error("You do not have permission to do this");
 			}
 
-			//return all hackerInfo if no pagination is needed
+			//return all hackers if no pagination is needed
 			if (!input) {
 				return {
-					results: await ctx.prisma.hackerInfo.findMany(),
+					results: await ctx.prisma.hacker.findMany(),
 					nextCursor: null,
 				};
 			}
 
 			const { limit, cursor } = input;
 
-			const results = await ctx.prisma.hackerInfo.findMany({
+			const results = await ctx.prisma.hacker.findMany({
 				take: limit + 1, // get an extra item at the end which we'll use as next cursor
 				cursor: cursor ? { id: cursor } : undefined,
 				orderBy: {
@@ -159,54 +169,85 @@ export const hackerRouter = createTRPCRouter({
 			};
 		}),
 
-	// Confirm a hacker's attendance
 	confirm: protectedProcedure
 		.input(
 			z.object({
 				id: z.string(),
-				shirtSize: z.enum([ShirtSize.S, ShirtSize.M, ShirtSize.L, ShirtSize.XL, ShirtSize.XXL]),
-				attendanceType: z.enum([AttendanceType.IN_PERSON, AttendanceType.ONLINE]),
 				userId: z.string(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
-			const hacker = await ctx.prisma.hackerInfo.findUnique({
+			const hacker = await ctx.prisma.hacker.findUnique({
 				where: {
 					id: input.id,
 				},
+				include: {
+					personalInfo: true,
+					miscellaneousInfo: true,
+					preferences: true,
+					user: true,
+				}
 			});
+			
+			const userId = hacker?.user?.id;
+			const preferences = hacker?.preferences;
+			const miscellaneousInfo = hacker?.miscellaneousInfo;
 
 			if (!hacker) {
 				throw new Error("Hacker not found");
 			}
 
-			if (hacker.confirmed) {
+			if (hacker.user) {
 				throw new Error("Hacker already confirmed");
 			}
-
-			if (hacker.userId && hacker.userId !== input.userId) {
+			
+			if (userId && userId !== input.userId) {
 				throw new Error("Hacker already assigned to another account");
 			}
+			
 
-			if (hacker.onlyOnline && input.attendanceType !== AttendanceType.ONLINE) {
+			if (preferences?.attendanceType !== AttendanceType.ONLINE) {
 				throw new Error("Hacker can only attend online");
 			}
 
-			if ((hacker.acceptanceExpiry ?? 0) < new Date()) {
+			//TO-DO: Implement acceptance expiries into more than one event.
+			if ((miscellaneousInfo?.acceptanceExpiry ?? 0) < new Date()) {
 				throw new Error("Hacker acceptance expired");
 			}
 
-			return ctx.prisma.hackerInfo.update({
+
+			const confirmedTag = await ctx.prisma.tag.findFirst({
+				where: {
+					value: Tag.CONFIRMED
+				},
+			});
+
+			const updatedHacker = ctx.prisma.hacker.update({
 				where: {
 					id: input.id,
 				},
-				data: {
-					shirtSize: input.attendanceType === AttendanceType.ONLINE ? null : input.shirtSize,
-					attendanceType: input.attendanceType,
-					userId: input.userId,
-					confirmed: true,
+				data: confirmedTag ? {
+					user: {
+						connect: {
+							id: input.userId,
+						},
+					},
+					tags: {
+						connect: {
+							id: confirmedTag?.id,
+						},
+					},
+				} : {
+					user: {
+						connect: {
+							id: input.userId,
+						},
+					},
 				},
+				
 			});
+
+			return updatedHacker;
 		}),
 
 	// Unsubscribe a hacker from emails
@@ -219,25 +260,42 @@ export const hackerRouter = createTRPCRouter({
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
-			const hacker = await ctx.prisma.hackerInfo.findFirst({
+			const person = await ctx.prisma.personalInfo.findFirst({
 				where: {
 					email: input.email,
 				},
+				include: {
+					hacker: {
+						include: {
+							preferences: {
+								include : {
+									emailUnsubscribe: true,
+								}
+							},
+						},
+					}
+				}
 			});
 
-			if (!hacker) {
-				throw new Error("Hacker not found");
+			if (!person) {
+				throw new Error("PersonalInfo with given email not found");
 			}
+
+
+			if (!person.hacker) {
+				throw new Error("PersonalInfo found, Hacker not found");
+			}
+			const token = person.hacker.preferences?.emailUnsubscribe?.unsubscribeToken;
 
 			// If the hacker has an unsubscribe token and is not using it or is using it incorrectly
 			if (
-				hacker.unsubscribeToken !== null &&
-				(input.unsubscribeToken === null || hacker.unsubscribeToken !== input.unsubscribeToken)
+				token !== null &&
+				(input.unsubscribeToken === null || token !== input.unsubscribeToken)
 			) {
-				throw new Error("invalid-unsubscribe-token");
+				throw new Error("Tokens provided are incorrect");
 			}
 
-			return ctx.prisma.hackerInfo.updateMany({
+			return ctx.prisma.hacker.updateMany({
 				where: {
 					email: input.email,
 				},

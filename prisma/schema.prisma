@@ -79,6 +79,7 @@ model Hacker {
   emergency    EmergencyContact?
   preferences  Preferences? 
   socials      Socials?
+  miscellaneousInfo         MiscellaneousInfo?
   events       Event[]
   presences    Presence[]
   responses    Response[]
@@ -209,12 +210,15 @@ model Preferences {
   shirtSize                    ShirtSize?
   hacker                     Hacker?        @relation(fields: [hackerId], references: [id])
   hackerId                   String?        @unique
+  emailUnsubscribe           EmailUnsubscribe?  @relation(fields: [emailUnsubscribeId], references: [id])
+  emailUnsubscribeId         String?        @unique
 }
 
 model EmailUnsubscribe {
   id                           String         @id @default(cuid())
   unsubscribed                 Boolean        @default(false)
   unsubscribeToken             String?        @unique @default(cuid())
+  preferences                  Preferences?  
 }
 
 model MiscellaneousInfo {
@@ -223,6 +227,8 @@ model MiscellaneousInfo {
   acceptanceExpiry             DateTime?
   walkIn                       Boolean        @default(false)
   waiver                       Boolean        @default(false)
+  Hacker                       Hacker?        @relation(fields: [hackerId], references: [id])
+  hackerId                     String?        @unique
 }
 
 //Can be used to add statuses/tags to hackers related to an event (winner of X challenge, accepted into X event, waitlisted on X event, etc...)
