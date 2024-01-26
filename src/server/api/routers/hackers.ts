@@ -4,6 +4,8 @@ import { walkInSchema, Role, Tag } from "../../../utils/common";
 import { hasRoles } from "../../../utils/helpers";
 import { logAuditEntry } from "../../audit";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+import { getTRPCErrorFromUnknown } from "@trpc/server";
+import { TURBO_TRACE_DEFAULT_MEMORY_LIMIT } from "next/dist/shared/lib/constants";
 
 
 const DEFAULT_ACCEPTANCE_EXPIRY = new Date(2023, 2, 6, 5, 0, 0, 0); // 2023-03-06 00:00:00 EST
@@ -144,13 +146,96 @@ export const hackerRouter = createTRPCRouter({
 		return hacker;
 	}),
 
-	// Get all hackers
-	all: protectedProcedure
+	// // Get all hackers
+	// all: protectedProcedure
+	// 	.input(
+	// 		z
+	// 			.object({
+	// 				limit: z.number().min(1).max(100),
+	// 				cursor: z.string().nullish(),
+	// 			})
+	// 			.optional(),
+	// 	)
+	// 	.query(async ({ ctx, input }) => {
+	// 		const userId = ctx.session.user.id;
+	// 		const user = await ctx.prisma.user.findUnique({
+	// 			where: {
+	// 				id: userId,
+	// 			},
+	// 		});
+
+	// 		if (!user) {
+	// 			throw new Error("User not found");
+	// 		}
+
+	// 		if (!hasRoles(user, [Role.SPONSOR, Role.ORGANIZER])) {
+	// 			throw new Error("You do not have permission to do this");
+	// 		}
+
+	// 		//return all hackers if no pagination is needed
+	// 		if (!input) {
+	// 			return {
+	// 				results: await ctx.prisma.hacker.findMany(
+	// 					{
+	// 						include: {					
+	// 							user: true,       
+	// 							personalInfo: true, 
+	// 							education: true,    
+	// 							emergency: true,   
+	// 							preferences: true,   
+	// 							socials: true,      
+	// 							miscellaneousInfo: true,   
+	// 						}
+	// 					}
+	// 				),
+	// 				nextCursor: null,
+	// 			};
+	// 		}
+
+	// 		const { limit, cursor } = input;
+
+	// 		const results = await ctx.prisma.hacker.findMany({
+	// 			take: limit + 1, // get an extra item at the end which we'll use as next cursor
+	// 			cursor: cursor ? { id: cursor } : undefined,
+	// 			orderBy: {
+	// 				id: "asc",
+	// 			},
+	// 			include: {
+	// 				user: true,       
+	// 				personalInfo: true, 
+	// 				education: true,    
+	// 				emergency: true,   
+	// 				preferences: true,   
+	// 				socials: true,      
+	// 				miscellaneousInfo: true,   
+	// 			},
+	// 		});
+
+	// 		let nextCursor: typeof cursor | undefined = undefined;
+
+	// 		if (results.length > limit) {
+	// 			const nextItem = results.pop();
+	// 			nextCursor = nextItem?.id;
+	// 		}
+
+	// 		return {
+	// 			results,
+	// 			nextCursor,
+	// 		};
+	// 	}),
+
+		// Get all hackers
+		all: protectedProcedure
 		.input(
 			z
 				.object({
 					limit: z.number().min(1).max(100),
 					cursor: z.string().nullish(),
+					schools: z.array(z.string()).optional(),
+					currentLevelsOfStudy: z.array(z.string()).optional(),
+					programs: z.array(z.string()).optional(),
+					graduationYears: z.array(z.number()).optional(),
+					attendanceTypes: z.array(z.nativeEnum(AttendanceType)).optional(),
 				})
 				.optional(),
 		)
@@ -159,7 +244,7 @@ export const hackerRouter = createTRPCRouter({
 			const user = await ctx.prisma.user.findUnique({
 				where: {
 					id: userId,
-				},
+				}
 			});
 
 			if (!user) {
@@ -170,42 +255,66 @@ export const hackerRouter = createTRPCRouter({
 				throw new Error("You do not have permission to do this");
 			}
 
-			//return all hackers if no pagination is needed
+			//return all hackerInfo if no pagination is needed
 			if (!input) {
 				return {
-					results: await ctx.prisma.hacker.findMany(
-						{
-							include: {					
-								user: true,       
-								personalInfo: true, 
-								education: true,    
-								emergency: true,   
-								preferences: true,   
-								socials: true,      
-								miscellaneousInfo: true,   
-							}
-						}
-					),
+					results: await ctx.prisma.hacker.findMany(),
 					nextCursor: null,
 				};
 			}
 
-			const { limit, cursor } = input;
+			const { limit, cursor, schools, currentLevelsOfStudy, programs, graduationYears, attendanceTypes } = input;
+
+			interface QueryConditions {
+				education: {
+					university?: { in: string[] }| null;
+					studyLevel?: { in: string[] }| null;
+					studyProgram?: { in: string[] }| null;
+					graduationYear?: { in: number[] }| null;
+				}
+				preferences: {
+					attendanceType?: { in: AttendanceType[] };
+				}
+			}
+
+			const queryConditions: QueryConditions = { education: {}, preferences: {}};
+
+			if (schools && schools.length > 0) {
+				queryConditions.education.university = { in: schools };
+			}
+
+			if (currentLevelsOfStudy && currentLevelsOfStudy.length > 0) {
+				queryConditions.education.studyLevel = { in: currentLevelsOfStudy };
+			}
+
+			if (programs && programs.length > 0) {
+				queryConditions.education.studyProgram = { in: programs };
+			}
+
+			if (graduationYears && graduationYears.length > 0) {
+				queryConditions.education.graduationYear = { in: graduationYears };
+			}
+
+			if (attendanceTypes && attendanceTypes.length > 0) {
+				queryConditions.preferences.attendanceType = { in: attendanceTypes };
+			}
+
 
 			const results = await ctx.prisma.hacker.findMany({
 				take: limit + 1, // get an extra item at the end which we'll use as next cursor
 				cursor: cursor ? { id: cursor } : undefined,
+				include: {
+					user: true,
+					personalInfo: true, 
+					education: true,
+					emergency: true,
+					preferences: true,
+					socials: true,
+					miscellaneousInfo: true,
+				},
+				where: queryConditions,
 				orderBy: {
 					id: "asc",
-				},
-				include: {
-					user: true,       
-					personalInfo: true, 
-					education: true,    
-					emergency: true,   
-					preferences: true,   
-					socials: true,      
-					miscellaneousInfo: true,   
 				},
 			});
 
@@ -221,6 +330,74 @@ export const hackerRouter = createTRPCRouter({
 				nextCursor,
 			};
 		}),
+
+		// get of all the options you can filter the hackers by
+		filterOptions: protectedProcedure
+		.query(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+			const user = await ctx.prisma.user.findUnique({
+				where: {
+					id: userId,
+				}
+			});
+
+			if (!user) {
+				throw new Error("User not found");
+			}
+
+			if (!hasRoles(user, [Role.SPONSOR, Role.ORGANIZER])) {
+				throw new Error("You do not have permission to do this");
+			}
+
+			const filterOptions: {
+				schools: string[];
+				currentLevelsOfStudy: string[];
+				programs: string[];
+				graduationYears: string[];
+				attendanceTypes: string[];
+			} = {
+				schools: [],
+				currentLevelsOfStudy: [],
+				programs: [],
+				graduationYears: [],
+				attendanceTypes: [],
+			};
+
+			const hackers = await ctx.prisma.hacker.findMany({
+				include: {
+					user: true,
+                    personalInfo: true, 
+                    education: true,
+                    emergency: true,
+                    preferences: true,
+                    socials: true,
+                    miscellaneousInfo: true,
+				}
+			})
+
+			hackers?.forEach(hacker => {
+				hacker.education?.university && !filterOptions.schools.includes(hacker.education?.university.toLowerCase())
+					? filterOptions.schools.push(hacker.education?.university.toLowerCase())
+					: "";
+				hacker.education?.studyLevel && !filterOptions.currentLevelsOfStudy.includes(hacker.education?.studyLevel.toLowerCase())
+					? filterOptions.currentLevelsOfStudy.push(hacker.education?.studyLevel.toLowerCase())
+					: "";
+				hacker.education?.studyProgram && !filterOptions.programs.includes(hacker.education?.studyProgram.toLowerCase())
+					? filterOptions.programs.push(hacker.education?.studyProgram.toLowerCase())
+					: "";
+				hacker.education?.graduationYear && !filterOptions.graduationYears.includes(hacker.education?.graduationYear.toString())
+					? filterOptions.graduationYears.push(hacker.education?.graduationYear.toString())
+					: "";
+				hacker.preferences?.attendanceType && !filterOptions.attendanceTypes.includes(hacker.preferences?.attendanceType)
+					? filterOptions.attendanceTypes.push(hacker.preferences?.attendanceType)
+					: "";
+			});
+
+			return {
+				filterOptions
+			};
+		}),
+
 
 	confirm: protectedProcedure
 		.input(
