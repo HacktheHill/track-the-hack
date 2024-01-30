@@ -348,7 +348,7 @@ export const hackerRouter = createTRPCRouter({
 						const auditEntry = {
 							action: "/update-hacker-info",
 							entityType: "UpdateHackerInfo",
-							userName: user.username ?? "Unknown",
+							userName: user.name ?? "Unknown",
 							details: `Updated field ${field} from ${String(before)} to ${String(
 								after ?? "empty",
 							)}`,
