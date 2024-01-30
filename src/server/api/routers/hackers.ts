@@ -282,7 +282,7 @@ export const hackerRouter = createTRPCRouter({
 				hacker.id,
 				"/walk-in",
 				"WalkIn",
-				user.username ?? "Unknown",
+				user.name ?? "Unknown",
 				`${input.firstName} ${input.lastName} walked in.`,
 			);
 
@@ -318,7 +318,7 @@ export const hackerRouter = createTRPCRouter({
 				userId,
 				"/update-hacker-info",
 				"UpdateHackerInfo",
-				user.username ?? "Unknown",
+				user.name ?? "Unknown",
 				"Updated hacker information",
 			);
 			const hackerDetails = await ctx.prisma.hackerInfo.findUnique({
@@ -348,7 +348,7 @@ export const hackerRouter = createTRPCRouter({
 						const auditEntry = {
 							action: "/update-hacker-info",
 							entityType: "UpdateHackerInfo",
-							userName: user.username ?? "Unknown",
+							userName: user.name ?? "Unknown",
 							details: `Updated field ${field} from ${String(before)} to ${String(
 								after ?? "empty",
 							)}`,

@@ -32,7 +32,7 @@ export const sponsorshipRouter = createTRPCRouter({
 
 		const { organizerFullName, companyEmail, subject, emailHTML } = input;
 
-		const name = organizerFullName ?? user.username;
+		const name = organizerFullName ?? user.name;
 
 		if (!name) {
 			throw new Error("Organizer name is required");
