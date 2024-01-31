@@ -105,6 +105,11 @@ export const hackerRouter = createTRPCRouter({
 				.object({
 					limit: z.number().min(1).max(100),
 					cursor: z.string().nullish(),
+					schools: z.array(z.string()).optional(),
+					currentLevelsOfStudy: z.array(z.string()).optional(),
+					programs: z.array(z.string()).optional(),
+					graduationYears: z.array(z.number()).optional(),
+					attendanceTypes: z.array(z.nativeEnum(AttendanceType)).optional(),
 				})
 				.optional(),
 		)
@@ -132,11 +137,43 @@ export const hackerRouter = createTRPCRouter({
 				};
 			}
 
-			const { limit, cursor } = input;
+			const { limit, cursor, schools, currentLevelsOfStudy, programs, graduationYears, attendanceTypes } = input;
+
+			interface QueryConditions {
+				university?: { in: string[] }| null;
+    			studyLevel?: { in: string[] }| null;
+    			studyProgram?: { in: string[] }| null;
+    			graduationYear?: { in: number[] }| null;
+				attendanceType?: { in: AttendanceType[] };
+			}
+
+			const queryConditions: QueryConditions = {};
+
+			if (schools && schools.length > 0) {
+				queryConditions.university = { in: schools };
+			}
+
+			if (currentLevelsOfStudy && currentLevelsOfStudy.length > 0) {
+				queryConditions.studyLevel = { in: currentLevelsOfStudy };
+			}
+
+			if (programs && programs.length > 0) {
+				queryConditions.studyProgram = { in: programs };
+			}
+
+			if (graduationYears && graduationYears.length > 0) {
+				queryConditions.graduationYear = { in: graduationYears };
+			}
+
+			if (attendanceTypes && attendanceTypes.length > 0) {
+				queryConditions.attendanceType = { in: attendanceTypes };
+			}
+
 
 			const results = await ctx.prisma.hackerInfo.findMany({
 				take: limit + 1, // get an extra item at the end which we'll use as next cursor
 				cursor: cursor ? { id: cursor } : undefined,
+				where: queryConditions,
 				orderBy: {
 					id: "asc",
 				},
@@ -152,6 +189,63 @@ export const hackerRouter = createTRPCRouter({
 			return {
 				results,
 				nextCursor,
+			};
+		}),
+
+		// get of all the options you can filter the hackers by
+		filterOptions: protectedProcedure
+		.query(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+			const user = await ctx.prisma.user.findUnique({
+				where: {
+					id: userId,
+				},
+			});
+
+			if (!user) {
+				throw new Error("User not found");
+			}
+
+			if (!hasRoles(user, [Role.SPONSOR, Role.ORGANIZER])) {
+				throw new Error("You do not have permission to do this");
+			}
+
+			const filterOptions: {
+				schools: string[];
+				currentLevelsOfStudy: string[];
+				programs: string[];
+				graduationYears: string[];
+				attendanceTypes: string[];
+			} = {
+				schools: [],
+				currentLevelsOfStudy: [],
+				programs: [],
+				graduationYears: [],
+				attendanceTypes: [],
+			};
+
+			const hackers = await ctx.prisma.hackerInfo.findMany()
+
+			hackers?.forEach(hacker => {
+				hacker.university && !filterOptions.schools.includes(hacker.university.toLowerCase())
+					? filterOptions.schools.push(hacker.university.toLowerCase())
+					: "";
+				hacker.studyLevel && !filterOptions.currentLevelsOfStudy.includes(hacker.studyLevel.toLowerCase())
+					? filterOptions.currentLevelsOfStudy.push(hacker.studyLevel.toLowerCase())
+					: "";
+				hacker.studyProgram && !filterOptions.programs.includes(hacker.studyProgram.toLowerCase())
+					? filterOptions.programs.push(hacker.studyProgram.toLowerCase())
+					: "";
+				hacker.graduationYear && !filterOptions.graduationYears.includes(hacker.graduationYear.toString())
+					? filterOptions.graduationYears.push(hacker.graduationYear.toString())
+					: "";
+				hacker.attendanceType && !filterOptions.attendanceTypes.includes(hacker.attendanceType)
+					? filterOptions.attendanceTypes.push(hacker.attendanceType)
+					: "";
+			});
+
+			return {
+				filterOptions
 			};
 		}),
 
@@ -204,6 +298,62 @@ export const hackerRouter = createTRPCRouter({
 				},
 			});
 		}),
+
+	// all: protectedProcedure
+	// 	.input(
+	// 		z
+	// 			.object({
+	// 				limit: z.number().min(1).max(100),
+	// 				cursor: z.string().nullish(),
+	// 			})
+	// 			.optional(),
+	// 	)
+	// 	.query(async ({ ctx, input }) => {
+	// 		const userId = ctx.session.user.id;
+	// 		const user = await ctx.prisma.user.findUnique({
+	// 			where: {
+	// 				id: userId,
+	// 			},
+	// 		});
+
+	// 		if (!user) {
+	// 			throw new Error("User not found");
+	// 		}
+
+	// 		if (!hasRoles(user, [Role.SPONSOR, Role.ORGANIZER])) {
+	// 			throw new Error("You do not have permission to do this");
+	// 		}
+
+	// 		//return all hackerInfo if no pagination is needed
+	// 		if (!input) {
+	// 			return {
+	// 				results: await ctx.prisma.hackerInfo.findMany(),
+	// 				nextCursor: null,
+	// 			};
+	// 		}
+
+	// 		const { limit, cursor } = input;
+
+	// 		const results = await ctx.prisma.hackerInfo.findMany({
+	// 			take: limit + 1, // get an extra item at the end which we'll use as next cursor
+	// 			cursor: cursor ? { id: cursor } : undefined,
+	// 			orderBy: {
+	// 				id: "asc",
+	// 			},
+	// 		});
+
+	// 		let nextCursor: typeof cursor | undefined = undefined;
+
+	// 		if (results.length > limit) {
+	// 			const nextItem = results.pop();
+	// 			nextCursor = nextItem?.id;
+	// 		}
+
+	// 		return {
+	// 			results,
+	// 			nextCursor,
+	// 		};
+	// 	}),
 
 	// Unsubscribe a hacker from emails
 	unsubscribe: publicProcedure
