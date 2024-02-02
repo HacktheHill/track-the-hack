@@ -39,10 +39,6 @@ const Confirm: NextPage = () => {
 		if (query.error) setError(query.error.message);
 		if (mutation.error) setError(mutation.error.message);
 		if (query.data) {
-			if (query.data.confirmed === false) {
-				setError(t("acceptance-expired"));
-				return;
-			}
 
 			setShirtSize(query.data.shirtSize ?? ShirtSize.M);
 			setAttendanceType(
