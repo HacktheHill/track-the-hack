@@ -157,6 +157,11 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 		breakfast2: "Breakfast March 5th",
 		lunch2: "Lunch March 5th",
 		lunch22: "Lunch March 5th 2",
+		hackherCheckIn: "HackHER Check In",
+		hackherLunch: "HackHER Lunch",
+		hackherDinner: "HackHER Dinner",
+		hackherSnack: "HackHER Snack",
+
 	} as const satisfies Record<keyof Omit<PresenceInfo, "id" | "hackerInfoId">, string>;
 
 	const fields = [
