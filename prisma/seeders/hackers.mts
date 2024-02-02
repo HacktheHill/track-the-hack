@@ -2,6 +2,7 @@ import { faker } from "@faker-js/faker";
 import { Role, Language,  } from "@prisma/client";
 import { AttendanceType, PrismaClient, ShirtSize } from "@prisma/client";
 import csv from "csvtojson";
+import { create } from "domain";
 import * as fs from "fs";
 import { z } from "zod";
 const prisma = new PrismaClient();
@@ -54,6 +55,24 @@ const hackers = async () => {
 				onlyOnline: false,
 				walkIn: false,
 				winner: false,
+				presenceInfo: {
+					create: {
+						checkedIn: false,
+						breakfast1: false,
+						lunch1: false,
+						dinner1: false,
+						snacks: false,
+						snacks2: false,
+						redbull: false,
+						breakfast2: false,
+						lunch2: false,
+						lunch22: false,
+						hackherCheckIn: false,
+						hackherLunch: false,
+						hackherDinner: false,
+						hackherSnack: false,
+					},
+				}
 			};
 
 			return hackerInfo;
