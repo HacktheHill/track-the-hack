@@ -39,7 +39,7 @@ const Confirm: NextPage = () => {
 		if (query.error) setError(query.error.message);
 		if (mutation.error) setError(mutation.error.message);
 		if (query.data) {
-			if (query.data.confirmed === false && (query.data.acceptanceExpiry ?? 0) < new Date()) {
+			if (query.data.confirmed === false) {
 				setError(t("acceptance-expired"));
 				return;
 			}
@@ -48,7 +48,7 @@ const Confirm: NextPage = () => {
 			setAttendanceType(
 				query.data.onlyOnline ? AttendanceType.ONLINE : query.data.attendanceType ?? AttendanceType.IN_PERSON,
 			);
-			setIsSubmitted(query.data.confirmed);
+			setIsSubmitted(query.data.userId !== null);
 		}
 	}, [query.data, query.error, mutation.error, t]);
 
@@ -111,7 +111,7 @@ const Confirm: NextPage = () => {
 				<div className="flex max-w-[25rem] flex-col items-center gap-6">
 					<h3 className="font-rubik text-[clamp(1rem,1vmin,5rem)] font-medium text-dark-color">
 						{t("congratulations-for-your-acceptance", {
-							name: query.data?.firstName ?? "",
+							name: query.data?.firstName ?? "Hacker",
 						})}
 					</h3>
 					<div className="flex flex-col items-center justify-center gap-3">
@@ -140,82 +140,6 @@ const Confirm: NextPage = () => {
 							</button>
 						)}
 					</div>
-					{query.data?.walkIn === false &&
-						(query.data?.onlyOnline ? (
-							<p className="font-rubik text-[clamp(1rem,1vmin,5rem)] font-medium text-dark-color">
-								{t("only-online")}
-							</p>
-						) : (
-							<div className="flex flex-col items-start justify-center gap-3">
-								<p>{t("please-confirm-the-form-below")}</p>
-								<div className="flex items-center justify-center gap-2">
-									<input
-										type="radio"
-										id="in-person"
-										name="attendanceType"
-										value={AttendanceType.IN_PERSON}
-										checked={attendanceType === AttendanceType.IN_PERSON}
-										onChange={handleAttendanceTypeChange}
-										className="flex h-4 w-4 appearance-none items-center justify-center rounded-full border-medium bg-transparent text-black after:m-0.5 after:block after:h-full after:w-full after:border-black after:leading-[calc(100%*3/4)] after:checked:content-check"
-									/>
-									<label
-										htmlFor="in-person"
-										className="whitespace-nowrap text-[clamp(1rem,1vmin,5rem)]"
-									>
-										{t("attendanceType.in-person")}
-									</label>
-								</div>
-								<div className="flex items-center justify-center gap-2">
-									<input
-										type="radio"
-										id="online"
-										name="attendanceType"
-										value={AttendanceType.ONLINE}
-										checked={attendanceType === AttendanceType.ONLINE}
-										onChange={handleAttendanceTypeChange}
-										className="flex h-4 w-4 appearance-none items-center justify-center rounded-full border border-medium bg-transparent text-black after:m-0.5 after:block after:h-full after:w-full after:border-black after:leading-[calc(100%*3/4)] after:checked:content-check"
-									/>
-									<label htmlFor="online" className="whitespace-nowrap text-[clamp(1rem,1vmin,5rem)]">
-										{t("attendanceType.online")}
-									</label>
-								</div>
-								{attendanceType === AttendanceType.IN_PERSON && (
-									<div className="flex items-center justify-center gap-6">
-										<label
-											htmlFor="shirtSize"
-											className="whitespace-nowrap text-[clamp(1rem,1vmin,5rem)]"
-										>
-											{t("t-shirt.label")}
-										</label>
-										<div className="rounded-2xl border border-medium px-4 py-2">
-											<select
-												name="shirtSize"
-												id="shirtSize"
-												value={shirtSize}
-												onChange={handleShirtSizeChange}
-												className="w-full border-none bg-transparent text-black text-inherit focus-visible:outline-none"
-											>
-												<option value="S" className="bg-light-color">
-													{t("t-shirt.small")}
-												</option>
-												<option value="M" className="bg-light-color">
-													{t("t-shirt.medium")}
-												</option>
-												<option value="L" className="bg-light-color">
-													{t("t-shirt.large")}
-												</option>
-												<option value="XL" className="bg-light-color">
-													{t("t-shirt.x-large")}
-												</option>
-												<option value="XXL" className="bg-light-color">
-													{t("t-shirt.xx-large")}
-												</option>
-											</select>
-										</div>
-									</div>
-								)}
-							</div>
-						))}
 					<div className="flex flex-col gap-3">
 						<div className="flex flex-row items-center justify-center gap-2">
 							<input
@@ -246,7 +170,7 @@ const Confirm: NextPage = () => {
 						{validationMessage && <p className="text-center text-red-500">{validationMessage}</p>}
 						<button
 							type="submit"
-							className="hover:bg-medium transform cursor-pointer whitespace-nowrap rounded-normal border-0 bg-light-color px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-rubik text-[clamp(1rem,1vmin,5rem)] text-light-color shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition"
+							className="hover:bg-medium transform cursor-pointer whitespace-nowrap rounded-normal border-0 bg-dark-primary-color px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-rubik text-[clamp(1rem,1vmin,5rem)] text-light-color shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition"
 						>
 							{t("confirm")}
 						</button>
