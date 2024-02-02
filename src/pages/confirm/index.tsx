@@ -6,7 +6,8 @@ import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState } from "react";
 import FormPage from "../../components/FormPage";
-import { trpc } from "../../utils/api";
+import { trpc } from "../../utils/api"; 
+import Link from "next/link";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
@@ -94,6 +95,7 @@ const Confirm: NextPage = () => {
 			user={query.data ?? null}
 			title={t("confirm")}
 		>
+	
 			{isSubmitted ? (
 				<div className="flex flex-col items-center justify-center gap-6">
 					<h3 className="font-rubik text-[clamp(1rem,1vmin,5rem)] font-medium text-dark-color">
@@ -102,6 +104,16 @@ const Confirm: NextPage = () => {
 					<p className="font-rubik text-[clamp(1rem,1vmin,5rem)] font-medium text-dark-color">
 						{t("we-look-forward-to-seeing-you")}
 					</p>
+					<p className="font-rubik text-[clamp(1rem,1vmin,5rem)] font-medium text-dark-color">
+						{"Please check out your special QR code for the event. You will use it to check in at the event."}
+					</p>
+					<button
+						className="transform cursor-pointer whitespace-nowrap rounded-normal border-2 border-light-color px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-rubik text-[clamp(1rem,1vmin,5rem)] text-light-color shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition hover:bg-light-color/50"
+						onClick={() => {void router.push(`/qr`)}}
+					>
+						{t("view-qr-code")}
+					</button>
+
 				</div>
 			) : (
 				<div className="flex max-w-[25rem] flex-col items-center gap-6">
