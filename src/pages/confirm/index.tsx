@@ -48,7 +48,7 @@ const Confirm: NextPage = () => {
 			setAttendanceType(
 				query.data.onlyOnline ? AttendanceType.ONLINE : query.data.attendanceType ?? AttendanceType.IN_PERSON,
 			);
-			setIsSubmitted(query.data.userId !== null);
+			setIsSubmitted(query.data.confirmed);
 		}
 	}, [query.data, query.error, mutation.error, t]);
 
