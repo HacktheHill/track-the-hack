@@ -48,16 +48,16 @@ model Session {
 }
 
 model User {
-  id           String       @id @default(cuid())
-  name     String?      @map("username")
-  email        String?      @unique
-  image String?      @map("profileImage")
-  role         Role         @default(HACKER)
+  id            String       @id @default(cuid())
+  name          String?      @map("username")
+  email         String?      @unique
+  image         String?      @map("profileImage")
+  role          Role         @default(HACKER)
   emailVerified DateTime?
-  accounts     Account[]
-  sessions     Session[]
-  hackerInfo   HackerInfo[]
-  auditLog     AuditLog[]
+  accounts      Account[]
+  sessions      Session[]
+  hackerInfo    HackerInfo[]
+  auditLog      AuditLog[]
 }
 
 model VerificationToken {
@@ -112,19 +112,23 @@ model HackerInfo {
 }
 
 model PresenceInfo {
-  id           String     @id @default(cuid())
-  checkedIn    Boolean    @default(false)
-  breakfast1   Boolean    @default(false)
-  lunch1       Boolean    @default(false)
-  dinner1      Boolean    @default(false)
-  snacks       Boolean    @default(false)
-  snacks2      Boolean    @default(false)
-  redbull      Boolean    @default(false)
-  breakfast2   Boolean    @default(false)
-  lunch2       Boolean    @default(false)
-  lunch22      Boolean    @default(false)
-  hackerInfo   HackerInfo @relation(fields: [hackerInfoId], references: [id])
-  hackerInfoId String     @unique
+  id             String     @id @default(cuid())
+  checkedIn      Boolean    @default(false)
+  breakfast1     Boolean    @default(false)
+  lunch1         Boolean    @default(false)
+  dinner1        Boolean    @default(false)
+  snacks         Boolean    @default(false)
+  snacks2        Boolean    @default(false)
+  redbull        Boolean    @default(false)
+  breakfast2     Boolean    @default(false)
+  lunch2         Boolean    @default(false)
+  lunch22        Boolean    @default(false)
+  hackherCheckIn Boolean    @default(false)
+  hackherLunch   Boolean    @default(false)
+  hackherDinner  Boolean    @default(false)
+  hackherSnack   Boolean    @default(false)
+  hackerInfo     HackerInfo @relation(fields: [hackerInfoId], references: [id])
+  hackerInfoId   String     @unique
 }
 
 model Event {
