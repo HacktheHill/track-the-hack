@@ -282,9 +282,6 @@ export const hackerRouter = createTRPCRouter({
 				throw new Error("Hacker can only attend online");
 			}
 
-			if ((hacker.acceptanceExpiry ?? 0) < new Date()) {
-				throw new Error("Hacker acceptance expired");
-			}
 
 			return ctx.prisma.hackerInfo.update({
 				where: {
