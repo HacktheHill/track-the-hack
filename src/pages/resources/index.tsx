@@ -106,11 +106,11 @@ const components = {
 			{children}
 		</p>
 	),
-	/* a: ({ children, node, ...props }: ComponentProps) => (
-		<a className="text-blue-900" {...props}>
+	a: ({ children, node, ...props }: ComponentProps) => (
+		<a className="text-blue-500" {...props}>
 			{children}
 		</a>
-	), */
+	),
 	ul: ({ children, node, ...props }: ComponentProps) => {
 		const { depth, ordered, className, ...rest } = props as {
 			depth: number;
@@ -119,7 +119,7 @@ const components = {
 		};
 
 		return (
-			<ul className="list-disc" {...rest}>
+			<ul className="list-disc text-dark-color" {...rest}>
 				{children}
 			</ul>
 		);
@@ -132,7 +132,7 @@ const components = {
 		};
 
 		return (
-			<ol className="list-decimal" {...rest}>
+			<ol className="list-decimal text-dark-color" {...rest}>
 				{children}
 			</ol>
 		);
@@ -146,7 +146,7 @@ const components = {
 
 		if (className === "task-list-item") {
 			return (
-				<li className="ml-4" {...rest}>
+				<li className="ml-4 text-dark-color" {...rest}>
 					<input type="checkbox" checked={checked} readOnly />
 					{children}
 				</li>
