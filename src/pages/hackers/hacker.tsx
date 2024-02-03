@@ -84,7 +84,7 @@ const Hacker: NextPage = () => {
 					{prevHackerQuery.data ? (
 						<a
 						href={`/hackers/hacker?id=${prevHackerQuery.data.id}`}
-						className="flex items-center justify-center gap-2 rounded-md bg-gray-800 px-4 py-2 text-light-color hover:bg-gray-700"
+						className="flex items-center justify-center gap-2 rounded-md bg-gray-800 px-4 py-2 text-dark-color hover:bg-gray-700"
 						>
 						Previous
 						</a>
@@ -94,7 +94,7 @@ const Hacker: NextPage = () => {
 					{nextHackerQuery.data && (
 						<a
 						href={`/hackers/hacker?id=${nextHackerQuery.data.id}`}
-						className="flex items-center justify-center gap-2 rounded-md bg-gray-800 px-4 py-2 text-light-color hover:bg-gray-700"
+						className="flex items-center justify-center gap-2 rounded-md bg-gray-800 px-4 py-2 text-dark-color hover:bg-gray-700"
 						>
 						Next
 						</a>
@@ -411,7 +411,7 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 	};
 
 	return (
-		<>
+		<div className="text-dark-color flex flex-col">
 			<h1 className="self-center font-coolvetica text-4xl font-normal text-dark-color">
 				{hackerData.firstName} {hackerData.lastName} ({hackerData.gender})
 			</h1>
@@ -493,13 +493,13 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 					</div>
 				))}
 
-				<input
+				{/* <input
 					ref={resumeUploadRef}
 					className="rounded-md border border-gray-400 p-2"
 					type="file"
 					accept="application/pdf"
 					onChange={handleUploadResume}
-				/>
+				/> */}
 
 				<p className="flex flex-row flex-wrap justify-center gap-4 py-4">
 					{Object.entries({
@@ -515,7 +515,7 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 									href={value}
 									target="_blank"
 									rel="noreferrer"
-									className="flex items-center justify-center gap-2 rounded-md bg-dark-color px-4 py-2 text-light-color hover:bg-gray-700"
+									className="flex items-center justify-center gap-2 rounded-md bg-light-color px-4 py-2 text-dark-color hover:bg-gray-700"
 								>
 									{key}
 								</a>
@@ -548,7 +548,7 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 
 				{edit && (
 					<div className="sticky bottom-0 mx-2 flex justify-center">
-						<div className="flex max-w-md rounded-md bg-dark-color px-2 py-2 text-light-color transition delay-150 ease-in-out">
+						<div className="flex max-w-md rounded-md bg-dark-color px-2 py-2 text-dark-color transition delay-150 ease-in-out">
 							<div className="flex flex-col items-center gap-2">
 								<p className="px-5 py-2 text-center">{t("edit_description")}</p>
 							</div>
@@ -565,7 +565,7 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 					</div>
 				)}
 			</form>
-		</>
+		</div>
 	);
 };
 
