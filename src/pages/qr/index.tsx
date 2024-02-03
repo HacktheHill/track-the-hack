@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth/next";
 import { useTranslation } from "next-i18next";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { hackersRedirect } from "../../utils/redirects";
 import { authOptions } from "../api/auth/[...nextauth]";
 
@@ -20,6 +20,9 @@ const QR = () => {
 	const { t } = useTranslation("qr");
 	const router = useRouter();
 	const [error, setError] = useState(false);
+	useEffect(() => {
+		t
+	}, [t]);
 
 	const onScan = (data: string) => {
 		void router.push(`/hackers/hacker?id=${data}`);

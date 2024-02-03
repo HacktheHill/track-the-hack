@@ -1,6 +1,6 @@
 import { EventType } from "@prisma/client";
 
-const day1 = "2023-08-8";
+const day1 = "2024-02-3";
 import { faker } from "@faker-js/faker";
 import { Role, Language,  } from "@prisma/client";
 import { AttendanceType, PrismaClient, ShirtSize } from "@prisma/client";
@@ -81,17 +81,16 @@ const prisma = new PrismaClient();
 // 	},
 // ];
 
-const events = () => {
+const events = async () => {
 	const headers = [
 		//headers on the csv file
-        "fullName", 
-		"email",
-		"pronouns",	
-		"gender",
-		"linkedin",	
-		"university",	
-		"dietaryRestrictions",	
-		"accommodations",
+        "start", 
+		"end",
+		"name",	
+		"type",
+		"description",	
+		"room",	
+		"image",	
 	];
 
     const registrations = csv({
@@ -100,9 +99,23 @@ const events = () => {
         delimiter: ",",
     });
 
-    void fs.createReadStream("prisma/responses.csv").pipe(registrations);
+    void fs.createReadStream("prisma/events.csv").pipe(registrations);
+	const temp = await registrations
+	const events = temp.map(event => {
+		const eventInfo =  
+			{
+				start: new Date(`${day1} ${event.start}`),
+				end: new Date(`${day1} ${event.end}`),
+				name: event.name,
+				type: event.type,
+				description: event.description,
+				room: event.room,
+				image: event.image,
+			};
+			return eventInfo;
+		});
 
-	
+		return events;
 }
 
 export { events };

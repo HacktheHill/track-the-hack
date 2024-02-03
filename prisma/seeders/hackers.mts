@@ -28,7 +28,7 @@ const hackers = async () => {
         delimiter: ",",
     });
 
-    void fs.createReadStream("prisma/responses.csv").pipe(registrations);
+    void fs.createReadStream("prisma/response.csv").pipe(registrations);
 	const temp = await registrations
 	const hackers = temp.map(hacker => {
 		const names = hacker.fullName.split(' ');
@@ -57,20 +57,6 @@ const hackers = async () => {
 				winner: false,
 				presenceInfo: {
 					create: {
-						checkedIn: false,
-						breakfast1: false,
-						lunch1: false,
-						dinner1: false,
-						snacks: false,
-						snacks2: false,
-						redbull: false,
-						breakfast2: false,
-						lunch2: false,
-						lunch22: false,
-						hackherCheckIn: false,
-						hackherLunch: false,
-						hackherDinner: false,
-						hackherSnack: false,
 					},
 				}
 			};

@@ -20,8 +20,8 @@ async function main() {
 	// console.log("uploading hacker infos to the app");
 	// const hackerInfos = uploadHackers(prisma.hackerInfo, hackers);
 
-	const temp = await hackers();
-	await insertRecords(prisma.hackerInfo, temp)
+	const temp = await events();
+	await insertRecords(prisma.event, temp)
 }
 
 main()
