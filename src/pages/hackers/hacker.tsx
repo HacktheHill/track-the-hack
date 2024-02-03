@@ -147,20 +147,12 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 	const boldClass = "text-left font-bold";
 
 	const keyToLabel = {
-		checkedIn: "Checked In",
-		breakfast1: "Breakfast March 4th",
-		lunch1: "Lunch March 4th",
-		dinner1: "Dinner March 4th",
-		snacks: "Snacks",
-		snacks2: "Snacks 2",
-		redbull: "RedBull",
-		breakfast2: "Breakfast March 5th",
-		lunch2: "Lunch March 5th",
-		lunch22: "Lunch March 5th 2",
-		hackherCheckIn: "HackHER Check In",
-		hackherLunch: "HackHER Lunch",
-		hackherDinner: "HackHER Dinner",
-		hackherSnack: "HackHER Snack",
+		checkedIn: "Check In",
+		lunch: "Lunch",
+		dinner: "Dinner",
+		snack: "First Snack",
+		snack2: "Second Snack",
+		snack3: "Third Snack",
 
 	} as const satisfies Record<keyof Omit<PresenceInfo, "id" | "hackerInfoId">, string>;
 

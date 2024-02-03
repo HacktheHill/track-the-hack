@@ -165,7 +165,7 @@ const Confirm: NextPage = () => {
 									components={{
 										a: (
 											<a
-												href="/Hack_the_Hill_2023_waiver_and_terms.pdf"
+												href="/Hack_the_Hill_agreements.pdf"
 												target="_blank"
 												rel="noreferrer"
 												className="underline"
