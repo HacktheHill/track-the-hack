@@ -133,7 +133,7 @@ const Hackers: NextPage = () => {
 	return (
 		// 2 <App>s based on whether or not sidebar is visible is made because the scroll to bottom wouldnt be detected when the filter sidebar was on
 		<> {sidebarVisible && <App className="mainWindow flex flex-col overflow-y-auto bg-default-gradient" integrated={true} title={t("title")}  onScroll={handleScroll}>
-			<div className="border-b border-dark-color bg-light-quaternary-color px-4 pb-4 pt-2 shadow-navbar sm:px-20">
+			<div className="border-b text-dark-color border-dark-color bg-light-quaternary-color px-4 pb-4 pt-2 shadow-navbar sm:px-20">
 				<div className="flex">
 					<button
 						className="border-dark m-1 mr-3 rounded-xl bg-medium-primary-color px-6 text-sm text-light-color"
@@ -310,7 +310,7 @@ const FilterOptions = ({ filters, setFilters, filterOptions, sidebarVisible }: F
 		<>
 			{sidebarVisible && (
 				<div className="border-dark text-dark ml-10 mt-5 flex flex-col align-middle">
-					<div className="z-40 w-60 rounded-lg border-b border-dark-color bg-light-quaternary-color p-5 text-center ">
+					<div className="z-40 m-2 w-60 rounded-lg border-b border-dark-color text-dark-color bg-light-quaternary-color p-5 text-center ">
 						<div className="mb-4 font-bold lg:text-lg xl:text-xl">Filter Options</div>
 						<ul>
 							<li className="mb-4">

@@ -6,7 +6,7 @@ import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Image from "next/image";
 import App from "../components/App";
 import { NextUIProvider } from "@nextui-org/react";
-
+import Weather from "../components/Weather";
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
 		props: await serverSideTranslations(locale ?? "en", ["common", "navbar", "index"]),
@@ -19,17 +19,18 @@ const Home: NextPage = () => {
 
 	return (
 		<NextUIProvider>
-			<App className="relative flex flex-col items-center justify-center gap-2 overflow-clip bg-default-gradient px-8 py-6 sm:gap-8 short:px-16 short:py-12">
+			<App className="relative flex  flex-col items-center justify-center gap-2 overflow-clip bg-default-gradient px-8 py-6 sm:gap-8 short:px-16 short:py-12">
+				<Weather count={45} type="snowflake" />
 				<Image
 					priority
-					className="z-10"
-					src="/assets/mascot-waving.svg"
+					className="z-10 animate-hoverAnimation"
+					src="/assets/mascot-waving.png"
 					alt="Mascot"
 					width={225}
 					height={225}
 				/>
-				<p className="z-10 text-center text-lg font-bold short:text-2xl">{t("welcome")}</p>
-				<p className="z-10 max-w-xl text-center text-sm short:text-base">{t("explanation")}</p>
+				<p className="z-10 text-dark-color text-center text-lg font-bold short:text-2xl">{t("welcome")}</p>
+				<p className="z-10 text-dark-color max-w-xl text-center text-sm short:text-base">{t("explanation")}</p>
 				{!sessionData && (
 					<button
 						className="z-10 whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-color transition-colors hover:bg-light-tertiary-color short:text-base"

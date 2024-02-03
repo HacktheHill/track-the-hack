@@ -404,7 +404,7 @@ export const hackerRouter = createTRPCRouter({
 					id: userId,
 				},
 			});
-
+			
 			if (!user) {
 				throw new Error("User not found");
 			}

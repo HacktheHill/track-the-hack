@@ -6,7 +6,7 @@
 		"online": "En ligne sur Twitch"
 	},
 	"confirm": "Confirmer",
-	"congratulations-for-your-acceptance": "Félicitations {{name}} pour votre acceptation à Hack the Hill 2023 !",
+	"congratulations-for-your-acceptance": "Félicitations {{name}} pour votre acceptation à HackHers !",
 	"error-no-id-found": "Erreur : aucun ID trouvé",
 	"invalid-confirmation-link": "Lien de confirmation invalide. Veuillez utiliser le lien de l'e-mail de confirmation que vous avez reçu.",
 	"only-online": "Vous avez été accepté comme participant en ligne et vous pourrez rejoindre l'événement sur Twitch. Veuillez confirmer votre participation ci-dessous.",
@@ -23,7 +23,7 @@
 		"xx-large": "TT-Grand"
 	},
 	"thank-you-for-confirming-your-attendance": "Merci d'avoir confirmé votre présence !",
-	"we-look-forward-to-seeing-you": "Nous avons hâte de vous voir à Hack the Hill !",
+	"we-look-forward-to-seeing-you": "Nous avons hâte de vous voir à HackHers !",
 	"you-must-accept-terms": "Vous devez accepter les termes et conditions pour continuer.",
 	"you-must-be-logged-in": "Vous devez être connecté pour continuer."
 }

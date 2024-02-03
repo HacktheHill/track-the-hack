@@ -30,7 +30,7 @@ type ComponentProps = {
 const components = {
 	/* eslint-disable  @typescript-eslint/no-unused-vars */
 	h1: ({ children, node, ...props }: ComponentProps) => (
-		<h1 className="my-2 text-4xl font-bold" {...props}>
+		<h1 className="my-2 text-4xl font-bold text-dark-color"  {...props}>
 			{React.Children.map(children, child => {
 				if (typeof child === "string") {
 					return child;
@@ -42,7 +42,7 @@ const components = {
 		</h1>
 	),
 	h2: ({ children, node, ...props }: ComponentProps) => (
-		<h2 className="my-2 text-3xl font-bold" {...props}>
+		<h2 className="my-2 text-3xl font-bold text-dark-color" {...props}>
 			{React.Children.map(children, child => {
 				if (typeof child === "string") {
 					return child;
@@ -54,7 +54,7 @@ const components = {
 		</h2>
 	),
 	h3: ({ children, node, ...props }: ComponentProps) => (
-		<h3 className="my-2 text-2xl font-bold" {...props}>
+		<h3 className="my-2 text-2xl font-bold text-dark-color" {...props}>
 			{React.Children.map(children, child => {
 				if (typeof child === "string") {
 					return child;
@@ -66,7 +66,7 @@ const components = {
 		</h3>
 	),
 	h4: ({ children, node, ...props }: ComponentProps) => (
-		<h4 className="my-2 text-xl font-bold" {...props}>
+		<h4 className="my-2 text-xl font-bold text-dark-color" {...props}>
 			{React.Children.map(children, child => {
 				if (typeof child === "string") {
 					return child;
@@ -78,7 +78,7 @@ const components = {
 		</h4>
 	),
 	h5: ({ children, node, ...props }: ComponentProps) => (
-		<h5 className="my-2 text-lg font-bold" {...props}>
+		<h5 className="my-2 text-lg font-bold text-dark-color" {...props}>
 			{React.Children.map(children, child => {
 				if (typeof child === "string") {
 					return child;
@@ -90,7 +90,7 @@ const components = {
 		</h5>
 	),
 	h6: ({ children, node, ...props }: ComponentProps) => (
-		<h6 className="my-2 text-base font-bold" {...props}>
+		<h6 className="my-2 text-base font-bold text-dark-color" {...props}>
 			{React.Children.map(children, child => {
 				if (typeof child === "string") {
 					return child;
@@ -102,7 +102,7 @@ const components = {
 		</h6>
 	),
 	p: ({ children, node, ...props }: ComponentProps) => (
-		<p className="my-2 text-base" {...props}>
+		<p className="my-2 text-base text-dark-color" {...props}>
 			{children}
 		</p>
 	),
@@ -286,7 +286,7 @@ const Resources: NextPage = () => {
 				href="https://discord.gg/8JNxJVMNrF"
 				target="_blank"
 				rel="noreferrer"
-				className="flex justify-center gap-2 self-center rounded-md bg-gray-800 px-4 py-2 text-light-color hover:bg-gray-700"
+				className="flex justify-center gap-2 self-center rounded-md bg-medium-primary-color px-4 py-2 text-dark-color hover:bg-dark-primary-color"
 			>
 				{t("join-our-discord-server")}
 			</a>

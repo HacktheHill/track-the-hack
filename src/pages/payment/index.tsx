@@ -150,7 +150,7 @@ const PaymentCard = ({ company, status }: PaymentCardProps) => {
 					<div className="flex flex-col items-center">
 						<Image
 							className="h-48 w-96 object-contain"
-							src="/assets/hackthehill-logo.svg"
+							src="/assets/hackhers-logo.svg"
 							alt="HackTheHill Logo"
 						/>
 					</div>

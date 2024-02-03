@@ -25,7 +25,7 @@ const Links = ({ bottom }: LinkProps) => {
 		<>
 			<Link
 				href="/"
-				className={bottom ? "" : "text-dark hover:text-light mx-4 flex items-center font-coolvetica text-2xl"}
+				className={bottom ? "" : "text-dark-color hover:text-light mx-4 flex items-center font-coolvetica text-2xl"}
 			>
 				{bottom ? <Image priority src="/assets/home.svg" height={32} width={32} alt={t("home")} /> : t("home")}
 			</Link>
@@ -33,7 +33,7 @@ const Links = ({ bottom }: LinkProps) => {
 				<Link
 					href="/qr"
 					className={
-						bottom ? "" : "text-dark hover:text-light mx-4 flex items-center font-coolvetica text-2xl"
+						bottom ? "" : "text-dark-color hover:text-light mx-4 flex items-center font-coolvetica text-2xl"
 					}
 				>
 					{bottom ? <Image priority src="/assets/qr.svg" height={32} width={32} alt={t("qr")} /> : t("qr")}
@@ -41,7 +41,7 @@ const Links = ({ bottom }: LinkProps) => {
 			)}
 			<Link
 				href="/schedule"
-				className={bottom ? "" : "text-dark hover:text-light mx-4 flex items-center font-coolvetica text-2xl"}
+				className={bottom ? "" : "text-dark-color hover:text-light mx-4 flex items-center font-coolvetica text-2xl"}
 			>
 				{bottom ? (
 					<Image priority src="/assets/schedule.svg" height={32} width={32} alt={t("schedule")} />
@@ -51,13 +51,13 @@ const Links = ({ bottom }: LinkProps) => {
 			</Link>
 			<Link
 				href="/maps"
-				className={bottom ? "" : "text-dark hover:text-light mx-4 flex items-center font-coolvetica text-2xl"}
+				className={bottom ? "" : "text-dark-color hover:text-light mx-4 flex items-center font-coolvetica text-2xl"}
 			>
 				{bottom ? <Image priority src="/assets/maps.svg" height={32} width={32} alt={t("maps")} /> : t("maps")}
 			</Link>
 			<Link
 				href="/resources"
-				className={bottom ? "" : "text-dark hover:text-light mx-4 flex items-center font-coolvetica text-2xl"}
+				className={bottom ? "" : "text-dark-color hover:text-light mx-4 flex items-center font-coolvetica text-2xl"}
 			>
 				{bottom ? (
 					<Image priority src="/assets/resources.svg" height={32} width={32} alt="Resources" />
@@ -70,7 +70,7 @@ const Links = ({ bottom }: LinkProps) => {
 					<Link
 						href="/hackers"
 						className={
-							bottom ? "" : "text-dark hover:text-light mx-4 flex items-center font-coolvetica text-2xl"
+							bottom ? "" : "text-dark-color hover:text-light mx-4 flex items-center font-coolvetica text-2xl"
 						}
 					>
 						{bottom ? (
@@ -96,7 +96,7 @@ const Navbar = ({ integrated }: NavbarProps) => {
 	return (
 		<nav
 			className={`sticky top-0 z-10 flex gap-4 whitespace-nowrap bg-light-quaternary-color p-4 ${
-				integrated ? "" : "border-b border-dark-primary-color shadow-navbar"
+				integrated ? "" : "border-b border-medium-primary-color shadow-navbar"
 			}`}
 			aria-label={t("navigation")}
 		>
@@ -105,17 +105,17 @@ const Navbar = ({ integrated }: NavbarProps) => {
 					<Image
 						className="hidden mobile:block"
 						priority
-						src="/assets/hackthehill-logo.svg"
-						height={64}
-						width={64}
+						src="/assets/hackhers-logo.svg"
+						height={238}
+						width={150}
 						alt={t("logo")}
 					/>
 					<Image
 						className="block mobile:hidden"
 						priority
-						src="/assets/hackthehill-banner.svg"
-						height={238}
-						width={238}
+						src="/assets/hackhers-logo.svg"
+						height={150}
+						width={150}
 						alt={t("logo")}
 					/>
 				</Link>
@@ -126,7 +126,7 @@ const Navbar = ({ integrated }: NavbarProps) => {
 			</div>
 
 			<button
-				className="hover:bg-light-quaternary right-4 ml-auto flex whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-color transition-colors sm:visible logo-center:absolute"
+				className="hover:bg-dark-primary-color right-4 ml-auto flex whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-color transition-colors sm:visible logo-center:absolute"
 				onClick={sessionData ? () => void signOut() : () => void signIn()}
 			>
 				{sessionData ? t("sign-out") : t("sign-in")}

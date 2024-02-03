@@ -41,7 +41,7 @@ const Snowflake = () => {
 
 	return (
 		<Image
-			src="/assets/snowflake.svg"
+			src="/assets/star.svg"
 			width={size}
 			height={size}
 			alt="Snowflake"
