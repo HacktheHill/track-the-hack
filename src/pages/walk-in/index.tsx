@@ -200,11 +200,11 @@ const WalkIn: NextPage = () => {
 	} as const;
 
 	return (
-		<App className="overflow-y-auto bg-default-gradient p-8 sm:p-12" title={t("title")}>
+		<App className="overflow-y-auto bg-default-gradient p-8 sm:p-12" title={"test"}>
 			<Filter filter={role => role === Role.ORGANIZER}>
 				{success ? (
 					<div className="flex flex-col items-center gap-8">
-						<h3 className="font-rubik text-4xl font-bold text-dark-color">{t("title")}</h3>
+						<h3 className="font-rubik text-4xl font-bold text-dark-color">{}</h3>
 						<QRCode id={mutation.data?.id} />
 						<button
 							className="cursor-pointer whitespace-nowrap rounded-[100px] border-none bg-light-color px-8 py-2 font-rubik text-light-color shadow-md transition-all duration-1000 hover:bg-medium-primary-color"
@@ -260,7 +260,6 @@ const WalkIn: NextPage = () => {
 						</button>
 					</form>
 				)}
-				<Error message={t("not-authorized-to-view-this-page")} />
 			</Filter>
 		</App>
 	);

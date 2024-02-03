@@ -1,3 +1,3 @@
-# Hack the Hill
+# HackHers
 
-The event is over now, but we hope to see you next year!
+The details for the event will appear here on Saturday!

@@ -108,7 +108,7 @@ const Confirm: NextPage = () => {
 						{"Please check out your special QR code for the event. You will use it to check in at the event."}
 					</p>
 					<button
-						className="transform cursor-pointer whitespace-nowrap rounded-normal border-2 border-light-color px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-rubik text-[clamp(1rem,1vmin,5rem)] text-light-color shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition hover:bg-light-color/50"
+						className="transform cursor-pointer whitespace-nowrap rounded-normal border-2 border-dark-color px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-rubik text-[clamp(1rem,1vmin,5rem)] bg-dark-secondary-color text-dark-color shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition hover:bg-light-color/50"
 						onClick={() => {void router.push(`/qr`)}}
 					>
 						{t("view-qr-code")}
@@ -122,7 +122,7 @@ const Confirm: NextPage = () => {
 							name: query.data?.firstName ?? "Hacker",
 						})}
 					</h3>
-					<div className="flex flex-col items-center justify-center gap-3">
+					<div className="flex flex-col items-center justify-center gap-3 text-dark-color">
 						{sessionData?.user?.id ? (
 							<>
 								<p>
@@ -132,7 +132,7 @@ const Confirm: NextPage = () => {
 								</p>
 								<button
 									type="button"
-									className="transform cursor-pointer whitespace-nowrap rounded-normal border-2 border-light-color px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-rubik text-[clamp(1rem,1vmin,5rem)] text-light-color shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition hover:bg-light-color/50"
+									className="transform cursor-pointer whitespace-nowrap rounded-normal border-2 border-dark-color px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-rubik text-[clamp(1rem,1vmin,5rem)] text-dark-color shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition hover:bg-dark-color/50"
 									onClick={() => void signOut()}
 								>
 									{t("sign-out")}
@@ -141,7 +141,7 @@ const Confirm: NextPage = () => {
 						) : (
 							<button
 								type="button"
-								className="hover:bg-blue transform cursor-pointer whitespace-nowrap rounded-normal border-2 border-light-color px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-rubik text-[clamp(1rem,1vmin,5rem)] text-light-color shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition hover:bg-light-color/50"
+								className="hover:bg-blue transform cursor-pointer whitespace-nowrap rounded-normal border-2 border-dark-color px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-rubik text-[clamp(1rem,1vmin,5rem)] text-dark-color shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition hover:bg-dark-primary-color/50"
 								onClick={() => void signIn()}
 							>
 								{t("sign-in")}
@@ -149,16 +149,16 @@ const Confirm: NextPage = () => {
 						)}
 					</div>
 					<div className="flex flex-col gap-3">
-						<div className="flex flex-row items-center justify-center gap-2">
+						<div className="flex flex-row items-center justify-center gap-2 text-dark-color">
 							<input
 								type="checkbox"
 								id="terms"
 								name="terms"
 								checked={terms}
 								onChange={() => setTerms(!terms)}
-								className="h-4 w-4 appearance-none rounded-lg border border-medium bg-transparent text-black after:block after:h-full after:w-full after:border-black after:p-0.5 after:leading-[calc(100%*1/2)] after:checked:content-check"
+								className="h-4 w-4 accent-white appearance-none rounded-lg border border-medium bg-transparent text-dark-color after:block after:h-full after:w-full after:border-white after:p-0.5 after:leading-[calc(100%*1/2)] after:checked:content-check after:checked:bg-white"
 							/>
-							<label htmlFor="terms" className="flex-1">
+							<label htmlFor="terms" className="flex-1 ">
 								<Trans
 									i18nKey="accept-terms"
 									t={t}
@@ -178,7 +178,7 @@ const Confirm: NextPage = () => {
 						{validationMessage && <p className="text-center text-red-500">{validationMessage}</p>}
 						<button
 							type="submit"
-							className="hover:bg-medium transform cursor-pointer whitespace-nowrap rounded-normal border-0 bg-dark-primary-color px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-rubik text-[clamp(1rem,1vmin,5rem)] text-light-color shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition"
+							className="hover:bg-medium transform cursor-pointer whitespace-nowrap rounded-normal border-0 bg-dark-primary-color px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-rubik text-[clamp(1rem,1vmin,5rem)] text-dark-color shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition hover:bg-medium-primary-color"
 						>
 							{t("confirm")}
 						</button>

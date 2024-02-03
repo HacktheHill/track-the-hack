@@ -36,7 +36,7 @@ export const authOptions: NextAuthOptions = {
 		}),
 	],
 	theme: {
-		logo: "/assets/hackthehill-logo.svg",
+		logo: "/assets/hackhers-logo.svg",
 		colorScheme: "light",
 	},
 };
