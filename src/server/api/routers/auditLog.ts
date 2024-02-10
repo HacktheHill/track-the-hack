@@ -1,11 +1,11 @@
 import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
-import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 const prisma = new PrismaClient();
 
 export const auditLogRouter = createTRPCRouter({
-	auditLog: protectedProcedure
+	auditLog: publicProcedure
 		.input(
 			z.object({
 				id: z.number(), // Assuming 'id' is auto-incremented, it should be a number

@@ -5,6 +5,8 @@ import { hackerRouter } from "./routers/hackers";
 import { paymentRouter } from "./routers/payment";
 import { presenceRouter } from "./routers/presence";
 import { sponsorshipRouter } from "./routers/sponsorship";
+import { responseRouter } from "./routers/response";
+import { questionRouter} from "./routers/question";
 import { userRouter } from "./routers/users";
 import { createTRPCRouter } from "./trpc";
 
@@ -23,6 +25,8 @@ export const appRouter = createTRPCRouter({
 	follow: followRouter,
 	auditLog: auditLogRouter,
 	payment: paymentRouter,
+	question: questionRouter,
+	response: responseRouter,
 });
 
 // export type definition of API

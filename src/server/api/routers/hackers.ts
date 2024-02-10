@@ -1,5 +1,5 @@
 import { AttendanceType, ShirtSize, type Hacker } from "@prisma/client";
-import { z } from "zod";
+import { number, z } from "zod";
 import { walkInSchema, Role, Tag } from "../../../utils/common";
 import { hasRoles } from "../../../utils/helpers";
 import { logAuditEntry } from "../../audit";
@@ -543,10 +543,13 @@ export const hackerRouter = createTRPCRouter({
 		.input(
 			walkInSchema.extend({
 				acceptanceExpiry: z.date().default(DEFAULT_ACCEPTANCE_EXPIRY),
+				//if you want to link the hackerInfo to account, add this argument
+				userId: z.string().optional(),
+				questionIdsToResponses: z.record(z.string(), z.string()).optional(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
-			const userId = ctx.session.user.id;
+			const userId = ctx.session?.user?.id;
 			const user = await ctx.prisma.user.findUnique({
 				where: {
 					id: userId,
@@ -557,9 +560,9 @@ export const hackerRouter = createTRPCRouter({
 				throw new Error("User not found");
 			}
 
-			if (!hasRoles(user, [Role.ORGANIZER])) {
-				throw new Error("You do not have permission to do this");
-			}
+			// List of keys to remove
+			const questionIdsToResponses = input.questionIdsToResponses;
+			delete input["questionIdsToResponses"]
 
 			const hacker = await ctx.prisma.hacker.create({
 				data: {
@@ -614,12 +617,26 @@ export const hackerRouter = createTRPCRouter({
 				  },
 				},
 			  });
+			  if (questionIdsToResponses) {
+				const responses = Object.entries(questionIdsToResponses).map(([questionId, response]) => {
+					return {
+						questionId,
+						hackerInfoId: hacker.id,
+						response,
+					};
+				});
+
+				await ctx.prisma.response.createMany({
+					data: responses,
+				});
+			}
+
 			await logAuditEntry(
 				ctx,
 				hacker.id,
 				"/walk-in",
 				"WalkIn",
-				user.username ?? "Unknown",
+				user.name ?? "Unknown",
 				`${input.firstName} ${input.lastName} walked in.`,
 			);
 
@@ -687,7 +704,7 @@ export const hackerRouter = createTRPCRouter({
 							entityType: "UpdateHackerInfo",
 							userName: user.username ?? "Unknown",
 							details: `Updated field ${field} from ${String(before)} to ${String(
-								after ?? "empty",
+								after ? after : "empty",
 							)}`,
 						};
 

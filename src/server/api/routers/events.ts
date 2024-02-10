@@ -33,4 +33,20 @@ export const eventsRouter = createTRPCRouter({
 
 		return events;
 	}),
+
+	checkHackers: publicProcedure
+	.input(
+		z.object({
+			id: z.string(),
+		}),
+	)
+	.query(async ({ ctx, input }) => {
+		const hackers = await ctx.prisma.event.findMany({
+			where: {
+				id: input.id,
+			},
+		});
+
+		return hackers;
+	}),
 });

@@ -40,13 +40,13 @@ const Links = ({ bottom }: LinkProps) => {
 				</Link>
 			)}
 			<Link
-				href="/schedule"
+				href="/events"
 				className={bottom ? "" : "text-dark hover:text-light mx-4 flex items-center font-coolvetica text-2xl"}
 			>
 				{bottom ? (
 					<Image priority src="/assets/schedule.svg" height={32} width={32} alt={t("schedule")} />
 				) : (
-					t("schedule")
+					t("events")
 				)}
 			</Link>
 			<Link
