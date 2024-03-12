@@ -126,7 +126,7 @@ model Event {
   id          String    @id @default(cuid())
   start       DateTime
   end         DateTime
-  name        String
+  name        String    @unique
   type        EventType @default(ALL)
   host        String?
   description String    @db.Text
@@ -138,6 +138,8 @@ model Event {
   hacker      Hacker[]
   questions   Question[]
   tags        Tag[]
+  presenceTypes PresenceType[]
+  
 }
 
 model Presence {
@@ -152,8 +154,14 @@ model Presence {
 //If the there exists a relation between PresenceType and Presence, then the Hacker it belongs to is ch
 model PresenceType {
   id String @id @default(cuid())
-  presence Presence[]
+  presence Presence @relation(fields: [presenceId], references: [id]) 
+  presenceId String
+  event Event @relation(fields: [eventId], references: [id])
+  eventId String
   name String
+
+  @@index([presenceId])
+  @@index([eventId])
 }
 
 model PersonalInfo {

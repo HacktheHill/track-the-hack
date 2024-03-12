@@ -1,4 +1,5 @@
-import { Role, type Hacker } from "@prisma/client";
+import { type Hacker } from "@prisma/client";
+import {Role, } from "../../utils/common";
 import type { NextPage } from "next";
 import { useTranslation } from "next-i18next";
 import Link from "next/link";
@@ -160,7 +161,6 @@ const Hackers: NextPage = () => {
   
 		const university = education?.university ?? '';
 		const studyProgram = education?.studyProgram ?? '';
-
 		const personalInfo = "personalInfo" in hacker && hacker.personalInfo !== null ? hacker.personalInfo : null;
   
 		const fullName = `${personalInfo?.firstName ?? ''} ${personalInfo?.lastName ?? ''}`.toLowerCase();

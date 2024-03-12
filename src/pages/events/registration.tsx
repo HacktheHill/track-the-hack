@@ -26,9 +26,8 @@ const Registration: NextPage = () => {
 	const eventId = router.query.eventId as string;
 	const signUpMutation = trpc.users.signUp.useMutation();
 	const questionMutation = trpc.response.createMany.useMutation();
-	const mutation = trpc.hackers.walkIn.useMutation();
+	const mutation = trpc.hackers.create.useMutation();
 	const [error, setError] = useState("");
-	const [success, setSuccess] = useState(false);
 	const hackerIdQuery = trpc.users.getHackerId.useQuery({ id: id ?? "" }, { enabled: !!id });
 	const applicationQuestions = trpc.question.all.useQuery({eventId: eventId}, { enabled: !!eventId });
 	

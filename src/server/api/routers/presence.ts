@@ -5,7 +5,7 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { logAuditEntry } from "../../audit";
 
 export const presenceRouter = createTRPCRouter({
-	getFromHackerId: protectedProcedure
+	getAllPresences: protectedProcedure
 		.input(
 			z.object({
 				id: z.string(),
@@ -27,9 +27,12 @@ export const presenceRouter = createTRPCRouter({
 				throw new Error("You do not have permission to do this");
 			}
 
-			const hacker = await ctx.prisma.hackerInfo.findUnique({
+			const hacker = await ctx.prisma.hacker.findUnique({
 				where: {
 					id: input.id,
+				},
+				include: {
+					presences: true,
 				},
 			});
 
@@ -37,30 +40,14 @@ export const presenceRouter = createTRPCRouter({
 				throw new Error("Hacker not found");
 			}
 
-			let presence = await ctx.prisma.presenceInfo.findUnique({
-				where: {
-					hackerInfoId: hacker.id,
-				},
-			});
-
-			if (!presence) {
-				presence = await ctx.prisma.presenceInfo.create({
-					data: {
-						hackerInfo: {
-							connect: {
-								id: hacker.id,
-							},
-						},
-					},
-				});
-			}
-
-			return presence;
+			return hacker.presences;
 		}),
+
 	update: protectedProcedure
 		.input(
 			z.object({
 				id: z.string(),
+				eventName: z.string(),
 				presenceInfo: z.record(z.boolean()),
 			}),
 		)
@@ -80,7 +67,7 @@ export const presenceRouter = createTRPCRouter({
 				throw new Error("You do not have permission to do this");
 			}
 
-			const hacker = await ctx.prisma.hackerInfo.findUnique({
+			const hacker = await ctx.prisma.hacker.findUnique({
 				where: {
 					id: input.id,
 				},
@@ -90,9 +77,10 @@ export const presenceRouter = createTRPCRouter({
 				throw new Error("Hacker not found");
 			}
 
-			const presenceInfoBefore = await ctx.prisma.presenceInfo.findUnique({
+			const presenceInfoBefore = await ctx.prisma.presence.findUnique({
 				where: {
-					hackerInfoId: hacker.id,
+					hackerId: hacker.id,
+					
 				},
 			});
 
@@ -103,7 +91,7 @@ export const presenceRouter = createTRPCRouter({
 				update: input.presenceInfo,
 				create: {
 					...input.presenceInfo,
-					hackerInfo: {
+					hacker: {
 						connect: {
 							id: hacker.id,
 						},

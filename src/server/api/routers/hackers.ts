@@ -1,14 +1,43 @@
 import { AttendanceType, ShirtSize, type Hacker } from "@prisma/client";
 import { number, z } from "zod";
-import { walkInSchema, Role, Tag } from "../../../utils/common";
+import { walkInSchema, Role, Tag, personalInfoSchema, emergencyContactSchema, educationSchema, socialsSchema, preferencesSchema, miscellanousInfoSchema } from "../../../utils/common";
 import { hasRoles } from "../../../utils/helpers";
 import { logAuditEntry } from "../../audit";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { getTRPCErrorFromUnknown } from "@trpc/server";
 import { TURBO_TRACE_DEFAULT_MEMORY_LIMIT } from "next/dist/shared/lib/constants";
-
-
+import { unescape } from "querystring";
+import { create } from "domain";
+import { connect } from "http2";
+import { id_ID } from "@faker-js/faker";
+import { events } from "../../../../prisma/seeders/events.mjs";
+import { PayloadSelect, createPayload } from "../../../utils/types";
+import { Prisma } from "@prisma/client";
+import { Prism } from "react-syntax-highlighter";
 const DEFAULT_ACCEPTANCE_EXPIRY = new Date(2023, 2, 6, 5, 0, 0, 0); // 2023-03-06 00:00:00 EST
+
+const temp = <T extends Prisma.HackerSelect[]>(...args: T) => args
+  
+type test = keyof Prisma.HackerSelect
+//convert test into an array of strings containing each of the possible values of test
+
+const hackerSelect = {
+	id: true,
+	user: true,       
+	personalInfo: true, 
+	education: true,    
+	emergency: true,   
+	preferences: true,   
+	socials: true,      
+	miscellaneousInfo: true,   
+	events : true,
+	presences : true,
+	responses : true,
+	tags: true,
+}
+
+
+
 
 export const hackerRouter = createTRPCRouter({
 	// Get a hacker by id or email
@@ -25,21 +54,13 @@ export const hackerRouter = createTRPCRouter({
 				),
 		)
 		.query(async ({ ctx, input }) => {
-			let hacker: Hacker | null = null;
+			let hacker = null;
 			if ("id" in input) {
 				hacker = await ctx.prisma.hacker.findUnique({
 					where: {
 						id: input.id,
 					},
-					include: {
-						user: true,       
-						personalInfo: true, 
-						education: true,    
-						emergency: true,   
-						preferences: true,   
-						socials: true,      
-						miscellaneousInfo: true,   
-					},	
+					select: hackerSelect,	
 				});
 			} else if ("email" in input) {
 				
@@ -47,17 +68,9 @@ export const hackerRouter = createTRPCRouter({
 					where: {
 						email: input.email,
 					},
-					include: {
+					select: {
 						hacker: {
-							include: {
-								user: true,       
-								personalInfo: true, 
-								education: true,    
-								emergency: true,   
-								preferences: true,   
-								socials: true,      
-								miscellaneousInfo: true,   
-							},
+							select: hackerSelect,
 						},
 					},
 				});
@@ -83,7 +96,7 @@ export const hackerRouter = createTRPCRouter({
 			}),
 	)
 	.query(async ({ ctx, input }) => {
-		let hacker: Hacker | null = null;
+		let hacker = null;
 		if ("id" in input) {
 			hacker = await ctx.prisma.hacker.findFirst({
 				take: 1,
@@ -91,15 +104,7 @@ export const hackerRouter = createTRPCRouter({
 				cursor: {
 					id: input.id,
 				},
-				include: {
-					user: true,       
-					personalInfo: true, 
-					education: true,    
-					emergency: true,   
-					preferences: true,   
-					socials: true,      
-					miscellaneousInfo: true,        
-				},
+				select: hackerSelect,
 			});
 		}
 
@@ -119,7 +124,7 @@ export const hackerRouter = createTRPCRouter({
 			}),
 	)
 	.query(async ({ ctx, input }) => {
-		let hacker: Hacker | null = null;
+		let hacker = null;
 		if ("id" in input) {
 			hacker = await ctx.prisma.hacker.findFirst({
 				take: -1,
@@ -127,15 +132,7 @@ export const hackerRouter = createTRPCRouter({
 				cursor: {
 					id: input.id,
 				},
-				include: {
-					user: true,       
-					personalInfo: true, 
-					education: true,    
-					emergency: true,   
-					preferences: true,   
-					socials: true,      
-					miscellaneousInfo: true,   
-				},
+				select: hackerSelect,
 			});
 		}
 
@@ -303,15 +300,7 @@ export const hackerRouter = createTRPCRouter({
 			const results = await ctx.prisma.hacker.findMany({
 				take: limit + 1, // get an extra item at the end which we'll use as next cursor
 				cursor: cursor ? { id: cursor } : undefined,
-				include: {
-					user: true,
-					personalInfo: true, 
-					education: true,
-					emergency: true,
-					preferences: true,
-					socials: true,
-					miscellaneousInfo: true,
-				},
+				select: hackerSelect,
 				where: queryConditions,
 				orderBy: {
 					id: "asc",
@@ -319,7 +308,7 @@ export const hackerRouter = createTRPCRouter({
 			});
 
 			let nextCursor: typeof cursor | undefined = undefined;
-
+			
 			if (results.length > limit) {
 				const nextItem = results.pop();
 				nextCursor = nextItem?.id;
@@ -364,15 +353,7 @@ export const hackerRouter = createTRPCRouter({
 			};
 
 			const hackers = await ctx.prisma.hacker.findMany({
-				include: {
-					user: true,
-                    personalInfo: true, 
-                    education: true,
-                    emergency: true,
-                    preferences: true,
-                    socials: true,
-                    miscellaneousInfo: true,
-				}
+				select: hackerSelect
 			})
 
 			hackers?.forEach(hacker => {
@@ -404,6 +385,7 @@ export const hackerRouter = createTRPCRouter({
 			z.object({
 				id: z.string(),
 				userId: z.string(),
+				eventId: z.string().optional(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -411,19 +393,11 @@ export const hackerRouter = createTRPCRouter({
 				where: {
 					id: input.id,
 				},
-				include: {
-					user: true,       
-					personalInfo: true, 
-					education: true,    
-					emergency: true,   
-					preferences: true,   
-					socials: true,      
-					miscellaneousInfo: true,   
-				}
+				select: hackerSelect
 			});
 			
 			const userId = hacker?.user?.id;
-			const preferences = hacker?.preferences;
+			
 			const miscellaneousInfo = hacker?.miscellaneousInfo;
 
 			if (!hacker) {
@@ -438,20 +412,21 @@ export const hackerRouter = createTRPCRouter({
 				throw new Error("Hacker already assigned to another account");
 			}
 			
-
-			if (preferences?.attendanceType !== AttendanceType.ONLINE) {
-				throw new Error("Hacker can only attend online");
-			}
+			// const preferences = hacker?.preferences;
+			// if (preferences?.attendanceType !== AttendanceType.ONLINE) {
+			// 	throw new Error("Hacker can only attend online");
+			// }
 
 			//TO-DO: Implement acceptance expiries into more than one event.
 			if ((miscellaneousInfo?.acceptanceExpiry ?? 0) < new Date()) {
 				throw new Error("Hacker acceptance expired");
 			}
 
-
+			//TODO: Create a confirmed tag instance once hackers are able to register
 			const confirmedTag = await ctx.prisma.tag.findFirst({
 				where: {
-					value: Tag.CONFIRMED
+					value: Tag.CONFIRMED,
+					eventId: input.eventId,
 				},
 			});
 
@@ -501,7 +476,7 @@ export const hackerRouter = createTRPCRouter({
 					hacker: {
 						include: {
 							preferences: {
-								include : {
+								select : {
 									emailUnsubscribe: true,
 								}
 							},
@@ -539,105 +514,76 @@ export const hackerRouter = createTRPCRouter({
 		}),
 
 	// Create a walk-in hacker
-	walkIn: protectedProcedure
+	create: protectedProcedure
 		.input(
-			walkInSchema.extend({
-				acceptanceExpiry: z.date().default(DEFAULT_ACCEPTANCE_EXPIRY),
-				//if you want to link the hackerInfo to account, add this argument
+			z.object({
+				personalInfo: personalInfoSchema,
 				userId: z.string().optional(),
+				emergencyContact: emergencyContactSchema.optional(),
+				education: educationSchema.optional(),
+				miscellaneousInfo: miscellanousInfoSchema.optional(),
+				socials: socialsSchema.optional(),
+				preferences: preferencesSchema.optional(),
 				questionIdsToResponses: z.record(z.string(), z.string()).optional(),
+				eventIds: z.array(z.string()).optional(),
+				tagIds: z.array(z.string()).optional(),
+				responsesIds : z.array(z.string()).optional(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
-			const userId = ctx.session?.user?.id;
-			const user = await ctx.prisma.user.findUnique({
-				where: {
-					id: userId,
+			// List of keys to remove
+			const data = {
+				user: input.userId ?  {
+					connect: {
+					  id: input.userId,
+					},
+				} : undefined,
+				personalInfo: {
+					create: input.personalInfo,
 				},
+				education: input.education ? {
+					create: input.education,
+				} : undefined,
+				emergency: input.emergencyContact ? {
+					create: input.emergencyContact,
+				} : undefined,
+				preferences: input.preferences ? {
+					create: input.preferences,
+				} : undefined,
+				socials: input.socials ?{
+					create: input.socials,
+				} : undefined,
+				miscellaneousInfo: input.miscellaneousInfo ? {
+					create: input.miscellaneousInfo,
+				} : undefined,
+				events : {
+					connect: input.eventIds?.map((id) => ({ id: id })) || [],
+				},
+				tags : {
+					connect: input.tagIds?.map((id) => ({ id: id })) || [],
+				},
+
+				presences : {
+					create: input.eventIds?.map((eventId) => ({
+						userId: input.userId,
+						eventId: eventId,
+					})),
+				},
+			};
+			
+			// If a syntax error ever occurs here, please check common.ts to ensure the schema match the fields exported there.
+			const hacker = await ctx.prisma.hacker.create({
+				data: data,
 			});
 
-			if (!user) {
-				throw new Error("User not found");
-			}
-
-			// List of keys to remove
-			const questionIdsToResponses = input.questionIdsToResponses;
-			delete input["questionIdsToResponses"]
-
-			const hacker = await ctx.prisma.hacker.create({
-				data: {
-				  user: {
-					connect: {
-					  // Connect the following info to the user
-					  id: userId,
-					},
-				  },
-				  personalInfo: {
-					create: {
-					  // Add personalInfo data  
-						
-					},
-				  },
-				  education: {
-					create: {
-					  // Add education data  
-					},
-				  },
-				  emergency: {
-					create: {
-					  // Add emergency contact data  
-					},
-				  },
-				  preferences: {
-					create: {
-					  // Add preferences data  
-					},
-				  },
-				  socials: {
-					create: {
-					  // Add socials data  
-					},
-				  },
-				  miscellaneousInfo: {
-					create: {
-					  // Add miscellaneousInfo data  
-					},
-				  },
-				  events: {
-					// You can add events data  
-				  },
-				  presences: {
-					// You can add presences data  
-				  },
-				  responses: {
-					// You can add responses data  
-				  },
-				  tags: {
-					// You can add tags data  
-				  },
-				},
-			  });
-			  if (questionIdsToResponses) {
-				const responses = Object.entries(questionIdsToResponses).map(([questionId, response]) => {
-					return {
-						questionId,
-						hackerInfoId: hacker.id,
-						response,
-					};
-				});
-
-				await ctx.prisma.response.createMany({
-					data: responses,
-				});
-			}
 
 			await logAuditEntry(
 				ctx,
 				hacker.id,
 				"/walk-in",
 				"WalkIn",
-				user.name ?? "Unknown",
-				`${input.firstName} ${input.lastName} walked in.`,
+				`${input.personalInfo.firstName} ${input.personalInfo.lastName}` ?? "Unknown",
+				`${input.personalInfo.firstName} ${input.personalInfo.lastName} walked in`,
 			);
 
 			return hacker;
@@ -672,10 +618,10 @@ export const hackerRouter = createTRPCRouter({
 				userId,
 				"/update-hacker-info",
 				"UpdateHackerInfo",
-				user.username ?? "Unknown",
+				user.name ?? "Unknown",
 				"Updated hacker information",
 			);
-			const hackerDetails = await ctx.prisma.hackerInfo.findUnique({
+			const hackerDetails = await ctx.prisma.hacker.findUnique({
 				where: {
 					id: input.id,
 				},
@@ -702,7 +648,7 @@ export const hackerRouter = createTRPCRouter({
 						const auditEntry = {
 							action: "/update-hacker-info",
 							entityType: "UpdateHackerInfo",
-							userName: user.username ?? "Unknown",
+							userName: user.name ?? "Unknown",
 							details: `Updated field ${field} from ${String(before)} to ${String(
 								after ? after : "empty",
 							)}`,
@@ -717,7 +663,7 @@ export const hackerRouter = createTRPCRouter({
 				await logAuditEntry(ctx, input.id, entry.action, entry.entityType, entry.userName, entry.details);
 			}
 
-			const hacker = await ctx.prisma.hackerInfo.update({
+			const hacker = await ctx.prisma.hacker.update({
 				where: {
 					id: input.id,
 				},

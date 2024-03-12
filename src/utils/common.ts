@@ -1,6 +1,6 @@
 import { TypeOf, z } from "zod";
 import { Language, ShirtSize, Tiers } from "@prisma/client";
-
+import {Prisma } from "@prisma/client";
 
 export const Role = {HACKER : "HACKER", ORGANIZER : "ORGANIZER", SPONSOR : "SPONSOR"};
 export type Roles = {HACKER : "HACKER", ORGANIZER : "ORGANIZER", SPONSOR : "SPONSOR"};
@@ -45,7 +45,7 @@ export const personalInfoSchema = z.object({
 	organizerId: z.string().nullable().optional(), // Assuming organizerId can be optional
 });
 
-const emergencyContactSchema = z.object({
+export const emergencyContactSchema = z.object({
 	name: z.string().nullable(),
 	phoneNumber: z.string().nullable(),
 	relationship: z.string().nullable(),
@@ -60,15 +60,14 @@ export const educationSchema = z.object({
 	hackerId: z.string().nullable().optional(), // Assuming hackerId can be optional
 });
   
-const SocialsSchema = z.object({
+export const socialsSchema = z.object({
 	hackerId: z.string().nullable().optional(), // Assuming hackerId can be optional
 	github: z.string().nullable(),
 	linkedin: z.string().nullable(),
 	personalSite: z.string().nullable(),
 });
 
-const PreferencesSchema = z.object({
-  id: z.string().optional(),
+export const preferencesSchema = z.object({
   dietaryRestrictions: z.string().nullable(),
   accessibilityRequirements: z.string().nullable(),
   transportationRequired: z.boolean().default(false),
@@ -76,6 +75,14 @@ const PreferencesSchema = z.object({
   shirtSize: z.enum([ShirtSize.S, ShirtSize.M, ShirtSize.L, ShirtSize.XL, ShirtSize.XXL]).default(ShirtSize.M),
   hackerId: z.string().nullable().optional(),
   emailUnsubscribeId: z.string().nullable(),
+});
+
+export const miscellanousInfoSchema = z.object({
+  numberOfPreviousHackathons: z.number().nullable(),
+  acceptanceExpiry: z.date().nullable(),
+  walkIn: z.boolean().default(false),
+  waiver: z.boolean().default(false),
+  hackerId: z.string().nullable().optional(),
 });
 
 
@@ -106,3 +113,5 @@ export const addSponsorshipSchema = z.object({
 	date: z.date().optional(),
 	invoice: z.string().optional(),
 });
+
+export const HackerType = Prisma.validator<Prisma.HackerSelect>() 

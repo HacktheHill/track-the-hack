@@ -1,4 +1,4 @@
-import {type Prisma } from "@prisma/client";
+import {Prisma } from "@prisma/client";
 import type { GetStaticProps, NextPage } from "next";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
@@ -12,9 +12,7 @@ import Error from "../../components/Error";
 import Loading from "../../components/Loading";
 import OnlyRole from "../../components/OnlyRole";
 import {Role, walkInSchema } from "../../utils/common";
-
-type Hacker = Prisma.HackerGetPayload<true>;
-type Presence = Prisma.PresenceGetPayload<true>;
+import type { Hacker, Presence } from "../../utils/types";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
@@ -28,8 +26,8 @@ const Hacker: NextPage = () => {
 	const { t } = useTranslation("hacker");
 
 	const hackerQuery = trpc.hackers.get.useQuery({ id: id ?? "" }, { enabled: !!id });
-	const presenceQuery = trpc.presence.getFromHackerId.useQuery({ id: id ?? "" }, { enabled: !!id });
-
+	const presenceQuery = trpc.presence.getAllPresences.useQuery({ id: id ?? "" }, { enabled: !!id });
+	
 	const nextHackerQuery = trpc.hackers.getNext.useQuery({ id: id ?? "" }, { enabled: !!id });
 	const prevHackerQuery = trpc.hackers.getPrev.useQuery({ id: id ?? "" }, { enabled: !!id });
 
@@ -83,7 +81,7 @@ const Hacker: NextPage = () => {
 	return (
 		<App
 			className="mx-auto h-full w-full overflow-y-auto bg-default-gradient px-4 py-12"
-			title={`${hackerQuery.data.firstName} ${hackerQuery.data.lastName}`}
+			title={`${hackerQuery.data.personalInfo?.firstName ?? ""} ${hackerQuery.data.personalInfo?.lastName ?? ""}`}
 		>
 			<div className="mx-auto flex max-w-2xl flex-col gap-4">
 				<OnlyRole filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
@@ -107,7 +105,7 @@ const Hacker: NextPage = () => {
 							</a>
 						)}
 					</div>
-					<HackerView hackerData={hackerQuery.data} presenceData={presenceQuery.data} />
+					<HackerView hackerData={hackerQuery.data} presenceData={presenceQuery} />
 				</OnlyRole>
 				<OnlyRole filter={role => role === Role.HACKER}>{t("not-authorized-to-view-this-page")}</OnlyRole>
 			</div>
@@ -116,8 +114,8 @@ const Hacker: NextPage = () => {
 };
 
 type HackerViewProps = {
-	hackerData: HackerInfo;
-	presenceData: PresenceInfo;
+	hackerData: Hacker;
+	presenceData: Presence[];
 };
 
 type Field = {
@@ -140,8 +138,8 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 
 	const [presenceState, setPresenceState] = useState(
 		Object.fromEntries(
-			Object.entries(presenceData).filter(([key]) => key !== "id" && key !== "hackerInfoId"),
-		) as Omit<PresenceInfo, "id" | "hackerInfoId">,
+			Object.entries(presenceData).filter(([key]) => key !== "id" && key !== "hackerId"),
+		) as Omit<Presence, "id" | "hackerId">,
 	);
 	const [edit, setEdit] = useState(false);
 
@@ -152,102 +150,89 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 	const paragraphClass = "flex justify-between gap-4 text-right py-1.5 ";
 	const boldClass = "text-left font-bold";
 
-	const keyToLabel = {
-		checkedIn: "Checked In",
-		breakfast1: "Breakfast March 4th",
-		lunch1: "Lunch March 4th",
-		dinner1: "Dinner March 4th",
-		snacks: "Snacks",
-		snacks2: "Snacks 2",
-		redbull: "RedBull",
-		breakfast2: "Breakfast March 5th",
-		lunch2: "Lunch March 5th",
-		lunch22: "Lunch March 5th 2",
-		wieSignUp: "WIE Event Sign up February 3rd",
-	} as const satisfies Record<keyof Omit<PresenceInfo, "id" | "hackerInfoId">, string>;
-
+	
 	const fields = [
 		{
 			label: t("gender"),
 			name: "gender",
-			default_value: hackerData.gender,
+			default_value: hackerData.personalInfo?.gender,
 			type: "text",
 			category: t("category_personal_information"),
 		},
 		{
 			label: t("firstName"),
 			name: "firstName",
-			default_value: hackerData.firstName,
+			default_value: hackerData.personalInfo?.firstName,
 			type: "text",
 			category: t("category_personal_information"),
 		},
 		{
 			label: t("lastName"),
 			name: "lastName",
-			default_value: hackerData.lastName,
+			default_value: hackerData.personalInfo?.lastName,
 			type: "text",
 			category: t("category_personal_information"),
 		},
 		{
 			label: t("university"),
 			name: "university",
-			default_value: hackerData.university,
+			default_value: hackerData.education?.university,
 			type: "text",
 			category: t("category_personal_information"),
 		},
 		{
 			label: t("studyLevel"),
 			name: "studyLevel",
-			default_value: hackerData.studyLevel?.toUpperCase(),
+			default_value: hackerData.education?.studyLevel?.toUpperCase(),
 			type: "text",
 			category: t("category_personal_information"),
 		},
 		{
 			label: t("studyProgram"),
 			name: "studyProgram",
-			default_value: hackerData.studyProgram,
+			default_value: hackerData.education?.studyProgram,
 			type: "text",
 			category: t("category_personal_information"),
 		},
 		{
 			label: t("graduationYear"),
 			name: "graduationYear",
-			default_value: hackerData.graduationYear,
+			default_value: hackerData.education?.graduationYear,
 			type: "number",
 			category: t("category_personal_information"),
 		},
 		{
 			label: t("phoneNumber"),
 			name: "phoneNumber",
-			default_value: hackerData.phoneNumber,
+			default_value: hackerData.personalInfo?.phoneNumber,
 			type: "number",
 			category: t("category_personal_information"),
 		},
 		{
 			label: t("email"),
 			name: "email",
-			default_value: hackerData.email,
+			default_value: hackerData.personalInfo?.email,
 			type: "email",
 			category: t("category_personal_information"),
 		},
 		{
 			label: t("emergencyContactName"),
 			name: "emergencyContactName",
-			default_value: hackerData.emergencyContactName,
+			default_value: hackerData.emergency?.name,
 			type: "text",
 			category: t("category_emergency_contact"),
 		},
 		{
 			label: t("emergencyContactRelationship"),
 			name: "emergencyContactRelationship",
-			default_value: hackerData.emergencyContactRelationship,
+			default_value: hackerData.emergency?.relationship,
 			type: "text",
 			category: t("category_emergency_contact"),
 		},
 		{
 			label: t("emergencyContactPhoneNumber"),
 			name: "emergencyContactPhoneNumber",
-			default_value: hackerData.emergencyContactPhoneNumber,
+			default_value: hackerData.emergency?.phoneNumber,
 			type: "number",
 			category: t("category_emergency_contact"),
 		},
@@ -513,10 +498,10 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 
 				<p className="flex flex-row flex-wrap justify-center gap-4 py-4">
 					{Object.entries({
-						Resume: hackerData.linkResume,
-						LinkedIn: hackerData.linkLinkedin,
-						GitHub: hackerData.linkGithub,
-						"Personal Website": hackerData.linkPersonalSite,
+						Resume: "",
+						LinkedIn: hackerData.socials?.linkedin,
+						GitHub: hackerData.socials?.github,
+						"Personal Website": hackerData.socials?.personalSite,
 					}).map(
 						([key, value]) =>
 							value && (
@@ -544,14 +529,14 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 							<b className={boldClass}>HackerInfo ID</b> {hackerData.id ?? "NULL"}
 						</p>
 						<p className={paragraphClass}>
-							<b className={boldClass}>User ID</b> {hackerData.userId ?? "NULL"}
+							<b className={boldClass}>User ID</b> {hackerData.user?.id ?? "NULL"}
 						</p>
 						<p className={paragraphClass}>
-							<b className={boldClass}>Unsubscribe Token</b> {hackerData.unsubscribeToken ?? "NULL"}
+							<b className={boldClass}>Unsubscribe Token ID</b> {hackerData.preferences?.emailUnsubscribeId ?? "NULL"}
 						</p>
 						<p className={paragraphClass}>
 							<b className={boldClass}>Acceptance Expiry</b>{" "}
-							{(hackerData.acceptanceExpiry ?? "NULL").toString()}
+							{(hackerData.miscellaneousInfo?.acceptanceExpiry ?? "NULL").toString()}
 						</p>
 					</>
 				</OnlyRole>

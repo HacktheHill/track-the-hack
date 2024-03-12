@@ -23,10 +23,10 @@ const Confirm: NextPage = () => {
 	// Get query params
 	const router = useRouter();
 	const [id] = [router.query.id].flat();
-
+	const [eventId] = [router.query.eventId].flat();
 	const mutation = trpc.hackers.confirm.useMutation();
-
 	const query = trpc.hackers.get.useQuery({ id: id ?? "" }, { enabled: !!id });
+	const tags = query.data?.tags.map((tag) => tag.value)
 
 	const [shirtSize, setShirtSize] = useState<keyof typeof ShirtSize>(ShirtSize.S);
 	const [attendanceType, setAttendanceType] = useState<keyof typeof AttendanceType>(AttendanceType.IN_PERSON);
@@ -34,23 +34,23 @@ const Confirm: NextPage = () => {
 	const [validationMessage, setValidationMessage] = useState("");
 	const [isSubmitted, setIsSubmitted] = useState(false);
 	const [error, setError] = useState("");
-
+	
 	useEffect(() => {
 		if (query.error) setError(query.error.message);
 		if (mutation.error) setError(mutation.error.message);
 		if (query.data) {
-			if (query.data.confirmed === false && (query.data.acceptanceExpiry ?? 0) < new Date()) {
+			if (tags?.includes("confirmed") && (query.data.miscellaneousInfo?.acceptanceExpiry ?? 0) < new Date()) {
 				setError(t("acceptance-expired"));
 				return;
 			}
 
-			setShirtSize(query.data.shirtSize ?? ShirtSize.M);
+			setShirtSize(query.data.preferences?.shirtSize ?? ShirtSize.M);
 			setAttendanceType(
-				query.data.onlyOnline ? AttendanceType.ONLINE : query.data.attendanceType ?? AttendanceType.IN_PERSON,
+				query.data.preferences?.attendanceType ?? AttendanceType.ONLINE,
 			);
-			setIsSubmitted(query.data.confirmed);
+			setIsSubmitted(tags?.includes("confirmed") ?? false);
 		}
-	}, [query.data, query.error, mutation.error, t]);
+	}, [query.data, query.error, mutation.error, t, tags]);
 
 	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
@@ -69,12 +69,15 @@ const Confirm: NextPage = () => {
 			setValidationMessage(t("you-must-accept-terms"));
 			return;
 		}
-
+		eventId ? 
 		mutation.mutate({
 			id,
-			shirtSize,
-			attendanceType,
-			userId: sessionData.user.id,
+			userId: sessionData.user?.id,
+		}) : 
+		mutation.mutate({
+			id,
+			userId: sessionData.user?.id,
+			eventId: eventId,
 		});
 
 		setIsSubmitted(true);
@@ -110,8 +113,9 @@ const Confirm: NextPage = () => {
 			) : (
 				<div className="flex max-w-[25rem] flex-col items-center gap-6">
 					<h3 className="font-rubik text-[clamp(1rem,1vmin,5rem)] font-medium text-dark-color">
+						{/* TODO: add custom messages for events */}
 						{t("congratulations-for-your-acceptance", {
-							name: query.data?.firstName ?? "",
+							name: query.data?.personalInfo?.firstName ?? "",
 						})}
 					</h3>
 					<div className="flex flex-col items-center justify-center gap-3">
@@ -140,8 +144,8 @@ const Confirm: NextPage = () => {
 							</button>
 						)}
 					</div>
-					{query.data?.walkIn === false &&
-						(query.data?.onlyOnline ? (
+					{query.data?.miscellaneousInfo?.walkIn === false &&
+						(query.data?.preferences?.attendanceType == AttendanceType.ONLINE ? (
 							<p className="font-rubik text-[clamp(1rem,1vmin,5rem)] font-medium text-dark-color">
 								{t("only-online")}
 							</p>
