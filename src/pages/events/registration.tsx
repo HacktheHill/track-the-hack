@@ -3,6 +3,7 @@ import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import type { GetStaticProps, NextPage } from "next/types";
 import { useEffect, useState } from "react";
+import { Language } from "@prisma/client";
 
 import App from "../../components/App";
 import Error from "../../components/Error";
@@ -10,11 +11,11 @@ import OnlyRole from "../../components/OnlyRole";
 import QRCode from "../../components/QRCode";
 import { useRouter } from "next/router";
 import { trpc } from "../../utils/api";
-import { walkInSchema } from "../../utils/common";
+import { personalInfoSchema, walkInSchema } from "../../utils/common";
 import z from "zod";
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
-		props: await serverSideTranslations(locale ?? "en", ["common", "registration"]),
+		props: await serverSideTranslations(locale ?? "en", ["common", "registration", "navbar"]),
 	};
 };
 
@@ -24,7 +25,7 @@ const Registration: NextPage = () => {
 	const id = sessionData?.user?.id;
 	const router = useRouter();
 	const eventId = router.query.eventId as string;
-	const signUpMutation = trpc.users.signUp.useMutation();
+	const signUpHackerMutation = trpc.hackers.signUp.useMutation();
 	const questionMutation = trpc.response.createMany.useMutation();
 	const mutation = trpc.hackers.create.useMutation();
 	const [error, setError] = useState("");
@@ -37,7 +38,6 @@ const Registration: NextPage = () => {
 	// }
 
 	useEffect(() => {
-
 		if(sessionData === null) {	
 			void signIn();
 		}
@@ -54,23 +54,23 @@ const Registration: NextPage = () => {
 			data.preferredLanguage = undefined;
 		}
 
-		if (typeof data.graduationYear === "string") {
-			data.graduationYear = parseInt(data.graduationYear);
-			if (Number.isNaN(data.graduationYear)) {
-				data.graduationYear = undefined;
-			}
-		}
+		// if (typeof data.graduationYear === "string") {
+		// 	data.graduationYear = parseInt(data.graduationYear);
+		// 	if (Number.isNaN(data.graduationYear)) {
+		// 		data.graduationYear = undefined;
+		// 	}
+		// }
 
-		if (data.shirtSize === "") {
-			data.shirtSize = undefined;
-		}
+		// if (data.shirtSize === "") {
+		// 	data.shirtSize = undefined;
+		// }
 
-		if (typeof data.numberOfPreviousHackathons === "string") {
-			data.numberOfPreviousHackathons = parseInt(data.numberOfPreviousHackathons);
-			if (Number.isNaN(data.numberOfPreviousHackathons)) {
-				data.numberOfPreviousHackathons = undefined;
-			}
-		}
+		// if (typeof data.numberOfPreviousHackathons === "string") {
+		// 	data.numberOfPreviousHackathons = parseInt(data.numberOfPreviousHackathons);
+		// 	if (Number.isNaN(data.numberOfPreviousHackathons)) {
+		// 		data.numberOfPreviousHackathons = undefined;
+		// 	}
+		// }
 		
 		const applicationParse : Record<string, z.ZodString>= {};
 		applicationQuestions.data?.map(question => {
@@ -89,45 +89,31 @@ const Registration: NextPage = () => {
 				hackerInfoResponses[key] = value;
 			}
 		});
-		const hackerInfoParse = walkInSchema.safeParse(hackerInfoResponses);
+		const hackerInfoParse = personalInfoSchema.safeParse(hackerInfoResponses);
 		const applicationParseResult = z.object(applicationParse).safeParse(applicationResponses);
 		
 		
+		console.log(hackerInfoParse);
 
+		//check if they are an existing hacker
 
-		if(hackerIdQuery.data) {
-			if (!applicationParseResult.success) {
+		if (!hackerInfoParse.success || !applicationParseResult.success) {
 				setError(t("invalid-form"));
 				console.error(t("error"));
-			} else {
-				questionMutation.mutate({questionIdsToResponses: applicationParseResult.data, hackerInfoId: mutation.data?.id ?? ""});
-				//void router.push("/events?eventId=" + eventId);
-				if (eventId) {
-					signUpMutation.mutate({ eventId: eventId });
-				}
-			}
 		} else {
-			if (!hackerInfoParse.success || !applicationParseResult.success) {
-				setError(t("invalid-form"));
-				console.error(t("error"));
-			} else {
-				//create and link a hackerInfo
-				mutation.mutate({...hackerInfoParse.data, userId: id, questionIdsToResponses: applicationParseResult.data});
-				console.log(`hello1 ${mutation.data?.id ?? ""}`)
-				if(!mutation.isError) {
-					setError("");
-					setSuccess(true);
-					event.currentTarget.reset();
-					if (eventId) {
-						signUpMutation.mutate({ eventId: eventId });
-					}
-					void router.push("/events?eventId=" + eventId);
-				}	
-			}
+			//void router.push("/events?eventId=" + eventId);
+			signUpHackerMutation.mutate({ eventId: eventId , hackerId: hackerIdQuery.data, personalInfo: hackerInfoParse.data });
+			questionMutation.mutate({questionIdsToResponses: applicationParseResult.data, hackerInfoId: mutation.data?.id ?? ""});
 		}
 	};
 
 	const fields = [
+		// {
+		// 	name: "preferredLanguage",
+		// 	type: "select",
+		// 	options: ["en", "fr"],
+		// 	required: false,
+		// },
 		{
 			name: "preferredLanguage",
 			type: "select",
@@ -136,33 +122,18 @@ const Registration: NextPage = () => {
 		},
 		{
 			name: "email",
-			type: "email",
-			required: true,
+			type: "text",
+			required: false,
 		},
 		{
 			name: "firstName",
 			type: "text",
-			required: true,
+			required: false,
 		},
 		{
 			name: "lastName",
 			type: "text",
-			required: true,
-		},
-		{
-			name: "university",
-			type: "text",
-			required: true,
-		},
-		{
-			name: "location",
-			type: "text",
-			required: true,
-		},
-		{
-			name: "pronouns",
-			type: "text",
-			required: true,
+			required: false,
 		},
 		{
 			name: "gender",
@@ -171,75 +142,15 @@ const Registration: NextPage = () => {
 		},
 		{
 			name: "phoneNumber",
-			type: "tel",
-			required: true,
-		},
-		{
-			name: "dietaryRestrictions",
 			type: "text",
 			required: false,
 		},
 		{
-			name: "accessibilityRequirements",
+			name: "city",
 			type: "text",
 			required: false,
-		},
-		{
-			name: "emergencyContactName",
-			type: "text",
-			required: true,
-		},
-		{
-			name: "emergencyContactRelationship",
-			type: "text",
-			required: true,
-		},
-		{
-			name: "emergencyContactPhoneNumber",
-			type: "tel",
-			required: true,
-		},
-		{
-			name: "studyLevel",
-			type: "text",
-			required: false,
-		},
-		{
-			name: "studyProgram",
-			type: "text",
-			required: false,
-		},
-		{
-			name: "graduationYear",
-			type: "number",
-			required: false,
-		},
-		{
-			name: "shirtSize",
-			type: "select",
-			options: ["S", "M", "L", "XL", "XXL"],
-			required: false,
-		},
-		{
-			name: "numberOfPreviousHackathons",
-			type: "number",
-			required: false,
-		},
-		{
-			name: "linkGithub",
-			type: "url",
-			required: false,
-		},
-		{
-			name: "linkLinkedin",
-			type: "url",
-			required: false,
-		},
-		{
-			name: "linkPersonalSite",
-			type: "url",
-			required: false,
-		},
+		}
+		
 	] as const;
 
 	const patterns = {
@@ -249,7 +160,6 @@ const Registration: NextPage = () => {
 		email: undefined,
 		text: undefined,
 	} as const;
-	console.log(eventId);
 	
 	return (
 		<App className="overflow-y-auto bg-default-gradient p-8 sm:p-12" title={t("title")}>
@@ -294,7 +204,9 @@ const Registration: NextPage = () => {
 						))}
 						</div>
 						</>)}
-					
+						{ (applicationQuestions.data?.length ?? 0) > 0 && (<>
+							
+						
 						<h3 className="font-rubik text-4xl font-bold text-dark-color text-center pt-8">{t("application")}</h3>
 						<p className="py-8 text-xl">{t("applicationInstructions")}</p>
 						{
@@ -316,6 +228,8 @@ const Registration: NextPage = () => {
 								</div>
 							))
 						}
+						</>
+						)}
 					</div>
 					{error && (
 						<div className="flex flex-col items-center gap-2">

@@ -18,7 +18,7 @@ import { faInstagram, faLinkedin, faXTwitter } from "@fortawesome/free-brands-sv
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
-		props: await serverSideTranslations(locale ?? "en", ["common", "schedule", "event"]),
+		props: await serverSideTranslations(locale ?? "en", ["common", "schedule", "event", "navbar"]),
 	};
 };
 
@@ -30,12 +30,9 @@ const Events: NextPage = () => {
 
 	const events = trpc.events.all.useQuery();
 	const { data: sessionData } = useSession();
-	const id = sessionData?.user?.id ?? "";
 
 	//check if a hackerinfo exists
-	const hackerInfoID = trpc.users.getHackerId.useQuery({ id });
 
-	const signUpMutation = trpc.users.signUp.useMutation();
 	const idInURL = router.query.eventId ?? "";
 
 	// do not use this hook, use openModal and closeModal instead
@@ -47,7 +44,7 @@ const Events: NextPage = () => {
         }
     }, [idInURL])
 
-    const eventsUserSignedUpTo = trpc.users.getSignedUpEvents.useQuery();
+    const eventsUserSignedUpTo = trpc.hackers.getSignedUpEvents.useQuery();
     const idsOfEventsUserSignedUpTo = eventsUserSignedUpTo?.data?.map(event => event.id);
 
 	const openModal = (eventId: string) => {
@@ -115,7 +112,7 @@ const Events: NextPage = () => {
 								>
 									<div className="group relative overflow-hidden rounded-t">
 										<img
-											src="./assets/events/wie-hack-background.png"
+											src={event.image ?? 'https://2024.hackthehill.com/Logos/hackthehill-logo.svg'}
 											alt=""
 											className="h-32 w-full object-cover"
 										/>
@@ -166,7 +163,10 @@ const Events: NextPage = () => {
 									</div>
 								</div>
 								<div className="flex flex-col justify-center py-4">
-									<img className="w-[60%]" src="./assets/events/wie-hack-background.png" />
+									{/* TODO: Emer Add image */}
+									<div className="justify-center items-center">
+										<img className="w-[60%] " src={events.data[idToIndex[modalId ?? ""] ?? 0]?.image ?? 'https://2024.hackthehill.com/Logos/hackthehill-logo.svg'} />
+									</div>
 								</div>
 								<div className="text-md">
 									<p>{events.data[idToIndex[modalId ?? ""] ?? 0]?.description}</p>

@@ -60,8 +60,10 @@ export const userRouter = createTRPCRouter({
 
 			const hacker = await ctx.prisma.hacker.findFirst({
 				where: {
-					id: input.id,
-				},
+					user: {
+						id: input.id,
+					},
+				}
 			});
 
 			if (!hacker) {
@@ -74,68 +76,4 @@ export const userRouter = createTRPCRouter({
 
 			return hacker.id;
 		}),
-
-
-	signUp: protectedProcedure.input(z.object({ eventId: z.string() })).mutation(async ({ ctx, input }) => {
-		const user = await ctx.prisma.user.update({
-			where: {
-				id: ctx.session.user.id,
-			},
-			data: {
-				event: {
-					connect: {
-						id: input.eventId,
-					},
-				},
-			},
-		});
-
-		return user;
-	}),
-
-	isSignedUp: protectedProcedure.input(z.object({ eventId: z.string() })).query(async ({ ctx, input }) => {
-		const user = await ctx.prisma.user.findUnique({
-			where: {
-				id: ctx.session.user.id,
-			},
-			include: {
-				hacker: {
-					include: {
-						events: true,       
-					},
-				},
-			},
-		});
-
-		if (!user) {
-			throw new Error("User is not logged in. Cannot query if signed up.");
-		}
-		user.hacker?.events.map(event => {
-			if (event.id === input.eventId) {
-				return true;
-			}
-		});
-		return false;
-	}),
-
-	getSignedUpEvents: protectedProcedure.query(async ({ ctx, input }) => {
-		const user = await ctx.prisma.user.findUnique({
-			where: {
-				id: ctx.session.user.id,
-			},
-			include: {
-				hacker: {
-					include: {
-						events: true,       
-					},
-				},
-			},
-		});
-
-		if (!user) {
-			throw new Error("User is not logged in. Cannot query if signed up.");
-		}
-
-		return user.hacker?.events;
-	}),
 });

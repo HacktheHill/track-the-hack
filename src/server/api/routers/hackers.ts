@@ -672,4 +672,129 @@ export const hackerRouter = createTRPCRouter({
 
 			return hacker;
 		}),
+		signUp: protectedProcedure.input(
+			z.object(
+				{ 
+					eventId: z.string(),
+					hackerId: z.string().nullable().optional(),
+					personalInfo: personalInfoSchema.optional(),
+					emergencyContact: emergencyContactSchema.optional(),
+					education: educationSchema.optional(),
+					miscellaneousInfo: miscellanousInfoSchema.optional(),
+					socials: socialsSchema.optional(),
+					preferences: preferencesSchema.optional(),
+					questionIdsToResponses: z.record(z.string(), z.string()).optional(),
+					eventIds: z.array(z.string()).optional(),
+					tagIds: z.array(z.string()).optional(),
+					responsesIds : z.array(z.string()).optional(),
+				}
+			)).mutation(async ({ ctx, input }) => {
+			
+			if(input.hackerId) {
+				const event = await ctx.prisma.event.update({
+					where: {
+						id: input.eventId
+					},
+					//connect existing hacker to event
+					data: {
+						hacker: {
+							connect: {
+								id: input.hackerId
+							}
+						}
+					}
+				});
+			}
+			else {
+
+				const data = {
+					user: {
+						connect: {
+						  id: ctx.session.user.id,
+						},
+					},
+					personalInfo: {
+						create: input.personalInfo,
+					},
+					education: input.education ? {
+						create: input.education,
+					} : undefined,
+					emergency: input.emergencyContact ? {
+						create: input.emergencyContact,
+					} : undefined,
+					preferences: input.preferences ? {
+						create: input.preferences,
+					} : undefined,
+					socials: input.socials ?{
+						create: input.socials,
+					} : undefined,
+					miscellaneousInfo: input.miscellaneousInfo ? {
+						create: input.miscellaneousInfo,
+					} : undefined,
+					events : {
+						connect: input.eventIds?.map((id) => ({ id: id })) || [],
+					},
+					tags : {
+						connect: input.tagIds?.map((id) => ({ id: id })) || [],
+					},
+	
+					presences : {
+						create: input.eventIds?.map((eventId) => ({
+							userId: ctx.session.user.id,
+							eventId: eventId,
+						})),
+					},
+				};
+				
+				// If a syntax error ever occurs here, please check common.ts to ensure the schema match the fields exported there.
+				const hacker = await ctx.prisma.hacker.create({
+					data: data,
+				});
+			}
+		}),
+	
+		isSignedUp: protectedProcedure.input(z.object({ eventId: z.string() })).query(async ({ ctx, input }) => {
+			//check if hacker is signed up for event
+			const user = await ctx.prisma.user.findUnique({
+				where: {
+					id: ctx.session.user.id
+				},
+				select: {
+					hacker: {
+						select: hackerSelect
+					}
+				}
+			});
+	
+			if (!user) {
+				throw new Error("User is not logged in. Cannot query if signed up.");
+			}
+			user.hacker?.events.map(event => {
+				if (event.id === input.eventId) {
+					return true;
+				}
+			});
+			return false;
+		}),
+	
+		getSignedUpEvents: protectedProcedure.query(async ({ ctx }) => {
+			const user = await ctx.prisma.user.findUnique({
+				where: {
+					id: ctx.session.user.id,
+				},
+				select: {
+					hacker: {
+						select : hackerSelect
+					}
+				},
+			});
+	
+			if (!user) {
+				throw new Error("User is not logged in. Cannot query if signed up.");
+			}
+			if (!user.hacker?.events)
+			return user.hacker?.events;
+			else
+			return [];
+		}),
 });

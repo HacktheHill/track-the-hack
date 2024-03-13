@@ -6,14 +6,14 @@ export const responseRouter = createTRPCRouter({
 	create: protectedProcedure.input(
         z.object({
             questionId: z.string(),
-            hackerInfoId: z.string(),
+            hackerId: z.string(),
             response: z.string(),
         }),
     ).mutation(async ({ ctx, input }) => {
         const response = await ctx.prisma.response.create({
             data: {
                 questionId: input.questionId,
-                hackerInfoId: input.hackerInfoId,
+                hackerId: input.hackerId,
                 response: input.response,
             },
         });

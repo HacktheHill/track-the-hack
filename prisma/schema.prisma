@@ -147,7 +147,7 @@ model Presence {
   hacker Hacker @relation(fields: [hackerId], references: [id])
   hackerId String
   presenceTypes PresenceType[]
-
+  
   @@index([hackerId])
 }
 
