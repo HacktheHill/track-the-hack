@@ -5,6 +5,7 @@ import { insertRecords } from "./utils.mjs";
 import { generateUsers } from "./users.mjs";
 import { events } from "./events.mjs";
 import { hackers } from "./hackers.mjs";
+import { hardware } from './hardware.mjs';
 const prisma = new PrismaClient();
 
 async function main() {
@@ -20,8 +21,13 @@ async function main() {
 	// console.log("uploading hacker infos to the app");
 	// const hackerInfos = uploadHackers(prisma.hackerInfo, hackers);
 
-	const temp = await events();
-	await insertRecords(prisma.event, temp)
+	// seed hardware table
+	console.log('Uploading hardware info to the app');
+	const hardwareEntry = await hardware();
+	await insertRecords(prisma.hardware, hardwareEntry);
+
+	// const temp = await events();
+	// await insertRecords(prisma.event, temp)
 }
 
 main()
