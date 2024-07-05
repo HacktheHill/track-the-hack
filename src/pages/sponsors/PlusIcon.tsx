@@ -1,5 +1,4 @@
-import React from "react";
-import IconSvgProps from "../../utils/types";
+import type IconSvgProps from "../../utils/types";
 
 const PlusIcon = ({ size = 24, width, height, ...props }: IconSvgProps) => (
 	<svg

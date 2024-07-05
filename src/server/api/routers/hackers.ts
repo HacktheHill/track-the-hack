@@ -1,6 +1,6 @@
 import { AttendanceType, Role, ShirtSize, type HackerInfo } from "@prisma/client";
-import { EventEmitter } from "events";
 import { observable } from "@trpc/server/observable";
+import { EventEmitter } from "events";
 import { z } from "zod";
 import { walkInSchema } from "../../../utils/common";
 import { hasRoles } from "../../../utils/helpers";
@@ -65,57 +65,55 @@ export const hackerRouter = createTRPCRouter({
 
 	// Get next hacker in db from an id
 	getNext: publicProcedure
-	.input(
-		z
-			.object({
+		.input(
+			z.object({
 				id: z.string(),
 			}),
-	)
-	.query(async ({ ctx, input }) => {
-		let hacker: HackerInfo | null = null;
-		if ("id" in input) {
-			hacker = await ctx.prisma.hackerInfo.findFirst({
-				take: 1,
-				skip: 1,
-				cursor: {
-					id: input.id,
-				},
-			});
-		}
+		)
+		.query(async ({ ctx, input }) => {
+			let hacker: HackerInfo | null = null;
+			if ("id" in input) {
+				hacker = await ctx.prisma.hackerInfo.findFirst({
+					take: 1,
+					skip: 1,
+					cursor: {
+						id: input.id,
+					},
+				});
+			}
 
-		if (!hacker) {
-			throw new Error("Hacker not found");
-		}
+			if (!hacker) {
+				throw new Error("Hacker not found");
+			}
 
-		return hacker;
-	}),
+			return hacker;
+		}),
 
 	// Get prev hacker in db from an id
 	getPrev: publicProcedure
-	.input(
-		z
-			.object({
+		.input(
+			z.object({
 				id: z.string(),
 			}),
-	)
-	.query(async ({ ctx, input }) => {
-		let hacker: HackerInfo | null = null;
-		if ("id" in input) {
-			hacker = await ctx.prisma.hackerInfo.findFirst({
-				take: -1,
-				skip: 1,
-				cursor: {
-					id: input.id,
-				},
-			});
-		}
+		)
+		.query(async ({ ctx, input }) => {
+			let hacker: HackerInfo | null = null;
+			if ("id" in input) {
+				hacker = await ctx.prisma.hackerInfo.findFirst({
+					take: -1,
+					skip: 1,
+					cursor: {
+						id: input.id,
+					},
+				});
+			}
 
-		if (!hacker) {
-			throw new Error("Hacker not found");
-		}
+			if (!hacker) {
+				throw new Error("Hacker not found");
+			}
 
-		return hacker;
-	}),
+			return hacker;
+		}),
 
 	// Get all hackers
 	all: protectedProcedure
@@ -159,10 +157,10 @@ export const hackerRouter = createTRPCRouter({
 			const { limit, cursor, schools, currentLevelsOfStudy, programs, graduationYears, attendanceTypes } = input;
 
 			interface QueryConditions {
-				university?: { in: string[] }| null;
-    			studyLevel?: { in: string[] }| null;
-    			studyProgram?: { in: string[] }| null;
-    			graduationYear?: { in: number[] }| null;
+				university?: { in: string[] } | null;
+				studyLevel?: { in: string[] } | null;
+				studyProgram?: { in: string[] } | null;
+				graduationYear?: { in: number[] } | null;
 				attendanceType?: { in: AttendanceType[] };
 			}
 
@@ -188,7 +186,6 @@ export const hackerRouter = createTRPCRouter({
 				queryConditions.attendanceType = { in: attendanceTypes };
 			}
 
-
 			const results = await ctx.prisma.hackerInfo.findMany({
 				take: limit + 1, // get an extra item at the end which we'll use as next cursor
 				cursor: cursor ? { id: cursor } : undefined,
@@ -211,62 +208,61 @@ export const hackerRouter = createTRPCRouter({
 			};
 		}),
 
-		// get of all the options you can filter the hackers by
-		filterOptions: protectedProcedure
-		.query(async ({ ctx, input }) => {
-			const userId = ctx.session.user.id;
-			const user = await ctx.prisma.user.findUnique({
-				where: {
-					id: userId,
-				},
-			});
+	// get of all the options you can filter the hackers by
+	filterOptions: protectedProcedure.query(async ({ ctx, input }) => {
+		const userId = ctx.session.user.id;
+		const user = await ctx.prisma.user.findUnique({
+			where: {
+				id: userId,
+			},
+		});
 
-			if (!user) {
-				throw new Error("User not found");
-			}
+		if (!user) {
+			throw new Error("User not found");
+		}
 
-			if (!hasRoles(user, [Role.SPONSOR, Role.ORGANIZER])) {
-				throw new Error("You do not have permission to do this");
-			}
+		if (!hasRoles(user, [Role.SPONSOR, Role.ORGANIZER])) {
+			throw new Error("You do not have permission to do this");
+		}
 
-			const filterOptions: {
-				schools: string[];
-				currentLevelsOfStudy: string[];
-				programs: string[];
-				graduationYears: string[];
-				attendanceTypes: string[];
-			} = {
-				schools: [],
-				currentLevelsOfStudy: [],
-				programs: [],
-				graduationYears: [],
-				attendanceTypes: [],
-			};
+		const filterOptions: {
+			schools: string[];
+			currentLevelsOfStudy: string[];
+			programs: string[];
+			graduationYears: string[];
+			attendanceTypes: string[];
+		} = {
+			schools: [],
+			currentLevelsOfStudy: [],
+			programs: [],
+			graduationYears: [],
+			attendanceTypes: [],
+		};
 
-			const hackers = await ctx.prisma.hackerInfo.findMany()
+		const hackers = await ctx.prisma.hackerInfo.findMany();
 
-			hackers?.forEach(hacker => {
-				hacker.university && !filterOptions.schools.includes(hacker.university.toLowerCase())
-					? filterOptions.schools.push(hacker.university.toLowerCase())
-					: "";
-				hacker.studyLevel && !filterOptions.currentLevelsOfStudy.includes(hacker.studyLevel.toLowerCase())
-					? filterOptions.currentLevelsOfStudy.push(hacker.studyLevel.toLowerCase())
-					: "";
-				hacker.studyProgram && !filterOptions.programs.includes(hacker.studyProgram.toLowerCase())
-					? filterOptions.programs.push(hacker.studyProgram.toLowerCase())
-					: "";
-				hacker.graduationYear && !filterOptions.graduationYears.includes(hacker.graduationYear.toString())
-					? filterOptions.graduationYears.push(hacker.graduationYear.toString())
-					: "";
-				hacker.attendanceType && !filterOptions.attendanceTypes.includes(hacker.attendanceType)
-					? filterOptions.attendanceTypes.push(hacker.attendanceType)
-					: "";
-			});
+		hackers?.forEach(hacker => {
+			hacker.university && !filterOptions.schools.includes(hacker.university.toLowerCase())
+				? filterOptions.schools.push(hacker.university.toLowerCase())
+				: "";
+			hacker.studyLevel && !filterOptions.currentLevelsOfStudy.includes(hacker.studyLevel.toLowerCase())
+				? filterOptions.currentLevelsOfStudy.push(hacker.studyLevel.toLowerCase())
+				: "";
+			hacker.studyProgram && !filterOptions.programs.includes(hacker.studyProgram.toLowerCase())
+				? filterOptions.programs.push(hacker.studyProgram.toLowerCase())
+				: "";
+			hacker.graduationYear && !filterOptions.graduationYears.includes(hacker.graduationYear.toString())
+				? filterOptions.graduationYears.push(hacker.graduationYear.toString())
+				: "";
+			hacker.attendanceType && !filterOptions.attendanceTypes.includes(hacker.attendanceType)
+				? filterOptions.attendanceTypes.push(hacker.attendanceType)
+				: "";
+		});
 
-			return {
-				filterOptions
-			};
-		}),
+		return {
+			filterOptions,
+		};
+	}),
 
 	// Confirm a hacker's attendance
 	confirm: protectedProcedure
@@ -520,9 +516,7 @@ export const hackerRouter = createTRPCRouter({
 							action: "/update-hacker-info",
 							entityType: "UpdateHackerInfo",
 							userName: user.name ?? "Unknown",
-							details: `Updated field ${field} from ${String(before)} to ${String(
-								after ?? "empty",
-							)}`,
+							details: `Updated field ${field} from ${String(before)} to ${String(after ?? "empty")}`,
 						};
 
 						auditEntries.push(auditEntry);

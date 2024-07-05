@@ -1,4 +1,4 @@
-import { TabGroup, TabList, Tab, TabPanels, TabPanel } from "@tremor/react";
+import { Tab, TabGroup, TabList, TabPanel, TabPanels } from "@tremor/react";
 import { useEffect, useState } from "react";
 
 import DemographicsTab from "../../components/DemographicsTab";
@@ -6,12 +6,12 @@ import MainEventTab from "../../components/MainEventTab";
 
 import type { HackerInfo, PresenceInfo } from "@prisma/client";
 import type { GetStaticProps, NextPage } from "next";
-import { trpc } from "../../utils/api";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
+import { trpc } from "../../utils/api";
 
-import { getAggregatedHackerInfo, getAggregatedPresenceInfo } from "../../utils/getAggregatedData";
-import Loading from "../../components/Loading";
 import Error from "../../components/Error";
+import Loading from "../../components/Loading";
+import { getAggregatedHackerInfo, getAggregatedPresenceInfo } from "../../utils/getAggregatedData";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {

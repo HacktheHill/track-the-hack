@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import Image from "next/image";
 import { useTranslation } from "next-i18next";
+import Image from "next/image";
+import { useEffect, useState } from "react";
 
 type GeneratorProps = {
 	type: "snowflake" | "cloud";

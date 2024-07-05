@@ -1,30 +1,30 @@
-import React, { useState } from "react";
 import {
-	Card,
-	Metric,
-	Text,
-	Title,
-	BarList,
-	Flex,
-	Grid,
-	DonutChart,
-	Legend,
-	BarChart,
-	Table,
+	AreaChart,
 	Badge,
-	TableHead,
-	TableHeaderCell,
-	TableBody,
-	TableRow,
-	TableCell,
+	BarChart,
+	BarList,
+	Card,
 	CategoryBar,
 	Divider,
-	AreaChart,
+	DonutChart,
+	Flex,
+	Grid,
+	Legend,
+	Metric,
 	Select,
 	SelectItem,
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeaderCell,
+	TableRow,
+	Text,
+	Title,
 } from "@tremor/react";
-import type { StrKeyAnyVal, StrKeyNumVal, TremorChartData } from "../utils/types";
+import React, { useState } from "react";
 import { valToStr } from "../utils/getAggregatedData";
+import type { StrKeyAnyVal, StrKeyNumVal, TremorChartData } from "../utils/types";
 
 type TremorDefaultColors = ("green" | "red" | "sky" | "fuchsia" | "lime" | "violet" | "yellow" | "indigo" | "orange")[];
 // green and red must be first and second so the "true" values are green and the "false" ones are red in the data charts
@@ -295,13 +295,13 @@ const CustomBarChart: React.FC<CustomBarChartProps> = ({ title, data }) => {
 };
 
 export {
-	CustomDonutChart,
-	CustomSmallTextCard,
-	MultiCheckInEventsChart,
-	EventsTable,
-	InventoryTable,
-	CustomBarList,
 	CustomAreaChart,
 	CustomBarChart,
+	CustomBarList,
+	CustomDonutChart,
+	CustomSmallTextCard,
+	EventsTable,
+	InventoryTable,
+	MultiCheckInEventsChart,
 };
 export type { CustomBarListProps };

@@ -1,8 +1,8 @@
 import NextAuth, { type NextAuthOptions } from "next-auth";
+import AuthentikProvider from "next-auth/providers/authentik";
 import DiscordProvider from "next-auth/providers/discord";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
-import AuthentikProvider from "next-auth/providers/authentik";
 
 // Prisma adapter for NextAuth, optional and can be removed
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
@@ -40,8 +40,8 @@ export const authOptions: NextAuthOptions = {
 			clientId: env.AUTHENTIK_ID,
 			clientSecret: env.AUTHENTIK_SECRET,
 			issuer: env.AUTHENTIK_ISSUER,
-			style: { logo: "https://hackthehill.com/Logos/hackthehill-logo.svg", bg: "#a8403f", text: "#fff" }
-		})
+			style: { logo: "https://hackthehill.com/Logos/hackthehill-logo.svg", bg: "#a8403f", text: "#fff" },
+		}),
 	],
 	theme: {
 		logo: "/assets/hackthehill-logo.svg",

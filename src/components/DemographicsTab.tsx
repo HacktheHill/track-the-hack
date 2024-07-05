@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from "react";
-import { Card, Grid, Select, SelectItem } from "@tremor/react";
-import { CustomBarList, CustomDonutChart, CustomSmallTextCard, CustomAreaChart, CustomBarChart } from "./Tremor_Custom";
-import { type AggregatedHackerInfo } from "../utils/types";
-import { getNumberPerValueBarChart, getNumberPerValueAreaChart } from "../utils/getAggregatedData";
-import { valToStr, getAggregatedHackerInfo } from "../utils/getAggregatedData";
-import { type HackerInfoKey } from "../utils/types";
 import { type HackerInfo } from "@prisma/client";
+import { Card, Grid, Select, SelectItem } from "@tremor/react";
+import { useEffect, useState } from "react";
+import {
+	getAggregatedHackerInfo,
+	getNumberPerValueAreaChart,
+	getNumberPerValueBarChart,
+	valToStr,
+} from "../utils/getAggregatedData";
+import { type AggregatedHackerInfo, type HackerInfoKey } from "../utils/types";
+import { CustomAreaChart, CustomBarChart, CustomBarList, CustomDonutChart, CustomSmallTextCard } from "./Tremor_Custom";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const filterHackerData = (filterKey: HackerInfoKey, filterVal: any, hackerData: HackerInfo[]) => {
