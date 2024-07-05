@@ -182,6 +182,19 @@ model Link {
   link  String
 }
 
+model Hardware {
+  id                   String   @id @default(cuid())
+  imageURL             String?
+  name                 String
+  quantityAvailable    Int?
+  manufacturer         String?
+  model                String?
+  type                 String?
+  description          String?
+
+  @@index([name])
+}
+
 enum Language {
   EN
   FR
