@@ -1,6 +1,5 @@
 import { EventType } from "@prisma/client";
-import type { NextPage } from "next";
-import type { GetStaticProps } from "next";
+import type { GetStaticProps, NextPage } from "next";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Image from "next/image";

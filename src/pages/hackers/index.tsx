@@ -11,8 +11,8 @@ import { getServerSession } from "next-auth/next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import App from "../../components/App";
 import Error from "../../components/Error";
-import Loading from "../../components/Loading";
 import Filter from "../../components/Filter";
+import Loading from "../../components/Loading";
 import { hackersRedirect } from "../../utils/redirects";
 import { authOptions } from "../api/auth/[...nextauth]";
 
@@ -36,7 +36,7 @@ const Hackers: NextPage = () => {
 			currentLevelsOfStudy: filters.currentLevelsOfStudy,
 			programs: filters.programs,
 			graduationsYears: filters.graduationYears,
-			attendanceTypes: filters.attendanceTypes
+			attendanceTypes: filters.attendanceTypes,
 		},
 		{
 			getNextPageParam: lastPage => lastPage.nextCursor,
@@ -71,7 +71,6 @@ const Hackers: NextPage = () => {
 	};
 
 	useEffect(() => {
-		
 		updateColumns();
 		const debouncedResizeHandler = debounce(updateColumns, 500);
 
@@ -97,9 +96,9 @@ const Hackers: NextPage = () => {
 
 	const { data: data } = trpc.hackers.filterOptions.useQuery();
 
-		if (data) {
-			filterBy = data.filterOptions;
-		}
+	if (data) {
+		filterBy = data.filterOptions;
+	}
 
 	if (status === "loading") {
 		return (
@@ -132,30 +131,81 @@ const Hackers: NextPage = () => {
 
 	return (
 		// 2 <App>s based on whether or not sidebar is visible is made because the scroll to bottom wouldnt be detected when the filter sidebar was on
-		<> {sidebarVisible && <App className="mainWindow flex flex-col overflow-y-auto bg-default-gradient" integrated={true} title={t("title")}  onScroll={handleScroll}>
-			<div className="border-b border-dark-color bg-light-quaternary-color px-4 pb-4 pt-2 shadow-navbar sm:px-20">
-				<div className="flex">
-					<button
-						className="border-dark m-1 mr-3 rounded-xl bg-medium-primary-color px-6 text-sm text-light-color"
-						onClick={toggleFilter}
-					>
-						Filters
-					</button>
-					<Search setSearch={setSearch} />
-				</div>
-			</div>
-				<div className="flex flex-row">
-					<FilterOptions
-						filters={filters}
-						setFilters={setFilters}
-						filterOptions={filterBy}
-						sidebarVisible={sidebarVisible}
-					/>
+		<>
+			{" "}
+			{sidebarVisible && (
+				<App
+					className="mainWindow flex flex-col overflow-y-auto bg-default-gradient"
+					integrated={true}
+					title={t("title")}
+					onScroll={handleScroll}
+				>
+					<div className="border-b border-dark-color bg-light-quaternary-color px-4 pb-4 pt-2 shadow-navbar sm:px-20">
+						<div className="flex">
+							<button
+								className="border-dark m-1 mr-3 rounded-xl bg-medium-primary-color px-6 text-sm text-light-color"
+								onClick={toggleFilter}
+							>
+								Filters
+							</button>
+							<Search setSearch={setSearch} />
+						</div>
+					</div>
+					<div className="flex flex-row">
+						<FilterOptions
+							filters={filters}
+							setFilters={setFilters}
+							filterOptions={filterBy}
+							sidebarVisible={sidebarVisible}
+						/>
+						<div
+							className="to-mobile:mx-auto grid h-fit flex-col gap-4 overflow-x-hidden px-4 py-4 sm:px-20"
+							style={{
+								gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+							}}
+						>
+							{filteredQuery?.map(hacker => (
+								<Card
+									key={hacker.id}
+									id={hacker.id}
+									firstName={hacker.firstName}
+									lastName={hacker.lastName}
+									university={hacker.university}
+									studyProgram={hacker.studyProgram}
+								/>
+							))}
+						</div>
+					</div>
+					{filteredQuery?.length == 0 && (
+						<div className="flex h-full w-full flex-col items-center justify-center gap-4 text-2xl text-dark-color">
+							<svg className="h-20 w-20" fill="currentColor" viewBox="0 0 24 24">
+								<path d="M10 0h24v24H0z" fill="none" />
+								<path d="M14 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+							</svg>
+							<p>No hackers found</p>
+						</div>
+					)}
+				</App>
+			)}
+			{!sidebarVisible && (
+				<App className="flex flex-col overflow-y-auto bg-default-gradient" integrated={true} title={t("title")}>
+					<div className="border-b border-dark-color bg-light-quaternary-color px-4 pb-4 pt-2 shadow-navbar sm:px-20">
+						<div className="flex">
+							<button
+								className="border-dark m-1 mr-3 rounded-xl bg-medium-primary-color px-6 text-sm text-light-color"
+								onClick={toggleFilter}
+							>
+								Filters
+							</button>
+							<Search setSearch={setSearch} />
+						</div>
+					</div>
 					<div
-						className="to-mobile:mx-auto grid h-fit flex-col gap-4 overflow-x-hidden px-4 py-4 sm:px-20"
+						className="mainWindow to-mobile:mx-auto grid h-fit flex-col gap-4 overflow-x-hidden px-4 py-4 sm:px-20"
 						style={{
 							gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
 						}}
+						onScroll={handleScroll}
 					>
 						{filteredQuery?.map(hacker => (
 							<Card
@@ -168,58 +218,18 @@ const Hackers: NextPage = () => {
 							/>
 						))}
 					</div>
-				</div>
-			{filteredQuery?.length == 0 && (
-				<div className="flex h-full w-full flex-col items-center justify-center gap-4 text-2xl text-dark-color">
-					<svg className="h-20 w-20" fill="currentColor" viewBox="0 0 24 24">
-						<path d="M10 0h24v24H0z" fill="none" />
-						<path d="M14 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
-					</svg>
-					<p>No hackers found</p>
-				</div>
+					{filteredQuery?.length == 0 && (
+						<div className="flex h-full w-full flex-col items-center justify-center gap-4 text-2xl text-dark-color">
+							<svg className="h-20 w-20" fill="currentColor" viewBox="0 0 24 24">
+								<path d="M10 0h24v24H0z" fill="none" />
+								<path d="M14 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+							</svg>
+							<p>No hackers found</p>
+						</div>
+					)}
+				</App>
 			)}
-		</App>
-		}{!sidebarVisible && <App className="flex flex-col overflow-y-auto bg-default-gradient" integrated={true} title={t("title")}>
-		<div className="border-b border-dark-color bg-light-quaternary-color px-4 pb-4 pt-2 shadow-navbar sm:px-20">
-			<div className="flex">
-				<button
-					className="border-dark m-1 mr-3 rounded-xl bg-medium-primary-color px-6 text-sm text-light-color"
-					onClick={toggleFilter}
-				>
-					Filters
-				</button>
-				<Search setSearch={setSearch} />
-			</div>
-		</div>
-				<div
-					className="mainWindow to-mobile:mx-auto grid h-fit flex-col gap-4 overflow-x-hidden px-4 py-4 sm:px-20"
-					style={{
-						gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
-					}}
-					onScroll={handleScroll}
-				>
-					{filteredQuery?.map(hacker => (
-						<Card
-							key={hacker.id}
-							id={hacker.id}
-							firstName={hacker.firstName}
-							lastName={hacker.lastName}
-							university={hacker.university}
-							studyProgram={hacker.studyProgram}
-						/>
-					))}
-				</div>
-		{filteredQuery?.length == 0 && (
-			<div className="flex h-full w-full flex-col items-center justify-center gap-4 text-2xl text-dark-color">
-				<svg className="h-20 w-20" fill="currentColor" viewBox="0 0 24 24">
-					<path d="M10 0h24v24H0z" fill="none" />
-					<path d="M14 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
-				</svg>
-				<p>No hackers found</p>
-			</div>
-		)}
-	</App>
-	}</>
+		</>
 	);
 };
 
@@ -294,7 +304,6 @@ type FilterProps = {
 };
 
 const FilterOptions = ({ filters, setFilters, filterOptions, sidebarVisible }: FilterProps) => {
-
 	const handleCheckBox = (option: string, filterSection: string) => {
 		if (filters[filterSection]?.[0] === option) {
 			const tempFilters = { ...filters, [filterSection]: [] };
@@ -304,7 +313,6 @@ const FilterOptions = ({ filters, setFilters, filterOptions, sidebarVisible }: F
 			setFilters(tempFilters);
 		}
 	};
-	
 
 	return (
 		<>
@@ -327,7 +335,11 @@ const FilterOptions = ({ filters, setFilters, filterOptions, sidebarVisible }: F
 											<input
 												type="checkbox"
 												className="h-6 w-6"
-												checked={filters["currentLevelsOfStudy"] ? filters["currentLevelsOfStudy"][0] == option : false }
+												checked={
+													filters["currentLevelsOfStudy"]
+														? filters["currentLevelsOfStudy"][0] == option
+														: false
+												}
 												onChange={() => {
 													handleCheckBox(option, "currentLevelsOfStudy");
 												}}
@@ -346,7 +358,7 @@ const FilterOptions = ({ filters, setFilters, filterOptions, sidebarVisible }: F
 												{option.slice(1)}
 											</span>
 											<input
-												checked={filters["schools"] ? filters["schools"][0] == option : false }
+												checked={filters["schools"] ? filters["schools"][0] == option : false}
 												onChange={() => {
 													handleCheckBox(option, "schools");
 												}}
@@ -369,7 +381,7 @@ const FilterOptions = ({ filters, setFilters, filterOptions, sidebarVisible }: F
 												{option.slice(1)}
 											</span>
 											<input
-												checked={filters["programs"] ? filters["programs"][0] == option : false }
+												checked={filters["programs"] ? filters["programs"][0] == option : false}
 												onChange={() => {
 													handleCheckBox(option, "programs");
 												}}
@@ -389,7 +401,11 @@ const FilterOptions = ({ filters, setFilters, filterOptions, sidebarVisible }: F
 										<li key={option} className="text-dark mb-2 flex items-center justify-between">
 											<span>{option}</span>
 											<input
-												checked={filters["graduationYears"] ? filters["graduationYears"][0] == option : false }
+												checked={
+													filters["graduationYears"]
+														? filters["graduationYears"][0] == option
+														: false
+												}
 												onChange={() => {
 													handleCheckBox(option, "graduationYears");
 												}}
@@ -412,7 +428,11 @@ const FilterOptions = ({ filters, setFilters, filterOptions, sidebarVisible }: F
 												{option.split("_").join(" ").slice(1).toLowerCase()}
 											</span>
 											<input
-												checked={filters["attendanceTypes"] ? filters["attendanceTypes"][0] == option : false }
+												checked={
+													filters["attendanceTypes"]
+														? filters["attendanceTypes"][0] == option
+														: false
+												}
 												onChange={() => {
 													handleCheckBox(option, "attendanceTypes");
 												}}

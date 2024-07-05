@@ -1,7 +1,6 @@
-import type { TremorChartData, StrKeyNumVal, AggregatedPresenceInfo, AggregatedHackerInfo } from "./types";
-import type { HackerInfo, PresenceInfo } from "@prisma/client";
+import type { HackerInfo, PresenceInfo, ShirtSize } from "@prisma/client";
 import { type Prisma } from "@prisma/client";
-import type { ShirtSize } from "@prisma/client";
+import type { AggregatedHackerInfo, AggregatedPresenceInfo, StrKeyNumVal, TremorChartData } from "./types";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const valToStr = (val: any): string => {

@@ -36,13 +36,13 @@ type AggregatedPresenceInfo = {
 };
 
 export type {
-	StrKeyAnyVal,
-	StrKeyStrVal,
-	StrKeyNumVal,
+	AggregatedHackerInfo,
+	AggregatedPresenceInfo,
 	ArrElement,
 	HackerInfoKey,
 	PresenceInfoKey,
+	StrKeyAnyVal,
+	StrKeyNumVal,
+	StrKeyStrVal,
 	TremorChartData,
-	AggregatedHackerInfo,
-	AggregatedPresenceInfo,
 };
