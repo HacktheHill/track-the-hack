@@ -1,6 +1,8 @@
-import type { HackerInfo, PresenceInfo, ShirtSize } from "@prisma/client";
+import type { TremorChartData, StrKeyNumVal, AggregatedPresenceInfo, AggregatedHackerInfo } from "./types";
+import type { HackerInfo, PresenceInfo } from "@prisma/client";
 import { type Prisma } from "@prisma/client";
-import type { AggregatedHackerInfo, AggregatedPresenceInfo, StrKeyNumVal, TremorChartData } from "./types";
+import type { ShirtSize } from "@prisma/client";
+import { keyToLabel } from "../pages/hackers/hacker";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const valToStr = (val: any): string => {
@@ -214,31 +216,20 @@ export const getAggregatedHackerInfo = (hackerData: HackerInfo[]) => {
 };
 
 export const getAggregatedPresenceInfo = (presenceData: Prisma.PresenceInfoGetPayload<true>[]) => {
-	const metricsData: AggregatedPresenceInfo = {
-		id: [],
-		checkedIn: [],
-		lunch: [],
-		dinner: [],
-		snack: [],
-		snack2: [],
-		snack3: [],
-		hackerInfoId: [],
-	};
+	const labels = Object.keys(keyToLabel);
+
+	const metricsData = labels.reduce((acc, label) => {
+		acc[label as keyof PresenceInfo] = [];
+		return acc;
+	}, {} as AggregatedPresenceInfo);
+
+	const aggregatedPresenceData = structuredClone(metricsData);
+
 	const { metricsKeys } = getMetricsKeysAndData(presenceData, metricsData);
 
-	const aggregatedPresenceData: AggregatedPresenceInfo = {
-		id: [],
-		checkedIn: [],
-		lunch: [],
-		dinner: [],
-		snack: [],
-		snack2: [],
-		snack3: [],
-		hackerInfoId: [],
-	};
-
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	metricsKeys.forEach(key => (aggregatedPresenceData[key] = getNumberPerValue(metricsData[key]!)));
+	metricsKeys.forEach(key => {
+		aggregatedPresenceData[key] = getNumberPerValue(metricsData[key]);
+	});
 
 	return aggregatedPresenceData;
 };
