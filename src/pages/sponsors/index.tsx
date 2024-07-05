@@ -36,8 +36,8 @@ import { useCallback } from "react";
 import { z } from "zod";
 import App from "../../components/App";
 import Error from "../../components/Error";
-import Loading from "../../components/Loading";
 import Filter from "../../components/Filter";
+import Loading from "../../components/Loading";
 import { trpc } from "../../utils/api";
 import { addSponsorshipSchema, sponsorshipSchema } from "../../utils/common";
 
@@ -128,73 +128,76 @@ const SponsorsTable = ({ companyQuery }: { companyQuery: CompanyQueryResult }) =
 		}),
 	);
 
-	const renderCell = useCallback((company: Companies, columnKey: string) => {
-		const cellValue = (company[columnKey as keyof Companies] as string) || "";
+	const renderCell = useCallback(
+		(company: Companies, columnKey: string) => {
+			const cellValue = (company[columnKey as keyof Companies] as string) || "";
 
-		switch (columnKey) {
-			case "company_name":
-				return (
-					<User
-						avatarProps={{ radius: "full", src: "/icons/favicon-96x96.png", size: "lg" }}
-						description={company.id}
-						name={cellValue}
-						classNames={{
-							base: "bg-red",
-						}}
-					>
-						{company.companyName}
-					</User>
-				);
-			case "tier":
-				return (
-					<div className="flex flex-col">
-						<p className="text-bold text-sm capitalize">{cellValue}</p>
-						<p className="text-bold text-sm capitalize text-default-400">${company.amount}</p>
-					</div>
-				);
-			case "paid":
-				return (
-					<Chip className="capitalize" color={statusColorMap[company.paid]} size="sm" variant="flat">
-						{cellValue}
-					</Chip>
-				);
-			case "actions":
-				return (
-					<div className="relative flex items-center gap-2">
-						<Tooltip content="Preview">
-							<span
-								className="cursor-pointer text-lg text-default-400 active:opacity-50"
-								onClick={() => {
-									router.push(`/payment?id=${company.id}`).catch(error => {
-										console.error("Error navigating to payment page:", error);
-									});
-								}}
-							>
-								<EyeIcon />
-							</span>
-						</Tooltip>
-						<Tooltip content="Edit">
-							<span
-								className="cursor-pointer text-lg text-default-400 active:opacity-50"
-								onClick={() => {
-									setIsModalOpen(true);
-									setSelectedUserId(company.id);
-								}}
-							>
-								<EditIcon />
-							</span>
-						</Tooltip>
-						<Tooltip color="danger" content="Delete">
-							<span className="cursor-pointer text-lg text-danger active:opacity-50">
-								<DeleteIcon />
-							</span>
-						</Tooltip>
-					</div>
-				);
-			default:
-				return cellValue;
-		}
-	}, [router]);
+			switch (columnKey) {
+				case "company_name":
+					return (
+						<User
+							avatarProps={{ radius: "full", src: "/icons/favicon-96x96.png", size: "lg" }}
+							description={company.id}
+							name={cellValue}
+							classNames={{
+								base: "bg-red",
+							}}
+						>
+							{company.companyName}
+						</User>
+					);
+				case "tier":
+					return (
+						<div className="flex flex-col">
+							<p className="text-bold text-sm capitalize">{cellValue}</p>
+							<p className="text-bold text-sm capitalize text-default-400">${company.amount}</p>
+						</div>
+					);
+				case "paid":
+					return (
+						<Chip className="capitalize" color={statusColorMap[company.paid]} size="sm" variant="flat">
+							{cellValue}
+						</Chip>
+					);
+				case "actions":
+					return (
+						<div className="relative flex items-center gap-2">
+							<Tooltip content="Preview">
+								<span
+									className="cursor-pointer text-lg text-default-400 active:opacity-50"
+									onClick={() => {
+										router.push(`/payment?id=${company.id}`).catch(error => {
+											console.error("Error navigating to payment page:", error);
+										});
+									}}
+								>
+									<EyeIcon />
+								</span>
+							</Tooltip>
+							<Tooltip content="Edit">
+								<span
+									className="cursor-pointer text-lg text-default-400 active:opacity-50"
+									onClick={() => {
+										setIsModalOpen(true);
+										setSelectedUserId(company.id);
+									}}
+								>
+									<EditIcon />
+								</span>
+							</Tooltip>
+							<Tooltip color="danger" content="Delete">
+								<span className="cursor-pointer text-lg text-danger active:opacity-50">
+									<DeleteIcon />
+								</span>
+							</Tooltip>
+						</div>
+					);
+				default:
+					return cellValue;
+			}
+		},
+		[router],
+	);
 
 	return (
 		<div>
@@ -278,8 +281,8 @@ const EditModal = ({ isModalOpen, setIsModalOpen, selectedUserId, setSelectedUse
 					value === "CUSTOM" || value === "STARTUP"
 						? parseFloat(value)
 						: amount[value as keyof typeof amount]
-						? parseInt(amount[value as keyof typeof amount] ?? "0")
-						: 0;
+							? parseInt(amount[value as keyof typeof amount] ?? "0")
+							: 0;
 				return {
 					...prevFormData,
 					[key]: value,

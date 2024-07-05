@@ -9,8 +9,8 @@ import { trpc } from "../../utils/api";
 import { z } from "zod";
 import App from "../../components/App";
 import Error from "../../components/Error";
-import Loading from "../../components/Loading";
 import Filter from "../../components/Filter";
+import Loading from "../../components/Loading";
 import { walkInSchema } from "../../utils/common";
 
 type HackerInfo = Prisma.HackerInfoGetPayload<true>;
@@ -35,12 +35,12 @@ const Hacker: NextPage = () => {
 
 	if (hackerQuery.isLoading || hackerQuery.data == null) {
 		return (
-		  <App className="h-full bg-default-gradient px-16 py-12">
-			<Filter filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
-			  <Loading />
-			  <Error message="You are not allowed to view this page" />
-			</Filter>
-		  </App>
+			<App className="h-full bg-default-gradient px-16 py-12">
+				<Filter filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
+					<Loading />
+					<Error message="You are not allowed to view this page" />
+				</Filter>
+			</App>
 		);
 	} else if (hackerQuery.isError) {
 		return (
@@ -78,31 +78,31 @@ const Hacker: NextPage = () => {
 			title={`${hackerQuery.data.firstName} ${hackerQuery.data.lastName}`}
 		>
 			<div className="mx-auto flex max-w-2xl flex-col gap-4">
-			<Filter filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
-				<>
-					<div className="flex justify-between">
-					{prevHackerQuery.data ? (
-						<a
-						href={`/hackers/hacker?id=${prevHackerQuery.data.id}`}
-						className="flex items-center justify-center gap-2 rounded-md bg-gray-800 px-4 py-2 text-light-color hover:bg-gray-700"
-						>
-						Previous
-						</a>
-					) : (
-						<a></a>
-					)}
-					{nextHackerQuery.data && (
-						<a
-						href={`/hackers/hacker?id=${nextHackerQuery.data.id}`}
-						className="flex items-center justify-center gap-2 rounded-md bg-gray-800 px-4 py-2 text-light-color hover:bg-gray-700"
-						>
-						Next
-						</a>
-					)}
-					</div>
-					<HackerView hackerData={hackerQuery.data} presenceData={presenceQuery.data} />
-				</>
-				<Error message={t("not-authorized-to-view-this-page")} />
+				<Filter filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
+					<>
+						<div className="flex justify-between">
+							{prevHackerQuery.data ? (
+								<a
+									href={`/hackers/hacker?id=${prevHackerQuery.data.id}`}
+									className="flex items-center justify-center gap-2 rounded-md bg-gray-800 px-4 py-2 text-light-color hover:bg-gray-700"
+								>
+									Previous
+								</a>
+							) : (
+								<a></a>
+							)}
+							{nextHackerQuery.data && (
+								<a
+									href={`/hackers/hacker?id=${nextHackerQuery.data.id}`}
+									className="flex items-center justify-center gap-2 rounded-md bg-gray-800 px-4 py-2 text-light-color hover:bg-gray-700"
+								>
+									Next
+								</a>
+							)}
+						</div>
+						<HackerView hackerData={hackerQuery.data} presenceData={presenceQuery.data} />
+					</>
+					<Error message={t("not-authorized-to-view-this-page")} />
 				</Filter>
 			</div>
 		</App>

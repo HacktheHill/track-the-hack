@@ -1,14 +1,14 @@
-import { Card, Grid } from "@tremor/react";
 import type { HackerInfo, PresenceInfo } from "@prisma/client";
+import { Card, Grid } from "@tremor/react";
+import { keyToLabel } from "../pages/hackers/hacker";
+import type { AggregatedHackerInfo, AggregatedPresenceInfo } from "../utils/types";
 import {
 	CustomDonutChart,
 	CustomSmallTextCard,
-	MultiCheckInEventsChart,
 	EventsTable,
 	InventoryTable,
+	MultiCheckInEventsChart,
 } from "./Tremor_Custom";
-import { keyToLabel } from "../pages/hackers/hacker";
-import type { AggregatedHackerInfo, AggregatedPresenceInfo } from "../utils/types";
 
 const multiCheckInEventsKeyToLabel = Object.entries({
 	...keyToLabel,
@@ -62,9 +62,8 @@ export default function MainEventTab({
 	presenceData,
 }: MainEventTabProps) {
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	const totalConfirmedAttendees = aggregatedHackerData.confirmed.filter(
-		dataValue => dataValue.name === "Yes",
-	)[0]?.value;
+	const totalConfirmedAttendees = aggregatedHackerData.confirmed.filter(dataValue => dataValue.name === "Yes")[0]
+		?.value;
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const totalCheckedIn = aggregatedPresenceData.checkedIn.filter(dataValue => dataValue.name === "Yes")[0]?.value;
 	const rsvpStillExpected = totalConfirmedAttendees && totalCheckedIn ? totalConfirmedAttendees - totalCheckedIn : 0;
@@ -93,7 +92,10 @@ export default function MainEventTab({
 				title: key,
 				state: true, // TODO: not sure how event state (open/closed) will be stored in the db
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				utilization: ((utilizedEventData.length > 0) && (totalConfirmedAttendees ?? 0 > 0)) ? utilizedEventData[0]!.value / (totalConfirmedAttendees ?? 0) : 0,
+				utilization:
+					utilizedEventData.length > 0 && (totalConfirmedAttendees ?? 0 > 0)
+						? utilizedEventData[0]!.value / (totalConfirmedAttendees ?? 0)
+						: 0,
 			};
 		});
 

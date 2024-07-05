@@ -1,5 +1,5 @@
-import { Children } from "react";
 import { useSession } from "next-auth/react";
+import { Children } from "react";
 
 import { trpc } from "../utils/api";
 import type { Roles } from "../utils/common";
@@ -31,7 +31,7 @@ const Filter = ({ filter, children }: FilterProps) => {
 
 	const childrenArray = Children.toArray(children);
 	if (query.data && !filter(query.data) && childrenArray.length >= 2) {
-	  return <>{childrenArray[1]}</>;
+		return <>{childrenArray[1]}</>;
 	}
 
 	return null;

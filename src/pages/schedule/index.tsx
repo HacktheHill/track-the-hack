@@ -1,13 +1,13 @@
 import type { Event } from "@prisma/client";
 import { EventType } from "@prisma/client";
 import type { GetStaticProps, NextPage } from "next";
+import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import App from "../../components/App";
 import Error from "../../components/Error";
 import Loading from "../../components/Loading";
-import { useTranslation } from "next-i18next";
 
 import { trpc } from "../../utils/api";
 
@@ -200,8 +200,9 @@ const Tab = ({ type, active, onClick }: TabProps) => {
 
 	return (
 		<div
-			className={`flex cursor-pointer flex-row items-center justify-center gap-2 rounded-lg bg-dark-color p-2 font-coolvetica text-light-color outline sm:p-4 ${type === active ? "outline-4 outline-light-color" : "outline-0"
-				}`}
+			className={`flex cursor-pointer flex-row items-center justify-center gap-2 rounded-lg bg-dark-color p-2 font-coolvetica text-light-color outline sm:p-4 ${
+				type === active ? "outline-4 outline-light-color" : "outline-0"
+			}`}
 			onClick={onClick}
 			onKeyDown={e => {
 				if (e.key === "Enter") {

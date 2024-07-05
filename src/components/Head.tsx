@@ -1,5 +1,5 @@
-import NextHead from "next/head";
 import { useTranslation } from "next-i18next";
+import NextHead from "next/head";
 
 type HeadProps = {
 	title?: string;

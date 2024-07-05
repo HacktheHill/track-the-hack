@@ -1,4 +1,3 @@
-import React from "react";
 import type IconSvgProps from "../../utils/types";
 
 const DeleteIcon = ({ size, height = 20, width = 20, ...props }: IconSvgProps) => (

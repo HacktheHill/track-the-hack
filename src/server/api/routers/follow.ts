@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { createTRPCRouter, publicProcedure } from "../trpc";
 import { logAuditEntry } from "../../audit";
+import { createTRPCRouter, publicProcedure } from "../trpc";
 
 export const followRouter = createTRPCRouter({
 	create: publicProcedure

@@ -1,4 +1,3 @@
-import React from "react";
 import type IconSvgProps from "../../utils/types";
 
 const EyeIcon = ({ size = 20, width, height, ...props }: IconSvgProps) => (

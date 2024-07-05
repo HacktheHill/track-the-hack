@@ -34,17 +34,19 @@ const QR = () => {
 			<div className="flex flex-col items-center gap-6">
 				<Filter filter={role => role === Role.ORGANIZER}>
 					<>
-					<QRScanner onScan={onScan} />
-					<PhysicalScanner onScan={onScan} />
-					{!error && (
-						<p className="z-10 max-w-xl text-center text-lg font-bold text-dark-color">{t("scan-qr")}</p>
-					)}
+						<QRScanner onScan={onScan} />
+						<PhysicalScanner onScan={onScan} />
+						{!error && (
+							<p className="z-10 max-w-xl text-center text-lg font-bold text-dark-color">
+								{t("scan-qr")}
+							</p>
+						)}
 					</>
 					<>
-					<QRCode setError={setError} />
-					{!error && (
-						<p className="z-10 max-w-xl text-center text-lg font-bold text-dark-color">{t("use-qr")}</p>
-					)}
+						<QRCode setError={setError} />
+						{!error && (
+							<p className="z-10 max-w-xl text-center text-lg font-bold text-dark-color">{t("use-qr")}</p>
+						)}
 					</>
 				</Filter>
 			</div>

@@ -1,5 +1,5 @@
-import { z } from "zod";
 import { Language, Role, ShirtSize, Tiers } from "@prisma/client";
+import { z } from "zod";
 
 export const roles = z.enum([Role.HACKER, Role.SPONSOR, Role.ORGANIZER]);
 export type Roles = z.infer<typeof roles>;

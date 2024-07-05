@@ -1,12 +1,12 @@
-import { Role } from "@prisma/client";
 import type { HackerInfo } from "@prisma/client";
-import { z } from "zod";
-import { EventEmitter } from "events";
+import { Role } from "@prisma/client";
 import { observable } from "@trpc/server/observable";
+import { EventEmitter } from "events";
+import { z } from "zod";
 import { hasRoles } from "../../../utils/helpers";
 
-import { createTRPCRouter, protectedProcedure, publicProcedure} from "../trpc";
 import { logAuditEntry } from "../../audit";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 const ee = new EventEmitter();
 
