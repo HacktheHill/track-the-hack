@@ -112,23 +112,18 @@ model HackerInfo {
 }
 
 model PresenceInfo {
-  id             String     @id @default(cuid())
-  checkedIn      Boolean    @default(false)
-  breakfast1     Boolean    @default(false)
-  lunch1         Boolean    @default(false)
-  dinner1        Boolean    @default(false)
-  snacks         Boolean    @default(false)
-  snacks2        Boolean    @default(false)
-  redbull        Boolean    @default(false)
-  breakfast2     Boolean    @default(false)
-  lunch2         Boolean    @default(false)
-  lunch22        Boolean    @default(false)
-  hackherCheckIn Boolean    @default(false)
-  hackherLunch   Boolean    @default(false)
-  hackherDinner  Boolean    @default(false)
-  hackherSnack   Boolean    @default(false)
-  hackerInfo     HackerInfo @relation(fields: [hackerInfoId], references: [id])
-  hackerInfoId   String     @unique
+  id           String     @id @default(cuid())
+  checkedIn    Boolean    @default(false)
+  snacks1      Boolean    @default(false)
+  breakfast1   Boolean    @default(false)
+  lunch1       Boolean    @default(false)
+  dinner1      Boolean    @default(false)
+  snacks2      Boolean    @default(false)
+  breakfast2   Boolean    @default(false)
+  lunch2       Boolean    @default(false)
+  redbull      Boolean    @default(false)
+  hackerInfo   HackerInfo @relation(fields: [hackerInfoId], references: [id])
+  hackerInfoId String     @unique
 }
 
 model Event {
@@ -183,14 +178,14 @@ model Link {
 }
 
 model Hardware {
-  id                   String   @id @default(cuid())
-  imageURL             String?
-  name                 String
-  quantityAvailable    Int?
-  manufacturer         String?
-  model                String?
-  type                 String?
-  description          String?
+  id                String  @id @default(cuid())
+  imageURL          String?
+  name              String
+  quantityAvailable Int?
+  manufacturer      String?
+  model             String?
+  type              String?
+  description       String?
 
   @@index([name])
 }
