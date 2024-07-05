@@ -81,15 +81,13 @@ const Hacker: NextPage = () => {
 				<Filter filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
 					<>
 						<div className="flex justify-between">
-							{prevHackerQuery.data ? (
+							{prevHackerQuery.data && (
 								<a
 									href={`/hackers/hacker?id=${prevHackerQuery.data.id}`}
 									className="flex items-center justify-center gap-2 rounded-md bg-gray-800 px-4 py-2 text-light-color hover:bg-gray-700"
 								>
 									Previous
 								</a>
-							) : (
-								<a></a>
 							)}
 							{nextHackerQuery.data && (
 								<a
@@ -111,11 +109,14 @@ const Hacker: NextPage = () => {
 
 export const keyToLabel = {
 	checkedIn: "Checked In",
-	lunch: "Lunch March 4th",
-	dinner: "Dinner March 4th",
-	snack: "Snacks",
-	snack2: "Snacks 2",
-	snack3: "RedBull",
+	snacks1: "Snacks 1",
+	breakfast1: "Breakfast 1",
+	lunch1: "Lunch 1",
+	dinner1: "Dinner 1",
+	snacks2: "Snacks 2",
+	breakfast2: "Breakfast 2",
+	lunch2: "Lunch 2",
+	redbull: "Redbull",
 } as const satisfies Record<keyof Omit<PresenceInfo, "id" | "hackerInfoId">, string>;
 
 type HackerViewProps = {
@@ -154,15 +155,6 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 
 	const paragraphClass = "flex justify-between gap-4 text-right py-1.5 ";
 	const boldClass = "text-left font-bold";
-
-	const keyToLabel = {
-		checkedIn: "Checked In",
-		lunch: "Lunch March 4th",
-		dinner: "Dinner March 4th",
-		snack: "Snacks",
-		snack2: "Snacks 2",
-		snack3: "RedBull",
-	} as const satisfies Record<keyof Omit<PresenceInfo, "id" | "hackerInfoId">, string>;
 
 	const fields = [
 		{
