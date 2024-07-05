@@ -3,6 +3,8 @@ import { PrismaClient } from "@prisma/client";
 import { insertRecords } from "./utils.mjs";
 
 import { generateUsers } from "./users.mjs";
+import { generateHackerInfos } from "./hackerInfos.mjs";
+import { generatePresenceInfos } from "./presenceInfos.mjs";
 import { events } from "./events.mjs";
 import { hackers } from "./hackers.mjs";
 const prisma = new PrismaClient();
@@ -20,8 +22,13 @@ async function main() {
 	// console.log("uploading hacker infos to the app");
 	// const hackerInfos = uploadHackers(prisma.hackerInfo, hackers);
 
-	const temp = await hackers();
-	await insertRecords(prisma.hackerInfo, temp)
+	const hackerInfos = generateHackerInfos(10);
+	await insertRecords(prisma.hackerInfo, hackerInfos);
+
+	console.log("Creating dummy presence info...");
+
+	const presenceInfos = generatePresenceInfos(30);
+	await insertRecords(prisma.presenceInfo, presenceInfos);
 }
 
 main()
