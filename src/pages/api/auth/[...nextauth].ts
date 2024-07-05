@@ -35,13 +35,6 @@ export const authOptions: NextAuthOptions = {
 			clientId: env.GOOGLE_CLIENT_ID,
 			clientSecret: env.GOOGLE_CLIENT_SECRET,
 		}),
-		AuthentikProvider({
-			name: "Hack The Hill",
-			clientId: env.AUTHENTIK_ID,
-			clientSecret: env.AUTHENTIK_SECRET,
-			issuer: env.AUTHENTIK_ISSUER,
-			style: { logo: "https://hackthehill.com/Logos/hackthehill-logo.svg", bg: "#a8403f", text: "#fff" },
-		}),
 	],
 	theme: {
 		logo: "/assets/hackthehill-logo.svg",
