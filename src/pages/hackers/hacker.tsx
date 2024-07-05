@@ -109,6 +109,15 @@ const Hacker: NextPage = () => {
 	);
 };
 
+export const keyToLabel = {
+	checkedIn: "Checked In",
+	lunch: "Lunch March 4th",
+	dinner: "Dinner March 4th",
+	snack: "Snacks",
+	snack2: "Snacks 2",
+	snack3: "RedBull",
+} as const satisfies Record<keyof Omit<PresenceInfo, "id" | "hackerInfoId">, string>;
+
 type HackerViewProps = {
 	hackerData: HackerInfo;
 	presenceData: PresenceInfo;
@@ -148,20 +157,11 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 
 	const keyToLabel = {
 		checkedIn: "Checked In",
-		breakfast1: "Breakfast March 4th",
-		lunch1: "Lunch March 4th",
-		dinner1: "Dinner March 4th",
-		snacks: "Snacks",
-		snacks2: "Snacks 2",
-		redbull: "RedBull",
-		breakfast2: "Breakfast March 5th",
-		lunch2: "Lunch March 5th",
-		lunch22: "Lunch March 5th 2",
-		hackherCheckIn: "HackHER Check In",
-		hackherLunch: "HackHER Lunch",
-		hackherDinner: "HackHER Dinner",
-		hackherSnack: "HackHER Snack",
-
+		lunch: "Lunch March 4th",
+		dinner: "Dinner March 4th",
+		snack: "Snacks",
+		snack2: "Snacks 2",
+		snack3: "RedBull",
 	} as const satisfies Record<keyof Omit<PresenceInfo, "id" | "hackerInfoId">, string>;
 
 	const fields = [
@@ -345,6 +345,7 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 	const initialInputValues: Record<string, string> = {};
 	const [inputValues, setInputValues] = useState<{ [key: string]: string }>(initialInputValues);
 	const groupedData: { [key: string]: Field[] } = {};
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 	const mutation = trpc.hackers.update.useMutation();
 
 	const handleInputChange = (name: string, value: string) => {
@@ -408,10 +409,13 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 			console.error("Validation Error:", parse.error);
 		} else {
 			console.log("Data parsed", parse.data);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 			mutation.mutate(parse.data);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			if (!mutation.error) {
 				event.currentTarget.reset();
 			} else {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				console.log("Error", mutation.error.message);
 			}
 		}

@@ -100,7 +100,7 @@ const Navbar = ({ integrated }: NavbarProps) => {
 			}`}
 			aria-label={t("navigation")}
 		>
-			<div className="flex w-full items-center justify-center font-coolvetica mobile:w-auto">
+			<div className="flex w-full items-center justify-start font-coolvetica mobile:w-auto mobile:justify-center">
 				<Link href="/">
 					<Image
 						className="hidden mobile:block"

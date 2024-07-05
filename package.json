@@ -21,6 +21,7 @@
 		"@trpc/next": "^10.44.1",
 		"@trpc/react-query": "^10.44.1",
 		"@trpc/server": "^10.44.1",
+		"@tremor/react": "^3.7.9",
 		"csvtojson": "^2.0.10",
 		"googleapis": "^129.0.0",
 		"i18next": "^23.7.11",
