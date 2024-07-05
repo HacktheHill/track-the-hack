@@ -1,7 +1,6 @@
 import { faker } from "@faker-js/faker";
-import { Role } from "@prisma/client";
-import { hackerInfo } from "./hackerInfos.mjs";
-import { Language } from "@prisma/client";
+import { Language, Role } from "@prisma/client";
+
 // Generates dummy users
 const user = () => {
 	const firstName = faker.person.firstName();
