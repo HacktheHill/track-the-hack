@@ -29,7 +29,7 @@ const Unsubscribe: NextPage = () => {
 
 	useEffect(() => {
 		if (query.data) {
-			setIsUnsubscribed(query.data.unsubscribed ? true : false);
+			setIsUnsubscribed(!!query.data.unsubscribed);
 		}
 		if (query.error) {
 			setError(query.error.message);
@@ -74,7 +74,7 @@ const Unsubscribe: NextPage = () => {
 				})}
 			</h3>
 			<button
-				className="hover:bg-medium cursor-pointer whitespace-nowrap rounded-[100px] border-none bg-light-color px-[calc(2*clamp(0.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-rubik text-[clamp(1rem,1vmin,5rem)] text-light-color shadow-md transition-all duration-1000"
+				className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
 				disabled={query.isLoading}
 			>
 				{isUnsubscribed ? t("resubscribe") : t("unsubscribe")}
