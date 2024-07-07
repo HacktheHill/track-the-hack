@@ -18,7 +18,7 @@ const Error = ({ message }: ErrorProps) => {
 			<Link href="mailto:development@hackthehill.com" target="_blank" rel="noreferrer">
 				<button
 					type="button"
-					className="transform  cursor-pointer whitespace-nowrap rounded-normal border-2 border-light-color px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-rubik text-[clamp(1rem,1vmin,5rem)] text-light-color shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition hover:bg-light-color/50"
+					className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
 				>
 					{t("contact-us")}
 				</button>

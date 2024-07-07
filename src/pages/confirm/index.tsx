@@ -4,7 +4,7 @@ import { signIn, signOut, useSession } from "next-auth/react";
 import { Trans, useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useRouter } from "next/router";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import FormPage from "../../components/FormPage";
 import { trpc } from "../../utils/api";
 
@@ -75,14 +75,6 @@ const Confirm: NextPage = () => {
 		setIsSubmitted(true);
 	};
 
-	const handleShirtSizeChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
-		setShirtSize(event.target.value as keyof typeof ShirtSize);
-	}, []);
-
-	const handleAttendanceTypeChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-		setAttendanceType(event.target.value as keyof typeof AttendanceType);
-	}, []);
-
 	return (
 		<FormPage
 			onSubmit={handleSubmit}
@@ -107,7 +99,7 @@ const Confirm: NextPage = () => {
 						}
 					</p>
 					<button
-						className="transform cursor-pointer whitespace-nowrap rounded-normal border-2 border-light-color px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-rubik text-[clamp(1rem,1vmin,5rem)] text-light-color shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition hover:bg-light-color/50"
+						className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
 						onClick={() => {
 							void router.push(`/qr`);
 						}}
@@ -132,7 +124,7 @@ const Confirm: NextPage = () => {
 								</p>
 								<button
 									type="button"
-									className="transform cursor-pointer whitespace-nowrap rounded-normal border-2 border-light-color px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-rubik text-[clamp(1rem,1vmin,5rem)] text-light-color shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition hover:bg-light-color/50"
+									className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
 									onClick={() => void signOut()}
 								>
 									{t("sign-out")}
@@ -141,7 +133,7 @@ const Confirm: NextPage = () => {
 						) : (
 							<button
 								type="button"
-								className="hover:bg-blue transform cursor-pointer whitespace-nowrap rounded-normal border-2 border-light-color px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-rubik text-[clamp(1rem,1vmin,5rem)] text-light-color shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition hover:bg-light-color/50"
+								className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
 								onClick={() => void signIn()}
 							>
 								{t("sign-in")}
@@ -156,7 +148,7 @@ const Confirm: NextPage = () => {
 								name="terms"
 								checked={terms}
 								onChange={() => setTerms(!terms)}
-								className="h-4 w-4 appearance-none rounded-lg border border-medium bg-transparent text-black after:block after:h-full after:w-full after:border-black after:p-0.5 after:leading-[calc(100%*1/2)] after:checked:content-check"
+								className="h-4 w-4 appearance-none bg-transparent text-black after:block after:h-full after:w-full after:rounded-lg after:border after:border-dark-primary-color after:p-0.5 after:leading-[calc(100%*1/2)] after:checked:content-check"
 							/>
 							<label htmlFor="terms" className="flex-1">
 								<Trans
@@ -169,7 +161,9 @@ const Confirm: NextPage = () => {
 												target="_blank"
 												rel="noreferrer"
 												className="underline"
-											/>
+											>
+												{t("accept-terms")}
+											</a>
 										),
 									}}
 								/>
@@ -178,7 +172,7 @@ const Confirm: NextPage = () => {
 						{validationMessage && <p className="text-center text-red-500">{validationMessage}</p>}
 						<button
 							type="submit"
-							className="hover:bg-medium transform cursor-pointer whitespace-nowrap rounded-normal border-0 bg-dark-primary-color px-[calc(2*clamp(.75rem,1vmin,5rem))] py-[clamp(0.75rem,1vmin,5rem)] font-rubik text-[clamp(1rem,1vmin,5rem)] text-light-color shadow-[0_15px_25px_rgba(0,_0,_0,_0.15),_0_5px_10px_rgba(0,_0,_0,_0.05)] transition"
+							className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
 						>
 							{t("confirm")}
 						</button>
