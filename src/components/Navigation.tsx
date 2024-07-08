@@ -88,7 +88,9 @@ const Links = ({ bottom }: LinkProps) => {
 					<Link
 						href="/hackers"
 						className={
-							bottom ? "" : "text-dark hover:text-light mx-4 flex items-center font-coolvetica text-2xl"
+							bottom
+								? ""
+								: "hover:text-light mx-4 flex items-center font-coolvetica text-2xl text-dark-primary-color"
 						}
 					>
 						{bottom ? (
