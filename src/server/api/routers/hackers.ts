@@ -2,7 +2,7 @@ import { AttendanceType, Role, ShirtSize, type HackerInfo } from "@prisma/client
 import { observable } from "@trpc/server/observable";
 import { EventEmitter } from "events";
 import { z } from "zod";
-import { walkInSchema } from "../../../utils/common";
+import { applySchema, walkInSchema } from "../../../utils/common";
 import { hasRoles } from "../../../utils/helpers";
 import { logAuditEntry } from "../../audit";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
@@ -449,6 +449,45 @@ export const hackerRouter = createTRPCRouter({
 				"WalkIn",
 				user.name ?? "Unknown",
 				`${input.firstName} ${input.lastName} walked in.`,
+			);
+
+			ee.emit("add", hacker);
+
+			return hacker;
+		}),
+
+	apply: protectedProcedure
+		.input(
+			applySchema.extend({
+				acceptanceExpiry: z.date().default(DEFAULT_ACCEPTANCE_EXPIRY),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+			const user = await ctx.prisma.user.findUnique({
+				where: {
+					id: userId,
+				},
+			});
+
+			if (!user) {
+				throw new Error("User not found");
+			}
+
+			if (!hasRoles(user, [Role.ORGANIZER])) {
+				throw new Error("You do not have permission to do this");
+			}
+
+			const hacker = await ctx.prisma.hackerInfo.create({
+				data: input,
+			});
+			await logAuditEntry(
+				ctx,
+				hacker.id,
+				"/apply",
+				"Apply",
+				user.name ?? "Unknown",
+				`${input.firstName} ${input.lastName} applied.`,
 			);
 
 			ee.emit("add", hacker);
