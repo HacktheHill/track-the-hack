@@ -2,7 +2,7 @@ import { Role, type HackerInfo } from "@prisma/client";
 import type { NextPage } from "next";
 import { useTranslation } from "next-i18next";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { trpc } from "../../utils/api";
 import { debounce } from "../../utils/helpers";
 
@@ -45,6 +45,8 @@ const Hackers: NextPage = () => {
 
 	const { t } = useTranslation("hackers");
 
+	const scrollRef = useRef<HTMLDivElement>(null);
+
 	const [sidebarVisible, setSidebarVisible] = useState(false);
 
 	const [search, setSearch] = useState("");
@@ -59,13 +61,10 @@ const Hackers: NextPage = () => {
 	}, []);
 
 	const handleScroll = () => {
-		const div = document?.querySelector(".mainWindow");
-		if (!div) return;
+		if (isFetching || !hasNextPage || !scrollRef.current) return;
 
-		if (isFetching || !hasNextPage) return;
-
-		// detect if user scrolled to bottom
-		if (div.scrollTop >= div.scrollHeight - div.clientHeight) {
+		// Load more when scrolled to the bottom
+		if (scrollRef.current.scrollTop >= scrollRef.current.scrollHeight - scrollRef.current.clientHeight) {
 			void query.fetchNextPage();
 		}
 	};
@@ -94,7 +93,7 @@ const Hackers: NextPage = () => {
 		attendanceTypes: [],
 	};
 
-	const { data: data } = trpc.hackers.filterOptions.useQuery();
+	const { data } = trpc.hackers.filterOptions.useQuery();
 
 	if (data) {
 		filterBy = data.filterOptions;
@@ -130,106 +129,58 @@ const Hackers: NextPage = () => {
 				);
 
 	return (
-		// 2 <App>s based on whether or not sidebar is visible is made because the scroll to bottom wouldnt be detected when the filter sidebar was on
-		<>
-			{" "}
-			{sidebarVisible && (
-				<App
-					className="mainWindow flex flex-col overflow-y-auto bg-default-gradient"
-					integrated={true}
-					title={t("title")}
-					onScroll={handleScroll}
-				>
-					<div className="border-b border-dark-color bg-light-quaternary-color px-4 pb-4 pt-2 shadow-navbar sm:px-20">
-						<div className="flex">
-							<button
-								className="border-dark m-1 mr-3 rounded-xl bg-medium-primary-color px-6 text-sm text-light-color"
-								onClick={toggleFilter}
-							>
-								Filters
-							</button>
-							<Search setSearch={setSearch} />
-						</div>
-					</div>
-					<div className="flex flex-row">
-						<FilterOptions
-							filters={filters}
-							setFilters={setFilters}
-							filterOptions={filterBy}
-							sidebarVisible={sidebarVisible}
-						/>
-						<div
-							className="to-mobile:mx-auto grid h-fit flex-col gap-4 overflow-x-hidden px-4 py-4 sm:px-20"
-							style={{
-								gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
-							}}
-						>
-							{filteredQuery?.map(hacker => (
-								<Card
-									key={hacker.id}
-									id={hacker.id}
-									firstName={hacker.firstName}
-									lastName={hacker.lastName}
-									university={hacker.university}
-									studyProgram={hacker.studyProgram}
-								/>
-							))}
-						</div>
-					</div>
-					{filteredQuery?.length == 0 && (
-						<div className="flex h-full w-full flex-col items-center justify-center gap-4 text-2xl text-dark-color">
-							<svg className="h-20 w-20" fill="currentColor" viewBox="0 0 24 24">
-								<path d="M10 0h24v24H0z" fill="none" />
-								<path d="M14 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
-							</svg>
-							<p>No hackers found</p>
-						</div>
-					)}
-				</App>
-			)}
-			{!sidebarVisible && (
-				<App className="flex flex-col overflow-y-auto bg-default-gradient" integrated={true} title={t("title")}>
-					<div className="border-b border-dark-color bg-light-quaternary-color px-4 pb-4 pt-2 shadow-navbar sm:px-20">
-						<div className="flex">
-							<button
-								className="border-dark m-1 mr-3 rounded-xl bg-medium-primary-color px-6 text-sm text-light-color"
-								onClick={toggleFilter}
-							>
-								Filters
-							</button>
-							<Search setSearch={setSearch} />
-						</div>
-					</div>
-					<div
-						className="mainWindow to-mobile:mx-auto grid h-fit flex-col gap-4 overflow-x-hidden px-4 py-4 sm:px-20"
-						style={{
-							gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
-						}}
-						onScroll={handleScroll}
+		<App
+			className="flex flex-col overflow-y-auto bg-default-gradient"
+			integrated={true}
+			title={t("title")}
+			onScroll={handleScroll}
+		>
+			<div className="border-b border-dark-color bg-light-quaternary-color px-4 pb-4 pt-2 shadow-navbar sm:px-10">
+				<div className="flex">
+					<button
+						className="border-dark m-1 mr-3 rounded-xl bg-medium-primary-color px-6 text-sm text-light-color"
+						onClick={toggleFilter}
 					>
-						{filteredQuery?.map(hacker => (
-							<Card
-								key={hacker.id}
-								id={hacker.id}
-								firstName={hacker.firstName}
-								lastName={hacker.lastName}
-								university={hacker.university}
-								studyProgram={hacker.studyProgram}
-							/>
-						))}
-					</div>
-					{filteredQuery?.length == 0 && (
-						<div className="flex h-full w-full flex-col items-center justify-center gap-4 text-2xl text-dark-color">
-							<svg className="h-20 w-20" fill="currentColor" viewBox="0 0 24 24">
-								<path d="M10 0h24v24H0z" fill="none" />
-								<path d="M14 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
-							</svg>
-							<p>No hackers found</p>
-						</div>
-					)}
-				</App>
+						Filters
+					</button>
+					<Search setSearch={setSearch} />
+				</div>
+			</div>
+			<div className="flex flex-row" ref={scrollRef}>
+				<FilterOptions
+					filters={filters}
+					setFilters={setFilters}
+					filterOptions={filterBy}
+					sidebarVisible={sidebarVisible}
+				/>
+				<div
+					className="to-mobile:mx-auto grid h-fit flex-col gap-4 overflow-x-hidden px-4 py-4 sm:px-10"
+					style={{
+						gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+					}}
+				>
+					{filteredQuery?.map(hacker => (
+						<Card
+							key={hacker.id}
+							id={hacker.id}
+							firstName={hacker.firstName}
+							lastName={hacker.lastName}
+							university={hacker.university}
+							studyProgram={hacker.studyProgram}
+						/>
+					))}
+				</div>
+			</div>
+			{filteredQuery?.length == 0 && (
+				<div className="flex h-full w-full flex-col items-center justify-center gap-4 text-2xl text-dark-color">
+					<svg className="h-20 w-20" fill="currentColor" viewBox="0 0 24 24">
+						<path d="M10 0h24v24H0z" fill="none" />
+						<path d="M14 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+					</svg>
+					<p>No hackers found</p>
+				</div>
 			)}
-		</>
+		</App>
 	);
 };
 
