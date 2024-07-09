@@ -16,7 +16,7 @@ Track the Hack is a comprehensive event management solution designed to streamli
 2. Add `DATABASE_URL="mysql://root:root@localhost/track-the-hack"` to the `.env` file.
 3. Run `npx prisma db push` to push the database schema and create the tables.
 4. Run `docker compose up -d` to start the database.
-5. Run `node --loader ts-node/esm prisma/seeders/index.mts` to seed the database.
+5. Run `npx tsx prisma/seeders/index.mts` to seed the database.
 
 ## Contributing
 
