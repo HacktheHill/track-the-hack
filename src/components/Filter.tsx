@@ -25,12 +25,15 @@ const Filter = ({ filter, children }: FilterProps) => {
 		return <Error message={query.error.message} />;
 	}
 
-	if (query.data && filter(query.data)) {
-		return <>{children}</>;
+	if (!query.data) {
+		return null;
 	}
 
 	const childrenArray = Children.toArray(children);
-	if (query.data && !filter(query.data) && childrenArray.length >= 2) {
+
+	if (filter(query.data)) {
+		return <>{childrenArray[0]}</>;
+	} else if (!filter(query.data) && childrenArray.length >= 2) {
 		return <>{childrenArray[1]}</>;
 	}
 
