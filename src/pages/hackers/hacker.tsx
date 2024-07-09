@@ -38,7 +38,7 @@ const Hacker: NextPage = () => {
 			<App className="h-full bg-default-gradient px-16 py-12">
 				<Filter filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
 					<Loading />
-					<Error message="You are not allowed to view this page" />
+					<Error message={t("not-authorized-to-view-this-page")} />
 				</Filter>
 			</App>
 		);
