@@ -13,7 +13,7 @@ import { trpc } from "../../utils/api";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
-		props: await serverSideTranslations(locale ?? "en", ["common", "logs"]),
+		props: await serverSideTranslations(locale ?? "en", ["common", "navbar", "logs"]),
 	};
 };
 
@@ -38,7 +38,7 @@ const Logs: NextPage = () => {
 			<App className="h-full bg-default-gradient px-16 py-12">
 				<Filter filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
 					<Loading />
-					<Error message="You are not allowed to view this page" />
+					<Error message={t("not-authorized-to-view-this-page")} />
 				</Filter>
 			</App>
 		);
