@@ -8,38 +8,36 @@ jobs:
   build:
     runs-on: self-hosted
     environment: Production
-    env:
-      DEPLOY_DIRECTORY: /home/azure/track-the-hack
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Deploy to production directory
-        run: |
-          rsync -avz --delete ./ ${{ env.DEPLOY_DIRECTORY }}/
-
       - name: Use Node.js 20.x
         uses: actions/setup-node@v3
         with:
           node-version: 20.x
           cache: "npm"
-
       - name: Cache Next.js build
         uses: actions/cache@v3
         with:
-          path: ${{ env.DEPLOY_DIRECTORY }}/.next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('${{ env.DEPLOY_DIRECTORY }}/package-lock.json') }}-${{ hashFiles('${{ env.DEPLOY_DIRECTORY }}/**.[jt]s', '${{ env.DEPLOY_DIRECTORY }}/**.[jt]sx') }}
+          path: /home/azure/track-the-hack/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('/home/azure/track-the-hack/package-lock.json') }}-${{ hashFiles('/home/azure/track-the-hack/**.[jt]s', '/home/azure/track-the-hack/**.[jt]sx') }}
           restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('${{ env.DEPLOY_DIRECTORY }}/package-lock.json') }}-
-
+            ${{ runner.os }}-nextjs-${{ hashFiles('/home/azure/track-the-hack/package-lock.json') }}-
+      - name: Deploy to production directory
+        run: |
+          rsync -avz ./ /home/azure/track-the-hack/
+          cd /home/azure/track-the-hack/
       - name: Install dependencies
-        working-directory: ${{ env.DEPLOY_DIRECTORY }}
+        working-directory: /home/azure/track-the-hack
         run: npm ci
-
+      - name: Create .env file
+        working-directory: /home/azure/track-the-hack
+        run: node ./.github/workflows/create-env.mjs "$SECRETS"
+        env:
+          SECRETS: ${{ toJson(secrets) }}
       - name: Build
-        working-directory: ${{ env.DEPLOY_DIRECTORY }}
+        working-directory: /home/azure/track-the-hack
         run: npm run build --if-present
-
       - name: Restart the server
-        working-directory: ${{ env.DEPLOY_DIRECTORY }}
+        working-directory: /home/azure/track-the-hack
         run: pm2 restart track-the-hack
