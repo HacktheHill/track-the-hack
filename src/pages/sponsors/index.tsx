@@ -43,7 +43,7 @@ import { addSponsorshipSchema, sponsorshipSchema } from "../../utils/common";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
-		props: await serverSideTranslations(locale ?? "en", ["common", "walk-in"]),
+		props: await serverSideTranslations(locale ?? "en", ["navbar", "payment", "common"]),
 	};
 };
 
