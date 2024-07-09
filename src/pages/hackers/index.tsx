@@ -50,7 +50,7 @@ const Hackers: NextPage = () => {
 	const [sidebarVisible, setSidebarVisible] = useState(false);
 
 	const [search, setSearch] = useState("");
-	const [columns, setColumns] = useState(3);
+	const [columns, setColumns] = useState(4);
 
 	function toggleFilter() {
 		setSidebarVisible(!sidebarVisible);
@@ -154,7 +154,7 @@ const Hackers: NextPage = () => {
 					sidebarVisible={sidebarVisible}
 				/>
 				<div
-					className="to-mobile:mx-auto grid h-fit flex-col gap-4 overflow-x-hidden px-4 py-4 sm:px-10"
+					className="mx-auto grid h-fit flex-col gap-4 overflow-x-hidden px-4 py-4 sm:px-10"
 					style={{
 						gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
 					}}

@@ -21,8 +21,8 @@ jobs:
                   cache: "npm"
 
             - name: Deploy
-              run:
-                rsync -avz --delete ./ /home/azure/tracker-the-hack
+              run: |
+                rsync -avz --delete ./ /home/azure/track-the-hack
                 cd /home/azure/track-the-hack
 
             - name: Install dependencies
