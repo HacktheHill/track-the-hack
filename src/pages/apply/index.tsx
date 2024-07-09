@@ -1,5 +1,4 @@
 import { Role } from "@prisma/client";
-import { useSession } from "next-auth/react";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import type { GetStaticProps, NextPage } from "next/types";
@@ -8,22 +7,22 @@ import { useEffect, useState } from "react";
 import App from "../../components/App";
 import Error from "../../components/Error";
 import Filter from "../../components/Filter";
-import QRCode from "../../components/QRCode";
 
 import { trpc } from "../../utils/api";
-import { walkInSchema } from "../../utils/common";
+import { applySchema } from "../../utils/common";
+import { useRouter } from "next/router";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
-		props: await serverSideTranslations(locale ?? "en", ["common", "navbar", "walk-in"]),
+		props: await serverSideTranslations(locale ?? "en", ["common", "navbar", "apply"]),
 	};
 };
 
-const WalkIn: NextPage = () => {
-	const { t } = useTranslation("walk-in");
-	const { data: sessionData } = useSession();
+const Apply: NextPage = () => {
+	const { t } = useTranslation("apply");
+	const router = useRouter();
 
-	const mutation = trpc.hackers.walkIn.useMutation();
+	const mutation = trpc.hackers.apply.useMutation();
 
 	const [error, setError] = useState("");
 	const [success, setSuccess] = useState(false);
@@ -65,7 +64,7 @@ const WalkIn: NextPage = () => {
 			}
 		}
 
-		const parse = walkInSchema.safeParse(data);
+		const parse = applySchema.safeParse(data);
 		if (!parse.success) {
 			setError(t("invalid-form"));
 			console.error(parse.error);
@@ -205,60 +204,59 @@ const WalkIn: NextPage = () => {
 				{success ? (
 					<div className="flex flex-col items-center gap-8">
 						<h3 className="font-rubik text-4xl font-bold text-dark-color">{t("title")}</h3>
-						<QRCode id={mutation.data?.id} />
+						<p>{t("success")}</p>
 						<button
 							className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
-							onClick={() => setSuccess(false)}
+							onClick={() => void router.replace("/")}
 						>
-							{t("new")}
+							{t("back")}
 						</button>
 					</div>
-				) : (
-					<form onSubmit={handleSubmit} className="flex flex-col items-center gap-8">
-						<h3 className="font-rubik text-4xl font-bold text-dark-color">{t("title")}</h3>
-						<div className="flex flex-col gap-4">
-							{fields.map(field => (
-								<div key={field.name} className="flex w-full flex-col items-center gap-2 sm:flex-row">
-									<label htmlFor={field.name} className="flex-[50%] font-rubik text-dark-color">
-										{t(field.name)}
-										{field.required && <span className="text-red-500"> *</span>}
-									</label>
-									{field.type === "select" ? (
-										<select
-											id={field.name}
-											name={field.name}
-											className="w-full rounded-[100px] border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
-											required={field.required}
-										>
-											<option value="">{t("select")}</option>
-											{field.options?.map(option => (
-												<option key={option} value={option}>
-													{t(option)}
-												</option>
-											))}
-										</select>
-									) : (
-										<input
-											id={field.name}
-											name={field.name}
-											type={field.type}
-											className="w-full rounded-[100px] border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
-											required={field.required}
-											pattern={patterns[field.type]}
-										/>
-									)}
-								</div>
-							))}
-						</div>
-						{error && (
-							<div className="flex flex-col items-center gap-2">
-								<p className="text-center font-rubik text-red-500">{error}</p>
+				) : (<form onSubmit={handleSubmit} className="flex flex-col items-center gap-8">
+					<h3 className="font-rubik text-4xl font-bold text-dark-color">{t("title")}</h3>
+					<div className="flex flex-col gap-4">
+						{fields.map(field => (
+							<div key={field.name} className="flex w-full flex-col items-center gap-2 sm:flex-row">
+								<label htmlFor={field.name} className="flex-[50%] font-rubik text-dark-color">
+									{t(field.name)}
+									{field.required && <span className="text-red-500"> *</span>}
+								</label>
+								{field.type === "select" ? (
+									<select
+										id={field.name}
+										name={field.name}
+										className="w-full rounded-[100px] border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+										required={field.required}
+									>
+										<option value="">{t("select")}</option>
+										{field.options?.map(option => (
+											<option key={option} value={option}>
+												{t(option)}
+											</option>
+										))}
+									</select>
+								) : (
+									<input
+										id={field.name}
+										name={field.name}
+										type={field.type}
+										className="w-full rounded-[100px] border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+										required={field.required}
+										pattern={patterns[field.type]}
+									/>
+								)}
 							</div>
-						)}
-						<button className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base">
-							{t("submit")}
-						</button>
-					</form>
+						))}
+					</div>
+					{error && (
+						<div className="flex flex-col items-center gap-2">
+							<p className="text-center font-rubik text-red-500">{error}</p>
+						</div>
+					)}
+					<button className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base">
+						{t("submit")}
+					</button>
+				</form>
 				)}
 				<Error message={t("not-authorized-to-view-this-page")} />
 			</Filter>
@@ -266,4 +264,4 @@ const WalkIn: NextPage = () => {
 	);
 };
 
-export default WalkIn;
+export default Apply;
