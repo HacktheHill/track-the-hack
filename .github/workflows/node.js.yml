@@ -20,6 +20,13 @@ jobs:
                   node-version: 20.x
                   cache: "npm"
 
+            - name: Cache Next.js build
+              uses: actions/cache@v3
+              with:
+                  path: /home/azure/track-the-hack/.next/cache
+                  key: ${{ runner.os }}-nextjs-${{ hashFiles('/home/azure/track-the-hack/package-lock.json') }}-${{ hashFiles('/home/azure/track-the-hack/**.[jt]s', '/home/azure/track-the-hack/**.[jt]sx') }}
+                  restore-keys: |
+                      ${{ runner.os }}-nextjs-${{ hashFiles('/home/azure/track-the-hack/package-lock.json') }}-
 
             - name: Deploy to production directory
               run: rsync -avz ./ /home/azure/track-the-hack/
