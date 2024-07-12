@@ -1,0 +1,6 @@
+{
+	"title": "S'inscrire",
+	"confirm": "Souhaitez-vous procéder avec l'adresse e-mail <strong>{{email}}</strong>?",
+	"continue": "Continuer",
+	"no-email": "Aucune adresse e-mail fournie"
+}
