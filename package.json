@@ -74,6 +74,6 @@
 		"initVersion": "7.3.1"
 	},
 	"prisma": {
-		"seed": "ts-node-esm prisma/seed.mts"
+		"seed": "npx tsx prisma/seeders/index.mts"
 	}
 }
