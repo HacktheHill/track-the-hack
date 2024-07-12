@@ -50,7 +50,7 @@ const Follow: NextPage = () => {
 			loading={false}
 			path={"/follow"}
 			user={null}
-			title={t("")}
+			title={t("follow")}
 		>
 			<h3 className="font-rubik text-[clamp(1rem,1vmin,5rem)] font-medium text-dark-color">
 				{follow && !mutation.isLoading ? t("success", { email }) : t("confirm", { email })}

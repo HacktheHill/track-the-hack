@@ -2,7 +2,7 @@ import { Role } from "@prisma/client";
 import { z } from "zod";
 import { roles } from "../../../utils/common";
 import { hasRoles } from "../../../utils/helpers";
-import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 export const userRouter = createTRPCRouter({
 	// Get the given user's role
@@ -62,5 +62,32 @@ export const userRouter = createTRPCRouter({
 			}
 
 			return hacker.id;
+		}),
+
+	// Sign up a new user
+	signUp: publicProcedure
+		.input(
+			z.object({
+				email: z.string(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const existingUser = await ctx.prisma.user.findFirst({
+				where: {
+					email: input.email,
+				},
+			});
+
+			if (existingUser) {
+				return existingUser;
+			}
+
+			const user = await ctx.prisma.user.create({
+				data: {
+					email: input.email,
+				},
+			});
+
+			return user;
 		}),
 });
