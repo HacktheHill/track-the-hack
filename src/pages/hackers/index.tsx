@@ -14,7 +14,7 @@ import Error from "../../components/Error";
 import Filter from "../../components/Filter";
 import Loading from "../../components/Loading";
 import { hackersRedirect } from "../../utils/redirects";
-import { authOptions } from "../api/auth/[...nextauth]";
+import { getAuthOptions } from "../api/auth/[...nextauth]";
 
 const Hackers: NextPage = () => {
 	interface Filters {
@@ -403,8 +403,8 @@ const FilterOptions = ({ filters, setFilters, filterOptions, sidebarVisible }: F
 };
 
 export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
-	const session = await getServerSession(req, res, authOptions);
-
+	const session = await getServerSession(req, res, getAuthOptions(req));
+	console.log(req);
 	return {
 		props: {
 			...(await hackersRedirect(session)),

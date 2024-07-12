@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { hackersRedirect } from "../../utils/redirects";
-import { authOptions } from "../api/auth/[...nextauth]";
+import { getAuthOptions } from "../api/auth/[...nextauth]";
 
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import App from "../../components/App";
@@ -70,8 +70,8 @@ const QR = () => {
 };
 
 export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
-	const session = await getServerSession(req, res, authOptions);
-
+	console.log("QR getServerSideProps", req);
+	const session = await getServerSession(req, res, getAuthOptions(req));
 	return {
 		props: {
 			...(await hackersRedirect(session)),
