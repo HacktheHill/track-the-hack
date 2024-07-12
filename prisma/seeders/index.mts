@@ -17,9 +17,9 @@ async function main() {
 	console.log("Creating dummy events...");
 	await insertRecords(prisma.event, events);
 
-	const hardwareData = await hardware();
+	/* const hardwareData = await hardware();
 	console.log("Creating dummy hardware...");
-	await insertRecords(prisma.hardware, hardwareData);
+	await insertRecords(prisma.hardware, hardwareData); */
 
 	const hackerInfos = generateHackerInfos(10);
 	console.log("Creating dummy hacker info...");
