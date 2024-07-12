@@ -1,6 +1,6 @@
 import NextAuth, { type NextAuthOptions } from "next-auth";
-import AuthentikProvider from "next-auth/providers/authentik";
 import DiscordProvider from "next-auth/providers/discord";
+import EmailProvider from "next-auth/providers/email";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 
@@ -34,6 +34,17 @@ export const authOptions: NextAuthOptions = {
 		GoogleProvider({
 			clientId: env.GOOGLE_CLIENT_ID,
 			clientSecret: env.GOOGLE_CLIENT_SECRET,
+		}),
+		EmailProvider({
+			server: {
+				host: env.EMAIL_SERVER_HOST,
+				port: env.EMAIL_SERVER_PORT,
+				auth: {
+					user: env.EMAIL_SERVER_USER,
+					pass: env.EMAIL_SERVER_PASSWORD,
+				},
+			},
+			from: `Hack The Hill <${env.EMAIL_FROM}>`,
 		}),
 	],
 	theme: {
