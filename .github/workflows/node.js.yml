@@ -45,6 +45,10 @@ jobs:
               working-directory: /home/azure/track-the-hack
               run: npm run build --if-present
 
+            - name: Update the database schema
+              working-directory: /home/azure/track-the-hack
+              run: npx prisma migrate deploy
+
             - name: Restart the server
               working-directory: /home/azure/track-the-hack
               run: pm2 restart track-the-hack
