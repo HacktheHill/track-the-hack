@@ -1,33 +1,32 @@
-import type { GetStaticProps } from "next";
-import type { NextPage } from "next";
 import { RoleName } from "@prisma/client";
+import type { GetServerSideProps, NextPage } from "next";
+import { getServerSession } from "next-auth";
+import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
-import Metrics from "./metrics";
 import App from "../../components/App";
 import Filter from "../../components/Filter";
-import Error from "../../components/Error";
-import { useTranslation } from "next-i18next";
-
-export const getStaticProps: GetStaticProps = async ({ locale }) => {
-	return {
-		props: await serverSideTranslations(locale ?? "en", ["common", "internal", "navbar"]),
-	};
-};
+import { hackersRedirect } from "../../utils/redirects";
+import { getAuthOptions } from "../api/auth/[...nextauth]";
 
 const Internal: NextPage = () => {
-	const { t: tInternal } = useTranslation("internal");
-	const { t: tCommon } = useTranslation("common");
+	const { t } = useTranslation("internal");
+
 	return (
-		<App className="overflow-y-auto bg-default-gradient" integrated={true} title={tInternal("title")}>
-			{/* TODO: some kind of menu for selecting things in the internal page */}
+		<App className="overflow-y-auto bg-default-gradient" integrated={true} title={t("title")}>
 			<Filter value={RoleName.ORGANIZER} method="above">
-				<Metrics />
-				<div className="flex flex-col items-center justify-center gap-4 px-16 py-12">
-					<Error message={tCommon("unauthorized")} />
-				</div>
+				<></>
 			</Filter>
 		</App>
 	);
 };
 
+export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
+	const session = await getServerSession(req, res, getAuthOptions(req));
+	return {
+		redirect: await hackersRedirect(session, "/internal"),
+		props: {
+			...(await serverSideTranslations(locale ?? "en", ["internal", "navbar", "common"])),
+		},
+	};
+};
 export default Internal;
