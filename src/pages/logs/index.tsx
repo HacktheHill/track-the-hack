@@ -1,4 +1,4 @@
-import { Role } from "@prisma/client";
+import { Role, RoleName } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
@@ -30,13 +30,12 @@ interface Log {
 const Logs: NextPage = () => {
 	const router = useRouter();
 	const logsQuery = trpc.auditLog.getAllTheLogs.useQuery(undefined, { enabled: true });
-	const { data: sessionData } = useSession();
 	const { t } = useTranslation("logs");
 
 	if (logsQuery.isLoading || logsQuery.data == null) {
 		return (
 			<App className="h-full bg-default-gradient px-16 py-12">
-				<Filter filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
+				<Filter value={[RoleName.ORGANIZER, RoleName.SPONSOR]} method="some">
 					<Loading />
 					<Error message={t("unauthorized")} />
 				</Filter>
@@ -60,7 +59,7 @@ const Logs: NextPage = () => {
 
 	return (
 		<App className="w-full overflow-y-auto bg-default-gradient p-8 sm:p-12" title={t("title")}>
-			<Filter filter={role => role === Role.ORGANIZER}>
+			<Filter value={RoleName.ORGANIZER} method="above">
 				<>
 					<h1 className="py-2 text-center font-rubik text-4xl font-bold text-dark-color">AuditLogs</h1>
 					<div className="relative w-full overflow-scroll">

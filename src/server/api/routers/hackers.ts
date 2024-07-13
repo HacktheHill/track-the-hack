@@ -1,4 +1,4 @@
-import { AttendanceType, Role, ShirtSize, type HackerInfo } from "@prisma/client";
+import { AttendanceType, RoleName, ShirtSize, type HackerInfo } from "@prisma/client";
 import { observable } from "@trpc/server/observable";
 import { EventEmitter } from "events";
 import { z } from "zod";
@@ -136,13 +136,20 @@ export const hackerRouter = createTRPCRouter({
 				where: {
 					id: userId,
 				},
+				select: {
+					roles: {
+						select: {
+							name: true,
+						},
+					},
+				},
 			});
 
 			if (!user) {
 				throw new Error("User not found");
 			}
 
-			if (!hasRoles(user, [Role.SPONSOR, Role.ORGANIZER])) {
+			if (!hasRoles(user, [RoleName.SPONSOR, RoleName.ORGANIZER])) {
 				throw new Error("You do not have permission to do this");
 			}
 
@@ -209,11 +216,18 @@ export const hackerRouter = createTRPCRouter({
 		}),
 
 	// get of all the options you can filter the hackers by
-	filterOptions: protectedProcedure.query(async ({ ctx, input }) => {
+	filterOptions: protectedProcedure.query(async ({ ctx }) => {
 		const userId = ctx.session.user.id;
 		const user = await ctx.prisma.user.findUnique({
 			where: {
 				id: userId,
+			},
+			select: {
+				roles: {
+					select: {
+						name: true,
+					},
+				},
 			},
 		});
 
@@ -221,7 +235,7 @@ export const hackerRouter = createTRPCRouter({
 			throw new Error("User not found");
 		}
 
-		if (!hasRoles(user, [Role.SPONSOR, Role.ORGANIZER])) {
+		if (!hasRoles(user, [RoleName.SPONSOR, RoleName.ORGANIZER])) {
 			throw new Error("You do not have permission to do this");
 		}
 
@@ -242,21 +256,20 @@ export const hackerRouter = createTRPCRouter({
 		const hackers = await ctx.prisma.hackerInfo.findMany();
 
 		hackers?.forEach(hacker => {
-			hacker.university && !filterOptions.schools.includes(hacker.university.toLowerCase())
-				? filterOptions.schools.push(hacker.university.toLowerCase())
-				: "";
-			hacker.studyLevel && !filterOptions.currentLevelsOfStudy.includes(hacker.studyLevel.toLowerCase())
-				? filterOptions.currentLevelsOfStudy.push(hacker.studyLevel.toLowerCase())
-				: "";
-			hacker.studyProgram && !filterOptions.programs.includes(hacker.studyProgram.toLowerCase())
-				? filterOptions.programs.push(hacker.studyProgram.toLowerCase())
-				: "";
-			hacker.graduationYear && !filterOptions.graduationYears.includes(hacker.graduationYear.toString())
-				? filterOptions.graduationYears.push(hacker.graduationYear.toString())
-				: "";
-			hacker.attendanceType && !filterOptions.attendanceTypes.includes(hacker.attendanceType)
-				? filterOptions.attendanceTypes.push(hacker.attendanceType)
-				: "";
+			if (hacker.university && !filterOptions.schools.includes(hacker.university.toLowerCase()))
+				filterOptions.schools.push(hacker.university.toLowerCase());
+
+			if (hacker.studyLevel && !filterOptions.currentLevelsOfStudy.includes(hacker.studyLevel.toLowerCase()))
+				filterOptions.currentLevelsOfStudy.push(hacker.studyLevel.toLowerCase());
+
+			if (hacker.studyProgram && !filterOptions.programs.includes(hacker.studyProgram.toLowerCase()))
+				filterOptions.programs.push(hacker.studyProgram.toLowerCase());
+
+			if (hacker.graduationYear && !filterOptions.graduationYears.includes(hacker.graduationYear.toString()))
+				filterOptions.graduationYears.push(hacker.graduationYear.toString());
+
+			if (hacker.attendanceType && !filterOptions.attendanceTypes.includes(hacker.attendanceType))
+				filterOptions.attendanceTypes.push(hacker.attendanceType);
 		});
 
 		return {
@@ -312,62 +325,6 @@ export const hackerRouter = createTRPCRouter({
 			});
 		}),
 
-	// all: protectedProcedure
-	// 	.input(
-	// 		z
-	// 			.object({
-	// 				limit: z.number().min(1).max(100),
-	// 				cursor: z.string().nullish(),
-	// 			})
-	// 			.optional(),
-	// 	)
-	// 	.query(async ({ ctx, input }) => {
-	// 		const userId = ctx.session.user.id;
-	// 		const user = await ctx.prisma.user.findUnique({
-	// 			where: {
-	// 				id: userId,
-	// 			},
-	// 		});
-
-	// 		if (!user) {
-	// 			throw new Error("User not found");
-	// 		}
-
-	// 		if (!hasRoles(user, [Role.SPONSOR, Role.ORGANIZER])) {
-	// 			throw new Error("You do not have permission to do this");
-	// 		}
-
-	// 		//return all hackerInfo if no pagination is needed
-	// 		if (!input) {
-	// 			return {
-	// 				results: await ctx.prisma.hackerInfo.findMany(),
-	// 				nextCursor: null,
-	// 			};
-	// 		}
-
-	// 		const { limit, cursor } = input;
-
-	// 		const results = await ctx.prisma.hackerInfo.findMany({
-	// 			take: limit + 1, // get an extra item at the end which we'll use as next cursor
-	// 			cursor: cursor ? { id: cursor } : undefined,
-	// 			orderBy: {
-	// 				id: "asc",
-	// 			},
-	// 		});
-
-	// 		let nextCursor: typeof cursor | undefined = undefined;
-
-	// 		if (results.length > limit) {
-	// 			const nextItem = results.pop();
-	// 			nextCursor = nextItem?.id;
-	// 		}
-
-	// 		return {
-	// 			results,
-	// 			nextCursor,
-	// 		};
-	// 	}),
-
 	// Unsubscribe a hacker from emails
 	unsubscribe: publicProcedure
 		.input(
@@ -421,13 +378,21 @@ export const hackerRouter = createTRPCRouter({
 				where: {
 					id: userId,
 				},
+				select: {
+					name: true,
+					roles: {
+						select: {
+							name: true,
+						},
+					},
+				},
 			});
 
 			if (!user) {
 				throw new Error("User not found");
 			}
 
-			if (!hasRoles(user, [Role.ORGANIZER])) {
+			if (!hasRoles(user, [RoleName.ORGANIZER])) {
 				throw new Error("You do not have permission to do this");
 			}
 
@@ -468,13 +433,21 @@ export const hackerRouter = createTRPCRouter({
 				where: {
 					id: userId,
 				},
+				select: {
+					name: true,
+					roles: {
+						select: {
+							name: true,
+						},
+					},
+				},
 			});
 
 			if (!user) {
 				throw new Error("User not found");
 			}
 
-			if (!hasRoles(user, [Role.ORGANIZER])) {
+			if (!hasRoles(user, [RoleName.ORGANIZER])) {
 				throw new Error("You do not have permission to do this");
 			}
 
@@ -509,13 +482,21 @@ export const hackerRouter = createTRPCRouter({
 				where: {
 					id: userId,
 				},
+				select: {
+					name: true,
+					roles: {
+						select: {
+							name: true,
+						},
+					},
+				},
 			});
 
 			if (!user) {
 				throw new Error("User not found");
 			}
 
-			if (input.id !== userId && !hasRoles(user, [Role.ORGANIZER])) {
+			if (input.id !== userId && !hasRoles(user, [RoleName.ORGANIZER])) {
 				throw new Error("You do not have permission to do this");
 			}
 

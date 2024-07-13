@@ -1,3 +1,4 @@
+import { RoleName } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import { useTranslation } from "next-i18next";
 import Image from "next/image";
@@ -28,7 +29,7 @@ const QRCode = ({ setError, id }: QRCodeProps) => {
 				}
 
 				// QR code for hackers
-			} else if (sessionData?.user?.hackerId) {
+			} else if ( sessionData?.user?.roles.includes(RoleName.HACKER) && sessionData?.user?.hackerId) {
 				try {
 					const qr = await qrcode.toDataURL(sessionData.user?.hackerId);
 					setQRCode(qr);
@@ -38,7 +39,7 @@ const QRCode = ({ setError, id }: QRCodeProps) => {
 			}
 		}
 		void getQRCode();
-	}, [id, sessionData?.user?.hackerId]);
+	}, [id, sessionData?.user?.hackerId, sessionData?.user?.roles]);
 
 	if (!qrCode) {
 		setError?.(true);

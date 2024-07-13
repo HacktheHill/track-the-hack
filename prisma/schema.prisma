@@ -17,21 +17,23 @@ datasource db {
 
 // Necessary for Next auth
 model Account {
-  id                       String  @id @default(cuid())
+  id                       String   @id @default(cuid())
   userId                   String
   type                     String
   provider                 String
   providerAccountId        String
-  refresh_token            String? @db.Text
+  refresh_token            String?  @db.Text
   refresh_token_expires_in Int?
-  access_token             String? @db.Text
+  access_token             String?  @db.Text
   expires_at               Int?
   token_type               String?
   scope                    String?
-  id_token                 String? @db.Text
+  id_token                 String?  @db.Text
   session_state            String?
   ext_expires_in           Int?
-  user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt @default(now())
+  user                     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@index([userId])
@@ -47,25 +49,35 @@ model Session {
   @@index([userId])
 }
 
-model User {
-  id            String       @id @default(cuid())
-  name          String?      @map("username")
-  email         String?      @unique
-  image         String?      @map("profileImage")
-  role          Role         @default(HACKER)
-  emailVerified DateTime?
-  accounts      Account[]
-  sessions      Session[]
-  hackerInfo    HackerInfo[]
-  auditLog      AuditLog[]
-}
-
 model VerificationToken {
   identifier String
   token      String   @unique
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model User {
+  id            String       @id @default(cuid())
+  name          String?      @map("username")
+  email         String?      @unique
+  image         String?      @map("profileImage")
+  roles         Role[]
+  emailVerified DateTime?
+  accounts      Account[]
+  sessions      Session[]
+  hackerInfo    HackerInfo[]
+  auditLog      AuditLog[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt @default(now())
+}
+
+model Role {
+  id        String   @id @default(cuid())
+  name      RoleName @unique
+  users     User[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
 }
 
 model HackerInfo {
@@ -107,6 +119,8 @@ model HackerInfo {
   winner                       Boolean        @default(false)
   user                         User?          @relation(fields: [userId], references: [id])
   presenceInfo                 PresenceInfo?
+  createdAt                    DateTime       @default(now())
+  updatedAt                    DateTime       @updatedAt @default(now())
 
   @@index([userId])
 }
@@ -139,11 +153,15 @@ model Event {
   image       String?
   link        String?
   linkText    String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt @default(now())
 }
 
 model Follow {
-  id    String @id @default(cuid())
-  email String @unique
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
 }
 
 model AuditLog {
@@ -169,6 +187,8 @@ model Payment {
   paid        String
   date        DateTime
   invoice     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt @default(now())
 }
 
 model Link {
@@ -178,7 +198,7 @@ model Link {
 }
 
 model Hardware {
-  id                String  @id @default(cuid())
+  id                String   @id @default(cuid())
   imageURL          String?
   name              String
   quantityAvailable Int?
@@ -186,6 +206,8 @@ model Hardware {
   model             String?
   type              String?
   description       String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt @default(now())
 
   @@index([name])
 }
@@ -208,7 +230,8 @@ enum ShirtSize {
   XXL
 }
 
-enum Role {
+enum RoleName {
+  ADMIN
   HACKER
   ORGANIZER
   SPONSOR

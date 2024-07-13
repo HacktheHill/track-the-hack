@@ -30,7 +30,9 @@ export const getAuthOptions = (req: IncomingMessage) =>
 					where: { id: user.id },
 					select: {
 						id: true,
-						role: true,
+						roles: {
+							select: { name: true },
+						},
 						hackerInfo: {
 							select: { id: true },
 							take: 1,
@@ -43,7 +45,7 @@ export const getAuthOptions = (req: IncomingMessage) =>
 					user: {
 						...session.user,
 						id: newSession?.id,
-						role: newSession?.role,
+						roles: newSession?.roles.map(role => role.name),
 						hackerId: newSession?.hackerInfo[0]?.id,
 					},
 				};

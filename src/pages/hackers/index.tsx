@@ -1,4 +1,4 @@
-import { Role, type HackerInfo } from "@prisma/client";
+import { RoleName, type HackerInfo } from "@prisma/client";
 import type { NextPage } from "next";
 import { useTranslation } from "next-i18next";
 import Link from "next/link";
@@ -102,7 +102,7 @@ const Hackers: NextPage = () => {
 	if (status === "loading") {
 		return (
 			<App className="h-full bg-default-gradient px-16 py-12">
-				<Filter filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
+				<Filter value={[RoleName.ORGANIZER, RoleName.SPONSOR]} method="some">
 					<Loading />
 					<Error message={t("unauthorized")} />
 				</Filter>

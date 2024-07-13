@@ -1,4 +1,4 @@
-import { PrismaClient, Role } from "@prisma/client";
+import { PrismaClient, RoleName } from "@prisma/client";
 import type { Session } from "next-auth";
 
 export async function hackersRedirect(session: Session | null, callbackUrl: string) {
@@ -10,9 +10,13 @@ export async function hackersRedirect(session: Session | null, callbackUrl: stri
 			where: {
 				id: session.user?.id,
 			},
+			select: {
+				id: true,
+				roles: true,
+			},
 		}));
 
-	if (user && user.role === Role.HACKER) {
+	if (user?.roles.map(role => role.name).includes(RoleName.HACKER)) {
 		const hacker = await prisma.hackerInfo.findFirst({
 			where: {
 				userId: user.id,
@@ -33,6 +37,4 @@ export async function hackersRedirect(session: Session | null, callbackUrl: stri
 			permanent: false,
 		};
 	}
-
-	return {};
 }

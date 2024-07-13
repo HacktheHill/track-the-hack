@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, RoleName } from "@prisma/client";
 
 import { insertRecords } from "./utils.mjs";
 
@@ -10,6 +10,17 @@ import { generateUsers } from "./users.mjs";
 const prisma = new PrismaClient();
 
 async function main() {
+	console.log("Creating dummy roles...");
+	await prisma.$transaction(
+		Object.values(RoleName).map(name =>
+			prisma.role.upsert({
+				where: { name },
+				update: {},
+				create: { name },
+			}),
+		),
+	);
+
 	console.log("Creating dummy users...");
 	const users = generateUsers(10);
 	await insertRecords(prisma.user, users);
