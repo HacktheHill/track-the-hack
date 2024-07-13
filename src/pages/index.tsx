@@ -1,4 +1,3 @@
-import { NextUIProvider } from "@nextui-org/react";
 import { RoleName } from "@prisma/client";
 import type { GetStaticProps } from "next";
 import { type NextPage } from "next";
@@ -22,7 +21,6 @@ const Home: NextPage = () => {
 	const router = useRouter();
 
 	return (
-		<NextUIProvider>
 			<App className="relative flex flex-col items-center justify-center gap-2 overflow-clip bg-default-gradient px-8 py-6 sm:gap-8 short:px-16 short:py-12">
 				<Image
 					priority
@@ -51,7 +49,6 @@ const Home: NextPage = () => {
 					</button>
 				)}
 			</App>
-		</NextUIProvider>
 	);
 };
 

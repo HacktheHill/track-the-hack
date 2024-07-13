@@ -38,3 +38,42 @@ export async function hackersRedirect(session: Session | null, callbackUrl: stri
 		};
 	}
 }
+
+export async function rolesRedirect(session: Session | null, callbackUrl: string, roles: RoleName[]) {
+	const prisma = new PrismaClient();
+
+	const user =
+		session &&
+		(await prisma.user.findUnique({
+			where: {
+				id: session.user?.id,
+			},
+			select: {
+				id: true,
+				roles: true,
+			},
+		}));
+
+	if (!user) {
+		return {
+			destination: `/api/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`,
+			permanent: false,
+		};
+	}
+
+	if (!user.roles.map(role => role.name).some(role => roles.includes(role))) {
+		return {
+			destination: callbackUrl.startsWith("/internal") ? "/internal" : "/",
+			permanent: false,
+		};
+	}
+}
+
+export function sessionRedirect(session: Session | null, callbackUrl: string) {
+	if (!session) {
+		return {
+			destination: `/api/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`,
+			permanent: false,
+		};
+	}
+}

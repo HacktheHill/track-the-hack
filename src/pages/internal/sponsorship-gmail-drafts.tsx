@@ -2,7 +2,7 @@ import { RoleName } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
-import type { GetStaticProps, NextPage } from "next/types";
+import type { GetServerSideProps, GetStaticProps, NextPage } from "next/types";
 import { createRef, useEffect, useState } from "react";
 
 import App from "../../components/App";
@@ -11,6 +11,9 @@ import Filter from "../../components/Filter";
 
 import { trpc } from "../../utils/api";
 import { sponsorshipGmailDraftsSchema } from "../../utils/common";
+import { getServerSession } from "next-auth";
+import { rolesRedirect } from "../../utils/redirects";
+import { getAuthOptions } from "../api/auth/[...nextauth]";
 
 const html = String.raw;
 
@@ -437,12 +440,6 @@ const templates = [
 	},
 ];
 
-export const getStaticProps: GetStaticProps = async ({ locale }) => {
-	return {
-		props: await serverSideTranslations(locale ?? "en", ["common", "navbar", "sponsorship-gmail-drafts"]),
-	};
-};
-
 const SponsorshipGmailDrafts: NextPage = () => {
 	const { t } = useTranslation("sponsorship-gmail-drafts");
 	const { data: sessionData } = useSession();
@@ -538,9 +535,9 @@ const SponsorshipGmailDrafts: NextPage = () => {
 		<App className="overflow-y-auto bg-default-gradient p-8 sm:p-12" title={t("title")}>
 			<Filter value={RoleName.ORGANIZER} method="above">
 				<form onSubmit={handleSubmit} className="m-auto flex w-fit flex-col items-center gap-4">
-					<h3 className="font-rubik text-4xl font-bold text-dark-color">{t("title")}</h3>
+					<h1 className="font-rubik text-4xl font-bold">{t("title")}</h1>
 					<div className="flex w-full flex-col items-center gap-2 sm:flex-row">
-						<label htmlFor="organizer-full-name" className="flex-[50%] font-rubik text-dark-color">
+						<label htmlFor="organizer-full-name" className="flex-[50%] font-rubik">
 							{t("organizer-full-name")}
 							<span className="text-red-500"> *</span>
 						</label>
@@ -555,7 +552,7 @@ const SponsorshipGmailDrafts: NextPage = () => {
 						/>
 					</div>
 					<div className="flex w-full flex-col items-center gap-2 sm:flex-row">
-						<label htmlFor="template" className="flex-[50%] font-rubik text-dark-color">
+						<label htmlFor="template" className="flex-[50%] font-rubik">
 							{t("select-template")}
 							<span className="text-red-500"> *</span>
 						</label>
@@ -587,7 +584,7 @@ const SponsorshipGmailDrafts: NextPage = () => {
 					{!customizeTemplate && (
 						<>
 							<div className="flex w-full flex-col items-center gap-2 sm:flex-row">
-								<label htmlFor="company-name" className="flex-[50%] font-rubik text-dark-color">
+								<label htmlFor="company-name" className="flex-[50%] font-rubik">
 									{t("company-name")}
 									<span className="text-red-500"> *</span>
 								</label>
@@ -602,7 +599,7 @@ const SponsorshipGmailDrafts: NextPage = () => {
 								/>
 							</div>
 							<div className="flex w-full flex-col items-center gap-2 sm:flex-row">
-								<label htmlFor="company-rep-name" className="flex-[50%] font-rubik text-dark-color">
+								<label htmlFor="company-rep-name" className="flex-[50%] font-rubik">
 									{t("company-rep-name")}
 									<span className="text-red-500"> *</span>
 								</label>
@@ -619,7 +616,7 @@ const SponsorshipGmailDrafts: NextPage = () => {
 						</>
 					)}
 					<div className="flex w-full flex-col items-center gap-2 sm:flex-row">
-						<label htmlFor="company-name" className="flex-[50%] font-rubik text-dark-color">
+						<label htmlFor="company-name" className="flex-[50%] font-rubik">
 							{t("company-email")}
 							<span className="text-red-500"> *</span>
 						</label>
@@ -634,7 +631,7 @@ const SponsorshipGmailDrafts: NextPage = () => {
 						/>
 					</div>
 					<div className="flex w-full flex-col items-center gap-2 sm:flex-row">
-						<label htmlFor="subject" className="flex-[50%] font-rubik text-dark-color">
+						<label htmlFor="subject" className="flex-[50%] font-rubik">
 							{t("subject")}
 							<span className="text-red-500"> *</span>
 						</label>
@@ -650,7 +647,7 @@ const SponsorshipGmailDrafts: NextPage = () => {
 					{customizeTemplate && (
 						<div className="flex w-full flex-col items-center gap-2 sm:flex-row">
 							<div className="flex flex-col gap-1">
-								<label htmlFor="custom-template" className="flex-[50%] font-rubik text-dark-color">
+								<label htmlFor="custom-template" className="flex-[50%] font-rubik">
 									{t("custom-template")}
 								</label>
 								<small className="w-36 text-xs">{t("custom-template-note")}</small>
@@ -678,11 +675,11 @@ const SponsorshipGmailDrafts: NextPage = () => {
 						>
 							{copied ? t("copied-to-clipboard") : t("copy-to-clipboard")}
 						</button>
-						<iframe srcDoc={htmlPreview} className="h-full w-full" />
+						<iframe srcDoc={htmlPreview} className="h-full w-full" title="Email Preview" />
 					</div>
 					<button
 						type="submit"
-						className="hover:bg-medium cursor-pointer whitespace-nowrap rounded-[100px] border-none bg-light-color px-8 py-2 font-rubik text-light-color shadow-md transition-all duration-1000 disabled:hover:bg-light-color"
+						className="cursor-pointer whitespace-nowrap rounded-xl border-none bg-medium-primary-color px-8 py-2 font-rubik text-light-color shadow-md transition-all duration-500 hover:bg-light-primary-color"
 						disabled={drafted}
 					>
 						{drafted ? t("created-draft-email") : t("create-draft-email")}
@@ -692,6 +689,19 @@ const SponsorshipGmailDrafts: NextPage = () => {
 			</Filter>
 		</App>
 	);
+};
+
+export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
+	const session = await getServerSession(req, res, getAuthOptions(req));
+	return {
+		redirect: await rolesRedirect(session, "/internal/sponsorship-gmail-drafts", [
+			RoleName.ORGANIZER,
+			RoleName.SPONSOR,
+		]),
+		props: {
+			...(await serverSideTranslations(locale ?? "en", ["sponsorship-gmail-drafts", "navbar", "common"])),
+		},
+	};
 };
 
 export default SponsorshipGmailDrafts;
