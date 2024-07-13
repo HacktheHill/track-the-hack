@@ -1,5 +1,4 @@
-import { Role } from "@prisma/client";
-import { useSession } from "next-auth/react";
+import { RoleName } from "@prisma/client";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import type { GetStaticProps, NextPage } from "next/types";
@@ -21,7 +20,6 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
 
 const WalkIn: NextPage = () => {
 	const { t } = useTranslation("walk-in");
-	const { data: sessionData } = useSession();
 
 	const mutation = trpc.hackers.walkIn.useMutation();
 
@@ -201,7 +199,7 @@ const WalkIn: NextPage = () => {
 
 	return (
 		<App className="overflow-y-auto bg-default-gradient p-8 sm:p-12" title={t("title")}>
-			<Filter filter={role => role === Role.ORGANIZER}>
+			<Filter value={[RoleName.ORGANIZER]} method="some">
 				{success ? (
 					<div className="flex flex-col items-center gap-8">
 						<h3 className="font-rubik text-4xl font-bold text-dark-color">{t("title")}</h3>

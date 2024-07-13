@@ -1,5 +1,5 @@
 import type { HackerInfo } from "@prisma/client";
-import { Role } from "@prisma/client";
+import { RoleName } from "@prisma/client";
 import { observable } from "@trpc/server/observable";
 import { EventEmitter } from "events";
 import { z } from "zod";
@@ -38,13 +38,20 @@ export const presenceRouter = createTRPCRouter({
 				where: {
 					id: userId,
 				},
+				select: {
+					roles: {
+						select: {
+							name: true,
+						},
+					},
+				},
 			});
 
 			if (!user) {
 				throw new Error("User not found");
 			}
 
-			if (!hasRoles(user, [Role.ORGANIZER])) {
+			if (!hasRoles(user, [RoleName.ORGANIZER])) {
 				throw new Error("You do not have permission to do this");
 			}
 
@@ -93,13 +100,20 @@ export const presenceRouter = createTRPCRouter({
 				where: {
 					id: userId,
 				},
+				select: {
+					roles: {
+						select: {
+							name: true,
+						},
+					},
+				},
 			});
 
 			if (!user) {
 				throw new Error("User not found");
 			}
 
-			if (!hasRoles(user, [Role.SPONSOR, Role.ORGANIZER])) {
+			if (!hasRoles(user, [RoleName.SPONSOR, RoleName.ORGANIZER])) {
 				throw new Error("You do not have permission to do this");
 			}
 
@@ -146,13 +160,21 @@ export const presenceRouter = createTRPCRouter({
 				where: {
 					id: userId,
 				},
+				select: {
+					name: true,
+					roles: {
+						select: {
+							name: true,
+						},
+					},
+				},
 			});
 
 			if (!user) {
 				throw new Error("User not found");
 			}
 
-			if (!hasRoles(user, [Role.ORGANIZER])) {
+			if (!hasRoles(user, [RoleName.ORGANIZER])) {
 				throw new Error("You do not have permission to do this");
 			}
 

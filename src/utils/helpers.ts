@@ -1,4 +1,4 @@
-import type { User } from "@prisma/client";
+import type { RoleName, User } from "@prisma/client";
 import type { Roles } from "./common";
 
 /**
@@ -25,17 +25,17 @@ export const isExpired = (expiry: string) => {
  * @param roles Roles to check against
  * @returns True if role matches one of the given roles
  * @example
- * matchesRole(Role.SPONSOR, [Role.ORGANIZER, Role.SPONSOR])
- * // => true if role is Role.ORGANIZER or Role.SPONSOR
+ * matchesRole(RoleName.SPONSOR, [RoleName.ORGANIZER, RoleName.SPONSOR])
+ * // => true if role is RoleName.ORGANIZER or RoleName.SPONSOR
  * // => false otherwise
  */
-export const matchesRole = (role: Roles, roles: Roles[]) => {
+export const matchesRole = (role: RoleName | null, roles: Roles[]) => {
 	if (!role) {
 		return false;
 	}
 
 	// If the user has at least one of the given roles, return true
-	return roles.some(role => role === role);
+	return roles.some(r => r === role);
 };
 
 /**
@@ -44,17 +44,24 @@ export const matchesRole = (role: Roles, roles: Roles[]) => {
  * @param roles Roles to check
  * @returns True if user has one of the given roles
  * @example
- * hasRoles(user, [Role.ORGANIZER, Role.SPONSOR])
- * // => true if user.role is Role.ORGANIZER or Role.SPONSOR
+ * hasRoles(user, [RoleName.ORGANIZER, RoleName.SPONSOR])
+ * // => true if user.role is RoleName.ORGANIZER or RoleName.SPONSOR
  * // => false otherwise
  */
-export const hasRoles = (user: User, roles: Roles[]) => {
+export const hasRoles = (
+	user: {
+		roles: {
+			name: RoleName;
+		}[];
+	} & Partial<User>,
+	roles: Roles[],
+) => {
 	if (!user) {
 		return false;
 	}
 
 	// If the user has at least one of the given roles, return true
-	return roles.some(role => user.role === role);
+	return user.roles.some(r => roles.includes(r.name));
 };
 
 /**

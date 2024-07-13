@@ -167,6 +167,8 @@ export const getAggregatedHackerInfo = (hackerData: HackerInfo[]) => {
 		acceptanceExpiry: [],
 		walkIn: [],
 		winner: [],
+		createdAt: [],
+		updatedAt: [],
 	};
 	const metricsData: AggregatedHackerInfo = {
 		id: [],
@@ -205,6 +207,8 @@ export const getAggregatedHackerInfo = (hackerData: HackerInfo[]) => {
 		acceptanceExpiry: [],
 		walkIn: [],
 		winner: [],
+		createdAt: [],
+		updatedAt: [],
 	};
 	const { metricsKeys } = getMetricsKeysAndData(hackerData, metricsData);
 
