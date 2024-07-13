@@ -5,100 +5,70 @@ import Image from "next/image";
 import Link from "next/link";
 import { trpc } from "../utils/api";
 import Filter from "./Filter";
+import { useCallback } from "react";
+
+type LinkItemProps = {
+	href: string;
+	bottom: boolean;
+	text: string;
+	src: string;
+	alt: string;
+};
+
+const LinkItem = ({ href, bottom, text, src, alt }: LinkItemProps) => (
+	<Link
+		href={href}
+		className={
+			bottom ? "" : "hover:text-light mx-4 flex items-center font-coolvetica text-2xl text-dark-primary-color"
+		}
+	>
+		{bottom ? <Image priority src={src} height={32} width={32} alt={alt} /> : text}
+	</Link>
+);
 
 type LinkProps = {
-	bottom?: boolean;
+	bottom: boolean;
 };
 
 const Links = ({ bottom }: LinkProps) => {
 	const { t } = useTranslation("navbar");
 	const { data: sessionData } = useSession();
 
-	const hackerId = trpc.users.getHackerId.useQuery(
-		{ id: sessionData?.user?.id ?? "" },
-		{ enabled: !!sessionData?.user?.id },
+	const qrFilter = useCallback(
+		(role: Role) => !!(role === Role.HACKER && sessionData?.user?.hackerId) || role === Role.ORGANIZER,
+		[sessionData?.user?.hackerId],
 	);
-
-	const role = trpc.users.getRole.useQuery({ id: sessionData?.user?.id ?? "" }, { enabled: !!sessionData?.user?.id });
 
 	return (
 		<>
-			<Link
-				href="/"
-				className={
-					bottom
-						? ""
-						: "hover:text-light mx-4 flex items-center font-coolvetica text-2xl text-dark-primary-color"
-				}
-			>
-				{bottom ? <Image priority src="/assets/home.svg" height={32} width={32} alt={t("home")} /> : t("home")}
-			</Link>
-			{sessionData?.user && ((role.data === Role.HACKER && hackerId.data) || role.data === Role.ORGANIZER) && (
-				<Link
-					href="/qr"
-					className={
-						bottom
-							? ""
-							: "hover:text-light mx-4 flex items-center font-coolvetica text-2xl text-dark-primary-color"
-					}
-				>
-					{bottom ? <Image priority src="/assets/qr.svg" height={32} width={32} alt={t("qr")} /> : t("qr")}
-				</Link>
-			)}
-			<Link
+			<LinkItem href="/" bottom={bottom} text={t("home")} src="/assets/home.svg" alt={t("home")} />
+			<Filter filter={qrFilter} silent>
+				<LinkItem href="/qr" bottom={bottom} text={t("qr")} src="/assets/qr.svg" alt={t("qr")} />
+			</Filter>
+			<LinkItem
 				href="/schedule"
-				className={
-					bottom
-						? ""
-						: "hover:text-light mx-4 flex items-center font-coolvetica text-2xl text-dark-primary-color"
-				}
-			>
-				{bottom ? (
-					<Image priority src="/assets/schedule.svg" height={32} width={32} alt={t("schedule")} />
-				) : (
-					t("schedule")
-				)}
-			</Link>
-			<Link
-				href="/maps"
-				className={
-					bottom
-						? ""
-						: "hover:text-light mx-4 flex items-center font-coolvetica text-2xl text-dark-primary-color"
-				}
-			>
-				{bottom ? <Image priority src="/assets/maps.svg" height={32} width={32} alt={t("maps")} /> : t("maps")}
-			</Link>
-			<Link
+				bottom={bottom}
+				text={t("schedule")}
+				src="/assets/schedule.svg"
+				alt={t("schedule")}
+			/>
+			<LinkItem href="/maps" bottom={bottom} text={t("maps")} src="/assets/maps.svg" alt={t("maps")} />
+			<LinkItem
 				href="/resources"
-				className={
-					bottom
-						? ""
-						: "hover:text-light mx-4 flex items-center font-coolvetica text-2xl text-dark-primary-color"
-				}
-			>
-				{bottom ? (
-					<Image priority src="/assets/resources.svg" height={32} width={32} alt="Resources" />
-				) : (
-					t("resources")
-				)}
-			</Link>
+				bottom={bottom}
+				text={t("resources")}
+				src="/assets/resources.svg"
+				alt="Resources"
+			/>
 			{sessionData?.user && (
-				<Filter filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
-					<Link
+				<Filter filter={role => role === Role.ORGANIZER || role === Role.SPONSOR} silent>
+					<LinkItem
 						href="/hackers"
-						className={
-							bottom
-								? ""
-								: "hover:text-light mx-4 flex items-center font-coolvetica text-2xl text-dark-primary-color"
-						}
-					>
-						{bottom ? (
-							<Image priority src="/assets/list.svg" height={32} width={32} alt={t("hackers")} />
-						) : (
-							t("hackers")
-						)}
-					</Link>
+						bottom={bottom}
+						text={t("hackers")}
+						src="/assets/list.svg"
+						alt={t("hackers")}
+					/>
 				</Filter>
 			)}
 		</>
@@ -146,7 +116,7 @@ const Navbar = ({ integrated }: NavbarProps) => {
 			</div>
 
 			<div className="hidden flex-row mobile:flex">
-				<Links />
+				<Links bottom={false} />
 			</div>
 
 			<button

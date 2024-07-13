@@ -25,7 +25,7 @@ const Internal: NextPage = () => {
 			</Filter>
 			<Filter filter={role => role !== Role.ORGANIZER}>
 				<div className="flex flex-col items-center justify-center gap-4 px-16 py-12">
-					<Error message={tCommon("not-authorized-to-view-this-page")} />
+					<Error message={tCommon("unauthorized")} />
 				</div>
 			</Filter>
 		</App>

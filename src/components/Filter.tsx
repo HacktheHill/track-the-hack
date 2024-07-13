@@ -1,43 +1,43 @@
 import { useSession } from "next-auth/react";
 import { Children } from "react";
 
-import { trpc } from "../utils/api";
 import type { Roles } from "../utils/common";
 
+import { useTranslation } from "next-i18next";
 import Error from "./Error";
+import Loading from "./Loading";
 
 type FilterProps = {
 	filter: (role: Roles) => boolean;
+	silent?: boolean;
 	children: React.ReactNode;
 };
 
-const Filter = ({ filter, children }: FilterProps) => {
-	const { data: sessionData } = useSession();
-	const id = sessionData?.user?.id ?? "";
-
-	const query = trpc.users.getRole.useQuery({ id }, { enabled: !!id });
-
-	if (query.isLoading && query.isSuccess) {
-		return null;
-	}
-
-	if (query.isError) {
-		return <Error message={query.error.message} />;
-	}
-
-	if (!query.data) {
-		return null;
-	}
-
+const Filter = ({ filter, silent, children }: FilterProps) => {
 	const childrenArray = Children.toArray(children);
 
-	if (filter(query.data)) {
+	const { t } = useTranslation("common");
+
+	const { data: sessionData, status } = useSession();
+	const role = sessionData?.user?.role;
+
+	if (status === "loading" && !silent) {
+		return <Loading />;
+	}
+
+	if (role && filter(role)) {
 		return <>{childrenArray[0]}</>;
-	} else if (!filter(query.data) && childrenArray.length >= 2) {
+	}
+
+	if (childrenArray.length >= 2) {
 		return <>{childrenArray[1]}</>;
 	}
 
-	return null;
+	if (silent) {
+		return null;
+	}
+
+	return <Error message={t("unauthorized")} />;
 };
 
 export default Filter;

@@ -4,5 +4,5 @@
 	"loading": "Loading...",
 	"error": "Error: {{message}}",
 	"contact-us": "Contact us for help",
-	"not-authorized-to-view-this-page": "You are not authorized to view this page."
+	"unauthorized": "You are not authorized to view this."
 }

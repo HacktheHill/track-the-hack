@@ -212,53 +212,54 @@ const Apply: NextPage = () => {
 							{t("back")}
 						</button>
 					</div>
-				) : (<form onSubmit={handleSubmit} className="flex flex-col items-center gap-8">
-					<h3 className="font-rubik text-4xl font-bold text-dark-color">{t("title")}</h3>
-					<div className="flex flex-col gap-4">
-						{fields.map(field => (
-							<div key={field.name} className="flex w-full flex-col items-center gap-2 sm:flex-row">
-								<label htmlFor={field.name} className="flex-[50%] font-rubik text-dark-color">
-									{t(field.name)}
-									{field.required && <span className="text-red-500"> *</span>}
-								</label>
-								{field.type === "select" ? (
-									<select
-										id={field.name}
-										name={field.name}
-										className="w-full rounded-[100px] border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
-										required={field.required}
-									>
-										<option value="">{t("select")}</option>
-										{field.options?.map(option => (
-											<option key={option} value={option}>
-												{t(option)}
-											</option>
-										))}
-									</select>
-								) : (
-									<input
-										id={field.name}
-										name={field.name}
-										type={field.type}
-										className="w-full rounded-[100px] border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
-										required={field.required}
-										pattern={patterns[field.type]}
-									/>
-								)}
-							</div>
-						))}
-					</div>
-					{error && (
-						<div className="flex flex-col items-center gap-2">
-							<p className="text-center font-rubik text-red-500">{error}</p>
+				) : (
+					<form onSubmit={handleSubmit} className="flex flex-col items-center gap-8">
+						<h3 className="font-rubik text-4xl font-bold text-dark-color">{t("title")}</h3>
+						<div className="flex flex-col gap-4">
+							{fields.map(field => (
+								<div key={field.name} className="flex w-full flex-col items-center gap-2 sm:flex-row">
+									<label htmlFor={field.name} className="flex-[50%] font-rubik text-dark-color">
+										{t(field.name)}
+										{field.required && <span className="text-red-500"> *</span>}
+									</label>
+									{field.type === "select" ? (
+										<select
+											id={field.name}
+											name={field.name}
+											className="w-full rounded-[100px] border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+											required={field.required}
+										>
+											<option value="">{t("select")}</option>
+											{field.options?.map(option => (
+												<option key={option} value={option}>
+													{t(option)}
+												</option>
+											))}
+										</select>
+									) : (
+										<input
+											id={field.name}
+											name={field.name}
+											type={field.type}
+											className="w-full rounded-[100px] border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+											required={field.required}
+											pattern={patterns[field.type]}
+										/>
+									)}
+								</div>
+							))}
 						</div>
-					)}
-					<button className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base">
-						{t("submit")}
-					</button>
-				</form>
+						{error && (
+							<div className="flex flex-col items-center gap-2">
+								<p className="text-center font-rubik text-red-500">{error}</p>
+							</div>
+						)}
+						<button className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base">
+							{t("submit")}
+						</button>
+					</form>
 				)}
-				<Error message={t("not-authorized-to-view-this-page")} />
+				<Error message={t("unauthorized")} />
 			</Filter>
 		</App>
 	);

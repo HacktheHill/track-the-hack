@@ -3,5 +3,7 @@
 	"use-qr": "Montrer ce code QR aux organisateurs pour participer",
 	"scan-qr": "Prêt à scanner un code QR",
 	"mascot-choco-alt": "Mascotte Hack the Hill avec du chocolat chaud",
-	"sign-in-to-access": "Vous devez vous connecter pour accéder à la page QR."
+	"sign-in-to-access": "Vous devez vous connecter pour accéder à la page QR.",
+	"no-hacker": "Aucun hacker trouvé avec ce compte.",
+	"qr-failed": "Échec de la génération du code QR."
 }

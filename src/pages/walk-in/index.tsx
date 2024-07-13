@@ -260,7 +260,7 @@ const WalkIn: NextPage = () => {
 						</button>
 					</form>
 				)}
-				<Error message={t("not-authorized-to-view-this-page")} />
+				<Error message={t("unauthorized")} />
 			</Filter>
 		</App>
 	);

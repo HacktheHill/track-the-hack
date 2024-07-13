@@ -75,7 +75,7 @@ const Sponsors: NextPage = () => {
 		<App className="overflow-y-auto bg-default-gradient p-8 sm:p-12" title={t("title")}>
 			<Filter filter={role => role === Role.ORGANIZER}>
 				<SponsorsTable companyQuery={companyQuery} />
-				<Error message={t("not-authorized-to-view-this-page")} />
+				<Error message={t("unauthorized")} />
 			</Filter>
 		</App>
 	);
