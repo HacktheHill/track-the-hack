@@ -13,7 +13,7 @@ import App from "../../components/App";
 import Error from "../../components/Error";
 import Filter from "../../components/Filter";
 import Loading from "../../components/Loading";
-import { hackersRedirect } from "../../utils/redirects";
+import { rolesRedirect } from "../../utils/redirects";
 import { getAuthOptions } from "../api/auth/[...nextauth]";
 
 const Hackers: NextPage = () => {
@@ -406,7 +406,7 @@ export const getServerSideProps: GetServerSideProps = async ({ req, res, locale 
 	const session = await getServerSession(req, res, getAuthOptions(req));
 	console.log(req);
 	return {
-		redirect: await hackersRedirect(session, "/hackers"),
+		redirect: await rolesRedirect(session, "/hackers", [RoleName.ORGANIZER, RoleName.SPONSOR]),
 		props: {
 			...(await serverSideTranslations(locale ?? "en", ["hackers", "navbar", "common"])),
 		},

@@ -6,28 +6,25 @@ import MainEventTab from "../../components/MainEventTab";
 import { getAggregatedHackerInfo, getAggregatedPresenceInfo } from "../../utils/getAggregatedData";
 
 import { RoleName, type HackerInfo, type PresenceInfo } from "@prisma/client";
-import type { GetStaticProps, NextPage } from "next";
+import type { GetServerSideProps, NextPage } from "next";
+import { getServerSession } from "next-auth";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { trpc } from "../../utils/api";
+import { rolesRedirect } from "../../utils/redirects";
+import { getAuthOptions } from "../api/auth/[...nextauth]";
 
 import App from "../../components/App";
 import Error from "../../components/Error";
 import Filter from "../../components/Filter";
 import Loading from "../../components/Loading";
 
-export const getStaticProps: GetStaticProps = async ({ locale }) => {
-	return {
-		props: await serverSideTranslations(locale ?? "en", ["common", "internal", "navbar"]),
-	};
-};
-
 const Metrics: NextPage = () => {
 	const { t } = useTranslation("internal");
 
 	return (
 		<App className="overflow-y-auto bg-default-gradient" integrated={true} title={t("title")}>
-			<Filter value={RoleName.ORGANIZER} method="above">
+			<Filter value={[RoleName.ORGANIZER, RoleName.SPONSOR]} method="some">
 				<MetricsDisplay />
 				<Error message={t("unauthorized")} />
 			</Filter>
@@ -117,6 +114,16 @@ export const MetricsView = ({ hackerData, presenceData }: MetricsViewProps) => {
 			</TabPanels>
 		</TabGroup>
 	);
+};
+
+export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
+	const session = await getServerSession(req, res, getAuthOptions(req));
+	return {
+		redirect: await rolesRedirect(session, "/internal/metrics", [RoleName.ORGANIZER, RoleName.SPONSOR]),
+		props: {
+			...(await serverSideTranslations(locale ?? "en", ["internal", "navbar", "common"])),
+		},
+	};
 };
 
 export default Metrics;

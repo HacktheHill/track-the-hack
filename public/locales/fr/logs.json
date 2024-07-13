@@ -1,7 +1,9 @@
 {
+	"logs": "Journaux d'audit",
 	"user": "utilisateur",
 	"action": "Action",
 	"timestamp": "Date",
 	"details": "Détails",
-	"userid": "ID de l'utilisateur"
+	"userid": "ID de l'utilisateur",
+	"no-logs": "Aucun journal trouvé"
 }

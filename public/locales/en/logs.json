@@ -1,7 +1,9 @@
 {
+	"title": "Audit Logs",
 	"user": "User",
 	"action": "Action",
 	"timestamp": "Timestamp",
 	"details": "Details",
-	"userid": "User ID"
+	"userid": "User ID",
+	"no-logs": "No logs found"
 }
