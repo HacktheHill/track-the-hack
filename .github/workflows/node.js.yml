@@ -51,4 +51,4 @@ jobs:
 
             - name: Restart the server
               working-directory: /home/azure/track-the-hack
-              run: pm2 restart track-the-hack
+              run: pm2 restart track-the-hack && pm2 restart prisma
