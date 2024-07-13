@@ -5,5 +5,5 @@
 	"error": "Erreur : {{message}}",
 	"contact-us": "Contactez-nous pour de l'aide",
 	"unknown-error": "Erreur inconnue",
-	"not-authorized-to-view-this-page": "Vous n'êtes pas autorisé à voir cette page"
+	"unauthorized": "Vous n'êtes pas autorisé à voir ceci."
 }

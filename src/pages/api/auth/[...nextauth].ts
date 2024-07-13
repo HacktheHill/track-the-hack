@@ -26,12 +26,15 @@ export const getAuthOptions = (req: IncomingMessage) =>
 		// Include user.id on session
 		callbacks: {
 			async session({ session, user }) {
-				const newSession = await prisma.session.findFirst({
-					where: {
-						userId: user.id,
-					},
-					include: {
-						user: true,
+				const newSession = await prisma.user.findUnique({
+					where: { id: user.id },
+					select: {
+						id: true,
+						role: true,
+						hackerInfo: {
+							select: { id: true },
+							take: 1,
+						},
 					},
 				});
 
@@ -39,8 +42,9 @@ export const getAuthOptions = (req: IncomingMessage) =>
 					...session,
 					user: {
 						...session.user,
-						id: newSession?.user.id,
-						role: newSession?.user.role,
+						id: newSession?.id,
+						role: newSession?.role,
+						hackerId: newSession?.hackerInfo[0]?.id,
 					},
 				};
 			},

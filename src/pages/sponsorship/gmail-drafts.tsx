@@ -688,7 +688,7 @@ const SponsorshipGmailDrafts: NextPage = () => {
 						{drafted ? t("created-draft-email") : t("create-draft-email")}
 					</button>
 				</form>
-				<Error message={t("not-authorized-to-view-this-page")} />
+				<Error message={t("unauthorized")} />
 			</Filter>
 		</App>
 	);
