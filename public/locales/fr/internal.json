@@ -1,3 +1,7 @@
 {
-	"title": "Interne"
+	"title": "Interne",
+	"roles": "Rôles",
+	"logs": "Journaux d'audit",
+	"sponsorship-gmail-drafts": "Brouillons Gmail de l'équipe de parrainage",
+	"metrics": "Métriques"
 }
