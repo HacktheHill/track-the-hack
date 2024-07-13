@@ -1,22 +1,19 @@
 import { Role } from "@prisma/client";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
-import type { GetStaticProps, NextPage } from "next/types";
+import type { GetServerSideProps, NextPage } from "next/types";
 import { useEffect, useState } from "react";
 
 import App from "../../components/App";
 import Error from "../../components/Error";
 import Filter from "../../components/Filter";
 
+import { getServerSession } from "next-auth";
+import { useRouter } from "next/router";
 import { trpc } from "../../utils/api";
 import { applySchema } from "../../utils/common";
-import { useRouter } from "next/router";
-
-export const getStaticProps: GetStaticProps = async ({ locale }) => {
-	return {
-		props: await serverSideTranslations(locale ?? "en", ["common", "navbar", "apply"]),
-	};
-};
+import { hackersRedirect } from "../../utils/redirects";
+import { getAuthOptions } from "../api/auth/[...nextauth]";
 
 const Apply: NextPage = () => {
 	const { t } = useTranslation("apply");
@@ -263,6 +260,16 @@ const Apply: NextPage = () => {
 			</Filter>
 		</App>
 	);
+};
+
+export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
+	const session = await getServerSession(req, res, getAuthOptions(req));
+	return {
+		redirect: await hackersRedirect(session, "/apply"),
+		props: {
+			...(await serverSideTranslations(locale ?? "en", ["apply", "navbar", "common"])),
+		},
+	};
 };
 
 export default Apply;
