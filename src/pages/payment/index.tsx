@@ -96,7 +96,7 @@ const Payment: NextPage = () => {
 		<App className="overflow-y-auto bg-default-gradient p-8 sm:p-12" title={t("title")}>
 			<Filter filter={role => role === Role.SPONSOR || role === Role.ORGANIZER}>
 				<PaymentCard company={companyQuery.data} status={status} />
-				<Error message={t("not-authorized-to-view-this-page")} />
+				<Error message={t("unauthorized")} />
 			</Filter>
 		</App>
 	);

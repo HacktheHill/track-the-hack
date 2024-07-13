@@ -3,7 +3,6 @@ import { useTranslation } from "next-i18next";
 import Image from "next/image";
 import qrcode from "qrcode";
 import { useEffect, useState } from "react";
-import { trpc } from "../utils/api";
 
 import Error from "./Error";
 
@@ -17,11 +16,6 @@ const QRCode = ({ setError, id }: QRCodeProps) => {
 	const { data: sessionData } = useSession();
 	const [qrCode, setQRCode] = useState<string | null>(null);
 
-	const query = trpc.users.getHackerId.useQuery(
-		{ id: sessionData?.user?.id ?? "" },
-		{ enabled: !!sessionData?.user?.id },
-	);
-
 	useEffect(() => {
 		async function getQRCode() {
 			// Confirmation QR code for walk-ins
@@ -34,9 +28,9 @@ const QRCode = ({ setError, id }: QRCodeProps) => {
 				}
 
 				// QR code for hackers
-			} else if (query.data) {
+			} else if (sessionData?.user?.hackerId) {
 				try {
-					const qr = await qrcode.toDataURL(query.data);
+					const qr = await qrcode.toDataURL(sessionData.user?.hackerId);
 					setQRCode(qr);
 				} catch (error) {
 					console.error(error);
@@ -44,16 +38,16 @@ const QRCode = ({ setError, id }: QRCodeProps) => {
 			}
 		}
 		void getQRCode();
-	}, [id, query.data]);
-
-	if (query.isError) {
-		setError?.(true);
-		return <Error message="User not registered" />;
-	}
+	}, [id, sessionData?.user?.hackerId]);
 
 	if (!qrCode) {
 		setError?.(true);
-		return <Error message="Cannot find QR code" />;
+
+		if (!sessionData?.user?.hackerId) {
+			return <Error message={t("no-hacker")} />;
+		}
+
+		return <Error message={t("qr-failed")} />;
 	}
 
 	setError?.(false);
