@@ -2,16 +2,16 @@ import { RoleName } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
-import type { GetServerSideProps, GetStaticProps, NextPage } from "next/types";
+import type { GetServerSideProps, NextPage } from "next/types";
 import { createRef, useEffect, useState } from "react";
 
 import App from "../../components/App";
 import Error from "../../components/Error";
 import Filter from "../../components/Filter";
 
+import { getServerSession } from "next-auth";
 import { trpc } from "../../utils/api";
 import { sponsorshipGmailDraftsSchema } from "../../utils/common";
-import { getServerSession } from "next-auth";
 import { rolesRedirect } from "../../utils/redirects";
 import { getAuthOptions } from "../api/auth/[...nextauth]";
 

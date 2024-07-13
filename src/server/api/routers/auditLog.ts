@@ -17,7 +17,7 @@ export const auditLogRouter = createTRPCRouter({
 				details: z.string().nullable(),
 			}),
 		)
-		.mutation(async ({ ctx, input }) => {
+		.mutation(async ({ input }) => {
 			const auditLog = await prisma.auditLog.create({
 				data: {
 					id: input.id,
@@ -39,7 +39,7 @@ export const auditLogRouter = createTRPCRouter({
 			return auditLog;
 		}),
 
-	getAllTheLogs: protectedProcedure.query(async ({ ctx }) => {
+	getAllTheLogs: protectedProcedure.query(async () => {
 		const auditLogs = await prisma.auditLog.findMany({
 			orderBy: [
 				{

@@ -204,8 +204,6 @@ type SearchProps = {
 };
 
 const Search = ({ setSearch }: SearchProps) => {
-	const { t } = useTranslation("hackers");
-
 	return (
 		<div className="relative mx-auto flex max-w-xl flex-col ">
 			<div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-dark-color">
@@ -348,23 +346,28 @@ const FilterOptions = ({ filters, setFilters, filterOptions, sidebarVisible }: F
 									Graduation Year
 								</div>
 								<ul>
-									{filterOptions.graduationYears.sort()?.map(option => (
-										<li key={option} className="text-dark mb-2 flex items-center justify-between">
-											<span>{option}</span>
-											<input
-												checked={
-													filters["graduationYears"]
-														? filters["graduationYears"][0] == option
-														: false
-												}
-												onChange={() => {
-													handleCheckBox(option, "graduationYears");
-												}}
-												type="checkbox"
-												className="z-50 h-6 w-6"
-											/>
-										</li>
-									))}
+									{filterOptions.graduationYears
+										.toSorted((a, b) => a.localeCompare(b))
+										?.map(option => (
+											<li
+												key={option}
+												className="text-dark mb-2 flex items-center justify-between"
+											>
+												<span>{option}</span>
+												<input
+													checked={
+														filters["graduationYears"]
+															? filters["graduationYears"][0] == option
+															: false
+													}
+													onChange={() => {
+														handleCheckBox(option, "graduationYears");
+													}}
+													type="checkbox"
+													className="z-50 h-6 w-6"
+												/>
+											</li>
+										))}
 								</ul>
 							</li>
 							<li>

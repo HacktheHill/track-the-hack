@@ -1,4 +1,3 @@
-import { RoleName } from "@prisma/client";
 import type { GetStaticProps } from "next";
 import { type NextPage } from "next";
 import { signIn, useSession } from "next-auth/react";
