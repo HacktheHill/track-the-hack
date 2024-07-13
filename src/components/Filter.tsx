@@ -1,8 +1,9 @@
 import { useSession } from "next-auth/react";
 import { Children } from "react";
 
-import { RoleName } from "@prisma/client";
+import type { RoleName } from "@prisma/client";
 import { useTranslation } from "next-i18next";
+import { roleHierarchy } from "../utils/common";
 import Error from "./Error";
 import Loading from "./Loading";
 
@@ -47,8 +48,6 @@ const Filter = (props: FilterProps) => {
 	const { data: sessionData, status } = useSession();
 	const roles = sessionData?.user?.roles;
 
-	const hierarchy = [RoleName.HACKER, RoleName.SPONSOR, RoleName.ORGANIZER];
-
 	if (status === "loading" && !silent) {
 		return <Loading />;
 	}
@@ -61,7 +60,7 @@ const Filter = (props: FilterProps) => {
 		} else if (method === "function") {
 			shouldRender = value(roles);
 		} else if (method === "above") {
-			shouldRender = roles.some(role => hierarchy.indexOf(role) <= hierarchy.indexOf(value));
+			shouldRender = roles.some(role => roleHierarchy.indexOf(role) <= roleHierarchy.indexOf(value));
 		} else if (method === "none") {
 			shouldRender = roles.length === 0;
 		} else if (method === "only") {
