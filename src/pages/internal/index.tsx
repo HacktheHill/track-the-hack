@@ -15,8 +15,8 @@ const Internal: NextPage = () => {
 
 	return (
 		<App className="overflow-y-auto bg-default-gradient" integrated={true} title={t("title")}>
-				<Filter value={RoleName.ORGANIZER} method="above">
-			<div className="flex h-full flex-col items-center">
+			<Filter value={RoleName.ORGANIZER} method="above">
+				<div className="flex h-full flex-col items-center">
 					<h1 className="p-10 font-rubik text-4xl font-bold">{t("title")}</h1>
 					<div className="flex flex-col items-stretch gap-4 text-center">
 						<Filter value={RoleName.ADMIN} method="above" silent>
@@ -47,8 +47,8 @@ const Internal: NextPage = () => {
 							{t("metrics")}
 						</Link>
 					</div>
-			</div>
-				</Filter>
+				</div>
+			</Filter>
 		</App>
 	);
 };
@@ -56,7 +56,7 @@ const Internal: NextPage = () => {
 export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
 	const session = await getServerSession(req, res, getAuthOptions(req));
 	return {
-		redirect: await rolesRedirect(session, "/", [RoleName.ORGANIZER]),
+		redirect: await rolesRedirect(session, "/", [RoleName.ORGANIZER, RoleName.ADMIN]),
 		props: {
 			...(await serverSideTranslations(locale ?? "en", ["internal", "navbar", "common"])),
 		},
