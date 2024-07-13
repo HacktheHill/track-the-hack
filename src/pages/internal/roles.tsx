@@ -44,7 +44,7 @@ const Roles: NextPage = () => {
 
 	return (
 		<App className="overflow-y-auto bg-default-gradient" integrated={true} title={t("title")}>
-			<Filter value={RoleName.ORGANIZER} method="above">
+			<Filter value={RoleName.ADMIN} method="above">
 				<div className="flex h-full flex-col items-center">
 					<h1 className="p-10 font-rubik text-4xl font-bold">{t("title")}</h1>
 					<form className="flex w-full max-w-lg flex-col gap-4" onSubmit={handleSubmit}>

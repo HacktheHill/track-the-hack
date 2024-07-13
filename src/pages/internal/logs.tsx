@@ -31,7 +31,7 @@ const Logs: NextPage = () => {
 	if (logsQuery.isLoading || logsQuery.data == null) {
 		return (
 			<App className="h-full bg-default-gradient px-16 py-12">
-				<Filter value={[RoleName.ORGANIZER, RoleName.SPONSOR]} method="some">
+				<Filter value={RoleName.ORGANIZER} method="above">
 					<Loading />
 					<Error message={t("unauthorized")} />
 				</Filter>
@@ -123,7 +123,7 @@ const Logs: NextPage = () => {
 export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
 	const session = await getServerSession(req, res, getAuthOptions(req));
 	return {
-		redirect: await rolesRedirect(session, "/internal/logs", [RoleName.ORGANIZER]),
+		redirect: await rolesRedirect(session, "/internal/logs", [RoleName.ORGANIZER, RoleName.ADMIN]),
 		props: {
 			...(await serverSideTranslations(locale ?? "en", ["logs", "navbar", "common"])),
 		},

@@ -447,13 +447,10 @@ export const hackerRouter = createTRPCRouter({
 				throw new Error("User not found");
 			}
 
-			if (!hasRoles(user, [RoleName.ORGANIZER])) {
-				throw new Error("You do not have permission to do this");
-			}
-
 			const hacker = await ctx.prisma.hackerInfo.create({
 				data: input,
 			});
+
 			await logAuditEntry(
 				ctx,
 				hacker.id,
