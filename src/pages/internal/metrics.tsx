@@ -3,23 +3,39 @@ import { useEffect, useState } from "react";
 
 import DemographicsTab from "../../components/DemographicsTab";
 import MainEventTab from "../../components/MainEventTab";
+import { getAggregatedHackerInfo, getAggregatedPresenceInfo } from "../../utils/getAggregatedData";
 
-import type { HackerInfo, PresenceInfo } from "@prisma/client";
+import { RoleName, type HackerInfo, type PresenceInfo } from "@prisma/client";
 import type { GetStaticProps, NextPage } from "next";
+import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { trpc } from "../../utils/api";
 
+import App from "../../components/App";
 import Error from "../../components/Error";
+import Filter from "../../components/Filter";
 import Loading from "../../components/Loading";
-import { getAggregatedHackerInfo, getAggregatedPresenceInfo } from "../../utils/getAggregatedData";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
-		props: await serverSideTranslations(locale ?? "en", ["common", "internal"]),
+		props: await serverSideTranslations(locale ?? "en", ["common", "internal", "navbar"]),
 	};
 };
 
 const Metrics: NextPage = () => {
+	const { t } = useTranslation("internal");
+
+	return (
+		<App className="overflow-y-auto bg-default-gradient" integrated={true} title={t("title")}>
+			<Filter value={RoleName.ORGANIZER} method="above">
+				<MetricsDisplay />
+				<Error message={t("unauthorized")} />
+			</Filter>
+		</App>
+	);
+};
+
+const MetricsDisplay = () => {
 	const { status: hackerStatus, ...hackerQuery } = trpc.hackers.all.useInfiniteQuery(
 		{
 			limit: 50,
@@ -79,12 +95,11 @@ export const MetricsView = ({ hackerData, presenceData }: MetricsViewProps) => {
 	}, [presenceData]);
 
 	return (
-		<TabGroup>
-			<div className="mx-auto max-w-7xl p-4 md:p-10">
-				<TabList className="flex justify-between p-3" variant="solid">
-					<Tab>Hacker Demographics</Tab>
-					<Tab>Main Event</Tab>
-					<Tab>Action Log</Tab>
+		<TabGroup className="mx-auto flex max-w-7xl flex-col gap-5 p-10">
+			<div>
+				<TabList className="flex justify-between rounded-lg border-none bg-dark-primary-color p-3">
+					<Tab className="border-none">Hacker Demographics</Tab>
+					<Tab className="border-none">Main Event</Tab>
 				</TabList>
 			</div>
 			<TabPanels>
@@ -99,7 +114,6 @@ export const MetricsView = ({ hackerData, presenceData }: MetricsViewProps) => {
 						presenceData={presenceData}
 					/>
 				</TabPanel>
-				<TabPanel>Not Integrated...</TabPanel>
 			</TabPanels>
 		</TabGroup>
 	);

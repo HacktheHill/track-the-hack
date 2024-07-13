@@ -60,7 +60,7 @@ export default function MainEventTab({
 	aggregatedPresenceData,
 	hackerData,
 	presenceData,
-}: MainEventTabProps) {
+}: Readonly<MainEventTabProps>) {
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const totalConfirmedAttendees = aggregatedHackerData.confirmed.filter(dataValue => dataValue.name === "Yes")[0]
 		?.value;
@@ -93,14 +93,14 @@ export default function MainEventTab({
 				state: true, // TODO: not sure how event state (open/closed) will be stored in the db
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				utilization:
-					utilizedEventData.length > 0 && (totalConfirmedAttendees ?? 0 > 0)
-						? utilizedEventData[0]!.value / (totalConfirmedAttendees ?? 0)
+					utilizedEventData.length > 0 && (totalConfirmedAttendees ?? 0) > 0
+						? utilizedEventData[0]?.value ?? 0 / (totalConfirmedAttendees ?? 0)
 						: 0,
 			};
 		});
 
 	return (
-		<main className="mx-auto max-w-7xl p-4 md:p-10">
+		<main>
 			<Grid numItems={1} className="gap-6">
 				<Grid numItemsSm={3} numItemsLg={4} className="gap-6">
 					<CustomSmallTextCard title="Total Checked In" metric={totalCheckedIn} />

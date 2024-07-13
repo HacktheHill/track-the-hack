@@ -36,22 +36,22 @@ interface DemographicsTabProps {
 	hackerData: HackerInfo[];
 }
 
-export default function DemographicsTab(props: DemographicsTabProps) {
+export default function DemographicsTab(props: Readonly<DemographicsTabProps>) {
 	const { aggregatedHackerData, hackerData } = props;
 	const [selectedKey, setSelectedKey] = useState("all");
 	const [filteredHackerData, setFilteredHackerData] = useState(hackerData);
-	const [filteredAggregatedHackerData, setFilteredAggregatedHackerInfo] = useState(aggregatedHackerData);
+	const [filteredAggregatedHackerData, setFilteredAggregatedHackerData] = useState(aggregatedHackerData);
 
 	useEffect(() => {
 		const newFilteredHackerData = getFilteredHackerData(selectedKey, hackerData);
 		setFilteredHackerData(newFilteredHackerData);
-		setFilteredAggregatedHackerInfo(getAggregatedHackerInfo(newFilteredHackerData));
+		setFilteredAggregatedHackerData(getAggregatedHackerInfo(newFilteredHackerData));
 	}, [hackerData, selectedKey]);
 
 	const handleOnSelectChange = (key: string) => {
 		setSelectedKey(key);
 		setFilteredHackerData(getFilteredHackerData(key, hackerData));
-		setFilteredAggregatedHackerInfo(getDataByAppType(key));
+		setFilteredAggregatedHackerData(getDataByAppType(key));
 	};
 
 	const getDataByAppType = (applicationType: string) => {
@@ -74,7 +74,7 @@ export default function DemographicsTab(props: DemographicsTabProps) {
 	};
 
 	return (
-		<main className="mx-auto max-w-7xl p-4 md:p-10">
+		<main>
 			<Grid numItems={1} className="gap-6">
 				<Select value={selectedKey} onValueChange={handleOnSelectChange}>
 					<SelectItem value="all">All Applications</SelectItem>
