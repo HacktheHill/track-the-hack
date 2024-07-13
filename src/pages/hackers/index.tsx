@@ -406,8 +406,8 @@ export const getServerSideProps: GetServerSideProps = async ({ req, res, locale 
 	const session = await getServerSession(req, res, getAuthOptions(req));
 	console.log(req);
 	return {
+		redirect: await hackersRedirect(session, "/hackers"),
 		props: {
-			...(await hackersRedirect(session)),
 			...(await serverSideTranslations(locale ?? "en", ["hackers", "navbar", "common"])),
 		},
 	};
