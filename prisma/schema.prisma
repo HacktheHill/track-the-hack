@@ -157,13 +157,6 @@ model Event {
   updatedAt   DateTime  @updatedAt @default(now())
 }
 
-model Follow {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt @default(now())
-}
-
 model AuditLog {
   id        Int      @id @default(autoincrement())
   timestamp DateTime @default(now())
@@ -175,26 +168,6 @@ model AuditLog {
   user      User[]
 
   @@index([userId])
-}
-
-model Payment {
-  id          String   @id @default(cuid())
-  companyName String   @map("company_name")
-  repName     String   @map("reps_name")
-  amount      Int
-  tier        Tiers
-  logo        String
-  paid        String
-  date        DateTime
-  invoice     String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt @default(now())
-}
-
-model Link {
-  id    String @id
-  label String
-  link  String
 }
 
 model Hardware {
@@ -243,13 +216,4 @@ enum EventType {
   SOCIAL
   CAREER_FAIR
   FOOD
-}
-
-enum Tiers {
-  STARTUP
-  MAYOR
-  PREMIER
-  GOVERNOR
-  PRIME_MINISTER
-  CUSTOM
 }

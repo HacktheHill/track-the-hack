@@ -1,4 +1,3 @@
-import { useTranslation } from "next-i18next";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
@@ -23,8 +22,6 @@ const Weather = ({ type, count }: GeneratorProps) => {
 };
 
 const Snowflake = () => {
-	const { t } = useTranslation("index");
-
 	const [x, setX] = useState(0);
 	const [y, setY] = useState(0);
 	const [size, setSize] = useState(0);
@@ -57,8 +54,6 @@ const Snowflake = () => {
 };
 
 const Cloud = () => {
-	const { t } = useTranslation("index");
-
 	const [x, setX] = useState(0);
 	const [y, setY] = useState(0);
 	const [size, setSize] = useState(0);
