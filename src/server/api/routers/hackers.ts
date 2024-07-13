@@ -407,6 +407,7 @@ export const hackerRouter = createTRPCRouter({
 					},
 				},
 			});
+
 			await logAuditEntry(
 				ctx,
 				hacker.id,
