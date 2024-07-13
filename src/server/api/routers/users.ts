@@ -3,6 +3,7 @@ import { z } from "zod";
 import { hasRoles } from "../../../utils/helpers";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { roles } from "../../../utils/common";
+import { logAuditEntry } from "../../audit";
 
 export const userRouter = createTRPCRouter({
 	// Sign up a new user
@@ -28,6 +29,15 @@ export const userRouter = createTRPCRouter({
 					email: input.email,
 				},
 			});
+
+			await logAuditEntry(
+				ctx,
+				user.id,
+				"/api/users/signUp",
+				"SignUp",
+				user.name ?? "Unknown",
+				`User signed up with email ${user.email ?? "Unknown"}`,
+			);
 
 			return user;
 		}),
@@ -137,6 +147,15 @@ export const userRouter = createTRPCRouter({
 					}),
 				);
 			}
+
+			await logAuditEntry(
+				ctx,
+				userId,
+				"/internal/roles",
+				"UpdateRoles",
+				user.name ?? "Unknown",
+				`Updated roles for ${input.userIds.length} users`,
+			);
 
 			await ctx.prisma.$transaction(transaction);
 		}),
