@@ -13,7 +13,7 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
  * @returns {string} Email template
  */
 
-export const sponsorshipRouter = createTRPCRouter({
+export const sponsorshipGmailDraftsRouter = createTRPCRouter({
 	createGmailDraft: protectedProcedure.input(sponsorshipGmailDraftsSchema).mutation(async ({ ctx, input }) => {
 		const userId = ctx.session.user.id;
 		const user = await ctx.prisma.user.findUnique({

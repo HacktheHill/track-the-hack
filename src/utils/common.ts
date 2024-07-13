@@ -1,4 +1,4 @@
-import { Language, RoleName, ShirtSize, Tiers } from "@prisma/client";
+import { Language, RoleName, ShirtSize } from "@prisma/client";
 import { z } from "zod";
 
 export const roles = z.enum([RoleName.HACKER, RoleName.SPONSOR, RoleName.ORGANIZER, RoleName.ADMIN]);
@@ -58,25 +58,4 @@ export const sponsorshipGmailDraftsSchema = z.object({
 	companyEmail: z.string().email(),
 	subject: z.string(),
 	emailHTML: z.string(),
-});
-
-export const sponsorshipSchema = z.object({
-	company_name: z.string().optional(),
-	amount: z.number().optional(),
-	reps_name: z.string().optional(),
-	tier: z
-		.enum([Tiers.STARTUP, Tiers.MAYOR, Tiers.PREMIER, Tiers.GOVERNOR, Tiers.PRIME_MINISTER, Tiers.CUSTOM])
-		.optional(),
-	paid: z.string().optional(),
-});
-
-export const addSponsorshipSchema = z.object({
-	companyName: z.string(),
-	amount: z.number(),
-	repName: z.string(),
-	tier: z.enum([Tiers.STARTUP, Tiers.MAYOR, Tiers.PREMIER, Tiers.GOVERNOR, Tiers.PRIME_MINISTER, Tiers.CUSTOM]),
-	paid: z.string(),
-	logo: z.string().optional(),
-	date: z.date().optional(),
-	invoice: z.string().optional(),
 });
