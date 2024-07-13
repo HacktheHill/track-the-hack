@@ -1,4 +1,4 @@
-import { Role } from "@prisma/client";
+import { RoleName } from "@prisma/client";
 import { sponsorshipGmailDraftsSchema } from "../../../utils/common";
 import { hasRoles } from "../../../utils/helpers";
 import { createDraft } from "../../lib/gmail";
@@ -20,13 +20,21 @@ export const sponsorshipRouter = createTRPCRouter({
 			where: {
 				id: userId,
 			},
+			select: {
+				name: true,
+				roles: {
+					select: {
+						name: true,
+					},
+				},
+			},
 		});
 
 		if (!user) {
 			throw new Error("User not found");
 		}
 
-		if (!hasRoles(user, [Role.ORGANIZER])) {
+		if (!hasRoles(user, [RoleName.ORGANIZER])) {
 			throw new Error("You do not have permission to do this");
 		}
 

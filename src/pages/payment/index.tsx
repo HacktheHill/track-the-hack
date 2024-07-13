@@ -1,4 +1,4 @@
-import { Role } from "@prisma/client";
+import { RoleName } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
@@ -94,7 +94,7 @@ const Payment: NextPage = () => {
 
 	return (
 		<App className="overflow-y-auto bg-default-gradient p-8 sm:p-12" title={t("title")}>
-			<Filter filter={role => role === Role.SPONSOR || role === Role.ORGANIZER}>
+			<Filter value={RoleName.SPONSOR} method="above">
 				<PaymentCard company={companyQuery.data} status={status} />
 				<Error message={t("unauthorized")} />
 			</Filter>

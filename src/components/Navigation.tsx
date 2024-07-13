@@ -1,11 +1,10 @@
-import { Role } from "@prisma/client";
+import { RoleName } from "@prisma/client";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { useTranslation } from "next-i18next";
 import Image from "next/image";
 import Link from "next/link";
-import { trpc } from "../utils/api";
-import Filter from "./Filter";
 import { useCallback } from "react";
+import Filter from "./Filter";
 
 type LinkItemProps = {
 	href: string;
@@ -35,14 +34,19 @@ const Links = ({ bottom }: LinkProps) => {
 	const { data: sessionData } = useSession();
 
 	const qrFilter = useCallback(
-		(role: Role) => !!(role === Role.HACKER && sessionData?.user?.hackerId) || role === Role.ORGANIZER,
+		(roles: RoleName[]) => {
+			const hasOrganizerRole = roles.includes(RoleName.ORGANIZER);
+			const isValidHacker = roles.includes(RoleName.HACKER) && !!sessionData?.user?.hackerId;
+
+			return (hasOrganizerRole || isValidHacker) && !(hasOrganizerRole && !isValidHacker);
+		},
 		[sessionData?.user?.hackerId],
 	);
 
 	return (
 		<>
 			<LinkItem href="/" bottom={bottom} text={t("home")} src="/assets/home.svg" alt={t("home")} />
-			<Filter filter={qrFilter} silent>
+			<Filter value={qrFilter} silent method="function">
 				<LinkItem href="/qr" bottom={bottom} text={t("qr")} src="/assets/qr.svg" alt={t("qr")} />
 			</Filter>
 			<LinkItem
@@ -61,7 +65,7 @@ const Links = ({ bottom }: LinkProps) => {
 				alt="Resources"
 			/>
 			{sessionData?.user && (
-				<Filter filter={role => role === Role.ORGANIZER || role === Role.SPONSOR} silent>
+				<Filter value={[RoleName.SPONSOR, RoleName.ORGANIZER]} silent method="only">
 					<LinkItem
 						href="/hackers"
 						bottom={bottom}

@@ -1,4 +1,4 @@
-import { Role, type Prisma } from "@prisma/client";
+import { RoleName, type Prisma } from "@prisma/client";
 import type { GetStaticProps, NextPage } from "next";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
@@ -36,7 +36,7 @@ const Hacker: NextPage = () => {
 	if (hackerQuery.isLoading || hackerQuery.data == null) {
 		return (
 			<App className="h-full bg-default-gradient px-16 py-12">
-				<Filter filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
+				<Filter value={[RoleName.ORGANIZER, RoleName.SPONSOR]} method="some">
 					<Loading />
 					<Error message={t("unauthorized")} />
 				</Filter>
@@ -78,7 +78,7 @@ const Hacker: NextPage = () => {
 			title={`${hackerQuery.data.firstName} ${hackerQuery.data.lastName}`}
 		>
 			<div className="mx-auto flex max-w-2xl flex-col gap-4">
-				<Filter filter={role => role === Role.ORGANIZER || role === Role.SPONSOR}>
+				<Filter value={[RoleName.ORGANIZER, RoleName.SPONSOR]} method="some">
 					<>
 						<div className="flex justify-between">
 							{prevHackerQuery.data && (
@@ -425,7 +425,7 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 				{hackerData.university && `at ${hackerData.university}`}{" "}
 				{hackerData.graduationYear && `(${hackerData.graduationYear})`}
 			</p>
-			<Filter filter={role => role === Role.ORGANIZER}>
+			<Filter value={[RoleName.ORGANIZER]} method="some">
 				<div className="grid grid-flow-row grid-cols-2 gap-4 rounded-lg bg-light-tertiary-color p-4">
 					{Object.entries(presenceState).map(([key, value]) => (
 						<p key={key}>
@@ -527,7 +527,7 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 					)}
 				</p>
 
-				<Filter filter={role => role === Role.ORGANIZER}>
+				<Filter value={RoleName.ORGANIZER} method="above">
 					<>
 						<div className="flex justify-center py-4">
 							<h2 className="self-center py-4 font-[Coolvetica] text-2xl font-normal text-dark-color ">

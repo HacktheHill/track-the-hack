@@ -1,4 +1,4 @@
-import { Role } from "@prisma/client";
+import { RoleName } from "@prisma/client";
 import type { GetServerSideProps } from "next";
 import { getServerSession } from "next-auth/next";
 import { useTranslation } from "next-i18next";
@@ -32,7 +32,7 @@ const QR = () => {
 		>
 			<Weather count={30} type="snowflake" />
 			<div className="flex flex-col items-center gap-6">
-				<Filter filter={role => role === Role.ORGANIZER}>
+				<Filter value={[RoleName.ORGANIZER]} method="some">
 					<>
 						<QRScanner onScan={onScan} />
 						<PhysicalScanner onScan={onScan} />
@@ -72,8 +72,8 @@ const QR = () => {
 export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
 	const session = await getServerSession(req, res, getAuthOptions(req));
 	return {
+		redirect: await hackersRedirect(session, "/hackers"),
 		props: {
-			redirect: await hackersRedirect(session, "/qr"),
 			...(await serverSideTranslations(locale ?? "en", ["qr", "navbar", "common"])),
 		},
 	};
