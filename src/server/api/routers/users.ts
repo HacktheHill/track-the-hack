@@ -3,7 +3,7 @@ import { z } from "zod";
 import { hasRoles } from "../../../utils/helpers";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { roles } from "../../../utils/common";
-import { logAuditEntry } from "../../audit";
+import { logAuditEntry } from "../../lib/audit";
 
 export const userRouter = createTRPCRouter({
 	// Sign up a new user
