@@ -5,7 +5,7 @@ import { EventEmitter } from "events";
 import { z } from "zod";
 import { hasRoles } from "../../../utils/helpers";
 
-import { logAuditEntry } from "../../audit";
+import { logAuditEntry } from "../../lib/audit";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 const ee = new EventEmitter();
