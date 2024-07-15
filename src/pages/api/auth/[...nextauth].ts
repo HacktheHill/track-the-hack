@@ -83,7 +83,7 @@ export const getAuthOptions = (req: IncomingMessage) =>
 
 				// If the user doesn't exist, redirect to signup
 				if (!existingUser) {
-					return `/auth/sign-up?email=${encodeURIComponent(user.email)}`;
+					return `/auth/sign-up?email=${encodeURIComponent(user.email)}&provider=${account.provider}`;
 				}
 
 				// Create account if user exists and account doesn't
@@ -147,6 +147,11 @@ export const getAuthOptions = (req: IncomingMessage) =>
 		theme: {
 			logo: "/assets/hackthehill-logo.svg",
 			colorScheme: "light",
+		},
+		pages: {
+			signIn: "/auth/sign-in",
+			error: "/auth/error",
+			verifyRequest: "/auth/verify-request",
 		},
 		session: {
 			jwt: true,

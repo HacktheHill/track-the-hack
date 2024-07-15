@@ -1,60 +1,72 @@
 import type { GetStaticProps, NextPage } from "next";
-import { signIn } from "next-auth/react";
-import { useTranslation, Trans } from "next-i18next";
+import { Trans, useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
-import { trpc } from "../../utils/api";
+import { FormEvent, useEffect, useState } from "react";
 import FormPage from "../../components/FormPage";
+import { trpc } from "../../utils/api";
+import Link from "next/link";
+import { signIn } from "next-auth/react";
+import { set } from "zod";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
-		props: await serverSideTranslations(locale ?? "en", ["common", "sign-up"]),
+		props: await serverSideTranslations(locale ?? "en", ["common", "auth"]),
 	};
 };
 
 const SignUp: NextPage = () => {
-	const { t } = useTranslation("sign-up");
+	const { t } = useTranslation("auth");
 
 	const router = useRouter();
 
 	const mutation = trpc.users.signUp.useMutation();
 
 	const [email, setEmail] = useState<string>();
+	const [provider, setProvider] = useState<string>();
+	const [loading, setLoading] = useState(false);
 
 	useEffect(() => {
-		const { email } = router.query;
+		const { email, provider } = router.query;
 		if (typeof email === "string") {
 			setEmail(decodeURIComponent(email));
 		}
+		if (typeof provider === "string") {
+			setProvider(provider);
+		}
 	}, [router.query]);
 
-	const handleSignUp = () => {
+	const handleSignUp = async (e: FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+
 		if (!email) return;
 
-		mutation.mutate({ email });
+		setLoading(true);
 
-		void signIn(undefined, {
+		await mutation.mutateAsync({ email });
+
+		await signIn(provider, {
+			email,
 			callbackUrl: "/",
-			email: email,
+			redirect: true,
 		});
 	};
 
 	return (
 		<FormPage
-			title={t("title")}
-			loading={mutation.isLoading}
+			title={t("sign-up")}
+			loading={mutation.isLoading || loading}
 			invalid={!email ? t("no-email") : mutation.error?.message ?? ""}
 			path={`/auth/sign-up`}
 			user={null}
-			onSubmit={handleSignUp}
+			onSubmit={e => void handleSignUp(e)}
 		>
-			<h3 className="font-rubik text-4xl font-bold text-dark-color">{t("title")}</h3>
+			<h3 className="font-rubik text-4xl font-bold text-dark-color">{t("sign-up")}</h3>
 			<p className="font-rubik text-dark-color">
 				<Trans i18nKey="confirm" t={t} values={{ email }} />
 			</p>
 			<button className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base">
-				{t("continue")}
+				{t("yes-and-sign-in")}
 			</button>
 		</FormPage>
 	);
