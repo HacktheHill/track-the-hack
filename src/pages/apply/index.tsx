@@ -1,12 +1,11 @@
+import { getServerSession } from "next-auth";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
+import { useRouter } from "next/router";
 import type { GetServerSideProps, NextPage } from "next/types";
 import { useEffect, useState } from "react";
 
 import App from "../../components/App";
-
-import { getServerSession } from "next-auth";
-import { useRouter } from "next/router";
 import { trpc } from "../../utils/api";
 import { applySchema } from "../../utils/common";
 import { sessionRedirect } from "../../utils/redirects";

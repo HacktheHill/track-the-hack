@@ -5,6 +5,7 @@ import { z } from "zod";
 import { applySchema, walkInSchema } from "../../../utils/common";
 import { hasRoles } from "../../../utils/helpers";
 import { logAuditEntry } from "../../lib/audit";
+import { sendThankYouEmail } from "../../lib/email";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 const DEFAULT_ACCEPTANCE_EXPIRY = new Date(2023, 2, 6, 5, 0, 0, 0); // 2023-03-06 00:00:00 EST
@@ -450,6 +451,11 @@ export const hackerRouter = createTRPCRouter({
 
 			const hacker = await ctx.prisma.hackerInfo.create({
 				data: input,
+			});
+
+			await sendThankYouEmail({
+				email: input.email,
+				name: input.firstName,
 			});
 
 			await logAuditEntry(
