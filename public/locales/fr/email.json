@@ -1,0 +1,10 @@
+{
+	"apply": {
+		"subject": "Merci d'avoir postulé à Hack the Hill II!",
+		"preview": "Merci d'avoir postulé pour le hackathon Hack the Hill II!",
+		"greeting": "Salut {{name}},",
+		"body": "Merci d'avoir postulé pour le hackathon Hack the Hill II. Nous apprécions votre intérêt et sommes ravis de vous avoir à bord. Restez à l'écoute pour plus de mises à jour!",
+		"closing": "Si vous avez des questions, n'hésitez pas à répondre à ce courriel.",
+		"signature": "Hack the Hill"
+	}
+}
