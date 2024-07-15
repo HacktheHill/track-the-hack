@@ -5,7 +5,7 @@ import { z } from "zod";
 import { applySchema, walkInSchema } from "../../../utils/common";
 import { hasRoles } from "../../../utils/helpers";
 import { logAuditEntry } from "../../lib/audit";
-import { sendThankYouEmail } from "../../lib/email";
+import { sendApplyEmail } from "../../lib/email";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 const DEFAULT_ACCEPTANCE_EXPIRY = new Date(2023, 2, 6, 5, 0, 0, 0); // 2023-03-06 00:00:00 EST
@@ -453,9 +453,10 @@ export const hackerRouter = createTRPCRouter({
 				data: input,
 			});
 
-			await sendThankYouEmail({
+			await sendApplyEmail({
 				email: input.email,
 				name: input.firstName,
+				language: input.preferredLanguage ?? "EN",
 			});
 
 			await logAuditEntry(
