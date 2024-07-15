@@ -1,6 +1,0 @@
-{
-	"title": "Sign Up",
-	"confirm": "Would you like to proceed with the email address <strong>{{email}}</strong>?",
-	"continue": "Continue",
-	"no-email": "No email address provided"
-}
