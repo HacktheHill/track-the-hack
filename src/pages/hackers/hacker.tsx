@@ -31,8 +31,20 @@ const Hacker: NextPage = () => {
 	const hackerQuery = trpc.hackers.get.useQuery({ id: id ?? "" }, { enabled: !!id });
 	const presenceQuery = trpc.presence.getFromHackerId.useQuery({ id: id ?? "" }, { enabled: !!id });
 
-	const nextHackerQuery = trpc.hackers.getNext.useQuery({ id: id ?? "" }, { enabled: !!id });
-	const prevHackerQuery = trpc.hackers.getPrev.useQuery({ id: id ?? "" }, { enabled: !!id });
+	const nextHackerQuery = trpc.hackers.getNext.useQuery(
+		{ id: id ?? "" },
+		{
+			enabled: !!id,
+			refetchOnMount: false,
+		},
+	);
+	const prevHackerQuery = trpc.hackers.getPrev.useQuery(
+		{ id: id ?? "" },
+		{
+			enabled: !!id,
+			refetchOnMount: false,
+		},
+	);
 
 	if (hackerQuery.isLoading || hackerQuery.data == null) {
 		return (
@@ -148,7 +160,7 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 
 	const downloadResume = trpc.hackers.downloadResume.useQuery(
 		{ id: id ?? "" },
-		{ enabled: !!id && !!hackerData.resume },
+		{ enabled: !!id && !!hackerData.hasResume },
 	);
 
 	const presenceMutation = trpc.presence.update.useMutation();
@@ -359,7 +371,7 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
 		const formData = new FormData(event.currentTarget);
-		const data = Object.fromEntries(formData) as Record<string, string | number | undefined>;
+		const data = Object.fromEntries(formData) as Record<string, string | boolean | number | undefined>;
 		data.id = id;
 
 		if (data.linkLinkedin !== hackerData.linkLinkedin || data.linkGithub !== hackerData.linkGithub) {
@@ -375,6 +387,9 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 			}
 		}
 
+		const resume = formData.get("resume") as File | null;
+		data.hasResume = !!resume;
+
 		const parse = hackerSchema
 			.extend({
 				id: z.string(),
@@ -386,7 +401,6 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 		} else {
 			console.log("Data parsed", parse.data);
 			const result = await mutation.mutateAsync(parse.data);
-			const resume = formData.get("resume") as File;
 			if (result.presignedUrl && resume) {
 				await uploadResume(result.presignedUrl, resume, resume.name);
 			}
