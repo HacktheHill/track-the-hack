@@ -32,7 +32,7 @@ model Account {
   session_state            String?
   ext_expires_in           Int?
   createdAt                DateTime @default(now())
-  updatedAt                DateTime @updatedAt @default(now())
+  updatedAt                DateTime @default(now()) @updatedAt
   user                     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
@@ -59,9 +59,9 @@ model VerificationToken {
 
 model User {
   id            String       @id @default(cuid())
-  name          String?      @map("username")
+  name          String?
   email         String?      @unique
-  image         String?      @map("profileImage")
+  image         String?
   roles         Role[]
   emailVerified DateTime?
   accounts      Account[]
@@ -69,7 +69,7 @@ model User {
   hackerInfo    HackerInfo[]
   auditLog      AuditLog[]
   createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt @default(now())
+  updatedAt     DateTime     @default(now()) @updatedAt
 }
 
 model Role {
@@ -77,11 +77,11 @@ model Role {
   name      RoleName @unique
   users     User[]
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model HackerInfo {
-  id                           String         @id @default(cuid()) @map("submissionID")
+  id                           String         @id @default(cuid())
   preferredLanguage            Language       @default(EN)
   email                        String
   firstName                    String
@@ -93,7 +93,7 @@ model HackerInfo {
   studyProgram                 String?
   graduationYear               Int?
   attendanceType               AttendanceType @default(IN_PERSON)
-  location                     String?        @map("attendanceLocation")
+  location                     String?
   transportationRequired       Boolean        @default(false)
   dietaryRestrictions          String         @db.Text
   accessibilityRequirements    String         @db.Text
@@ -105,7 +105,7 @@ model HackerInfo {
   linkGithub                   String?
   linkLinkedin                 String?
   linkPersonalSite             String?
-  linkResume                   String?        @db.Text
+  resume                       String?        @db.Text
   lookingForwardTo             String?        @db.Text
   formStartDate                DateTime?
   formEndDate                  DateTime?
@@ -120,7 +120,7 @@ model HackerInfo {
   user                         User?          @relation(fields: [userId], references: [id])
   presenceInfo                 PresenceInfo?
   createdAt                    DateTime       @default(now())
-  updatedAt                    DateTime       @updatedAt @default(now())
+  updatedAt                    DateTime       @default(now()) @updatedAt
 
   @@index([userId])
 }
@@ -154,13 +154,13 @@ model Event {
   link        String?
   linkText    String?
   createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt @default(now())
+  updatedAt   DateTime  @default(now()) @updatedAt
 }
 
 model AuditLog {
   id        Int      @id @default(autoincrement())
   timestamp DateTime @default(now())
-  userId    String   @map("user_id")
+  userId    String
   author    String   @default("")
   route     String
   action    String
@@ -180,7 +180,7 @@ model Hardware {
   type              String?
   description       String?
   createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt @default(now())
+  updatedAt         DateTime @default(now()) @updatedAt
 
   @@index([name])
 }
