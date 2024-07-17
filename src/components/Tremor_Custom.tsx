@@ -23,8 +23,8 @@ import {
 	Title,
 } from "@tremor/react";
 import React, { useState } from "react";
-import { valToStr } from "../utils/getAggregatedData";
-import type { StrKeyAnyVal, StrKeyNumVal, TremorChartData } from "../utils/types";
+import { valToStr } from "../client/getAggregatedData";
+import type { StrKeyAnyVal, StrKeyNumVal, TremorChartData } from "../client/types";
 
 type TremorDefaultColors = ("green" | "red" | "sky" | "fuchsia" | "lime" | "violet" | "yellow" | "indigo" | "orange")[];
 // green and red must be first and second so the "true" values are green and the "false" ones are red in the data charts

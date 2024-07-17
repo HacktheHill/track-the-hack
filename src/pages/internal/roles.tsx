@@ -3,13 +3,13 @@ import type { GetServerSideProps, NextPage } from "next";
 import { getServerSession } from "next-auth";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
-import { rolesRedirect } from "../../utils/redirects";
+import { rolesRedirect } from "../../server/lib/redirects";
 import { getAuthOptions } from "../api/auth/[...nextauth]";
 
 import { useState } from "react";
 import App from "../../components/App";
 import Filter from "../../components/Filter";
-import { trpc } from "../../utils/api";
+import { trpc } from "../../server/api/api";
 
 const Roles: NextPage = () => {
 	const { t } = useTranslation("internal");

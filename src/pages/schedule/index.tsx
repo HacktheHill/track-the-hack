@@ -9,7 +9,7 @@ import App from "../../components/App";
 import Error from "../../components/Error";
 import Loading from "../../components/Loading";
 
-import { trpc } from "../../utils/api";
+import { trpc } from "../../server/api/api";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {

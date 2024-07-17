@@ -1,13 +1,11 @@
 import type { GetStaticProps, NextPage } from "next";
+import { signIn } from "next-auth/react";
 import { Trans, useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useRouter } from "next/router";
 import { FormEvent, useEffect, useState } from "react";
 import FormPage from "../../components/FormPage";
-import { trpc } from "../../utils/api";
-import Link from "next/link";
-import { signIn } from "next-auth/react";
-import { set } from "zod";
+import { trpc } from "../../server/api/api";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {

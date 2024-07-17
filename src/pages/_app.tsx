@@ -6,7 +6,7 @@ import { useEffect } from "react";
 
 import { appWithTranslation } from "next-i18next";
 
-import { trpc } from "../utils/api";
+import { trpc } from "../server/api/api";
 
 import "../styles/globals.css";
 

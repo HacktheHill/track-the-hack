@@ -6,7 +6,7 @@ import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import FormPage from "../../components/FormPage";
-import { trpc } from "../../utils/api";
+import { trpc } from "../../server/api/api";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
