@@ -3,7 +3,7 @@ import type { NextPage } from "next";
 import { useTranslation } from "next-i18next";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { trpc } from "../../utils/api";
+import { trpc } from "../../server/api/api";
 import { debounce } from "../../utils/helpers";
 
 import type { GetServerSideProps } from "next";
@@ -13,7 +13,7 @@ import App from "../../components/App";
 import Error from "../../components/Error";
 import Filter from "../../components/Filter";
 import Loading from "../../components/Loading";
-import { rolesRedirect } from "../../utils/redirects";
+import { rolesRedirect } from "../../server/lib/redirects";
 import { getAuthOptions } from "../api/auth/[...nextauth]";
 
 const Hackers: NextPage = () => {

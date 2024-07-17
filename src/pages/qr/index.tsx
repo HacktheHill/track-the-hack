@@ -5,7 +5,7 @@ import { useTranslation } from "next-i18next";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { useState } from "react";
-import { hackersRedirect } from "../../utils/redirects";
+import { hackersRedirect } from "../../server/lib/redirects";
 import { getAuthOptions } from "../api/auth/[...nextauth]";
 
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
