@@ -146,7 +146,10 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 	);
 	const [edit, setEdit] = useState(false);
 
-	const downloadResume = trpc.hackers.downloadResume.useQuery({ id: id ?? "" }, { enabled: !!id });
+	const downloadResume = trpc.hackers.downloadResume.useQuery(
+		{ id: id ?? "" },
+		{ enabled: !!id && !!hackerData.resume },
+	);
 
 	const presenceMutation = trpc.presence.update.useMutation();
 
