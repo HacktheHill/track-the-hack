@@ -27,6 +27,7 @@ export const hackerSchema = z.object({
 	linkGithub: z.string().optional(),
 	linkLinkedin: z.string().optional(),
 	linkPersonalSite: z.string().optional(),
+	hasResume: z.boolean(),
 });
 
 export const fields = [

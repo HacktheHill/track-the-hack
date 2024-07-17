@@ -165,10 +165,6 @@ const processFormData = (formData: FormData) => {
 		}
 	}
 
-	if (!(data.resume instanceof File)) {
-		data.resume = undefined;
-	}
-
 	return data;
 };
 

@@ -105,10 +105,8 @@ model HackerInfo {
   linkGithub                   String?
   linkLinkedin                 String?
   linkPersonalSite             String?
-  resume                       String?        @db.Text
+  hasResume                    Boolean        @default(false)
   lookingForwardTo             String?        @db.Text
-  formStartDate                DateTime?
-  formEndDate                  DateTime?
   confirmed                    Boolean        @default(false)
   userId                       String?
   unsubscribed                 Boolean        @default(false)

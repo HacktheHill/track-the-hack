@@ -14,7 +14,7 @@ import { uploadResume } from "../../client/s3";
 
 const processFormData = (formData: FormData) => {
 	const data = Object.fromEntries(formData.entries()) as {
-		[k: string]: FormDataEntryValue | number | File | undefined;
+		[k: string]: FormDataEntryValue | number | boolean | File | undefined;
 	};
 
 	if (data.preferredLanguage === "en" || data.preferredLanguage === "fr") {
@@ -41,8 +41,6 @@ const processFormData = (formData: FormData) => {
 		}
 	}
 
-	delete data.resume;
-
 	return data;
 };
 
@@ -67,13 +65,15 @@ const Apply: NextPage = () => {
 		const formData = new FormData(event.currentTarget);
 		const data = processFormData(formData);
 
+		const resume = formData.get("resume") as File | null;
+		data.hasResume = !!resume;
+
 		const parse = hackerSchema.safeParse(data);
 		if (!parse.success) {
 			setError(t("invalid-form"));
 			console.error(parse.error.message);
 		} else {
 			const result = await mutation.mutateAsync(parse.data);
-			const resume = formData.get("resume") as File;
 			if (result.presignedUrl && resume) {
 				await uploadResume(result.presignedUrl, resume, resume.name);
 			}

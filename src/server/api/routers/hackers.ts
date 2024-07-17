@@ -85,10 +85,6 @@ export const hackerRouter = createTRPCRouter({
 				});
 			}
 
-			if (!hacker) {
-				throw new Error("Hacker not found");
-			}
-
 			return hacker;
 		}),
 
@@ -109,10 +105,6 @@ export const hackerRouter = createTRPCRouter({
 						id: input.id,
 					},
 				});
-			}
-
-			if (!hacker) {
-				throw new Error("Hacker not found");
 			}
 
 			return hacker;
@@ -543,6 +535,7 @@ export const hackerRouter = createTRPCRouter({
 						const field = key as keyof typeof input;
 						const before = hackerDetails[key2 as keyof typeof hackerDetails];
 						const after = input[key as keyof typeof input];
+						console.log(field, before, after);
 
 						const auditEntry = {
 							action: "/update-hacker-info",
