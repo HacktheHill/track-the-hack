@@ -9,13 +9,167 @@ import Error from "../../components/Error";
 import Filter from "../../components/Filter";
 import QRCode from "../../components/QRCode";
 
-import { trpc } from "../../utils/api";
-import { walkInSchema } from "../../utils/common";
+import { trpc } from "../../server/api/api";
+import { hackerSchema } from "../../utils/common";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
 		props: await serverSideTranslations(locale ?? "en", ["common", "navbar", "walk-in"]),
 	};
+};
+
+const fields = [
+	{
+		name: "email",
+		type: "email",
+		required: true,
+	},
+	{
+		name: "firstName",
+		type: "text",
+		required: true,
+	},
+	{
+		name: "lastName",
+		type: "text",
+		required: true,
+	},
+	{
+		name: "phoneNumber",
+		type: "tel",
+		required: true,
+	},
+	{
+		name: "dietaryRestrictions",
+		type: "text",
+		required: false,
+	},
+	{
+		name: "accessibilityRequirements",
+		type: "text",
+		required: false,
+	},
+	{
+		name: "emergencyContactName",
+		type: "text",
+		required: true,
+	},
+	{
+		name: "emergencyContactRelationship",
+		type: "text",
+		required: true,
+	},
+	{
+		name: "emergencyContactPhoneNumber",
+		type: "tel",
+		required: true,
+	},
+	{
+		name: "preferredLanguage",
+		type: "select",
+		options: ["en", "fr"],
+		required: false,
+	},
+	{
+		name: "gender",
+		type: "text",
+		required: false,
+	},
+	{
+		name: "university",
+		type: "text",
+		required: false,
+	},
+	{
+		name: "studyLevel",
+		type: "text",
+		required: false,
+	},
+	{
+		name: "studyProgram",
+		type: "text",
+		required: false,
+	},
+	{
+		name: "graduationYear",
+		type: "number",
+		required: false,
+	},
+	{
+		name: "location",
+		type: "text",
+		required: false,
+	},
+	{
+		name: "shirtSize",
+		type: "select",
+		options: ["S", "M", "L", "XL", "XXL"],
+		required: false,
+	},
+	{
+		name: "numberOfPreviousHackathons",
+		type: "number",
+		required: false,
+	},
+	{
+		name: "linkGithub",
+		type: "url",
+		required: false,
+	},
+	{
+		name: "linkLinkedin",
+		type: "url",
+		required: false,
+	},
+	{
+		name: "linkPersonalSite",
+		type: "url",
+		required: false,
+	},
+] as const;
+
+const patterns = {
+	tel: "/^+?d{10,15}$/",
+	url: undefined,
+	number: "/^d+$/",
+	email: undefined,
+	text: undefined,
+} as const satisfies Record<string, string | undefined>;
+
+const processFormData = (formData: FormData) => {
+	const data = Object.fromEntries(formData.entries()) as {
+		[k: string]: FormDataEntryValue | number | File | undefined;
+	};
+
+	if (data.preferredLanguage === "en" || data.preferredLanguage === "fr") {
+		data.preferredLanguage = data.preferredLanguage.toUpperCase();
+	} else {
+		data.preferredLanguage = undefined;
+	}
+
+	if (typeof data.graduationYear === "string") {
+		data.graduationYear = parseInt(data.graduationYear);
+		if (Number.isNaN(data.graduationYear)) {
+			data.graduationYear = undefined;
+		}
+	}
+
+	if (data.shirtSize === "") {
+		data.shirtSize = undefined;
+	}
+
+	if (typeof data.numberOfPreviousHackathons === "string") {
+		data.numberOfPreviousHackathons = parseInt(data.numberOfPreviousHackathons);
+		if (Number.isNaN(data.numberOfPreviousHackathons)) {
+			data.numberOfPreviousHackathons = undefined;
+		}
+	}
+
+	if (!(data.resume instanceof File)) {
+		data.resume = undefined;
+	}
+
+	return data;
 };
 
 const WalkIn: NextPage = () => {
@@ -36,34 +190,9 @@ const WalkIn: NextPage = () => {
 		event.preventDefault();
 
 		const formData = new FormData(event.currentTarget);
+		const data = processFormData(formData);
 
-		const data = Object.fromEntries(formData) as Record<string, string | number | undefined>;
-
-		if (data.preferredLanguage === "en" || data.preferredLanguage === "fr") {
-			data.preferredLanguage = data.preferredLanguage.toUpperCase();
-		} else {
-			data.preferredLanguage = undefined;
-		}
-
-		if (typeof data.graduationYear === "string") {
-			data.graduationYear = parseInt(data.graduationYear);
-			if (Number.isNaN(data.graduationYear)) {
-				data.graduationYear = undefined;
-			}
-		}
-
-		if (data.shirtSize === "") {
-			data.shirtSize = undefined;
-		}
-
-		if (typeof data.numberOfPreviousHackathons === "string") {
-			data.numberOfPreviousHackathons = parseInt(data.numberOfPreviousHackathons);
-			if (Number.isNaN(data.numberOfPreviousHackathons)) {
-				data.numberOfPreviousHackathons = undefined;
-			}
-		}
-
-		const parse = walkInSchema.safeParse(data);
+		const parse = hackerSchema.safeParse(data);
 		if (!parse.success) {
 			setError(t("invalid-form"));
 			console.error(parse.error);
@@ -78,124 +207,6 @@ const WalkIn: NextPage = () => {
 			}
 		}
 	};
-
-	const fields = [
-		{
-			name: "email",
-			type: "email",
-			required: true,
-		},
-		{
-			name: "firstName",
-			type: "text",
-			required: true,
-		},
-		{
-			name: "lastName",
-			type: "text",
-			required: true,
-		},
-		{
-			name: "phoneNumber",
-			type: "tel",
-			required: true,
-		},
-		{
-			name: "dietaryRestrictions",
-			type: "text",
-			required: false,
-		},
-		{
-			name: "accessibilityRequirements",
-			type: "text",
-			required: false,
-		},
-		{
-			name: "emergencyContactName",
-			type: "text",
-			required: true,
-		},
-		{
-			name: "emergencyContactRelationship",
-			type: "text",
-			required: true,
-		},
-		{
-			name: "emergencyContactPhoneNumber",
-			type: "tel",
-			required: true,
-		},
-		{
-			name: "preferredLanguage",
-			type: "select",
-			options: ["en", "fr"],
-			required: false,
-		},
-		{
-			name: "gender",
-			type: "text",
-			required: false,
-		},
-		{
-			name: "university",
-			type: "text",
-			required: false,
-		},
-		{
-			name: "studyLevel",
-			type: "text",
-			required: false,
-		},
-		{
-			name: "studyProgram",
-			type: "text",
-			required: false,
-		},
-		{
-			name: "graduationYear",
-			type: "number",
-			required: false,
-		},
-		{
-			name: "location",
-			type: "text",
-			required: false,
-		},
-		{
-			name: "shirtSize",
-			type: "select",
-			options: ["S", "M", "L", "XL", "XXL"],
-			required: false,
-		},
-		{
-			name: "numberOfPreviousHackathons",
-			type: "number",
-			required: false,
-		},
-		{
-			name: "linkGithub",
-			type: "url",
-			required: false,
-		},
-		{
-			name: "linkLinkedin",
-			type: "url",
-			required: false,
-		},
-		{
-			name: "linkPersonalSite",
-			type: "url",
-			required: false,
-		},
-	] as const;
-
-	const patterns = {
-		tel: "/^+?d{10,15}$/",
-		url: undefined,
-		number: "/^d+$/",
-		email: undefined,
-		text: undefined,
-	} as const;
 
 	return (
 		<App className="overflow-y-auto bg-default-gradient p-8 sm:p-12" title={t("title")}>

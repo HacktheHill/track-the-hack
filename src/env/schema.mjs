@@ -32,6 +32,8 @@ export const serverSchema = z.object({
 	SPONSORSHIP_GOOGLE_CLIENT_ID: z.string(),
 	SPONSORSHIP_GOOGLE_CLIENT_SECRET: z.string(),
 	SPONSORSHIP_GOOGLE_REFRESH_TOKEN: z.string(),
+	S3_URL: z.string().url(),
+	S3_AUTH_KEY: z.string(),
 });
 
 /**
@@ -60,6 +62,8 @@ export const serverEnv = {
 	SPONSORSHIP_GOOGLE_CLIENT_ID: process.env.SPONSORSHIP_GOOGLE_CLIENT_ID,
 	SPONSORSHIP_GOOGLE_CLIENT_SECRET: process.env.SPONSORSHIP_GOOGLE_CLIENT_SECRET,
 	SPONSORSHIP_GOOGLE_REFRESH_TOKEN: process.env.SPONSORSHIP_GOOGLE_REFRESH_TOKEN,
+	S3_URL: process.env.S3_URL,
+	S3_AUTH_KEY: process.env.S3_AUTH_KEY,
 };
 
 /**

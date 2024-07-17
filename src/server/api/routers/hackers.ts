@@ -2,11 +2,13 @@ import { AttendanceType, RoleName, ShirtSize, type HackerInfo } from "@prisma/cl
 import { observable } from "@trpc/server/observable";
 import { EventEmitter } from "events";
 import { z } from "zod";
-import { applySchema, walkInSchema } from "../../../utils/common";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+
+import { hackerSchema } from "../../../utils/common";
 import { hasRoles } from "../../../utils/helpers";
 import { logAuditEntry } from "../../lib/audit";
 import { sendApplyEmail } from "../../lib/email";
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+import { generatePresignedGetUrl, generatePresignedPutUrl, generateS3Filename } from "../../lib/s3";
 
 const DEFAULT_ACCEPTANCE_EXPIRY = new Date(2023, 2, 6, 5, 0, 0, 0); // 2023-03-06 00:00:00 EST
 
@@ -369,7 +371,7 @@ export const hackerRouter = createTRPCRouter({
 	// Create a walk-in hacker
 	walkIn: protectedProcedure
 		.input(
-			walkInSchema.extend({
+			hackerSchema.extend({
 				acceptanceExpiry: z.date().default(DEFAULT_ACCEPTANCE_EXPIRY),
 			}),
 		)
@@ -425,7 +427,7 @@ export const hackerRouter = createTRPCRouter({
 
 	apply: protectedProcedure
 		.input(
-			applySchema.extend({
+			hackerSchema.extend({
 				acceptanceExpiry: z.date().default(DEFAULT_ACCEPTANCE_EXPIRY),
 			}),
 		)
@@ -453,6 +455,9 @@ export const hackerRouter = createTRPCRouter({
 				data: input,
 			});
 
+			const filename = generateS3Filename(hacker.id, `${hacker.firstName}_${hacker.lastName}_Resume`, "pdf");
+			const presignedUrl = await generatePresignedPutUrl(filename, "resumes");
+
 			await sendApplyEmail({
 				email: input.email,
 				name: input.firstName,
@@ -470,14 +475,16 @@ export const hackerRouter = createTRPCRouter({
 
 			ee.emit("add", hacker);
 
-			return hacker;
+			return {
+				...hacker,
+				presignedUrl,
+			};
 		}),
 
 	// Update a hacker's info
 	update: protectedProcedure
-
 		.input(
-			walkInSchema.extend({
+			hackerSchema.extend({
 				id: z.string(),
 			}),
 		)
@@ -560,6 +567,36 @@ export const hackerRouter = createTRPCRouter({
 				data: input,
 			});
 
-			return hacker;
+			const filename = generateS3Filename(hacker.id, `${hacker.firstName}_${hacker.lastName}_Resume`, "pdf");
+			const presignedUrl = await generatePresignedPutUrl(filename, "resumes");
+
+			return {
+				...hacker,
+				presignedUrl,
+			};
+		}),
+
+	// Download a hacker's resume
+	downloadResume: protectedProcedure
+		.input(
+			z.object({
+				id: z.string(),
+			}),
+		)
+		.query(async ({ ctx, input }) => {
+			const hacker = await ctx.prisma.hackerInfo.findUnique({
+				where: {
+					id: input.id,
+				},
+			});
+
+			if (!hacker) {
+				throw new Error("Hacker not found");
+			}
+
+			const filename = generateS3Filename(hacker.id, `${hacker.firstName}_${hacker.lastName}_Resume`, "pdf");
+			const presignedUrl = await generatePresignedGetUrl(filename, "resumes");
+
+			return presignedUrl;
 		}),
 });
