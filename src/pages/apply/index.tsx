@@ -11,6 +11,7 @@ import { fields, hackerSchema, patterns } from "../../utils/common";
 import { sessionRedirect } from "../../server/lib/redirects";
 import { getAuthOptions } from "../api/auth/[...nextauth]";
 import { uploadResume } from "../../client/s3";
+import Loading from "../../components/Loading";
 
 const processFormData = (formData: FormData) => {
 	const data = Object.fromEntries(formData.entries()) as {
@@ -48,6 +49,7 @@ const Apply: NextPage = () => {
 	const { t } = useTranslation("apply");
 	const router = useRouter();
 
+	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState("");
 	const [success, setSuccess] = useState(false);
 
@@ -61,6 +63,7 @@ const Apply: NextPage = () => {
 
 	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
+		setLoading(true);
 
 		const formData = new FormData(event.currentTarget);
 		const data = processFormData(formData);
@@ -80,12 +83,13 @@ const Apply: NextPage = () => {
 
 			if (!mutation.error) {
 				setError("");
-				setSuccess(true);
 				event.currentTarget?.reset();
+				setSuccess(true);
 			} else {
 				setError(mutation.error.message);
 			}
 		}
+		setLoading(false);
 	};
 
 	return (
@@ -144,9 +148,13 @@ const Apply: NextPage = () => {
 							<p className="text-center font-rubik text-red-500">{error}</p>
 						</div>
 					)}
-					<button className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base">
-						{t("submit")}
-					</button>
+					{loading ? (
+						<Loading />
+					) : (
+						<button className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base">
+							{t("submit")}
+						</button>
+					)}
 				</form>
 			)}
 		</App>
