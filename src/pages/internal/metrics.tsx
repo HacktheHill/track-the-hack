@@ -1,17 +1,17 @@
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from "@tremor/react";
 import { useEffect, useState } from "react";
 
+import { getAggregatedHackerInfo, getAggregatedPresenceInfo } from "../../client/getAggregatedData";
 import DemographicsTab from "../../components/DemographicsTab";
 import MainEventTab from "../../components/MainEventTab";
-import { getAggregatedHackerInfo, getAggregatedPresenceInfo } from "../../utils/getAggregatedData";
 
 import { RoleName, type HackerInfo, type PresenceInfo } from "@prisma/client";
 import type { GetServerSideProps, NextPage } from "next";
 import { getServerSession } from "next-auth";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
-import { trpc } from "../../utils/api";
-import { rolesRedirect } from "../../utils/redirects";
+import { trpc } from "../../server/api/api";
+import { rolesRedirect } from "../../server/lib/redirects";
 import { getAuthOptions } from "../api/auth/[...nextauth]";
 
 import App from "../../components/App";

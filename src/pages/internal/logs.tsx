@@ -4,8 +4,8 @@ import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useRouter } from "next/router";
 import App from "../../components/App";
-import { trpc } from "../../utils/api";
-import { rolesRedirect } from "../../utils/redirects";
+import { trpc } from "../../server/api/api";
+import { rolesRedirect } from "../../server/lib/redirects";
 import { getAuthOptions } from "../api/auth/[...nextauth]";
 
 import Error from "../../components/Error";

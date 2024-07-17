@@ -6,8 +6,8 @@ import {
 	getNumberPerValueAreaChart,
 	getNumberPerValueBarChart,
 	valToStr,
-} from "../utils/getAggregatedData";
-import { type AggregatedHackerInfo, type HackerInfoKey } from "../utils/types";
+} from "../client/getAggregatedData";
+import { type AggregatedHackerInfo, type HackerInfoKey } from "../client/types";
 import { CustomAreaChart, CustomBarChart, CustomBarList, CustomDonutChart, CustomSmallTextCard } from "./Tremor_Custom";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

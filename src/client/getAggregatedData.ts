@@ -3,6 +3,7 @@ import type { HackerInfo, PresenceInfo } from "@prisma/client";
 import { type Prisma } from "@prisma/client";
 import type { ShirtSize } from "@prisma/client";
 import { keyToLabel } from "../pages/hackers/hacker";
+import { hackerSchema } from "../utils/common";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const valToStr = (val: any): string => {
@@ -130,86 +131,11 @@ export function getMetricsKeysAndData<InfoType extends HackerInfo | PresenceInfo
 }
 
 export const getAggregatedHackerInfo = (hackerData: HackerInfo[]) => {
-	const aggregatedHackerInfo: AggregatedHackerInfo = {
-		id: [],
-		preferredLanguage: [],
-		email: [],
-		firstName: [],
-		lastName: [],
-		gender: [],
-		phoneNumber: [],
-		university: [],
-		studyLevel: [],
-		studyProgram: [],
-		graduationYear: [],
-		attendanceType: [],
-		location: [],
-		transportationRequired: [],
-		dietaryRestrictions: [],
-		accessibilityRequirements: [],
-		shirtSize: [],
-		emergencyContactName: [],
-		emergencyContactRelationship: [],
-		emergencyContactPhoneNumber: [],
-		numberOfPreviousHackathons: [],
-		linkGithub: [],
-		linkLinkedin: [],
-		linkPersonalSite: [],
-		linkResume: [],
-		lookingForwardTo: [],
-		formStartDate: [],
-		formEndDate: [],
-		confirmed: [],
-		userId: [],
-		unsubscribed: [],
-		unsubscribeToken: [],
-		onlyOnline: [],
-		acceptanceExpiry: [],
-		walkIn: [],
-		winner: [],
-		createdAt: [],
-		updatedAt: [],
-	};
-	const metricsData: AggregatedHackerInfo = {
-		id: [],
-		preferredLanguage: [],
-		email: [],
-		firstName: [],
-		lastName: [],
-		gender: [],
-		phoneNumber: [],
-		university: [],
-		studyLevel: [],
-		studyProgram: [],
-		graduationYear: [],
-		attendanceType: [],
-		location: [],
-		transportationRequired: [],
-		dietaryRestrictions: [],
-		accessibilityRequirements: [],
-		shirtSize: [],
-		emergencyContactName: [],
-		emergencyContactRelationship: [],
-		emergencyContactPhoneNumber: [],
-		numberOfPreviousHackathons: [],
-		linkGithub: [],
-		linkLinkedin: [],
-		linkPersonalSite: [],
-		linkResume: [],
-		lookingForwardTo: [],
-		formStartDate: [],
-		formEndDate: [],
-		confirmed: [],
-		userId: [],
-		unsubscribed: [],
-		unsubscribeToken: [],
-		onlyOnline: [],
-		acceptanceExpiry: [],
-		walkIn: [],
-		winner: [],
-		createdAt: [],
-		updatedAt: [],
-	};
+	const aggregatedHackerInfo: AggregatedHackerInfo = Object.keys(hackerSchema.keyof().Values).reduce((acc, key) => {
+		acc[key as keyof AggregatedHackerInfo] = [];
+		return acc;
+	}, {} as AggregatedHackerInfo);
+	const metricsData: AggregatedHackerInfo = structuredClone(aggregatedHackerInfo);
 	const { metricsKeys } = getMetricsKeysAndData(hackerData, metricsData);
 
 	metricsKeys.forEach(key => {

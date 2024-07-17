@@ -3,15 +3,16 @@ import type { GetStaticProps, NextPage } from "next";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useRouter } from "next/router";
-import { useRef, useState } from "react";
-import { trpc } from "../../utils/api";
+import { useState } from "react";
+import { trpc } from "../../server/api/api";
 
 import { z } from "zod";
+import { uploadResume } from "../../client/s3";
 import App from "../../components/App";
 import Error from "../../components/Error";
 import Filter from "../../components/Filter";
 import Loading from "../../components/Loading";
-import { walkInSchema } from "../../utils/common";
+import { hackerSchema, patterns } from "../../utils/common";
 
 type HackerInfo = Prisma.HackerInfoGetPayload<true>;
 type PresenceInfo = Prisma.PresenceInfoGetPayload<true>;
@@ -127,15 +128,11 @@ type HackerViewProps = {
 type Field = {
 	label: string;
 	name: string;
-	default_value: string | null | undefined;
-	type: string;
+	default_value: string | boolean | number | null;
+	type: keyof typeof patterns;
 	category: string;
 	options?: string[];
 };
-
-interface Patterns {
-	[key: string]: string | undefined;
-}
 
 const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 	const router = useRouter();
@@ -149,9 +146,9 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 	);
 	const [edit, setEdit] = useState(false);
 
-	const presenceMutation = trpc.presence.update.useMutation();
+	const downloadResume = trpc.hackers.downloadResume.useQuery({ id: id ?? "" }, { enabled: !!id });
 
-	const resumeUploadRef = useRef<HTMLInputElement>(null);
+	const presenceMutation = trpc.presence.update.useMutation();
 
 	const paragraphClass = "flex justify-between gap-4 text-right py-1.5 ";
 	const boldClass = "text-left font-bold";
@@ -188,7 +185,7 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 		{
 			label: t("studyLevel"),
 			name: "studyLevel",
-			default_value: hackerData.studyLevel?.toUpperCase(),
+			default_value: hackerData.studyLevel?.toUpperCase() ?? null,
 			type: "text",
 			category: t("category_personal_information"),
 		},
@@ -324,20 +321,11 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 			type: "url",
 			category: t("category_links_information"),
 		},
-	];
-
-	const patterns: Patterns = {
-		tel: "^\\s*(?:\\+?(\\d{1,3}))?[-. (]*(\\d{3})[-. )]*(\\d{3})[-. ]*(\\d{4})(?: *x(\\d+))?\\s*$",
-		url: undefined,
-		number: "^\\d+$",
-		email: undefined,
-		text: undefined,
-	};
+	] as const satisfies Field[];
 
 	const initialInputValues: Record<string, string> = {};
 	const [inputValues, setInputValues] = useState<{ [key: string]: string }>(initialInputValues);
 	const groupedData: { [key: string]: Field[] } = {};
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 	const mutation = trpc.hackers.update.useMutation();
 
 	const handleInputChange = (name: string, value: string) => {
@@ -354,25 +342,18 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 	};
 
 	fields.forEach(field => {
-		initialInputValues[field.name] = String(field.default_value) || "";
+		initialInputValues[field.name] = field.default_value?.toString() ?? "";
 	});
 
 	fields.forEach(item => {
-		const field = item as Field;
+		const field = item;
 		if (!groupedData[field.category]) {
 			groupedData[field.category] = [];
 		}
 		groupedData[field.category]?.push(field);
 	});
 
-	const handleUploadResume = () => {
-		if (resumeUploadRef.current?.files?.length) {
-			const file = resumeUploadRef.current.files[0];
-			// TODO: Upload file using presigned URL
-		}
-	};
-
-	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
 		const formData = new FormData(event.currentTarget);
 		const data = Object.fromEntries(formData) as Record<string, string | number | undefined>;
@@ -391,7 +372,7 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 			}
 		}
 
-		const parse = walkInSchema
+		const parse = hackerSchema
 			.extend({
 				id: z.string(),
 			})
@@ -401,13 +382,15 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 			console.error("Validation Error:", parse.error);
 		} else {
 			console.log("Data parsed", parse.data);
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-			mutation.mutate(parse.data);
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			const result = await mutation.mutateAsync(parse.data);
+			const resume = formData.get("resume") as File;
+			if (result.presignedUrl && resume) {
+				await uploadResume(result.presignedUrl, resume, resume.name);
+			}
+
 			if (!mutation.error) {
-				event.currentTarget.reset();
+				event.currentTarget?.reset();
 			} else {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				console.log("Error", mutation.error.message);
 			}
 		}
@@ -450,7 +433,7 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 				</div>
 			</Filter>
 
-			<form onSubmit={handleSubmit}>
+			<form onSubmit={e => void handleSubmit(e)}>
 				{Object.keys(groupedData).map((category, index) => (
 					<div key={index}>
 						<div className="flex justify-center">
@@ -498,16 +481,18 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 				))}
 
 				<input
-					ref={resumeUploadRef}
+					name="resume"
 					className="rounded-md border border-gray-400 p-2"
 					type="file"
 					accept="application/pdf"
-					onChange={handleUploadResume}
+					onChange={e => {
+						handleInputChange("resume", e.target.value);
+					}}
 				/>
 
 				<p className="flex flex-row flex-wrap justify-center gap-4 py-4">
 					{Object.entries({
-						Resume: hackerData.linkResume,
+						Resume: downloadResume.data,
 						LinkedIn: hackerData.linkLinkedin,
 						GitHub: hackerData.linkGithub,
 						"Personal Website": hackerData.linkPersonalSite,
