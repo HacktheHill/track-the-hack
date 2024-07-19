@@ -92,75 +92,77 @@ const Apply: NextPage = () => {
 		setLoading(false);
 	};
 
-	return (
-		<App className="overflow-y-auto bg-default-gradient p-8 sm:p-12" title={t("title")}>
-			{success ? (
-				<div className="flex flex-col items-center gap-8">
-					<h3 className="font-rubik text-4xl font-bold text-dark-color">{t("title")}</h3>
-					<p>{t("success")}</p>
-					<button
-						className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
-						onClick={() => void router.replace("/")}
-					>
-						{t("back")}
-					</button>
-				</div>
-			) : (
-				<form onSubmit={e => void handleSubmit(e)} className="flex flex-col items-center gap-8">
-					<h3 className="font-rubik text-4xl font-bold text-dark-color">{t("title")}</h3>
-					<div className="flex flex-col gap-4">
-						{fields.map(field => (
-							<div key={field.name} className="flex w-full flex-col items-center gap-2 sm:flex-row">
-								<label htmlFor={field.name} className="flex-[50%] font-rubik text-dark-color">
-									{t(field.name)}
-									{field.required && <span className="text-red-500"> *</span>}
-								</label>
-								{field.type === "select" ? (
-									<select
-										id={field.name}
-										name={field.name}
-										className="w-full rounded-[100px] border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
-										required={field.required}
-									>
-										<option value="">{t("select")}</option>
-										{field.options?.map(option => (
-											<option key={option} value={option}>
-												{t(option)}
-											</option>
-										))}
-									</select>
-								) : (
-									<input
-										id={field.name}
-										name={field.name}
-										type={field.type}
-										className="w-full rounded-[100px] border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
-										required={field.required}
-										pattern={patterns[field.type]}
-										accept={field.type === "file" ? "application/pdf" : undefined}
-									/>
-								)}
-							</div>
-						))}
-					</div>
-					{error && (
-						<div className="flex flex-col items-center gap-2">
-							<p className="text-center font-rubik text-red-500">{error}</p>
-						</div>
-					)}
-					{loading ? (
-						<Loading />
-					) : (
-						<button className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base">
-							{t("submit")}
-						</button>
-					)}
-				</form>
-			)}
-		</App>
-	);
+  return (
+    <div className="w-full relative bg-lightsalmon overflow-hidden flex flex-col items-center justify-start pt-[64px] px-5 pb-[64px] box-border leading-[normal] tracking-[normal]">
+      <div className="w-[4674px] h-[4764px] absolute !m-[0] top-[-1683px] left-[-2069px] rounded-[50%] [background:radial-gradient(50%_50%_at_50%_50%,_#fee4a1,_rgba(250,_209,_147,_0.79)_42%,_rgba(234,_138,_96,_0))]" />
+      <App className="relative z-10 w-full max-w-3xl" title={t("title")}>
+        {success ? (
+          <div className="flex flex-col items-center gap-8 bg-white rounded-xl p-8 shadow-lg">
+            <h3 className="font-rubik text-4xl font-bold text-maroon-300">{t("title")}</h3>
+            <p className="text-maroon-500">{t("success")}</p>
+            <button
+              className="cursor-pointer [border:none] pt-2 px-6 pb-2 bg-maroon-300 rounded-3xs text-xl font-medium font-p-button text-linen text-center shadow-[0px_4px_4px_rgba(0,_0,_0,_0.25)] hover:bg-maroon-400 transition-colors"
+              onClick={() => void router.replace("/")}
+            >
+              {t("back")}
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={e => void handleSubmit(e)} className="flex flex-col items-center gap-8 bg-white rounded-xl p-8 shadow-lg">
+            <h3 className="font-rubik text-4xl font-bold text-maroon-300">{t("title")}</h3>
+            <div className="flex flex-col gap-4 w-full">
+              {fields.map(field => (
+                <div key={field.name} className="flex w-full flex-col items-start gap-2">
+                  <label htmlFor={field.name} className="font-rubik text-maroon-500">
+                    {t(field.name)}
+                    {field.required && <span className="text-red-500"> *</span>}
+                  </label>
+                  {field.type === "select" ? (
+                    <select
+                      id={field.name}
+                      name={field.name}
+                      className="w-full rounded-3xs border-[1px] border-solid border-maroon-600 bg-transparent px-4 py-2 font-p-button text-xl text-maroon-500"
+                      required={field.required}
+                    >
+                      <option value="">{t("select")}</option>
+                      {field.options?.map(option => (
+                        <option key={option} value={option}>
+                          {t(option)}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      id={field.name}
+                      name={field.name}
+                      type={field.type}
+                      className="w-full rounded-3xs border-[1px] border-solid border-maroon-600 bg-transparent px-4 py-2 font-p-button text-xl text-maroon-500"
+                      required={field.required}
+                      pattern={patterns[field.type]}
+                      accept={field.type === "file" ? "application/pdf" : undefined}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+            {error && (
+              <div className="flex flex-col items-center gap-2">
+                <p className="text-center font-rubik text-red-500">{error}</p>
+              </div>
+            )}
+            {loading ? (
+              <Loading />
+            ) : (
+              <button className="cursor-pointer [border:none] pt-2 px-6 pb-2 bg-tomato rounded-3xs text-xl font-medium font-p-button text-linen text-center shadow-[0px_4px_4px_rgba(0,_0,_0,_0.25)] hover:bg-red-600 transition-colors">
+                {t("submit")}
+              </button>
+            )}
+          </form>
+        )}
+      </App>
+    </div>
+  );
 };
-
 export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
 	const session = await getServerSession(req, res, getAuthOptions(req));
 	return {
