@@ -265,7 +265,7 @@ const WalkIn: NextPage = () => {
 						</button>
 					</form>
 				)}
-				<Error message={t("unauthorized")} />
+				<Error message={t("common:unauthorized")} />
 			</Filter>
 		</App>
 	);

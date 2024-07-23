@@ -26,7 +26,7 @@ const Metrics: NextPage = () => {
 		<App className="overflow-y-auto bg-default-gradient" integrated={true} title={t("title")}>
 			<Filter value={[RoleName.ORGANIZER, RoleName.SPONSOR]} method="some">
 				<MetricsDisplay />
-				<Error message={t("unauthorized")} />
+				<Error message={t("common:unauthorized")} />
 			</Filter>
 		</App>
 	);

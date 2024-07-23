@@ -33,7 +33,7 @@ const Logs: NextPage = () => {
 			<App className="h-full bg-default-gradient px-16 py-12">
 				<Filter value={RoleName.ORGANIZER} method="above">
 					<Loading />
-					<Error message={t("unauthorized")} />
+					<Error message={t("common:unauthorized")} />
 				</Filter>
 			</App>
 		);
@@ -114,7 +114,7 @@ const Logs: NextPage = () => {
 						</tbody>
 					</table>
 				</div>
-				<Error message={t("unauthorized")} />
+				<Error message={t("common:unauthorized")} />
 			</Filter>
 		</App>
 	);
