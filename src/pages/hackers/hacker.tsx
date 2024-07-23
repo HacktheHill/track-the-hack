@@ -51,7 +51,7 @@ const Hacker: NextPage = () => {
 			<App className="h-full bg-default-gradient px-16 py-12">
 				<Filter value={[RoleName.ORGANIZER, RoleName.SPONSOR]} method="some">
 					<Loading />
-					<Error message={t("unauthorized")} />
+					<Error message={t("common:unauthorized")} />
 				</Filter>
 			</App>
 		);
@@ -113,7 +113,7 @@ const Hacker: NextPage = () => {
 						</div>
 						<HackerView hackerData={hackerQuery.data} presenceData={presenceQuery.data} />
 					</>
-					<Error message={t("unauthorized")} />
+					<Error message={t("common:unauthorized")} />
 				</Filter>
 			</div>
 		</App>

@@ -11,7 +11,7 @@ const Error = ({ message }: ErrorProps) => {
 	return (
 		<div className="flex flex-col items-center justify-center gap-4">
 			<code>
-				{t("error", {
+				{t("error-message", {
 					message,
 				})}
 			</code>
