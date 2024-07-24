@@ -1,32 +1,235 @@
 {
 	"title": "Apply",
+	"next": "Next",
 	"submit": "Submit",
 	"success": "Application submitted successfully!",
 	"back": "Back to Home",
 	"select": "Select",
-	"email": "Email",
-	"firstName": "First Name",
-	"lastName": "Last Name",
-	"phoneNumber": "Phone Number",
-	"dietaryRestrictions": "Dietary Restrictions",
-	"accessibilityRequirements": "Accessibility Requirements",
-	"emergencyContactName": "Emergency Contact Name",
-	"emergencyContactRelationship": "Emergency Contact Relationship",
-	"emergencyContactPhoneNumber": "Emergency Contact Phone Number",
-	"preferredLanguage": "Preferred Language",
-	"en": "English",
-	"fr": "French",
-	"gender": "Gender",
-	"university": "University",
-	"studyLevel": "Study Level",
-	"studyProgram": "Study Program",
-	"graduationYear": "Graduation Year",
-	"location": "Location",
-	"shirtSize": "Shirt Size",
-	"numberOfPreviousHackathons": "Number of Previous Hackathons",
-	"linkGithub": "Link to Github",
-	"linkLinkedin": "Link to LinkedIn",
-	"linkPersonalSite": "Link to Personal Site",
-	"resume": "Resume",
-	"invalid-form": "Please fill out all required fields correctly."
+
+	"introduction": {
+		"title": "Introduction",
+		"description": "Welcome to Hack the Hill! We’re excited to announce that applications for the first round are now open. This hackathon is a fantastic opportunity to challenge yourself, collaborate with peers, and unleash your creativity in a vibrant and dynamic environment. We are eager to consider applicants who demonstrate a keen interest in technology and innovation. This is your chance to show off your skills, learn from others, and potentially create something extraordinary."
+	},
+	"preferredLanguage": {
+		"title": "Preferred Language",
+		"description": "Please select your preferred language for the application form.",
+		"preferredLanguage": {
+			"label": "Preferred Language",
+			"options": {
+				"EN": "English",
+				"FR": "French"
+			}
+		}
+	},
+	"personal": {
+		"title": "Personal Information",
+		"description": "To identify and contact you about your application status and event updates, we’ll be collecting personal information. Rest assured, your data will be handled with the utmost confidentiality and care.",
+		"firstName": { "label": "First Name" },
+		"lastName": { "label": "Last Name" },
+		"email": { "label": "Email Address" },
+		"phoneNumber": { "label": "Phone Number" },
+		"country": { "label": "Country of Residence" },
+		"dateOfBirth": { "label": "Date of Birth" }
+	},
+	"demographics": {
+		"title": "Demographic Information",
+		"description": "To help us understand trends in our hackathon attendance and improve future events, we are collecting demographic information. Please note that your responses to these questions will not impact the evaluation of your application.",
+		"gender": {
+			"label": "Gender",
+			"options": {
+				"man": "Male",
+				"woman": "Female",
+				"nonBinary": "Non-Binary",
+				"other": "Prefer to self-describe",
+				"preferNotToAnswer": "Prefer Not to Answer"
+			}
+		},
+		"pronouns": {
+			"label": "Pronouns",
+			"options": {
+				"sheHer": "She/Her",
+				"heHim": "He/Him",
+				"theyThem": "They/Them",
+				"other": "Other (please specify)",
+				"preferNotToAnswer": "Prefer Not to Answer"
+			}
+		},
+		"raceEthnicity": {
+			"label": "Race/Ethnicity",
+			"options": {
+				"caucasian": "Caucasian (White)",
+				"southAsian": "South Asian",
+				"african": "African",
+				"eastAsian": "East Asian",
+				"hispanic": "Hispanic / Latino / Spanish Origin",
+				"middleEastern": "Middle Eastern",
+				"nativeAmerican": "Native American or Alaskan Native",
+				"other": "Other (please specify)",
+				"preferNotToAnswer": "Prefer Not to Answer"
+			}
+		}
+	},
+	"education": {
+		"title": "Education and Professional Information",
+		"description": "Please provide details about your post-secondary education and, if applicable, your professional career.",
+		"currentSchoolOrganization": {
+			"label": "What is your current School/Organization?"
+		},
+		"educationLevel": {
+			"label": "Which level of formal education are you currently enrolled in/completing?",
+			"options": {
+				"highSchool": "High School (Grades 11/12)",
+				"undergraduate": "Undergraduate",
+				"graduate": "Graduate (Masters, Professional, Doctoral, etc.)",
+				"other": "Other (please specify)"
+			}
+		},
+		"major": {
+			"label": "What is your major/primary area of study? If you already graduated, what was your major/primary area of study?"
+		}
+	},
+	"links": {
+		"title": "Links",
+		"description": "",
+		"linkedin": {
+			"label": "LinkedIn"
+		},
+		"github": {
+			"label": "Github"
+		},
+		"personalWebsite": {
+			"label": "Personal Website (optional)"
+		},
+		"resume": {
+			"label": "Resume (PDF or link to resume)"
+		}
+	},
+	"skillsAccomplishments": {
+		"title": "Skills and Accomplishments",
+		"description": "Now's your chance to shine! We’re gathering background information to help you highlight your skills and accomplishments. While technical proficiency is important, please note that it doesn't guarantee acceptance into the hackathon.",
+		"hackathonBefore": {
+			"label": "Have you participated in a hackathon before?",
+			"options": {
+				"yes": "Yes",
+				"no": "No"
+			}
+		},
+		"hackathonDetails": {
+			"label": "If yes, please provide details for each, including the name of the event, the projects you worked on, and the outcomes."
+		},
+		"programmingLanguagesTechnologies": {
+			"label": "What programming languages and technologies are you proficient in?"
+		},
+		"projectDescription": {
+			"label": "Describe a project you’ve worked on that you’re particularly proud of (provide a link if available)"
+		},
+		"participationReason": {
+			"label": "Why do you want to participate in this hackathon?"
+		},
+		"learningGoals": {
+			"label": "What do you hope to achieve or learn from this event?"
+		}
+	},
+	"emergencyContact": {
+		"title": "Emergency Contact",
+		"description": "In case of an emergency, we need to know who to contact. Please provide the following information.",
+		"name": {
+			"label": "Full Name"
+		},
+		"relation": {
+			"label": "Relationship to You"
+		},
+		"phoneNumber": {
+			"label": "Phone Number"
+		}
+	},
+	"logistics": {
+		"title": "Logistics",
+		"description": "Hope you're still with us! We have a few additional questions regarding food and travel logistics.",
+		"shirt": {
+			"label": "What is your T-shirt size?",
+			"options": {
+				"xs": "XS",
+				"s": "S",
+				"m": "M",
+				"l": "L",
+				"xl": "XL",
+				"xxl": "XXL",
+				"xxxl": "XXXL"
+			}
+		},
+		"dietaryRestrictions": {
+			"label": "If you have any dietary restrictions/allergies, please select them below:",
+			"options": {
+				"halal": "Halal",
+				"glutenFree": "Gluten-Free",
+				"vegetarian": "Vegetarian",
+				"vegan": "Vegan",
+				"kosher": "Kosher",
+				"lactoseIntolerance": "Lactose Intolerance",
+				"nuts": "Nuts",
+				"soy": "Soy",
+				"none": "None",
+				"other": "Other (please specify)"
+			}
+		},
+		"specialAccommodations": {
+			"label": "Do you require any special accommodations to participate?"
+		},
+		"additionalInfo": {
+			"label": "Is there anything else you would like us to know about you?"
+		},
+		"travelOrigin": {
+			"label": "Where will you be traveling from to attend Hack the Hill, if located outside Ottawa (City, country)?"
+		},
+		"travelAccommodations": {
+			"label": "Would you like to use Hack the Hill’s travel accommodations? If so, please select one of the following locations for transportation arrangements. If you are not from Ottawa or any of these locations, you may need to arrange your travel:",
+			"options": {
+				"gta": "Greater Toronto Area (GTA)",
+				"montreal": "Montreal",
+				"waterloo": "Waterloo",
+				"none": "None"
+			}
+		},
+		"referral": {
+			"label": "How did you hear about this hackathon?",
+			"options": {
+				"studentOrganizations": "Student Organizations or Clubs",
+				"friends": "Friends or Classmates",
+				"universityWebsite": "University Website",
+				"linkedin": "LinkedIn",
+				"instagram": "Instagram",
+				"tiktok": "TikTok",
+				"facebook": "Facebook",
+				"universityEmail": "University Email",
+				"classAnnouncements": "Class Announcements",
+				"hackathonWebsites": "Hackathon Websites (e.g. MLH)",
+				"flyers": "Flyers or Posters on Campus",
+				"professors": "Professors or Academic Advisors",
+				"careerServices": "Career Services",
+				"onlineForums": "Online Forums or Groups (e.g. Reddit, Discord)",
+				"alumniNetworks": "Alumni Networks",
+				"other": "Other (please specify)"
+			}
+		}
+	},
+	"agreements": {
+		"title": "Agreements and Consents",
+		"description": "We’re almost there. We’d like to inform the applicant that we are MLH-affiliated. The following 3 checkboxes are for this partnership.",
+		"hthAgreements": {
+			"label": "I agree to the Hack the Hill Code of Conduct, Privacy Policy, Terms of Service, Liability Release Waiver, and Media Release Waiver."
+		},
+		"hthPromotions": {
+			"label": "I authorize Hack the Hill to send me emails about upcoming events and opportunities."
+		},
+		"mlhCodeOfConduct": {
+			"label": "I have read and agree to the MLH Code of Conduct."
+		},
+		"mlhPrivacyTerms": {
+			"label": "I authorize you to share my application/registration information with Major League Hacking for event administration, ranking, and MLH administration in line with the MLH Privacy Policy. I further agree to the terms of the MLH Contest Terms and Conditions."
+		},
+		"mlhPromotions": {
+			"label": "I authorize MLH to send me occasional emails about relevant events, career opportunities, and community announcements."
+		}
+	}
 }

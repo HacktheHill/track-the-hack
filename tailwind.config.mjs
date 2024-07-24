@@ -14,7 +14,6 @@ module.exports = {
 				"medium-gradient": "linear-gradient(#f8cc8d, #dd484d)",
 			},
 			screens: {
-				"logo-center": "600px",
 				mobile: "900px",
 				short: { raw: "(min-height: 700px)" },
 				xs: "400px",
@@ -89,10 +88,15 @@ module.exports = {
 				navbar: "0 4px 4px rgba(0, 0, 0, 0.25)",
 			},
 			animation: {
+				"fade-in": "fade-in linear forwards",
 				"snowflake-fall": "snowflake-fall linear infinite",
 				"cloud-drift": "cloud-drift linear infinite alternate",
 			},
 			keyframes: {
+				"fade-in": {
+					"0%": { opacity: 0 },
+					"100%": { opacity: 1 },
+				},
 				"snowflake-fall": {
 					"0%": { transform: "translateY(-100vh)" },
 					"100%": { transform: "translateY(100vh)" },

@@ -34,6 +34,12 @@ type FilterProps =
 	  }
 	| {
 			value: RoleName[];
+			method: "not";
+			silent?: boolean;
+			children: React.ReactNode;
+	  }
+	| {
+			value: RoleName[];
 			method: "only";
 			silent?: boolean;
 			children: React.ReactNode;
@@ -63,6 +69,8 @@ const Filter = (props: FilterProps) => {
 			shouldRender = roles.some(role => roleHierarchy.indexOf(role) >= roleHierarchy.indexOf(value));
 		} else if (method === "none") {
 			shouldRender = roles.length === 0;
+		} else if (method === "not") {
+			shouldRender = !value.some(role => roles.includes(role));
 		} else if (method === "only") {
 			shouldRender = value.some(role => roles.includes(role)) && roles.every(role => value.includes(role));
 		}

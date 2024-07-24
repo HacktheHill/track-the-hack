@@ -1,3 +1,4 @@
+import { RoleName } from "@prisma/client";
 import type { GetStaticProps } from "next";
 import { type NextPage } from "next";
 import { useSession } from "next-auth/react";
@@ -24,7 +25,7 @@ const Home: NextPage = () => {
 			<Image priority className="z-10" src="/assets/mascot-waving.svg" alt="Mascot" width={225} height={225} />
 			<p className="z-10 text-center text-lg font-bold short:text-2xl">{t("welcome")}</p>
 			{sessionData ? (
-				<Filter method="none" silent>
+				<Filter method="not" value={[RoleName.HACKER]} silent>
 					<button
 						className="z-10 whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
 						onClick={() => void router.push("/apply")}

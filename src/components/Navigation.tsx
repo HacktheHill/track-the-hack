@@ -1,10 +1,12 @@
-import { RoleName } from "@prisma/client";
+import { Locale, RoleName } from "@prisma/client";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { useTranslation } from "next-i18next";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { useCallback } from "react";
 import Filter from "./Filter";
+import { trpc } from "../server/api/api";
 
 type LinkItemProps = {
 	href: string;
@@ -87,6 +89,15 @@ const Navbar = ({ integrated }: NavbarProps) => {
 	const { t } = useTranslation("navbar");
 	const { data: sessionData } = useSession();
 
+	const router = useRouter();
+	const { locale } = router;
+
+	const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+		void router.push(router.pathname, router.asPath, {
+			locale: e.target.value.toLocaleLowerCase(),
+		});
+	};
+
 	return (
 		<nav
 			className={`sticky top-0 z-10 flex gap-4 whitespace-nowrap bg-light-quaternary-color p-4 ${
@@ -101,19 +112,11 @@ const Navbar = ({ integrated }: NavbarProps) => {
 			>
 				<Link href="/">
 					<Image
-						className="hidden mobile:block"
+						className="block"
 						priority
 						src="/assets/hackthehill-logo.svg"
 						height={64}
 						width={64}
-						alt={t("logo")}
-					/>
-					<Image
-						className="block mobile:hidden"
-						priority
-						src="/assets/hackthehill-banner.svg"
-						height={238}
-						width={238}
 						alt={t("logo")}
 					/>
 				</Link>
@@ -123,8 +126,20 @@ const Navbar = ({ integrated }: NavbarProps) => {
 				<Links bottom={false} />
 			</div>
 
+			<select
+				className="hover:bg-light-quaternary ml-auto whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors sm:visible"
+				onChange={handleLanguageChange}
+				value={locale ?? "en"}
+			>
+				{Object.keys(Locale).map(locale => (
+					<option key={locale} value={locale.toLocaleLowerCase()}>
+						{locale}
+					</option>
+				))}
+			</select>
+
 			<button
-				className="hover:bg-light-quaternary right-4 ml-auto flex whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors sm:visible logo-center:absolute"
+				className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors sm:visible"
 				onClick={sessionData ? () => void signOut() : () => void signIn()}
 			>
 				{sessionData ? t("sign-out") : t("sign-in")}

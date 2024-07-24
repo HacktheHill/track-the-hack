@@ -63,7 +63,6 @@ model User {
   email         String?      @unique
   image         String?
   roles         Role[]
-  emailVerified DateTime?
   accounts      Account[]
   sessions      Session[]
   hackerInfo    HackerInfo[]
@@ -82,7 +81,6 @@ model Role {
 
 model HackerInfo {
   id                           String         @id @default(cuid())
-  preferredLanguage            Language       @default(EN)
   email                        String
   firstName                    String
   lastName                     String
@@ -106,15 +104,13 @@ model HackerInfo {
   linkLinkedin                 String?
   linkPersonalSite             String?
   hasResume                    Boolean        @default(false)
-  lookingForwardTo             String?        @db.Text
   confirmed                    Boolean        @default(false)
-  userId                       String?
   unsubscribed                 Boolean        @default(false)
   unsubscribeToken             String?        @unique @default(cuid())
-  onlyOnline                   Boolean        @default(false)
   acceptanceExpiry             DateTime?
   walkIn                       Boolean        @default(false)
   winner                       Boolean        @default(false)
+  userId                       String?
   user                         User?          @relation(fields: [userId], references: [id])
   presenceInfo                 PresenceInfo?
   createdAt                    DateTime       @default(now())
