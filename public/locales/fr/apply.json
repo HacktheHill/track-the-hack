@@ -1,32 +1,235 @@
 {
 	"title": "Appliquer",
+	"next": "Suivant",
 	"submit": "Soumettre",
-	"success": "Application soumise avec succès!",
+	"success": "Candidature soumise avec succès!",
 	"back": "Retour à l'accueil",
 	"select": "Sélectionner",
-	"email": "Courriel",
-	"firstName": "Prénom",
-	"lastName": "Nom de famille",
-	"phoneNumber": "Numéro de téléphone",
-	"dietaryRestrictions": "Restrictions alimentaires",
-	"accessibilityRequirements": "Exigences d'accessibilité",
-	"emergencyContactName": "Nom du contact d'urgence",
-	"emergencyContactRelationship": "Relation avec le contact d'urgence",
-	"emergencyContactPhoneNumber": "Numéro de téléphone du contact d'urgence",
-	"preferredLanguage": "Langue préférée",
-	"en": "Anglais",
-	"fr": "Français",
-	"gender": "Genre",
-	"university": "Université",
-	"studyLevel": "Niveau d'études",
-	"studyProgram": "Programme d'études",
-	"graduationYear": "Année de graduation",
-	"location": "Emplacement",
-	"shirtSize": "Taille de chemise",
-	"numberOfPreviousHackathons": "Nombre de hackathons précédents",
-	"linkGithub": "Lien vers Github",
-	"linkLinkedin": "Lien vers LinkedIn",
-	"linkPersonalSite": "Lien vers le site personnel",
-	"resume": "Curriculum vitae",
-	"invalid-form": "Veuillez remplir tous les champs requis correctement."
+
+	"introduction": {
+		"title": "Introduction",
+		"description": "Bienvenue à Hack the Hill! Nous sommes ravis d'annoncer que les candidatures pour le premier tour sont maintenant ouvertes. Ce hackathon est une formidable opportunité de vous mettre au défi, de collaborer avec vos pairs et de libérer votre créativité dans un environnement vibrant et dynamique. Nous sommes impatients de considérer les candidats qui démontrent un vif intérêt pour la technologie et l'innovation. C'est votre chance de montrer vos compétences, d'apprendre des autres et de potentiellement créer quelque chose d'extraordinaire."
+	},
+	"preferredLanguage": {
+		"title": "Langue préférée",
+		"description": "Veuillez sélectionner votre langue préférée pour le formulaire de candidature.",
+		"preferredLanguage": {
+			"label": "Langue préférée",
+			"options": {
+				"EN": "Anglais",
+				"FR": "Français"
+			}
+		}
+	},
+	"personal": {
+		"title": "Informations personnelles",
+		"description": "Pour vous identifier et vous contacter au sujet de l'état de votre candidature et des mises à jour de l'événement, nous collecterons des informations personnelles. Soyez assuré que vos données seront traitées avec la plus grande confidentialité et soin.",
+		"firstName": { "label": "Prénom" },
+		"lastName": { "label": "Nom de famille" },
+		"email": { "label": "Adresse e-mail" },
+		"phoneNumber": { "label": "Numéro de téléphone" },
+		"country": { "label": "Pays de résidence" },
+		"dateOfBirth": { "label": "Date de naissance" }
+	},
+	"demographics": {
+		"title": "Informations démographiques",
+		"description": "Pour nous aider à comprendre les tendances de la participation à notre hackathon et à améliorer les événements futurs, nous collectons des informations démographiques. Veuillez noter que vos réponses à ces questions n'affecteront pas l'évaluation de votre candidature.",
+		"gender": {
+			"label": "Genre",
+			"options": {
+				"man": "Homme",
+				"woman": "Femme",
+				"nonBinary": "Non-binaire",
+				"other": "Préférer s'autodécrire",
+				"preferNotToAnswer": "Préférer ne pas répondre"
+			}
+		},
+		"pronouns": {
+			"label": "Pronoms",
+			"options": {
+				"sheHer": "Elle",
+				"heHim": "Il",
+				"theyThem": "Iel",
+				"other": "Autre (veuillez préciser)",
+				"preferNotToAnswer": "Préférer ne pas répondre"
+			}
+		},
+		"raceEthnicity": {
+			"label": "Origine ethnique",
+			"options": {
+				"caucasian": "Caucasien (Blanc)",
+				"southAsian": "Asiatique du Sud",
+				"african": "Africain",
+				"eastAsian": "Asiatique de l'Est",
+				"hispanic": "Hispanique / Latino / Origine espagnole",
+				"middleEastern": "Moyen-Orient",
+				"nativeAmerican": "Amérindien ou natif d'Alaska",
+				"other": "Autre (veuillez préciser)",
+				"preferNotToAnswer": "Préférer ne pas répondre"
+			}
+		}
+	},
+	"education": {
+		"title": "Informations sur l'éducation et la carrière",
+		"description": "Veuillez fournir des détails sur votre éducation postsecondaire et, le cas échéant, votre carrière professionnelle.",
+		"currentSchoolOrganization": {
+			"label": "Quelle est votre école/organisation actuelle ?"
+		},
+		"educationLevel": {
+			"label": "Quel niveau d'éducation formelle suivez-vous actuellement ou complétez-vous ?",
+			"options": {
+				"highSchool": "Lycée (Classes de 11e/12e)",
+				"undergraduate": "Premier cycle",
+				"graduate": "Cycle supérieur (Master, Professionnel, Doctorat, etc.)",
+				"other": "Autre (veuillez préciser)"
+			}
+		},
+		"major": {
+			"label": "Quelle est votre spécialisation/principal domaine d'étude ? Si vous avez déjà obtenu votre diplôme, quelle était votre spécialisation/principal domaine d'étude ?"
+		}
+	},
+	"links": {
+		"title": "Liens",
+		"description": "",
+		"linkedin": {
+			"label": "LinkedIn"
+		},
+		"github": {
+			"label": "Github"
+		},
+		"personalWebsite": {
+			"label": "Site personnel (optionnel)"
+		},
+		"resume": {
+			"label": "CV (PDF ou lien vers le CV)"
+		}
+	},
+	"skillsAccomplishments": {
+		"title": "Compétences et réalisations",
+		"description": "C'est votre chance de briller ! Nous recueillons des informations de base pour vous aider à mettre en valeur vos compétences et réalisations. Bien que la compétence technique soit importante, elle ne garantit pas l'acceptation au hackathon.",
+		"hackathonBefore": {
+			"label": "Avez-vous déjà participé à un hackathon ?",
+			"options": {
+				"yes": "Oui",
+				"no": "Non"
+			}
+		},
+		"hackathonDetails": {
+			"label": "Si oui, veuillez fournir des détails pour chacun, y compris le nom de l'événement, les projets sur lesquels vous avez travaillé et les résultats."
+		},
+		"programmingLanguagesTechnologies": {
+			"label": "Quelles langues de programmation et technologies maîtrisez-vous ?"
+		},
+		"projectDescription": {
+			"label": "Décrivez un projet sur lequel vous avez travaillé et dont vous êtes particulièrement fier (fournissez un lien si disponible)"
+		},
+		"participationReason": {
+			"label": "Pourquoi voulez-vous participer à ce hackathon ?"
+		},
+		"learningGoals": {
+			"label": "Qu'espérez-vous accomplir ou apprendre lors de cet événement ?"
+		}
+	},
+	"emergencyContact": {
+		"title": "Contact d'urgence",
+		"description": "En cas d'urgence, nous devons savoir qui contacter. Veuillez fournir les informations suivantes.",
+		"name": {
+			"label": "Nom complet"
+		},
+		"relation": {
+			"label": "Relation avec vous"
+		},
+		"phoneNumber": {
+			"label": "Numéro de téléphone"
+		}
+	},
+	"logistics": {
+		"title": "Logistique",
+		"description": "Nous espérons que vous êtes toujours avec nous ! Nous avons quelques questions supplémentaires concernant la nourriture et la logistique de voyage.",
+		"shirt": {
+			"label": "Quelle est votre taille de t-shirt ?",
+			"options": {
+				"xs": "XS",
+				"s": "S",
+				"m": "M",
+				"l": "L",
+				"xl": "XL",
+				"xxl": "XXL",
+				"xxxl": "XXXL"
+			}
+		},
+		"dietaryRestrictions": {
+			"label": "Si vous avez des restrictions alimentaires ou des allergies, veuillez les indiquer ci-dessous :",
+			"options": {
+				"halal": "Halal",
+				"glutenFree": "Sans gluten",
+				"vegetarian": "Végétarien",
+				"vegan": "Végan",
+				"kosher": "Casher",
+				"lactoseIntolerance": "Intolérance au lactose",
+				"nuts": "Noix",
+				"soy": "Soja",
+				"none": "Aucune",
+				"other": "Autre (veuillez préciser)"
+			}
+		},
+		"specialAccommodations": {
+			"label": "Avez-vous besoin d'aménagements spéciaux pour participer ?"
+		},
+		"additionalInfo": {
+			"label": "Y a-t-il autre chose que vous aimeriez nous faire savoir sur vous ?"
+		},
+		"travelOrigin": {
+			"label": "D'où viendrez-vous pour assister à Hack the Hill, si vous êtes situé en dehors d'Ottawa (Ville, pays) ?"
+		},
+		"travelAccommodations": {
+			"label": "Souhaitez-vous utiliser les hébergements de voyage de Hack the Hill ? Si oui, veuillez sélectionner l'un des emplacements suivants pour les arrangements de transport. Si vous n'êtes pas d'Ottawa ou d'un de ces endroits, vous devrez peut-être organiser votre voyage :",
+			"options": {
+				"gta": "Grand Toronto (GTA)",
+				"montreal": "Montréal",
+				"waterloo": "Waterloo",
+				"none": "Aucun"
+			}
+		},
+		"referral": {
+			"label": "Comment avez-vous entendu parler de ce hackathon ?",
+			"options": {
+				"studentOrganizations": "Organisations ou clubs étudiants",
+				"friends": "Amis ou camarades de classe",
+				"universityWebsite": "Site Web de l'université",
+				"linkedin": "LinkedIn",
+				"instagram": "Instagram",
+				"tiktok": "TikTok",
+				"facebook": "Facebook",
+				"universityEmail": "E-mail universitaire",
+				"classAnnouncements": "Annonces en classe",
+				"hackathonWebsites": "Sites Web de hackathon (par exemple, MLH)",
+				"flyers": "Flyers ou affiches sur le campus",
+				"professors": "Professeurs ou conseillers académiques",
+				"careerServices": "Services de carrière",
+				"onlineForums": "Forums ou groupes en ligne (par exemple, Reddit, Discord)",
+				"alumniNetworks": "Réseaux d'anciens élèves",
+				"other": "Autre (veuillez préciser)"
+			}
+		}
+	},
+	"agreements": {
+		"title": "Accords et consentements",
+		"description": "Nous y sommes presque. Nous tenons à informer le candidat que nous sommes affiliés à MLH. Les trois cases à cocher suivantes concernent ce partenariat.",
+		"hthAgreements": {
+			"label": "J'accepte le code de conduite, la politique de confidentialité, les conditions d'utilisation, la renonciation à la responsabilité et la renonciation à la diffusion des médias de Hack the Hill."
+		},
+		"hthPromotions": {
+			"label": "J'autorise Hack the Hill à m'envoyer des e-mails concernant les événements et opportunités à venir."
+		},
+		"mlhCodeOfConduct": {
+			"label": "J'ai lu et j'accepte le code de conduite de MLH."
+		},
+		"mlhPrivacyTerms": {
+			"label": "J'autorise le partage de mes informations d'inscription/candidature avec Major League Hacking pour l'administration des événements, le classement et l'administration de MLH conformément à la politique de confidentialité de MLH. J'accepte également les conditions générales des concours MLH."
+		},
+		"mlhPromotions": {
+			"label": "J'autorise MLH à m'envoyer des e-mails occasionnels sur les événements pertinents, les opportunités de carrière et les annonces communautaires."
+		}
+	}
 }
