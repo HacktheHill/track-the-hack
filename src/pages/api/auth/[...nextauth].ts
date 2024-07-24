@@ -83,7 +83,7 @@ export const getAuthOptions = (req: IncomingMessage) =>
 
 				// If the user doesn't exist, redirect to signup
 				if (!existingUser) {
-					return `/auth/sign-up?email=${encodeURIComponent(user.email)}&provider=${account.provider}`;
+					return `/auth/sign-up?no-user=true&email=${encodeURIComponent(user.email)}`;
 				}
 
 				// Create account if user exists and account doesn't
