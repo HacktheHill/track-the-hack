@@ -1,8 +1,11 @@
-import { useTranslation } from "next-i18next";
-import Head from "../../components/Head";
-import Error from "../../components/Error";
 import type { GetStaticProps } from "next";
+import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
+import Image from "next/image";
+import { useRouter } from "next/router";
+
+import Error from "../../components/Error";
+import Head from "../../components/Head";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
@@ -12,17 +15,27 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
 
 const ErrorPage = () => {
 	const { t } = useTranslation("auth");
+	const router = useRouter();
+	const [error] = [router.query.error].flat();
 
 	return (
 		<>
 			<Head title={t("error")} />
-			<main className="flex h-screen flex-col items-center justify-center gap-10 bg-default-gradient bg-no-repeat text-center supports-[height:100cqh]:h-[100cqh] supports-[height:100svh]:h-[100svh]">
+			<main className="flex h-screen flex-col items-center justify-center gap-4 bg-default-gradient bg-no-repeat text-center supports-[height:100cqh]:h-[100cqh] supports-[height:100svh]:h-[100svh]">
 				<div className="flex flex-col items-center">
+					<Image
+						src="https://hackthehill.com/Logos/hackthehill-logo.svg"
+						alt={t("common:hack-the-hill-logo-alt")}
+						width={128}
+						height={128}
+						className="h-auto w-auto"
+						priority
+					/>
 					<h1 className="font-coolvetica text-[clamp(1rem,3.5vmin,5rem)] font-normal text-dark-color">
 						{t("error")}
 					</h1>
-					<Error message={t("error-message")} />
 				</div>
+				<Error message={error ?? t("common:unknown-error")} />
 			</main>
 		</>
 	);
