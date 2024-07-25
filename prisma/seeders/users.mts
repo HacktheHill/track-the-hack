@@ -1,6 +1,5 @@
 import { faker } from "@faker-js/faker";
 import { RoleName } from "@prisma/client";
-import { generateHackerData } from "./hackers.mjs";
 
 // Generates dummy users
 const user = () => {
@@ -16,7 +15,6 @@ const user = () => {
 			connect: [{ name: RoleName.HACKER }],
 		},
 		image: "https://i.pravatar.cc/50",
-		hacker: generateHackerData(),
 	};
 };
 
