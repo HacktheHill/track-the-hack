@@ -4,43 +4,36 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 const prisma = new PrismaClient();
 
-export const auditLogRouter = createTRPCRouter({
-	auditLog: protectedProcedure
+export const logRouter = createTRPCRouter({
+	new: protectedProcedure
 		.input(
 			z.object({
 				id: z.number(), // Assuming 'id' is auto-incremented, it should be a number
 				timestamp: z.date(),
-				userId: z.string(),
-				route: z.string(),
-				author: z.string(),
 				action: z.string(),
-				details: z.string().nullable(),
+				details: z.string(),
+				route: z.string(),
+				locale: z.string(),
+				sourceId: z.string(),
+				sourceType: z.string(),
 			}),
 		)
 		.mutation(async ({ input }) => {
-			const auditLog = await prisma.auditLog.create({
-				data: {
-					id: input.id,
-					timestamp: input.timestamp,
-					userId: input.userId,
-					route: input.route,
-					author: input.author,
-					action: input.action,
-					details: input.details,
-				},
+			const log = await prisma.log.create({
+				data: input,
 			});
 
-			if (!auditLog) {
+			if (!log) {
 				throw new Error("Audit Log unsuccessful");
 			}
 
-			console.log(auditLog);
+			console.log(log);
 
-			return auditLog;
+			return log;
 		}),
 
-	getAllTheLogs: protectedProcedure.query(async () => {
-		const auditLogs = await prisma.auditLog.findMany({
+	all: protectedProcedure.query(async () => {
+		const logs = await prisma.log.findMany({
 			orderBy: [
 				{
 					timestamp: "desc",
@@ -48,10 +41,10 @@ export const auditLogRouter = createTRPCRouter({
 			],
 		});
 
-		if (!auditLogs) {
+		if (!logs) {
 			throw new Error("No audit logs found");
 		}
 
-		return auditLogs;
+		return logs
 	}),
 });
