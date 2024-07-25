@@ -29,7 +29,7 @@ jobs:
                       ${{ runner.os }}-nextjs-${{ hashFiles('/home/azure/track-the-hack/package-lock.json') }}-
 
             - name: Deploy to production directory
-              run: rsync -avz ./ /home/azure/track-the-hack/
+              run: rsync -avz --delete ./ /home/azure/track-the-hack/
 
             - name: Install dependencies
               working-directory: /home/azure/track-the-hack
