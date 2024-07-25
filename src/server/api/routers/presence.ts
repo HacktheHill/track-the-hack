@@ -1,11 +1,11 @@
-import type { HackerInfo } from "@prisma/client";
+import type { Hacker } from "@prisma/client";
 import { RoleName } from "@prisma/client";
 import { observable } from "@trpc/server/observable";
 import { EventEmitter } from "events";
 import { z } from "zod";
-import { hasRoles } from "../../../utils/helpers";
 
-import { logAuditEntry } from "../../lib/audit";
+import { hasRoles } from "../../../utils/helpers";
+import { log } from "../../lib/log";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 const ee = new EventEmitter();
@@ -13,8 +13,8 @@ const ee = new EventEmitter();
 export const presenceRouter = createTRPCRouter({
 	onMutation: publicProcedure.subscription(() => {
 		// return an `observable` with a callback which is triggered immediately
-		return observable<HackerInfo>(emit => {
-			const onMutation = (data: HackerInfo) => {
+		return observable<Hacker>(emit => {
+			const onMutation = (data: Hacker) => {
 				// emit data to client
 				emit.next(data);
 			};
@@ -39,6 +39,7 @@ export const presenceRouter = createTRPCRouter({
 					id: userId,
 				},
 				select: {
+					name: true,
 					roles: {
 						select: {
 							name: true,
@@ -55,7 +56,7 @@ export const presenceRouter = createTRPCRouter({
 				throw new Error("You do not have permission to do this");
 			}
 
-			const hacker = await ctx.prisma.hackerInfo.findUnique({
+			const hacker = await ctx.prisma.hacker.findUnique({
 				where: {
 					id: input.id,
 				},
@@ -65,93 +66,21 @@ export const presenceRouter = createTRPCRouter({
 				throw new Error("Hacker not found");
 			}
 
-			let presence = await ctx.prisma.presenceInfo.findUnique({
+			const presence = await ctx.prisma.presence.findMany({
 				where: {
-					hackerInfoId: hacker.id,
+					hackerId: hacker.id,
 				},
 			});
-
-			if (!presence) {
-				presence = await ctx.prisma.presenceInfo.create({
-					data: {
-						hackerInfo: {
-							connect: {
-								id: hacker.id,
-							},
-						},
-					},
-				});
-			}
 
 			return presence;
 		}),
-	all: protectedProcedure
-		.input(
-			z
-				.object({
-					limit: z.number().min(1).max(100),
-					cursor: z.string().nullish(),
-				})
-				.optional(),
-		)
-		.query(async ({ ctx, input }) => {
-			const userId = ctx.session.user.id;
-			const user = await ctx.prisma.user.findUnique({
-				where: {
-					id: userId,
-				},
-				select: {
-					roles: {
-						select: {
-							name: true,
-						},
-					},
-				},
-			});
 
-			if (!user) {
-				throw new Error("User not found");
-			}
-
-			if (!hasRoles(user, [RoleName.SPONSOR, RoleName.ORGANIZER])) {
-				throw new Error("You do not have permission to do this");
-			}
-
-			//return all presenceInfo if no pagination is needed
-			if (!input) {
-				return {
-					results: await ctx.prisma.presenceInfo.findMany(),
-					nextCursor: null,
-				};
-			}
-
-			const { limit, cursor } = input;
-
-			const results = await ctx.prisma.presenceInfo.findMany({
-				take: limit + 1, // get an extra item at the end which we'll use as next cursor
-				cursor: cursor ? { id: cursor } : undefined,
-				orderBy: {
-					id: "asc",
-				},
-			});
-
-			let nextCursor: typeof cursor | undefined = undefined;
-
-			if (results.length > limit) {
-				const nextItem = results.pop();
-				nextCursor = nextItem?.id;
-			}
-
-			return {
-				results,
-				nextCursor,
-			};
-		}),
-	update: protectedProcedure
+	upsert: protectedProcedure
 		.input(
 			z.object({
-				id: z.string(),
-				presenceInfo: z.record(z.boolean()),
+				key: z.string(),
+				value: z.number(),
+				label: z.string(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -178,9 +107,9 @@ export const presenceRouter = createTRPCRouter({
 				throw new Error("You do not have permission to do this");
 			}
 
-			const hacker = await ctx.prisma.hackerInfo.findUnique({
+			const hacker = await ctx.prisma.hacker.findUnique({
 				where: {
-					id: input.id,
+					userId,
 				},
 			});
 
@@ -188,57 +117,84 @@ export const presenceRouter = createTRPCRouter({
 				throw new Error("Hacker not found");
 			}
 
-			const presenceInfoBefore = await ctx.prisma.presenceInfo.findUnique({
-				where: {
-					hackerInfoId: hacker.id,
-				},
-			});
 			ee.emit("add", hacker);
 
-			await ctx.prisma.presenceInfo.upsert({
+			await ctx.prisma.presence.upsert({
 				where: {
-					hackerInfoId: hacker.id,
+					key: input.key,
 				},
-				update: input.presenceInfo,
 				create: {
-					...input.presenceInfo,
-					hackerInfo: {
-						connect: {
-							id: hacker.id,
+					key: input.key,
+					value: input.value,
+					label: input.label,
+				},
+				update: {
+					value: input.value,
+					label: input.label,
+				},
+			});
+
+			await log(ctx, {
+				action: "update",
+				sourceId: hacker.id,
+				sourceType: "Presence",
+				author: user.name ?? "Unknown",
+				route: "presence",
+				details: `Updated presence for hacker ${hacker.id} with key ${input.key}  (${input.label}) to ${input.value}`,
+			});
+		}),
+
+	increment: protectedProcedure
+		.input(
+			z.object({
+				key: z.string(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+			const user = await ctx.prisma.user.findUnique({
+				where: {
+					id: userId,
+				},
+				select: {
+					name: true,
+					roles: {
+						select: {
+							name: true,
 						},
 					},
 				},
 			});
 
-			for (const key in input.presenceInfo) {
-				for (const key2 in presenceInfoBefore) {
-					if (key === key2) {
-						const valueBefore = presenceInfoBefore[key2 as keyof typeof presenceInfoBefore];
-						const valueNow = input.presenceInfo[key];
-
-						if (valueNow !== valueBefore) {
-							if (valueNow) {
-								await logAuditEntry(
-									ctx,
-									hacker.id,
-									"/presence",
-									"Presence",
-									user.name ?? "Unknown",
-									`${hacker.firstName} ${hacker.lastName} ${key} updated to true.`,
-								);
-							} else {
-								await logAuditEntry(
-									ctx,
-									hacker.id,
-									"/presence",
-									"Presence",
-									user.name ?? "Unknown",
-									`${hacker.firstName} ${hacker.lastName} ${key} updated to false.`,
-								);
-							}
-						}
-					}
-				}
+			if (!user) {
+				throw new Error("User not found");
 			}
+
+			if (!hasRoles(user, [RoleName.ORGANIZER])) {
+				throw new Error("You do not have permission to do this");
+			}
+
+			const hacker = await ctx.prisma.hacker.findUnique({
+				where: {
+					userId,
+				},
+			});
+
+			if (!hacker) {
+				throw new Error("Hacker not found");
+			}
+
+			ee.emit("add", hacker);
+
+			await ctx.prisma.presence.update({
+				where: {
+					key: input.key,
+				},
+				data: {
+					value: {
+						increment: 1,
+					},
+				},
+			});
 		}),
 });

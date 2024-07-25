@@ -58,17 +58,17 @@ model VerificationToken {
 }
 
 model User {
-  id            String       @id @default(cuid())
-  name          String?
-  email         String?      @unique
-  image         String?
-  roles         Role[]
-  accounts      Account[]
-  sessions      Session[]
-  hackerInfo    HackerInfo[]
-  auditLog      AuditLog[]
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @default(now()) @updatedAt
+  id        String    @id @default(cuid())
+  name      String?
+  email     String?   @unique
+  image     String?
+  roles     Role[]
+  accounts  Account[]
+  sessions  Session[]
+  Hacker    Hacker?
+  Log       Log[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
 }
 
 model Role {
@@ -79,59 +79,76 @@ model Role {
   updatedAt DateTime @default(now()) @updatedAt
 }
 
-model HackerInfo {
-  id                           String         @id @default(cuid())
-  email                        String
-  firstName                    String
-  lastName                     String
-  gender                       String         @default("Prefer not to say")
-  phoneNumber                  String
-  university                   String?
-  studyLevel                   String?
-  studyProgram                 String?
-  graduationYear               Int?
-  attendanceType               AttendanceType @default(IN_PERSON)
-  location                     String?
-  transportationRequired       Boolean        @default(false)
-  dietaryRestrictions          String         @db.Text
-  accessibilityRequirements    String         @db.Text
-  shirtSize                    ShirtSize?
-  emergencyContactName         String
-  emergencyContactRelationship String
-  emergencyContactPhoneNumber  String
-  numberOfPreviousHackathons   Int?
-  linkGithub                   String?
-  linkLinkedin                 String?
-  linkPersonalSite             String?
-  hasResume                    Boolean        @default(false)
-  confirmed                    Boolean        @default(false)
-  unsubscribed                 Boolean        @default(false)
-  unsubscribeToken             String?        @unique @default(cuid())
-  acceptanceExpiry             DateTime?
-  walkIn                       Boolean        @default(false)
-  winner                       Boolean        @default(false)
-  userId                       String?
-  user                         User?          @relation(fields: [userId], references: [id])
-  presenceInfo                 PresenceInfo?
-  createdAt                    DateTime       @default(now())
-  updatedAt                    DateTime       @default(now()) @updatedAt
+model Hacker {
+  id String @id @default(cuid())
+
+  preferredLanguage                Locale
+  firstName                        String
+  lastName                         String
+  email                            String
+  phoneNumber                      String
+  country                          String
+  dateOfBirth                      DateTime
+  gender                           Gender
+  pronouns                         Pronouns
+  raceEthnicity                    RaceEthnicity
+  currentSchoolOrganization        String
+  educationLevel                   EducationLevel
+  major                            String
+  linkedin                         String?
+  github                           String?
+  personalWebsite                  String?
+  hackathonBefore                  Boolean
+  hackathonDetails                 String?
+  programmingLanguagesTechnologies String
+  projectDescription               String
+  participationReason              String
+  learningGoals                    String
+  emergencyContactName             String
+  emergencyContactRelation         String
+  emergencyContactPhoneNumber      String
+  tShirtSize                       TShirtSize
+  dietaryRestrictions              DietaryRestrictions
+  specialAccommodations            String?
+  additionalInfo                   String?
+  travelOrigin                     String?
+  travelAccommodations             TravelAccommodations?
+  referralSource                   ReferralSource
+  referralOther                    String?
+  hthAgreements                    Boolean
+  hthPromotions                    Boolean
+  mlhCodeOfConduct                 Boolean
+  mlhPrivacyTerms                  Boolean
+  mlhPromotions                    Boolean
+
+  hasResume        Boolean    @default(false)
+  confirmed        Boolean    @default(false)
+  unsubscribed     Boolean    @default(false)
+  unsubscribeToken String?    @unique @default(cuid())
+  acceptanceExpiry DateTime?
+  walkIn           Boolean    @default(false)
+  winner           Boolean    @default(false)
+  userId           String?    @unique
+  user             User?      @relation(fields: [userId], references: [id])
+  presences        Presence[]
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @default(now()) @updatedAt
+  presenceInfoId   String?
 
   @@index([userId])
+  @@index([presenceInfoId])
 }
 
-model PresenceInfo {
-  id           String     @id @default(cuid())
-  checkedIn    Boolean    @default(false)
-  snacks1      Boolean    @default(false)
-  breakfast1   Boolean    @default(false)
-  lunch1       Boolean    @default(false)
-  dinner1      Boolean    @default(false)
-  snacks2      Boolean    @default(false)
-  breakfast2   Boolean    @default(false)
-  lunch2       Boolean    @default(false)
-  redbull      Boolean    @default(false)
-  hackerInfo   HackerInfo @relation(fields: [hackerInfoId], references: [id])
-  hackerInfoId String     @unique
+model Presence {
+  key       String   @id @unique
+  value     Int
+  label     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  Hacker    Hacker?  @relation(fields: [hackerId], references: [id])
+  hackerId  String?
+
+  @@index([hackerId])
 }
 
 model Event {
@@ -151,15 +168,17 @@ model Event {
   updatedAt   DateTime  @default(now()) @updatedAt
 }
 
-model AuditLog {
-  id        Int      @id @default(autoincrement())
-  timestamp DateTime @default(now())
-  userId    String
-  author    String   @default("")
-  route     String
-  action    String
-  details   String?
-  user      User[]
+model Log {
+  id         Int      @id @default(autoincrement())
+  timestamp  DateTime @default(now())
+  sourceId   String
+  sourceType String
+  author     String   @default("")
+  route      String
+  action     String
+  details    String?
+  userId     String?
+  user       User[]
 
   @@index([userId])
 }
@@ -179,22 +198,9 @@ model Hardware {
   @@index([name])
 }
 
-enum Language {
+enum Locale {
   EN
   FR
-}
-
-enum AttendanceType {
-  IN_PERSON
-  ONLINE
-}
-
-enum ShirtSize {
-  S
-  M
-  L
-  XL
-  XXL
 }
 
 enum RoleName {
@@ -210,4 +216,86 @@ enum EventType {
   SOCIAL
   CAREER_FAIR
   FOOD
+}
+
+enum Gender {
+  MAN
+  WOMAN
+  NON_BINARY
+  OTHER
+  PREFER_NOT_TO_ANSWER
+}
+
+enum Pronouns {
+  HE_HIM
+  SHE_HER
+  THEY_THEM
+  OTHER
+  PREFER_NOT_TO_ANSWER
+}
+
+enum RaceEthnicity {
+  AFRICAN
+  CAUCASIAN
+  EAST_ASIAN
+  SOUTH_ASIAN
+  MIDDLE_EASTERN
+  HISPANIC_LATINO_SPANISH
+  NATIVE_AMERICAN_ALASKAN_NATIVE
+  OTHER
+  PREFER_NOT_TO_ANSWER
+}
+
+enum EducationLevel {
+  HIGH_SCHOOL
+  UNDERGRADUATE
+  GRADUATE
+  OTHER
+}
+
+enum TShirtSize {
+  XS
+  S
+  M
+  L
+  XL
+  XXL
+}
+
+enum DietaryRestrictions {
+  HALAL
+  VEGETARIAN
+  VEGAN
+  KOSHER
+  LACTOSE_INTOLERANCE
+  GLUTEN_FREE
+  NUTS
+  SOY
+  NONE
+  OTHER
+}
+
+enum TravelAccommodations {
+  GTA
+  MONTREAL
+  WATERLOO
+  NONE
+}
+
+enum ReferralSource {
+  STUDENT_ORGANIZATIONS
+  FRIENDS
+  UNIVERSITY_WEBSITE
+  LINKEDIN
+  INSTAGRAM
+  TIKTOK
+  FACEBOOK
+  UNIVERSITY_EMAIL
+  CLASS_ANNOUNCEMENTS
+  HACKATHON_WEBSITES
+  FLYERS
+  PROFESSORS
+  ONLINE_FORUMS
+  ALUMNI_NETWORKS
+  OTHER
 }

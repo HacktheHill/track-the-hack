@@ -1,4 +1,4 @@
-import { RoleName, type Prisma } from "@prisma/client";
+import { DietaryRestrictions, EducationLevel, Gender, Locale, RoleName, TShirtSize, type Prisma } from "@prisma/client";
 import type { GetStaticProps, NextPage } from "next";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
@@ -12,10 +12,10 @@ import App from "../../components/App";
 import Error from "../../components/Error";
 import Filter from "../../components/Filter";
 import Loading from "../../components/Loading";
-import { hackerSchema, patterns } from "../../utils/common";
+import { hackerSchema } from "../../utils/common";
 
-type HackerInfo = Prisma.HackerInfoGetPayload<true>;
-type PresenceInfo = Prisma.PresenceInfoGetPayload<true>;
+type Hacker = Prisma.HackerGetPayload<true>;
+type Presence = Prisma.PresenceGetPayload<true>;
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
@@ -120,28 +120,16 @@ const Hacker: NextPage = () => {
 	);
 };
 
-export const keyToLabel = {
-	checkedIn: "Checked In",
-	snacks1: "Snacks 1",
-	breakfast1: "Breakfast 1",
-	lunch1: "Lunch 1",
-	dinner1: "Dinner 1",
-	snacks2: "Snacks 2",
-	breakfast2: "Breakfast 2",
-	lunch2: "Lunch 2",
-	redbull: "Redbull",
-} as const satisfies Record<keyof Omit<PresenceInfo, "id" | "hackerInfoId">, string>;
-
 type HackerViewProps = {
-	hackerData: HackerInfo;
-	presenceData: PresenceInfo;
+	hackerData: Hacker;
+	presenceData: Presence[];
 };
 
 type Field = {
 	label: string;
 	name: string;
-	default_value: string | boolean | number | null;
-	type: keyof typeof patterns;
+	defaultValue: string | boolean | number | null;
+	type: "text" | "number" | "email" | "select" | "url";
 	category: string;
 	options?: string[];
 };
@@ -151,19 +139,12 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 	const [id] = [router.query.id].flat();
 	const { t } = useTranslation("hacker");
 
-	const [presenceState, setPresenceState] = useState(
-		Object.fromEntries(
-			Object.entries(presenceData).filter(([key]) => key !== "id" && key !== "hackerInfoId"),
-		) as Omit<PresenceInfo, "id" | "hackerInfoId">,
-	);
 	const [edit, setEdit] = useState(false);
 
 	const downloadResume = trpc.hackers.downloadResume.useQuery(
 		{ id: id ?? "" },
 		{ enabled: !!id && !!hackerData.hasResume },
 	);
-
-	const presenceMutation = trpc.presence.update.useMutation();
 
 	const paragraphClass = "flex justify-between gap-4 text-right py-1.5 ";
 	const boldClass = "text-left font-bold";
@@ -172,121 +153,117 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 		{
 			label: t("gender"),
 			name: "gender",
-			default_value: hackerData.gender,
-			type: "text",
+			defaultValue: hackerData.gender,
+			type: "select",
+			options: Object.values(Gender),
 			category: t("category_personal_information"),
 		},
 		{
 			label: t("firstName"),
 			name: "firstName",
-			default_value: hackerData.firstName,
+			defaultValue: hackerData.firstName,
 			type: "text",
 			category: t("category_personal_information"),
 		},
 		{
 			label: t("lastName"),
 			name: "lastName",
-			default_value: hackerData.lastName,
+			defaultValue: hackerData.lastName,
 			type: "text",
 			category: t("category_personal_information"),
 		},
 		{
 			label: t("university"),
 			name: "university",
-			default_value: hackerData.university,
+			defaultValue: hackerData.currentSchoolOrganization,
 			type: "text",
 			category: t("category_personal_information"),
 		},
 		{
 			label: t("studyLevel"),
 			name: "studyLevel",
-			default_value: hackerData.studyLevel?.toUpperCase() ?? null,
-			type: "text",
+			defaultValue: hackerData.educationLevel,
+			type: "select",
+			options: Object.values(EducationLevel),
 			category: t("category_personal_information"),
 		},
 		{
 			label: t("studyProgram"),
 			name: "studyProgram",
-			default_value: hackerData.studyProgram,
+			defaultValue: hackerData.major,
 			type: "text",
-			category: t("category_personal_information"),
-		},
-		{
-			label: t("graduationYear"),
-			name: "graduationYear",
-			default_value: hackerData.graduationYear,
-			type: "number",
 			category: t("category_personal_information"),
 		},
 		{
 			label: t("phoneNumber"),
 			name: "phoneNumber",
-			default_value: hackerData.phoneNumber,
-			type: "number",
+			defaultValue: hackerData.phoneNumber,
+			type: "text",
 			category: t("category_personal_information"),
 		},
 		{
 			label: t("email"),
 			name: "email",
-			default_value: hackerData.email,
+			defaultValue: hackerData.email,
 			type: "email",
 			category: t("category_personal_information"),
 		},
 		{
 			label: t("emergencyContactName"),
 			name: "emergencyContactName",
-			default_value: hackerData.emergencyContactName,
+			defaultValue: hackerData.emergencyContactName,
 			type: "text",
 			category: t("category_emergency_contact"),
 		},
 		{
 			label: t("emergencyContactRelationship"),
 			name: "emergencyContactRelationship",
-			default_value: hackerData.emergencyContactRelationship,
+			defaultValue: hackerData.emergencyContactRelation,
 			type: "text",
 			category: t("category_emergency_contact"),
 		},
 		{
 			label: t("emergencyContactPhoneNumber"),
 			name: "emergencyContactPhoneNumber",
-			default_value: hackerData.emergencyContactPhoneNumber,
-			type: "number",
+			defaultValue: hackerData.emergencyContactPhoneNumber,
+			type: "text",
 			category: t("category_emergency_contact"),
 		},
 		{
 			label: t("dietaryRestrictions"),
 			name: "dietaryRestrictions",
-			default_value: hackerData.dietaryRestrictions,
-			type: "text",
+			defaultValue: hackerData.dietaryRestrictions,
+			type: "select",
+			options: Object.values(DietaryRestrictions),
 			category: t("category_general_information"),
 		},
 		{
 			label: t("accessibilityRequirements"),
 			name: "accessibilityRequirements",
-			default_value: hackerData.accessibilityRequirements,
+			defaultValue: hackerData.specialAccommodations,
 			type: "text",
 			category: t("category_general_information"),
 		},
 		{
 			label: t("preferredLanguage"),
 			name: "preferredLanguage",
-			default_value: hackerData.preferredLanguage,
+			defaultValue: hackerData.preferredLanguage,
 			type: "select",
-			options: ["EN", "FR"],
+			options: Object.values(Locale),
 			category: t("category_general_information"),
 		},
 		{
 			label: t("shirtSize"),
 			name: "shirtSize",
-			default_value: hackerData.shirtSize,
+			defaultValue: hackerData.tShirtSize,
 			type: "select",
-			options: ["S", "M", "L", "XL", "XXL"],
+			options: Object.values(TShirtSize),
 			category: t("category_general_information"),
 		},
 		{
 			label: t("walkIn"),
 			name: "walkIn",
-			default_value: hackerData.walkIn,
+			defaultValue: hackerData.walkIn,
 			type: "select",
 			options: ["true", "false"],
 			category: t("category_general_information"),
@@ -294,30 +271,7 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 		{
 			label: t("subscribeToMailingList"),
 			name: "subscribed",
-			default_value: hackerData.unsubscribed,
-			type: "select",
-			options: ["true", "false"],
-			category: t("category_general_information"),
-		},
-		{
-			label: t("attendanceType"),
-			name: "attendanceType",
-			default_value: hackerData.attendanceType,
-			type: "select",
-			options: ["IN_PERSON", "ONLINE"],
-			category: t("category_general_information"),
-		},
-		{
-			label: t("location"),
-			name: "location",
-			default_value: hackerData.location,
-			type: "text",
-			category: t("category_general_information"),
-		},
-		{
-			label: t("transportationRequired"),
-			name: "transportationRequired",
-			default_value: hackerData.transportationRequired,
+			defaultValue: !hackerData.unsubscribed,
 			type: "select",
 			options: ["true", "false"],
 			category: t("category_general_information"),
@@ -325,14 +279,21 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 		{
 			label: "Linkedin",
 			name: "linkLinkedin",
-			default_value: hackerData.linkLinkedin,
+			defaultValue: hackerData.linkedin,
 			type: "url",
 			category: t("category_links_information"),
 		},
 		{
 			label: "Github",
 			name: "linkGithub",
-			default_value: hackerData.linkGithub,
+			defaultValue: hackerData.github,
+			type: "url",
+			category: t("category_links_information"),
+		},
+		{
+			label: "Personal Website",
+			name: "linkPersonalSite",
+			defaultValue: hackerData.personalWebsite,
 			type: "url",
 			category: t("category_links_information"),
 		},
@@ -357,7 +318,7 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 	};
 
 	fields.forEach(field => {
-		initialInputValues[field.name] = field.default_value?.toString() ?? "";
+		initialInputValues[field.name] = field.defaultValue as string;
 	});
 
 	fields.forEach(item => {
@@ -373,19 +334,6 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 		const formData = new FormData(event.currentTarget);
 		const data = Object.fromEntries(formData) as Record<string, string | boolean | number | undefined>;
 		data.id = id;
-
-		if (data.linkLinkedin !== hackerData.linkLinkedin || data.linkGithub !== hackerData.linkGithub) {
-			window.location.reload();
-		}
-
-		if (typeof data.graduationYear === "string") {
-			const parsedGraduationYear = parseInt(data.graduationYear);
-			if (!isNaN(parsedGraduationYear)) {
-				data.graduationYear = parsedGraduationYear;
-			} else {
-				data.graduationYear = undefined;
-			}
-		}
 
 		const resume = formData.get("resume") as File | null;
 		data.hasResume = !!resume;
@@ -420,32 +368,15 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 				{hackerData.firstName} {hackerData.lastName} ({hackerData.gender})
 			</h1>
 
-			<p className="self-center">
-				{hackerData.studyLevel?.toUpperCase()} {hackerData.studyProgram}{" "}
-				{hackerData.university && `at ${hackerData.university}`}{" "}
-				{hackerData.graduationYear && `(${hackerData.graduationYear})`}
-			</p>
 			<Filter value={[RoleName.ORGANIZER]} method="some">
 				<div className="grid grid-flow-row grid-cols-2 gap-4 rounded-lg bg-light-tertiary-color p-4">
-					{Object.entries(presenceState).map(([key, value]) => (
-						<p key={key}>
-							<input
-								className="form-checkbox h-3.5 w-5 rounded text-gray-800 accent-dark-primary-color"
-								type="checkbox"
-								key={key}
-								id={key}
-								checked={value}
-								onChange={() => {
-									const updatedPresenceInfo = { ...presenceState, [key]: !value };
-									setPresenceState(updatedPresenceInfo);
-									presenceMutation.mutate({
-										id: id ?? "",
-										presenceInfo: updatedPresenceInfo,
-									});
-								}}
-							/>{" "}
-							<label htmlFor={key}>{keyToLabel[key as keyof typeof keyToLabel]}</label>
-						</p>
+					{presenceData.map((presence, index) => (
+						<div key={index} className="flex justify-between gap-4">
+							<p>
+								<b>{presence.label}</b>
+							</p>
+							<p>{presence.value}</p>
+						</div>
 					))}
 				</div>
 			</Filter>
@@ -489,7 +420,6 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 										onChange={e => {
 											handleInputChange(item.name, e.target.value);
 										}}
-										pattern={patterns[item.type]}
 									/>
 								)}
 							</div>
@@ -510,9 +440,9 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 				<p className="flex flex-row flex-wrap justify-center gap-4 py-4">
 					{Object.entries({
 						Resume: downloadResume.data,
-						LinkedIn: hackerData.linkLinkedin,
-						GitHub: hackerData.linkGithub,
-						"Personal Website": hackerData.linkPersonalSite,
+						LinkedIn: hackerData.linkedin,
+						GitHub: hackerData.github,
+						"Personal Website": hackerData.personalWebsite,
 					}).map(
 						([key, value]) =>
 							value && (

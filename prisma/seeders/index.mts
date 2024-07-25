@@ -1,11 +1,10 @@
 import { PrismaClient, RoleName } from "@prisma/client";
 
 import { insertRecords } from "./utils.mjs";
-
 import { events } from "./events.mjs";
-import { generateHackerInfos } from "./hackerInfos.mjs";
-import { hardware } from "./hardware.mjs";
+import { generateHackers } from "./hackers.mjs";
 import { generateUsers } from "./users.mjs";
+import { generatePresences } from "./presences.mjs";
 
 const prisma = new PrismaClient();
 
@@ -32,9 +31,13 @@ async function main() {
 	console.log("Creating dummy hardware...");
 	await insertRecords(prisma.hardware, hardwareData); */
 
-	const hackerInfos = generateHackerInfos(10);
-	console.log("Creating dummy hacker info...");
-	await insertRecords(prisma.hackerInfo, hackerInfos);
+	const hackers = generateHackers(10);
+	console.log("Creating dummy hackers...");
+	await insertRecords(prisma.hacker, hackers);
+
+	const presences = generatePresences(10);
+	console.log("Creating dummy presences...");
+	await insertRecords(prisma.presence, presences);
 }
 
 main()

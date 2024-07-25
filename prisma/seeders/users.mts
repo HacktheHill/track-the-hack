@@ -1,5 +1,6 @@
 import { faker } from "@faker-js/faker";
-import { Language, RoleName } from "@prisma/client";
+import { RoleName } from "@prisma/client";
+import { generateHackerData } from "./hackers.mjs";
 
 // Generates dummy users
 const user = () => {
@@ -7,7 +8,6 @@ const user = () => {
 	const lastName = faker.person.lastName();
 	const name = `${firstName} ${lastName}`;
 	const email = faker.internet.email();
-	const phoneNumber = faker.phone.number();
 
 	return {
 		name,
@@ -16,20 +16,7 @@ const user = () => {
 			connect: [{ name: RoleName.HACKER }],
 		},
 		image: "https://i.pravatar.cc/50",
-		hackerInfo: {
-			create: {
-				firstName,
-				lastName,
-				preferredLanguage: Language.EN,
-				phoneNumber,
-				email,
-				emergencyContactName: "",
-				emergencyContactRelationship: "",
-				emergencyContactPhoneNumber: "",
-				dietaryRestrictions: "",
-				accessibilityRequirements: "",
-			},
-		},
+		hacker: generateHackerData(),
 	};
 };
 

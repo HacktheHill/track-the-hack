@@ -1,8 +1,8 @@
+import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useRouter } from "next/router";
 import type { GetStaticProps, NextPage } from "next/types";
 import { useEffect, useState } from "react";
-import { useTranslation } from "next-i18next";
 import FormPage from "../../components/FormPage";
 import { trpc } from "../../server/api/api";
 
@@ -63,13 +63,11 @@ const Unsubscribe: NextPage = () => {
 			error={error}
 			invalid={!email || query.data === null ? t("invalid-email") : null}
 			loading={email != null && query.isLoading && !query.isError}
-			path={query.data?.email ? `/unsubscribe?email=${query.data?.email}` : null}
-			user={query.data ?? null}
 			title={t("unsubscribe")}
 		>
 			<h3 className="font-rubik text-[clamp(1rem,1vmin,5rem)] font-medium text-dark-color">
 				{t("are-you-sure", {
-					email: query.data?.email as string,
+					email: query.data?.email,
 					unsubscribe: (isUnsubscribed ? t("resubscribe") : t("unsubscribe")).toLowerCase(),
 				})}
 			</h3>

@@ -1,4 +1,4 @@
-import type { Language } from "@prisma/client";
+import type { Locale } from "@prisma/client";
 import i18next from "i18next";
 import Backend from "i18next-fs-backend";
 import { createTransport } from "nodemailer";
@@ -48,9 +48,9 @@ const sendEmail = async ({ to, from, subject, html, text }: Email) => {
 	}
 };
 
-const sendApplyEmail = async ({ email, name, language }: { email: string; name: string; language: Language }) => {
-	await i18next.changeLanguage(language.toLocaleLowerCase());
-	const t = i18next.getFixedT(language.toLocaleLowerCase(), "email");
+const sendApplyEmail = async ({ email, name, locale }: { email: string; name: string; locale: Locale }) => {
+	await i18next.changeLanguage(locale.toLocaleLowerCase());
+	const t = i18next.getFixedT(locale.toLocaleLowerCase(), "email");
 
 	await sendEmail({
 		to: email,

@@ -1,4 +1,4 @@
-import { AttendanceType, RoleName, ShirtSize, type HackerInfo } from "@prisma/client";
+import { ReferralSource, RoleName, TShirtSize, type Hacker } from "@prisma/client";
 import { observable } from "@trpc/server/observable";
 import { EventEmitter } from "events";
 import { z } from "zod";
@@ -6,8 +6,8 @@ import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 import { hackerSchema } from "../../../utils/common";
 import { hasRoles } from "../../../utils/helpers";
-import { logAuditEntry } from "../../lib/audit";
 import { sendApplyEmail } from "../../lib/email";
+import { log } from "../../lib/log";
 import { generatePresignedGetUrl, generatePresignedPutUrl, generateS3Filename } from "../../lib/s3";
 
 const DEFAULT_ACCEPTANCE_EXPIRY = new Date(2023, 2, 6, 5, 0, 0, 0); // 2023-03-06 00:00:00 EST
@@ -17,8 +17,8 @@ const ee = new EventEmitter();
 export const hackerRouter = createTRPCRouter({
 	onMutation: publicProcedure.subscription(() => {
 		// return an `observable` with a callback which is triggered immediately
-		return observable<HackerInfo>(emit => {
-			const onMutation = (data: HackerInfo) => {
+		return observable<Hacker>(emit => {
+			const onMutation = (data: Hacker) => {
 				// emit data to client
 				emit.next(data);
 			};
@@ -44,15 +44,15 @@ export const hackerRouter = createTRPCRouter({
 				),
 		)
 		.query(async ({ ctx, input }) => {
-			let hacker: HackerInfo | null = null;
+			let hacker: Hacker | null = null;
 			if ("id" in input) {
-				hacker = await ctx.prisma.hackerInfo.findUnique({
+				hacker = await ctx.prisma.hacker.findUnique({
 					where: {
 						id: input.id,
 					},
 				});
 			} else if ("email" in input) {
-				hacker = await ctx.prisma.hackerInfo.findFirst({
+				hacker = await ctx.prisma.hacker.findFirst({
 					where: {
 						email: input.email,
 					},
@@ -74,9 +74,9 @@ export const hackerRouter = createTRPCRouter({
 			}),
 		)
 		.query(async ({ ctx, input }) => {
-			let hacker: HackerInfo | null = null;
+			let hacker: Hacker | null = null;
 			if ("id" in input) {
-				hacker = await ctx.prisma.hackerInfo.findFirst({
+				hacker = await ctx.prisma.hacker.findFirst({
 					take: 1,
 					skip: 1,
 					cursor: {
@@ -96,9 +96,9 @@ export const hackerRouter = createTRPCRouter({
 			}),
 		)
 		.query(async ({ ctx, input }) => {
-			let hacker: HackerInfo | null = null;
+			let hacker: Hacker | null = null;
 			if ("id" in input) {
-				hacker = await ctx.prisma.hackerInfo.findFirst({
+				hacker = await ctx.prisma.hacker.findFirst({
 					take: -1,
 					skip: 1,
 					cursor: {
@@ -121,7 +121,7 @@ export const hackerRouter = createTRPCRouter({
 					currentLevelsOfStudy: z.array(z.string()).optional(),
 					programs: z.array(z.string()).optional(),
 					graduationYears: z.array(z.number()).optional(),
-					attendanceTypes: z.array(z.nativeEnum(AttendanceType)).optional(),
+					referralSources: z.array(z.nativeEnum(ReferralSource)).optional(),
 				})
 				.optional(),
 		)
@@ -148,25 +148,23 @@ export const hackerRouter = createTRPCRouter({
 				throw new Error("You do not have permission to do this");
 			}
 
-			//return all hackerInfo if no pagination is needed
+			// Return all hackers if no pagination is needed
 			if (!input) {
 				return {
-					results: await ctx.prisma.hackerInfo.findMany(),
+					results: await ctx.prisma.hacker.findMany(),
 					nextCursor: null,
 				};
 			}
 
-			const { limit, cursor, schools, currentLevelsOfStudy, programs, graduationYears, attendanceTypes } = input;
+			const { limit, cursor, schools, currentLevelsOfStudy, programs, graduationYears } = input;
 
-			interface QueryConditions {
+			const queryConditions: {
 				university?: { in: string[] } | null;
 				studyLevel?: { in: string[] } | null;
 				studyProgram?: { in: string[] } | null;
 				graduationYear?: { in: number[] } | null;
-				attendanceType?: { in: AttendanceType[] };
-			}
-
-			const queryConditions: QueryConditions = {};
+				referralSource?: { in: ReferralSource[] };
+			} = {};
 
 			if (schools && schools.length > 0) {
 				queryConditions.university = { in: schools };
@@ -184,11 +182,11 @@ export const hackerRouter = createTRPCRouter({
 				queryConditions.graduationYear = { in: graduationYears };
 			}
 
-			if (attendanceTypes && attendanceTypes.length > 0) {
-				queryConditions.attendanceType = { in: attendanceTypes };
+			if (input.referralSources && input.referralSources.length > 0) {
+				queryConditions.referralSource = { in: input.referralSources };
 			}
 
-			const results = await ctx.prisma.hackerInfo.findMany({
+			const results = await ctx.prisma.hacker.findMany({
 				take: limit + 1, // get an extra item at the end which we'll use as next cursor
 				cursor: cursor ? { id: cursor } : undefined,
 				where: queryConditions,
@@ -234,37 +232,46 @@ export const hackerRouter = createTRPCRouter({
 			throw new Error("You do not have permission to do this");
 		}
 
-		const filterOptions: {
-			schools: string[];
-			currentLevelsOfStudy: string[];
-			programs: string[];
-			graduationYears: string[];
-			attendanceTypes: string[];
-		} = {
-			schools: [],
-			currentLevelsOfStudy: [],
-			programs: [],
-			graduationYears: [],
-			attendanceTypes: [],
+		const filterOptions = {
+			currentSchoolOrganizations: [],
+			educationLevels: [],
+			majors: [],
+			referralSources: [],
+		} as {
+			currentSchoolOrganizations: string[];
+			educationLevels: string[];
+			majors: string[];
+			referralSources: ReferralSource[];
 		};
 
-		const hackers = await ctx.prisma.hackerInfo.findMany();
+		const hackers = await ctx.prisma.hacker.findMany();
 
 		hackers?.forEach(hacker => {
-			if (hacker.university && !filterOptions.schools.includes(hacker.university.toLowerCase()))
-				filterOptions.schools.push(hacker.university.toLowerCase());
+			if (hacker.currentSchoolOrganization) {
+				if (!filterOptions.currentSchoolOrganizations.includes(hacker.currentSchoolOrganization)) {
+					filterOptions.currentSchoolOrganizations.push(hacker.currentSchoolOrganization);
+				}
+			}
 
-			if (hacker.studyLevel && !filterOptions.currentLevelsOfStudy.includes(hacker.studyLevel.toLowerCase()))
-				filterOptions.currentLevelsOfStudy.push(hacker.studyLevel.toLowerCase());
+			if (hacker.educationLevel) {
+				if (!filterOptions.educationLevels.includes(hacker.educationLevel)) {
+					filterOptions.educationLevels.push(hacker.educationLevel);
+				}
+			}
 
-			if (hacker.studyProgram && !filterOptions.programs.includes(hacker.studyProgram.toLowerCase()))
-				filterOptions.programs.push(hacker.studyProgram.toLowerCase());
+			if (hacker.major) {
+				if (!filterOptions.majors.includes(hacker.major)) {
+					filterOptions.majors.push(hacker.major);
+				}
+			}
 
-			if (hacker.graduationYear && !filterOptions.graduationYears.includes(hacker.graduationYear.toString()))
-				filterOptions.graduationYears.push(hacker.graduationYear.toString());
-
-			if (hacker.attendanceType && !filterOptions.attendanceTypes.includes(hacker.attendanceType))
-				filterOptions.attendanceTypes.push(hacker.attendanceType);
+			if (hacker.referralSource) {
+				Object.values(ReferralSource).forEach(source => {
+					if (!filterOptions.referralSources.includes(source)) {
+						filterOptions.referralSources.push(source);
+					}
+				});
+			}
 		});
 
 		return {
@@ -277,13 +284,12 @@ export const hackerRouter = createTRPCRouter({
 		.input(
 			z.object({
 				id: z.string(),
-				shirtSize: z.enum([ShirtSize.S, ShirtSize.M, ShirtSize.L, ShirtSize.XL, ShirtSize.XXL]),
-				attendanceType: z.enum([AttendanceType.IN_PERSON, AttendanceType.ONLINE]),
+				shirtSize: z.enum([TShirtSize.S, TShirtSize.M, TShirtSize.L, TShirtSize.XL, TShirtSize.XXL]),
 				userId: z.string(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
-			const hacker = await ctx.prisma.hackerInfo.findUnique({
+			const hacker = await ctx.prisma.hacker.findUnique({
 				where: {
 					id: input.id,
 				},
@@ -301,19 +307,14 @@ export const hackerRouter = createTRPCRouter({
 				throw new Error("Hacker already assigned to another account");
 			}
 
-			if (hacker.onlyOnline && input.attendanceType !== AttendanceType.ONLINE) {
-				throw new Error("Hacker can only attend online");
-			}
-
 			ee.emit("add", hacker);
 
-			return ctx.prisma.hackerInfo.update({
+			return ctx.prisma.hacker.update({
 				where: {
 					id: input.id,
 				},
 				data: {
-					shirtSize: input.attendanceType === AttendanceType.ONLINE ? null : input.shirtSize,
-					attendanceType: input.attendanceType,
+					tShirtSize: input.shirtSize,
 					userId: input.userId,
 					confirmed: true,
 				},
@@ -330,7 +331,7 @@ export const hackerRouter = createTRPCRouter({
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
-			const hacker = await ctx.prisma.hackerInfo.findFirst({
+			const hacker = await ctx.prisma.hacker.findFirst({
 				where: {
 					email: input.email,
 				},
@@ -350,7 +351,7 @@ export const hackerRouter = createTRPCRouter({
 
 			ee.emit("add", hacker);
 
-			return ctx.prisma.hackerInfo.updateMany({
+			return ctx.prisma.hacker.updateMany({
 				where: {
 					email: input.email,
 				},
@@ -391,26 +392,27 @@ export const hackerRouter = createTRPCRouter({
 				throw new Error("You do not have permission to do this");
 			}
 
-			const hacker = await ctx.prisma.hackerInfo.create({
+			const hacker = await ctx.prisma.hacker.create({
 				data: {
 					...input,
 					walkIn: true,
-					presenceInfo: {
+					presences: {
 						create: {
-							checkedIn: true,
+							key: "checkedIn",
+							value: 1,
 						},
 					},
 				},
 			});
 
-			await logAuditEntry(
-				ctx,
-				hacker.id,
-				"/walk-in",
-				"WalkIn",
-				user.name ?? "Unknown",
-				`${input.firstName} ${input.lastName} walked in.`,
-			);
+			await log(ctx, {
+				sourceId: hacker.id,
+				sourceType: "Hacker",
+				route: "/walk-in",
+				action: "WalkIn",
+				details: `${input.firstName} ${input.lastName} walked in.`,
+				author: user.name ?? "Unknown",
+			});
 
 			ee.emit("add", hacker);
 
@@ -443,7 +445,7 @@ export const hackerRouter = createTRPCRouter({
 				throw new Error("User not found");
 			}
 
-			const hacker = await ctx.prisma.hackerInfo.create({
+			const hacker = await ctx.prisma.hacker.create({
 				data: input,
 			});
 
@@ -453,17 +455,17 @@ export const hackerRouter = createTRPCRouter({
 			await sendApplyEmail({
 				email: input.email,
 				name: input.firstName,
-				language: input.preferredLanguage ?? "EN",
+				locale: input.preferredLanguage ?? "EN",
 			});
 
-			await logAuditEntry(
-				ctx,
-				hacker.id,
-				"/apply",
-				"Apply",
-				user.name ?? "Unknown",
-				`${input.firstName} ${input.lastName} applied.`,
-			);
+			await log(ctx, {
+				sourceId: hacker.id,
+				sourceType: "Hacker",
+				route: "/apply",
+				action: "Apply",
+				author: user.name ?? "Unknown",
+				details: `${input.firstName} ${input.lastName} applied.`,
+			});
 
 			ee.emit("add", hacker);
 
@@ -504,25 +506,20 @@ export const hackerRouter = createTRPCRouter({
 				throw new Error("You do not have permission to do this");
 			}
 
-			await logAuditEntry(
-				ctx,
-				userId,
-				"/update-hacker-info",
-				"UpdateHackerInfo",
-				user.name ?? "Unknown",
-				"Updated hacker information",
-			);
-			const hackerDetails = await ctx.prisma.hackerInfo.findUnique({
+			await log(ctx, {
+				sourceId: input.id,
+				sourceType: "Hacker",
+				route: "/update-hacker-info",
+				author: user.name ?? "Unknown",
+				action: "UpdateHackerInfo",
+				details: `Updated hacker info for ${input.firstName} ${input.lastName}.`,
+			});
+
+			const hackerDetails = await ctx.prisma.hacker.findUnique({
 				where: {
 					id: input.id,
 				},
 			});
-			const auditEntries: Array<{
-				action: string;
-				entityType: string;
-				userName: string;
-				details: string;
-			}> = [];
 
 			for (const key in input) {
 				for (const key2 in hackerDetails) {
@@ -535,25 +532,20 @@ export const hackerRouter = createTRPCRouter({
 						const field = key as keyof typeof input;
 						const before = hackerDetails[key2 as keyof typeof hackerDetails];
 						const after = input[key as keyof typeof input];
-						console.log(field, before, after);
 
-						const auditEntry = {
-							action: "/update-hacker-info",
-							entityType: "UpdateHackerInfo",
-							userName: user.name ?? "Unknown",
+						await log(ctx, {
+							sourceId: input.id,
+							sourceType: "Hacker",
+							route: "/update-hacker-info",
 							details: `Updated field ${field} from ${String(before)} to ${String(after ?? "empty")}`,
-						};
-
-						auditEntries.push(auditEntry);
+							action: "UpdateHackerInfo",
+							author: user.name ?? "Unknown",
+						});
 					}
 				}
 			}
 
-			for (const entry of auditEntries) {
-				await logAuditEntry(ctx, input.id, entry.action, entry.entityType, entry.userName, entry.details);
-			}
-
-			const hacker = await ctx.prisma.hackerInfo.update({
+			const hacker = await ctx.prisma.hacker.update({
 				where: {
 					id: input.id,
 				},
@@ -577,7 +569,7 @@ export const hackerRouter = createTRPCRouter({
 			}),
 		)
 		.query(async ({ ctx, input }) => {
-			const hacker = await ctx.prisma.hackerInfo.findUnique({
+			const hacker = await ctx.prisma.hacker.findUnique({
 				where: {
 					id: input.id,
 				},

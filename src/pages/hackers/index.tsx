@@ -1,4 +1,5 @@
-import { RoleName, type HackerInfo } from "@prisma/client";
+import type { Hacker, ReferralSource } from "@prisma/client";
+import { RoleName } from "@prisma/client";
 import type { NextPage } from "next";
 import { useTranslation } from "next-i18next";
 import Link from "next/link";
@@ -23,8 +24,8 @@ const Hackers: NextPage = () => {
 
 	const [filters, setFilters] = useState<Filters>({
 		schools: [],
-		currentLevelsOfStudy: [],
-		programs: [],
+		educationLevels: [],
+		major: [],
 		graduationYears: [],
 		attendanceTypes: [],
 	});
@@ -33,8 +34,8 @@ const Hackers: NextPage = () => {
 		{
 			limit: 50,
 			schools: filters.schools,
-			currentLevelsOfStudy: filters.currentLevelsOfStudy,
-			programs: filters.programs,
+			educationLevels: filters.educationLevels,
+			major: filters.major,
 			graduationsYears: filters.graduationYears,
 			attendanceTypes: filters.attendanceTypes,
 		},
@@ -79,18 +80,16 @@ const Hackers: NextPage = () => {
 		};
 	}, [updateColumns]);
 
-	let filterBy: {
-		schools: string[];
-		currentLevelsOfStudy: string[];
-		programs: string[];
-		graduationYears: string[];
-		attendanceTypes: string[];
-	} = {
-		schools: [],
-		currentLevelsOfStudy: [],
-		programs: [],
-		graduationYears: [],
-		attendanceTypes: [],
+	let filterBy = {
+		currentSchoolOrganizations: [],
+		educationLevels: [],
+		majors: [],
+		referralSources: [],
+	} as {
+		currentSchoolOrganizations: string[];
+		educationLevels: string[];
+		majors: string[];
+		referralSources: ReferralSource[];
 	};
 
 	const { data } = trpc.hackers.filterOptions.useQuery();
@@ -123,8 +122,8 @@ const Hackers: NextPage = () => {
 			? hackers
 			: hackers?.filter(
 					hacker =>
-						hacker.university?.toLowerCase().includes(search.toLowerCase()) ||
-						hacker.studyProgram?.toLowerCase().includes(search.toLowerCase()) ||
+						hacker.currentSchoolOrganization?.toLowerCase().includes(search.toLowerCase()) ||
+						hacker.major?.toLowerCase().includes(search.toLowerCase()) ||
 						`${hacker.firstName} ${hacker.lastName}`.toLowerCase().includes(search.toLowerCase()),
 				);
 
@@ -165,8 +164,8 @@ const Hackers: NextPage = () => {
 							id={hacker.id}
 							firstName={hacker.firstName}
 							lastName={hacker.lastName}
-							university={hacker.university}
-							studyProgram={hacker.studyProgram}
+							currentSchoolOrganization={hacker.currentSchoolOrganization}
+							major={hacker.major}
 						/>
 					))}
 				</div>
@@ -184,17 +183,17 @@ const Hackers: NextPage = () => {
 	);
 };
 
-type CardProps = Pick<HackerInfo, "university" | "firstName" | "lastName" | "studyProgram" | "id">;
+type CardProps = Pick<Hacker, "currentSchoolOrganization" | "firstName" | "lastName" | "major" | "id">;
 
-const Card = ({ firstName, lastName, university, studyProgram, id }: CardProps) => {
+const Card = ({ firstName, lastName, currentSchoolOrganization, major, id }: CardProps) => {
 	return (
 		<Link
 			href={`/hackers/hacker?id=${id}`}
 			className="hover:bg-medium block w-full rounded-lg bg-medium-primary-color p-6 text-light-color shadow"
 		>
 			<h3 className="text-2xl font-bold tracking-tight">{`${firstName} ${lastName}`}</h3>
-			<p>{university}</p>
-			<p>{studyProgram}</p>
+			<p>{major}</p>
+			<p>{currentSchoolOrganization}</p>
 		</Link>
 	);
 };
@@ -243,11 +242,10 @@ type FilterProps = {
 	filters: Filters;
 	setFilters: (filters: Filters) => void;
 	filterOptions: {
-		schools: string[];
-		currentLevelsOfStudy: string[];
-		programs: string[];
-		graduationYears: string[];
-		attendanceTypes: string[];
+		currentSchoolOrganizations: string[];
+		educationLevels: string[];
+		majors: string[];
+		referralSources: ReferralSource[];
 	};
 	sidebarVisible: boolean;
 };
@@ -275,7 +273,7 @@ const FilterOptions = ({ filters, setFilters, filterOptions, sidebarVisible }: F
 									Level of Study
 								</div>
 								<ul>
-									{filterOptions.currentLevelsOfStudy?.map(option => (
+									{filterOptions.educationLevels?.map(option => (
 										<li key={option} className="text-dark mb-2 flex items-center justify-between">
 											<span>
 												{option.charAt(0).toUpperCase()}
@@ -285,12 +283,12 @@ const FilterOptions = ({ filters, setFilters, filterOptions, sidebarVisible }: F
 												type="checkbox"
 												className="h-6 w-6"
 												checked={
-													filters["currentLevelsOfStudy"]
-														? filters["currentLevelsOfStudy"][0] == option
+													filters["educationLevels"]
+														? filters["educationLevels"][0] == option
 														: false
 												}
 												onChange={() => {
-													handleCheckBox(option, "currentLevelsOfStudy");
+													handleCheckBox(option, "educationLevels");
 												}}
 											/>
 										</li>
@@ -300,95 +298,68 @@ const FilterOptions = ({ filters, setFilters, filterOptions, sidebarVisible }: F
 							<li>
 								<div className="text-dark mb-2 text-left font-bold lg:text-base xl:text-lg">School</div>
 								<ul>
-									{filterOptions.schools?.map(option => (
+									{filterOptions.currentSchoolOrganizations?.map(option => (
 										<li key={option} className="text-dark mb-2 flex items-center justify-between">
 											<span>
 												{option.charAt(0).toUpperCase()}
 												{option.slice(1)}
-											</span>
-											<input
-												checked={filters["schools"] ? filters["schools"][0] == option : false}
-												onChange={() => {
-													handleCheckBox(option, "schools");
-												}}
-												type="checkbox"
-												className="z-50 h-6 w-6"
-											/>
-										</li>
-									))}
-								</ul>
-							</li>
-							<li>
-								<div className="text-dark mb-2 text-left font-bold lg:text-base xl:text-lg">
-									Program
-								</div>
-								<ul>
-									{filterOptions.programs?.map(option => (
-										<li key={option} className="text-dark mb-2 flex items-center justify-between">
-											<span>
-												{option.charAt(0).toUpperCase()}
-												{option.slice(1)}
-											</span>
-											<input
-												checked={filters["programs"] ? filters["programs"][0] == option : false}
-												onChange={() => {
-													handleCheckBox(option, "programs");
-												}}
-												type="checkbox"
-												className="z-50 h-6 w-6"
-											/>
-										</li>
-									))}
-								</ul>
-							</li>
-							<li>
-								<div className="text-dark mb-2 text-left font-bold lg:text-base xl:text-lg">
-									Graduation Year
-								</div>
-								<ul>
-									{filterOptions.graduationYears
-										.toSorted((a, b) => a.localeCompare(b))
-										?.map(option => (
-											<li
-												key={option}
-												className="text-dark mb-2 flex items-center justify-between"
-											>
-												<span>{option}</span>
-												<input
-													checked={
-														filters["graduationYears"]
-															? filters["graduationYears"][0] == option
-															: false
-													}
-													onChange={() => {
-														handleCheckBox(option, "graduationYears");
-													}}
-													type="checkbox"
-													className="z-50 h-6 w-6"
-												/>
-											</li>
-										))}
-								</ul>
-							</li>
-							<li>
-								<div className="text-dark mb-2 text-left font-bold lg:text-base xl:text-lg">
-									Online/In-person
-								</div>
-								<ul>
-									{filterOptions.attendanceTypes?.map(option => (
-										<li key={option} className="text-dark mb-2 flex items-center justify-between">
-											<span>
-												{option.split("_").join(" ").charAt(0)}
-												{option.split("_").join(" ").slice(1).toLowerCase()}
 											</span>
 											<input
 												checked={
-													filters["attendanceTypes"]
-														? filters["attendanceTypes"][0] == option
+													filters["currentSchoolOrganizations"]
+														? filters["currentSchoolOrganizations"][0] == option
 														: false
 												}
 												onChange={() => {
-													handleCheckBox(option, "attendanceTypes");
+													handleCheckBox(option, "currentSchoolOrganizations");
+												}}
+												type="checkbox"
+												className="z-50 h-6 w-6"
+											/>
+										</li>
+									))}
+								</ul>
+							</li>
+							<li>
+								<div className="text-dark mb-2 text-left font-bold lg:text-base xl:text-lg">Major</div>
+								<ul>
+									{filterOptions.majors?.map(option => (
+										<li key={option} className="text-dark mb-2 flex items-center justify-between">
+											<span>
+												{option.charAt(0).toUpperCase()}
+												{option.slice(1)}
+											</span>
+											<input
+												checked={filters["majors"] ? filters["majors"][0] == option : false}
+												onChange={() => {
+													handleCheckBox(option, "majors");
+												}}
+												type="checkbox"
+												className="z-50 h-6 w-6"
+											/>
+										</li>
+									))}
+								</ul>
+							</li>
+							<li>
+								<div className="text-dark mb-2 text-left font-bold lg:text-base xl:text-lg">
+									Referral Source
+								</div>
+								<ul>
+									{filterOptions.referralSources?.map(option => (
+										<li key={option} className="text-dark mb-2 flex items-center justify-between">
+											<span>
+												{option.charAt(0).toUpperCase()}
+												{option.slice(1)}
+											</span>
+											<input
+												checked={
+													filters["referralSources"]
+														? filters["referralSources"][0] == option
+														: false
+												}
+												onChange={() => {
+													handleCheckBox(option, "referralSources");
 												}}
 												type="checkbox"
 												className="z-50 h-6 w-6"
