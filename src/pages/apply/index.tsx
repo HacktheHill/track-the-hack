@@ -303,7 +303,6 @@ const Language = ({ field }: { field: ProcessedFieldGeneric<"radio"> }) => {
 						value={key}
 						className="peer hidden"
 						onChange={() => {
-							console.log(key);
 							void router.push(router.pathname, router.pathname, {
 								locale: key.toLocaleLowerCase(),
 							});
@@ -330,7 +329,7 @@ const Select = ({ field }: { field: ProcessedFieldGeneric<"select"> }) => {
 			<select
 				id={field.name}
 				name={field.name}
-				className="w-full rounded border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+				className="w-full rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
 				required={field.required}
 				onChange={e => setShowOther(e.target.value === "other")}
 			>
@@ -346,7 +345,7 @@ const Select = ({ field }: { field: ProcessedFieldGeneric<"select"> }) => {
 					id={`${field.name}-other`}
 					name={`${field.name}-other`}
 					type="text"
-					className="w-full rounded border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+					className="w-full rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
 				/>
 			)}
 		</>
@@ -383,7 +382,7 @@ const Radio = ({ field }: { field: ProcessedFieldGeneric<"radio"> }) => {
 					id={`${field.name}-other`}
 					name={`${field.name}-other`}
 					type="text"
-					className="w-full rounded border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+					className="w-full rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
 				/>
 			)}
 		</div>
@@ -400,7 +399,7 @@ const MultiSelect = ({ field }: { field: ProcessedFieldGeneric<"multiselect"> })
 				id={field.name}
 				name={field.name}
 				multiple
-				className="w-full rounded border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+				className="w-full rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
 				required={field.required}
 				onChange={e =>
 					setShowOther(
@@ -421,7 +420,7 @@ const MultiSelect = ({ field }: { field: ProcessedFieldGeneric<"multiselect"> })
 					id={`${field.name}-other`}
 					name={`${field.name}-other`}
 					type="text"
-					className="w-full rounded border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+					className="w-full rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
 				/>
 			)}
 		</div>
@@ -447,12 +446,12 @@ const Typeahead = ({ field }: { field: ProcessedFieldGeneric<"typeahead"> }) => 
 				id={field.name}
 				name={field.name}
 				list={`${field.name}-list`}
-				className="w-full rounded border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+				className="w-full rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
 				required={field.required}
 			/>
 			<datalist id={`${field.name}-list`}>
-				{options.map(option => (
-					<option key={option} value={option} />
+				{options.map((option, i) => (
+					<option key={i} value={option} />
 				))}
 			</datalist>
 		</>
@@ -479,7 +478,7 @@ const TextArea = ({ field }: { field: ProcessedFieldGeneric<"textarea"> }) => {
 			<textarea
 				id={field.name}
 				name={field.name}
-				className="w-full rounded border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+				className="w-full rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
 				required={field.required}
 				onChange={e => {
 					const { value } = e.target;
@@ -504,7 +503,7 @@ const Input = ({ field }: { field: ProcessedFieldGeneric<"text" | "email" | "tel
 			id={field.name}
 			name={field.name}
 			type={field.type}
-			className="w-full rounded border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+			className="w-full rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
 			required={field.required}
 			accept={field.type === "file" ? "application/pdf" : undefined}
 		/>
