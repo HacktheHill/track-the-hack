@@ -1,7 +1,8 @@
 import { getServerSession } from "next-auth";
-import { useTranslation } from "next-i18next";
+import { Trans, useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import type { GetServerSideProps } from "next/types";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -114,8 +115,24 @@ const Apply = ({ applicationQuestions }: { applicationQuestions: ApplicationQues
 		return fields.map(field => (
 			<div key={field.name} className="flex w-full flex-col items-center gap-2 sm:flex-row">
 				<label htmlFor={field.name} className="flex-[50%] font-rubik text-dark-color">
-					{t(`${page}.${field.name}.label`)}
-					{field.required && <span className="text-red-500"> *</span>}
+					<Trans
+						i18nKey={`${page}.${field.name}.label`}
+						t={t}
+						components={
+							"links" in field
+								? field.links?.map((url: string) => (
+										<Link
+											href={url}
+											key={url}
+											className="text-dark-primary-color underline"
+											target="_blank"
+											rel="noopener noreferrer"
+										/>
+									))
+								: []
+						}
+					/>
+					{field.required && <span className="text-red-500">&nbsp;*</span>}
 				</label>
 				{renderField(field)}
 			</div>

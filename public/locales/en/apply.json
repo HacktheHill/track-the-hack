@@ -214,18 +214,18 @@
 	},
 	"agreements": {
 		"title": "Agreements and Consents",
-		"description": "We’re almost there. We’d like to inform the applicant that we are MLH-affiliated. The following 3 checkboxes are for this partnership.",
+		"description": "We're almost there! All that's left is to review and agree to the following terms and conditions. Please read and check the boxes below to acknowledge your agreement.",
 		"hthAgreements": {
-			"label": "I agree to the Hack the Hill Code of Conduct, Privacy Policy, Terms of Service, Liability Release Waiver, and Media Release Waiver."
+			"label": "I agree to the Hack the Hill <0>Code of Conduct</0>, <1>Privacy Policy</1>, <2>Terms of Service</2>, <3>Liability Release Waiver</3>, and <4>Media Release Waiver</4>."
 		},
 		"hthPromotions": {
 			"label": "I authorize Hack the Hill to send me emails about upcoming events and opportunities."
 		},
 		"mlhCodeOfConduct": {
-			"label": "I have read and agree to the MLH Code of Conduct."
+			"label": "I have read and agree to the <0>MLH Code of Conduct</0>."
 		},
 		"mlhPrivacyTerms": {
-			"label": "I authorize you to share my application/registration information with Major League Hacking for event administration, ranking, and MLH administration in line with the MLH Privacy Policy. I further agree to the terms of the MLH Contest Terms and Conditions."
+			"label": "I authorize you to share my application/registration information with Major League Hacking for event administration, ranking, and MLH administration in line with the <0>MLH Privacy Policy</0>. I further agree to the terms of the <1>MLH Contest Terms and Conditions</1>."
 		},
 		"mlhPromotions": {
 			"label": "I authorize MLH to send me occasional emails about relevant events, career opportunities, and community announcements."
