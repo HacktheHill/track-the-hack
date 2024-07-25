@@ -98,10 +98,10 @@
 			"label": "Github"
 		},
 		"personalWebsite": {
-			"label": "Personal Website (optional)"
+			"label": "Personal Website"
 		},
 		"resume": {
-			"label": "Resume (PDF or link to resume)"
+			"label": "Resume"
 		}
 	},
 	"skillsAccomplishments": {
