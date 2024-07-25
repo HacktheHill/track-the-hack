@@ -345,8 +345,9 @@ export const getApplicationQuestions = (locale: string) => {
 				questions: [
 					{
 						name: "currentSchoolOrganization",
-						type: "text",
+						type: "typeahead",
 						required: true,
+						url: "/schools.txt",
 					},
 					{
 						name: "educationLevel",
@@ -602,8 +603,13 @@ type Field = {
 			type: "textarea";
 			charLimit: number;
 	  }
+	| {
+			type: "typeahead";
+			url: string;
+	  }
 );
 
 export type ApplicationQuestionsType = ReturnType<typeof getApplicationQuestions>;
 type ExtractFieldType<T> = T extends { questions: infer U } ? U : never;
 export type ProcessedField = ExtractFieldType<ApplicationQuestionsType[number]>[number];
+export type ProcessedFieldGeneric<T> = ProcessedField & { type: T };

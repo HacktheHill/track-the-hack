@@ -1,15 +1,16 @@
 import { getServerSession } from "next-auth";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
+import Image from "next/image";
 import { useRouter } from "next/router";
-import type { GetServerSideProps, NextPage } from "next/types";
+import type { GetServerSideProps } from "next/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { uploadResume } from "../../client/s3";
 import App from "../../components/App";
 import Loading from "../../components/Loading";
 import { trpc } from "../../server/api/api";
-import type { ApplicationQuestionsType, ProcessedField } from "../../server/lib/apply";
+import type { ApplicationQuestionsType, ProcessedField, ProcessedFieldGeneric } from "../../server/lib/apply";
 import { getApplicationQuestions } from "../../server/lib/apply";
 import { sessionRedirect } from "../../server/lib/redirects";
 import { hackerSchema } from "../../utils/common";
@@ -23,7 +24,7 @@ const processFormData = (formData: FormData) => {
 	return data;
 };
 
-const Apply: NextPage<{ applicationQuestions: ApplicationQuestionsType }> = ({ applicationQuestions }) => {
+const Apply = ({ applicationQuestions }: { applicationQuestions: ApplicationQuestionsType }) => {
 	const { t } = useTranslation("apply");
 	const router = useRouter();
 
@@ -32,16 +33,9 @@ const Apply: NextPage<{ applicationQuestions: ApplicationQuestionsType }> = ({ a
 	const [success, setSuccess] = useState(false);
 	const [step, setStep] = useState(0);
 	const [formData, setFormData] = useState(new FormData());
-	const [charCount, setCharCount] = useState<{ [key: string]: number }>({});
-	const [showOther, setShowOther] = useState<{ [key: string]: boolean }>({});
 	const formRef = useRef<HTMLFormElement>(null);
 
 	const mutation = trpc.hackers.apply.useMutation();
-
-	const handleOtherChange = (event: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
-		const { name, value } = event.target;
-		setShowOther(prev => ({ ...prev, [name]: value === "other" }));
-	};
 
 	const handleNext = useCallback(() => {
 		if (!formRef.current || step >= applicationQuestions.length - 1) return;
@@ -96,142 +90,27 @@ const Apply: NextPage<{ applicationQuestions: ApplicationQuestionsType }> = ({ a
 	const renderField = (field: ProcessedField) => {
 		switch (field.type) {
 			case "select":
-				return (
-					<>
-						<select
-							id={field.name}
-							name={field.name}
-							className="w-full rounded border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
-							required={field.required}
-							onChange={handleOtherChange}
-						>
-							<option value="">{t("select")}</option>
-							{Object.entries(field.options).map(([key, value]: [string, string]) => (
-								<option key={key} value={key}>
-									{t(value)}
-								</option>
-							))}
-						</select>
-						{field.options.other && showOther[field.name] && (
-							<input
-								id={`${field.name}-other`}
-								name={`${field.name}-other`}
-								type="text"
-								className="w-full rounded border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
-							/>
-						)}
-					</>
-				);
+				return <Select field={field} />;
 			case "radio":
-				return (
-					<div className="flex gap-4">
-						{Object.entries(field.options).map(([key, value]: [string, string]) => (
-							<div key={key} className="flex items-center gap-2">
-								<input
-									id={key}
-									name={field.name}
-									type="radio"
-									value={key}
-									className="hidden"
-									required={field.required}
-									onChange={handleOtherChange}
-								/>
-								<label
-									htmlFor={key}
-									className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
-								>
-									{t(value)}
-								</label>
-							</div>
-						))}
-						{field.options.other && showOther[field.name] && (
-							<input
-								id={`${field.name}-other`}
-								name={`${field.name}-other`}
-								type="text"
-								className="w-full rounded border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
-							/>
-						)}
-					</div>
-				);
+				return <Radio field={field} />;
 			case "multiselect":
-				return (
-					<div className="flex flex-col gap-2">
-						<select
-							id={field.name}
-							name={field.name}
-							multiple
-							className="w-full rounded border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
-							required={field.required}
-							onChange={handleOtherChange}
-						>
-							{Object.entries(field.options).map(([key, value]: [string, string]) => (
-								<option key={key} value={key}>
-									{t(value)}
-								</option>
-							))}
-						</select>
-						{field.options.other && showOther[field.name] && (
-							<input
-								id={`${field.name}-other`}
-								name={`${field.name}-other`}
-								type="text"
-								className="w-full rounded border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
-							/>
-						)}
-					</div>
-				);
+				return <MultiSelect field={field} />;
 			case "checkbox":
-				return (
-					<input
-						id={field.name}
-						name={field.name}
-						type="checkbox"
-						className="h-4 w-4 appearance-none bg-transparent text-black after:block after:h-full after:w-full after:rounded-lg after:border after:border-dark-primary-color after:p-0.5 after:leading-[calc(100%*1/2)] after:checked:content-check"
-						required={field.required}
-					/>
-				);
+				return <Checkbox field={field} />;
 			case "textarea":
-				return (
-					<div className="relative w-full">
-						<textarea
-							id={field.name}
-							name={field.name}
-							className="w-full rounded border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
-							required={field.required}
-							onChange={e => {
-								const { value } = e.target;
-								if (field.charLimit && value.length > field.charLimit) {
-									e.target.value = value.slice(0, field.charLimit);
-								}
-								setCharCount(prev => ({
-									...prev,
-									[field.name]: value.length,
-								}));
-							}}
-						/>
-						{field.charLimit && (
-							<p className="absolute bottom-2 right-2 text-right text-light-color">
-								{charCount[field.name] ?? 0}/{field.charLimit}
-							</p>
-						)}
-					</div>
-				);
+				return <TextArea field={field} />;
+			case "typeahead":
+				return <Typeahead field={field} />;
 			default:
-				return (
-					<input
-						id={field.name}
-						name={field.name}
-						type={field.type}
-						className="w-full rounded border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
-						required={field.required}
-						accept={field.type === "file" ? "application/pdf" : undefined}
-					/>
-				);
+				return <Input field={field} />;
 		}
 	};
 
 	const renderFields = (fields: ProcessedField[], page: string) => {
+		if (page === "preferredLanguage" && fields[0]?.type === "radio") {
+			return <Language field={fields[0]} />;
+		}
+
 		return fields.map(field => (
 			<div key={field.name} className="flex w-full flex-col items-center gap-2 sm:flex-row">
 				<label htmlFor={field.name} className="flex-[50%] font-rubik text-dark-color">
@@ -321,7 +200,16 @@ const Apply: NextPage<{ applicationQuestions: ApplicationQuestionsType }> = ({ a
 									{t(`${page.name}.title`)}
 								</h3>
 								<p className="text-center">{t(`${page.name}.description`)}</p>
-								{page.questions.length !== 0 && (
+								{page.questions.length === 0 ? (
+									<Image
+										priority
+										className="z-10 m-auto"
+										src="/assets/mascot-waving.svg"
+										alt="Mascot"
+										width={225}
+										height={225}
+									/>
+								) : (
 									<div className="flex flex-col gap-4 mobile:my-auto">
 										{renderFields(page.questions, page.name)}
 									</div>
@@ -380,6 +268,229 @@ const Apply: NextPage<{ applicationQuestions: ApplicationQuestionsType }> = ({ a
 				</form>
 			)}
 		</App>
+	);
+};
+
+const Language = ({ field }: { field: ProcessedFieldGeneric<"radio"> }) => {
+	const router = useRouter();
+	const { t } = useTranslation("apply");
+
+	return (
+		<div className="flex justify-evenly gap-4">
+			{Object.entries(field.options).map(([key, value]) => (
+				<div key={key}>
+					<input
+						type="radio"
+						id={`${field.name}-${key}`}
+						name={field.name}
+						value={key}
+						className="peer hidden"
+						onChange={() => {
+							console.log(key);
+							void router.push(router.pathname, router.pathname, {
+								locale: key.toLocaleLowerCase(),
+							});
+						}}
+					/>
+					<label
+						htmlFor={`${field.name}-${key}`}
+						className="cursor-pointer whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-4xl text-dark-primary-color transition-colors hover:bg-light-tertiary-color peer-checked:bg-light-primary-color/50"
+					>
+						{t(value)}
+					</label>
+				</div>
+			))}
+		</div>
+	);
+};
+
+const Select = ({ field }: { field: ProcessedFieldGeneric<"select"> }) => {
+	const { t } = useTranslation("apply");
+	const [showOther, setShowOther] = useState(false);
+
+	return (
+		<>
+			<select
+				id={field.name}
+				name={field.name}
+				className="w-full rounded border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+				required={field.required}
+				onChange={e => setShowOther(e.target.value === "other")}
+			>
+				<option value="">{t("select")}</option>
+				{Object.entries(field.options).map(([key, value]: [string, string]) => (
+					<option key={key} value={key}>
+						{t(value)}
+					</option>
+				))}
+			</select>
+			{field.options.other && showOther && (
+				<input
+					id={`${field.name}-other`}
+					name={`${field.name}-other`}
+					type="text"
+					className="w-full rounded border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+				/>
+			)}
+		</>
+	);
+};
+
+const Radio = ({ field }: { field: ProcessedFieldGeneric<"radio"> }) => {
+	const { t } = useTranslation("apply");
+	const [showOther, setShowOther] = useState(false);
+
+	return (
+		<div className="flex gap-4">
+			{Object.entries(field.options).map(([key, value]: [string, string]) => (
+				<div key={key} className="flex items-center gap-2">
+					<input
+						id={key}
+						name={field.name}
+						type="radio"
+						value={key}
+						className="peer hidden"
+						required={field.required}
+						onChange={() => setShowOther(key === "other")}
+					/>
+					<label
+						htmlFor={key}
+						className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color peer-checked:bg-light-primary-color/50 short:text-base"
+					>
+						{t(value)}
+					</label>
+				</div>
+			))}
+			{field.options.other && showOther && (
+				<input
+					id={`${field.name}-other`}
+					name={`${field.name}-other`}
+					type="text"
+					className="w-full rounded border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+				/>
+			)}
+		</div>
+	);
+};
+
+const MultiSelect = ({ field }: { field: ProcessedFieldGeneric<"multiselect"> }) => {
+	const { t } = useTranslation("apply");
+	const [showOther, setShowOther] = useState(false);
+
+	return (
+		<div className="flex flex-col gap-2">
+			<select
+				id={field.name}
+				name={field.name}
+				multiple
+				className="w-full rounded border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+				required={field.required}
+				onChange={e =>
+					setShowOther(
+						Array.from(e.target.selectedOptions)
+							.map(option => option.value)
+							.includes("other"),
+					)
+				}
+			>
+				{Object.entries(field.options).map(([key, value]: [string, string]) => (
+					<option key={key} value={key}>
+						{t(value)}
+					</option>
+				))}
+			</select>
+			{field.options.other && showOther && (
+				<input
+					id={`${field.name}-other`}
+					name={`${field.name}-other`}
+					type="text"
+					className="w-full rounded border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+				/>
+			)}
+		</div>
+	);
+};
+
+const Typeahead = ({ field }: { field: ProcessedFieldGeneric<"typeahead"> }) => {
+	const [options, setOptions] = useState<string[]>([]);
+
+	useEffect(() => {
+		const fetchOptions = async () => {
+			const res = await fetch(field.url);
+			const data = await res.text();
+			setOptions(data.split("\n"));
+		};
+
+		void fetchOptions();
+	}, [field.options.url, field.url]);
+
+	return (
+		<>
+			<input
+				id={field.name}
+				name={field.name}
+				list={`${field.name}-list`}
+				className="w-full rounded border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+				required={field.required}
+			/>
+			<datalist id={`${field.name}-list`}>
+				{options.map(option => (
+					<option key={option} value={option} />
+				))}
+			</datalist>
+		</>
+	);
+};
+
+const Checkbox = ({ field }: { field: ProcessedFieldGeneric<"checkbox"> }) => {
+	return (
+		<input
+			id={field.name}
+			name={field.name}
+			type="checkbox"
+			className="h-4 w-4 appearance-none bg-transparent text-black after:block after:h-full after:w-full after:rounded-lg after:border after:border-dark-primary-color after:p-0.5 after:leading-[calc(100%*1/2)] after:checked:content-check"
+			required={field.required}
+		/>
+	);
+};
+
+const TextArea = ({ field }: { field: ProcessedFieldGeneric<"textarea"> }) => {
+	const [charCount, setCharCount] = useState(0);
+
+	return (
+		<div className="relative w-full">
+			<textarea
+				id={field.name}
+				name={field.name}
+				className="w-full rounded border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+				required={field.required}
+				onChange={e => {
+					const { value } = e.target;
+					if (field.charLimit && value.length > field.charLimit) {
+						e.target.value = value.slice(0, field.charLimit);
+					}
+					setCharCount(value.length);
+				}}
+			/>
+			{field.charLimit && (
+				<p className="absolute bottom-2 right-2 text-right text-light-color">
+					{charCount ?? 0}/{field.charLimit}
+				</p>
+			)}
+		</div>
+	);
+};
+
+const Input = ({ field }: { field: ProcessedFieldGeneric<"text" | "email" | "tel" | "date" | "url" | "file"> }) => {
+	return (
+		<input
+			id={field.name}
+			name={field.name}
+			type={field.type}
+			className="w-full rounded border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+			required={field.required}
+			accept={field.type === "file" ? "application/pdf" : undefined}
+		/>
 	);
 };
 
