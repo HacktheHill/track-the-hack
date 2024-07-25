@@ -106,7 +106,7 @@
 	},
 	"skillsAccomplishments": {
 		"title": "Compétences et réalisations",
-		"description": "C'est votre chance de briller ! Nous recueillons des informations de base pour vous aider à mettre en valeur vos compétences et réalisations. Bien que la compétence technique soit importante, elle ne garantit pas l'acceptation au hackathon.",
+		"description": "C'est votre chance de briller! Nous recueillons des informations de base pour vous aider à mettre en valeur vos compétences et réalisations. Bien que la compétence technique soit importante, elle ne garantit pas l'acceptation au hackathon.",
 		"hackathonBefore": {
 			"label": "Avez-vous déjà participé à un hackathon ?",
 			"options": {
@@ -145,7 +145,7 @@
 	},
 	"logistics": {
 		"title": "Logistique",
-		"description": "Nous espérons que vous êtes toujours avec nous ! Nous avons quelques questions supplémentaires concernant la nourriture et la logistique de voyage.",
+		"description": "Nous espérons que vous êtes toujours avec nous! Nous avons quelques questions supplémentaires concernant la nourriture et la logistique de voyage.",
 		"shirt": {
 			"label": "Quelle est votre taille de t-shirt ?",
 			"options": {
@@ -184,7 +184,7 @@
 		"travelAccommodations": {
 			"label": "Souhaitez-vous utiliser les hébergements de voyage de Hack the Hill ? Si oui, veuillez sélectionner l'un des emplacements suivants pour les arrangements de transport. Si vous n'êtes pas d'Ottawa ou d'un de ces endroits, vous devrez peut-être organiser votre voyage :",
 			"options": {
-				"gta": "Grand Toronto (GTA)",
+				"gta": "Grand Toronto (RGT)",
 				"montreal": "Montréal",
 				"waterloo": "Waterloo",
 				"none": "Aucun"
@@ -214,18 +214,18 @@
 	},
 	"agreements": {
 		"title": "Accords et consentements",
-		"description": "Nous y sommes presque. Nous tenons à informer le candidat que nous sommes affiliés à MLH. Les trois cases à cocher suivantes concernent ce partenariat.",
+		"description": "Nous y sommes presque! Il ne reste plus qu'à examiner et à accepter les conditions suivantes. Veuillez lire et cocher les cases ci-dessous pour confirmer votre accord.",
 		"hthAgreements": {
-			"label": "J'accepte le code de conduite, la politique de confidentialité, les conditions d'utilisation, la renonciation à la responsabilité et la renonciation à la diffusion des médias de Hack the Hill."
+			"label": "J'accepte le <0>code de conduite</0>, la <1>politique de confidentialité</1>, les <2>conditions d'utilisation</2>, la <3>renonciation à la responsabilité</3> et la <4>renonciation à la diffusion des médias</4> de Hack the Hill."
 		},
 		"hthPromotions": {
 			"label": "J'autorise Hack the Hill à m'envoyer des e-mails concernant les événements et opportunités à venir."
 		},
 		"mlhCodeOfConduct": {
-			"label": "J'ai lu et j'accepte le code de conduite de MLH."
+			"label": "J'ai lu et j'accepte le <0>code de conduite de MLH</1>."
 		},
 		"mlhPrivacyTerms": {
-			"label": "J'autorise le partage de mes informations d'inscription/candidature avec Major League Hacking pour l'administration des événements, le classement et l'administration de MLH conformément à la politique de confidentialité de MLH. J'accepte également les conditions générales des concours MLH."
+			"label": "J'autorise le partage de mes informations d'inscription/candidature avec Major League Hacking pour l'administration des événements, le classement et l'administration de MLH conformément à la <0>politique de confidentialité de MLH</0>. J'accepte également les <1>conditions générales des concours MLH</1>."
 		},
 		"mlhPromotions": {
 			"label": "J'autorise MLH à m'envoyer des e-mails occasionnels sur les événements pertinents, les opportunités de carrière et les annonces communautaires."
