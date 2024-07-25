@@ -400,6 +400,7 @@ export const hackerRouter = createTRPCRouter({
 						create: {
 							key: "checkedIn",
 							value: 1,
+							label: "Checked In",
 						},
 					},
 				},
