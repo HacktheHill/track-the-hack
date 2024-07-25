@@ -33,9 +33,8 @@ export const getAuthOptions = (req: IncomingMessage) =>
 						roles: {
 							select: { name: true },
 						},
-						hackerInfo: {
+						Hacker: {
 							select: { id: true },
-							take: 1,
 						},
 					},
 				});
@@ -46,7 +45,7 @@ export const getAuthOptions = (req: IncomingMessage) =>
 						...session.user,
 						id: newSession?.id,
 						roles: newSession?.roles.map(role => role.name),
-						hackerId: newSession?.hackerInfo[0]?.id,
+						hackerId: newSession?.Hacker?.id,
 					},
 				};
 			},

@@ -1,7 +1,7 @@
 import type { HackerInfo, PresenceInfo } from "@prisma/client";
 import { Card, Grid } from "@tremor/react";
-import { keyToLabel } from "../pages/hackers/hacker";
 import type { AggregatedHackerInfo, AggregatedPresenceInfo } from "../client/types";
+import { keyToLabel } from "../pages/hackers/hacker";
 import {
 	CustomDonutChart,
 	CustomSmallTextCard,
@@ -77,7 +77,7 @@ export default function MainEventTab({
 		const hackerInfo = matchingHackerInfos[0];
 
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return hackerInfo!.walkIn && !presenceDatum.checkedIn;
+		return hackerInfo.walkIn && !presenceDatum.checkedIn;
 	}).length;
 
 	const multiCheckInEventsData = Object.entries(aggregatedPresenceData)

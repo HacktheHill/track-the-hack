@@ -1,8 +1,5 @@
-import type { HackerInfo } from "@prisma/client";
 import { useTranslation } from "next-i18next";
 import Image from "next/image";
-import { useRouter } from "next/router";
-import { useEffect } from "react";
 
 import Error from "./Error";
 import Head from "./Head";
@@ -14,24 +11,11 @@ type FormPageProps = {
 	error?: string;
 	invalid: string | null;
 	loading: boolean;
-	path: `/${string}` | null;
-	user: HackerInfo | null;
 	title: string;
 };
 
-const FormPage = ({ children, onSubmit, error, invalid, loading, path, user, title }: FormPageProps) => {
+const FormPage = ({ children, onSubmit, error, invalid, loading, title }: FormPageProps) => {
 	const { t } = useTranslation("common");
-	const router = useRouter();
-
-	useEffect(() => {
-		if (user && path) {
-			if (user.preferredLanguage.toLowerCase() !== router.locale) {
-				void router.push(path, undefined, {
-					locale: user.preferredLanguage.toLowerCase(),
-				});
-			}
-		}
-	}, [user, router, path]);
 
 	return (
 		<>

@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCallback } from "react";
 import Filter from "./Filter";
-import { trpc } from "../server/api/api";
 
 type LinkItemProps = {
 	href: string;
