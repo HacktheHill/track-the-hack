@@ -8,10 +8,10 @@ import { trpc } from "../../server/api/api";
 import { rolesRedirect } from "../../server/lib/redirects";
 import { getAuthOptions } from "../api/auth/[...nextauth]";
 
+import { getServerSession } from "next-auth";
 import Error from "../../components/Error";
 import Filter from "../../components/Filter";
 import Loading from "../../components/Loading";
-import { getServerSession } from "next-auth";
 
 interface Log {
 	id: number;

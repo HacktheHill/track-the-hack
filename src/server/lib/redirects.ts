@@ -17,7 +17,7 @@ export async function hackersRedirect(session: Session | null, callbackUrl: stri
 		}));
 
 	if (user?.roles.map(role => role.name).includes(RoleName.HACKER)) {
-		const hacker = await prisma.hackerInfo.findFirst({
+		const hacker = await prisma.hacker.findFirst({
 			where: {
 				userId: user.id,
 			},

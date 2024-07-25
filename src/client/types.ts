@@ -4,7 +4,7 @@ export default interface IconSvgProps extends SVGProps<SVGSVGElement> {
 	size?: number;
 }
 
-import type { HackerInfo, PresenceInfo } from "@prisma/client";
+import type { Hacker, Presence } from "@prisma/client";
 
 type StrKeyAnyVal = {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -21,9 +21,9 @@ type StrKeyNumVal = {
 
 type ArrElement<ArrType> = ArrType extends readonly (infer ElementType)[] ? ElementType : never;
 
-type HackerInfoKey = keyof HackerInfo;
+type HackerInfoKey = keyof Hacker;
 
-type PresenceInfoKey = keyof PresenceInfo;
+type PresenceInfoKey = keyof Presence;
 
 type TremorChartData = { name: string; value: number; title: string }[];
 

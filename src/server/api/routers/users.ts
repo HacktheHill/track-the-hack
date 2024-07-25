@@ -1,9 +1,9 @@
 import { RoleName } from "@prisma/client";
 import { z } from "zod";
-import { hasRoles } from "../../../utils/helpers";
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { roles } from "../../../utils/common";
-import { logAuditEntry } from "../../lib/audit";
+import { hasRoles } from "../../../utils/helpers";
+import { log } from "../../lib/log";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 export const userRouter = createTRPCRouter({
 	// Sign up a new user
@@ -30,14 +30,14 @@ export const userRouter = createTRPCRouter({
 				},
 			});
 
-			await logAuditEntry(
-				ctx,
-				user.id,
-				"/api/users/signUp",
-				"SignUp",
-				user.name ?? "Unknown",
-				`User signed up with email ${user.email ?? "Unknown"}`,
-			);
+			await log(ctx, {
+				sourceId: user.id,
+				sourceType: "User",
+				action: "SignUp",
+				author: user.name ?? "Unknown",
+				route: "/api/users/signUp",
+				details: `User signed up with email ${user.email ?? "Unknown"}`,
+			});
 
 			return user;
 		}),
@@ -148,14 +148,14 @@ export const userRouter = createTRPCRouter({
 				);
 			}
 
-			await logAuditEntry(
-				ctx,
-				userId,
-				"/internal/roles",
-				"UpdateRoles",
-				user.name ?? "Unknown",
-				`Updated roles for ${input.userIds.length} users`,
-			);
+			await log(ctx, {
+				sourceId: userId,
+				sourceType: "User",
+				action: "update",
+				author: user.name ?? "Unknown",
+				route: "/internal/roles",
+				details: `Updated roles for users ${input.userIds.join(", ")} to ${input.roles.join(", ")}`,
+			});
 
 			await ctx.prisma.$transaction(transaction);
 		}),

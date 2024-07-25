@@ -29,7 +29,7 @@ const QRCode = ({ setError, id }: QRCodeProps) => {
 				}
 
 				// QR code for hackers
-			} else if ( sessionData?.user?.roles.includes(RoleName.HACKER) && sessionData?.user?.hackerId) {
+			} else if (sessionData?.user?.roles.includes(RoleName.HACKER) && sessionData?.user?.hackerId) {
 				try {
 					const qr = await qrcode.toDataURL(sessionData.user?.hackerId);
 					setQRCode(qr);
