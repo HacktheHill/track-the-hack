@@ -529,6 +529,13 @@ export const getApplicationQuestions = (locale: string) => {
 						name: "hthAgreements",
 						type: "checkbox",
 						required: true,
+						links: [
+							"https://docs.google.com/document/d/1thE_Ia595Cz9YaD8gTbyZ3gnZiBSgkLgl0wwGSANczc/edit",
+							"https://docs.google.com/document/d/1hhsl6WrrZtDz_mbeW7wDBS70Ozrbe6-aL06vqIh2550/edit",
+							"https://docs.google.com/document/u/2/d/149kUCf4PXmd2GvIgGNt8MXiMz6BJfDiIEMdNzUti_Kc/edit",
+							"https://docs.google.com/document/d/1aacZOxbDqiBnmIOq31NpHUggXXMvUqoVFR_d7IAuujE/edit",
+							"https://docs.google.com/document/d/1y7zP5kBHRrNMOxx_0JAz8NcLBHWFWe8OtsbOOosBs60/edit",
+						],
 					},
 					{
 						name: "hthPromotions",
@@ -539,11 +546,16 @@ export const getApplicationQuestions = (locale: string) => {
 						name: "mlhCodeOfConduct",
 						type: "checkbox",
 						required: true,
+						links: ["https://github.com/MLH/mlh-policies/blob/main/code-of-conduct.md"],
 					},
 					{
 						name: "mlhPrivacyTerms",
 						type: "checkbox",
 						required: true,
+						links: [
+							"https://github.com/MLH/mlh-policies/blob/main/privacy-policy.md",
+							"https://github.com/MLH/mlh-policies/blob/main/contest-terms.md",
+						],
 					},
 					{
 						name: "mlhPromotions",
@@ -591,6 +603,7 @@ export const getApplicationQuestions = (locale: string) => {
 type Field = {
 	name: string;
 	required: boolean;
+	links?: string[];
 } & (
 	| {
 			type: "text" | "email" | "tel" | "date" | "url" | "file" | "checkbox";
