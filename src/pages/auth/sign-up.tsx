@@ -130,20 +130,7 @@ const SignUp = ({ providers }: InferGetServerSidePropsType<typeof getServerSideP
 							</button>
 						</form>
 					))}
-					<p className="text-dark-primary-color">
-						<Trans
-							i18nKey="already-signed-up"
-							t={t}
-							components={{
-								a: (
-									<Link
-										href="/auth/sign-in"
-										className="underline hover:text-medium-primary-color"
-									></Link>
-								),
-							}}
-						/>
-					</p>
+
 					{error && <Error message={error} />}
 					{loading && <Loading />}
 				</div>
