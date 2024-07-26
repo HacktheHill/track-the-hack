@@ -1,15 +1,5 @@
 import { faker } from "@faker-js/faker";
-import {
-	Locale,
-	TShirtSize,
-	Gender,
-	Pronouns,
-	RaceEthnicity,
-	EducationLevel,
-	DietaryRestrictions,
-	TravelAccommodations,
-	ReferralSource,
-} from "@prisma/client";
+import { Locale, TravelAccommodations, TShirtSize } from "@prisma/client";
 
 const generateHackerData = () => {
 	const firstName = faker.person.firstName();
@@ -28,14 +18,35 @@ const generateHackerData = () => {
 		phoneNumber,
 		country: faker.location.countryCode(),
 		dateOfBirth: faker.date.past(),
-		dietaryRestrictions: faker.helpers.arrayElement(Object.values(DietaryRestrictions)),
+		dietaryRestrictions: faker.helpers.arrayElement([
+			"Halal",
+			"Gluten-Free",
+			"Vegetarian",
+			"Vegan",
+			"Kosher",
+			"Lactose Intolerance",
+			"Nuts",
+			"Soy",
+			"None",
+			"Pescetarian",
+		]),
 		specialAccommodations: faker.helpers.arrayElement([null, "Wheelchair access", "Sign language interpreter"]),
 		emergencyContactName,
 		emergencyContactRelation: emergencyContactRelationship,
 		emergencyContactPhoneNumber,
-		gender: faker.helpers.arrayElement(Object.values(Gender)),
-		pronouns: faker.helpers.arrayElement(Object.values(Pronouns)),
-		raceEthnicity: faker.helpers.arrayElement(Object.values(RaceEthnicity)),
+		gender: faker.helpers.arrayElement(["Male", "Female", "Non-Binary", "Gender Fluid", "Prefer Not to Answer"]),
+		pronouns: faker.helpers.arrayElement(["He/Him", "She/Her", "They/Them", "Ze/Zir", "Prefer not to say"]),
+		raceEthnicity: faker.helpers.arrayElement([
+			"Caucasian (White)",
+			"South Asian",
+			"African",
+			"East Asian",
+			"Hispanic / Latino / Spanish Origin",
+			"Middle Eastern",
+			"Native American or Alaskan Native",
+			"African American",
+			"Prefer Not to Answer",
+		]),
 		currentSchoolOrganization: faker.helpers.arrayElement([
 			"University of Ottawa",
 			"Carleton University",
@@ -43,7 +54,12 @@ const generateHackerData = () => {
 			"McGill University",
 			"University of Toronto",
 		]),
-		educationLevel: faker.helpers.arrayElement(Object.values(EducationLevel)),
+		educationLevel: faker.helpers.arrayElement([
+			"High School (Grades 11/12)",
+			"Undergraduate",
+			"Graduate (Masters, Professional, Doctoral, etc.)",
+			"College",
+		]),
 		major: faker.helpers.arrayElement([
 			"Computer Science",
 			"Software Engineering",
@@ -56,7 +72,6 @@ const generateHackerData = () => {
 		personalWebsite: faker.internet.url(),
 		hackathonBefore: faker.datatype.boolean(),
 		hackathonDetails: faker.helpers.arrayElement([
-			null,
 			"Participated in Hack the North 2020",
 			"Won the best project award at Local Hack Day",
 		]),
@@ -67,7 +82,24 @@ const generateHackerData = () => {
 		tShirtSize: faker.helpers.arrayElement(Object.values(TShirtSize)),
 		travelOrigin: faker.helpers.arrayElement([null, "Ottawa", "Toronto", "Vancouver"]),
 		travelAccommodations: faker.helpers.arrayElement(Object.values(TravelAccommodations)),
-		referralSource: faker.helpers.arrayElement(Object.values(ReferralSource)),
+		referralSource: faker.helpers.arrayElement([
+			"Student Organizations or Clubs",
+			"Friends or Classmates",
+			"University Website",
+			"LinkedIn",
+			"Instagram",
+			"TikTok",
+			"Facebook",
+			"University Email",
+			"Class Announcements",
+			"Hackathon Websites (e.g. MLH)",
+			"Flyers or Posters on Campus",
+			"Professors or Academic Advisors",
+			"Career Services",
+			"Online Forums or Groups (e.g. Reddit, Discord)",
+			"Alumni Networks",
+			"Mentors or Coaches",
+		]),
 		hthAgreements: faker.datatype.boolean(),
 		hthPromotions: faker.datatype.boolean(),
 		mlhCodeOfConduct: faker.datatype.boolean(),
@@ -94,4 +126,4 @@ function generateHackers(n = 10) {
 	return hackers;
 }
 
-export { generateHackers, generateHackerData };
+export { generateHackerData, generateHackers };

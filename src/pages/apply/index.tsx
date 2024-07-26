@@ -1,3 +1,4 @@
+import { Locale } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { Trans, useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
@@ -14,15 +15,48 @@ import { trpc } from "../../server/api/api";
 import type { ApplicationQuestionsType, ProcessedField, ProcessedFieldGeneric } from "../../server/lib/apply";
 import { getApplicationQuestions } from "../../server/lib/apply";
 import { sessionRedirect } from "../../server/lib/redirects";
-import { hackerSchema } from "../../utils/common";
+import { hackerSchema, pageSchemas } from "../../utils/common";
 import { getAuthOptions } from "../api/auth/[...nextauth]";
 
-const processFormData = (formData: FormData) => {
-	const data = Object.fromEntries(formData.entries()) as {
-		[k: string]: FormDataEntryValue | number | boolean | File | undefined;
-	};
+type ProcessedEntryValue = string | boolean | Date | File | undefined;
 
-	return data;
+const processValue = (key: string, value: string): ProcessedEntryValue => {
+	if (value === "") {
+		return undefined;
+	} else if (value === "true") {
+		return true;
+	} else if (value === "false") {
+		return false;
+	} else if (key === "dateOfBirth") {
+		return new Date(value);
+	} else {
+		return value;
+	}
+};
+
+const processFormData = (formData: FormData) => {
+	const processedEntries: [string, ProcessedEntryValue][] = [];
+
+	formData.forEach((value, key) => {
+		if (key.endsWith("-checkbox")) {
+			processedEntries.push([key.replace("-checkbox", ""), value === "on"]);
+		} else if (key.endsWith("-other")) {
+			const baseKey = key.replace("-other", "");
+			const baseValue = formData.get(baseKey);
+			if (baseValue === "other") {
+				processedEntries.push([baseKey, value]);
+			}
+		} else if (value instanceof File) {
+			processedEntries.push([key, value]);
+		} else {
+			const processedValue = processValue(key, value);
+			if (processedValue !== undefined) {
+				processedEntries.push([key, processedValue]);
+			}
+		}
+	});
+
+	return Object.fromEntries(processedEntries);
 };
 
 const Apply = ({ applicationQuestions }: { applicationQuestions: ApplicationQuestionsType }) => {
@@ -30,24 +64,47 @@ const Apply = ({ applicationQuestions }: { applicationQuestions: ApplicationQues
 	const router = useRouter();
 
 	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState("");
+	const [error, setError] = useState<string | null>(null);
 	const [success, setSuccess] = useState(false);
 	const [step, setStep] = useState(0);
 	const [formData, setFormData] = useState(new FormData());
+	const [errors, setErrors] = useState<Record<string, string[] | undefined>>({});
 	const formRef = useRef<HTMLFormElement>(null);
 
 	const mutation = trpc.hackers.apply.useMutation();
 
-	const handleNext = useCallback(() => {
-		if (!formRef.current || step >= applicationQuestions.length - 1) return;
+	const validateCurrentPage = useCallback(() => {
+		if (!formRef.current || step >= applicationQuestions.length || !applicationQuestions[step]) return false;
+
 		const currentFormData = new FormData(formRef.current);
 		currentFormData.forEach((value, key) => formData.set(key, value));
+
+		const pageName = applicationQuestions[step].name;
+		if (pageName in pageSchemas) {
+			const pageData = processFormData(currentFormData);
+			const schema = pageSchemas[pageName as keyof typeof pageSchemas];
+			const parseResult = schema.safeParse(pageData);
+			if (!parseResult.success) {
+				const newErrors = parseResult.error.flatten().fieldErrors;
+				setErrors(newErrors);
+				console.error(parseResult.error.message);
+				return false;
+			}
+		}
+
+		setErrors({});
+		return true;
+	}, [applicationQuestions, formData, step]);
+
+	const handleNext = useCallback(() => {
+		if (!validateCurrentPage()) return;
 		setStep(step + 1);
 		formRef.current?.scroll({
 			left: (step + 1) * window.innerWidth,
+			top: 0,
 			behavior: "smooth",
 		});
-	}, [applicationQuestions.length, formData, step]);
+	}, [step, validateCurrentPage]);
 
 	const handlePrevious = useCallback(() => {
 		if (step <= 0) return;
@@ -60,90 +117,123 @@ const Apply = ({ applicationQuestions }: { applicationQuestions: ApplicationQues
 
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
-		setLoading(true);
 
-		const data = processFormData(formData);
+		if (!validateCurrentPage()) return;
 
 		const resume = formData.get("resume") as File | null;
-		data.hasResume = !!resume;
+		const data = {
+			...processFormData(formData),
+			hasResume: !!resume,
+		};
 
 		const parse = hackerSchema.safeParse(data);
 		if (!parse.success) {
 			setError(t("invalid-form"));
 			console.error(parse.error.message);
 		} else {
+			setLoading(true);
 			const result = await mutation.mutateAsync(parse.data);
 			if (result.presignedUrl && resume) {
 				await uploadResume(result.presignedUrl, resume, resume.name);
 			}
 
 			if (!mutation.error) {
-				setError("");
+				setError(null);
 				setFormData(new FormData());
 				setSuccess(true);
 			} else {
 				setError(mutation.error.message);
 			}
+			setLoading(false);
 		}
-		setLoading(false);
 	};
 
 	const renderField = (field: ProcessedField) => {
+		const fieldError = errors[field.name];
+		const errorClass = fieldError ? "border-red-500" : "";
+		const className = `w-full rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50 ${errorClass}`;
+
 		switch (field.type) {
 			case "select":
-				return <Select field={field} />;
+				return <Select field={field} className={className} />;
 			case "radio":
-				return <Radio field={field} />;
+				return <Radio field={field} className={className} />;
 			case "multiselect":
-				return <MultiSelect field={field} />;
+				return <MultiSelect field={field} className={className} />;
 			case "checkbox":
 				return <Checkbox field={field} />;
 			case "textarea":
-				return <TextArea field={field} />;
+				return <TextArea field={field} className={className} />;
 			case "typeahead":
-				return <Typeahead field={field} />;
+				return <Typeahead field={field} className={className} />;
 			default:
-				return <Input field={field} />;
+				return <Input field={field} className={className} />;
 		}
 	};
 
 	const renderFields = (fields: ProcessedField[], page: string) => {
-		if (page === "preferredLanguage" && fields[0]?.type === "radio") {
-			return <Language field={fields[0]} />;
-		}
+		return fields.map(field => {
+			const hasLinks = "links" in field && field.links?.length > 0;
+			const fieldLinks = hasLinks
+				? field.links.map((url: string) => (
+						<Link
+							href={url}
+							key={url}
+							className="text-dark-primary-color underline"
+							target="_blank"
+							rel="noopener noreferrer"
+						/>
+					))
+				: [];
 
-		return fields.map(field => (
-			<div key={field.name} className="flex w-full flex-col items-center gap-2 sm:flex-row">
+			const fieldError = errors[field.name] && <p className="text-red-500">{errors[field.name]}</p>;
+
+			if (page === "preferredLanguage" && field.type === "radio") {
+				return (
+					<>
+						<Language field={field} />
+						{fieldError}
+					</>
+				);
+			}
+
+			const fieldLabel = (
 				<label htmlFor={field.name} className="flex-[50%] font-rubik text-dark-color">
-					<Trans
-						i18nKey={`${page}.${field.name}.label`}
-						t={t}
-						components={
-							"links" in field
-								? field.links?.map((url: string) => (
-										<Link
-											href={url}
-											key={url}
-											className="text-dark-primary-color underline"
-											target="_blank"
-											rel="noopener noreferrer"
-										/>
-									))
-								: []
-						}
-					/>
+					<Trans i18nKey={`${page}.${field.name}.label`} t={t} components={fieldLinks} />
 					{field.required && <span className="text-red-500">&nbsp;*</span>}
 				</label>
-				{renderField(field)}
-			</div>
-		));
+			);
+
+			const fieldInput = (
+				<div className={`flex flex-col gap-2 ${field.type === "checkbox" ? "" : "w-full"}`}>
+					{renderField(field)}
+					{fieldError}
+				</div>
+			);
+
+			return (
+				<div key={field.name} className="flex flex-col items-center gap-2 sm:flex-row">
+					{field.type === "checkbox" ? (
+						<>
+							{fieldInput}
+							{fieldLabel}
+						</>
+					) : (
+						<>
+							{fieldLabel}
+							{fieldInput}
+						</>
+					)}
+				</div>
+			);
+		});
 	};
 
 	useEffect(() => {
 		if (mutation.error) {
 			setError(mutation.error.message);
 		}
-	}, [mutation.error, t]);
+	}, [mutation.error]);
 
 	useEffect(() => {
 		const handleKeydown = (event: KeyboardEvent) => {
@@ -211,6 +301,7 @@ const Apply = ({ applicationQuestions }: { applicationQuestions: ApplicationQues
 							className={`flex h-full w-screen flex-shrink-0 p-8 transition-opacity duration-1000 ease-in ${
 								step <= index - 1 ? "opacity-0" : "opacity-100"
 							}`}
+							inert={step !== index ? true : undefined}
 						>
 							<div className="m-auto flex flex-col gap-4 rounded border-dark-primary-color p-8 mobile:w-2/3 mobile:gap-8 mobile:border mobile:bg-light-quaternary-color/50">
 								<h3 className="text-center font-rubik text-4xl font-bold text-dark-primary-color">
@@ -295,12 +386,13 @@ const Language = ({ field }: { field: ProcessedFieldGeneric<"radio"> }) => {
 	return (
 		<div className="flex justify-evenly gap-4">
 			{Object.entries(field.options).map(([key, value]) => (
-				<div key={key}>
+				<div key={key} className="flex">
 					<input
 						type="radio"
 						id={`${field.name}-${key}`}
 						name={field.name}
 						value={key}
+						checked={router.locale === key.toLocaleLowerCase()}
 						className="peer hidden"
 						onChange={() => {
 							void router.push(router.pathname, router.pathname, {
@@ -320,7 +412,7 @@ const Language = ({ field }: { field: ProcessedFieldGeneric<"radio"> }) => {
 	);
 };
 
-const Select = ({ field }: { field: ProcessedFieldGeneric<"select"> }) => {
+const Select = ({ field, className }: { field: ProcessedFieldGeneric<"select">; className: string }) => {
 	const { t } = useTranslation("apply");
 	const [showOther, setShowOther] = useState(false);
 
@@ -329,7 +421,7 @@ const Select = ({ field }: { field: ProcessedFieldGeneric<"select"> }) => {
 			<select
 				id={field.name}
 				name={field.name}
-				className="w-full rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+				className={className}
 				required={field.required}
 				onChange={e => setShowOther(e.target.value === "other")}
 			>
@@ -341,18 +433,13 @@ const Select = ({ field }: { field: ProcessedFieldGeneric<"select"> }) => {
 				))}
 			</select>
 			{field.options.other && showOther && (
-				<input
-					id={`${field.name}-other`}
-					name={`${field.name}-other`}
-					type="text"
-					className="w-full rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
-				/>
+				<input id={`${field.name}-other`} name={`${field.name}-other`} type="text" className={className} />
 			)}
 		</>
 	);
 };
 
-const Radio = ({ field }: { field: ProcessedFieldGeneric<"radio"> }) => {
+const Radio = ({ field, className }: { field: ProcessedFieldGeneric<"radio">; className: string }) => {
 	const { t } = useTranslation("apply");
 	const [showOther, setShowOther] = useState(false);
 
@@ -361,7 +448,7 @@ const Radio = ({ field }: { field: ProcessedFieldGeneric<"radio"> }) => {
 			{Object.entries(field.options).map(([key, value]: [string, string]) => (
 				<div key={key} className="flex items-center gap-2">
 					<input
-						id={key}
+						id={field.name}
 						name={field.name}
 						type="radio"
 						value={key}
@@ -370,7 +457,7 @@ const Radio = ({ field }: { field: ProcessedFieldGeneric<"radio"> }) => {
 						onChange={() => setShowOther(key === "other")}
 					/>
 					<label
-						htmlFor={key}
+						htmlFor={field.name}
 						className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color peer-checked:bg-light-primary-color/50 short:text-base"
 					>
 						{t(value)}
@@ -378,18 +465,13 @@ const Radio = ({ field }: { field: ProcessedFieldGeneric<"radio"> }) => {
 				</div>
 			))}
 			{field.options.other && showOther && (
-				<input
-					id={`${field.name}-other`}
-					name={`${field.name}-other`}
-					type="text"
-					className="w-full rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
-				/>
+				<input id={`${field.name}-other`} name={`${field.name}-other`} type="text" className={className} />
 			)}
 		</div>
 	);
 };
 
-const MultiSelect = ({ field }: { field: ProcessedFieldGeneric<"multiselect"> }) => {
+const MultiSelect = ({ field, className }: { field: ProcessedFieldGeneric<"multiselect">; className: string }) => {
 	const { t } = useTranslation("apply");
 	const [showOther, setShowOther] = useState(false);
 
@@ -399,7 +481,7 @@ const MultiSelect = ({ field }: { field: ProcessedFieldGeneric<"multiselect"> })
 				id={field.name}
 				name={field.name}
 				multiple
-				className="w-full rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+				className={className}
 				required={field.required}
 				onChange={e =>
 					setShowOther(
@@ -416,18 +498,13 @@ const MultiSelect = ({ field }: { field: ProcessedFieldGeneric<"multiselect"> })
 				))}
 			</select>
 			{field.options.other && showOther && (
-				<input
-					id={`${field.name}-other`}
-					name={`${field.name}-other`}
-					type="text"
-					className="w-full rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
-				/>
+				<input id={`${field.name}-other`} name={`${field.name}-other`} type="text" className={className} />
 			)}
 		</div>
 	);
 };
 
-const Typeahead = ({ field }: { field: ProcessedFieldGeneric<"typeahead"> }) => {
+const Typeahead = ({ field, className }: { field: ProcessedFieldGeneric<"typeahead">; className: string }) => {
 	const [options, setOptions] = useState<string[]>([]);
 
 	useEffect(() => {
@@ -446,7 +523,7 @@ const Typeahead = ({ field }: { field: ProcessedFieldGeneric<"typeahead"> }) => 
 				id={field.name}
 				name={field.name}
 				list={`${field.name}-list`}
-				className="w-full rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+				className={className}
 				required={field.required}
 			/>
 			<datalist id={`${field.name}-list`}>
@@ -462,7 +539,7 @@ const Checkbox = ({ field }: { field: ProcessedFieldGeneric<"checkbox"> }) => {
 	return (
 		<input
 			id={field.name}
-			name={field.name}
+			name={`${field.name}-checkbox`}
 			type="checkbox"
 			className="h-4 w-4 appearance-none bg-transparent text-black after:block after:h-full after:w-full after:rounded-lg after:border after:border-dark-primary-color after:p-0.5 after:leading-[calc(100%*1/2)] after:checked:content-check"
 			required={field.required}
@@ -470,7 +547,7 @@ const Checkbox = ({ field }: { field: ProcessedFieldGeneric<"checkbox"> }) => {
 	);
 };
 
-const TextArea = ({ field }: { field: ProcessedFieldGeneric<"textarea"> }) => {
+const TextArea = ({ field, className }: { field: ProcessedFieldGeneric<"textarea">; className: string }) => {
 	const [charCount, setCharCount] = useState(0);
 
 	return (
@@ -478,7 +555,7 @@ const TextArea = ({ field }: { field: ProcessedFieldGeneric<"textarea"> }) => {
 			<textarea
 				id={field.name}
 				name={field.name}
-				className="w-full rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+				className={className}
 				required={field.required}
 				onChange={e => {
 					const { value } = e.target;
@@ -497,13 +574,19 @@ const TextArea = ({ field }: { field: ProcessedFieldGeneric<"textarea"> }) => {
 	);
 };
 
-const Input = ({ field }: { field: ProcessedFieldGeneric<"text" | "email" | "tel" | "date" | "url" | "file"> }) => {
+const Input = ({
+	field,
+	className,
+}: {
+	field: ProcessedFieldGeneric<"text" | "email" | "tel" | "date" | "url" | "file">;
+	className: string;
+}) => {
 	return (
 		<input
 			id={field.name}
 			name={field.name}
 			type={field.type}
-			className="w-full rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+			className={className}
 			required={field.required}
 			accept={field.type === "file" ? "application/pdf" : undefined}
 		/>
@@ -517,7 +600,9 @@ export const getServerSideProps: GetServerSideProps = async ({ req, res, locale 
 		redirect: sessionRedirect(session, "/apply"),
 		props: {
 			...(await serverSideTranslations(locale ?? "en", ["apply", "navbar", "common"])),
-			applicationQuestions: getApplicationQuestions(locale ?? "en"),
+			applicationQuestions: getApplicationQuestions(
+				locale && locale in Locale ? (locale as keyof typeof Locale) : "EN",
+			),
 		},
 	};
 };

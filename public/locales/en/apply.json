@@ -110,8 +110,8 @@
 		"hackathonBefore": {
 			"label": "Have you participated in a hackathon before?",
 			"options": {
-				"yes": "Yes",
-				"no": "No"
+				"true": "Yes",
+				"false": "No"
 			}
 		},
 		"hackathonDetails": {
@@ -133,28 +133,28 @@
 	"emergencyContact": {
 		"title": "Emergency Contact",
 		"description": "In case of an emergency, we need to know who to contact. Please provide the following information.",
-		"name": {
+		"emergencyContactName": {
 			"label": "Full Name"
 		},
-		"relation": {
+		"emergencyContactRelation": {
 			"label": "Relationship to You"
 		},
-		"phoneNumber": {
+		"emergencyContactPhoneNumber": {
 			"label": "Phone Number"
 		}
 	},
 	"logistics": {
 		"title": "Logistics",
 		"description": "Hope you're still with us! We have a few additional questions regarding food and travel logistics.",
-		"shirt": {
+		"tShirtSize": {
 			"label": "What is your T-shirt size?",
 			"options": {
-				"xs": "XS",
-				"s": "S",
-				"m": "M",
-				"l": "L",
-				"xl": "XL",
-				"xxl": "XXL"
+				"XS": "XS",
+				"S": "S",
+				"M": "M",
+				"L": "L",
+				"XL": "XL",
+				"XXL": "XXL"
 			}
 		},
 		"dietaryRestrictions": {
@@ -182,7 +182,7 @@
 			"label": "Where will you be traveling from to attend Hack the Hill, if located outside Ottawa (City, country)?"
 		},
 		"travelAccommodations": {
-			"label": "Would you like to use Hack the Hill’s travel accommodations? If so, please select one of the following locations for transportation arrangements. If you are not from Ottawa or any of these locations, you may need to arrange your travel:",
+			"label": "Would you like to use Hack the Hill’s travel accommodations? If so, please select one of the following locations for transportation arrangements:",
 			"options": {
 				"gta": "Greater Toronto Area (GTA)",
 				"montreal": "Montreal",
@@ -190,7 +190,7 @@
 				"none": "None"
 			}
 		},
-		"referral": {
+		"referralSource": {
 			"label": "How did you hear about this hackathon?",
 			"options": {
 				"studentOrganizations": "Student Organizations or Clubs",
