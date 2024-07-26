@@ -36,7 +36,9 @@ const Home: NextPage = () => {
 	return (
 		<App className="items-left relative flex flex-col justify-center gap-2 bg-default-gradient px-8 py-6 short:gap-8">
 			<Image priority src={Leaves} alt="Leaves" className="absolute inset-0 top-auto w-full" />
-			<h2 className="font-coolvetica text-4xl text-dark-primary-color">{t("welcome")}</h2>
+			<h2 className="z-10 w-1/2 font-coolvetica text-4xl text-dark-primary-color lg:min-w-full">
+				{t("description")}
+			</h2>
 			<Image
 				priority
 				className="absolute bottom-0 left-1/4 z-10 h-fit max-h-[90%] sm:left-1/2 mobile:left-2/3"
