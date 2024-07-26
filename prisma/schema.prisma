@@ -58,17 +58,18 @@ model VerificationToken {
 }
 
 model User {
-  id        String    @id @default(cuid())
-  name      String?
-  email     String?   @unique
-  image     String?
-  roles     Role[]
-  accounts  Account[]
-  sessions  Session[]
-  Hacker    Hacker?
-  Log       Log[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @default(now()) @updatedAt
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  image         String?
+  emailVerified DateTime?
+  roles         Role[]
+  accounts      Account[]
+  sessions      Session[]
+  Hacker        Hacker?
+  Log           Log[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @default(now()) @updatedAt
 }
 
 model Role {
@@ -225,7 +226,6 @@ enum TShirtSize {
   XL
   XXL
 }
-
 
 enum TravelAccommodations {
   GTA
