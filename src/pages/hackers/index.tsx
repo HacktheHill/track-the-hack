@@ -89,7 +89,7 @@ const Hackers: NextPage = () => {
 		currentSchoolOrganizations: string[];
 		educationLevels: string[];
 		majors: string[];
-		referralSources: ReferralSource[];
+		referralSources: string[];
 	};
 
 	const { data } = trpc.hackers.filterOptions.useQuery();
@@ -245,7 +245,7 @@ type FilterProps = {
 		currentSchoolOrganizations: string[];
 		educationLevels: string[];
 		majors: string[];
-		referralSources: ReferralSource[];
+		referralSources: string[];
 	};
 	sidebarVisible: boolean;
 };

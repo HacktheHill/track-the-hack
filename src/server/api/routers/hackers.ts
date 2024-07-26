@@ -1,4 +1,4 @@
-import { ReferralSource, RoleName, TShirtSize, type Hacker } from "@prisma/client";
+import { RoleName, TShirtSize, type Hacker } from "@prisma/client";
 import { observable } from "@trpc/server/observable";
 import { EventEmitter } from "events";
 import { z } from "zod";
@@ -121,7 +121,7 @@ export const hackerRouter = createTRPCRouter({
 					currentLevelsOfStudy: z.array(z.string()).optional(),
 					programs: z.array(z.string()).optional(),
 					graduationYears: z.array(z.number()).optional(),
-					referralSources: z.array(z.nativeEnum(ReferralSource)).optional(),
+					referralSources: z.array(z.string()).optional(),
 				})
 				.optional(),
 		)
@@ -163,7 +163,7 @@ export const hackerRouter = createTRPCRouter({
 				studyLevel?: { in: string[] } | null;
 				studyProgram?: { in: string[] } | null;
 				graduationYear?: { in: number[] } | null;
-				referralSource?: { in: ReferralSource[] };
+				referralSource?: { in: string[] };
 			} = {};
 
 			if (schools && schools.length > 0) {
@@ -241,7 +241,7 @@ export const hackerRouter = createTRPCRouter({
 			currentSchoolOrganizations: string[];
 			educationLevels: string[];
 			majors: string[];
-			referralSources: ReferralSource[];
+			referralSources: string[];
 		};
 
 		const hackers = await ctx.prisma.hacker.findMany();
@@ -266,11 +266,9 @@ export const hackerRouter = createTRPCRouter({
 			}
 
 			if (hacker.referralSource) {
-				Object.values(ReferralSource).forEach(source => {
-					if (!filterOptions.referralSources.includes(source)) {
-						filterOptions.referralSources.push(source);
-					}
-				});
+				if (!filterOptions.referralSources.includes(hacker.referralSource)) {
+					filterOptions.referralSources.push(hacker.referralSource);
+				}
 			}
 		});
 

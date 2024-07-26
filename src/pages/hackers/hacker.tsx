@@ -1,4 +1,4 @@
-import { DietaryRestrictions, EducationLevel, Gender, Locale, RoleName, TShirtSize, type Prisma } from "@prisma/client";
+import { Locale, RoleName, TShirtSize, type Prisma } from "@prisma/client";
 import type { GetStaticProps, NextPage } from "next";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
@@ -155,7 +155,7 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 			name: "gender",
 			defaultValue: hackerData.gender,
 			type: "select",
-			options: Object.values(Gender),
+			options: ["man", "woman", "nonBinary", "other", "preferNotToAnswer"],
 			category: t("category_personal_information"),
 		},
 		{
@@ -184,7 +184,7 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 			name: "studyLevel",
 			defaultValue: hackerData.educationLevel,
 			type: "select",
-			options: Object.values(EducationLevel),
+			options: ["highSchool", "undergraduate", "graduate", "other"],
 			category: t("category_personal_information"),
 		},
 		{
@@ -234,7 +234,18 @@ const HackerView = ({ hackerData, presenceData }: HackerViewProps) => {
 			name: "dietaryRestrictions",
 			defaultValue: hackerData.dietaryRestrictions,
 			type: "select",
-			options: Object.values(DietaryRestrictions),
+			options: [
+				"halal",
+				"glutenFree",
+				"vegetarian",
+				"vegan",
+				"kosher",
+				"lactoseIntolerance",
+				"nuts",
+				"soy",
+				"none",
+				"other",
+			],
 			category: t("category_general_information"),
 		},
 		{
