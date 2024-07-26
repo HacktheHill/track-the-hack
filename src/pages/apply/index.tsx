@@ -36,13 +36,14 @@ const Apply = ({ applicationQuestions }: { applicationQuestions: ApplicationQues
 	const mutation = trpc.hackers.apply.useMutation();
 
 	const validateCurrentPage = useCallback(() => {
-		if (!formRef.current || step >= applicationQuestions.length || !applicationQuestions[step]) return false;
+		const page = applicationQuestions[step];
+		if (!formRef.current || step >= applicationQuestions.length || !page) return false;
 
 		const currentFormData = new FormData(formRef.current);
 		currentFormData.forEach((value, key) => formData.set(key, value));
 		saveToSessionStorage(currentFormData);
 
-		const pageName = applicationQuestions[step].name;
+		const pageName = page.name;
 		if (pageName in pageSchemas) {
 			const pageData = processFormData(currentFormData);
 			const schema = pageSchemas[pageName as keyof typeof pageSchemas];

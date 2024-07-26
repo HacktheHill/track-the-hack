@@ -1,4 +1,4 @@
-import type { Hacker, ReferralSource } from "@prisma/client";
+import type { Hacker } from "@prisma/client";
 import { RoleName } from "@prisma/client";
 import type { NextPage } from "next";
 import { useTranslation } from "next-i18next";
