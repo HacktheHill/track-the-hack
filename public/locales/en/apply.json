@@ -184,10 +184,10 @@
 		"travelAccommodations": {
 			"label": "Would you like to use Hack the Hill’s travel accommodations? If so, please select one of the following locations for transportation arrangements:",
 			"options": {
-				"gta": "Greater Toronto Area (GTA)",
-				"montreal": "Montreal",
-				"waterloo": "Waterloo",
-				"none": "None"
+				"GTA": "Greater Toronto Area (GTA)",
+				"MONTREAL": "Montreal",
+				"WATERLOO": "Waterloo",
+				"NONE": "None"
 			}
 		},
 		"referralSource": {
