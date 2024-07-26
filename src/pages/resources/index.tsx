@@ -282,14 +282,6 @@ const Resources: NextPage = () => {
 			>
 				{locale === "fr" ? fr : en}
 			</ReactMarkdown>
-			<a
-				href="https://discord.gg/8JNxJVMNrF"
-				target="_blank"
-				rel="noreferrer"
-				className="flex justify-center gap-2 self-center rounded-md bg-gray-800 px-4 py-2 text-light-color hover:bg-gray-700"
-			>
-				{t("join-our-discord-server")}
-			</a>
 		</App>
 	);
 };
