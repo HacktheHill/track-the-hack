@@ -47,10 +47,9 @@ CREATE TABLE `VerificationToken` (
 -- CreateTable
 CREATE TABLE `User` (
     `id` VARCHAR(191) NOT NULL,
-    `username` VARCHAR(191) NULL,
+    `name` VARCHAR(191) NULL,
     `email` VARCHAR(191) NULL,
-    `profileImage` VARCHAR(191) NULL,
-    `emailVerified` DATETIME(3) NULL,
+    `image` VARCHAR(191) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
@@ -70,67 +69,76 @@ CREATE TABLE `Role` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `HackerInfo` (
-    `submissionID` VARCHAR(191) NOT NULL,
-    `preferredLanguage` ENUM('EN', 'FR') NOT NULL DEFAULT 'EN',
-    `email` VARCHAR(191) NOT NULL,
+CREATE TABLE `Hacker` (
+    `id` VARCHAR(191) NOT NULL,
+    `preferredLanguage` ENUM('EN', 'FR') NOT NULL,
     `firstName` VARCHAR(191) NOT NULL,
     `lastName` VARCHAR(191) NOT NULL,
-    `gender` VARCHAR(191) NOT NULL DEFAULT 'Prefer not to say',
+    `email` VARCHAR(191) NOT NULL,
     `phoneNumber` VARCHAR(191) NOT NULL,
-    `university` VARCHAR(191) NULL,
-    `studyLevel` VARCHAR(191) NULL,
-    `studyProgram` VARCHAR(191) NULL,
-    `graduationYear` INTEGER NULL,
-    `attendanceType` ENUM('IN_PERSON', 'ONLINE') NOT NULL DEFAULT 'IN_PERSON',
-    `attendanceLocation` VARCHAR(191) NULL,
-    `transportationRequired` BOOLEAN NOT NULL DEFAULT false,
-    `dietaryRestrictions` TEXT NOT NULL,
-    `accessibilityRequirements` TEXT NOT NULL,
-    `shirtSize` ENUM('S', 'M', 'L', 'XL', 'XXL') NULL,
+    `country` VARCHAR(191) NOT NULL,
+    `dateOfBirth` DATETIME(3) NOT NULL,
+    `gender` VARCHAR(191) NULL,
+    `pronouns` VARCHAR(191) NULL,
+    `raceEthnicity` VARCHAR(191) NULL,
+    `currentSchoolOrganization` VARCHAR(191) NOT NULL,
+    `educationLevel` VARCHAR(191) NOT NULL,
+    `major` VARCHAR(191) NOT NULL,
+    `linkedin` VARCHAR(191) NULL,
+    `github` VARCHAR(191) NULL,
+    `personalWebsite` VARCHAR(191) NULL,
+    `hackathonBefore` BOOLEAN NOT NULL,
+    `hackathonDetails` VARCHAR(191) NOT NULL,
+    `programmingLanguagesTechnologies` VARCHAR(191) NOT NULL,
+    `projectDescription` VARCHAR(191) NOT NULL,
+    `participationReason` VARCHAR(191) NOT NULL,
+    `learningGoals` VARCHAR(191) NOT NULL,
     `emergencyContactName` VARCHAR(191) NOT NULL,
-    `emergencyContactRelationship` VARCHAR(191) NOT NULL,
+    `emergencyContactRelation` VARCHAR(191) NOT NULL,
     `emergencyContactPhoneNumber` VARCHAR(191) NOT NULL,
-    `numberOfPreviousHackathons` INTEGER NULL,
-    `linkGithub` VARCHAR(191) NULL,
-    `linkLinkedin` VARCHAR(191) NULL,
-    `linkPersonalSite` VARCHAR(191) NULL,
-    `linkResume` TEXT NULL,
-    `lookingForwardTo` TEXT NULL,
-    `formStartDate` DATETIME(3) NULL,
-    `formEndDate` DATETIME(3) NULL,
+    `tShirtSize` ENUM('XS', 'S', 'M', 'L', 'XL', 'XXL') NOT NULL,
+    `dietaryRestrictions` VARCHAR(191) NOT NULL,
+    `specialAccommodations` VARCHAR(191) NULL,
+    `additionalInfo` VARCHAR(191) NULL,
+    `travelOrigin` VARCHAR(191) NULL,
+    `travelAccommodations` ENUM('GTA', 'MONTREAL', 'WATERLOO', 'NONE') NULL,
+    `referralSource` VARCHAR(191) NULL,
+    `hthAgreements` BOOLEAN NOT NULL,
+    `hthPromotions` BOOLEAN NOT NULL,
+    `mlhCodeOfConduct` BOOLEAN NOT NULL,
+    `mlhPrivacyTerms` BOOLEAN NOT NULL,
+    `mlhPromotions` BOOLEAN NOT NULL,
+    `hasResume` BOOLEAN NOT NULL DEFAULT false,
     `confirmed` BOOLEAN NOT NULL DEFAULT false,
-    `userId` VARCHAR(191) NULL,
     `unsubscribed` BOOLEAN NOT NULL DEFAULT false,
     `unsubscribeToken` VARCHAR(191) NULL,
-    `onlyOnline` BOOLEAN NOT NULL DEFAULT false,
     `acceptanceExpiry` DATETIME(3) NULL,
     `walkIn` BOOLEAN NOT NULL DEFAULT false,
     `winner` BOOLEAN NOT NULL DEFAULT false,
+    `userId` VARCHAR(191) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `presenceInfoId` VARCHAR(191) NULL,
 
-    UNIQUE INDEX `HackerInfo_unsubscribeToken_key`(`unsubscribeToken`),
-    INDEX `HackerInfo_userId_idx`(`userId`),
-    PRIMARY KEY (`submissionID`)
+    UNIQUE INDEX `Hacker_unsubscribeToken_key`(`unsubscribeToken`),
+    UNIQUE INDEX `Hacker_userId_key`(`userId`),
+    INDEX `Hacker_userId_idx`(`userId`),
+    INDEX `Hacker_presenceInfoId_idx`(`presenceInfoId`),
+    PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `PresenceInfo` (
-    `id` VARCHAR(191) NOT NULL,
-    `checkedIn` BOOLEAN NOT NULL DEFAULT false,
-    `snacks1` BOOLEAN NOT NULL DEFAULT false,
-    `breakfast1` BOOLEAN NOT NULL DEFAULT false,
-    `lunch1` BOOLEAN NOT NULL DEFAULT false,
-    `dinner1` BOOLEAN NOT NULL DEFAULT false,
-    `snacks2` BOOLEAN NOT NULL DEFAULT false,
-    `breakfast2` BOOLEAN NOT NULL DEFAULT false,
-    `lunch2` BOOLEAN NOT NULL DEFAULT false,
-    `redbull` BOOLEAN NOT NULL DEFAULT false,
-    `hackerInfoId` VARCHAR(191) NOT NULL,
+CREATE TABLE `Presence` (
+    `key` VARCHAR(191) NOT NULL,
+    `value` INTEGER NOT NULL,
+    `label` VARCHAR(191) NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `hackerId` VARCHAR(191) NULL,
 
-    UNIQUE INDEX `PresenceInfo_hackerInfoId_key`(`hackerInfoId`),
-    PRIMARY KEY (`id`)
+    UNIQUE INDEX `Presence_key_key`(`key`),
+    INDEX `Presence_hackerId_idx`(`hackerId`),
+    PRIMARY KEY (`key`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
@@ -154,16 +162,18 @@ CREATE TABLE `Event` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `AuditLog` (
+CREATE TABLE `Log` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `timestamp` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `user_id` VARCHAR(191) NOT NULL,
+    `sourceId` VARCHAR(191) NOT NULL,
+    `sourceType` VARCHAR(191) NOT NULL,
     `author` VARCHAR(191) NOT NULL DEFAULT '',
     `route` VARCHAR(191) NOT NULL,
     `action` VARCHAR(191) NOT NULL,
     `details` VARCHAR(191) NULL,
+    `userId` VARCHAR(191) NULL,
 
-    INDEX `AuditLog_user_id_idx`(`user_id`),
+    INDEX `Log_userId_idx`(`userId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -194,10 +204,10 @@ CREATE TABLE `_RoleToUser` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `_AuditLogToUser` (
+CREATE TABLE `_LogToUser` (
     `A` INTEGER NOT NULL,
     `B` VARCHAR(191) NOT NULL,
 
-    UNIQUE INDEX `_AuditLogToUser_AB_unique`(`A`, `B`),
-    INDEX `_AuditLogToUser_B_index`(`B`)
+    UNIQUE INDEX `_LogToUser_AB_unique`(`A`, `B`),
+    INDEX `_LogToUser_B_index`(`B`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
