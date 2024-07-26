@@ -1,5 +1,8 @@
 import { Locale, RoleName, TShirtSize, TravelAccommodations } from "@prisma/client";
 import { z } from "zod";
+import { zodI18nMap } from "zod-i18n-map";
+
+z.setErrorMap(zodI18nMap);
 
 export const roles = z.enum([RoleName.HACKER, RoleName.SPONSOR, RoleName.ORGANIZER, RoleName.ADMIN]);
 export type Roles = z.infer<typeof roles>;

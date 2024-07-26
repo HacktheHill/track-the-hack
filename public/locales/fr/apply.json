@@ -16,8 +16,8 @@
 		"preferredLanguage": {
 			"label": "Langue préférée",
 			"options": {
-				"en": "Anglais",
-				"fr": "Français"
+				"EN": "Anglais",
+				"FR": "Français"
 			}
 		}
 	},
@@ -184,10 +184,10 @@
 		"travelAccommodations": {
 			"label": "Souhaitez-vous utiliser les hébergements de voyage de Hack the Hill?:",
 			"options": {
-				"gta": "Grand Toronto (RGT)",
-				"montreal": "Montréal",
-				"waterloo": "Waterloo",
-				"none": "Aucun"
+				"GTA": "Grand Toronto (RGT)",
+				"MONTREAL": "Montréal",
+				"WATERLOO": "Waterloo",
+				"NONE": "Aucun"
 			}
 		},
 		"referralSource": {
