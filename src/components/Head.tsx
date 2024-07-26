@@ -36,7 +36,7 @@ const Head = ({ title, noIndex }: HeadProps) => {
 			<link rel="mstile-150x150" sizes="150x150" href="/icons/mstile-150x150.png" />
 			<link rel="mstile-310x150" sizes="310x150" href="/icons/mstile-310x150.png" />
 			<link rel="mstile-310x310" sizes="310x310" href="/icons/mstile-310x310.png" />
-			<meta name="theme-color" content="#3b4779" />
+			<meta name="theme-color" content="#EA8A60" />
 			{noIndex && <meta name="robots" content="noindex" />}
 		</NextHead>
 	);
