@@ -89,17 +89,17 @@ model Hacker {
   phoneNumber                      String
   country                          String
   dateOfBirth                      DateTime
-  gender                           Gender
-  pronouns                         Pronouns
-  raceEthnicity                    RaceEthnicity
+  gender                           String?
+  pronouns                         String?
+  raceEthnicity                    String?
   currentSchoolOrganization        String
-  educationLevel                   EducationLevel
+  educationLevel                   String
   major                            String
   linkedin                         String?
   github                           String?
   personalWebsite                  String?
   hackathonBefore                  Boolean
-  hackathonDetails                 String?
+  hackathonDetails                 String
   programmingLanguagesTechnologies String
   projectDescription               String
   participationReason              String
@@ -108,13 +108,12 @@ model Hacker {
   emergencyContactRelation         String
   emergencyContactPhoneNumber      String
   tShirtSize                       TShirtSize
-  dietaryRestrictions              DietaryRestrictions
+  dietaryRestrictions              String
   specialAccommodations            String?
   additionalInfo                   String?
   travelOrigin                     String?
   travelAccommodations             TravelAccommodations?
-  referralSource                   ReferralSource
-  referralOther                    String?
+  referralSource                   String?
   hthAgreements                    Boolean
   hthPromotions                    Boolean
   mlhCodeOfConduct                 Boolean

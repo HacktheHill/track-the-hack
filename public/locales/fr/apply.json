@@ -16,8 +16,8 @@
 		"preferredLanguage": {
 			"label": "Langue préférée",
 			"options": {
-				"EN": "Anglais",
-				"FR": "Français"
+				"en": "Anglais",
+				"fr": "Français"
 			}
 		}
 	},
@@ -73,10 +73,10 @@
 		"title": "Informations sur l'éducation et la carrière",
 		"description": "Veuillez fournir des détails sur votre éducation postsecondaire et, le cas échéant, votre carrière professionnelle.",
 		"currentSchoolOrganization": {
-			"label": "Quelle est votre école/organisation actuelle ?"
+			"label": "Quelle est votre école/organisation actuelle?"
 		},
 		"educationLevel": {
-			"label": "Quel niveau d'éducation formelle suivez-vous actuellement ou complétez-vous ?",
+			"label": "Quel niveau d'éducation formelle suivez-vous actuellement ou complétez-vous?",
 			"options": {
 				"highSchool": "Lycée (Classes de 11e/12e)",
 				"undergraduate": "Premier cycle",
@@ -85,7 +85,7 @@
 			}
 		},
 		"major": {
-			"label": "Quelle est votre spécialisation/principal domaine d'étude ? Si vous avez déjà obtenu votre diplôme, quelle était votre spécialisation/principal domaine d'étude ?"
+			"label": "Quelle est votre spécialisation/principal domaine d'étude? Si vous avez déjà obtenu votre diplôme, quelle était votre spécialisation/principal domaine d'étude?"
 		}
 	},
 	"links": {
@@ -108,53 +108,53 @@
 		"title": "Compétences et réalisations",
 		"description": "C'est votre chance de briller! Nous recueillons des informations de base pour vous aider à mettre en valeur vos compétences et réalisations. Bien que la compétence technique soit importante, elle ne garantit pas l'acceptation au hackathon.",
 		"hackathonBefore": {
-			"label": "Avez-vous déjà participé à un hackathon ?",
+			"label": "Avez-vous déjà participé à un hackathon?",
 			"options": {
-				"yes": "Oui",
-				"no": "Non"
+				"true": "Oui",
+				"false": "Non"
 			}
 		},
 		"hackathonDetails": {
 			"label": "Si oui, veuillez fournir des détails pour chacun, y compris le nom de l'événement, les projets sur lesquels vous avez travaillé et les résultats."
 		},
 		"programmingLanguagesTechnologies": {
-			"label": "Quelles langues de programmation et technologies maîtrisez-vous ?"
+			"label": "Quelles langues de programmation et technologies maîtrisez-vous?"
 		},
 		"projectDescription": {
 			"label": "Décrivez un projet sur lequel vous avez travaillé et dont vous êtes particulièrement fier (fournissez un lien si disponible)"
 		},
 		"participationReason": {
-			"label": "Pourquoi voulez-vous participer à ce hackathon ?"
+			"label": "Pourquoi voulez-vous participer à ce hackathon?"
 		},
 		"learningGoals": {
-			"label": "Qu'espérez-vous accomplir ou apprendre lors de cet événement ?"
+			"label": "Qu'espérez-vous accomplir ou apprendre lors de cet événement?"
 		}
 	},
 	"emergencyContact": {
 		"title": "Contact d'urgence",
 		"description": "En cas d'urgence, nous devons savoir qui contacter. Veuillez fournir les informations suivantes.",
-		"name": {
+		"emergencyContactName": {
 			"label": "Nom complet"
 		},
-		"relation": {
+		"emergencyContactRelation": {
 			"label": "Relation avec vous"
 		},
-		"phoneNumber": {
+		"emergencyContactPhoneNumber": {
 			"label": "Numéro de téléphone"
 		}
 	},
 	"logistics": {
 		"title": "Logistique",
 		"description": "Nous espérons que vous êtes toujours avec nous! Nous avons quelques questions supplémentaires concernant la nourriture et la logistique de voyage.",
-		"shirt": {
-			"label": "Quelle est votre taille de t-shirt ?",
+		"tShirtSize": {
+			"label": "Quelle est votre taille de t-shirt?",
 			"options": {
-				"xs": "XS",
-				"s": "S",
-				"m": "M",
-				"l": "L",
-				"xl": "XL",
-				"xxl": "XXL"
+				"XS": "XS",
+				"S": "S",
+				"M": "M",
+				"L": "L",
+				"XL": "XL",
+				"XXL": "XXL"
 			}
 		},
 		"dietaryRestrictions": {
@@ -173,16 +173,16 @@
 			}
 		},
 		"specialAccommodations": {
-			"label": "Avez-vous besoin d'aménagements spéciaux pour participer ?"
+			"label": "Avez-vous besoin d'aménagements spéciaux pour participer?"
 		},
 		"additionalInfo": {
-			"label": "Y a-t-il autre chose que vous aimeriez nous faire savoir sur vous ?"
+			"label": "Y a-t-il autre chose que vous aimeriez nous faire savoir sur vous?"
 		},
 		"travelOrigin": {
-			"label": "D'où viendrez-vous pour assister à Hack the Hill, si vous êtes situé en dehors d'Ottawa (Ville, pays) ?"
+			"label": "D'où viendrez-vous pour assister à Hack the Hill, si vous êtes situé en dehors d'Ottawa (Ville, pays)?"
 		},
 		"travelAccommodations": {
-			"label": "Souhaitez-vous utiliser les hébergements de voyage de Hack the Hill ? Si oui, veuillez sélectionner l'un des emplacements suivants pour les arrangements de transport. Si vous n'êtes pas d'Ottawa ou d'un de ces endroits, vous devrez peut-être organiser votre voyage :",
+			"label": "Souhaitez-vous utiliser les hébergements de voyage de Hack the Hill?:",
 			"options": {
 				"gta": "Grand Toronto (RGT)",
 				"montreal": "Montréal",
@@ -190,8 +190,8 @@
 				"none": "Aucun"
 			}
 		},
-		"referral": {
-			"label": "Comment avez-vous entendu parler de ce hackathon ?",
+		"referralSource": {
+			"label": "Comment avez-vous entendu parler de ce hackathon?",
 			"options": {
 				"studentOrganizations": "Organisations ou clubs étudiants",
 				"friends": "Amis ou camarades de classe",
