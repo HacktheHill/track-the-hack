@@ -7,6 +7,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { Locale } from "@prisma/client";
 import { getServerSession } from "next-auth";
+import { makeZodI18nMap } from "zod-i18n-map";
 import { uploadResume } from "../../client/s3";
 import App from "../../components/App";
 import Fields from "../../components/apply/Fields";
@@ -21,6 +22,8 @@ import { getAuthOptions } from "../api/auth/[...nextauth]";
 const Apply = ({ applicationQuestions }: { applicationQuestions: ApplicationQuestionsType }) => {
 	const { t } = useTranslation("apply");
 	const router = useRouter();
+
+	const errorMap = makeZodI18nMap({ t });
 
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -43,7 +46,9 @@ const Apply = ({ applicationQuestions }: { applicationQuestions: ApplicationQues
 		if (pageName in pageSchemas) {
 			const pageData = processFormData(currentFormData);
 			const schema = pageSchemas[pageName as keyof typeof pageSchemas];
-			const parseResult = schema.safeParse(pageData);
+			const parseResult = schema.safeParse(pageData, {
+				errorMap,
+			});
 			if (!parseResult.success) {
 				const newErrors = parseResult.error.flatten().fieldErrors;
 				setErrors(newErrors);
@@ -54,7 +59,7 @@ const Apply = ({ applicationQuestions }: { applicationQuestions: ApplicationQues
 
 		setErrors({});
 		return true;
-	}, [applicationQuestions, formData, step]);
+	}, [applicationQuestions, errorMap, formData, step]);
 
 	const handleNext = useCallback(() => {
 		if (!validateCurrentPage()) return;
@@ -89,7 +94,9 @@ const Apply = ({ applicationQuestions }: { applicationQuestions: ApplicationQues
 			hasResume: !!resume,
 		};
 
-		const parse = hackerSchema.safeParse(data);
+		const parse = hackerSchema.safeParse(data, {
+			errorMap,
+		});
 		if (!parse.success) {
 			setError(t("invalid-form"));
 			console.error(parse.error.message);
@@ -288,7 +295,7 @@ export const getServerSideProps: GetServerSideProps = async ({ req, res, locale 
 	return {
 		redirect: sessionRedirect(session, "/apply"),
 		props: {
-			...(await serverSideTranslations(locale ?? "en", ["apply", "navbar", "common"])),
+			...(await serverSideTranslations(locale ?? "en", ["apply", "zod", "navbar", "common"])),
 			applicationQuestions: getApplicationQuestions(
 				locale && locale in Locale ? (locale as keyof typeof Locale) : "EN",
 			),
