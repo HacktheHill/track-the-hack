@@ -27,23 +27,18 @@ const Fields = ({
 		}
 
 		return (
-			<div key={field.name} className="flex flex-col items-center gap-2 sm:flex-row">
-				{field.type === "checkbox" ? (
-					<>
-						<FieldInput field={field} formData={formData} errors={errors} />
-						<FieldLabel page={page} field={field} />
-					</>
-				) : (
-					<>
-						<FieldLabel page={page} field={field} />
-						<FieldInput field={field} formData={formData} errors={errors} />
-					</>
-				)}
+			<div
+				key={field.name}
+				className={`flex items-center gap-2 ${
+					field.type === "checkbox" ? "flex-row-reverse" : "flex-col sm:flex-row"
+				}`}
+			>
+				<FieldLabel page={page} field={field} />
+				<FieldInput field={field} formData={formData} errors={errors} />
 			</div>
 		);
 	});
 };
-
 
 const FieldInput = ({
 	field,
