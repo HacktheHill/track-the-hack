@@ -137,18 +137,6 @@ const Apply = ({ applicationQuestions }: { applicationQuestions: ApplicationQues
 			}
 		};
 
-		const handleSwipe = (event: TouchEvent) => {
-			const x = event.changedTouches[0]?.clientX;
-			if (!x) return;
-			const deltaX = x - (event.target as HTMLElement).clientWidth;
-
-			if (deltaX > 0) {
-				handlePrevious();
-			} else {
-				handleNext();
-			}
-		};
-
 		const handleResize = () => {
 			if (formRef.current) {
 				formRef.current.scroll({
@@ -158,11 +146,9 @@ const Apply = ({ applicationQuestions }: { applicationQuestions: ApplicationQues
 		};
 
 		window.addEventListener("keydown", handleKeydown);
-		window.addEventListener("touchend", handleSwipe);
 		window.addEventListener("resize", handleResize);
 		return () => {
 			window.removeEventListener("keydown", handleKeydown);
-			window.removeEventListener("touchend", handleSwipe);
 			window.removeEventListener("resize", handleResize);
 		};
 	}, [handleNext, handlePrevious, step]);
