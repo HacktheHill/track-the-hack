@@ -16,7 +16,7 @@ const Typeahead = ({
 		const fetchOptions = async () => {
 			const res = await fetch(field.url);
 			const data = await res.text();
-			setOptions(data.split("\n"));
+			setOptions(data.replace(/(^")|("$)/gm, "").split("\n"));
 		};
 
 		void fetchOptions();
