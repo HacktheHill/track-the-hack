@@ -53,6 +53,7 @@ const Select = ({
 					type="text"
 					className={className}
 					defaultValue={otherValue}
+					onChange={e => setOtherValue(e.target.value)}
 				/>
 			)}
 		</>
