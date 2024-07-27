@@ -58,8 +58,12 @@ export const linksSchema = z.object({
 	personalWebsite: z.string().url().optional(),
 	resume: z
 		.instanceof(File)
-		.refine(file => !!file && file.size <= 2 * 1024 * 1024)
-		.refine(file => !!file && file.type === "application/pdf"),
+		.refine(file => !!file && file.size <= 2 * 1024 * 1024, {
+			params: { i18n: "resume.size" },
+		})
+		.refine(file => !!file && file.type === "application/pdf", {
+			params: { i18n: "resume.format" },
+		}),
 });
 
 export const skillsAccomplishmentsSchema = z.object({

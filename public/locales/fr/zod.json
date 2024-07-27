@@ -109,5 +109,9 @@
 		"never": "never",
 		"map": "map",
 		"set": "ensemble"
+	},
+	"resume": {
+		"size": "La taille du fichier doit être inférieure à 2 Mo",
+		"format": "Format de fichier non valide. Doit être un fichier PDF"
 	}
 }
