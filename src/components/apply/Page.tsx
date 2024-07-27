@@ -107,15 +107,10 @@ const Page = ({
 					<button
 						type="button"
 						onClick={handleNext}
-						className="mx-auto flex w-2/3 items-center justify-center whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
+						className="mx-auto flex w-fit items-center justify-center whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base gap-2"
 					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							viewBox="0 0 24 24"
-							fill="currentColor"
-							className="h-8 rotate-90"
-						>
-							<path d="M10 17l5-5-5-5v10z" />
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 12" fill="currentColor" className="w-4">
+							<path d="M0 0 L12 12 L24 0 Z" />
 						</svg>
 						{t("next")}
 					</button>
