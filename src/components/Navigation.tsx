@@ -152,7 +152,7 @@ const BottomMenu = () => {
 
 	return (
 		<nav
-			className="sticky bottom-0 flex w-full items-center justify-evenly gap-4 whitespace-nowrap bg-light-quaternary-color p-4 mobile:hidden xs:gap-8"
+			className="z-10 flex w-full items-center justify-evenly gap-4 whitespace-nowrap bg-light-quaternary-color p-4 mobile:hidden xs:gap-8"
 			aria-label={t("bottom-navigation")}
 		>
 			<Links bottom />
