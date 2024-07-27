@@ -30,7 +30,7 @@ const Page = ({
 	const handleNext = () => {
 		setLoading(true);
 		if (validatePage(page)) {
-			setStep(prevStep => prevStep + 1);
+			setStep(prev => (index + 1 > prev ? index + 1 : prev));
 			setTimeout(() => {
 				pageRef.current?.nextElementSibling?.scrollIntoView({
 					behavior: "smooth",
@@ -75,9 +75,9 @@ const Page = ({
 		<div
 			key={page.name}
 			ref={pageRef}
-			className="m-auto flex min-h-[calc(100dvh-75px)] w-full transform opacity-0 transition-opacity duration-1000 ease-in-out"
+			className="m-auto flex min-h-[calc(100dvh-140px)] w-full transform opacity-0 transition-opacity duration-1000 ease-in-out mobile:min-h-[calc(100dvh-75px)]"
 		>
-			<div className="m-auto flex w-full flex-col gap-4 rounded border-dark-primary-color mobile:w-2/3 mobile:gap-8 mobile:border mobile:bg-light-quaternary-color/50 mobile:p-8">
+			<div className="m-auto flex w-full flex-col gap-4 rounded border-dark-primary-color p-4 mobile:w-2/3 mobile:gap-8 mobile:border mobile:bg-light-quaternary-color/50 mobile:p-8">
 				<h3 className="text-center font-rubik text-4xl font-bold text-dark-primary-color">
 					{t(`${page.name}.title`)}
 				</h3>
@@ -106,9 +106,17 @@ const Page = ({
 				) : (
 					<button
 						type="button"
-						className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
 						onClick={handleNext}
+						className="mx-auto flex w-2/3 items-center justify-center whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
 					>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 24 24"
+							fill="currentColor"
+							className="h-8 rotate-90"
+						>
+							<path d="M10 17l5-5-5-5v10z" />
+						</svg>
 						{t("next")}
 					</button>
 				)}
