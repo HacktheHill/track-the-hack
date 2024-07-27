@@ -31,7 +31,7 @@ const Radio = ({
 			{Object.entries(field.options).map(([k, v]: [string, string]) => (
 				<div key={k} className="flex items-center gap-2">
 					<input
-						id={field.name}
+						id={`${field.name}-${k}`}
 						name={field.name}
 						type="radio"
 						value={k}
@@ -44,7 +44,7 @@ const Radio = ({
 						}}
 					/>
 					<label
-						htmlFor={field.name}
+						htmlFor={`${field.name}-${k}`}
 						className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color peer-checked:bg-light-primary-color/50 short:text-base"
 					>
 						{t(v)}
