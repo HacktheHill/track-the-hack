@@ -35,7 +35,7 @@ const ErrorPage = () => {
 						{t("error")}
 					</h1>
 				</div>
-				<Error message={error ?? t("common:unknown-error")} />
+				<Error message={(error && t(`next-auth.${error}`)) ?? t("common:unknown-error")} />
 			</main>
 		</>
 	);
