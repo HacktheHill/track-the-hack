@@ -80,7 +80,7 @@ const SignUp = ({ providers }: InferGetServerSidePropsType<typeof getServerSideP
 	return (
 		<>
 			<Head title={t("sign-up")} />
-			<main className="flex h-screen flex-col items-center justify-center gap-4 bg-default-gradient bg-no-repeat text-center supports-[height:100cqh]:h-[100cqh] supports-[height:100svh]:h-[100svh]">
+			<main className="flex h-screen flex-col items-center justify-center gap-4 bg-default-gradient bg-no-repeat p-4 text-center supports-[height:100cqh]:h-[100cqh] supports-[height:100svh]:h-[100svh]">
 				<div className="flex flex-col items-center">
 					<Image
 						src="https://hackthehill.com/Logos/hackthehill-logo.svg"
@@ -94,13 +94,13 @@ const SignUp = ({ providers }: InferGetServerSidePropsType<typeof getServerSideP
 						{t("sign-up")}
 					</h1>
 				</div>
-				<div className="flex w-fit flex-col gap-4">
+				<div className="flex w-full max-w-md flex-col gap-4">
 					{noUser && <p className="w-96 text-dark-color">{t("no-user-sign-up")}</p>}
 					{email}
 					{Object.values(providers).map(provider => (
 						<form
 							key={provider.id}
-							className="flex gap-2"
+							className="flex flex-wrap gap-4 mobile:flex-nowrap"
 							onSubmit={e => void handleSubmit(e, provider.id)}
 						>
 							{provider.id === "email" && (
@@ -109,7 +109,7 @@ const SignUp = ({ providers }: InferGetServerSidePropsType<typeof getServerSideP
 									name="email"
 									placeholder={t("email-address")}
 									required
-									className="rounded-lg border border-dark-primary-color bg-light-primary-color px-4 py-2 font-rubik text-lg text-light-color shadow-md transition-all duration-500 placeholder:text-light-quaternary-color hover:bg-light-primary-color/75 hover:shadow-lg"
+									className="w-full rounded-lg border border-dark-primary-color bg-light-primary-color px-4 py-2 font-rubik text-lg text-light-color shadow-md transition-all duration-500 placeholder:text-light-quaternary-color hover:bg-light-primary-color/75 hover:shadow-lg"
 								/>
 							)}
 							<button
@@ -126,7 +126,7 @@ const SignUp = ({ providers }: InferGetServerSidePropsType<typeof getServerSideP
 										/>
 									</>
 								)}
-								<span>{provider.name}</span>
+								{provider.id === "email" ? t("email-sign-up") : provider.name}
 							</button>
 						</form>
 					))}
