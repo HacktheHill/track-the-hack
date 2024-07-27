@@ -130,8 +130,7 @@ const SignUp = ({ providers }: InferGetServerSidePropsType<typeof getServerSideP
 							</button>
 						</form>
 					))}
-
-					{error && <Error message={error} />}
+					{error && <Error message={t(`next-auth.${error}`)} />}
 					{loading && <Loading />}
 				</div>
 			</main>
