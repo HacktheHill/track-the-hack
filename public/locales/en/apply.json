@@ -2,8 +2,10 @@
 	"title": "Apply",
 	"next": "Next",
 	"submit": "Submit",
-	"success": "Application submitted successfully!",
-	"back": "Back to Home",
+	"success": "Success",
+	"application-submitted-successfully": "Application submitted successfully!",
+	"return-to-form": "Return to Form",
+	"back-home": "Back to Home",
 	"select": "Select",
 
 	"introduction": {

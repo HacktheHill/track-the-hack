@@ -2,8 +2,10 @@
 	"title": "Appliquer",
 	"next": "Suivant",
 	"submit": "Soumettre",
-	"success": "Candidature soumise avec succès!",
-	"back": "Retour à l'accueil",
+	"success": "Succès",
+	"application-submitted-successfully": "Candidature soumise avec succès!",
+	"return-to-form": "Retour au formulaire",
+	"back-home": "Retour à l'accueil",
 	"select": "Sélectionner",
 
 	"introduction": {

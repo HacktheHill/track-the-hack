@@ -1,25 +1,26 @@
+import { Locale } from "@prisma/client";
 import type { GetServerSideProps } from "next";
+import { getServerSession } from "next-auth";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
-import Image from "next/image";
 import { useRouter } from "next/router";
-import React, { useCallback, useEffect, useRef, useState } from "react";
-
-import { Locale } from "@prisma/client";
-import { getServerSession } from "next-auth";
+import React, { useEffect, useRef, useState } from "react";
 import { makeZodI18nMap } from "zod-i18n-map";
+
 import { uploadResume } from "../../client/s3";
 import App from "../../components/App";
-import Fields from "../../components/apply/Fields";
+import Page from "../../components/apply/Page";
+import Error from "../../components/Error";
 import Loading from "../../components/Loading";
 import { trpc } from "../../server/api/api";
-import { getApplicationQuestions, type ApplicationQuestionsType } from "../../server/lib/apply";
+import type { ApplicationQuestionsType } from "../../server/lib/apply";
+import { getApplicationQuestions } from "../../server/lib/apply";
 import { sessionRedirect } from "../../server/lib/redirects";
 import { processFormData, saveToSessionStorage } from "../../utils/apply";
 import { hackerSchema, pageSchemas } from "../../utils/common";
 import { getAuthOptions } from "../api/auth/[...nextauth]";
 
-const Apply = ({ applicationQuestions }: { applicationQuestions: ApplicationQuestionsType }) => {
+const Apply = ({ applicationQuestions }: { applicationQuestions: ApplicationQuestionsType[number][] }) => {
 	const { t } = useTranslation("apply");
 	const router = useRouter();
 
@@ -30,16 +31,16 @@ const Apply = ({ applicationQuestions }: { applicationQuestions: ApplicationQues
 	const [success, setSuccess] = useState(false);
 	const [step, setStep] = useState<number>(0);
 	const [formData, setFormData] = useState(new FormData());
-	const [errors, setErrors] = useState<Record<string, string[] | undefined>>({});
 	const formRef = useRef<HTMLFormElement>(null);
+	const [errors, setErrors] = useState<Record<string, Record<string, string[]>>>({});
 
 	const mutation = trpc.hackers.apply.useMutation();
 
-	const validateCurrentPage = useCallback(() => {
-		const page = applicationQuestions[step];
-		if (!formRef.current || step >= applicationQuestions.length || !page) return false;
+	const validatePage = (page: ApplicationQuestionsType[number]) => {
+		const ref = formRef.current;
+		if (!ref) return false;
 
-		const currentFormData = new FormData(formRef.current);
+		const currentFormData = new FormData(ref);
 		currentFormData.forEach((value, key) => formData.set(key, value));
 		saveToSessionStorage(currentFormData);
 
@@ -50,44 +51,36 @@ const Apply = ({ applicationQuestions }: { applicationQuestions: ApplicationQues
 			const parseResult = schema.safeParse(pageData, {
 				errorMap,
 			});
-			if (!parseResult.success) {
+			if (parseResult.success) {
+				setErrors(prevErrors => ({ ...prevErrors, [pageName]: {} }));
+			} else {
 				const newErrors = parseResult.error.flatten().fieldErrors;
-				setErrors(newErrors);
+				setErrors(prevErrors => ({ ...prevErrors, [pageName]: newErrors }));
 				console.error(parseResult.error.message);
 				return false;
 			}
 		}
 
-		setErrors({});
 		return true;
-	}, [applicationQuestions, errorMap, formData, step]);
+	};
 
-	const handleNext = useCallback(() => {
-		if (!validateCurrentPage()) return;
-		const newStep = step + 1;
-		formRef.current?.scroll({
-			left: newStep * window.innerWidth,
-			top: 0,
-			behavior: "smooth",
+	const validateAllPages = () => {
+		let isValid = true;
+		applicationQuestions.forEach(page => {
+			if (!validatePage(page)) {
+				isValid = false;
+			}
 		});
-		setStep(newStep);
-	}, [step, validateCurrentPage]);
-
-	const handlePrevious = useCallback(() => {
-		if (step <= 0) return;
-		const newStep = step - 1;
-		formRef.current?.scroll({
-			left: newStep * window.innerWidth,
-			top: 0,
-			behavior: "smooth",
-		});
-		setStep(newStep);
-	}, [step]);
+		return isValid;
+	};
 
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 
-		if (!validateCurrentPage()) return;
+		if (!validateAllPages()) {
+			setError(t("invalid-form"));
+			return;
+		}
 
 		const resume = formData.get("resume") as File | null;
 		const data = {
@@ -98,60 +91,31 @@ const Apply = ({ applicationQuestions }: { applicationQuestions: ApplicationQues
 		const parse = hackerSchema.safeParse(data, {
 			errorMap,
 		});
+
 		if (!parse.success) {
 			setError(t("invalid-form"));
 			console.error(parse.error.message);
-		} else {
-			setLoading(true);
+			return;
+		}
+
+		setLoading(true);
+		setError(null);
+		setSuccess(false);
+
+		try {
 			const result = await mutation.mutateAsync(parse.data);
 			if (result.presignedUrl && resume) {
 				await uploadResume(result.presignedUrl, resume, resume.name);
 			}
 			sessionStorage.removeItem("applyFormData");
-
-			if (!mutation.error) {
-				setError(null);
-				setFormData(new FormData());
-				setSuccess(true);
-			} else {
-				setError(mutation.error.message);
-			}
+			setSuccess(true);
+		} catch (err) {
+			setError((err as Error).message ?? t("unknown-error"));
+			console.error(err);
+		} finally {
 			setLoading(false);
 		}
 	};
-
-	useEffect(() => {
-		if (mutation.error) {
-			setError(mutation.error.message);
-		}
-	}, [mutation.error]);
-
-	useEffect(() => {
-		const handleKeydown = (event: KeyboardEvent) => {
-			if (["INPUT", "SELECT", "TEXTAREA"].includes(document.activeElement?.tagName ?? "")) return;
-
-			if (event.key === "ArrowRight" || event.key === " " || event.key === "Enter") {
-				handleNext();
-			} else if (event.key === "ArrowLeft") {
-				handlePrevious();
-			}
-		};
-
-		const handleResize = () => {
-			if (formRef.current) {
-				formRef.current.scroll({
-					left: step * window.innerWidth,
-				});
-			}
-		};
-
-		window.addEventListener("keydown", handleKeydown);
-		window.addEventListener("resize", handleResize);
-		return () => {
-			window.removeEventListener("keydown", handleKeydown);
-			window.removeEventListener("resize", handleResize);
-		};
-	}, [handleNext, handlePrevious, step]);
 
 	useEffect(() => {
 		const savedData = sessionStorage.getItem("applyFormData");
@@ -169,109 +133,52 @@ const Apply = ({ applicationQuestions }: { applicationQuestions: ApplicationQues
 
 	return (
 		<App className="overflow-y-auto bg-default-gradient" title={t("title")}>
-			{success ? (
-				<div className="flex h-full flex-col items-center justify-center gap-8">
-					<h3 className="font-rubik text-4xl font-bold text-dark-color">{t("title")}</h3>
-					<p>{t("success")}</p>
-					<button
-						className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
-						onClick={() => void router.replace("/")}
-					>
-						{t("back")}
-					</button>
+			{(loading || error || success) && (
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-light-tertiary-color bg-opacity-90">
+					<div className="w-full max-w-lg rounded border border-dark-primary-color bg-light-quaternary-color p-8 text-center">
+						{loading && <Loading />}
+						{error && (
+							<>
+								<Error message={error} />
+								<button
+									type="button"
+									className="mt-4 whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
+									onClick={() => setError(null)}
+								>
+									{t("return-to-form")}
+								</button>
+							</>
+						)}
+						{success && (
+							<>
+								<h3 className="text-4xl font-bold text-dark-color">{t("success")}</h3>
+								<p>{t("application-submitted-successfully")}</p>
+								<button
+									type="button"
+									className="mt-4 whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
+									onClick={() => void router.replace("/")}
+								>
+									{t("back-home")}
+								</button>
+							</>
+						)}
+					</div>
 				</div>
-			) : (
-				<form
-					ref={formRef}
-					className="flex h-full w-screen overflow-x-hidden"
-					onSubmit={e => void handleSubmit(e)}
-				>
-					{applicationQuestions.map((page, index) => (
-						<div
-							key={page.name}
-							className={`flex h-full w-screen flex-shrink-0 p-8 transition-opacity duration-1000 ease-in ${
-								step <= index - 1 ? "opacity-0" : "opacity-100"
-							}`}
-							// @ts-expect-error https://github.com/facebook/react/issues/17157#issuecomment-2012795215
-							inert={step !== index ? "" : undefined}
-						>
-							<div className="m-auto flex flex-col gap-4 rounded border-dark-primary-color p-8 mobile:w-2/3 mobile:gap-8 mobile:border mobile:bg-light-quaternary-color/50">
-								<h3 className="text-center font-rubik text-4xl font-bold text-dark-primary-color">
-									{t(`${page.name}.title`)}
-								</h3>
-								<p className="text-center">{t(`${page.name}.description`)}</p>
-								{page.questions.length === 0 ? (
-									<Image
-										priority
-										className="z-10 m-auto"
-										src="/assets/mascot-waving.svg"
-										alt="Mascot"
-										width={225}
-										height={225}
-									/>
-								) : (
-									<div className="flex flex-col gap-4 mobile:my-auto">
-										<Fields
-											fields={page.questions}
-											errors={errors}
-											formData={formData}
-											page={page.name}
-										/>
-									</div>
-								)}
-								{index === applicationQuestions.length - 1 && (
-									<button
-										type="submit"
-										className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
-									>
-										{t("submit")}
-									</button>
-								)}
-								{loading && <Loading />}
-								{error && (
-									<div className="flex flex-col items-center gap-2">
-										<p className="text-center font-rubik text-red-500">{error}</p>
-									</div>
-								)}
-							</div>
-						</div>
-					))}
-					{step > 0 && (
-						<button
-							type="button"
-							onClick={handlePrevious}
-							aria-label={t("previous")}
-							className="fixed left-0 h-full w-8 text-dark-primary-color mobile:w-24"
-						>
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								viewBox="0 0 24 24"
-								fill="currentColor"
-								className="-translate-y-1/2 transform"
-							>
-								<path d="M14 7l-5 5 5 5V7z" />
-							</svg>
-						</button>
-					)}
-					{step < applicationQuestions.length - 1 && (
-						<button
-							type="button"
-							onClick={handleNext}
-							aria-label={t("next")}
-							className="fixed right-0 h-full w-8 text-dark-primary-color mobile:w-24"
-						>
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								viewBox="0 0 24 24"
-								fill="currentColor"
-								className="-translate-y-1/2 transform"
-							>
-								<path d="M10 17l5-5-5-5v10z" />
-							</svg>
-						</button>
-					)}
-				</form>
 			)}
+			<form ref={formRef} onSubmit={e => void handleSubmit(e)}>
+				{applicationQuestions.slice(0, step + 1).map((page, index) => (
+					<Page
+						key={page.name}
+						page={page}
+						formData={formData}
+						index={index}
+						isLastPage={index === applicationQuestions.length - 1}
+						setStep={setStep}
+						errors={errors[page.name] ?? {}}
+						validatePage={validatePage}
+					/>
+				))}
+			</form>
 		</App>
 	);
 };

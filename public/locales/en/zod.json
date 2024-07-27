@@ -109,5 +109,9 @@
 		"never": "never",
 		"map": "map",
 		"set": "set"
+	},
+	"resume": {
+		"size": "File size must be less than 2MB",
+		"format": "Invalid file format. Must be a PDF file"
 	}
 }
