@@ -2,7 +2,11 @@ import { useRouter } from "next/router";
 import { useTranslation } from "next-i18next";
 import type { ProcessedFieldGeneric } from "../../server/lib/apply";
 
-const Language = ({ field }: { field: ProcessedFieldGeneric<"radio"> }) => {
+type LanguageProps = {
+	field: ProcessedFieldGeneric<"radio">;
+};
+
+const Language = ({ field }: LanguageProps) => {
 	const router = useRouter();
 	const { t } = useTranslation("apply");
 

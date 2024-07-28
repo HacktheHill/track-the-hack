@@ -1,14 +1,12 @@
 import type { ProcessedFieldGeneric } from "../../server/lib/apply";
 
-const Input = ({
-	field,
-	className,
-	formData,
-}: {
+type InputProps = {
 	field: ProcessedFieldGeneric<"text" | "email" | "tel" | "date" | "url" | "file">;
 	className: string;
 	formData: FormData;
-}) => {
+};
+
+const Input = ({ field, className, formData }: InputProps) => {
 	return (
 		<input
 			id={field.name}
