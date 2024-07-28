@@ -1,6 +1,10 @@
 import type { ProcessedFieldGeneric } from "../../server/lib/apply";
 
-const Checkbox = ({ field }: { field: ProcessedFieldGeneric<"checkbox"> }) => {
+type CheckboxProps = {
+	field: ProcessedFieldGeneric<"checkbox">;
+};
+
+const Checkbox = ({ field }: CheckboxProps) => {
 	return (
 		<input
 			id={field.name}

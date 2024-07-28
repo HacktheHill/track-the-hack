@@ -2,15 +2,13 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "next-i18next";
 import type { ProcessedFieldGeneric } from "../../server/lib/apply";
 
-const Select = ({
-	field,
-	className,
-	formData,
-}: {
+type SelectProps = {
 	field: ProcessedFieldGeneric<"select">;
 	className: string;
 	formData: FormData;
-}) => {
+};
+
+const Select = ({ field, className, formData }: SelectProps) => {
 	const { t } = useTranslation("apply");
 	const [showOther, setShowOther] = useState(false);
 	const [value, setValue] = useState<string | undefined>();

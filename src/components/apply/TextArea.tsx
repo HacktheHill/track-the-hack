@@ -1,15 +1,13 @@
 import { useState } from "react";
 import type { ProcessedFieldGeneric } from "../../server/lib/apply";
 
-const TextArea = ({
-	field,
-	className,
-	formData,
-}: {
+type TextAreaProps = {
 	field: ProcessedFieldGeneric<"textarea">;
 	className: string;
 	formData: FormData;
-}) => {
+};
+
+const TextArea = ({ field, className, formData }: TextAreaProps) => {
 	const [charCount, setCharCount] = useState(0);
 
 	return (

@@ -20,7 +20,11 @@ import { processFormData, saveToLocalStorage } from "../../utils/apply";
 import { hackerSchema, pageSchemas } from "../../utils/common";
 import { getAuthOptions } from "../api/auth/[...nextauth]";
 
-const Apply = ({ applicationQuestions }: { applicationQuestions: ApplicationQuestionsType[number][] }) => {
+type ApplyProps = {
+	applicationQuestions: ApplicationQuestionsType[number][];
+};
+
+const Apply = ({ applicationQuestions }: ApplyProps) => {
 	const { t } = useTranslation("apply");
 	const router = useRouter();
 

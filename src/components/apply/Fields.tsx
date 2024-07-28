@@ -5,17 +5,14 @@ import type { ProcessedField } from "../../server/lib/apply";
 import Field from "./Field";
 import Language from "./Language";
 
-const Fields = ({
-	fields,
-	page,
-	formData,
-	errors,
-}: {
+type FieldsProps = {
 	fields: ProcessedField[];
 	page: string;
 	formData: FormData;
 	errors: Record<string, string[] | undefined>;
-}) => {
+};
+
+const Fields = ({ fields, page, formData, errors }: FieldsProps) => {
 	return fields.map(field => {
 		if (page === "preferredLanguage" && field.type === "radio") {
 			return (
@@ -40,15 +37,13 @@ const Fields = ({
 	});
 };
 
-const FieldInput = ({
-	field,
-	formData,
-	errors,
-}: Readonly<{
+type FieldInputProps = Readonly<{
 	field: ProcessedField;
 	formData: FormData;
 	errors: Record<string, string[] | undefined>;
-}>) => {
+}>;
+
+const FieldInput = ({ field, formData, errors }: FieldInputProps) => {
 	return (
 		<div className={`flex flex-col gap-2 ${field.type === "checkbox" ? "" : "w-full"}`}>
 			<Field field={field} formData={formData} errors={errors} />
@@ -57,13 +52,12 @@ const FieldInput = ({
 	);
 };
 
-const FieldLabel = ({
-	page,
-	field,
-}: Readonly<{
+type FieldLabelProps = {
 	page: string;
 	field: ProcessedField;
-}>) => {
+};
+
+const FieldLabel = ({ page, field }: FieldLabelProps) => {
 	const { t } = useTranslation("apply");
 	const hasLinks = "links" in field && field.links?.length > 0;
 	return (
@@ -90,10 +84,12 @@ const FieldLabel = ({
 	);
 };
 
-function FieldError({
-	errors,
-	field,
-}: Readonly<{ errors: Record<string, string[] | undefined>; field: ProcessedField }>) {
+type FieldErrorProps = Readonly<{
+	errors: Record<string, string[] | undefined>;
+	field: ProcessedField;
+}>;
+
+function FieldError({ errors, field }: FieldErrorProps) {
 	return <>{errors[field.name] && <p className="text-red-500">{errors[field.name]}</p>}</>;
 }
 

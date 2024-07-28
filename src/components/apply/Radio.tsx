@@ -2,15 +2,17 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "next-i18next";
 import type { ProcessedFieldGeneric } from "../../server/lib/apply";
 
+type RadioProps = {
+	field: ProcessedFieldGeneric<"radio">;
+	className: string;
+	formData: FormData;
+};
+
 const Radio = ({
 	field,
 	className,
 	formData,
-}: {
-	field: ProcessedFieldGeneric<"radio">;
-	className: string;
-	formData: FormData;
-}) => {
+}: RadioProps) => {
 	const { t } = useTranslation("apply");
 	const [showOther, setShowOther] = useState(false);
 	const [value, setValue] = useState<string | undefined>();

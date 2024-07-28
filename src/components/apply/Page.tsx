@@ -5,15 +5,7 @@ import type { ApplicationQuestionsType } from "../../server/lib/apply";
 import Loading from "../Loading";
 import Fields from "./Fields";
 
-const Page = ({
-	page,
-	formData,
-	index,
-	isLastPage,
-	setStep,
-	errors,
-	validatePage,
-}: {
+type PageProps = {
 	page: ApplicationQuestionsType[number];
 	formData: FormData;
 	index: number;
@@ -21,7 +13,9 @@ const Page = ({
 	setStep: React.Dispatch<React.SetStateAction<number>>;
 	errors: Record<string, string[] | undefined>;
 	validatePage: (page: ApplicationQuestionsType[number]) => boolean;
-}) => {
+};
+
+const Page = ({ page, formData, index, isLastPage, setStep, errors, validatePage }: PageProps) => {
 	const { t } = useTranslation("apply");
 	const pageRef = useRef<HTMLDivElement>(null);
 
@@ -107,7 +101,7 @@ const Page = ({
 					<button
 						type="button"
 						onClick={handleNext}
-						className="mx-auto flex w-fit items-center justify-center whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base gap-2"
+						className="mx-auto flex w-fit items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
 					>
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 12" fill="currentColor" className="w-4">
 							<path d="M0 0 L12 12 L24 0 Z" />
