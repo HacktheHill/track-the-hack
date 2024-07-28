@@ -121,19 +121,20 @@ model Hacker {
   mlhPrivacyTerms                  Boolean
   mlhPromotions                    Boolean
 
-  hasResume        Boolean    @default(false)
-  confirmed        Boolean    @default(false)
-  unsubscribed     Boolean    @default(false)
-  unsubscribeToken String?    @unique @default(cuid())
-  acceptanceExpiry DateTime?
-  walkIn           Boolean    @default(false)
-  winner           Boolean    @default(false)
-  userId           String?    @unique
-  user             User?      @relation(fields: [userId], references: [id])
-  presences        Presence[]
-  createdAt        DateTime   @default(now())
-  updatedAt        DateTime   @default(now()) @updatedAt
-  presenceInfoId   String?
+  hasResume         Boolean           @default(false)
+  applicationStatus ApplicationStatus @default(PENDING)
+  confirmed         Boolean           @default(false)
+  unsubscribed      Boolean           @default(false)
+  unsubscribeToken  String?           @unique @default(cuid())
+  acceptanceExpiry  DateTime?
+  walkIn            Boolean           @default(false)
+  winner            Boolean           @default(false)
+  userId            String?           @unique
+  user              User?             @relation(fields: [userId], references: [id])
+  presences         Presence[]
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @default(now()) @updatedAt
+  presenceInfoId    String?
 
   @@index([userId])
   @@index([presenceInfoId])
@@ -232,4 +233,11 @@ enum TravelAccommodations {
   MONTREAL
   WATERLOO
   NONE
+}
+
+enum ApplicationStatus {
+  PENDING
+  ACCEPTED
+  WAITLISTED
+  REJECTED
 }
