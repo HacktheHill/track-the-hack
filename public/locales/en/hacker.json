@@ -1,31 +1,97 @@
 {
-	"gender": "Gender",
-	"firstName": "First Name",
-	"lastName": "Last Name",
-	"university": "University",
-	"study": "Study",
-	"studyLevel": "Study Level",
-	"studyProgram": "Study Program",
-	"graduationYear": "Graduation Year",
-	"phoneNumber": "Phone Number",
-	"email": "Email",
-	"emergencyContactName": "Emergency Contact Name",
-	"emergencyContactRelationship": "Emergency Contact Relationship",
-	"emergencyContactPhoneNumber": "Emergency Contact Phone Number",
-	"dietaryRestrictions": "Dietary Restrictions",
-	"accessibilityRequirements": "Accessibility Requirements",
-	"preferredLanguage": "Preferred Language",
-	"shirtSize": "Shirt Size",
-	"walkIn": "Walk In",
-	"subscribeToMailingList": "Subscribe to Mailing List",
-	"attendanceType": "Attendance Type",
-	"location": "Location",
-	"transportationRequired": "Transportation Required",
-	"category_personal_information": "Personal Information",
-	"category_emergency_contact": "Emergency Contact",
-	"category_general_information": "General Information",
-	"category_links_information": "Links Information",
-	"edit_description": "Careful - you have unsaved changes!",
-	"edit_reset_button": "Reset",
-	"edit_save_button": "Save"
+	"personal": {
+		"title": "Personal Information",
+		"firstName": "First Name",
+		"lastName": "Last Name",
+		"email": "Email Address",
+		"phoneNumber": "Phone Number",
+		"country": "Country of Residence",
+		"dateOfBirth": "Date of Birth"
+	},
+	"demographics": {
+		"title": "Demographic Information",
+		"gender": {
+			"label": "Gender",
+			"man": "Man",
+			"woman": "Woman",
+			"nonBinary": "Non-binary",
+			"preferNotToAnswer": "Prefer not to answer"
+		},
+		"pronouns": "Pronouns",
+		"raceEthnicity": "Race/Ethnicity"
+	},
+	"education": {
+		"title": "Education and Professional Information",
+		"currentSchoolOrganization": "Current School/Organization",
+		"educationLevel": {
+			"label": "Education Level",
+			"highSchool": "High School",
+			"undergraduate": "Undergraduate",
+			"graduate": "Graduate"
+		},
+		"major": "Major/Primary Area of Study"
+	},
+	"skillsAccomplishments": {
+		"title": "Skills and Accomplishments",
+		"hackathonBefore": {
+			"label": "Previous Hackathon Experience",
+			"true": "Yes",
+			"false": "No"
+		},
+		"hackathonDetails": "Hackathon Details",
+		"programmingLanguagesTechnologies": "Programming Languages & Technologies",
+		"projectDescription": "Project Description",
+		"participationReason": "Reason for Participation",
+		"learningGoals": "Learning Goals"
+	},
+	"emergencyContact": {
+		"title": "Emergency Contact",
+		"emergencyContactName": "Emergency Contact Name",
+		"emergencyContactRelation": "Emergency Contact Relationship",
+		"emergencyContactPhoneNumber": "Emergency Contact Phone Number"
+	},
+	"logistics": {
+		"title": "Logistics",
+		"tShirtSize": {
+			"label": "T-shirt Size"
+		},
+		"dietaryRestrictions": {
+			"label": "Dietary Restrictions",
+			"halal": "Halal",
+			"glutenFree": "Gluten Free",
+			"vegetarian": "Vegetarian",
+			"vegan": "Vegan",
+			"kosher": "Kosher",
+			"lactoseIntolerance": "Lactose Intolerance",
+			"nuts": "Nuts",
+			"soy": "Soy",
+			"none": "None"
+		},
+		"specialAccommodations": "Special Accommodations",
+		"additionalInfo": "Additional Information",
+		"travelOrigin": "Travel Origin",
+		"travelAccommodations": "Travel Accommodations"
+	},
+	"links": {
+		"title": "Links",
+		"linkedin": "LinkedIn",
+		"github": "GitHub",
+		"personalSite": "Personal Website",
+		"resume": "Resume"
+	},
+	"other": {
+		"title": "Other",
+		"acceptanceExpiry": "Acceptance Expiry"
+	},
+	"applicationStatus": {
+		"PENDING": "Pending",
+		"ACCEPTED": "Accepted",
+		"WAITLISTED": "Waitlisted",
+		"REJECTED": "Rejected"
+	},
+	"next": "Next",
+	"previous": "Previous",
+	"unsavedChanges": "You have unsaved changes.",
+	"reset": "Reset",
+	"save": "Save"
 }
