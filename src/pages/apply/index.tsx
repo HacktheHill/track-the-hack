@@ -41,16 +41,20 @@ const Apply = ({ applicationQuestions }: { applicationQuestions: ApplicationQues
 		if (!ref) return false;
 
 		const currentFormData = new FormData(ref);
-		currentFormData.forEach((value, key) => formData.set(key, value));
-		saveToLocalStorage(currentFormData);
+		const updatedFormData = new FormData();
+
+		formData.forEach((value, key) => updatedFormData.append(key, value));
+		currentFormData.forEach((value, key) => updatedFormData.append(key, value));
+
+		setFormData(updatedFormData);
+		saveToLocalStorage(updatedFormData);
 
 		const pageName = page.name;
 		if (pageName in pageSchemas) {
-			const pageData = processFormData(currentFormData);
+			const pageData = processFormData(updatedFormData);
 			const schema = pageSchemas[pageName as keyof typeof pageSchemas];
-			const parseResult = schema.safeParse(pageData, {
-				errorMap,
-			});
+			const parseResult = schema.safeParse(pageData, { errorMap });
+
 			if (parseResult.success) {
 				setErrors(prevErrors => ({ ...prevErrors, [pageName]: {} }));
 			} else {
@@ -88,9 +92,7 @@ const Apply = ({ applicationQuestions }: { applicationQuestions: ApplicationQues
 			hasResume: !!resume,
 		};
 
-		const parse = hackerSchema.safeParse(data, {
-			errorMap,
-		});
+		const parse = hackerSchema.safeParse(data, { errorMap });
 
 		if (!parse.success) {
 			setError(t("invalid-form"));
@@ -121,15 +123,18 @@ const Apply = ({ applicationQuestions }: { applicationQuestions: ApplicationQues
 		const savedData = localStorage.getItem("applyFormData");
 		if (savedData) {
 			const parsedData = JSON.parse(savedData) as Record<string, FormDataEntryValue | FormDataEntryValue[]>;
+			const newFormData = new FormData();
 			Object.entries(parsedData).forEach(([key, value]) => {
 				if (Array.isArray(value)) {
-					value.forEach(val => formData.append(key, val));
+					value.forEach(v => newFormData.append(key, v));
 				} else {
-					formData.set(key, value);
+					newFormData.append(key, value);
 				}
 			});
+
+			setFormData(newFormData);
 		}
-	}, [formData]);
+	}, []);
 
 	return (
 		<App className="overflow-y-auto bg-default-gradient" title={t("title")}>
