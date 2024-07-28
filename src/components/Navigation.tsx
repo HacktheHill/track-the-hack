@@ -76,6 +76,17 @@ const Links = ({ bottom }: LinkProps) => {
 					/>
 				</Filter>
 			)}
+			{sessionData?.user && sessionData.user.hackerId && (
+				<Filter value={[RoleName.HACKER]} silent method="only">
+					<LinkItem
+						href={`/hackers/hacker?id=${sessionData.user.hackerId}`}
+						bottom={bottom}
+						text={t("profile")}
+						src="/assets/profile.svg"
+						alt={t("profile")}
+					/>
+				</Filter>
+			)}
 		</>
 	);
 };

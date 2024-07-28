@@ -19,15 +19,32 @@ import { hackerRedirect } from "../../server/lib/redirects";
 import { hackerSchema } from "../../utils/common";
 import { getAuthOptions } from "../api/auth/[...nextauth]";
 
-const HackerPage: NextPage = () => {
+const HackerPage: NextPage<{ organizer: boolean }> = ({ organizer }) => {
 	const router = useRouter();
 	const [id] = [router.query.id].flat();
 	const { t } = useTranslation("hacker");
 
 	const hackerQuery = trpc.hackers.get.useQuery({ id: id ?? "" }, { enabled: !!id });
-	const presenceQuery = trpc.presence.getFromHackerId.useQuery({ id: id ?? "" }, { enabled: !!id });
-	const nextHackerQuery = trpc.hackers.getNext.useQuery({ id: id ?? "" }, { enabled: !!id, refetchOnMount: false });
-	const prevHackerQuery = trpc.hackers.getPrev.useQuery({ id: id ?? "" }, { enabled: !!id, refetchOnMount: false });
+	const presenceQuery = trpc.presence.getFromHackerId.useQuery(
+		{ id: id ?? "" },
+		{
+			enabled: !!id && organizer,
+		},
+	);
+	const nextHackerQuery = trpc.hackers.getNext.useQuery(
+		{ id: id ?? "" },
+		{
+			enabled: !!id && organizer,
+			refetchOnMount: false,
+		},
+	);
+	const prevHackerQuery = trpc.hackers.getPrev.useQuery(
+		{ id: id ?? "" },
+		{
+			enabled: !!id && organizer,
+			refetchOnMount: false,
+		},
+	);
 	const downloadResume = trpc.hackers.downloadResume.useQuery(
 		{ id: id ?? "" },
 		{ enabled: !!id && !!hackerQuery.data?.hasResume },
@@ -142,7 +159,7 @@ const HackerPage: NextPage = () => {
 		void router.push("/404");
 	}
 
-	if (presenceQuery.isLoading || presenceQuery.data == null) {
+	if (organizer && (presenceQuery.isLoading || presenceQuery.data == null)) {
 		return (
 			<App className="h-full bg-default-gradient px-16 py-12">
 				<Loading />
@@ -196,7 +213,7 @@ const HackerPage: NextPage = () => {
 
 				<Filter value={[RoleName.ORGANIZER]} method="some" silent>
 					<div className="grid grid-flow-row grid-cols-2 gap-4 rounded-lg bg-light-tertiary-color p-4">
-						{presenceQuery.data.map((presence, index) => (
+						{presenceQuery.data?.map((presence, index) => (
 							<div key={index} className="flex justify-between gap-4">
 								<p>
 									<b>{presence.label}</b>
@@ -332,6 +349,7 @@ export const getServerSideProps: GetServerSideProps = async ({ req, res, query, 
 		props: {
 			...(await serverSideTranslations(locale ?? "en", ["hacker", "common", "navbar"])),
 			redirect: (await hackerRedirect(session, "/", id)) ?? null,
+			organizer: session?.user?.roles.includes(RoleName.ORGANIZER) ?? false,
 		},
 	};
 };
