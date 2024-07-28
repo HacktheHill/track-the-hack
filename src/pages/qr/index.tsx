@@ -59,7 +59,7 @@ const QR = () => {
 export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
 	const session = await getServerSession(req, res, getAuthOptions(req));
 	return {
-		redirect: await qrRedirect(session, "/hackers"),
+		redirect: await qrRedirect(session, "/qr"),
 		props: {
 			...(await serverSideTranslations(locale ?? "en", ["qr", "navbar", "common"])),
 		},
