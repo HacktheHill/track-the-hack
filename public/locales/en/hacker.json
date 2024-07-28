@@ -5,6 +5,11 @@
 		"lastName": "Last Name",
 		"email": "Email Address",
 		"phoneNumber": "Phone Number",
+		"preferredLanguage": {
+			"label": "Preferred Language",
+			"EN": "English",
+			"FR": "French"
+		},
 		"country": "Country of Residence",
 		"dateOfBirth": "Date of Birth"
 	},
