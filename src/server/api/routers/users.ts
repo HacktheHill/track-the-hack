@@ -1,5 +1,6 @@
 import { RoleName } from "@prisma/client";
 import { z } from "zod";
+import { env } from "../../../env/server.mjs";
 import { roles } from "../../../utils/common";
 import { hasRoles } from "../../../utils/helpers";
 import { log } from "../../lib/log";
@@ -158,5 +159,64 @@ export const userRouter = createTRPCRouter({
 			});
 
 			await ctx.prisma.$transaction(transaction);
+		}),
+
+	// Discord server verification
+	verifyDiscord: protectedProcedure
+		.input(
+			z.object({
+				discordId: z.string(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+			const user = await ctx.prisma.user.findUnique({
+				where: {
+					id: userId,
+				},
+				select: {
+					name: true,
+					roles: {
+						select: {
+							name: true,
+						},
+					},
+					Hacker: true,
+				},
+			});
+
+			if (!user) {
+				throw new Error("User not found");
+			}
+
+			if (!hasRoles(user, [RoleName.HACKER]) && !user.Hacker) {
+				throw new Error("You are not a hacker");
+			}
+
+			const response = await fetch(`${env.DISCORD_BOT_URL}/verify`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					discordId: input.discordId,
+					secretKey: env.DISCORD_BOT_SECRET_KEY,
+				}),
+			});
+
+			if (!response.ok) {
+				throw new Error("Failed to verify Discord ID");
+			}
+
+			await log(ctx, {
+				sourceId: userId,
+				sourceType: "User",
+				action: "verifyDiscord",
+				author: user.name ?? "Unknown",
+				route: "/discord",
+				details: `Discord ID ${input.discordId} verified as user ${userId} with bot`,
+			});
+
+			return true;
 		}),
 });

@@ -1,0 +1,10 @@
+{
+	"title": "Discord Verification",
+	"please-sign-in": "Please sign in",
+	"sign-in": "Sign In",
+	"success-welcome": "Success! Welcome to the Hack the Hill II Discord server!",
+	"verify-details": "Verify that you are a hacker to gain access to the Hack the Hill II Discord server.",
+	"you-must-be-logged-in": "You must be logged in to verify your Discord account.",
+	"missing-discord-id": "Discord ID is missing. Please check the link and try again.",
+	"invalid-discord-id": "Invalid Discord ID provided."
+}
