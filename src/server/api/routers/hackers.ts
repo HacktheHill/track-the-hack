@@ -501,6 +501,7 @@ export const hackerRouter = createTRPCRouter({
 							name: true,
 						},
 					},
+					Hacker: true,
 				},
 			});
 
@@ -508,24 +509,15 @@ export const hackerRouter = createTRPCRouter({
 				throw new Error("User not found");
 			}
 
-			if (input.id !== userId && !hasRoles(user, [RoleName.ORGANIZER])) {
-				throw new Error("You do not have permission to do this");
+			const hacker = user.Hacker;
+
+			if (!hacker) {
+				throw new Error("Hacker not found");
 			}
 
-			await log(ctx, {
-				sourceId: input.id,
-				sourceType: "Hacker",
-				route: "/update-hacker-info",
-				author: user.name ?? "Unknown",
-				action: "UpdateHackerInfo",
-				details: `Updated hacker info for ${input.firstName} ${input.lastName}.`,
-			});
-
-			const hacker = await ctx.prisma.hacker.findUnique({
-				where: {
-					id: input.id,
-				},
-			});
+			if (!hasRoles(user, [RoleName.ORGANIZER]) && hacker.id !== input.id) {
+				throw new Error("You do not have permission to do this");
+			}
 
 			const updates = new Map<keyof typeof input, string | boolean | Date | undefined>();
 
@@ -562,12 +554,24 @@ export const hackerRouter = createTRPCRouter({
 				data: Object.fromEntries(updates),
 			});
 
-			const filename = generateS3Filename(
-				updatedHacker.id,
-				`${updatedHacker.firstName}_${updatedHacker.lastName}_Resume`,
-				"pdf",
-			);
-			const presignedUrl = await generatePresignedPutUrl(filename, "resumes");
+			let presignedUrl = null;
+			if (updatedHacker.hasResume) {
+				const filename = generateS3Filename(
+					updatedHacker.id,
+					`${updatedHacker.firstName}_${updatedHacker.lastName}_Resume`,
+					"pdf",
+				);
+				presignedUrl = await generatePresignedPutUrl(filename, "resumes");
+			}
+
+			await log(ctx, {
+				sourceId: input.id,
+				sourceType: "Hacker",
+				route: "/update-hacker-info",
+				author: user.name ?? "Unknown",
+				action: "UpdateHackerInfo",
+				details: `Updated hacker info for ${input.id}`,
+			});
 
 			return {
 				...updatedHacker,

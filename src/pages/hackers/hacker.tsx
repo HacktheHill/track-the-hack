@@ -18,6 +18,7 @@ import Loading from "../../components/Loading";
 import { hackerRedirect } from "../../server/lib/redirects";
 import { hackerSchema } from "../../utils/common";
 import { getAuthOptions } from "../api/auth/[...nextauth]";
+import { makeZodI18nMap } from "zod-i18n-map";
 
 const HackerPage: NextPage<{ organizer: boolean }> = ({ organizer }) => {
 	const router = useRouter();
@@ -50,7 +51,12 @@ const HackerPage: NextPage<{ organizer: boolean }> = ({ organizer }) => {
 		{ enabled: !!id && !!hackerQuery.data?.hasResume },
 	);
 
+	const errorMap = makeZodI18nMap({ t });
+
 	const [edit, setEdit] = useState(false);
+	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+	const [success, setSuccess] = useState(false);
 	const [inputValues, setInputValues] = useState<Record<string, string>>({});
 
 	const mutation = trpc.hackers.update.useMutation();
@@ -97,34 +103,42 @@ const HackerPage: NextPage<{ organizer: boolean }> = ({ organizer }) => {
 	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
 		const formData = new FormData(event.currentTarget);
-		const data = Object.fromEntries(formData) as Record<string, string | boolean | number | undefined>;
-		data.id = hackerQuery.data?.id;
 
 		const resume = formData.get("resume") as File | null;
-		data.hasResume = !!resume;
+		const data = {
+			...Object.fromEntries(formData),
+			id: hackerQuery.data?.id,
+			hasResume: !!resume,
+		};
 
 		const parse = hackerSchema
 			.partial()
 			.extend({
 				id: z.string(),
 			})
-			.safeParse(data);
+			.safeParse(data, { errorMap });
 
 		if (!parse.success) {
-			console.error("Validation Error:", parse.error.errors);
-		} else {
+			setError(t("invalid-form"));
+			console.error(parse.error.message);
+			return;
+		}
+		setLoading(true);
+		setError(null);
+		setSuccess(false);
+
+		try {
 			const result = await mutation.mutateAsync(parse.data);
 			if (result.presignedUrl && resume) {
 				await uploadResume(result.presignedUrl, resume, resume.name);
 			}
-
-			if (!mutation.error) {
-				event.currentTarget?.reset();
-			} else {
-				console.log("Error", mutation.error.message);
-			}
+			setSuccess(true);
+		} catch (err) {
+			setError((err as Error).message ?? t("unknown-error"));
+			console.error(err);
+		} finally {
+			setEdit(false);
 		}
-		setEdit(false);
 	};
 
 	useEffect(() => {
@@ -317,20 +331,20 @@ const HackerPage: NextPage<{ organizer: boolean }> = ({ organizer }) => {
 					</div>
 
 					{edit && (
-						<div className="sticky bottom-0 mx-2 flex justify-center">
-							<div className="flex max-w-md rounded-md bg-dark-color px-2 py-2 text-light-color transition delay-150 ease-in-out">
+						<div className="sticky bottom-0 mx-2 flex justify-center  font-coolvetica">
+							<div className="flex max-w-md rounded-md bg-dark-primary-color px-2 py-2 text-light-color transition delay-150 ease-in-out">
 								<div className="flex flex-col items-center gap-2">
 									<p className="px-5 py-2 text-center">{t("unsavedChanges")}</p>
 								</div>
-								<div className="flex items-center justify-center">
-									<button className="px-4 py-2" onClick={resetInputFields}>
-										{t("reset")}
-									</button>
-									<button className="h-max w-max rounded-md bg-green-700 px-4 py-2">
-										<i className="fas fa-user-edit"></i>
-										{t("save")}
-									</button>
-								</div>
+								<button className="text-light-quaternary-color px-4 py-2" onClick={resetInputFields}>
+									{t("reset")}
+								</button>
+								<button
+									className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 text-dark-color transition-all duration-500 hover:bg-light-tertiary-color"
+									type="submit"
+								>
+									{t("save")}
+								</button>
 							</div>
 						</div>
 					)}
