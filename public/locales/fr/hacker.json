@@ -1,34 +1,97 @@
 {
-	"gender": "Genre",
-	"firstName": "Prénom",
-	"lastName": "Nom de famille",
-	"university": "Université",
-	"study": "Études",
-	"studyLevel": "Niveau d'études",
-	"studyProgram": "Programme d'études",
-	"graduationYear": "Année de diplomation",
-	"phoneNumber": "Numéro de téléphone",
-	"email": "Adresse e-mail",
-	"emergencyContactName": "Nom du contact en cas d'urgence",
-	"emergencyContactRelationship": "Relation avec le contact en cas d'urgence",
-	"emergencyContactPhoneNumber": "Numéro de téléphone du contact en cas d'urgence",
-	"dietaryRestrictions": "Restrictions alimentaires",
-	"accessibilityRequirements": "Exigences en matière d'accessibilité",
-	"preferredLanguage": "Langue préférée",
-	"shirtSize": "Taille de chemise",
-	"walkIn": "Marcher",
-	"subscribeToMailingList": "S'abonner à la liste de diffusion",
-	"attendanceType": "Type de participation",
-	"location": "Emplacement",
-	"transportationRequired": "Transport requis",
-	"linkGithub": "Lien vers Github",
-	"linkLinkedin": "Lien vers LinkedIn",
-	"uploadResume": "Télécharger le CV",
-	"category_personal_information": "Informations personnelles",
-	"category_emergency_contact": "Contact en cas d'urgence",
-	"category_general_information": "Informations générales",
-	"category_links_information": "Liens",
-	"edit_description": "Modifications non enregistrées!",
-	"edit_reset_button": "Réinitialiser",
-	"edit_save_button": "Sauvegarder"
+	"personal": {
+		"title": "Informations personnelles",
+		"firstName": "Prénom",
+		"lastName": "Nom de famille",
+		"email": "Adresse e-mail",
+		"phoneNumber": "Numéro de téléphone",
+		"country": "Pays de résidence",
+		"dateOfBirth": "Date de naissance"
+	},
+	"demographics": {
+		"title": "Informations démographiques",
+		"gender": {
+			"label": "Genre",
+			"man": "Homme",
+			"woman": "Femme",
+			"nonBinary": "Non-binaire",
+			"preferNotToAnswer": "Préférer ne pas répondre"
+		},
+		"pronouns": "Pronoms",
+		"raceEthnicity": "Origine ethnique"
+	},
+	"education": {
+		"title": "Informations sur l'éducation et la carrière",
+		"currentSchoolOrganization": "École/organisation actuelle",
+		"educationLevel": {
+			"label": "Niveau d'études",
+			"highSchool": "Lycée",
+			"undergraduate": "Premier cycle",
+			"graduate": "Cycle supérieur"
+		},
+		"major": "Spécialisation/principal domaine d'étude"
+	},
+	"skillsAccomplishments": {
+		"title": "Compétences et réalisations",
+		"hackathonBefore": {
+			"label": "Expérience précédente en hackathon",
+			"true": "Oui",
+			"false": "Non"
+		},
+		"hackathonDetails": "Détails du hackathon",
+		"programmingLanguagesTechnologies": "Langages de programmation et technologies",
+		"projectDescription": "Description du projet",
+		"participationReason": "Raison de la participation",
+		"learningGoals": "Objectifs d'apprentissage"
+	},
+	"emergencyContact": {
+		"title": "Contact d'urgence",
+		"emergencyContactName": "Nom du contact d'urgence",
+		"emergencyContactRelation": "Relation avec le contact d'urgence",
+		"emergencyContactPhoneNumber": "Numéro de téléphone du contact d'urgence"
+	},
+	"logistics": {
+		"title": "Logistique",
+		"tShirtSize": {
+			"label": "Taille de t-shirt"
+		},
+		"dietaryRestrictions": {
+			"label": "Restrictions alimentaires",
+			"halal": "Halal",
+			"glutenFree": "Sans gluten",
+			"vegetarian": "Végétarien",
+			"vegan": "Végan",
+			"kosher": "Casher",
+			"lactoseIntolerance": "Intolérance au lactose",
+			"nuts": "Noix",
+			"soy": "Soja",
+			"none": "Aucune"
+		},
+		"specialAccommodations": "Aménagements spéciaux",
+		"additionalInfo": "Informations supplémentaires",
+		"travelOrigin": "Origine du voyage",
+		"travelAccommodations": "Aménagements de voyage"
+	},
+	"links": {
+		"title": "Liens",
+		"linkedin": "LinkedIn",
+		"github": "GitHub",
+		"personalSite": "Site personnel",
+		"resume": "Curriculum vitae"
+	},
+	"other": {
+		"title": "Autre",
+		"acceptanceExpiry": "Expiration de l'acceptation"
+	},
+	"applicationStatus": {
+		"PENDING": "En attente",
+		"ACCEPTED": "Accepté",
+		"WAITLISTED": "Liste d'attente",
+		"REJECTED": "Rejeté"
+	},
+	"next": "Suivant",
+	"previous": "Précédent",
+	"unsavedChanges": "Vous avez des modifications non enregistrées.",
+	"reset": "Réinitialiser",
+	"save": "Sauvegarder"
 }

@@ -484,7 +484,7 @@ export const hackerRouter = createTRPCRouter({
 	// Update a hacker's info
 	update: protectedProcedure
 		.input(
-			hackerSchema.extend({
+			hackerSchema.partial().extend({
 				id: z.string(),
 			}),
 		)
@@ -521,22 +521,24 @@ export const hackerRouter = createTRPCRouter({
 				details: `Updated hacker info for ${input.firstName} ${input.lastName}.`,
 			});
 
-			const hackerDetails = await ctx.prisma.hacker.findUnique({
+			const hacker = await ctx.prisma.hacker.findUnique({
 				where: {
 					id: input.id,
 				},
 			});
 
+			const updates = new Map<keyof typeof input, string | boolean | Date | undefined>();
+
 			for (const key in input) {
-				for (const key2 in hackerDetails) {
+				for (const key2 in hacker) {
 					if (
 						key === key2 &&
-						input[key as keyof typeof input] !== hackerDetails[key2 as keyof typeof hackerDetails] &&
+						input[key as keyof typeof input] !== hacker[key2 as keyof typeof hacker] &&
 						input[key as keyof typeof input] !== null &&
-						hackerDetails[key2 as keyof typeof hackerDetails] !== null
+						hacker[key2 as keyof typeof hacker] !== null
 					) {
 						const field = key as keyof typeof input;
-						const before = hackerDetails[key2 as keyof typeof hackerDetails];
+						const before = hacker[key2 as keyof typeof hacker];
 						const after = input[key as keyof typeof input];
 
 						await log(ctx, {
@@ -547,22 +549,28 @@ export const hackerRouter = createTRPCRouter({
 							action: "UpdateHackerInfo",
 							author: user.name ?? "Unknown",
 						});
+
+						updates.set(field, after);
 					}
 				}
 			}
 
-			const hacker = await ctx.prisma.hacker.update({
+			const updatedHacker = await ctx.prisma.hacker.update({
 				where: {
 					id: input.id,
 				},
-				data: input,
+				data: Object.fromEntries(updates),
 			});
 
-			const filename = generateS3Filename(hacker.id, `${hacker.firstName}_${hacker.lastName}_Resume`, "pdf");
+			const filename = generateS3Filename(
+				updatedHacker.id,
+				`${updatedHacker.firstName}_${updatedHacker.lastName}_Resume`,
+				"pdf",
+			);
 			const presignedUrl = await generatePresignedPutUrl(filename, "resumes");
 
 			return {
-				...hacker,
+				...updatedHacker,
 				presignedUrl,
 			};
 		}),

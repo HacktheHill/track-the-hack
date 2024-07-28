@@ -26,6 +26,7 @@ export const presenceRouter = createTRPCRouter({
 			};
 		});
 	}),
+
 	getFromHackerId: protectedProcedure
 		.input(
 			z.object({
