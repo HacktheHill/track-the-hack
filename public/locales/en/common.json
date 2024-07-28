@@ -1,6 +1,6 @@
 {
 	"hack-the-hill-logo-alt": "Hack the Hill logo",
-	"description": "App for tracking the participants of the Hack the Hill hackathon",
+	"description": "Hack the Hill's event management software",
 	"loading": "Loading...",
 	"error-message": "Error: {{message}}",
 	"contact-us": "Contact us for help",
