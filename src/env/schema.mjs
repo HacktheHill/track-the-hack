@@ -34,6 +34,8 @@ export const serverSchema = z.object({
 	SPONSORSHIP_GOOGLE_REFRESH_TOKEN: z.string(),
 	S3_URL: z.string().url(),
 	S3_AUTH_KEY: z.string(),
+	DISCORD_BOT_SECRET_KEY: z.string(),
+	DISCORD_BOT_URL: z.string().url(),
 });
 
 /**
@@ -64,6 +66,8 @@ export const serverEnv = {
 	SPONSORSHIP_GOOGLE_REFRESH_TOKEN: process.env.SPONSORSHIP_GOOGLE_REFRESH_TOKEN,
 	S3_URL: process.env.S3_URL,
 	S3_AUTH_KEY: process.env.S3_AUTH_KEY,
+	DISCORD_BOT_SECRET_KEY: process.env.DISCORD_BOT_SECRET_KEY,
+	DISCORD_BOT_URL: process.env.DISCORD_BOT_URL,
 };
 
 /**
