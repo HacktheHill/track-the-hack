@@ -189,7 +189,7 @@ export const userRouter = createTRPCRouter({
 				throw new Error("User not found");
 			}
 
-			if (!hasRoles(user, [RoleName.HACKER]) && !user.Hacker) {
+			if (!hasRoles(user, [RoleName.HACKER]) || !user.Hacker) {
 				throw new Error("You are not a hacker");
 			}
 
