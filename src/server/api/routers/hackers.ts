@@ -445,7 +445,14 @@ export const hackerRouter = createTRPCRouter({
 			}
 
 			const hacker = await ctx.prisma.hacker.create({
-				data: input,
+				data: {
+					...input,
+					user: {
+						connect: {
+							id: userId,
+						},
+					},
+				},
 			});
 
 			const filename = generateS3Filename(hacker.id, `${hacker.firstName}_${hacker.lastName}_Resume`, "pdf");
