@@ -3,10 +3,9 @@
 	"please-sign-in": "Veuillez vous connecter",
 	"sign-in": "Se connecter",
 	"success-welcome": "Succès! Bienvenue sur le serveur Discord de Hack the Hill II!",
-	"verify-your-discord-account": "Vérifiez votre compte Discord",
 	"verify-details": "Vérifiez que vous êtes un hacker pour accéder au serveur Discord de Hack the Hill II.",
 	"verify": "Vérifier",
 	"you-must-be-logged-in": "Vous devez être connecté pour vérifier votre compte Discord.",
 	"missing-discord-id": "L'ID Discord est manquant. Veuillez vérifier le lien et réessayer.",
-	"invalid-discord-id": "L'ID Discord fourni est invalide."
+	"invalid-discord-id": "L'ID Discord fourni est invalide.",
 }
