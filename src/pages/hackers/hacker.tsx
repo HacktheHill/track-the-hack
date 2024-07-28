@@ -123,6 +123,7 @@ const HackerPage: NextPage<{ organizer: boolean }> = ({ organizer }) => {
 			console.error(parse.error.message);
 			return;
 		}
+
 		setLoading(true);
 		setError(null);
 		setSuccess(false);
@@ -138,6 +139,7 @@ const HackerPage: NextPage<{ organizer: boolean }> = ({ organizer }) => {
 			console.error(err);
 		} finally {
 			setEdit(false);
+			setLoading(false);
 		}
 	};
 
@@ -192,6 +194,27 @@ const HackerPage: NextPage<{ organizer: boolean }> = ({ organizer }) => {
 			className="mx-auto h-full w-full overflow-y-auto bg-default-gradient px-4 py-12"
 			title={`${hackerQuery.data.firstName} ${hackerQuery.data.lastName}`}
 		>
+			{(loading || error || success) && (
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-light-tertiary-color bg-opacity-90">
+					<div className="w-full max-w-lg rounded border border-dark-primary-color bg-light-quaternary-color p-8 text-center">
+						{loading && <Loading />}
+						{error && <Error message={error} />}
+						{success && <h3 className="text-4xl font-bold text-dark-color">{t("success")}</h3>}
+						{(error || success) && (
+							<button
+								type="button"
+								className="mt-4 whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
+								onClick={() => {
+									setError(null);
+									setSuccess(false);
+								}}
+							>
+								{t("return-to-form")}
+							</button>
+						)}
+					</div>
+				</div>
+			)}
 			<div className="mx-auto flex max-w-2xl flex-col gap-4">
 				<div className="flex justify-between">
 					{prevHackerQuery.data && (
@@ -333,10 +356,9 @@ const HackerPage: NextPage<{ organizer: boolean }> = ({ organizer }) => {
 					{edit && (
 						<div className="sticky bottom-0 mx-2 flex justify-center  font-coolvetica">
 							<div className="flex max-w-md rounded-md bg-dark-primary-color px-2 py-2 text-light-color transition delay-150 ease-in-out">
-								<div className="flex flex-col items-center gap-2">
-									<p className="px-5 py-2 text-center">{t("unsavedChanges")}</p>
-								</div>
-								<button className="text-light-quaternary-color px-4 py-2" onClick={resetInputFields}>
+								<p className="px-5 py-2 text-center">{t("unsavedChanges")}</p>
+								{loading && <Loading />}
+								<button className="px-4 py-2 text-light-quaternary-color" onClick={resetInputFields}>
 									{t("reset")}
 								</button>
 								<button

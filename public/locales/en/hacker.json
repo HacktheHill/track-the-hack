@@ -98,5 +98,8 @@
 	"previous": "Previous",
 	"unsavedChanges": "You have unsaved changes.",
 	"reset": "Reset",
-	"save": "Save"
+	"save": "Save",
+	"invalid-form": "Please fill out all required fields.",
+	"success": "Saved changes successfully.",
+	"return-to-form": "Return to form"
 }
