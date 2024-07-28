@@ -16,7 +16,7 @@ import { trpc } from "../../server/api/api";
 import type { ApplicationQuestionsType } from "../../server/lib/apply";
 import { getApplicationQuestions } from "../../server/lib/apply";
 import { sessionRedirect } from "../../server/lib/redirects";
-import { processFormData, saveToSessionStorage } from "../../utils/apply";
+import { processFormData, saveToLocalStorage } from "../../utils/apply";
 import { hackerSchema, pageSchemas } from "../../utils/common";
 import { getAuthOptions } from "../api/auth/[...nextauth]";
 
@@ -42,7 +42,7 @@ const Apply = ({ applicationQuestions }: { applicationQuestions: ApplicationQues
 
 		const currentFormData = new FormData(ref);
 		currentFormData.forEach((value, key) => formData.set(key, value));
-		saveToSessionStorage(currentFormData);
+		saveToLocalStorage(currentFormData);
 
 		const pageName = page.name;
 		if (pageName in pageSchemas) {
@@ -107,7 +107,7 @@ const Apply = ({ applicationQuestions }: { applicationQuestions: ApplicationQues
 			if (result.presignedUrl && resume) {
 				await uploadResume(result.presignedUrl, resume, resume.name);
 			}
-			sessionStorage.removeItem("applyFormData");
+			localStorage.removeItem("applyFormData");
 			setSuccess(true);
 		} catch (err) {
 			setError((err as Error).message ?? t("unknown-error"));
@@ -118,7 +118,7 @@ const Apply = ({ applicationQuestions }: { applicationQuestions: ApplicationQues
 	};
 
 	useEffect(() => {
-		const savedData = sessionStorage.getItem("applyFormData");
+		const savedData = localStorage.getItem("applyFormData");
 		if (savedData) {
 			const parsedData = JSON.parse(savedData) as Record<string, FormDataEntryValue | FormDataEntryValue[]>;
 			Object.entries(parsedData).forEach(([key, value]) => {
