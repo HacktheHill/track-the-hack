@@ -48,7 +48,7 @@ export const processFormData = (formData: FormData) => {
 	return Object.fromEntries(processedEntries);
 };
 
-export const saveToSessionStorage = (formData: FormData) => {
+export const saveToLocalStorage = (formData: FormData) => {
 	const data: Record<string, FormDataEntryValue | FormDataEntryValue[]> = {};
 
 	formData.forEach((value, key) => {
@@ -62,5 +62,5 @@ export const saveToSessionStorage = (formData: FormData) => {
 		}
 	});
 
-	sessionStorage.setItem("applyFormData", JSON.stringify(data));
+	localStorage.setItem("applyFormData", JSON.stringify(data));
 };
