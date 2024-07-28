@@ -3,9 +3,13 @@ import { writeFileSync } from "fs";
 
 console.info("Creating .env file...");
 
-const env = JSON.parse(process.argv[2]);
+const secrets = JSON.parse(process.argv[2]);
+const vars = JSON.parse(process.argv[3]);
 
-console.log(process.argv, env);
+console.log("Secrets:", secrets);
+console.log("Vars:", vars);
+
+const env = { ...secrets, ...vars };
 
 const envFile = Object.keys(env)
     .map((key) => `${key.replace(/^_+/, "")}=${env[key]}`)
