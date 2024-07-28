@@ -1,6 +1,6 @@
 {
 	"hack-the-hill-logo-alt": "Logo de Hack the Hill",
-	"description": "Une application pour suivre les participants du hackathon Hack the Hill",
+	"description": "Logiciel de gestion d'événements de Hack the Hill",
 	"loading": "Chargement en cours...",
 	"error-message": "Erreur : {{message}}",
 	"contact-us": "Contactez-nous pour de l'aide",
