@@ -6,7 +6,7 @@
 	"application-submitted-successfully": "Application submitted successfully!",
 	"return-to-form": "Return to Form",
 	"back-home": "Back to Home",
-	"select": "Select",
+	"invalid-form": "Please fill out all required fields.",
 
 	"introduction": {
 		"title": "Introduction",
