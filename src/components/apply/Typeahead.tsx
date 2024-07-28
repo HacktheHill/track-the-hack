@@ -1,15 +1,13 @@
 import { useEffect, useState } from "react";
 import type { ProcessedFieldGeneric } from "../../server/lib/apply";
 
-const Typeahead = ({
-	field,
-	className,
-	formData,
-}: {
+type TypeaheadProps = {
 	field: ProcessedFieldGeneric<"typeahead">;
 	className: string;
 	formData: FormData;
-}) => {
+};
+
+const Typeahead = ({ field, className, formData }: TypeaheadProps) => {
 	const [options, setOptions] = useState<string[]>([]);
 
 	useEffect(() => {

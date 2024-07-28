@@ -9,15 +9,13 @@ import Select from "./Select";
 import TextArea from "./TextArea";
 import Typeahead from "./Typeahead";
 
-const Field = ({
-	field,
-	formData,
-	errors,
-}: Readonly<{
+type FieldProps = Readonly<{
 	field: ProcessedField;
 	formData: FormData;
 	errors: Record<string, string[] | undefined> | undefined;
-}>) => {
+}>;
+
+const Field = ({ field, formData, errors }: FieldProps) => {
 	const fieldError = errors?.[field.name];
 	const errorClass = fieldError ? "border-red-500" : "";
 	const className = `w-full rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50 ${errorClass}`;

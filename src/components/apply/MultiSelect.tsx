@@ -2,15 +2,13 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "next-i18next";
 import type { ProcessedFieldGeneric } from "../../server/lib/apply";
 
-const MultiSelect = ({
-	field,
-	className,
-	formData,
-}: {
+type MultiSelectProps = {
 	field: ProcessedFieldGeneric<"multiselect">;
 	className: string;
 	formData: FormData;
-}) => {
+};
+
+const MultiSelect = ({ field, className, formData }: MultiSelectProps) => {
 	const { t } = useTranslation("apply");
 	const [showOther, setShowOther] = useState(false);
 	const [values, setValues] = useState<string[]>([]);
