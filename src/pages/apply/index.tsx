@@ -1,4 +1,4 @@
-import { RoleName } from "@prisma/client";
+import { Locale } from "@prisma/client";
 import type { GetServerSideProps } from "next";
 import { getServerSession } from "next-auth";
 import { useTranslation } from "next-i18next";
@@ -14,7 +14,8 @@ import Error from "../../components/Error";
 import Loading from "../../components/Loading";
 import { trpc } from "../../server/api/api";
 import type { ApplicationQuestionsType } from "../../server/lib/apply";
-import { rolesRedirect } from "../../server/lib/redirects";
+import { getApplicationQuestions } from "../../server/lib/apply";
+import { sessionRedirect } from "../../server/lib/redirects";
 import { processFormData, saveToLocalStorage } from "../../utils/apply";
 import { hackerSchema, pageSchemas } from "../../utils/common";
 import { getAuthOptions } from "../api/auth/[...nextauth]";
@@ -193,10 +194,14 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 
 export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
 	const session = await getServerSession(req, res, getAuthOptions(req));
+
 	return {
-		redirect: await rolesRedirect(session, "/", [RoleName.ORGANIZER]),
+		redirect: sessionRedirect(session, "/apply"),
 		props: {
-			...(await serverSideTranslations(locale ?? "en", ["hacker", "navbar", "common"])),
+			...(await serverSideTranslations(locale ?? "en", ["apply", "zod", "navbar", "common"])),
+			applicationQuestions: getApplicationQuestions(
+				locale && locale in Locale ? (locale as keyof typeof Locale) : "EN",
+			),
 		},
 	};
 };

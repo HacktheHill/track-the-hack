@@ -383,7 +383,7 @@ export const getServerSideProps: GetServerSideProps = async ({ req, res, query, 
 
 	return {
 		props: {
-			...(await serverSideTranslations(locale ?? "en", ["hacker", "common", "navbar"])),
+			...(await serverSideTranslations(locale ?? "en", ["hacker", "zod", "common", "navbar"])),
 			redirect: (await hackerRedirect(session, "/", id)) ?? null,
 			organizer: session?.user?.roles.includes(RoleName.ORGANIZER) ?? false,
 		},
