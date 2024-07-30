@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { ProcessedFieldGeneric } from "../../server/lib/apply";
 
 type TextAreaProps = {
@@ -8,7 +8,13 @@ type TextAreaProps = {
 };
 
 const TextArea = ({ field, className, formData }: TextAreaProps) => {
-	const [charCount, setCharCount] = useState(0);
+	const initialValue = formData.get(field.name)?.toString() ?? "";
+	const [charCount, setCharCount] = useState(initialValue.length);
+	const [value, setValue] = useState(initialValue);
+
+	useEffect(() => {
+		setCharCount(value.length);
+	}, [value]);
 
 	return (
 		<div className="relative w-full">
@@ -17,18 +23,17 @@ const TextArea = ({ field, className, formData }: TextAreaProps) => {
 				name={field.name}
 				className={className}
 				required={field.required}
-				defaultValue={formData.get(field.name)?.toString() ?? ""}
+				value={value}
 				onChange={e => {
-					const { value } = e.target;
-					if (field.charLimit && value.length > field.charLimit) {
-						e.target.value = value.slice(0, field.charLimit);
+					const newValue = e.target.value;
+					if (!field.charLimit || newValue.length <= field.charLimit) {
+						setValue(newValue);
 					}
-					setCharCount(value.length);
 				}}
 			/>
 			{field.charLimit && (
 				<p className="absolute bottom-2 right-2 text-right text-light-color">
-					{charCount ?? 0}/{field.charLimit}
+					{charCount}/{field.charLimit}
 				</p>
 			)}
 		</div>

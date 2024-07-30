@@ -292,7 +292,7 @@ export const getApplicationQuestions = (locale: keyof typeof Locale) => {
 					{
 						name: "hthPromotions",
 						type: "checkbox",
-						required: true,
+						required: false,
 					},
 					{
 						name: "mlhCodeOfConduct",
@@ -312,7 +312,7 @@ export const getApplicationQuestions = (locale: keyof typeof Locale) => {
 					{
 						name: "mlhPromotions",
 						type: "checkbox",
-						required: true,
+						required: false,
 					},
 				],
 			},
