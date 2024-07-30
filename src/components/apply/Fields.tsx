@@ -90,7 +90,7 @@ type FieldErrorProps = Readonly<{
 }>;
 
 function FieldError({ errors, field }: FieldErrorProps) {
-	return <>{errors[field.name] && <p className="text-red-500">{errors[field.name]}</p>}</>;
+	return <>{errors[field.name] && <p className="text-red-500">{errors[field.name]?.join(". ")}</p>}</>;
 }
 
 export default Fields;
