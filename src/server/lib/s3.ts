@@ -15,7 +15,7 @@ const generatePresignedPutUrl = async (id: string, bucket: string) => {
 
 	const signedUrl = await response.text();
 
-	console.log("Generated presigned PUT URL for S3", signedUrl);
+	console.info("Generated presigned PUT URL for S3", signedUrl);
 
 	return signedUrl;
 };
@@ -33,7 +33,7 @@ const generatePresignedGetUrl = async (id: string, bucket: string) => {
 
 	const signedUrl = await response.text();
 
-	console.log("Generated presigned GET URL for S3", signedUrl);
+	console.info("Generated presigned GET URL for S3", signedUrl);
 
 	return signedUrl;
 };

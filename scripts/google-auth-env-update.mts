@@ -39,13 +39,13 @@ const saveCredentials = async (client: OAuth2Client): Promise<void> => {
 };
 
 const main = async () => {
-	console.log("Authorizing...");
+	console.info("Authorizing...");
 	const client = await authenticate({
 		scopes: SCOPES,
 		keyfilePath: CREDENTIALS_PATH,
 	});
 	if (client.credentials) {
-		console.log("Credentials obtained, saving to file");
+		console.info("Credentials obtained, saving to file");
 		await saveCredentials(client);
 	}
 };

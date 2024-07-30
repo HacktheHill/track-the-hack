@@ -6,8 +6,8 @@ console.info("Creating .env file...");
 const secrets = JSON.parse(process.argv[2]);
 const vars = JSON.parse(process.argv[3]);
 
-console.log("Secrets:", secrets);
-console.log("Vars:", vars);
+console.info("Secrets:", secrets);
+console.info("Vars:", vars);
 
 const env = { ...secrets, ...vars };
 

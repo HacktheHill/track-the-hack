@@ -96,7 +96,7 @@ const HackerPage: NextPage<{ organizer: boolean }> = ({ organizer }) => {
 		}
 
 		if (presenceMutation.error) {
-			console.log("Error", presenceMutation.error.message);
+			console.error(presenceMutation.error.message);
 		}
 	};
 

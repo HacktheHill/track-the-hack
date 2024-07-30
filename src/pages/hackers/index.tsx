@@ -378,7 +378,6 @@ const FilterOptions = ({ filters, setFilters, filterOptions, sidebarVisible }: F
 
 export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
 	const session = await getServerSession(req, res, getAuthOptions(req));
-	console.log(req);
 	return {
 		redirect: await rolesRedirect(session, "/hackers", [RoleName.ORGANIZER, RoleName.SPONSOR]),
 		props: {
