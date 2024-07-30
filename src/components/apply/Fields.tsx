@@ -16,10 +16,10 @@ const Fields = ({ fields, page, formData, errors }: FieldsProps) => {
 	return fields.map(field => {
 		if (page === "preferredLanguage" && field.type === "radio") {
 			return (
-				<>
+				<div key={field.name}>
 					<Language field={field} />
 					<FieldError errors={errors} field={field} />
-				</>
+				</div>
 			);
 		}
 
