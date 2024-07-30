@@ -6,7 +6,7 @@ async function insertRecords(db: iDatabaseTable, rows: object[]) {
 			});
 		});
 	} catch (e) {
-		console.log(e);
+		console.error(e);
 	}
 }
 
