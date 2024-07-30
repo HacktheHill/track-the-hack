@@ -10,18 +10,19 @@ type MultiSelectProps = {
 
 const MultiSelect = ({ field, className, formData }: MultiSelectProps) => {
 	const { t } = useTranslation("apply");
-	const [showOther, setShowOther] = useState(false);
-	const [values, setValues] = useState<string[]>([]);
-	const [otherValue, setOtherValue] = useState<string | undefined>();
+	const initialValues = formData.getAll(`${field.name}[]`).map(v => (v instanceof File ? "" : v.toString()));
+	const initialOtherValue = formData.get(`${field.name}[]-other`)?.toString() ?? "";
+
+	const [values, setValues] = useState<string[]>(initialValues);
+	const [showOther, setShowOther] = useState(initialValues.includes("other"));
+	const [otherValue, setOtherValue] = useState<string>(initialOtherValue);
 
 	useEffect(() => {
 		const initialValues = formData.getAll(`${field.name}[]`).map(v => (v instanceof File ? "" : v.toString()));
 		setValues(initialValues);
 		const other = formData.get(`${field.name}[]-other`)?.toString();
-		if (initialValues.includes("other") && other) {
-			setShowOther(true);
-			setOtherValue(other);
-		}
+		setShowOther(initialValues.includes("other"));
+		setOtherValue(other ?? "");
 	}, [field.name, formData]);
 
 	return (
@@ -51,7 +52,7 @@ const MultiSelect = ({ field, className, formData }: MultiSelectProps) => {
 					name={`${field.name}[]-other`}
 					type="text"
 					className={className}
-					defaultValue={otherValue}
+					value={otherValue}
 					onChange={e => setOtherValue(e.target.value)}
 				/>
 			)}

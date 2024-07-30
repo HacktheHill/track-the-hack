@@ -99,10 +99,10 @@ export const logisticsSchema = z.object({
 });
 
 export const agreementsSchema = z.object({
-	hthAgreements: z.boolean(),
+	hthAgreements: z.literal(true),
 	hthPromotions: z.boolean(),
-	mlhCodeOfConduct: z.boolean(),
-	mlhPrivacyTerms: z.boolean(),
+	mlhCodeOfConduct: z.literal(true),
+	mlhPrivacyTerms: z.literal(true),
 	mlhPromotions: z.boolean(),
 });
 

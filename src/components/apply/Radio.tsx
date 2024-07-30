@@ -8,25 +8,15 @@ type RadioProps = {
 	formData: FormData;
 };
 
-const Radio = ({
-	field,
-	className,
-	formData,
-}: RadioProps) => {
+const Radio = ({ field, className, formData }: RadioProps) => {
 	const { t } = useTranslation("apply");
-	const [showOther, setShowOther] = useState(false);
-	const [value, setValue] = useState<string | undefined>();
-	const [otherValue, setOtherValue] = useState<string | undefined>();
 
-	useEffect(() => {
-		const initialValue = formData.get(field.name)?.toString() ?? "";
-		setValue(initialValue);
-		const otherValue = formData.get(`${field.name}-other`)?.toString();
-		if (initialValue === "other" && otherValue) {
-			setShowOther(true);
-			setOtherValue(otherValue);
-		}
-	}, [field.name, formData]);
+	const initialValue = formData.get(field.name)?.toString() ?? "";
+	const initialOtherValue = formData.get(`${field.name}-other`)?.toString() ?? "";
+
+	const [value, setValue] = useState<string>(initialValue);
+	const [showOther, setShowOther] = useState<boolean>(initialValue === "other");
+	const [otherValue, setOtherValue] = useState<string>(initialOtherValue);
 
 	return (
 		<div className="flex gap-4">
@@ -59,7 +49,7 @@ const Radio = ({
 					name={`${field.name}-other`}
 					type="text"
 					className={className}
-					defaultValue={otherValue}
+					value={otherValue}
 					onChange={e => setOtherValue(e.target.value)}
 				/>
 			)}

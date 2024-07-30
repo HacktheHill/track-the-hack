@@ -29,33 +29,52 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 	const router = useRouter();
 
 	const errorMap = makeZodI18nMap({ t });
+	const formRef = useRef<HTMLFormElement>(null);
+	const formDataRef = useRef<FormData>(new FormData());
 
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [success, setSuccess] = useState(false);
 	const [step, setStep] = useState<number>(0);
-	const [formData, setFormData] = useState(new FormData());
-	const formRef = useRef<HTMLFormElement>(null);
 	const [errors, setErrors] = useState<Record<string, Record<string, string[]>>>({});
 
 	const mutation = trpc.hackers.apply.useMutation();
 
-	const validatePage = (page: ApplicationQuestionsType[number]) => {
-		const ref = formRef.current;
-		if (!ref) return false;
-
-		const currentFormData = new FormData(ref);
+	const updateFormData = () => {
+		if (!formRef.current) return;
+		const formElementData = new FormData(formRef.current);
 		const updatedFormData = new FormData();
 
-		formData.forEach((value, key) => updatedFormData.append(key, value));
-		currentFormData.forEach((value, key) => updatedFormData.append(key, value));
+		formDataRef.current.forEach((value, key) => {
+			if (key.endsWith("[]")) {
+				updatedFormData.delete(key);
+				formDataRef.current.getAll(key).forEach(v => updatedFormData.append(key, v));
+			} else {
+				updatedFormData.set(key, value);
+			}
+		});
 
-		setFormData(updatedFormData);
+		formElementData.forEach((value, key) => {
+			if (key.endsWith("[]")) {
+				updatedFormData.delete(key);
+				formElementData.getAll(key).forEach(v => updatedFormData.append(key, v));
+			} else {
+				updatedFormData.set(key, value);
+			}
+		});
+
+		formDataRef.current = updatedFormData;
 		saveToLocalStorage(updatedFormData);
+	};
+
+	const validatePage = (page: ApplicationQuestionsType[number]) => {
+		if (!formRef.current) return false;
+
+		updateFormData();
 
 		const pageName = page.name;
 		if (pageName in pageSchemas) {
-			const pageData = processFormData(updatedFormData);
+			const pageData = processFormData(formDataRef.current);
 			const schema = pageSchemas[pageName as keyof typeof pageSchemas];
 			const parseResult = schema.safeParse(pageData, { errorMap });
 
@@ -85,14 +104,16 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 
+		updateFormData();
+
 		if (!validateAllPages()) {
 			setError(t("invalid-form"));
 			return;
 		}
 
-		const resume = formData.get("resume") as File | null;
+		const resume = formDataRef.current.get("resume") as File | null;
 		const data = {
-			...processFormData(formData),
+			...processFormData(formDataRef.current),
 			hasResume: !!resume,
 		};
 
@@ -135,8 +156,7 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 					newFormData.append(key, value);
 				}
 			});
-
-			setFormData(newFormData);
+			formDataRef.current = newFormData;
 		}
 	}, []);
 
@@ -179,7 +199,7 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 					<Page
 						key={page.name}
 						page={page}
-						formData={formData}
+						formData={formDataRef.current}
 						index={index}
 						isLastPage={index === applicationQuestions.length - 1}
 						setStep={setStep}

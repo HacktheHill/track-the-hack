@@ -18,9 +18,7 @@ export const processFormData = (formData: FormData) => {
 	const processedEntries: [string, ProcessedEntryValue][] = [];
 
 	formData.forEach((value, key) => {
-		if (key.endsWith("-checkbox")) {
-			processedEntries.push([key.replace("-checkbox", ""), value === "on"]);
-		} else if (key.endsWith("-other")) {
+		if (key.endsWith("-other")) {
 			const baseKey = key.replace("-other", "");
 			const baseValue = formData.get(baseKey);
 			if (baseValue === "other") {
@@ -43,6 +41,7 @@ export const processFormData = (formData: FormData) => {
 				processedEntries.push([key, processedValue]);
 			}
 		}
+		console.log(processedEntries);
 	});
 
 	return Object.fromEntries(processedEntries);
@@ -63,4 +62,5 @@ export const saveToLocalStorage = (formData: FormData) => {
 	});
 
 	localStorage.setItem("applyFormData", JSON.stringify(data));
+	console.log(data);
 };
