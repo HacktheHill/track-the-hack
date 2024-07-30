@@ -113,5 +113,9 @@
 	"resume": {
 		"size": "La taille du fichier doit être inférieure à 2 Mo",
 		"format": "Format de fichier non valide. Doit être un fichier PDF"
+	},
+	"dateOfBirth": {
+		"future": "La date de naissance doit être dans le passé",
+		"age": "Vous devez avoir au moins 15 ans (11e année) pour postuler"
 	}
 }
