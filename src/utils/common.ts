@@ -37,7 +37,14 @@ export const personalSchema = z.object({
 	email: z.string().email(),
 	phoneNumber: z.string().min(1),
 	country: z.enum(countryCodes),
-	dateOfBirth: z.date(),
+	dateOfBirth: z
+		.date()
+		.refine(date => date < new Date(), {
+			params: { i18n: "dateOfBirth.future" },
+		})
+		.refine(date => new Date().getFullYear() - date.getFullYear() >= 15, {
+			params: { i18n: "dateOfBirth.age" },
+		}),
 });
 
 export const demographicsSchema = z.object({
