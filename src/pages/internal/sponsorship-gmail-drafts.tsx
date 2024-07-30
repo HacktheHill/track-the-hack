@@ -478,7 +478,7 @@ const SponsorshipGmailDrafts: NextPage = () => {
 
 		const data = Object.fromEntries(formData) as Record<string, string | number | undefined>;
 		data.emailHTML = htmlPreview;
-		console.log(data);
+		console.info(data);
 
 		// Remove empty values
 		Object.keys(data).forEach(key => {

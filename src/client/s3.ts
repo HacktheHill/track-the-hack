@@ -11,7 +11,7 @@ const uploadResume = async (presignedUrl: string, file: File, name: string) => {
 		console.error("Failed to upload resume", error);
 	}
 
-	console.log("Uploaded resume to S3", name);
+	console.info("Uploaded resume to S3", name);
 };
 
 export { uploadResume };
