@@ -10,19 +10,12 @@ type SelectProps = {
 
 const Select = ({ field, className, formData }: SelectProps) => {
 	const { t } = useTranslation("apply");
-	const [showOther, setShowOther] = useState(false);
-	const [value, setValue] = useState<string | undefined>();
-	const [otherValue, setOtherValue] = useState<string | undefined>();
+	const initialValue = formData.get(field.name)?.toString() ?? "";
+	const initialOtherValue = formData.get(`${field.name}-other`)?.toString() ?? "";
 
-	useEffect(() => {
-		const initialValue = formData.get(field.name)?.toString() ?? "";
-		setValue(initialValue);
-		const otherValue = formData.get(`${field.name}-other`)?.toString();
-		if (initialValue === "other" && otherValue) {
-			setShowOther(true);
-			setOtherValue(otherValue);
-		}
-	}, [field.name, formData]);
+	const [value, setValue] = useState<string>(initialValue);
+	const [showOther, setShowOther] = useState<boolean>(initialValue === "other");
+	const [otherValue, setOtherValue] = useState<string>(initialOtherValue);
 
 	return (
 		<>
@@ -31,10 +24,11 @@ const Select = ({ field, className, formData }: SelectProps) => {
 				name={field.name}
 				className={className}
 				required={field.required}
-				value={value ?? ""}
+				value={value}
 				onChange={e => {
-					setValue(e.target.value);
-					setShowOther(e.target.value === "other");
+					const selectedValue = e.target.value;
+					setValue(selectedValue);
+					setShowOther(selectedValue === "other");
 				}}
 			>
 				<option value="">{t("select")}</option>
@@ -50,7 +44,7 @@ const Select = ({ field, className, formData }: SelectProps) => {
 					name={`${field.name}-other`}
 					type="text"
 					className={className}
-					defaultValue={otherValue}
+					value={otherValue}
 					onChange={e => setOtherValue(e.target.value)}
 				/>
 			)}

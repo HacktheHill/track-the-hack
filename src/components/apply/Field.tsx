@@ -32,7 +32,7 @@ const Field = ({ field, formData, errors }: FieldProps) => {
 		case "multiselect":
 			return <MultiSelect field={field} className={className} formData={formData} />;
 		case "checkbox":
-			return <Checkbox field={field} />;
+			return <Checkbox field={field} formData={formData}/>;
 		case "textarea":
 			return <TextArea field={field} className={className} formData={formData} />;
 		case "typeahead":

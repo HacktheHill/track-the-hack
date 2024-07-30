@@ -9,19 +9,28 @@ type TypeaheadProps = {
 
 const Typeahead = ({ field, className, formData }: TypeaheadProps) => {
 	const [options, setOptions] = useState<string[]>([]);
+	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
 		const fetchOptions = async () => {
-			const res = await fetch(field.url);
-			const data = await res.text();
-			setOptions(data.replace(/(^")|("$)/gm, "").split("\n"));
+			try {
+				const res = await fetch(field.url);
+				if (!res.ok) {
+					throw new Error(`Error fetching options: ${res.statusText}`);
+				}
+				const data = await res.text();
+				setOptions(data.replace(/(^")|("$)/gm, "").split("\n"));
+			} catch (err) {
+				setError((err as Error).message);
+			}
 		};
 
 		void fetchOptions();
-	}, [field.options.url, field.url]);
+	}, [field.url]);
 
 	return (
 		<>
+			{error && <p className="text-red-600">{error}</p>}
 			<input
 				id={field.name}
 				name={field.name}
