@@ -10,8 +10,6 @@ import { sendApplyEmail } from "../../lib/email";
 import { log } from "../../lib/log";
 import { generatePresignedGetUrl, generatePresignedPutUrl, generateS3Filename } from "../../lib/s3";
 
-const DEFAULT_ACCEPTANCE_EXPIRY = new Date(2023, 2, 6, 5, 0, 0, 0); // 2023-03-06 00:00:00 EST
-
 const ee = new EventEmitter();
 
 export const hackerRouter = createTRPCRouter({
@@ -360,126 +358,114 @@ export const hackerRouter = createTRPCRouter({
 		}),
 
 	// Create a walk-in hacker
-	walkIn: protectedProcedure
-		.input(
-			hackerSchema.extend({
-				acceptanceExpiry: z.date().default(DEFAULT_ACCEPTANCE_EXPIRY),
-			}),
-		)
-		.mutation(async ({ ctx, input }) => {
-			const userId = ctx.session.user.id;
-			const user = await ctx.prisma.user.findUnique({
-				where: {
-					id: userId,
-				},
-				select: {
-					name: true,
-					roles: {
-						select: {
-							name: true,
-						},
+	walkIn: protectedProcedure.input(hackerSchema).mutation(async ({ ctx, input }) => {
+		const userId = ctx.session.user.id;
+		const user = await ctx.prisma.user.findUnique({
+			where: {
+				id: userId,
+			},
+			select: {
+				name: true,
+				roles: {
+					select: {
+						name: true,
 					},
 				},
-			});
+			},
+		});
 
-			if (!user) {
-				throw new Error("User not found");
-			}
+		if (!user) {
+			throw new Error("User not found");
+		}
 
-			if (!hasRoles(user, [RoleName.ORGANIZER])) {
-				throw new Error("You do not have permission to do this");
-			}
+		if (!hasRoles(user, [RoleName.ORGANIZER])) {
+			throw new Error("You do not have permission to do this");
+		}
 
-			const hacker = await ctx.prisma.hacker.create({
-				data: {
-					...input,
-					walkIn: true,
-					presences: {
-						create: {
-							key: "checkedIn",
-							value: 1,
-							label: "Checked In",
-						},
+		const hacker = await ctx.prisma.hacker.create({
+			data: {
+				...input,
+				walkIn: true,
+				presences: {
+					create: {
+						key: "checkedIn",
+						value: 1,
+						label: "Checked In",
 					},
 				},
-			});
+			},
+		});
 
-			await log(ctx, {
-				sourceId: hacker.id,
-				sourceType: "Hacker",
-				route: "/walk-in",
-				action: "WalkIn",
-				details: `${input.firstName} ${input.lastName} walked in.`,
-				author: user.name ?? "Unknown",
-			});
+		await log(ctx, {
+			sourceId: hacker.id,
+			sourceType: "Hacker",
+			route: "/walk-in",
+			action: "WalkIn",
+			details: `${input.firstName} ${input.lastName} walked in.`,
+			author: user.name ?? "Unknown",
+		});
 
-			ee.emit("add", hacker);
+		ee.emit("add", hacker);
 
-			return hacker;
-		}),
+		return hacker;
+	}),
 
-	apply: protectedProcedure
-		.input(
-			hackerSchema.extend({
-				acceptanceExpiry: z.date().default(DEFAULT_ACCEPTANCE_EXPIRY),
-			}),
-		)
-		.mutation(async ({ ctx, input }) => {
-			const userId = ctx.session.user.id;
-			const user = await ctx.prisma.user.findUnique({
-				where: {
-					id: userId,
-				},
-				select: {
-					name: true,
-					roles: {
-						select: {
-							name: true,
-						},
+	apply: protectedProcedure.input(hackerSchema).mutation(async ({ ctx, input }) => {
+		const userId = ctx.session.user.id;
+		const user = await ctx.prisma.user.findUnique({
+			where: {
+				id: userId,
+			},
+			select: {
+				name: true,
+				roles: {
+					select: {
+						name: true,
 					},
 				},
-			});
+			},
+		});
 
-			if (!user) {
-				throw new Error("User not found");
-			}
+		if (!user) {
+			throw new Error("User not found");
+		}
 
-			const hacker = await ctx.prisma.hacker.create({
-				data: {
-					...input,
-					user: {
-						connect: {
-							id: userId,
-						},
+		const hacker = await ctx.prisma.hacker.create({
+			data: {
+				...input,
+				user: {
+					connect: {
+						id: userId,
 					},
 				},
-			});
+			},
+		});
 
-			const filename = generateS3Filename(hacker.id, `${hacker.firstName}_${hacker.lastName}_Resume`, "pdf");
-			const presignedUrl = await generatePresignedPutUrl(filename, "resumes");
+		const filename = generateS3Filename(hacker.id, `${hacker.firstName}_${hacker.lastName}_Resume`, "pdf");
+		const presignedUrl = await generatePresignedPutUrl(filename, "resumes");
 
-			await sendApplyEmail({
-				email: input.email,
-				name: input.firstName,
-				locale: input.preferredLanguage ?? "EN",
-			});
+		await sendApplyEmail({
+			email: input.email,
+			name: input.firstName,
+			locale: input.preferredLanguage ?? "EN",
+		});
 
-			await log(ctx, {
-				sourceId: hacker.id,
-				sourceType: "Hacker",
-				route: "/apply",
-				action: "Apply",
-				author: user.name ?? "Unknown",
-				details: `${input.firstName} ${input.lastName} applied.`,
-			});
+		await log(ctx, {
+			sourceId: hacker.id,
+			sourceType: "Hacker",
+			route: "/apply",
+			action: "Apply",
+			author: user.name ?? "Unknown",
+			details: `${input.firstName} ${input.lastName} applied.`,
+		});
 
-			ee.emit("add", hacker);
+		ee.emit("add", hacker);
 
-			return {
-				...hacker,
-				presignedUrl,
-			};
-		}),
+		return {
+			...hacker,
+			presignedUrl,
+		};
+	}),
 
 	delete: protectedProcedure
 		.input(
