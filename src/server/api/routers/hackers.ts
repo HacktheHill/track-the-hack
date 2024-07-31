@@ -481,6 +481,59 @@ export const hackerRouter = createTRPCRouter({
 			};
 		}),
 
+	delete: protectedProcedure
+		.input(
+			z.object({
+				id: z.string(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+			const user = await ctx.prisma.user.findUnique({
+				where: {
+					id: userId,
+				},
+				select: {
+					name: true,
+					roles: {
+						select: {
+							name: true,
+						},
+					},
+					Hacker: true,
+				},
+			});
+
+			if (!user) {
+				throw new Error("User not found");
+			}
+
+			const hacker = user.Hacker;
+
+			if (!hacker) {
+				throw new Error("Hacker not found");
+			}
+
+			if (!hasRoles(user, [RoleName.ORGANIZER]) && hacker.id !== input.id) {
+				throw new Error("You do not have permission to do this");
+			}
+
+			await log(ctx, {
+				sourceId: input.id,
+				sourceType: "Hacker",
+				route: "/delete-hacker",
+				action: "DeleteHacker",
+				details: `Deleted hacker ${input.id}`,
+				author: user.name ?? "Unknown",
+			});
+
+			return ctx.prisma.hacker.delete({
+				where: {
+					id: input.id,
+				},
+			});
+		}),
+
 	// Update a hacker's info
 	update: protectedProcedure
 		.input(

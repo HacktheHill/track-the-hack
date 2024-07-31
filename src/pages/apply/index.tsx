@@ -10,7 +10,7 @@ import { makeZodI18nMap } from "zod-i18n-map";
 import { uploadResume } from "../../client/s3";
 import App from "../../components/App";
 import Page from "../../components/apply/Page";
-import Error from "../../components/Error";
+import ErrorComponent from "../../components/Error";
 import Loading from "../../components/Loading";
 import { trpc } from "../../server/api/api";
 import type { ApplicationQuestionsType } from "../../server/lib/apply";
@@ -39,6 +39,7 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 	const [errors, setErrors] = useState<Record<string, Record<string, string[]>>>({});
 
 	const mutation = trpc.hackers.apply.useMutation();
+	const revertMutation = trpc.hackers.delete.useMutation();
 
 	const updateFormData = () => {
 		if (!formRef.current) return;
@@ -129,14 +130,22 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 		setError(null);
 		setSuccess(false);
 
+		let result;
 		try {
-			const result = await mutation.mutateAsync(parse.data);
+			result = await mutation.mutateAsync(parse.data);
 			if (result.presignedUrl && resume) {
-				await uploadResume(result.presignedUrl, resume, resume.name);
+				const uploadResult = await uploadResume(result.presignedUrl, resume, resume.name);
+
+				if (!uploadResult) {
+					throw new Error("Failed to upload resume");
+				}
 			}
 			localStorage.removeItem("applyFormData");
 			setSuccess(true);
 		} catch (err) {
+			if (result?.id) {
+				await revertMutation.mutateAsync({ id: result.id });
+			}
 			setError((err as Error).message ?? t("unknown-error"));
 			console.error(err);
 		} finally {
@@ -168,7 +177,7 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 						{loading && <Loading />}
 						{error && (
 							<>
-								<Error message={error} />
+								<ErrorComponent message={error} />
 								<button
 									type="button"
 									className="mt-4 whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
