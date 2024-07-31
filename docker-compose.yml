@@ -9,10 +9,17 @@
 # npx prisma db push
 
 services:
-    hth-dev:
+    track-the-hack-db:
         image: mysql
+        restart: always
         command: --sql_mode="ONLY_FULL_GROUP_BY,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION"
         environment:
             - MYSQL_ROOT_PASSWORD=root
         ports:
             - 3306:3306
+        volumes:
+            - mysql_data:/var/lib/mysql
+
+volumes:
+    mysql_data:
+        driver: local
