@@ -88,7 +88,7 @@
 			}
 		},
 		"major": {
-			"label": "Quelle est votre spécialisation/principal domaine d'étude? Si vous avez déjà obtenu votre diplôme, quelle était votre spécialisation/principal domaine d'étude?"
+			"label": "Si vous étiez/êtes inscrit(e) à un programme d'études post-secondaires, quel était/est votre domaine d'études principal?"
 		}
 	},
 	"links": {
