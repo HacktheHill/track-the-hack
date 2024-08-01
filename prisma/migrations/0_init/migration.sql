@@ -50,6 +50,7 @@ CREATE TABLE `User` (
     `name` VARCHAR(191) NULL,
     `email` VARCHAR(191) NULL,
     `image` VARCHAR(191) NULL,
+    `emailVerified` DATETIME(3) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
@@ -109,6 +110,7 @@ CREATE TABLE `Hacker` (
     `mlhPrivacyTerms` BOOLEAN NOT NULL,
     `mlhPromotions` BOOLEAN NOT NULL,
     `hasResume` BOOLEAN NOT NULL DEFAULT false,
+    `applicationStatus` ENUM('PENDING', 'ACCEPTED', 'WAITLISTED', 'REJECTED') NOT NULL DEFAULT 'PENDING',
     `confirmed` BOOLEAN NOT NULL DEFAULT false,
     `unsubscribed` BOOLEAN NOT NULL DEFAULT false,
     `unsubscribeToken` VARCHAR(191) NULL,
@@ -211,3 +213,4 @@ CREATE TABLE `_LogToUser` (
     UNIQUE INDEX `_LogToUser_AB_unique`(`A`, `B`),
     INDEX `_LogToUser_B_index`(`B`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
