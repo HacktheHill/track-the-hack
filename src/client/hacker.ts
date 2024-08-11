@@ -8,56 +8,39 @@ type Field = {
 	editable?: boolean;
 };
 
-/*
-editable fields:
-
-[
-	"firstName",
-	"lastName",
-	"email",
-	"phoneNumber",
-	"emergencyContactName",
-	"emergencyContactRelation",
-	"emergencyContactPhoneNumber",
-	"dietaryRestrictions",
-	"accessibilityRequirements",
-	"preferredLanguage",
-	"shirtSize",
-]*/
-
-export const getHackerFields = (hackerData: Hacker) => {
+export const getHackerFields = (hackerData: Hacker, acceptance: boolean) => {
 	return {
 		personal: [
 			{
 				name: "firstName",
-				value: hackerData.firstName,
+				value: acceptance ? "Hidden" : hackerData.firstName,
 				type: "text",
-				editable: true,
+				editable: !acceptance,
 			},
 			{
 				name: "lastName",
-				value: hackerData.lastName,
+				value: acceptance ? "Hidden" : hackerData.lastName,
 				type: "text",
-				editable: true,
+				editable: !acceptance,
 			},
 			{
 				name: "email",
-				value: hackerData.email,
+				value: acceptance ? "Hidden" : hackerData.email,
 				type: "email",
-				editable: true,
+				editable: !acceptance,
 			},
 			{
 				name: "phoneNumber",
-				value: hackerData.phoneNumber,
+				value: acceptance ? "Hidden" : hackerData.phoneNumber,
 				type: "text",
-				editable: true,
+				editable: !acceptance,
 			},
 			{
 				name: "preferredLanguage",
 				value: hackerData.preferredLanguage,
 				options: Object.values(Locale),
 				type: "select",
-				editable: true,
+				editable: !acceptance,
 			},
 			{
 				name: "country",
@@ -66,25 +49,25 @@ export const getHackerFields = (hackerData: Hacker) => {
 			},
 			{
 				name: "dateOfBirth",
-				value: hackerData.dateOfBirth?.toISOString().split("T")[0] ?? null,
+				value: acceptance ? "Hidden" : hackerData.dateOfBirth?.toISOString().split("T")[0] ?? null,
 				type: "text",
 			},
 		],
 		demographics: [
 			{
 				name: "gender",
-				value: hackerData.gender,
+				value: acceptance ? "Hidden" : hackerData.gender,
 				type: "select",
 				options: ["man", "woman", "nonBinary", "preferNotToAnswer"],
 			},
 			{
 				name: "pronouns",
-				value: hackerData.pronouns,
+				value: acceptance ? "Hidden" : hackerData.pronouns,
 				type: "text",
 			},
 			{
 				name: "raceEthnicity",
-				value: hackerData.raceEthnicity,
+				value: acceptance ? "Hidden" : hackerData.raceEthnicity,
 				type: "text",
 			},
 		],
@@ -142,21 +125,21 @@ export const getHackerFields = (hackerData: Hacker) => {
 		emergencyContact: [
 			{
 				name: "emergencyContactName",
-				value: hackerData.emergencyContactName,
+				value: acceptance ? "Hidden" : hackerData.emergencyContactName,
 				type: "text",
-				editable: true,
+				editable: !acceptance,
 			},
 			{
 				name: "emergencyContactRelation",
-				value: hackerData.emergencyContactRelation,
+				value: acceptance ? "Hidden" : hackerData.emergencyContactRelation,
 				type: "text",
-				editable: true,
+				editable: !acceptance,
 			},
 			{
 				name: "emergencyContactPhoneNumber",
-				value: hackerData.emergencyContactPhoneNumber,
+				value: acceptance ? "Hidden" : hackerData.emergencyContactPhoneNumber,
 				type: "text",
-				editable: true,
+				editable: !acceptance,
 			},
 		],
 		logistics: [
@@ -165,7 +148,7 @@ export const getHackerFields = (hackerData: Hacker) => {
 				value: hackerData.tShirtSize,
 				type: "select",
 				options: Object.values(TShirtSize),
-				editable: true,
+				editable: !acceptance,
 			},
 			{
 				name: "dietaryRestrictions",
@@ -182,13 +165,13 @@ export const getHackerFields = (hackerData: Hacker) => {
 					"soy",
 					"none",
 				],
-				editable: true,
+				editable: !acceptance,
 			},
 			{
 				name: "specialAccommodations",
 				value: hackerData.specialAccommodations,
 				type: "textarea",
-				editable: true,
+				editable: !acceptance,
 			},
 			{
 				name: "additionalInfo",
