@@ -86,13 +86,14 @@
 	},
 	"other": {
 		"title": "Other",
+		"applicationStatus": {
+			"label": "Application Status",
+			"PENDING": "Pending",
+			"ACCEPTED": "Accepted",
+			"WAITLISTED": "Waitlisted",
+			"REJECTED": "Rejected"
+		},
 		"acceptanceExpiry": "Acceptance Expiry"
-	},
-	"applicationStatus": {
-		"PENDING": "Pending",
-		"ACCEPTED": "Accepted",
-		"WAITLISTED": "Waitlisted",
-		"REJECTED": "Rejected"
 	},
 	"next": "Next",
 	"previous": "Previous",

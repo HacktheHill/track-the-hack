@@ -558,7 +558,18 @@ export const hackerRouter = createTRPCRouter({
 				throw new Error("Hacker not found");
 			}
 
-			if (!hasRoles(user, [RoleName.ORGANIZER]) && hacker.userId !== userId) {
+			if (
+				// If the user is not an organizer, they can only edit their own hacker info
+				!hasRoles(user, [RoleName.ORGANIZER]) &&
+				hacker.userId !== userId &&
+				// If the user has the acceptance role, they can only edit the application status
+				!(
+					Object.values(input).length === 2 &&
+					input.id &&
+					input.applicationStatus &&
+					hasRoles(user, [RoleName.ACCEPTANCE])
+				)
+			) {
 				throw new Error("You do not have permission to edit this hacker");
 			}
 

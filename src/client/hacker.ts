@@ -191,10 +191,17 @@ export const getHackerFields = (hackerData: Hacker, acceptance: boolean) => {
 		],
 		other: [
 			{
+				name: "applicationStatus",
+				value: hackerData.applicationStatus,
+				type: "select",
+				options: ["PENDING", "ACCEPTED", "WAITLISTED", "REJECTED"],
+				editable: acceptance,
+			},
+			{
 				name: "acceptanceExpiry",
 				value: hackerData.acceptanceExpiry?.toISOString().split("T")[0] ?? null,
 				type: "text",
 			},
 		],
-	} satisfies Record<string, Field[]>;
+	} as const satisfies Record<string, Field[]>;
 };
