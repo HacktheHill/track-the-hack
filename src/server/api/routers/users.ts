@@ -219,4 +219,16 @@ export const userRouter = createTRPCRouter({
 
 			return true;
 		}),
+
+	// Check if user is a hacker
+	isHacker: protectedProcedure.query(async ({ ctx }) => {
+		const userId = ctx.session.user.id;
+		const hacker = await ctx.prisma.hacker.findUnique({
+			where: {
+				userId,
+			},
+		});
+
+		return !!hacker;
+	}),
 });
