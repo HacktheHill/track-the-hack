@@ -13,25 +13,25 @@ export const getHackerFields = (hackerData: Hacker, acceptance: boolean) => {
 		personal: [
 			{
 				name: "firstName",
-				value: acceptance ? "Hidden" : hackerData.firstName,
+				value: acceptance ? "-" : hackerData.firstName,
 				type: "text",
 				editable: !acceptance,
 			},
 			{
 				name: "lastName",
-				value: acceptance ? "Hidden" : hackerData.lastName,
+				value: acceptance ? "-" : hackerData.lastName,
 				type: "text",
 				editable: !acceptance,
 			},
 			{
 				name: "email",
-				value: acceptance ? "Hidden" : hackerData.email,
+				value: acceptance ? "-" : hackerData.email,
 				type: "email",
 				editable: !acceptance,
 			},
 			{
 				name: "phoneNumber",
-				value: acceptance ? "Hidden" : hackerData.phoneNumber,
+				value: acceptance ? "-" : hackerData.phoneNumber,
 				type: "text",
 				editable: !acceptance,
 			},
@@ -49,25 +49,25 @@ export const getHackerFields = (hackerData: Hacker, acceptance: boolean) => {
 			},
 			{
 				name: "dateOfBirth",
-				value: acceptance ? "Hidden" : hackerData.dateOfBirth?.toISOString().split("T")[0] ?? null,
+				value: acceptance ? "-" : hackerData.dateOfBirth?.toISOString().split("T")[0] ?? null,
 				type: "text",
 			},
 		],
 		demographics: [
 			{
 				name: "gender",
-				value: acceptance ? "Hidden" : hackerData.gender,
+				value: acceptance ? "-" : hackerData.gender,
 				type: "select",
 				options: ["man", "woman", "nonBinary", "preferNotToAnswer"],
 			},
 			{
 				name: "pronouns",
-				value: acceptance ? "Hidden" : hackerData.pronouns,
+				value: acceptance ? "-" : hackerData.pronouns,
 				type: "text",
 			},
 			{
 				name: "raceEthnicity",
-				value: acceptance ? "Hidden" : hackerData.raceEthnicity,
+				value: acceptance ? "-" : hackerData.raceEthnicity,
 				type: "text",
 			},
 		],
@@ -125,19 +125,19 @@ export const getHackerFields = (hackerData: Hacker, acceptance: boolean) => {
 		emergencyContact: [
 			{
 				name: "emergencyContactName",
-				value: acceptance ? "Hidden" : hackerData.emergencyContactName,
+				value: acceptance ? "-" : hackerData.emergencyContactName,
 				type: "text",
 				editable: !acceptance,
 			},
 			{
 				name: "emergencyContactRelation",
-				value: acceptance ? "Hidden" : hackerData.emergencyContactRelation,
+				value: acceptance ? "-" : hackerData.emergencyContactRelation,
 				type: "text",
 				editable: !acceptance,
 			},
 			{
 				name: "emergencyContactPhoneNumber",
-				value: acceptance ? "Hidden" : hackerData.emergencyContactPhoneNumber,
+				value: acceptance ? "-" : hackerData.emergencyContactPhoneNumber,
 				type: "text",
 				editable: !acceptance,
 			},
