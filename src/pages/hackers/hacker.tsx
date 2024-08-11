@@ -77,7 +77,7 @@ const HackerPage: NextPage<{
 			Object.entries(fields).forEach(([categoryName, fieldGroup]) => {
 				fieldGroup.forEach(field => {
 					let value = field.value?.toString() ?? "";
-					if ("options" in field && field.options?.length) {
+					if ("options" in field && field.options?.length && field.type !== "select") {
 						const localizedOption = field.options.find(option => option === value);
 						if (localizedOption) {
 							value = t(`${categoryName}.${field.name}.${localizedOption}`);
@@ -111,7 +111,7 @@ const HackerPage: NextPage<{
 		const data = {
 			...Object.fromEntries(formData),
 			id: hackerQuery.data?.id,
-			hasResume: !!resume,
+			...(hackerQuery.data?.hasResume !== !!resume ? { hasResume: true } : {}),
 		};
 
 		const parse = hackerSchema
@@ -248,7 +248,7 @@ const HackerPage: NextPage<{
 						statusColorMap[hackerQuery.data.applicationStatus] ?? "bg-gray-500"
 					}`}
 				>
-					{t(`applicationStatus.${hackerQuery.data.applicationStatus}`)}
+					{t(`other.applicationStatus.${hackerQuery.data.applicationStatus}`)}
 				</div>
 
 				<Filter value={[RoleName.ORGANIZER]} method="some" silent>
@@ -325,15 +325,17 @@ const HackerPage: NextPage<{
 					<div className="flex flex-col gap-4">
 						<h3 className="text-center font-coolvetica text-2xl text-dark-color">{t("links.title")}</h3>
 
-						<input
-							name="resume"
-							className="w-fit rounded-md border border-dark-primary-color p-2"
-							type="file"
-							accept="application/pdf"
-							onChange={e => {
-								handleInputChange("resume", e.target.value);
-							}}
-						/>
+						{!acceptance && (
+							<input
+								name="resume"
+								className="w-fit rounded-md border border-dark-primary-color p-2"
+								type="file"
+								accept="application/pdf"
+								onChange={e => {
+									handleInputChange("resume", e.target.value);
+								}}
+							/>
+						)}
 
 						<p className="flex flex-row flex-wrap justify-center gap-4">
 							{Object.entries({

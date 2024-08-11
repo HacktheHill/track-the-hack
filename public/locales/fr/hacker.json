@@ -86,13 +86,14 @@
 	},
 	"other": {
 		"title": "Autre",
+		"applicationStatus": {
+			"label": "Statut de la candidature",
+			"PENDING": "En attente",
+			"ACCEPTED": "Accepté",
+			"WAITLISTED": "En liste d'attente",
+			"REJECTED": "Rejeté"
+		},
 		"acceptanceExpiry": "Expiration de l'acceptation"
-	},
-	"applicationStatus": {
-		"PENDING": "En attente",
-		"ACCEPTED": "Accepté",
-		"WAITLISTED": "Liste d'attente",
-		"REJECTED": "Rejeté"
 	},
 	"next": "Suivant",
 	"previous": "Précédent",
