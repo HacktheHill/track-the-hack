@@ -548,14 +548,18 @@ export const hackerRouter = createTRPCRouter({
 				throw new Error("User not found");
 			}
 
-			const hacker = user.Hacker;
+			const hacker = await ctx.prisma.hacker.findUnique({
+				where: {
+					id: input.id,
+				},
+			});
 
 			if (!hacker) {
 				throw new Error("Hacker not found");
 			}
 
-			if (!hasRoles(user, [RoleName.ORGANIZER]) && hacker.id !== input.id) {
-				throw new Error("You do not have permission to do this");
+			if (!hasRoles(user, [RoleName.ORGANIZER]) && hacker.userId !== userId) {
+				throw new Error("You do not have permission to edit this hacker");
 			}
 
 			const updates = new Map<keyof typeof input, string | boolean | Date | undefined>();
