@@ -112,7 +112,8 @@
 	},
 	"resume": {
 		"size": "La taille du fichier doit être inférieure à 2 Mo",
-		"format": "Format de fichier non valide. Doit être un fichier PDF"
+		"format": "Format de fichier non valide. Doit être un fichier PDF",
+		"content": "Contenu de fichier non valide. Doit être un fichier PDF"
 	},
 	"dateOfBirth": {
 		"future": "La date de naissance doit être dans le passé",

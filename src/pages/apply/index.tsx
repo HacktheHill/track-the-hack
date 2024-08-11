@@ -70,7 +70,7 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 		saveToLocalStorage(updatedFormData);
 	};
 
-	const validatePage = (page: ApplicationQuestionsType[number]) => {
+	const validatePage = async (page: ApplicationQuestionsType[number]) => {
 		if (!formRef.current) return false;
 
 		updateFormData();
@@ -79,7 +79,7 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 		if (pageName in pageSchemas) {
 			const pageData = processFormData(formDataRef.current);
 			const schema = pageSchemas[pageName as keyof typeof pageSchemas];
-			const parseResult = schema.safeParse(pageData, { errorMap });
+			const parseResult = await schema.safeParseAsync(pageData, { errorMap });
 
 			if (parseResult.success) {
 				setErrors(prevErrors => ({ ...prevErrors, [pageName]: {} }));
@@ -94,13 +94,13 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 		return true;
 	};
 
-	const validateAllPages = () => {
+	const validateAllPages = async () => {
 		let isValid = true;
-		applicationQuestions.forEach(page => {
-			if (!validatePage(page)) {
+		for (const page of applicationQuestions) {
+			if (!(await validatePage(page))) {
 				isValid = false;
 			}
-		});
+		}
 		return isValid;
 	};
 
@@ -109,7 +109,7 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 
 		updateFormData();
 
-		if (!validateAllPages()) {
+		if (!(await validateAllPages())) {
 			setError(t("invalid-form"));
 			return;
 		}
@@ -120,7 +120,7 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 			hasResume: !!resume,
 		};
 
-		const parse = hackerSchema.safeParse(data, { errorMap });
+		const parse = await hackerSchema.safeParseAsync(data, { errorMap });
 
 		if (!parse.success) {
 			setError(t("invalid-form"));

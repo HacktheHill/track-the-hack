@@ -27,6 +27,27 @@ export const countryCodes = [
 	"VE", "VN", "VG", "VI", "WF", "EH", "YE", "ZM", "ZW",
 ] as const;
 
+const validatePDFContent = (file: File) => {
+	return new Promise((resolve, reject) => {
+		const reader = new FileReader();
+
+		reader.onload = () => {
+			const content = reader.result as string;
+			if (content.startsWith("%PDF-")) {
+				resolve(true);
+			} else {
+				resolve(false);
+			}
+		};
+
+		reader.onerror = () => {
+			reject(new Error("Error reading the file"));
+		};
+
+		reader.readAsText(file);
+	});
+};
+
 export const preferredLanguageSchema = z.object({
 	preferredLanguage: z.nativeEnum(Locale),
 });
@@ -70,6 +91,9 @@ export const linksSchema = z.object({
 		})
 		.refine(file => !!file && file.type === "application/pdf", {
 			params: { i18n: "resume.format" },
+		})
+		.refine(file => validatePDFContent(file), {
+			params: { i18n: "resume.content" },
 		}),
 });
 

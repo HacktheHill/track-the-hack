@@ -12,7 +12,7 @@ type PageProps = {
 	isLastPage?: boolean;
 	setStep: React.Dispatch<React.SetStateAction<number>>;
 	errors: Record<string, string[] | undefined>;
-	validatePage: (page: ApplicationQuestionsType[number]) => boolean;
+	validatePage: (page: ApplicationQuestionsType[number]) => Promise<boolean>;
 };
 
 const Page = ({ page, formData, index, isLastPage, setStep, errors, validatePage }: PageProps) => {
@@ -21,9 +21,9 @@ const Page = ({ page, formData, index, isLastPage, setStep, errors, validatePage
 
 	const [loading, setLoading] = useState(false);
 
-	const handleNext = () => {
+	const handleNext = async () => {
 		setLoading(true);
-		if (validatePage(page)) {
+		if (await validatePage(page)) {
 			setStep(prev => (index + 1 > prev ? index + 1 : prev));
 			setTimeout(() => {
 				pageRef.current?.nextElementSibling?.scrollIntoView({
@@ -100,7 +100,7 @@ const Page = ({ page, formData, index, isLastPage, setStep, errors, validatePage
 				) : (
 					<button
 						type="button"
-						onClick={handleNext}
+						onClick={() => void handleNext()}
 						className="mx-auto flex w-fit items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
 					>
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 12" fill="currentColor" className="w-4">
