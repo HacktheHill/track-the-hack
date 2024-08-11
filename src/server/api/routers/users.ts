@@ -1,7 +1,6 @@
 import { RoleName } from "@prisma/client";
 import { z } from "zod";
 import { env } from "../../../env/server.mjs";
-import { roles } from "../../../utils/common";
 import { hasRoles } from "../../../utils/helpers";
 import { log } from "../../lib/log";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
@@ -84,7 +83,7 @@ export const userRouter = createTRPCRouter({
 	updateRoles: protectedProcedure
 		.input(
 			z.object({
-				roles: z.array(roles),
+				roles: z.array(z.nativeEnum(RoleName)),
 				userIds: z.array(z.string()),
 			}),
 		)
