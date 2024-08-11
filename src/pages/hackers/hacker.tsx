@@ -20,7 +20,10 @@ import { hackerSchema } from "../../utils/common";
 import { getAuthOptions } from "../api/auth/[...nextauth]";
 import { makeZodI18nMap } from "zod-i18n-map";
 
-const HackerPage: NextPage<{ organizer: boolean }> = ({ organizer }) => {
+const HackerPage: NextPage<{
+	organizer: boolean;
+	acceptance: boolean;
+}> = ({ organizer, acceptance }) => {
 	const router = useRouter();
 	const [id] = [router.query.id].flat();
 	const { t } = useTranslation("hacker");
@@ -69,7 +72,7 @@ const HackerPage: NextPage<{ organizer: boolean }> = ({ organizer }) => {
 
 	const resetInputFields = useCallback(() => {
 		if (hackerQuery.data) {
-			const fields = getHackerFields(hackerQuery.data);
+			const fields = getHackerFields(hackerQuery.data, acceptance);
 			const initialValues: Record<string, string> = {};
 			Object.entries(fields).forEach(([categoryName, fieldGroup]) => {
 				fieldGroup.forEach(field => {
@@ -86,7 +89,7 @@ const HackerPage: NextPage<{ organizer: boolean }> = ({ organizer }) => {
 			setInputValues(initialValues);
 		}
 		setEdit(false);
-	}, [hackerQuery.data, t]);
+	}, [acceptance, hackerQuery.data, t]);
 
 	const handlePresenceIncrement = async (key: string) => {
 		await presenceMutation.mutateAsync({ key });
@@ -268,55 +271,57 @@ const HackerPage: NextPage<{ organizer: boolean }> = ({ organizer }) => {
 				</Filter>
 
 				<form onSubmit={e => void handleSubmit(e)} className="flex flex-col gap-4">
-					{Object.entries(getHackerFields(hackerQuery.data)).map(([categoryName, fields], index) => (
-						<div className="flex flex-col gap-4" key={index}>
-							<h3 className="text-center font-coolvetica text-2xl text-dark-color">
-								{t(`${categoryName}.title`)}
-							</h3>
-							{fields.map((field, index) => {
-								const fieldAttributes = {
-									id: field.name,
-									name: field.name,
-									type: field.type,
-									className:
-										"w-1/2 rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50",
-									value: inputValues[field.name] ?? "",
-									onChange: (
-										e: React.ChangeEvent<
-											HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-										>,
-									) => handleInputChange(field.name, e.target.value),
-								};
+					{Object.entries(getHackerFields(hackerQuery.data, acceptance)).map(
+						([categoryName, fields], index) => (
+							<div className="flex flex-col gap-4" key={index}>
+								<h3 className="text-center font-coolvetica text-2xl text-dark-color">
+									{t(`${categoryName}.title`)}
+								</h3>
+								{fields.map((field, index) => {
+									const fieldAttributes = {
+										id: field.name,
+										name: field.name,
+										type: field.type,
+										className:
+											"w-1/2 rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50",
+										value: inputValues[field.name] ?? "",
+										onChange: (
+											e: React.ChangeEvent<
+												HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+											>,
+										) => handleInputChange(field.name, e.target.value),
+									};
 
-								return (
-									<div key={index} className="flex justify-between gap-2">
-										<strong className="text-left font-bold">
-											{"options" in field && field.options
-												? t(`${categoryName}.${field.name}.label`)
-												: t(`${categoryName}.${field.name}`)}
-										</strong>
-										{"editable" in field && field.editable ? (
-											field.type === "select" ? (
-												<select {...fieldAttributes}>
-													{field.options?.map((option, index) => (
-														<option key={index} value={option}>
-															{option}
-														</option>
-													))}
-												</select>
-											) : field.type === "textarea" ? (
-												<textarea {...fieldAttributes} />
+									return (
+										<div key={index} className="flex justify-between gap-2">
+											<strong className="text-left font-bold">
+												{"options" in field && field.options
+													? t(`${categoryName}.${field.name}.label`)
+													: t(`${categoryName}.${field.name}`)}
+											</strong>
+											{"editable" in field && field.editable ? (
+												field.type === "select" ? (
+													<select {...fieldAttributes}>
+														{field.options?.map((option, index) => (
+															<option key={index} value={option}>
+																{option}
+															</option>
+														))}
+													</select>
+												) : field.type === "textarea" ? (
+													<textarea {...fieldAttributes} />
+												) : (
+													<input {...fieldAttributes} />
+												)
 											) : (
-												<input {...fieldAttributes} />
-											)
-										) : (
-											<p>{fieldAttributes.value}</p>
-										)}
-									</div>
-								);
-							})}
-						</div>
-					))}
+												<p>{fieldAttributes.value}</p>
+											)}
+										</div>
+									);
+								})}
+							</div>
+						),
+					)}
 					<div className="flex flex-col gap-4">
 						<h3 className="text-center font-coolvetica text-2xl text-dark-color">{t("links.title")}</h3>
 
@@ -386,6 +391,7 @@ export const getServerSideProps: GetServerSideProps = async ({ req, res, query, 
 			...(await serverSideTranslations(locale ?? "en", ["hacker", "zod", "common", "navbar"])),
 			redirect: (await hackerRedirect(session, "/", id)) ?? null,
 			organizer: session?.user?.roles.includes(RoleName.ORGANIZER) ?? false,
+			acceptance: session?.user?.roles.includes(RoleName.ACCEPTANCE) ?? false,
 		},
 	};
 };

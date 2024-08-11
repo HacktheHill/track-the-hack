@@ -209,6 +209,7 @@ enum RoleName {
   HACKER
   ORGANIZER
   SPONSOR
+  ACCEPTANCE
 }
 
 enum EventType {
