@@ -66,7 +66,12 @@ const Filter = (props: FilterProps) => {
 		} else if (method === "function") {
 			shouldRender = value(roles);
 		} else if (method === "above") {
-			shouldRender = roles.some(role => roleHierarchy.indexOf(role) >= roleHierarchy.indexOf(value));
+			shouldRender = roles.some(
+				role =>
+					roleHierarchy.includes(role) &&
+					roleHierarchy.includes(value) &&
+					roleHierarchy.indexOf(role) >= roleHierarchy.indexOf(value),
+			);
 		} else if (method === "none") {
 			shouldRender = roles.length === 0;
 		} else if (method === "not") {
