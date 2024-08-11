@@ -100,18 +100,18 @@ model Hacker {
   github                           String?
   personalWebsite                  String?
   hackathonBefore                  Boolean
-  hackathonDetails                 String
-  programmingLanguagesTechnologies String
-  projectDescription               String
-  participationReason              String
-  learningGoals                    String
+  hackathonDetails                 String                @db.Text
+  programmingLanguagesTechnologies String                @db.Text
+  projectDescription               String                @db.Text
+  participationReason              String                @db.Text
+  learningGoals                    String                @db.Text
   emergencyContactName             String
   emergencyContactRelation         String
   emergencyContactPhoneNumber      String
   tShirtSize                       TShirtSize
   dietaryRestrictions              String
-  specialAccommodations            String?
-  additionalInfo                   String?
+  specialAccommodations            String?               @db.Text
+  additionalInfo                   String?               @db.Text
   travelOrigin                     String?
   travelAccommodations             TravelAccommodations?
   referralSource                   String?
