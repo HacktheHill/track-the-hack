@@ -4,6 +4,8 @@
 	"submit": "Submit",
 	"success": "Success",
 	"application-submitted-successfully": "Application submitted successfully!",
+	"attention": "Attention",
+	"overwriting-submission": "You have already submitted an application. Submitting a new application will overwrite your previous submission. Are you sure you want to continue?",
 	"return-to-form": "Return to Form",
 	"back-home": "Back to Home",
 	"invalid-form": "Please fill out all required fields.",

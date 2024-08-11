@@ -35,9 +35,11 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [success, setSuccess] = useState(false);
+	const [ignoreAlreadyHacker, setIgnoreAlreadyHacker] = useState(false);
 	const [step, setStep] = useState<number>(0);
 	const [errors, setErrors] = useState<Record<string, Record<string, string[]>>>({});
 
+	const isHacker = trpc.users.isHacker.useQuery();
 	const mutation = trpc.hackers.apply.useMutation();
 	const revertMutation = trpc.hackers.delete.useMutation();
 
@@ -171,16 +173,16 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 
 	return (
 		<App className="overflow-y-auto bg-default-gradient" title={t("title")}>
-			{(loading || error || success) && (
+			{(loading || error || success || (isHacker.data && !ignoreAlreadyHacker)) && (
 				<div className="fixed inset-0 z-50 flex items-center justify-center bg-light-tertiary-color bg-opacity-90">
-					<div className="w-full max-w-lg rounded border border-dark-primary-color bg-light-quaternary-color p-8 text-center">
+					<div className="flex w-full max-w-lg flex-col gap-4 rounded border border-dark-primary-color bg-light-quaternary-color p-8 text-center">
 						{loading && <Loading />}
 						{error && (
 							<>
 								<ErrorComponent message={error} />
 								<button
 									type="button"
-									className="mt-4 whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
+									className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
 									onClick={() => setError(null)}
 								>
 									{t("return-to-form")}
@@ -193,11 +195,33 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 								<p>{t("application-submitted-successfully")}</p>
 								<button
 									type="button"
-									className="mt-4 whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
+									className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
 									onClick={() => void router.replace("/")}
 								>
 									{t("back-home")}
 								</button>
+							</>
+						)}
+						{isHacker.data && !ignoreAlreadyHacker && (
+							<>
+								<h3 className="text-4xl font-bold text-dark-color">{t("attention")}</h3>
+								<p>{t("overwriting-submission")}</p>
+								<div className="flex justify-center gap-4">
+									<button
+										type="button"
+										className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
+										onClick={() => void router.replace("/")}
+									>
+										{t("back-home")}
+									</button>
+									<button
+										type="button"
+										className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
+										onClick={() => setIgnoreAlreadyHacker(true)}
+									>
+										{t("return-to-form")}
+									</button>
+								</div>
 							</>
 						)}
 					</div>
