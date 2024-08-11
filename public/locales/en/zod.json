@@ -112,7 +112,8 @@
 	},
 	"resume": {
 		"size": "File size must be less than 2MB",
-		"format": "Invalid file format. Must be a PDF file"
+		"format": "Invalid file format. Must be a PDF file",
+		"content": "Invalid file content. Must be a PDF file"
 	},
 	"dateOfBirth": {
 		"future": "Date of birth must be in the past",
