@@ -1,5 +1,4 @@
 import type { RoleName, User } from "@prisma/client";
-import type { Roles } from "./common";
 
 /**
  * Checks if a given expiry date is expired
@@ -29,7 +28,7 @@ export const isExpired = (expiry: string) => {
  * // => true if role is RoleName.ORGANIZER or RoleName.SPONSOR
  * // => false otherwise
  */
-export const matchesRole = (role: RoleName | null, roles: Roles[]) => {
+export const matchesRole = (role: RoleName | null, roles: RoleName[]) => {
 	if (!role) {
 		return false;
 	}
@@ -54,7 +53,7 @@ export const hasRoles = (
 			name: RoleName;
 		}[];
 	} & Partial<User>,
-	roles: Roles[],
+	roles: RoleName[],
 ) => {
 	if (!user) {
 		return false;
