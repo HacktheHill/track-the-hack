@@ -137,7 +137,7 @@ export const getHackerFields = (hackerData: Hacker, acceptance: boolean) => {
 			},
 			{
 				name: "emergencyContactPhoneNumber",
-				value: acceptance ? "-" : hackerData.emergencyContactPhoneNumber,
+				value: hackerData.emergencyContactPhoneNumber,
 				type: "text",
 				editable: !acceptance,
 			},
