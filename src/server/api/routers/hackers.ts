@@ -189,7 +189,7 @@ export const hackerRouter = createTRPCRouter({
 				cursor: cursor ? { id: cursor } : undefined,
 				where: queryConditions,
 				orderBy: {
-					id: "asc",
+					createdAt: "asc",
 				},
 			});
 
