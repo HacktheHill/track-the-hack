@@ -18,6 +18,7 @@ const generateHackerData = () => {
 		phoneNumber,
 		country: faker.location.countryCode(),
 		dateOfBirth: faker.date.past(),
+		age: faker.number.int({ min: 15, max: 30 }),
 		dietaryRestrictions: faker.helpers.arrayElement([
 			"Halal",
 			"Gluten-Free",

@@ -90,6 +90,7 @@ model Hacker {
   phoneNumber                      String
   country                          String
   dateOfBirth                      DateTime
+  age                              Int
   gender                           String?
   pronouns                         String?
   raceEthnicity                    String?

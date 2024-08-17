@@ -64,6 +64,12 @@ export const personalSchema = z.object({
 		.refine(date => new Date().getFullYear() - date.getFullYear() >= 15, {
 			params: { i18n: "dateOfBirth.age" },
 		}),
+	age: z
+		.number()
+		.int()
+		.refine(age => age >= 15, {
+			params: { i18n: "age.min" },
+		}),
 });
 
 export const demographicsSchema = z.object({
