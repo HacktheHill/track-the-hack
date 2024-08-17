@@ -7,8 +7,6 @@ export const processValue = (key: string, value: string): ProcessedEntryValue =>
 		return true;
 	} else if (value === "false") {
 		return false;
-	} else if (key === "dateOfBirth") {
-		return new Date(value);
 	} else {
 		return value;
 	}
