@@ -1,7 +1,7 @@
 import type { ProcessedFieldGeneric } from "../../server/lib/apply";
 
 type InputProps = {
-	field: ProcessedFieldGeneric<"text" | "email" | "tel" | "date" | "url" | "file">;
+	field: ProcessedFieldGeneric<"text" | "email" | "tel" | "date" | "number" | "url" | "file">;
 	className: string;
 	formData: FormData;
 };

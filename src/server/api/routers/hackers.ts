@@ -573,7 +573,7 @@ export const hackerRouter = createTRPCRouter({
 				throw new Error("You do not have permission to edit this hacker");
 			}
 
-			const updates = new Map<keyof typeof input, string | boolean | Date | undefined>();
+			const updates = new Map<keyof typeof input, string | boolean | number | Date | undefined>();
 
 			for (const key in input) {
 				for (const key2 in hacker) {
