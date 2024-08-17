@@ -1,4 +1,4 @@
-export type ProcessedEntryValue = string | boolean | Date | File | undefined;
+export type ProcessedEntryValue = string | boolean | number | Date | File | undefined;
 
 export const processValue = (key: string, value: string): ProcessedEntryValue => {
 	if (value === "") {
@@ -7,6 +7,8 @@ export const processValue = (key: string, value: string): ProcessedEntryValue =>
 		return true;
 	} else if (value === "false") {
 		return false;
+	} else if (key === "age") {
+		return parseInt(value);
 	} else {
 		return value;
 	}
