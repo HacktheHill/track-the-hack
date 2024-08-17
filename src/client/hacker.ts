@@ -48,8 +48,8 @@ export const getHackerFields = (hackerData: Hacker, acceptance: boolean) => {
 				type: "text",
 			},
 			{
-				name: "dateOfBirth",
-				value: acceptance ? "-" : hackerData.dateOfBirth?.toISOString().split("T")[0] ?? null,
+				name: "age",
+				value: acceptance ? "-" : hackerData.age,
 				type: "text",
 			},
 		],

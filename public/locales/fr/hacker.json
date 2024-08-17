@@ -11,7 +11,7 @@
 			"FR": "Français"
 		},
 		"country": "Pays de résidence",
-		"dateOfBirth": "Date de naissance"
+		"age": "Âge"
 	},
 	"demographics": {
 		"title": "Informations démographiques",

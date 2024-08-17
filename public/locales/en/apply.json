@@ -34,7 +34,7 @@
 		"email": { "label": "Email Address" },
 		"phoneNumber": { "label": "Phone Number" },
 		"country": { "label": "Country of Residence" },
-		"dateOfBirth": { "label": "Date of Birth" }
+		"age": { "label": "Age" }
 	},
 	"demographics": {
 		"title": "Demographic Information",

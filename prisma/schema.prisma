@@ -89,7 +89,6 @@ model Hacker {
   email                            String
   phoneNumber                      String
   country                          String
-  dateOfBirth                      DateTime
   age                              Int
   gender                           String?
   pronouns                         String?

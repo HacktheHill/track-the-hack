@@ -115,8 +115,7 @@
 		"format": "Invalid file format. Must be a PDF file",
 		"content": "Invalid file content. Must be a PDF file"
 	},
-	"dateOfBirth": {
-		"future": "Date of birth must be in the past",
-		"age": "You must be at least 15 years old (grade 11) to apply"
+	"age": {
+		"min": "You must be at least 15 years old (grade 11) to apply"
 	}
 }

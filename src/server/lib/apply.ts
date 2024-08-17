@@ -53,8 +53,8 @@ export const getApplicationQuestions = (locale: keyof typeof Locale) => {
 						required: true,
 					},
 					{
-						name: "dateOfBirth",
-						type: "date",
+						name: "age",
+						type: "number",
 						required: true,
 					},
 				],
@@ -358,7 +358,7 @@ type Field = {
 	links?: readonly string[];
 } & (
 	| {
-			type: "text" | "email" | "tel" | "date" | "url" | "file" | "checkbox";
+			type: "text" | "email" | "tel" | "number" | "url" | "file" | "checkbox";
 	  }
 	| {
 			type: "select" | "multiselect" | "radio";
