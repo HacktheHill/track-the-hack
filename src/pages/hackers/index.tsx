@@ -186,11 +186,27 @@ const Hackers: NextPage = () => {
 type CardProps = Pick<Hacker, "currentSchoolOrganization" | "firstName" | "lastName" | "major" | "id">;
 
 const Card = ({ firstName, lastName, currentSchoolOrganization, major, id }: CardProps) => {
+	const [copied, setCopied] = useState(false);
+
 	return (
 		<Link
 			href={`/hackers/hacker?id=${id}`}
-			className="hover:bg-medium block w-full rounded-lg bg-medium-primary-color p-6 text-light-color shadow"
+			className="hover:bg-medium relative block w-full rounded-lg bg-medium-primary-color p-6 text-light-color shadow"
 		>
+			<Filter value={[RoleName.ACCEPTANCE]} method="some" silent>
+				<button
+					className="text-[8pt] absolute right-2 top-1"
+					onClick={e => {
+						e.preventDefault();
+						e.stopPropagation();
+						void navigator.clipboard.writeText(id);
+						setCopied(true);
+						setTimeout(() => setCopied(false), 2000);
+					}}
+				>
+					<small>{copied ? "Copied" : id}</small>
+				</button>
+			</Filter>
 			<h3 className="text-2xl font-bold tracking-tight">{`${firstName} ${lastName}`}</h3>
 			<p>{major}</p>
 			<p>{currentSchoolOrganization}</p>
