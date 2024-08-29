@@ -1,4 +1,4 @@
-import { AcceptanceStatus, Locale, RoleName, TShirtSize, TravelAccommodations } from "@prisma/client";
+import { AcceptanceStatus, Locale, RoleName, TShirtSize } from "@prisma/client";
 import { z } from "zod";
 
 export const roleHierarchy: RoleName[] = [RoleName.HACKER, RoleName.SPONSOR, RoleName.ORGANIZER, RoleName.ADMIN];
@@ -114,16 +114,12 @@ export const logisticsSchema = z.object({
 	specialAccommodations: z.string().max(1500).optional(),
 	additionalInfo: z.string().max(1500).optional(),
 	travelOrigin: z.string().optional(),
-	travelAccommodations: z.nativeEnum(TravelAccommodations).optional(),
 	referralSource: z.string().optional(),
 });
 
 export const agreementsSchema = z.object({
-	hthAgreements: z.literal(true),
-	hthPromotions: z.boolean(),
-	mlhCodeOfConduct: z.literal(true),
-	mlhPrivacyTerms: z.literal(true),
-	mlhPromotions: z.boolean(),
+	agreements: z.literal(true),
+	promotions: z.boolean(),
 });
 
 export const pageSchemas = {

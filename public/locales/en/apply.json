@@ -186,15 +186,6 @@
 		"travelOrigin": {
 			"label": "Where will you be traveling from to attend Hack the Hill, if located outside Ottawa (City, country)?"
 		},
-		"travelAccommodations": {
-			"label": "Would you like to use Hack the Hill’s travel accommodations? If so, please select one of the following locations for transportation arrangements:",
-			"options": {
-				"GTA": "Greater Toronto Area (GTA)",
-				"MONTREAL": "Montreal",
-				"WATERLOO": "Waterloo",
-				"NONE": "None"
-			}
-		},
 		"referralSource": {
 			"label": "How did you hear about this hackathon?",
 			"options": {
@@ -220,20 +211,11 @@
 	"agreements": {
 		"title": "Agreements and Consents",
 		"description": "We're almost there! All that's left is to review and agree to the following terms and conditions. Please read and check the boxes below to acknowledge your agreement.",
-		"hthAgreements": {
+		"agreements": {
 			"label": "I agree to the Hack the Hill <0>Code of Conduct</0>, <1>Privacy Policy</1>, <2>Terms of Service</2>, <3>Liability Release Waiver</3>, and <4>Media Release Waiver</4>."
 		},
-		"hthPromotions": {
+		"promotions": {
 			"label": "I authorize Hack the Hill to send me emails about upcoming events and opportunities."
-		},
-		"mlhCodeOfConduct": {
-			"label": "I have read and agree to the <0>MLH Code of Conduct</0>."
-		},
-		"mlhPrivacyTerms": {
-			"label": "I authorize you to share my application/registration information with Major League Hacking for event administration, ranking, and MLH administration in line with the <0>MLH Privacy Policy</0>. I further agree to the terms of the <1>MLH Contest Terms and Conditions</1>."
-		},
-		"mlhPromotions": {
-			"label": "I authorize MLH to send me occasional emails about relevant events, career opportunities, and community announcements."
 		}
 	}
 }
