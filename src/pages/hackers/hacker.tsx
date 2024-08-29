@@ -1,4 +1,4 @@
-import type { ApplicationStatus } from "@prisma/client";
+import type { AcceptanceStatus } from "@prisma/client";
 import { RoleName } from "@prisma/client";
 import type { GetServerSideProps, NextPage } from "next";
 import { useTranslation } from "next-i18next";
@@ -155,7 +155,7 @@ const HackerPage: NextPage<{
 		ACCEPTED: "bg-green-400/75",
 		WAITLISTED: "bg-yellow-400/75",
 		REJECTED: "bg-red-400/75",
-	} satisfies Record<ApplicationStatus, string>;
+	} satisfies Record<AcceptanceStatus, string>;
 
 	if (hackerQuery.isLoading || hackerQuery.data == null) {
 		return (
@@ -245,10 +245,10 @@ const HackerPage: NextPage<{
 
 				<div
 					className={`rounded px-4 py-2 text-center font-coolvetica text-2xl font-normal text-dark-color ${
-						statusColorMap[hackerQuery.data.applicationStatus] ?? "bg-gray-500"
+						statusColorMap[hackerQuery.data.acceptanceStatus] ?? "bg-gray-500"
 					}`}
 				>
-					{t(`other.applicationStatus.${hackerQuery.data.applicationStatus}`)}
+					{t(`other.acceptanceStatus.${hackerQuery.data.acceptanceStatus}`)}
 				</div>
 
 				<Filter value={[RoleName.ORGANIZER]} method="some" silent>
