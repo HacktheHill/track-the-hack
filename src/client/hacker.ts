@@ -100,26 +100,31 @@ export const getHackerFields = (hackerData: Hacker, acceptance: boolean) => {
 				name: "hackathonDetails",
 				value: hackerData.hackathonDetails,
 				type: "textarea",
+				editable: !acceptance,
 			},
 			{
 				name: "programmingLanguagesTechnologies",
 				value: hackerData.programmingLanguagesTechnologies,
 				type: "textarea",
+				editable: !acceptance,
 			},
 			{
 				name: "projectDescription",
 				value: hackerData.projectDescription,
 				type: "textarea",
+				editable: !acceptance,
 			},
 			{
 				name: "participationReason",
 				value: hackerData.participationReason,
 				type: "textarea",
+				editable: !acceptance,
 			},
 			{
 				name: "learningGoals",
 				value: hackerData.learningGoals,
 				type: "textarea",
+				editable: !acceptance,
 			},
 		],
 		emergencyContact: [
@@ -177,6 +182,7 @@ export const getHackerFields = (hackerData: Hacker, acceptance: boolean) => {
 				name: "additionalInfo",
 				value: hackerData.additionalInfo,
 				type: "textarea",
+				editable: !acceptance,
 			},
 			{
 				name: "travelOrigin",
