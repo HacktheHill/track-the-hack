@@ -1,4 +1,4 @@
-import { ApplicationStatus, Locale, RoleName, TShirtSize, TravelAccommodations } from "@prisma/client";
+import { AcceptanceStatus, Locale, RoleName, TShirtSize, TravelAccommodations } from "@prisma/client";
 import { z } from "zod";
 
 export const roleHierarchy: RoleName[] = [RoleName.HACKER, RoleName.SPONSOR, RoleName.ORGANIZER, RoleName.ADMIN];
@@ -149,7 +149,8 @@ export const hackerSchema = z.object({
 	...logisticsSchema.shape,
 	...agreementsSchema.shape,
 	hasResume: z.boolean().default(false),
-	applicationStatus: z.nativeEnum(ApplicationStatus).default(ApplicationStatus.PENDING),
+	acceptanceStatus: z.nativeEnum(AcceptanceStatus).default(AcceptanceStatus.PENDING),
+	acceptanceReason: z.string().optional(),
 });
 
 export const sponsorshipGmailDraftsSchema = z.object({

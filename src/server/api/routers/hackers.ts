@@ -562,11 +562,11 @@ export const hackerRouter = createTRPCRouter({
 				// If the user is not an organizer, they can only edit their own hacker info
 				!hasRoles(user, [RoleName.ORGANIZER]) &&
 				hacker.userId !== userId &&
-				// If the user has the acceptance role, they can only edit the application status
+				// If the user has the acceptance role, they can only edit the acceptance status
 				!(
 					Object.values(input).length === 2 &&
 					input.id &&
-					input.applicationStatus &&
+					input.acceptanceStatus &&
 					hasRoles(user, [RoleName.ACCEPTANCE])
 				)
 			) {

@@ -191,10 +191,17 @@ export const getHackerFields = (hackerData: Hacker, acceptance: boolean) => {
 		],
 		other: [
 			{
-				name: "applicationStatus",
-				value: hackerData.applicationStatus,
+				name: "acceptanceStatus",
+				value: hackerData.acceptanceStatus,
 				type: "select",
 				options: ["PENDING", "ACCEPTED", "WAITLISTED", "REJECTED"],
+				editable: acceptance,
+			},
+			{
+				name: "acceptanceReason",
+				value: hackerData.acceptanceReason,
+				type: "select",
+				options: ["lackEffort", "noResume", "lackSkills", "outsideCanada", "minAge", "belowStandards", "none"],
 				editable: acceptance,
 			},
 			{

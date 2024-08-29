@@ -86,7 +86,7 @@
 	},
 	"other": {
 		"title": "Autre",
-		"applicationStatus": {
+		"acceptanceStatus": {
 			"label": "Statut de la candidature",
 			"PENDING": "En attente",
 			"ACCEPTED": "Accepté",

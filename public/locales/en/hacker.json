@@ -86,12 +86,22 @@
 	},
 	"other": {
 		"title": "Other",
-		"applicationStatus": {
-			"label": "Application Status",
+		"acceptanceStatus": {
+			"label": "Acceptance Status",
 			"PENDING": "Pending",
 			"ACCEPTED": "Accepted",
 			"WAITLISTED": "Waitlisted",
 			"REJECTED": "Rejected"
+		},
+		"acceptanceReason": {
+			"label": "Acceptance Reason",
+			"lackEffort": "Lack of effort",
+			"noResume": "No resume",
+			"lackSkills": "Lack of skills",
+			"outsideCanada": "Outside of Canada",
+			"minAge": "Below minimum age",
+			"belowStandards": "Below standards",
+			"none": "None"
 		},
 		"acceptanceExpiry": "Acceptance Expiry"
 	},

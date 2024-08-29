@@ -28,7 +28,7 @@
 	},
 	"personal": {
 		"title": "Personal Information",
-		"description": "To identify and contact you about your application status and event updates, we’ll be collecting personal information. Rest assured, your data will be handled with the utmost confidentiality and care.",
+		"description": "To identify and contact you about your acceptance status and event updates, we’ll be collecting personal information. Rest assured, your data will be handled with the utmost confidentiality and care.",
 		"firstName": { "label": "First Name" },
 		"lastName": { "label": "Last Name" },
 		"email": { "label": "Email Address" },
