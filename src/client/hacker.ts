@@ -183,11 +183,6 @@ export const getHackerFields = (hackerData: Hacker, acceptance: boolean) => {
 				value: hackerData.travelOrigin,
 				type: "text",
 			},
-			{
-				name: "travelAccommodations",
-				value: hackerData.travelAccommodations,
-				type: "text",
-			},
 		],
 		other: [
 			{

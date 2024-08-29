@@ -113,13 +113,9 @@ model Hacker {
   specialAccommodations            String?    @db.Text
   additionalInfo                   String?    @db.Text
   travelOrigin                     String?
-  travelAccommodations             TravelAccommodations @default(NONE)
   referralSource                   String?
-  hthAgreements                    Boolean
-  hthPromotions                    Boolean
-  mlhCodeOfConduct                 Boolean
-  mlhPrivacyTerms                  Boolean
-  mlhPromotions                    Boolean
+  agreements                       Boolean
+  promotions                       Boolean
   hasResume                        Boolean    @default(false)
 
   acceptanceStatus AcceptanceStatus @default(PENDING)
@@ -231,13 +227,6 @@ enum TShirtSize {
   L
   XL
   XXL
-}
-
-enum TravelAccommodations {
-  GTA
-  MONTREAL
-  WATERLOO
-  NONE
 }
 
 enum AcceptanceStatus {
