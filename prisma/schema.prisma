@@ -100,18 +100,18 @@ model Hacker {
   github                           String?
   personalWebsite                  String?
   hackathonBefore                  Boolean
-  hackathonDetails                 String               @db.Text
-  programmingLanguagesTechnologies String               @db.Text
-  projectDescription               String               @db.Text
-  participationReason              String               @db.Text
-  learningGoals                    String               @db.Text
+  hackathonDetails                 String     @db.Text
+  programmingLanguagesTechnologies String     @db.Text
+  projectDescription               String     @db.Text
+  participationReason              String     @db.Text
+  learningGoals                    String     @db.Text
   emergencyContactName             String
   emergencyContactRelation         String
   emergencyContactPhoneNumber      String
   tShirtSize                       TShirtSize
   dietaryRestrictions              String
-  specialAccommodations            String?              @db.Text
-  additionalInfo                   String?              @db.Text
+  specialAccommodations            String?    @db.Text
+  additionalInfo                   String?    @db.Text
   travelOrigin                     String?
   travelAccommodations             TravelAccommodations @default(NONE)
   referralSource                   String?
@@ -120,21 +120,25 @@ model Hacker {
   mlhCodeOfConduct                 Boolean
   mlhPrivacyTerms                  Boolean
   mlhPromotions                    Boolean
+  hasResume                        Boolean    @default(false)
 
-  hasResume         Boolean           @default(false)
-  applicationStatus ApplicationStatus @default(PENDING)
-  confirmed         Boolean           @default(false)
-  unsubscribed      Boolean           @default(false)
-  unsubscribeToken  String?           @unique @default(cuid())
-  acceptanceExpiry  DateTime?
-  walkIn            Boolean           @default(false)
-  winner            Boolean           @default(false)
-  userId            String?           @unique
-  user              User?             @relation(fields: [userId], references: [id])
-  presences         Presence[]
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @default(now()) @updatedAt
-  presenceInfoId    String?
+  acceptanceStatus AcceptanceStatus @default(PENDING)
+  acceptanceReason String           @default("none")
+  acceptanceExpiry DateTime?
+
+  unsubscribed     Boolean @default(false)
+  unsubscribeToken String? @unique @default(cuid())
+
+  confirmed Boolean @default(false)
+  walkIn    Boolean @default(false)
+  winner    Boolean @default(false)
+
+  userId         String?    @unique
+  user           User?      @relation(fields: [userId], references: [id])
+  presences      Presence[]
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @default(now()) @updatedAt
+  presenceInfoId String?
 
   @@index([userId])
   @@index([presenceInfoId])
@@ -236,7 +240,7 @@ enum TravelAccommodations {
   NONE
 }
 
-enum ApplicationStatus {
+enum AcceptanceStatus {
   PENDING
   ACCEPTED
   WAITLISTED
