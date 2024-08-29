@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { Locale, TravelAccommodations, TShirtSize } from "@prisma/client";
+import { Locale, TShirtSize } from "@prisma/client";
 
 const generateHackerData = () => {
 	const firstName = faker.person.firstName();
@@ -81,7 +81,6 @@ const generateHackerData = () => {
 		learningGoals: "To improve my skills in backend development.",
 		tShirtSize: faker.helpers.arrayElement(Object.values(TShirtSize)),
 		travelOrigin: faker.helpers.arrayElement([null, "Ottawa", "Toronto", "Vancouver"]),
-		travelAccommodations: faker.helpers.arrayElement(Object.values(TravelAccommodations)),
 		referralSource: faker.helpers.arrayElement([
 			"Student Organizations or Clubs",
 			"Friends or Classmates",
@@ -100,11 +99,8 @@ const generateHackerData = () => {
 			"Alumni Networks",
 			"Mentors or Coaches",
 		]),
-		hthAgreements: faker.datatype.boolean(),
-		hthPromotions: faker.datatype.boolean(),
-		mlhCodeOfConduct: faker.datatype.boolean(),
-		mlhPrivacyTerms: faker.datatype.boolean(),
-		mlhPromotions: faker.datatype.boolean(),
+		agreements: faker.datatype.boolean(),
+		promotions: faker.datatype.boolean(),
 		hasResume: faker.datatype.boolean(),
 		confirmed: faker.datatype.boolean(),
 		unsubscribed: faker.datatype.boolean(),

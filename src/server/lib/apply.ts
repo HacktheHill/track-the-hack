@@ -1,4 +1,4 @@
-import { Locale, TravelAccommodations, TShirtSize } from "@prisma/client";
+import { Locale, TShirtSize } from "@prisma/client";
 import { countryCodes } from "../../utils/common";
 
 export const getApplicationQuestions = (locale: keyof typeof Locale) => {
@@ -244,12 +244,6 @@ export const getApplicationQuestions = (locale: keyof typeof Locale) => {
 						required: false,
 					},
 					{
-						name: "travelAccommodations",
-						type: "select",
-						options: Object.keys(TravelAccommodations),
-						required: false,
-					},
-					{
 						name: "referralSource",
 						type: "multiselect",
 						options: [
@@ -278,7 +272,7 @@ export const getApplicationQuestions = (locale: keyof typeof Locale) => {
 				name: "agreements",
 				questions: [
 					{
-						name: "hthAgreements",
+						name: "agreements",
 						type: "checkbox",
 						required: true,
 						links: [
@@ -290,27 +284,7 @@ export const getApplicationQuestions = (locale: keyof typeof Locale) => {
 						],
 					},
 					{
-						name: "hthPromotions",
-						type: "checkbox",
-						required: false,
-					},
-					{
-						name: "mlhCodeOfConduct",
-						type: "checkbox",
-						required: true,
-						links: ["https://github.com/MLH/mlh-policies/blob/main/code-of-conduct.md"],
-					},
-					{
-						name: "mlhPrivacyTerms",
-						type: "checkbox",
-						required: true,
-						links: [
-							"https://github.com/MLH/mlh-policies/blob/main/privacy-policy.md",
-							"https://github.com/MLH/mlh-policies/blob/main/contest-terms.md",
-						],
-					},
-					{
-						name: "mlhPromotions",
+						name: "promotions",
 						type: "checkbox",
 						required: false,
 					},

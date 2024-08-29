@@ -186,15 +186,6 @@
 		"travelOrigin": {
 			"label": "D'où viendrez-vous pour assister à Hack the Hill, si vous êtes situé en dehors d'Ottawa (Ville, pays)?"
 		},
-		"travelAccommodations": {
-			"label": "Souhaitez-vous utiliser les hébergements de voyage de Hack the Hill?:",
-			"options": {
-				"GTA": "Grand Toronto (RGT)",
-				"MONTREAL": "Montréal",
-				"WATERLOO": "Waterloo",
-				"NONE": "Aucun"
-			}
-		},
 		"referralSource": {
 			"label": "Comment avez-vous entendu parler de ce hackathon?",
 			"options": {
@@ -220,20 +211,11 @@
 	"agreements": {
 		"title": "Accords et consentements",
 		"description": "Nous y sommes presque! Il ne reste plus qu'à examiner et à accepter les conditions suivantes. Veuillez lire et cocher les cases ci-dessous pour confirmer votre accord.",
-		"hthAgreements": {
+		"agreements": {
 			"label": "J'accepte le <0>code de conduite</0>, la <1>politique de confidentialité</1>, les <2>conditions d'utilisation</2>, la <3>renonciation à la responsabilité</3> et la <4>renonciation à la diffusion des médias</4> de Hack the Hill."
 		},
-		"hthPromotions": {
+		"promotions": {
 			"label": "J'autorise Hack the Hill à m'envoyer des e-mails concernant les événements et opportunités à venir."
-		},
-		"mlhCodeOfConduct": {
-			"label": "J'ai lu et j'accepte le <0>code de conduite de MLH</1>."
-		},
-		"mlhPrivacyTerms": {
-			"label": "J'autorise le partage de mes informations d'inscription/candidature avec Major League Hacking pour l'administration des événements, le classement et l'administration de MLH conformément à la <0>politique de confidentialité de MLH</0>. J'accepte également les <1>conditions générales des concours MLH</1>."
-		},
-		"mlhPromotions": {
-			"label": "J'autorise MLH à m'envoyer des e-mails occasionnels sur les événements pertinents, les opportunités de carrière et les annonces communautaires."
 		}
 	}
 }
