@@ -131,11 +131,6 @@ const Confirm: NextPage = () => {
 			return;
 		}
 
-		if (!teamName) {
-			setValidationMessage(t("you-must-enter-team-name"));
-			return;
-		}
-
 		if (!signature) {
 			setValidationMessage(t("you-must-sign"));
 			return;
@@ -259,7 +254,6 @@ const Confirm: NextPage = () => {
 									value={teamName}
 									onChange={handleTeamNameChange}
 									className="w-full rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
-									required
 								/>
 								{team ? (
 									<p className="text-sm">
