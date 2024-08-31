@@ -56,24 +56,24 @@ const QR = () => {
 		// Hacker already registered -> increment
 		if (presences && presences.length > 0) {
 			for (const presence of presences) {
-				if (presence.label === event) {
-					try {
-						await presenceIncrementMutation.mutateAsync({key: presence.key});
-						return <div>{hacker.firstName} has checked-in {presence.value + 1} times!</div>;
-					} catch (error) {
-						if (error instanceof TRPCClientError) {
-							return <div>Error: {error.message}</div>;
-						}
-						return <div>An unknown error occurred!</div>;
+				if (presence.label != event) continue;
+
+				try {
+					await presenceIncrementMutation.mutateAsync({key: presence.key});
+					return <div>{hacker.firstName} {hacker.lastName} has checked-in {presence.value + 1} times!</div>;
+				} catch (error) {
+					if (error instanceof TRPCClientError) {
+						return <div>Error: {error.message}</div>;
 					}
+					return <div>An unknown error occurred!</div>;
 				}
 			}
 		}
 	
 		// First check-in
 		try {
-			await presenceUpsertMutation.mutateAsync({key: faker.helpers.slugify(faker.lorem.words(2)), value: 1, label: event})
-			return <div>{hacker.firstName} successfully check-in for {event}</div>;
+			await presenceUpsertMutation.mutateAsync({hackerID, key: faker.helpers.slugify(faker.lorem.words(2)), value: 1, label: event})
+			return <div>{hacker.firstName} {hacker.lastName} successfully check-in for {event}</div>;
 		} catch (error) {
 			if (error instanceof TRPCClientError) {
 				return <div>Error: {error.message}</div>;
@@ -93,7 +93,7 @@ const QR = () => {
 	}, [hackerID]);
 
 	useEffect(() => {
-		async function handleEvenet () {
+		async function handleEvent () {
 			if (!hacker) return;
 
 			switch (selectedEvent) {
@@ -119,17 +119,29 @@ const QR = () => {
 						// Hacker already registered
 						if (presence.label === EVENTS.OPENING_CEREMONY) {
 							setDisplay(
-								<div>Error: hacker already checked in for opening ceremony!</div>
+								<div>Error: {hacker.firstName} {hacker.lastName} already checked in for opening ceremony!</div>
 							);
 							return
 						}
 					}
 				}
 				// Hacker not registered. TODO: is key randomly generated?
-				presenceUpsertMutation.mutate({key: faker.helpers.slugify(faker.lorem.words(2)), value: 1, label: EVENTS.OPENING_CEREMONY});
-				setDisplay(
-					<div>{hacker.firstName} successfully check-in for {EVENTS.OPENING_CEREMONY}</div>
-				);
+				try {
+					await presenceUpsertMutation.mutateAsync({hackerID, key: faker.helpers.slugify(faker.lorem.words(2)), value: 1, label: EVENTS.OPENING_CEREMONY});
+					setDisplay(
+						<div>{hacker.firstName} {hacker.lastName} successfully check-in for {EVENTS.OPENING_CEREMONY}</div>
+					);	
+				}catch (error) {
+					if (error instanceof TRPCClientError) {
+						setDisplay(
+							<div>Error: {error.message}</div>
+						);
+						break;
+					}
+					setDisplay(
+						<div>An unknown error occurred!</div>
+					);
+				}
 				break;
 			case EVENTS.FRIDAY_DINNER:
 				setDisplay(await handleMealEvent(EVENTS.FRIDAY_DINNER, hacker, presences));
@@ -151,7 +163,7 @@ const QR = () => {
 				break;
 			}
 		}
-		void handleEvenet();
+		void handleEvent();
 		
 	}, [hacker]);
 
