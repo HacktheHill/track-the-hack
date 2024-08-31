@@ -339,7 +339,7 @@ const Confirm: NextPage = () => {
 								type="submit"
 								className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
 							>
-								{t("confirm")}
+								{t("ill-be-there")}
 							</button>
 							{query.data?.acceptanceExpiry && (
 								<p className="text-center text-sm">{t("you-can-change-your-response", { deadline })}</p>

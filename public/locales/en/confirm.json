@@ -1,4 +1,5 @@
 {
+	"confirm": "Confirm",
 	"acceptance-expired": "This confirmation link has expired. Please contact us if you need help.",
 	"error-no-id-found": "Error: no ID Found",
 	"invalid-confirmation-link": "Invalid confirmation link. Please use the link from the email you received.",
@@ -19,7 +20,7 @@
 	"parent-guardian-consent": "By signing below, I, the undersigned parent or legal guardian of {{name}}, acknowledge that I have read, understood, and agree to all the terms and conditions in the documents referenced above, and consent to my child's participation in Hack the Hill II.",
 	"attendee-consent": "By signing below, I, {{name}}, acknowledge that I have read, understood, and agree to all the terms and conditions in the documents referenced above, and consent to participate in Hack the Hill II.",
 	"clear": "Clear",
-	"confirm": "I'll be there!",
+	"ill-be-there": "I'll be there!",
 	"you-can-change-your-response": "You can change your response by revisiting this page anytime before the deadline of {{deadline}}.",
 	"thank-you-for-confirming-your-attendance": "Thank you for confirming your attendance!",
 	"we-look-forward-to-seeing-you": "We look forward to seeing you at Hack the Hill II!",

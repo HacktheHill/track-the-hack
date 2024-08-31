@@ -1,4 +1,5 @@
 {
+	"confirm": "Confirm",
 	"acceptance-expired": "Ce lien de confirmation a expiré. Veuillez nous contacter si vous avez besoin d'aide.",
 	"error-no-id-found": "Erreur : aucun ID trouvé",
 	"invalid-confirmation-link": "Lien de confirmation invalide. Veuillez utiliser le lien du courriel que vous avez reçu.",
@@ -19,7 +20,7 @@
 	"parent-guardian-consent": "En signant ci-dessous, je, le parent ou tuteur légal de {{name}}, reconnais avoir lu, compris et accepté tous les termes et conditions des documents référencés ci-dessus, et je consens à la participation de mon enfant à Hack the Hill II.",
 	"attendee-consent": "En signant ci-dessous, je, {{name}}, reconnais avoir lu, compris et accepté tous les termes et conditions des documents référencés ci-dessus, et je consens à participer à Hack the Hill II.",
 	"clear": "Effacer",
-	"confirm": "Je serai là!",
+	"ill-be-there": "Je serai là!",
 	"you-can-change-your-response": "Vous pouvez modifier votre réponse en revisitant cette page à tout moment avant la date limite du {{deadline}}.",
 	"thank-you-for-confirming-your-attendance": "Merci d'avoir confirmé votre présence!",
 	"we-look-forward-to-seeing-you": "Nous avons hâte de vous voir à Hack the Hill II!",
