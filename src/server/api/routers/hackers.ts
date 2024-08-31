@@ -1,4 +1,4 @@
-import { RoleName, TShirtSize, type Hacker } from "@prisma/client";
+import { RoleName, type Hacker } from "@prisma/client";
 import { observable } from "@trpc/server/observable";
 import { EventEmitter } from "events";
 import { z } from "zod";
@@ -280,8 +280,8 @@ export const hackerRouter = createTRPCRouter({
 		.input(
 			z.object({
 				id: z.string(),
-				shirtSize: z.enum([TShirtSize.S, TShirtSize.M, TShirtSize.L, TShirtSize.XL, TShirtSize.XXL]),
-				userId: z.string(),
+				teamName: z.string().optional(),
+				confirm: z.boolean().default(true),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -295,26 +295,43 @@ export const hackerRouter = createTRPCRouter({
 				throw new Error("Hacker not found");
 			}
 
-			if (hacker.confirmed) {
-				throw new Error("Hacker already confirmed");
-			}
-
-			if (hacker.userId && hacker.userId !== input.userId) {
-				throw new Error("Hacker already assigned to another account");
+			if (input.confirm && !input.teamName) {
+				throw new Error("Team name is required to confirm attendance");
 			}
 
 			ee.emit("add", hacker);
 
-			return ctx.prisma.hacker.update({
+			await ctx.prisma.hacker.update({
 				where: {
 					id: input.id,
 				},
 				data: {
-					tShirtSize: input.shirtSize,
-					userId: input.userId,
-					confirmed: true,
+					confirmed: input.confirm,
+					...(input.confirm && {
+						Team: {
+							connect: {
+								name: input.teamName,
+							},
+						},
+					}),
 				},
 			});
+
+			await ctx.prisma.team.deleteMany({
+				where: {
+					hackers: {
+						none: {},
+					},
+				},
+			});
+
+			const filename = generateS3Filename(hacker.id, `${hacker.firstName}_${hacker.lastName}_Signature`, "png");
+			const presignedUrl = await generatePresignedPutUrl(filename, "signatures");
+
+			return {
+				...hacker,
+				presignedUrl,
+			};
 		}),
 
 	// Unsubscribe a hacker from emails
@@ -433,7 +450,7 @@ export const hackerRouter = createTRPCRouter({
 		const hacker = await ctx.prisma.hacker.create({
 			data: {
 				...input,
-				user: {
+				User: {
 					connect: {
 						id: userId,
 					},

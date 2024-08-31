@@ -73,10 +73,11 @@ export const hasRoles = (
  * debounced();
  * // => "Hello" will be logged after 1000ms
  */
-export const debounce = <F extends (...args: unknown[]) => unknown>(func: F, wait: number) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const debounce = <F extends (...args: any[]) => void | Promise<void>>(func: F, wait: number) => {
 	let timeout: ReturnType<typeof setTimeout>;
 	return (...args: Parameters<F>) => {
 		clearTimeout(timeout);
-		timeout = setTimeout(() => func(...args), wait);
+		timeout = setTimeout(() => void func(...args), wait);
 	};
 };
