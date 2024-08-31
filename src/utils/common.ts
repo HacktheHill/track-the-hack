@@ -146,7 +146,7 @@ export const hackerSchema = z.object({
 	...agreementsSchema.shape,
 	hasResume: z.boolean().default(false),
 	acceptanceStatus: z.nativeEnum(AcceptanceStatus).default(AcceptanceStatus.PENDING),
-	acceptanceReason: z.string().optional(),
+	acceptanceReason: z.string(),
 });
 
 export const sponsorshipGmailDraftsSchema = z.object({
