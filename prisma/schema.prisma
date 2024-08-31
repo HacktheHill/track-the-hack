@@ -119,7 +119,7 @@ model Hacker {
   hasResume                        Boolean    @default(false)
 
   acceptanceStatus AcceptanceStatus @default(PENDING)
-  acceptanceReason String           @default("none")
+  acceptanceReason String           @db.Text
   acceptanceExpiry DateTime?
 
   unsubscribed     Boolean @default(false)
