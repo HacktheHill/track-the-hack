@@ -239,12 +239,17 @@ const Confirm: NextPage = () => {
 					</div>
 				) : (
 					<div className="flex max-w-[25rem] flex-col items-center gap-6">
-						<h3 className="font-rubik font-medium text-dark-color">
-							{t("congratulations-for-acceptance", {
-								name: query.data?.firstName,
-							})}
-						</h3>
-						<div className="flex flex-col gap-4">
+						<div className="flex flex-col gap-2">
+							<h3 className="font-rubik font-medium text-dark-color">
+								{t("congratulations-for-acceptance", {
+									name: query.data?.firstName,
+								})}
+							</h3>
+							<p>{t("excited-to-have-you-join-us")}</p>
+							<p>{t("description")}</p>
+							<p>{t("please-confirm-your-attendance")}</p>
+						</div>
+						<div className="flex flex-col gap-8">
 							<div className="flex flex-col gap-2">
 								<label htmlFor="team-name">{t("which-team")}</label>
 								<input
@@ -267,7 +272,7 @@ const Confirm: NextPage = () => {
 										type="button"
 										disabled={teamName.length < 3}
 										onClick={handleCreateTeam}
-										className="mt-2 rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-light-quaternary-color short:text-base"
+										className="rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-light-quaternary-color short:text-base"
 									>
 										{t("create-team")}
 									</button>
@@ -302,31 +307,32 @@ const Confirm: NextPage = () => {
 										</label>
 									</div>
 								))}
-							</div>
-
-							<div className="flex flex-col gap-2">
-								<label htmlFor="signature">
-									{t(isMinor ? "parent-guardian-consent" : "attendee-consent", {
-										name: `${query.data?.firstName} ${query.data?.lastName}`,
-									})}
-								</label>
-								<div className="relative">
-									<SignaturePad
-										ref={sigCanvas}
-										canvasProps={{
-											className: "border border-dark-primary-color rounded-lg w-full h-24",
-										}}
-										onEnd={handleSignatureEnd}
-									/>
-									<button
-										type="button"
-										onClick={handleClearSignature}
-										className="absolute bottom-2 right-2 rounded-lg border border-dark-primary-color bg-light-quaternary-color px-2 py-1 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
-									>
-										{t("clear")}
-									</button>
+								<div className="flex flex-col gap-2">
+									<label htmlFor="signature">
+										{t(isMinor ? "parent-guardian-consent" : "attendee-consent", {
+											name: `${query.data?.firstName} ${query.data?.lastName}`,
+										})}
+									</label>
+									<div className="relative">
+										<SignaturePad
+											ref={sigCanvas}
+											canvasProps={{
+												className: "border border-dark-primary-color rounded-lg w-full h-24",
+											}}
+											onEnd={handleSignatureEnd}
+										/>
+										<button
+											type="button"
+											onClick={handleClearSignature}
+											className="absolute bottom-2 right-2 rounded-lg border border-dark-primary-color bg-light-quaternary-color px-2 py-1 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
+										>
+											{t("clear")}
+										</button>
+									</div>
+									{validationMessage && (
+										<p className="text-center text-red-500">{validationMessage}</p>
+									)}
 								</div>
-								{validationMessage && <p className="text-center text-red-500">{validationMessage}</p>}
 							</div>
 
 							<button
