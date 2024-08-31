@@ -8,8 +8,6 @@
 	"description": "Hack the Hill II will take place from Friday, September 27th to Sunday, September 29th on the uOttawa campus.",
 	"please-confirm-your-attendance": "Please confirm your attendance by selecting your team, signing the necessary legal documents, and clicking the button below.",
 	"which-team": "Which team would you like to join?",
-	"you-must-select-a-team": "You must select a team.",
-	"you-must-enter-team-name": "You must enter a team name.",
 	"team-already-exists": "A team with this name already exists. Are you sure you want to join a team with {{members}}?",
 	"create-team": "Create Team",
 	"team-created-successfully": "Team created successfully!",

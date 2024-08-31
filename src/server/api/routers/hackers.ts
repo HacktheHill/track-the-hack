@@ -295,10 +295,6 @@ export const hackerRouter = createTRPCRouter({
 				throw new Error("Hacker not found");
 			}
 
-			if (input.confirm && !input.teamName) {
-				throw new Error("Team name is required to confirm attendance");
-			}
-
 			ee.emit("add", hacker);
 
 			await ctx.prisma.hacker.update({
@@ -307,7 +303,7 @@ export const hackerRouter = createTRPCRouter({
 				},
 				data: {
 					confirmed: input.confirm,
-					...(input.confirm && {
+					...(input.confirm && input.teamName && {
 						Team: {
 							connect: {
 								name: input.teamName,
