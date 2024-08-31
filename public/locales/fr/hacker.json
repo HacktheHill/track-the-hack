@@ -92,6 +92,7 @@
 			"WAITLISTED": "En liste d'attente",
 			"REJECTED": "Rejeté"
 		},
+		"acceptanceReason": "Raison de l'acceptation",
 		"acceptanceExpiry": "Expiration de l'acceptation"
 	},
 	"next": "Suivant",
