@@ -303,13 +303,14 @@ export const hackerRouter = createTRPCRouter({
 				},
 				data: {
 					confirmed: input.confirm,
-					...(input.confirm && input.teamName && {
-						Team: {
-							connect: {
-								name: input.teamName,
+					...(input.confirm &&
+						input.teamName && {
+							Team: {
+								connect: {
+									name: input.teamName,
+								},
 							},
-						},
-					}),
+						}),
 				},
 			});
 
@@ -442,6 +443,12 @@ export const hackerRouter = createTRPCRouter({
 		if (!user) {
 			throw new Error("User not found");
 		}
+
+		await ctx.prisma.hacker.deleteMany({
+			where: {
+				userId: userId,
+			},
+		});
 
 		const hacker = await ctx.prisma.hacker.create({
 			data: {
