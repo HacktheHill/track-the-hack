@@ -3,6 +3,7 @@
 	"acceptance-expired": "This confirmation link has expired. Please contact us if you need help.",
 	"error-no-id-found": "Error: no ID Found",
 	"invalid-confirmation-link": "Invalid confirmation link. Please use the link from the email you received.",
+	"you-must-be-logged-in": "You must be logged in to confirm your attendance.",
 	"congratulations-for-acceptance": "Congratulations {{name}} for being accepted to attend Hack the Hill II!",
 	"excited-to-have-you-join-us": "We're excited to have you join us for a weekend of hacking, learning, and fun!",
 	"description": "Hack the Hill II will take place from Friday, September 27th to Sunday, September 29th on the uOttawa campus.",
@@ -24,5 +25,5 @@
 	"we-look-forward-to-seeing-you": "We look forward to seeing you at Hack the Hill II!",
 	"you-must-accept-terms": "You must agree to the terms and conditions to continue.",
 	"signature-upload-failed": "Signature upload failed. Please try again.",
-	"edit-response": "Edit My Response"
+	"undo-edit-response": "Undo RSVP and Edit Response"
 }
