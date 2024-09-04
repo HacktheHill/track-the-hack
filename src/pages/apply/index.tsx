@@ -202,7 +202,7 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 								</button>
 							</>
 						)}
-						{isHacker.data && !ignoreAlreadyHacker && (
+						{isHacker.data && !ignoreAlreadyHacker && !success && (
 							<>
 								<h3 className="text-4xl font-bold text-dark-color">{t("attention")}</h3>
 								<p>{t("overwriting-submission")}</p>

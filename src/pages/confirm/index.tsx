@@ -4,10 +4,11 @@ import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
 import SignaturePad from "react-signature-canvas";
+import { uploadSignature } from "../../client/s3";
 import FormPage from "../../components/FormPage";
 import { trpc } from "../../server/api/api";
 import { debounce } from "../../utils/helpers";
-import { uploadSignature } from "../../client/s3";
+import { useSession } from "next-auth/react";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
@@ -18,6 +19,7 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
 const Confirm: NextPage = () => {
 	const { t } = useTranslation("confirm");
 	const router = useRouter();
+	const { data: sessionData } = useSession();
 	const [id] = [router.query.id].flat();
 
 	const [teamName, setTeamName] = useState("");
@@ -66,6 +68,9 @@ const Confirm: NextPage = () => {
 	useEffect(() => {
 		if (query.error) setError(query.error.message);
 		if (mutation.error) setError(mutation.error.message);
+		if (!sessionData?.user?.id) {
+			setError(t("you-must-be-logged-in"));
+		}
 		if (query.data) {
 			setIsSubmitted(query.data.confirmed);
 			setIsMinor(query.data.age < 18);
@@ -229,7 +234,7 @@ const Confirm: NextPage = () => {
 							onClick={handleEdit}
 							className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
 						>
-							{t("edit-response")}
+							{t("undo-edit-response")}
 						</button>
 					</div>
 				) : (
