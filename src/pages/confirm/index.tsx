@@ -8,7 +8,6 @@ import { uploadSignature } from "../../client/s3";
 import FormPage from "../../components/FormPage";
 import { trpc } from "../../server/api/api";
 import { debounce } from "../../utils/helpers";
-import { useSession } from "next-auth/react";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
@@ -19,7 +18,6 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
 const Confirm: NextPage = () => {
 	const { t } = useTranslation("confirm");
 	const router = useRouter();
-	const { data: sessionData } = useSession();
 	const [id] = [router.query.id].flat();
 
 	const [teamName, setTeamName] = useState("");
@@ -68,9 +66,6 @@ const Confirm: NextPage = () => {
 	useEffect(() => {
 		if (query.error) setError(query.error.message);
 		if (mutation.error) setError(mutation.error.message);
-		if (!sessionData?.user?.id) {
-			setError(t("you-must-be-logged-in"));
-		}
 		if (query.data) {
 			setIsSubmitted(query.data.confirmed);
 			setIsMinor(query.data.age < 18);
