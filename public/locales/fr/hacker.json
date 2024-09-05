@@ -92,7 +92,15 @@
 			"WAITLISTED": "En liste d'attente",
 			"REJECTED": "Rejeté"
 		},
-		"acceptanceReason": "Raison de l'acceptation",
+		"acceptanceReason": {
+			"label": "Raison de l'acceptation",
+			"lackEffort": "Manque d'effort",
+			"noResume": "Aucun curriculum vitae",
+			"lackSkills": "Manque de compétences",
+			"minAge": "Âge minimum",
+			"belowStandards": "En dessous des normes",
+			"none": "Aucune"
+		},
 		"acceptanceExpiry": "Expiration de l'acceptation"
 	},
 	"next": "Suivant",
