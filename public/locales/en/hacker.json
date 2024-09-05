@@ -92,7 +92,15 @@
 			"WAITLISTED": "Waitlisted",
 			"REJECTED": "Rejected"
 		},
-		"acceptanceReason": "Acceptance Reason",
+		"acceptanceReason": {
+			"label": "Acceptance Reason",
+			"lackEffort": "Lack of effort",
+			"noResume": "No resume",
+			"lackSkills": "Lack of skills",
+			"minAge": "Below minimum age",
+			"belowStandards": "Below standards",
+			"none": "None"
+		},
 		"acceptanceExpiry": "Acceptance Expiry"
 	},
 	"next": "Next",

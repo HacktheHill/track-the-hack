@@ -201,7 +201,8 @@ export const getHackerFields = (hackerData: Hacker, acceptance: boolean) => {
 			{
 				name: "acceptanceReason",
 				value: hackerData.acceptanceReason,
-				type: "textarea",
+				type: "select",
+				options: ["lackEffort", "noResume", "lackSkills", "minAge", "belowStandards", "none"],
 				editable: acceptance,
 			},
 			{
