@@ -17,7 +17,13 @@ export const getServerSideProps: GetServerSideProps<{ providers: Providers }> = 
 
 	// If the user is already logged in
 	if (session) {
-		return { redirect: { permanent: false, destination: "/" } };
+		const callbackUrl = req.url ? new URL(req.url).searchParams.get("callbackUrl") : null;
+		return {
+			redirect: {
+				permanent: false,
+				destination: callbackUrl ?? "/",
+			},
+		};
 	}
 
 	const providers = (await getProviders()) ?? ({} as Providers);
@@ -33,6 +39,7 @@ export const getServerSideProps: GetServerSideProps<{ providers: Providers }> = 
 const SignIn = ({ providers }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
 	const { t } = useTranslation("auth");
 	const router = useRouter();
+	const [callbackUrl] = [router.query.callbackUrl].flat();
 	const [error] = [router.query.error].flat();
 
 	if (!providers) {
@@ -67,10 +74,10 @@ const SignIn = ({ providers }: InferGetServerSidePropsType<typeof getServerSideP
 								if (provider.id === "email") {
 									void signIn(provider.id, {
 										email: formData.get("email"),
-										redirectTo: "/",
+										redirectTo: callbackUrl,
 									});
 								} else {
-									void signIn(provider.id, { callbackUrl: "/" });
+									void signIn(provider.id, { callbackUrl });
 								}
 							}}
 						>
