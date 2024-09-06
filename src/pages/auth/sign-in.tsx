@@ -17,7 +17,7 @@ export const getServerSideProps: GetServerSideProps<{ providers: Providers }> = 
 
 	// If the user is already logged in
 	if (session) {
-		const callbackUrl = req.url ? new URL(req.url).searchParams.get("callbackUrl") : null;
+		const callbackUrl = req.url ? new URL(req.url, process.env.NEXTAUTH_URL).searchParams.get("callbackUrl") : null;
 		return {
 			redirect: {
 				permanent: false,
