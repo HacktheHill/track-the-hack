@@ -2,6 +2,7 @@ import { RoleName } from "@prisma/client";
 import type { GetServerSideProps } from "next";
 import { getServerSession } from "next-auth/next";
 import { useTranslation } from "next-i18next";
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { qrRedirect } from "../../server/lib/redirects";
 import { getAuthOptions } from "../api/auth/[...nextauth]";
@@ -15,157 +16,120 @@ import QRScanner from "../../components/QRScanner";
 import { trpc } from "../../server/api/api";
 import type { AppRouter } from "../../server/api/root";
 import type { inferRouterOutputs } from "@trpc/server";
-import { faker } from "@faker-js/faker";
+import type { TRPCClientErrorLike } from "@trpc/client";
 import { TRPCClientError } from "@trpc/client";
+import type { UseMutateAsyncFunction } from "@tanstack/react-query";
 
 type RouterOutput = inferRouterOutputs<AppRouter>;
 type Hacker = RouterOutput["hackers"]["get"];
-type Presence = RouterOutput["presence"]["getFromHackerId"];
+type Presence = RouterOutput["presence"]["getFromHackerId"][0];
 
-// TODO: sync it with db
-enum EVENTS {
+enum ACTIONS {
 	NONE = "Select an event",
-	OPENING_CEREMONY = "Opening Ceremony",
-	FRIDAY_DINNER = "Friday Dinner",
-	SATURDAY_BREAKFAST = "Saturday Breakfast",
-	SATURDAY_LAUNCH = "Saturday Lunch",
-	SATURDAY_DINNER = "Saturday Dinner",
-	SUNDAY_BREAKFAST = "Sunday Breakfast",
-	GET_HACKER = "Get Hacker info"
+	GET_HACKER = "Get Hacker info",
 }
-
-type EVENTS_T = keyof typeof EVENTS;
 
 const QR = () => {
 	const { t } = useTranslation("qr");
+	const router = useRouter();
 	const [error, setError] = useState(false);
 
-	const [selectedEvent, selectEvent] = useState(EVENTS.NONE);
-	const events = Object.keys(EVENTS) as EVENTS_T[];
+	const [selectedAction, setSelectedAction] = useState<string>(ACTIONS.NONE);
+	const actions: string[] = Object.keys(ACTIONS).map(key => ACTIONS[key as keyof typeof ACTIONS]);
+	const { data: events } = trpc.events.all.useQuery();
 
-	const [hackerID, setHackerID] = useState<string>("");
-	const {data:hacker, refetch:refetchHacker} = trpc.hackers.get.useQuery({ id: hackerID }, { enabled: false });
-	const {data:presences, refetch:refetchPresences} = trpc.presence.getFromHackerId.useQuery({ id: hackerID }, { enabled: false });
+	const [hackerId, setHackerId] = useState<string>("");
+	const { data: hacker, refetch: refetchHacker } = trpc.hackers.get.useQuery({ id: hackerId }, { enabled: false });
+	const { data: presences, refetch: refetchPresences } = trpc.presence.getFromHackerId.useQuery(
+		{ id: hackerId },
+		{ enabled: false },
+	);
 
-	const presenceUpsertMutation = trpc.presence.upsert.useMutation();
-	const presenceIncrementMutation = trpc.presence.increment.useMutation();
+	const { mutateAsync: presenceUpsertMutateAsync } = trpc.presence.upsert.useMutation();
+	const { mutateAsync: presenceIncrementMutateAsync } = trpc.presence.increment.useMutation();
 
 	const [display, setDisplay] = useState(<></>);
 
-	const handleMealEvent = async (event: EVENTS, hacker:Hacker, presences: Presence | undefined) => {
-		// Hacker already registered -> increment
-		if (presences && presences.length > 0) {
-			for (const presence of presences) {
-				if (presence.label != event) continue;
-
-				try {
-					await presenceIncrementMutation.mutateAsync({key: presence.key});
-					return <div>{hacker.firstName} {hacker.lastName} has checked-in {presence.value + 1} times!</div>;
-				} catch (error) {
-					if (error instanceof TRPCClientError) {
-						return <div>Error: {error.message}</div>;
-					}
-					return <div>An unknown error occurred!</div>;
-				}
-			}
-		}
-	
-		// First check-in
-		try {
-			await presenceUpsertMutation.mutateAsync({hackerID, key: faker.helpers.slugify(faker.lorem.words(2)), value: 1, label: event})
-			return <div>{hacker.firstName} {hacker.lastName} successfully check-in for {event}</div>;
-		} catch (error) {
-			if (error instanceof TRPCClientError) {
-				return <div>Error: {error.message}</div>;
-			}
-			return <div>An unknown error occurred!</div>;
-		}
-	}
-
 	useEffect(() => {
-		console.info("Hacker ID: ", hackerID);
-		(() =>{
-			if (!hackerID || hackerID === "") return;
+		console.info("Hacker ID: ", hackerId);
+		(() => {
+			if (!hackerId || hackerId === "") return;
 			void refetchHacker();
 
-			if (selectedEvent != EVENTS.GET_HACKER) void refetchPresences();
-		})()
-	}, [hackerID]);
+			if (selectedAction != ACTIONS.GET_HACKER) void refetchPresences();
+		})();
+	}, [hackerId, refetchHacker, refetchPresences, selectedAction]);
 
 	useEffect(() => {
-		async function handleEvent () {
+		const handleAction = async (event: string, maxCheckIns: number | null) => {
+			if (!hacker) return <>Error: Hacker info not fetched!</>;
+
+			// Hacker already registered -> increment
+			if (presences && presences.length > 0) {
+				for (const presence of presences) {
+					if (presence.label != event) continue;
+					try {
+						return (
+							<Result
+								hacker={hacker}
+								presence={presence}
+								maxCheckIns={maxCheckIns}
+								mutate={presenceIncrementMutateAsync}
+							/>
+						);
+					} catch (error) {
+						if (error instanceof TRPCClientError) {
+							return <div>Error: {error.message}</div>;
+						}
+						return <div>An unknown error occurred!</div>;
+					}
+				}
+			}
+
+			// First check-in
+			try {
+				await presenceUpsertMutateAsync({ hackerId, value: 1, label: event });
+				return (
+					<div>
+						{hacker.firstName} {hacker.lastName} successfully check-in for {event}
+					</div>
+				);
+			} catch (error) {
+				if (error instanceof TRPCClientError) {
+					return <div>Error: {error.message}</div>;
+				}
+				return <div>An unknown error occurred!</div>;
+			}
+		};
+
+		async function handleEvent() {
 			if (!hacker) return;
 
-			switch (selectedEvent) {
-			case EVENTS.NONE:
-				break;
-			case EVENTS.GET_HACKER:
-				setDisplay(
-				<div
-					className="hover:bg-medium block w-full rounded-lg bg-medium-primary-color p-6 text-light-color shadow"
-				>
-					<h3 className="text-2xl font-bold tracking-tight">{`${hacker.firstName} ${hacker.lastName}`}</h3>
-					<p>{hacker.major}</p>
-					<p>{hacker.currentSchoolOrganization}</p>
-					<p>{hacker.email}</p>
-					<p>{hacker.phoneNumber}</p>
-					<p>{hacker.gender}</p>
-					<p>{hacker.major}</p>
-				</div>);
-				break;
-			case EVENTS.OPENING_CEREMONY:
-				if (presences && presences.length > 0) {
-					for (const presence of presences) {
-						// Hacker already registered
-						if (presence.label === EVENTS.OPENING_CEREMONY) {
-							setDisplay(
-								<div>Error: {hacker.firstName} {hacker.lastName} already checked in for opening ceremony!</div>
-							);
-							return
-						}
-					}
-				}
-				// Hacker not registered. TODO: is key randomly generated?
-				try {
-					await presenceUpsertMutation.mutateAsync({hackerID, key: faker.helpers.slugify(faker.lorem.words(2)), value: 1, label: EVENTS.OPENING_CEREMONY});
-					setDisplay(
-						<div>{hacker.firstName} {hacker.lastName} successfully check-in for {EVENTS.OPENING_CEREMONY}</div>
-					);	
-				}catch (error) {
-					if (error instanceof TRPCClientError) {
-						setDisplay(
-							<div>Error: {error.message}</div>
-						);
-						break;
-					}
-					setDisplay(
-						<div>An unknown error occurred!</div>
-					);
-				}
-				break;
-			case EVENTS.FRIDAY_DINNER:
-				setDisplay(await handleMealEvent(EVENTS.FRIDAY_DINNER, hacker, presences));
-				break
-			case EVENTS.SATURDAY_BREAKFAST:
-				setDisplay(await handleMealEvent(EVENTS.SATURDAY_BREAKFAST, hacker, presences));
-				break;
-			case EVENTS.SATURDAY_LAUNCH:
-				setDisplay(await handleMealEvent(EVENTS.SATURDAY_LAUNCH, hacker, presences));
-				break;
-			case EVENTS.SATURDAY_DINNER:
-				setDisplay(await handleMealEvent(EVENTS.SATURDAY_DINNER, hacker, presences));
-				break;
-			case EVENTS.SUNDAY_BREAKFAST:
-				setDisplay(await handleMealEvent(EVENTS.SUNDAY_BREAKFAST, hacker, presences));
-				break;
-			default:
-				alert("Unhandled action!")
-				break;
+			switch (selectedAction) {
+				case ACTIONS.NONE:
+					break;
+				case ACTIONS.GET_HACKER:
+					void router.push(`/hackers/hacker?id=${hackerId}`);
+					break;
+				default:
+					const maxCheckIns = events?.find(event => event.name === selectedAction)?.maxCheckIns as
+						| number
+						| null;
+					setDisplay(await handleAction(selectedAction, maxCheckIns));
+					break;
 			}
 		}
 		void handleEvent();
-		
-	}, [hacker]);
+	}, [
+		events,
+		hacker,
+		hackerId,
+		presenceIncrementMutateAsync,
+		presenceUpsertMutateAsync,
+		presences,
+		router,
+		selectedAction,
+	]);
 
 	return (
 		<App
@@ -175,20 +139,21 @@ const QR = () => {
 			<div className="flex flex-col items-center gap-6">
 				<Filter value={[RoleName.ORGANIZER]} method="some">
 					<>
-						<select 
-						    className="p-3 text-center text-lg font-bold text-dark-color"
-							onChange={e => selectEvent(EVENTS[e.target.value as EVENTS_T])}>
-							{events.map(event => {
+						<select
+							className="p-3 text-center text-lg font-bold text-dark-color"
+							onChange={e => setSelectedAction(e.target.value)}
+						>
+							{(events ? actions.concat(events?.map(event => event.name)) : actions).map(event => {
 								return (
 									<option key={event} value={event}>
-										{EVENTS[event]}
+										{event}
 									</option>
 								);
 							})}
 						</select>
 
-						{(selectedEvent != EVENTS.NONE) ? <QRScanner onScan={setHackerID} />:null}
-						<PhysicalScanner onScan={setHackerID} />
+						{selectedAction != ACTIONS.NONE ? <QRScanner onScan={setHackerId} /> : null}
+						<PhysicalScanner onScan={setHackerId} />
 						{!error && (
 							<p className="z-10 max-w-xl text-center text-lg font-bold text-dark-color">
 								{t("scan-qr")}
@@ -210,6 +175,42 @@ const QR = () => {
 				</div>
 			)}
 		</App>
+	);
+};
+
+type ResultProps = {
+	hacker: Hacker;
+	presence: Presence;
+	maxCheckIns: number | null;
+	mutate: UseMutateAsyncFunction<void, TRPCClientErrorLike<any>, { id: string }>;
+};
+const Result = ({ hacker, presence, maxCheckIns, mutate }: ResultProps) => {
+	const [counter, setCounter] = useState(0);
+
+	useEffect(() => {
+		setCounter(presence.value);
+	}, [presence]);
+
+	const handleIncrement = async () => {
+		setCounter(counter + 1);
+		await mutate({ id: presence.id });
+	};
+	return (
+		<div className="flex flex-col items-center justify-center gap-4 rounded-lg bg-light-primary-color p-6 text-light-color">
+			<div>
+				{hacker.firstName} {hacker.lastName} has already checked-in {counter} times!
+			</div>
+			{!maxCheckIns || maxCheckIns > presence.value ? (
+				<button
+					className="z-10 w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color mobile:px-8 mobile:py-4 mobile:text-4xl"
+					onClick={() => void handleIncrement()}
+				>
+					Increment
+				</button>
+			) : (
+				<div>ERROR: Max {maxCheckIns} check-ins allowed!</div>
+			)}
+		</div>
 	);
 };
 
