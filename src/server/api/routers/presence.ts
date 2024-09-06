@@ -79,8 +79,8 @@ export const presenceRouter = createTRPCRouter({
 	upsert: protectedProcedure
 		.input(
 			z.object({
-				hackerID: z.string(),
-				key: z.string(),
+				id: z.optional(z.string()),
+				hackerId: z.string(),
 				value: z.number(),
 				label: z.string(),
 			}),
@@ -111,7 +111,7 @@ export const presenceRouter = createTRPCRouter({
 
 			const hacker = await ctx.prisma.hacker.findUnique({
 				where: {
-					id: input.hackerID,
+					id: input.hackerId,
 				},
 			});
 
@@ -123,13 +123,12 @@ export const presenceRouter = createTRPCRouter({
 
 			await ctx.prisma.presence.upsert({
 				where: {
-					key: input.key,
+					id: input.id ?? "",
 				},
 				create: {
-					key: input.key,
 					value: input.value,
 					label: input.label,
-					hackerId: input.hackerID,
+					hackerId: input.hackerId,
 				},
 				update: {
 					value: input.value,
@@ -143,14 +142,14 @@ export const presenceRouter = createTRPCRouter({
 				sourceType: "Presence",
 				author: user.name ?? "Unknown",
 				route: "presence",
-				details: `Updated presence for hacker ${hacker.id} with key ${input.key}  (${input.label}) to ${input.value}`,
+				details: `Updated presence for hacker ${hacker.id} with id ${input.id}  (${input.label}) to ${input.value}`,
 			});
 		}),
 
 	increment: protectedProcedure
 		.input(
 			z.object({
-				key: z.string(),
+				id: z.string(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -177,22 +176,9 @@ export const presenceRouter = createTRPCRouter({
 				throw new Error("You do not have permission to do this");
 			}
 
-      		// TODO: Do we need this? Why?
-			//const hacker = await ctx.prisma.hacker.findUnique({
-			//	where: {
-			//		userId,
-			//	},
-			//});
-
-			//if (!hacker) {
-			//	throw new Error("Hacker not found");
-			//}
-
-			//ee.emit("add", hacker);
-
 			await ctx.prisma.presence.update({
 				where: {
-					key: input.key,
+					id: input.id,
 				},
 				data: {
 					value: {
