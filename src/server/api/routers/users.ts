@@ -189,7 +189,7 @@ export const userRouter = createTRPCRouter({
 			}
 
 			if (!hasRoles(user, [RoleName.HACKER]) || !user.Hacker) {
-				throw new Error("You are not a hacker");
+				throw new Error("You have not yet been accepted as a hacker");
 			}
 
 			const response = await fetch(`${env.DISCORD_BOT_URL}/verify`, {
