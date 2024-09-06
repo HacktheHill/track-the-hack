@@ -4,7 +4,6 @@ import { count } from "console";
 // generates dummy presences
 export const presences = () => {
 	return {
-		key: faker.helpers.slugify(faker.lorem.words(2)),
 		value: faker.number.int({ min: 1, max: 10 }),
 		label: faker.helpers.arrayElement([
 			"Checked In",

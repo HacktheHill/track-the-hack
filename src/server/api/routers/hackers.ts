@@ -408,7 +408,6 @@ export const hackerRouter = createTRPCRouter({
 				walkIn: true,
 				presences: {
 					create: {
-						key: "checkedIn",
 						value: 1,
 						label: "Checked In",
 					},

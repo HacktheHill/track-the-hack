@@ -20,6 +20,7 @@ const events = [
 		description:
 			"Join us for the opening ceremony of Hack the Hill 2023! We will be welcoming our sponsors and announcing the challenges and much more, you won’t want to miss the start of the event!",
 		room: "Room 2",
+		maxCheckIns: 1,
 	},
 	{
 		start: new Date(`${day1} 12:00`),

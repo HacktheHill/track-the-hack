@@ -145,7 +145,7 @@ model Hacker {
 }
 
 model Presence {
-  key       String   @id @unique
+  id        String   @id @default(cuid())
   value     Int
   label     String
   createdAt DateTime @default(now())
@@ -175,6 +175,7 @@ model Event {
   image       String?
   link        String?
   linkText    String?
+  maxCheckIns Int?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @default(now()) @updatedAt
 }

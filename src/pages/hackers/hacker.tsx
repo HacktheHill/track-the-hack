@@ -91,8 +91,8 @@ const HackerPage: NextPage<{
 		setEdit(false);
 	}, [acceptance, hackerQuery.data, t]);
 
-	const handlePresenceIncrement = async (key: string) => {
-		await presenceMutation.mutateAsync({ key });
+	const handlePresenceIncrement = async (id: string) => {
+		await presenceMutation.mutateAsync({ id });
 
 		if (presenceMutation.isSuccess) {
 			await presenceQuery.refetch();
@@ -261,7 +261,7 @@ const HackerPage: NextPage<{
 								<p>{presence.value}</p>
 								<button
 									className="rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
-									onClick={() => void handlePresenceIncrement(presence.key)}
+									onClick={() => void handlePresenceIncrement(presence.id)}
 								>
 									{presence.value >= 2 ? "+" : presence.value === 1 ? "True" : "False"}
 								</button>
