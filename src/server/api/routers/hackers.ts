@@ -306,11 +306,17 @@ export const hackerRouter = createTRPCRouter({
 					...(input.confirm &&
 						input.teamName && {
 							Team: {
-								connect: {
-									name: input.teamName,
+								connectOrCreate: {
+									where: { name: input.teamName },
+									create: { name: input.teamName },
 								},
 							},
 						}),
+					...(input.confirm === false && {
+						Team: {
+							disconnect: true,
+						},
+					}),
 				},
 			});
 
