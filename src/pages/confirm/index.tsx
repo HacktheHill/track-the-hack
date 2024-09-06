@@ -1,4 +1,5 @@
-import type { GetStaticProps, NextPage } from "next";
+import type { GetServerSideProps, NextPage } from "next";
+import { getServerSession } from "next-auth";
 import { Trans, useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useRouter } from "next/router";
@@ -7,13 +8,9 @@ import SignaturePad from "react-signature-canvas";
 import { uploadSignature } from "../../client/s3";
 import FormPage from "../../components/FormPage";
 import { trpc } from "../../server/api/api";
+import { sessionRedirect } from "../../server/lib/redirects";
 import { debounce } from "../../utils/helpers";
-
-export const getStaticProps: GetStaticProps = async ({ locale }) => {
-	return {
-		props: await serverSideTranslations(locale ?? "en", ["common", "confirm"]),
-	};
-};
+import { getAuthOptions } from "../api/auth/[...nextauth]";
 
 const Confirm: NextPage = () => {
 	const { t } = useTranslation("confirm");
@@ -343,6 +340,15 @@ const Confirm: NextPage = () => {
 				))}
 		</FormPage>
 	);
+};
+
+export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
+	const session = await getServerSession(req, res, getAuthOptions(req));
+
+	return {
+		redirect: sessionRedirect(session, req.url ?? "/"),
+		props: await serverSideTranslations(locale ?? "en", ["confirm", "common"]),
+	};
 };
 
 export default Confirm;
