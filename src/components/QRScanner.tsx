@@ -1,11 +1,11 @@
 import QrScanner from "qr-scanner";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, memo } from "react";
 
 type QRScannerProps = {
 	onScan: (data: string) => void;
 };
 
-const QRScanner = (props: QRScannerProps) => {
+const QRScanner = memo(function QRScanner(props: QRScannerProps) {
 	const video = useRef<HTMLVideoElement>(null);
 
 	useEffect(() => {
@@ -27,6 +27,6 @@ const QRScanner = (props: QRScannerProps) => {
 		};
 	});
 	return <video ref={video} className="aspect-square rounded-3xl object-cover" width="300" height="300" />;
-};
+});
 
 export default QRScanner;

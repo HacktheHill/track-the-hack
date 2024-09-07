@@ -3,7 +3,7 @@ import type { GetServerSideProps } from "next";
 import { getServerSession } from "next-auth/next";
 import { useTranslation } from "next-i18next";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { qrRedirect } from "../../server/lib/redirects";
 import { getAuthOptions } from "../api/auth/[...nextauth]";
 
@@ -50,86 +50,91 @@ const QR = () => {
 
 	const [display, setDisplay] = useState(<></>);
 
-	useEffect(() => {
-		console.info("Hacker ID: ", hackerId);
-		(() => {
-			if (!hackerId || hackerId === "") return;
-			void refetchHacker();
+	const onScan = useCallback(
+		(result: string) => {
+			if (result === hackerId) return;
 
-			if (selectedAction != ACTIONS.GET_HACKER) void refetchPresences();
-		})();
-	}, [hackerId, refetchHacker, refetchPresences, selectedAction]);
+			setHackerId(result);
+			console.log(result);
+		},
+		[hackerId],
+	);
 
 	useEffect(() => {
-		const handleAction = async (event: string, maxCheckIns: number | null) => {
-			if (!hacker) return <>Error: Hacker info not fetched!</>;
+		function cleanUp() {
+			setHackerId("");
+		}
+		async function handleEvent() {
+			const maxCheckIns = events?.find(event => event.name === selectedAction)?.maxCheckIns as number | null;
+
+			if (!hacker || !presences) return cleanUp();
 
 			// Hacker already registered -> increment
-			if (presences && presences.length > 0) {
+			if (presences.length > 0) {
 				for (const presence of presences) {
-					if (presence.label != event) continue;
+					if (presence.label != selectedAction) continue;
 					try {
-						return (
+						setDisplay(
 							<Result
 								hacker={hacker}
 								presence={presence}
 								maxCheckIns={maxCheckIns}
 								mutate={presenceIncrementMutateAsync}
-							/>
+							/>,
 						);
+						return cleanUp();
 					} catch (error) {
 						if (error instanceof TRPCClientError) {
-							return <div>Error: {error.message}</div>;
+							setDisplay(<div>Error: {error.message}</div>);
+							return cleanUp();
 						}
-						return <div>An unknown error occurred!</div>;
+						setDisplay(<div>An unknown error occurred!</div>);
+						return cleanUp();
 					}
 				}
 			}
 
 			// First check-in
 			try {
-				await presenceUpsertMutateAsync({ hackerId, value: 1, label: event });
-				return (
+				await presenceUpsertMutateAsync({ hackerId, value: 1, label: selectedAction });
+				setDisplay(
 					<div>
-						{hacker.firstName} {hacker.lastName} successfully check-in for {event}
-					</div>
+						{hacker.firstName} {hacker.lastName} successfully check-in for {selectedAction}
+					</div>,
 				);
+				return cleanUp();
 			} catch (error) {
 				if (error instanceof TRPCClientError) {
-					return <div>Error: {error.message}</div>;
+					setDisplay(<div>Error: {error.message}</div>);
+					return cleanUp();
 				}
-				return <div>An unknown error occurred!</div>;
+				setDisplay(<div>An unknown error occurred!</div>);
 			}
-		};
+			return cleanUp();
+		}
 
+		void handleEvent();
+	}, [presences]);
+
+	useEffect(() => {
 		async function handleEvent() {
-			if (!hacker) return;
+			if (hackerId == "") return;
+			console.log("Hacker id changed", hackerId);
 
 			switch (selectedAction) {
 				case ACTIONS.NONE:
 					break;
 				case ACTIONS.GET_HACKER:
-					void router.push(`/hackers/hacker?id=${hackerId}`);
+					await router.push(`/hackers/hacker?id=${hackerId}`);
 					break;
 				default:
-					const maxCheckIns = events?.find(event => event.name === selectedAction)?.maxCheckIns as
-						| number
-						| null;
-					setDisplay(await handleAction(selectedAction, maxCheckIns));
+					await refetchHacker();
+					await refetchPresences();
 					break;
 			}
 		}
 		void handleEvent();
-	}, [
-		events,
-		hacker,
-		hackerId,
-		presenceIncrementMutateAsync,
-		presenceUpsertMutateAsync,
-		presences,
-		router,
-		selectedAction,
-	]);
+	}, [hackerId, refetchHacker, refetchPresences, router, selectedAction]);
 
 	return (
 		<App
@@ -141,7 +146,11 @@ const QR = () => {
 					<>
 						<select
 							className="p-3 text-center text-lg font-bold text-dark-color"
-							onChange={e => setSelectedAction(e.target.value)}
+							onChange={e => {
+								setSelectedAction(e.target.value);
+								setHackerId("");
+								setDisplay(<></>);
+							}}
 						>
 							{(events ? actions.concat(events?.map(event => event.name)) : actions).map(event => {
 								return (
@@ -152,8 +161,8 @@ const QR = () => {
 							})}
 						</select>
 
-						{selectedAction != ACTIONS.NONE ? <QRScanner onScan={setHackerId} /> : null}
-						<PhysicalScanner onScan={setHackerId} />
+						{selectedAction !== ACTIONS.NONE ? <QRScanner onScan={onScan} /> : null}
+						<PhysicalScanner onScan={onScan} />
 						{!error && (
 							<p className="z-10 max-w-xl text-center text-lg font-bold text-dark-color">
 								{t("scan-qr")}
