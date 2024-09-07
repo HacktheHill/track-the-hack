@@ -79,7 +79,7 @@ export const presenceRouter = createTRPCRouter({
 	upsert: protectedProcedure
 		.input(
 			z.object({
-				id: z.optional(z.string()),
+				id: z.string().optional().default(""),
 				hackerId: z.string(),
 				value: z.number(),
 				label: z.string(),
@@ -123,7 +123,7 @@ export const presenceRouter = createTRPCRouter({
 
 			await ctx.prisma.presence.upsert({
 				where: {
-					id: input.id ?? "",
+					id: input.id,
 				},
 				create: {
 					value: input.value,
