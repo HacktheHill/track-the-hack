@@ -2,7 +2,7 @@ import { RoleName } from "@prisma/client";
 import type { GetServerSideProps } from "next";
 import { getServerSession } from "next-auth/next";
 import { useTranslation } from "next-i18next";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
 import { qrRedirect } from "../../server/lib/redirects";
 import { getAuthOptions } from "../api/auth/[...nextauth]";
@@ -39,6 +39,8 @@ const QR = () => {
 	const { data: events } = trpc.events.all.useQuery();
 
 	const [hackerId, setHackerId] = useState<string>("");
+	const [prevId, setPrevId] = useState<string>("");
+
 	const { data: hacker, refetch: refetchHacker } = trpc.hackers.get.useQuery({ id: hackerId }, { enabled: false });
 	const { data: presences, refetch: refetchPresences } = trpc.presence.getFromHackerId.useQuery(
 		{ id: hackerId },
@@ -50,24 +52,19 @@ const QR = () => {
 
 	const [display, setDisplay] = useState(<></>);
 
-	const onScan = useCallback(
-		(result: string) => {
-			if (result === hackerId) return;
+	const utils = trpc.useUtils();
 
-			setHackerId(result);
-			console.log(result);
-		},
-		[hackerId],
-	);
+	// Memoize function to prevent re-rendering QRScanner. QRScanner should never be re-rendered or it will break.
+	const onScan = useCallback((result: string) => {
+		if (!result) return;
+		setHackerId(result);
+	}, []);
 
 	useEffect(() => {
-		function cleanUp() {
-			setHackerId("");
-		}
 		async function handleEvent() {
 			const maxCheckIns = events?.find(event => event.name === selectedAction)?.maxCheckIns as number | null;
 
-			if (!hacker || !presences) return cleanUp();
+			if (!hacker || !presences) return;
 
 			// Hacker already registered -> increment
 			if (presences.length > 0) {
@@ -82,14 +79,14 @@ const QR = () => {
 								mutate={presenceIncrementMutateAsync}
 							/>,
 						);
-						return cleanUp();
+						return;
 					} catch (error) {
 						if (error instanceof TRPCClientError) {
 							setDisplay(<div>Error: {error.message}</div>);
-							return cleanUp();
+							return;
 						}
 						setDisplay(<div>An unknown error occurred!</div>);
-						return cleanUp();
+						return;
 					}
 				}
 			}
@@ -99,42 +96,58 @@ const QR = () => {
 				await presenceUpsertMutateAsync({ hackerId, value: 1, label: selectedAction });
 				setDisplay(
 					<div>
-						{hacker.firstName} {hacker.lastName} successfully check-in for {selectedAction}
+						{hacker.firstName} {hacker.lastName} successfully checked-in for {selectedAction}
 					</div>,
 				);
-				return cleanUp();
 			} catch (error) {
 				if (error instanceof TRPCClientError) {
 					setDisplay(<div>Error: {error.message}</div>);
-					return cleanUp();
+					return;
 				}
 				setDisplay(<div>An unknown error occurred!</div>);
 			}
-			return cleanUp();
 		}
 
 		void handleEvent();
 	}, [presences]);
 
-	useEffect(() => {
-		async function handleEvent() {
-			if (hackerId == "") return;
-			console.log("Hacker id changed", hackerId);
+	async function clearData() {
+		await utils.hackers.get.reset();
+		await utils.presence.getFromHackerId.reset();
+	}
 
+	async function handleRefetch() {
+		// Reset hacker and presences data
+		await clearData();
+
+		await refetchHacker();
+		await refetchPresences();
+	}
+
+	useEffect(() => {
+		if (hackerId === prevId) return;
+		console.log("hackerId changed", hackerId, "!=", prevId);
+		setPrevId(hackerId);
+
+		if (hackerId === "") {
+			// Clear data when selectedAction is changed
+			void clearData();
+			return;
+		}
+
+		void (async () => {
 			switch (selectedAction) {
 				case ACTIONS.NONE:
 					break;
 				case ACTIONS.GET_HACKER:
-					await router.push(`/hackers/hacker?id=${hackerId}`);
+					router.push(`/hackers/hacker?id=${hackerId}`);
 					break;
 				default:
-					await refetchHacker();
-					await refetchPresences();
+					await handleRefetch();
 					break;
 			}
-		}
-		void handleEvent();
-	}, [hackerId, refetchHacker, refetchPresences, router, selectedAction]);
+		})();
+	}, [hackerId, selectedAction]);
 
 	return (
 		<App
