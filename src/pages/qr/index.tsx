@@ -3,7 +3,7 @@ import type { GetServerSideProps } from "next";
 import { getServerSession } from "next-auth/next";
 import { useTranslation } from "next-i18next";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { qrRedirect } from "../../server/lib/redirects";
 import { getAuthOptions } from "../api/auth/[...nextauth]";
 
@@ -39,7 +39,7 @@ const QR = () => {
 	const { data: events } = trpc.events.all.useQuery();
 
 	const [hackerId, setHackerId] = useState<string>("");
-	const [prevId, setPrevId] = useState<string>("");
+	const prevId = useRef<string>("");
 
 	const { data: hacker, refetch: refetchHacker } = trpc.hackers.get.useQuery({ id: hackerId }, { enabled: false });
 	const { data: presences, refetch: refetchPresences } = trpc.presence.getFromHackerId.useQuery(
@@ -55,47 +55,71 @@ const QR = () => {
 	const utils = trpc.useUtils();
 
 	// Memoize function to prevent re-rendering QRScanner. QRScanner should never be re-rendered or it will break.
+	// React does not properly re-render video components.
 	const onScan = useCallback((result: string) => {
 		if (!result) return;
 		setHackerId(result);
+		console.log("Scan result:", result);
 	}, []);
 
 	useEffect(() => {
-		async function handleEvent() {
-			const maxCheckIns = events?.find(event => event.name === selectedAction)?.maxCheckIns as number | null;
+		if (hackerId === prevId.current) return;
+		console.log("hackerId changed", hackerId, "!=", prevId);
+		prevId.current = hackerId;
 
+		if (hackerId === "") return;
+
+		void (async () => {
+			switch (selectedAction) {
+				case ACTIONS.NONE:
+					break;
+				case ACTIONS.GET_HACKER:
+					router.push(`/hackers/hacker?id=${hackerId}`);
+					break;
+				default:
+					await refetchHacker();
+					await refetchPresences();
+					break;
+			}
+		})();
+	}, [hackerId, selectedAction, refetchHacker, refetchPresences, router]);
+
+	useEffect(() => {
+		void (async () => {
 			if (!hacker || !presences) return;
 
-			// Hacker already registered -> increment
-			if (presences.length > 0) {
-				for (const presence of presences) {
-					if (presence.label != selectedAction) continue;
-					try {
-						setDisplay(
-							<Result
-								hacker={hacker}
-								presence={presence}
-								maxCheckIns={maxCheckIns}
-								mutate={presenceIncrementMutateAsync}
-							/>,
-						);
-						return;
-					} catch (error) {
-						if (error instanceof TRPCClientError) {
-							setDisplay(<div>Error: {error.message}</div>);
-							return;
-						}
-						setDisplay(<div>An unknown error occurred!</div>);
+			const maxCheckIns = events?.find(event => event.name === selectedAction)?.maxCheckIns as number | null;
+
+			// If hacker has already checked-in -> increment
+			for (const presence of presences) {
+				if (presence.label != selectedAction) continue;
+				try {
+					setDisplay(
+						<RepeatedVisitor
+							hacker={hacker}
+							presence={presence}
+							maxCheckIns={maxCheckIns}
+							mutate={presenceIncrementMutateAsync}
+						/>,
+					);
+					await utils.presence.getFromHackerId.reset();
+					return;
+				} catch (error) {
+					if (error instanceof TRPCClientError) {
+						setDisplay(<div>Error: {error.message}</div>);
 						return;
 					}
+					setDisplay(<div>An unknown error occurred!</div>);
+					return;
 				}
 			}
 
 			// First check-in
 			try {
 				await presenceUpsertMutateAsync({ hackerId, value: 1, label: selectedAction });
+				await utils.presence.getFromHackerId.reset();
 				setDisplay(
-					<div>
+					<div className="flex flex-col items-center justify-center gap-4 rounded-lg bg-light-primary-color p-6 text-light-color">
 						{hacker.firstName} {hacker.lastName} successfully checked-in for {selectedAction}
 					</div>,
 				);
@@ -106,48 +130,8 @@ const QR = () => {
 				}
 				setDisplay(<div>An unknown error occurred!</div>);
 			}
-		}
-
-		void handleEvent();
-	}, [presences]);
-
-	async function clearData() {
-		await utils.hackers.get.reset();
-		await utils.presence.getFromHackerId.reset();
-	}
-
-	async function handleRefetch() {
-		// Reset hacker and presences data
-		await clearData();
-
-		await refetchHacker();
-		await refetchPresences();
-	}
-
-	useEffect(() => {
-		if (hackerId === prevId) return;
-		console.log("hackerId changed", hackerId, "!=", prevId);
-		setPrevId(hackerId);
-
-		if (hackerId === "") {
-			// Clear data when selectedAction is changed
-			void clearData();
-			return;
-		}
-
-		void (async () => {
-			switch (selectedAction) {
-				case ACTIONS.NONE:
-					break;
-				case ACTIONS.GET_HACKER:
-					router.push(`/hackers/hacker?id=${hackerId}`);
-					break;
-				default:
-					await handleRefetch();
-					break;
-			}
 		})();
-	}, [hackerId, selectedAction]);
+	}, [presences]);
 
 	return (
 		<App
@@ -200,13 +184,13 @@ const QR = () => {
 	);
 };
 
-type ResultProps = {
+type RepeatedVisitor = {
 	hacker: Hacker;
 	presence: Presence;
 	maxCheckIns: number | null;
 	mutate: UseMutateAsyncFunction<void, TRPCClientErrorLike<any>, { id: string }>;
 };
-const Result = ({ hacker, presence, maxCheckIns, mutate }: ResultProps) => {
+const RepeatedVisitor = ({ hacker, presence, maxCheckIns, mutate }: RepeatedVisitor) => {
 	const [counter, setCounter] = useState(0);
 
 	useEffect(() => {
