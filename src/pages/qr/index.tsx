@@ -64,7 +64,7 @@ const QR = () => {
 
 	useEffect(() => {
 		if (hackerId === prevId.current) return;
-		console.log("hackerId changed", hackerId, "!=", prevId);
+		console.log("hackerId changed", hackerId, "!=", prevId.current);
 		prevId.current = hackerId;
 
 		if (hackerId === "") return;
@@ -208,7 +208,7 @@ const RepeatedVisitor = ({ hacker, presence, maxCheckIns, mutate }: RepeatedVisi
 			</div>
 			{!maxCheckIns || maxCheckIns > presence.value ? (
 				<button
-					className="z-10 w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color mobile:px-8 mobile:py-4 mobile:text-4xl"
+					className="z-10 w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
 					onClick={() => void handleIncrement()}
 				>
 					Increment
