@@ -1,5 +1,6 @@
 {
 	"confirm": "Confirm",
+	"not-accepted": "Vous n'avez pas encore reçu d'acceptation pour participer à Hack the Hill II.",
 	"acceptance-expired": "Ce lien de confirmation a expiré. Veuillez nous contacter si vous avez besoin d'aide.",
 	"error-no-id-found": "Erreur : aucun ID trouvé",
 	"invalid-confirmation-link": "Lien de confirmation invalide. Veuillez utiliser le lien du courriel que vous avez reçu.",
