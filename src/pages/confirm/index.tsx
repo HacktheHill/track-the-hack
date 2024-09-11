@@ -1,3 +1,4 @@
+import { AcceptanceStatus } from "@prisma/client";
 import type { GetServerSideProps, NextPage } from "next";
 import { getServerSession } from "next-auth";
 import { Trans, useTranslation } from "next-i18next";
@@ -11,6 +12,7 @@ import { trpc } from "../../server/api/api";
 import { sessionRedirect } from "../../server/lib/redirects";
 import { debounce } from "../../utils/helpers";
 import { getAuthOptions } from "../api/auth/[...nextauth]";
+import { isExpired } from "../../utils/helpers";
 
 const Confirm: NextPage = () => {
 	const { t } = useTranslation("confirm");
@@ -32,12 +34,12 @@ const Confirm: NextPage = () => {
 		travelPolicy: false,
 	});
 
+	const sigCanvas = useRef<SignaturePad | null>(null);
+
 	const mutation = trpc.hackers.confirm.useMutation();
 	const query = trpc.hackers.get.useQuery({ id: id ?? "" }, { enabled: !!id });
 	const checkTeam = trpc.teams.check.useQuery({ name: teamName }, { enabled: false });
 	const createTeam = trpc.teams.create.useMutation();
-
-	const sigCanvas = useRef<SignaturePad | null>(null);
 
 	const deadline = query.data?.acceptanceExpiry?.toLocaleDateString(router.locale, {
 		year: "numeric",
@@ -52,11 +54,7 @@ const Confirm: NextPage = () => {
 	const debounceCheckTeam = debounce(async (name: string) => {
 		if (name) {
 			const response = await checkTeam.refetch();
-			if (response.data?.exists) {
-				setTeam(response.data.team);
-			} else {
-				setTeam(null);
-			}
+			setTeam(response.data?.exists ? response.data.team : null);
 		}
 	}, 300);
 
@@ -67,7 +65,7 @@ const Confirm: NextPage = () => {
 			setIsSubmitted(query.data.confirmed);
 			setIsMinor(query.data.age < 18);
 		}
-	}, [query.data, query.error, mutation.error]);
+	}, [query.data, query.error, mutation.error, t]);
 
 	const handleTeamNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const name = e.target.value;
@@ -77,22 +75,18 @@ const Confirm: NextPage = () => {
 	};
 
 	const handleCreateTeam = () => {
-		if (!query.data) return;
+		if (!query.data || !teamName) return;
 
-		if (teamName) {
-			createTeam.mutate(
-				{ teamName: teamName, hackerId: query.data.id },
-				{
-					onSuccess: () => {
-						setValidationMessage("");
-						setTeamCreated(true);
-					},
-					onError: error => {
-						setValidationMessage(error.message);
-					},
+		createTeam.mutate(
+			{ teamName: teamName, hackerId: query.data.id },
+			{
+				onSuccess: () => {
+					setValidationMessage("");
+					setTeamCreated(true);
 				},
-			);
-		}
+				onError: error => setValidationMessage(error.message),
+			},
+		);
 	};
 
 	const handleClearSignature = () => {
@@ -110,7 +104,6 @@ const Confirm: NextPage = () => {
 	const handleSignatureEnd = () => {
 		const canvas = sigCanvas.current?.getTrimmedCanvas();
 		setSignature(canvas?.toDataURL("image/png") ?? null);
-		console.log(canvas?.toDataURL("image/png"));
 	};
 
 	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -207,7 +200,15 @@ const Confirm: NextPage = () => {
 		<FormPage
 			onSubmit={event => void handleSubmit(event)}
 			error={error}
-			invalid={!id || query.data === null ? t("invalid-confirmation-link") : null}
+			invalid={
+				!id || query.data === null
+					? t("invalid-confirmation-link")
+					: isExpired(query.data?.acceptanceExpiry)
+						? t("acceptance-expired")
+						: query.data?.acceptanceStatus !== AcceptanceStatus.ACCEPTED
+							? t("not-accepted")
+							: null
+			}
 			loading={id != null && query.isLoading && !query.isError}
 			title={t("confirm")}
 		>

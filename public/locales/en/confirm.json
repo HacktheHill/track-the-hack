@@ -1,5 +1,6 @@
 {
 	"confirm": "Confirm",
+	"not-accepted": "You have not yet received an acceptance to attend Hack the Hill II.",
 	"acceptance-expired": "This confirmation link has expired. Please contact us if you need help.",
 	"error-no-id-found": "Error: no ID Found",
 	"invalid-confirmation-link": "Invalid confirmation link. Please use the link from the email you received.",

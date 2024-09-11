@@ -9,7 +9,10 @@ import type { RoleName, User } from "@prisma/client";
  * // => true if current date is after 2022-01-01T00:00:00.000Z
  * // => false otherwise
  */
-export const isExpired = (expiry: string) => {
+export const isExpired = (expiry: Date | string | null | undefined) => {
+	if (!expiry) {
+		return false;
+	}
 	const now = new Date();
 	const expiryDate = new Date(expiry);
 	if (expiryDate.toString() === "Invalid Date") {
