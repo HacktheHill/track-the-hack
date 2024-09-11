@@ -109,9 +109,21 @@ const QR = () => {
 					router.push(`/hackers/hacker?id=${hackerId}`);
 					break;
 				default:
-					const hacker = await utils.hackers.get.fetch({ id: hackerId });
-					const presences = await utils.presence.getFromHackerId.fetch({ id: hackerId });
-					await handleEvent(hackerId, hacker, presences);
+					try {
+						const hacker = await utils.hackers.get.fetch({ id: hackerId });
+						const presences = await utils.presence.getFromHackerId.fetch({ id: hackerId });
+						await handleEvent(hackerId, hacker, presences);
+					} catch (error) {
+						if (error instanceof TRPCClientError) {
+							setDisplay(
+								<div>
+									Error: {error.message}. ID: {hackerId}
+								</div>,
+							);
+							break;
+						}
+						setDisplay(<div>An unknown error occurred!</div>);
+					}
 					break;
 			}
 		},
