@@ -16,9 +16,7 @@ import QRScanner from "../../components/QRScanner";
 import { trpc } from "../../server/api/api";
 import type { AppRouter } from "../../server/api/root";
 import type { inferRouterOutputs } from "@trpc/server";
-import type { TRPCClientErrorLike } from "@trpc/client";
 import { TRPCClientError } from "@trpc/client";
-import type { UseMutateAsyncFunction } from "@tanstack/react-query";
 
 type RouterOutput = inferRouterOutputs<AppRouter>;
 type Hacker = RouterOutput["hackers"]["get"];
@@ -34,18 +32,11 @@ const QR = () => {
 	const router = useRouter();
 	const [error, setError] = useState(false);
 
-	const [selectedAction, setSelectedAction] = useState<string>(ACTIONS.NONE);
+	const selectedAction = useRef<string>(ACTIONS.NONE);
 	const actions: string[] = Object.keys(ACTIONS).map(key => ACTIONS[key as keyof typeof ACTIONS]);
 	const { data: events } = trpc.events.all.useQuery();
 
-	const [hackerId, setHackerId] = useState<string>("");
-	const prevId = useRef<string>("");
-
-	const { data: hacker, refetch: refetchHacker } = trpc.hackers.get.useQuery({ id: hackerId }, { enabled: false });
-	const { data: presences, refetch: refetchPresences } = trpc.presence.getFromHackerId.useQuery(
-		{ id: hackerId },
-		{ enabled: false },
-	);
+	const prevHackerId = useRef<string>("");
 
 	const { mutateAsync: presenceUpsertMutateAsync } = trpc.presence.upsert.useMutation();
 	const { mutateAsync: presenceIncrementMutateAsync } = trpc.presence.increment.useMutation();
@@ -54,45 +45,15 @@ const QR = () => {
 
 	const utils = trpc.useUtils();
 
-	// Memoize function to prevent re-rendering QRScanner. QRScanner should never be re-rendered or it will break.
-	// React does not properly re-render video components.
-	const onScan = useCallback((result: string) => {
-		if (!result) return;
-		setHackerId(result);
-		console.log("Scan result:", result);
-	}, []);
+	const handleEvent = useCallback(
+		async (hackerId: string, hacker: Hacker, presences: Presence[]) => {
+			const maxCheckIns = events?.find(event => event.name === selectedAction.current)?.maxCheckIns as
+				| number
+				| null;
 
-	useEffect(() => {
-		if (hackerId === prevId.current) return;
-		console.log("hackerId changed", hackerId, "!=", prevId.current);
-		prevId.current = hackerId;
-
-		if (hackerId === "") return;
-
-		void (async () => {
-			switch (selectedAction) {
-				case ACTIONS.NONE:
-					break;
-				case ACTIONS.GET_HACKER:
-					router.push(`/hackers/hacker?id=${hackerId}`);
-					break;
-				default:
-					await refetchHacker();
-					await refetchPresences();
-					break;
-			}
-		})();
-	}, [hackerId, selectedAction, refetchHacker, refetchPresences, router]);
-
-	useEffect(() => {
-		void (async () => {
-			if (!hacker || !presences) return;
-
-			const maxCheckIns = events?.find(event => event.name === selectedAction)?.maxCheckIns as number | null;
-
-			// If hacker has already checked-in -> increment
+			// If hacker has already checked-in -> Show RepeatedVisitor component with increment button
 			for (const presence of presences) {
-				if (presence.label != selectedAction) continue;
+				if (presence.label != selectedAction.current) continue;
 				try {
 					setDisplay(
 						<RepeatedVisitor
@@ -102,7 +63,6 @@ const QR = () => {
 							mutate={presenceIncrementMutateAsync}
 						/>,
 					);
-					await utils.presence.getFromHackerId.reset();
 					return;
 				} catch (error) {
 					if (error instanceof TRPCClientError) {
@@ -116,11 +76,10 @@ const QR = () => {
 
 			// First check-in
 			try {
-				await presenceUpsertMutateAsync({ hackerId, value: 1, label: selectedAction });
-				await utils.presence.getFromHackerId.reset();
+				await presenceUpsertMutateAsync({ hackerId, value: 1, label: selectedAction.current });
 				setDisplay(
 					<div className="flex flex-col items-center justify-center gap-4 rounded-lg bg-light-primary-color p-6 text-light-color">
-						{hacker.firstName} {hacker.lastName} successfully checked-in for {selectedAction}
+						{hacker.firstName} {hacker.lastName} successfully checked-in for {selectedAction.current}
 					</div>,
 				);
 			} catch (error) {
@@ -130,9 +89,44 @@ const QR = () => {
 				}
 				setDisplay(<div>An unknown error occurred!</div>);
 			}
-		})();
-	}, [presences]);
+		},
+		[events, presenceIncrementMutateAsync, presenceUpsertMutateAsync],
+	);
 
+	const handleScanResult = useCallback(
+		async (hackerId: string) => {
+			if (hackerId === prevHackerId.current) return;
+
+			console.debug("hackerId changed", hackerId, "!=", prevHackerId.current);
+			prevHackerId.current = hackerId;
+
+			if (hackerId === "") return;
+
+			switch (selectedAction.current) {
+				case ACTIONS.NONE:
+					break;
+				case ACTIONS.GET_HACKER:
+					router.push(`/hackers/hacker?id=${hackerId}`);
+					break;
+				default:
+					const hacker = await utils.hackers.get.fetch({ id: hackerId });
+					const presences = await utils.presence.getFromHackerId.fetch({ id: hackerId });
+					await handleEvent(hackerId, hacker, presences);
+					break;
+			}
+		},
+		[handleEvent, router, utils],
+	);
+
+	// Memoize function to prevent re-rendering QRScanner. QRScanner should never be re-rendered or it will break.
+	// React does not properly re-render video components.
+	const onScan = useCallback(
+		(result: string) => {
+			console.debug("Scan result:", result);
+			void handleScanResult(result);
+		},
+		[handleScanResult],
+	);
 	return (
 		<App
 			className="relative flex h-full flex-col items-center justify-center gap-16 bg-default-gradient"
@@ -144,8 +138,8 @@ const QR = () => {
 						<select
 							className="p-3 text-center text-lg font-bold text-dark-color"
 							onChange={e => {
-								setSelectedAction(e.target.value);
-								setHackerId("");
+								selectedAction.current = e.target.value;
+								prevHackerId.current = "";
 								setDisplay(<></>);
 							}}
 						>
@@ -158,7 +152,7 @@ const QR = () => {
 							})}
 						</select>
 
-						{selectedAction !== ACTIONS.NONE ? <QRScanner onScan={onScan} /> : null}
+						{selectedAction.current !== ACTIONS.NONE ? <QRScanner onScan={onScan} /> : null}
 						<PhysicalScanner onScan={onScan} />
 						{!error && (
 							<p className="z-10 max-w-xl text-center text-lg font-bold text-dark-color">
@@ -188,8 +182,9 @@ type RepeatedVisitor = {
 	hacker: Hacker;
 	presence: Presence;
 	maxCheckIns: number | null;
-	mutate: UseMutateAsyncFunction<void, TRPCClientErrorLike<any>, { id: string }>;
+	mutate: (params: { id: string }) => Promise<void>;
 };
+
 const RepeatedVisitor = ({ hacker, presence, maxCheckIns, mutate }: RepeatedVisitor) => {
 	const [counter, setCounter] = useState(0);
 
