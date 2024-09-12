@@ -200,11 +200,7 @@ const Confirm: NextPage = () => {
 		<FormPage
 			onSubmit={event => void handleSubmit(event)}
 			error={error}
-			invalid={
-				!id || query.data === null || query.data?.acceptanceStatus !== AcceptanceStatus.ACCEPTED
-					? t("invalid-confirmation-link")
-					: null
-			}
+			invalid={!id || query.data === null ? t("invalid-confirmation-link") : null}
 			loading={id != null && query.isLoading && !query.isError}
 			title={t("confirm")}
 		>
@@ -232,6 +228,8 @@ const Confirm: NextPage = () => {
 					</div>
 				) : isExpired(query.data?.acceptanceExpiry) ? (
 					<h3 className="font-rubik font-medium text-dark-color">{t("acceptance-expired")}</h3>
+				) : query.data?.acceptanceStatus !== AcceptanceStatus.ACCEPTED ? (
+					<h3 className="font-rubik font-medium text-dark-color">{t("not-accepted")}</h3>
 				) : (
 					<div className="flex max-w-[25rem] flex-col items-center gap-6">
 						<div className="flex flex-col gap-2">
