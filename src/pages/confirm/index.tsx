@@ -201,13 +201,9 @@ const Confirm: NextPage = () => {
 			onSubmit={event => void handleSubmit(event)}
 			error={error}
 			invalid={
-				!id || query.data === null
+				!id || query.data === null || query.data?.acceptanceStatus !== AcceptanceStatus.ACCEPTED
 					? t("invalid-confirmation-link")
-					: isExpired(query.data?.acceptanceExpiry)
-						? t("acceptance-expired")
-						: query.data?.acceptanceStatus !== AcceptanceStatus.ACCEPTED
-							? t("not-accepted")
-							: null
+					: null
 			}
 			loading={id != null && query.isLoading && !query.isError}
 			title={t("confirm")}
@@ -219,17 +215,23 @@ const Confirm: NextPage = () => {
 							{t("thank-you-for-confirming-your-attendance")}
 						</h3>
 						<p className="font-medium text-dark-color">{t("we-look-forward-to-seeing-you")}</p>
-						{query.data?.acceptanceExpiry && (
-							<p className="text-sm">{t("you-can-change-your-response", { deadline })}</p>
+						{!isExpired(query.data?.acceptanceExpiry) && (
+							<>
+								{query.data?.acceptanceExpiry && (
+									<p className="text-sm">{t("you-can-change-your-response", { deadline })}</p>
+								)}
+								<button
+									type="button"
+									onClick={handleEdit}
+									className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
+								>
+									{t("undo-edit-response")}
+								</button>
+							</>
 						)}
-						<button
-							type="button"
-							onClick={handleEdit}
-							className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
-						>
-							{t("undo-edit-response")}
-						</button>
 					</div>
+				) : isExpired(query.data?.acceptanceExpiry) ? (
+					<h3 className="font-rubik font-medium text-dark-color">{t("acceptance-expired")}</h3>
 				) : (
 					<div className="flex max-w-[25rem] flex-col items-center gap-6">
 						<div className="flex flex-col gap-2">
