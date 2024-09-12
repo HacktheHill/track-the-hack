@@ -6,13 +6,14 @@ import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
 import SignaturePad from "react-signature-canvas";
+
 import { uploadSignature } from "../../client/s3";
+import ErrorComponent from "../../components/Error";
 import FormPage from "../../components/FormPage";
 import { trpc } from "../../server/api/api";
 import { sessionRedirect } from "../../server/lib/redirects";
-import { debounce } from "../../utils/helpers";
+import { debounce, isExpired } from "../../utils/helpers";
 import { getAuthOptions } from "../api/auth/[...nextauth]";
-import { isExpired } from "../../utils/helpers";
 
 const Confirm: NextPage = () => {
 	const { t } = useTranslation("confirm");
@@ -227,9 +228,9 @@ const Confirm: NextPage = () => {
 						)}
 					</div>
 				) : isExpired(query.data?.acceptanceExpiry) ? (
-					<h3 className="font-rubik font-medium text-dark-color">{t("acceptance-expired")}</h3>
+					<ErrorComponent message={t("acceptance-expired")} />
 				) : query.data?.acceptanceStatus !== AcceptanceStatus.ACCEPTED ? (
-					<h3 className="font-rubik font-medium text-dark-color">{t("not-accepted")}</h3>
+					<ErrorComponent message={t("not-accepted")} />
 				) : (
 					<div className="flex max-w-[25rem] flex-col items-center gap-6">
 						<div className="flex flex-col gap-2">
