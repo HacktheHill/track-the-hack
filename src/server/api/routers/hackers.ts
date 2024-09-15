@@ -450,7 +450,9 @@ export const hackerRouter = createTRPCRouter({
 			throw new Error("User not found");
 		}
 
-		await ctx.prisma.hacker.deleteMany({
+		throw new Error("The application deadline has passed");
+
+		/* await ctx.prisma.hacker.deleteMany({
 			where: {
 				userId: userId,
 			},
@@ -490,7 +492,7 @@ export const hackerRouter = createTRPCRouter({
 		return {
 			...hacker,
 			presignedUrl,
-		};
+		}; */
 	}),
 
 	delete: protectedProcedure
