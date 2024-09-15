@@ -105,7 +105,7 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 	};
 
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-		e.preventDefault();
+		/* e.preventDefault();
 
 		updateFormData();
 
@@ -152,7 +152,7 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 			console.error(err);
 		} finally {
 			setLoading(false);
-		}
+		} */
 	};
 
 	useEffect(() => {
@@ -245,10 +245,13 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 };
 
 export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
-	const session = await getServerSession(req, res, getAuthOptions(req));
+	// const session = await getServerSession(req, res, getAuthOptions(req));
 
 	return {
-		redirect: sessionRedirect(session, "/apply"),
+		// sessionRedirect(session, "/apply")
+		redirect: {
+			destination: "/",
+		},
 		props: {
 			...(await serverSideTranslations(locale ?? "en", ["apply", "zod", "navbar", "common"])),
 			applicationQuestions: getApplicationQuestions(
