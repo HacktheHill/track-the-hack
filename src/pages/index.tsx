@@ -1,4 +1,3 @@
-import { RoleName } from "@prisma/client";
 import type { GetStaticProps } from "next";
 import { type NextPage } from "next";
 import { useSession } from "next-auth/react";
@@ -8,13 +7,12 @@ import type { StaticImageData } from "next/image";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import App from "../components/App";
-import Filter from "../components/Filter";
 
+import buildingSVG from "../../public/assets/hero/building.svg";
 import hackSVG from "../../public/assets/hero/hack.svg";
 import hillSVG from "../../public/assets/hero/hill.svg";
-import theSVG from "../../public/assets/hero/the.svg";
-import buildingSVG from "../../public/assets/hero/building.svg";
 import leavesSVG from "../../public/assets/hero/leaves.svg";
+import theSVG from "../../public/assets/hero/the.svg";
 
 const Hill = hillSVG as StaticImageData;
 const The = theSVG as StaticImageData;
@@ -36,7 +34,7 @@ const Home: NextPage = () => {
 	return (
 		<App className="items-left relative flex flex-col justify-center gap-2 bg-default-gradient px-8 py-6 short:gap-8">
 			<Image priority src={Leaves} alt="Leaves" className="absolute inset-0 top-auto w-full" />
-			<h2 className="z-10 w-1/2 font-coolvetica text-lg sm:text-4xl text-dark-primary-color lg:min-w-full">
+			<h2 className="z-10 w-1/2 font-coolvetica text-lg text-dark-primary-color sm:text-4xl lg:min-w-full">
 				{t("description")}
 			</h2>
 			<Image
@@ -50,16 +48,7 @@ const Home: NextPage = () => {
 				<Image priority src={The} alt=" the " height={120} />
 				<Image priority src={Hill} alt="Hill" height={140} />
 			</h1>
-			{sessionData ? (
-				<Filter method="not" value={[RoleName.HACKER]} silent>
-					<button
-						className="z-10 w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color mobile:px-8 mobile:py-4 mobile:text-4xl"
-						onClick={() => void router.push("/apply")}
-					>
-						{t("apply")}
-					</button>
-				</Filter>
-			) : (
+			{!sessionData && (
 				<button
 					className="z-10 w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color mobile:px-8 mobile:py-4 mobile:text-4xl"
 					onClick={() => void router.push("/auth/sign-up")}
