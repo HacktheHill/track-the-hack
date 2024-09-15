@@ -176,8 +176,9 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 			{(loading || error || success || (isHacker.data && !ignoreAlreadyHacker)) && (
 				<div className="fixed inset-0 z-50 flex items-center justify-center bg-light-tertiary-color bg-opacity-90">
 					<div className="flex w-full max-w-lg flex-col gap-4 rounded border border-dark-primary-color bg-light-quaternary-color p-8 text-center">
-						{loading && <Loading />}
-						{error && (
+						{loading ? (
+							<Loading />
+						) : error ? (
 							<>
 								<ErrorComponent message={error} />
 								<button
@@ -188,8 +189,7 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 									{t("return-to-form")}
 								</button>
 							</>
-						)}
-						{success && (
+						) : success ? (
 							<>
 								<h3 className="text-4xl font-bold text-dark-color">{t("success")}</h3>
 								<p>{t("application-submitted-successfully")}</p>
@@ -201,8 +201,7 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 									{t("back-home")}
 								</button>
 							</>
-						)}
-						{isHacker.data && !ignoreAlreadyHacker && !success && (
+						) : isHacker.data && !ignoreAlreadyHacker ? (
 							<>
 								<h3 className="text-4xl font-bold text-dark-color">{t("attention")}</h3>
 								<p>{t("overwriting-submission")}</p>
@@ -223,7 +222,7 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 									</button>
 								</div>
 							</>
-						)}
+						) : null}
 					</div>
 				</div>
 			)}
