@@ -1,9 +1,15 @@
 {
 	"title": "QR Code",
-	"use-qr": "Show this QR code to organizers to check in",
+	"use-qr": "Show this QR code to organizers",
 	"scan-qr": "Ready to scan a QR code",
-	"mascot-choco-alt": "Hack the Hill mascot with hot chocolate",
-	"sign-in-to-access": "You need to sign in to access the QR page.",
 	"no-hacker": "No hacker found with this account.",
-	"qr-failed": "Failed to generate QR code."
+	"qr-failed": "Failed to generate QR code.",
+	"checked-in": "Checked in {{firstName}} {{lastName}} for {{event}}",
+	"actions": {
+		"none": "Select an action",
+		"get-hacker": "Get hacker"
+	}
+	,
+	"already-checked-in": "{{firstName}} {{lastName}} has already checked in {{counter}} times!",
+	"max-check-ins-reached": "You have reached the maximum of {{maxCheckIns}} check-ins for {{firstName}} {{lastName}}!"
 }
