@@ -1,9 +1,14 @@
 {
 	"title": "Code QR",
-	"use-qr": "Montrer ce code QR aux organisateurs pour participer",
+	"use-qr": "Montrer ce code QR aux organisateurs",
 	"scan-qr": "Prêt à scanner un code QR",
-	"mascot-choco-alt": "Mascotte Hack the Hill avec du chocolat chaud",
-	"sign-in-to-access": "Vous devez vous connecter pour accéder à la page QR.",
 	"no-hacker": "Aucun hacker trouvé avec ce compte.",
-	"qr-failed": "Échec de la génération du code QR."
+	"qr-failed": "Échec de la génération du code QR.",
+	"checked-in": "Enregistré {firstName} {lastName} pour {event}",
+	"actions": {
+		"none": "Sélectionner une action",
+		"get-hacker": "Obtenir le hacker"
+	},
+	"already-checked-in": "{firstName} {lastName} s'est déjà enregistré {counter} fois!",
+	"max-check-ins-reached": "Vous avez atteint le maximum de {maxCheckIns} enregistrements pour {firstName} {lastName}!"
 }

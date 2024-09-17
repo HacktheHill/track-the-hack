@@ -1,30 +1,31 @@
 import { RoleName } from "@prisma/client";
+import { TRPCClientError } from "@trpc/client";
+import type { inferRouterOutputs } from "@trpc/server";
 import type { GetServerSideProps } from "next";
 import { getServerSession } from "next-auth/next";
 import { useTranslation } from "next-i18next";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useCallback, useRef } from "react";
-import { qrRedirect } from "../../server/lib/redirects";
-import { getAuthOptions } from "../api/auth/[...nextauth]";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { AppRouter } from "../../server/api/root";
 
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import App from "../../components/App";
+import Error from "../../components/Error";
 import Filter from "../../components/Filter";
 import PhysicalScanner from "../../components/PhysicalScanner";
 import QRCode from "../../components/QRCode";
 import QRScanner from "../../components/QRScanner";
 import { trpc } from "../../server/api/api";
-import type { AppRouter } from "../../server/api/root";
-import type { inferRouterOutputs } from "@trpc/server";
-import { TRPCClientError } from "@trpc/client";
+import { qrRedirect } from "../../server/lib/redirects";
+import { getAuthOptions } from "../api/auth/[...nextauth]";
 
 type RouterOutput = inferRouterOutputs<AppRouter>;
 type Hacker = RouterOutput["hackers"]["get"];
 type Presence = RouterOutput["presence"]["getFromHackerId"][0];
 
 enum ACTIONS {
-	NONE = "Select an event",
-	GET_HACKER = "Get Hacker info",
+	NONE = "actions.none",
+	GET_HACKER = "actions.get-hacker",
 }
 
 const QR = () => {
@@ -66,10 +67,10 @@ const QR = () => {
 					return;
 				} catch (error) {
 					if (error instanceof TRPCClientError) {
-						setDisplay(<div>Error: {error.message}</div>);
+						setDisplay(<Error message={error.message} />);
 						return;
 					}
-					setDisplay(<div>An unknown error occurred!</div>);
+					setDisplay(<Error message={t("unknown-error")} />);
 					return;
 				}
 			}
@@ -79,18 +80,22 @@ const QR = () => {
 				await presenceUpsertMutateAsync({ hackerId, value: 1, label: selectedAction.current });
 				setDisplay(
 					<div className="flex flex-col items-center justify-center gap-4 rounded-lg bg-light-primary-color p-6 text-light-color">
-						{hacker.firstName} {hacker.lastName} successfully checked-in for {selectedAction.current}
+						{t("checked-in", {
+							firstName: hacker.firstName,
+							lastName: hacker.lastName,
+							event: selectedAction.current,
+						})}
 					</div>,
 				);
 			} catch (error) {
 				if (error instanceof TRPCClientError) {
-					setDisplay(<div>Error: {error.message}</div>);
+					setDisplay(<Error message={error.message} />);
 					return;
 				}
-				setDisplay(<div>An unknown error occurred!</div>);
+				setDisplay(<Error message={t("unknown-error")} />);
 			}
 		},
-		[events, presenceIncrementMutateAsync, presenceUpsertMutateAsync],
+		[events, presenceIncrementMutateAsync, presenceUpsertMutateAsync, t],
 	);
 
 	const handleScanResult = useCallback(
@@ -103,9 +108,9 @@ const QR = () => {
 			if (hackerId === "") return;
 
 			switch (selectedAction.current) {
-				case ACTIONS.NONE:
+				case t(ACTIONS.NONE):
 					break;
-				case ACTIONS.GET_HACKER:
+				case t(ACTIONS.GET_HACKER):
 					router.push(`/hackers/hacker?id=${hackerId}`);
 					break;
 				default:
@@ -115,19 +120,15 @@ const QR = () => {
 						await handleEvent(hackerId, hacker, presences);
 					} catch (error) {
 						if (error instanceof TRPCClientError) {
-							setDisplay(
-								<div>
-									Error: {error.message}. ID: {hackerId}
-								</div>,
-							);
+							setDisplay(<Error message={error.message} />);
 							break;
 						}
-						setDisplay(<div>An unknown error occurred!</div>);
+						setDisplay(<Error message={t("unknown-error")} />);
 					}
 					break;
 			}
 		},
-		[handleEvent, router, utils],
+		[handleEvent, router, t, utils.hackers.get, utils.presence.getFromHackerId],
 	);
 
 	// Memoize function to prevent re-rendering QRScanner. QRScanner should never be re-rendered or it will break.
@@ -155,15 +156,16 @@ const QR = () => {
 								setDisplay(<></>);
 							}}
 						>
-							{(events ? actions.concat(events?.map(event => event.name)) : actions).map(event => {
-								return (
-									<option key={event} value={event}>
-										{event}
-									</option>
-								);
-							})}
+							{[actions.map(action => t(action)), events?.map(event => event.name) ?? []]
+								.flat()
+								.map(event => {
+									return (
+										<option key={event} value={event}>
+											{event}
+										</option>
+									);
+								})}
 						</select>
-
 						{selectedAction.current !== ACTIONS.NONE ? <QRScanner onScan={onScan} /> : null}
 						<PhysicalScanner onScan={onScan} />
 						{!error && (
@@ -181,11 +183,6 @@ const QR = () => {
 				</Filter>
 				{display}
 			</div>
-			{error && (
-				<div className="flex h-40 items-center justify-center text-dark-color">
-					<p>{t("sign-in-to-access")}</p>
-				</div>
-			)}
 		</App>
 	);
 };
@@ -198,6 +195,8 @@ type RepeatedVisitor = {
 };
 
 const RepeatedVisitor = ({ hacker, presence, maxCheckIns, mutate }: RepeatedVisitor) => {
+	const { t } = useTranslation("qr");
+
 	const [counter, setCounter] = useState(0);
 
 	useEffect(() => {
@@ -208,11 +207,10 @@ const RepeatedVisitor = ({ hacker, presence, maxCheckIns, mutate }: RepeatedVisi
 		setCounter(counter + 1);
 		await mutate({ id: presence.id });
 	};
+
 	return (
 		<div className="flex flex-col items-center justify-center gap-4 rounded-lg bg-light-primary-color p-6 text-light-color">
-			<div>
-				{hacker.firstName} {hacker.lastName} has already checked-in {counter} times!
-			</div>
+			<div>{t("already-checked-in", { firstName: hacker.firstName, lastName: hacker.lastName, counter })}</div>
 			{!maxCheckIns || maxCheckIns > presence.value ? (
 				<button
 					className="z-10 w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
@@ -221,7 +219,13 @@ const RepeatedVisitor = ({ hacker, presence, maxCheckIns, mutate }: RepeatedVisi
 					Increment
 				</button>
 			) : (
-				<div>ERROR: Max {maxCheckIns} check-ins allowed!</div>
+				<Error
+					message={t("max-check-ins-reached", {
+						maxCheckIns,
+						firstName: hacker.firstName,
+						lastName: hacker.lastName,
+					})}
+				/>
 			)}
 		</div>
 	);
