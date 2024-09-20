@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
 import { useTranslation } from "next-i18next";
+import { useState } from "react";
 import type { ProcessedFieldGeneric } from "../../server/lib/apply";
 
 type SelectProps = {
