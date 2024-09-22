@@ -140,6 +140,7 @@ const QR = () => {
 		},
 		[handleScanResult],
 	);
+
 	return (
 		<App
 			className="relative flex h-full flex-col items-center justify-center gap-16 bg-default-gradient"
