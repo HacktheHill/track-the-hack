@@ -125,22 +125,19 @@ model Hacker {
   unsubscribed     Boolean @default(false)
   unsubscribeToken String? @unique @default(cuid())
 
-  confirmed Boolean @default(false)
-  walkIn    Boolean @default(false)
-  winner    Boolean @default(false)
+  confirmed     Boolean @default(false)
+  walkIn        Boolean @default(false)
 
-  Team           Team?      @relation(fields: [teamId], references: [id])
-  teamId         String?
-  User           User?      @relation(fields: [userId], references: [id])
-  userId         String?    @unique
-  presences      Presence[]
-  presenceInfoId String?
+  Team      Team?      @relation(fields: [teamId], references: [id])
+  teamId    String?
+  User      User?      @relation(fields: [userId], references: [id])
+  userId    String?    @unique
+  presences Presence[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
   @@index([userId])
-  @@index([presenceInfoId])
   @@index([teamId])
 }
 
