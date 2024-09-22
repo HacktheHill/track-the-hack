@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useTranslation } from "next-i18next";
 import type { ProcessedFieldGeneric } from "../../server/lib/apply";
 

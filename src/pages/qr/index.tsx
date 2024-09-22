@@ -47,7 +47,7 @@ const QR = () => {
 	const utils = trpc.useUtils();
 
 	const handleEvent = useCallback(
-		async (hackerId: string, hacker: Hacker, presences: Presence[]) => {
+		async (hacker: Hacker, presences: Presence[]) => {
 			const maxCheckIns = events?.find(event => event.name === selectedAction.current)?.maxCheckIns as
 				| number
 				| null;
@@ -55,47 +55,33 @@ const QR = () => {
 			// If hacker has already checked-in -> Show RepeatedVisitor component with increment button
 			for (const presence of presences) {
 				if (presence.label != selectedAction.current) continue;
-				try {
-					setDisplay(
-						<RepeatedVisitor
-							hacker={hacker}
-							presence={presence}
-							maxCheckIns={maxCheckIns}
-							mutate={presenceIncrementMutateAsync}
-						/>,
-					);
-					return;
-				} catch (error) {
-					if (error instanceof TRPCClientError) {
-						setDisplay(<Error message={error.message} />);
-						return;
-					}
-					setDisplay(<Error message={t("unknown-error")} />);
-					return;
-				}
+				return setDisplay(
+					<RepeatedVisitor
+						hacker={hacker}
+						presence={presence}
+						maxCheckIns={maxCheckIns}
+						incrementFn={presenceIncrementMutateAsync}
+					/>,
+				);
 			}
 
-			// First check-in
 			try {
-				await presenceUpsertMutateAsync({ hackerId, value: 1, label: selectedAction.current });
-				setDisplay(
-					<div className="flex flex-col items-center justify-center gap-4 rounded-lg bg-light-primary-color p-6 text-light-color">
-						{t("checked-in", {
-							firstName: hacker.firstName,
-							lastName: hacker.lastName,
-							event: selectedAction.current,
-						})}
-					</div>,
+				await presenceUpsertMutateAsync({ hackerId: hacker.id, value: 1, label: selectedAction.current });
+				return setDisplay(
+					<FirstTimeVisitor
+						hacker={hacker}
+						event={selectedAction.current}
+						upsertFn={presenceUpsertMutateAsync}
+					/>,
 				);
 			} catch (error) {
 				if (error instanceof TRPCClientError) {
-					setDisplay(<Error message={error.message} />);
-					return;
+					return setDisplay(<Error message={error.message} />);
 				}
-				setDisplay(<Error message={t("unknown-error")} />);
+				return setDisplay(<UnknownError />);
 			}
 		},
-		[events, presenceIncrementMutateAsync, presenceUpsertMutateAsync, t],
+		[events, presenceIncrementMutateAsync, presenceUpsertMutateAsync],
 	);
 
 	const handleScanResult = useCallback(
@@ -108,27 +94,27 @@ const QR = () => {
 			if (hackerId === "") return;
 
 			switch (selectedAction.current) {
-				case t(ACTIONS.NONE):
+				case ACTIONS.NONE:
 					break;
-				case t(ACTIONS.GET_HACKER):
+				case ACTIONS.GET_HACKER:
 					router.push(`/hackers/hacker?id=${hackerId}`);
 					break;
 				default:
 					try {
 						const hacker = await utils.hackers.get.fetch({ id: hackerId });
 						const presences = await utils.presence.getFromHackerId.fetch({ id: hackerId });
-						await handleEvent(hackerId, hacker, presences);
+						await handleEvent(hacker, presences);
 					} catch (error) {
 						if (error instanceof TRPCClientError) {
 							setDisplay(<Error message={error.message} />);
 							break;
 						}
-						setDisplay(<Error message={t("unknown-error")} />);
+						setDisplay(<UnknownError />);
 					}
 					break;
 			}
 		},
-		[handleEvent, router, t, utils.hackers.get, utils.presence.getFromHackerId],
+		[handleEvent, router, utils],
 	);
 
 	// Memoize function to prevent re-rendering QRScanner. QRScanner should never be re-rendered or it will break.
@@ -156,15 +142,20 @@ const QR = () => {
 								setDisplay(<></>);
 							}}
 						>
-							{[actions.map(action => t(action)), events?.map(event => event.name) ?? []]
-								.flat()
-								.map(event => {
-									return (
-										<option key={event} value={event}>
-											{event}
-										</option>
-									);
-								})}
+							{actions.map(event => {
+								return (
+									<option key={event} value={event}>
+										{t(event)}
+									</option>
+								);
+							})}
+							{events?.map(event => {
+								return (
+									<option key={event.name} value={event.name}>
+										{t(event.name)}
+									</option>
+								);
+							})}
 						</select>
 						{selectedAction.current !== ACTIONS.NONE ? <QRScanner onScan={onScan} /> : null}
 						<PhysicalScanner onScan={onScan} />
@@ -187,14 +178,40 @@ const QR = () => {
 	);
 };
 
+const UnknownError = () => {
+	const { t } = useTranslation("qr");
+
+	return <Error message={t("unknown-error")} />;
+};
+
+type FirstTimeVisitor = {
+	hacker: Hacker;
+	event: string;
+	upsertFn: (params: { hackerId: string; value: number; label: string }) => Promise<void>;
+};
+
+const FirstTimeVisitor = ({ hacker, event }: FirstTimeVisitor) => {
+	const { t } = useTranslation("qr");
+
+	return (
+		<div className="flex flex-col items-center justify-center gap-4 rounded-lg bg-light-primary-color p-6 text-light-color">
+			{t("checked-in", {
+				firstName: hacker.firstName,
+				lastName: hacker.lastName,
+				event: event,
+			})}
+		</div>
+	);
+};
+
 type RepeatedVisitor = {
 	hacker: Hacker;
 	presence: Presence;
 	maxCheckIns: number | null;
-	mutate: (params: { id: string }) => Promise<void>;
+	incrementFn: (params: { id: string; value: number }) => Promise<void>;
 };
 
-const RepeatedVisitor = ({ hacker, presence, maxCheckIns, mutate }: RepeatedVisitor) => {
+const RepeatedVisitor = ({ hacker, presence, maxCheckIns, incrementFn }: RepeatedVisitor) => {
 	const { t } = useTranslation("qr");
 
 	const [counter, setCounter] = useState(0);
@@ -203,21 +220,36 @@ const RepeatedVisitor = ({ hacker, presence, maxCheckIns, mutate }: RepeatedVisi
 		setCounter(presence.value);
 	}, [presence]);
 
-	const handleIncrement = async () => {
-		setCounter(counter + 1);
-		await mutate({ id: presence.id });
+	const handleIncrement = async (value: number) => {
+		setCounter(counter + value);
+		try {
+			await incrementFn({ id: presence.id, value });
+		} catch (error) {
+			if (error instanceof TRPCClientError) {
+				return <Error message={error.message} />;
+			}
+			return <UnknownError />;
+		}
 	};
 
 	return (
 		<div className="flex flex-col items-center justify-center gap-4 rounded-lg bg-light-primary-color p-6 text-light-color">
 			<div>{t("already-checked-in", { firstName: hacker.firstName, lastName: hacker.lastName, counter })}</div>
 			{!maxCheckIns || maxCheckIns > presence.value ? (
-				<button
-					className="z-10 w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
-					onClick={() => void handleIncrement()}
-				>
-					Increment
-				</button>
+				<div className="flex w-full justify-center gap-16">
+					<button
+						className="z-10 w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
+						onClick={() => void handleIncrement(-1)}
+					>
+						—
+					</button>
+					<button
+						className="z-10 w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
+						onClick={() => void handleIncrement(1)}
+					>
+						+
+					</button>
+				</div>
 			) : (
 				<Error
 					message={t("max-check-ins-reached", {
