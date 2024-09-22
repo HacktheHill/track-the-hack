@@ -143,7 +143,7 @@ export const hackerRouter = createTRPCRouter({
 				educationLevel?: { in: string[] };
 				major?: { in: string[] };
 				referralSource?: { in: string[] };
-				OR?: { firstName?: { contains: string }; lastName?: { contains: string } }[];
+				OR?: { firstName?: { contains: string }; lastName?: { contains: string }; email?: { contains: string } }[];
 			} = {};
 
 			if (search) {
@@ -155,6 +155,11 @@ export const hackerRouter = createTRPCRouter({
 					},
 					{
 						lastName: {
+							contains: search,
+						},
+					},
+					{
+						email: {
 							contains: search,
 						},
 					},
