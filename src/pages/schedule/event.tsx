@@ -62,7 +62,7 @@ const Event: NextPage = () => {
 			integrated={true}
 		>
 			<button
-				className="absolute right-4 top-0 text-dark-color hover:text-light-color"
+				className="absolute right-4 top-4 text-dark-primary-color transition-all duration-500 hover:scale-110 hover:text-dark-color"
 				onClick={() => router.back()}
 			>
 				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -84,8 +84,8 @@ const Event: NextPage = () => {
 				</svg>
 			</button>
 
-			<div className="flex flex-col font-coolvetica text-dark-color">
-				<h1 className="text-4xl">{name}</h1>
+			<div className="flex flex-col font-rubik text-dark-color">
+				<h1 className="font-coolvetica text-4xl">{name}</h1>
 				<p className="text-lg">
 					{start.toLocaleDateString(dateLocale, {
 						weekday: "long",
@@ -121,7 +121,7 @@ const Event: NextPage = () => {
 				</Link>
 			)}
 
-			<div className="flex flex-col font-coolvetica">
+			<div className="flex flex-col font-rubik">
 				<p className="text-xl">
 					{description.split("\\n").map((line, i, arr) => (
 						<span key={i}>
