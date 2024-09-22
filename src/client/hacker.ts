@@ -210,6 +210,18 @@ export const getHackerFields = (hackerData: Hacker, acceptance: boolean) => {
 				value: hackerData.acceptanceExpiry?.toISOString().split("T")[0] ?? null,
 				type: "text",
 			},
+			{
+				name: "confirmed",
+				value: hackerData.confirmed ? "true" : "false",
+				type: "select",
+				options: ["true", "false"],
+			},
+			{
+				name: "walkIn",
+				value: hackerData.walkIn ? "true" : "false",
+				type: "select",
+				options: ["true", "false"],
+			},
 		],
 	} as const satisfies Record<string, Field[]>;
 };
