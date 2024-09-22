@@ -95,12 +95,12 @@ export const hackerRouter = createTRPCRouter({
 			z
 				.object({
 					limit: z.number().min(1).max(100),
-					cursor: z.string().nullish(),
-					schools: z.array(z.string()).optional(),
-					currentLevelsOfStudy: z.array(z.string()).optional(),
-					programs: z.array(z.string()).optional(),
-					graduationYears: z.array(z.number()).optional(),
+					search: z.string().optional(),
+					currentSchoolOrganizations: z.array(z.string()).optional(),
+					educationLevels: z.array(z.string()).optional(),
+					majors: z.array(z.string()).optional(),
 					referralSources: z.array(z.string()).optional(),
+					cursor: z.string().nullish(),
 				})
 				.optional(),
 		)
@@ -135,34 +135,46 @@ export const hackerRouter = createTRPCRouter({
 				};
 			}
 
-			const { limit, cursor, schools, currentLevelsOfStudy, programs, graduationYears } = input;
+			const { limit, cursor, search, currentSchoolOrganizations, educationLevels, majors, referralSources } =
+				input;
 
 			const queryConditions: {
-				university?: { in: string[] } | null;
-				studyLevel?: { in: string[] } | null;
-				studyProgram?: { in: string[] } | null;
-				graduationYear?: { in: number[] } | null;
+				currentSchoolOrganization?: { in: string[] };
+				educationLevel?: { in: string[] };
+				major?: { in: string[] };
 				referralSource?: { in: string[] };
+				OR?: { firstName?: { contains: string }; lastName?: { contains: string } }[];
 			} = {};
 
-			if (schools && schools.length > 0) {
-				queryConditions.university = { in: schools };
+			if (search) {
+				queryConditions.OR = [
+					{
+						firstName: {
+							contains: search,
+						},
+					},
+					{
+						lastName: {
+							contains: search,
+						},
+					},
+				];
 			}
 
-			if (currentLevelsOfStudy && currentLevelsOfStudy.length > 0) {
-				queryConditions.studyLevel = { in: currentLevelsOfStudy };
+			if (currentSchoolOrganizations && currentSchoolOrganizations.length > 0) {
+				queryConditions.currentSchoolOrganization = { in: currentSchoolOrganizations };
 			}
 
-			if (programs && programs.length > 0) {
-				queryConditions.studyProgram = { in: programs };
+			if (educationLevels && educationLevels.length > 0) {
+				queryConditions.educationLevel = { in: educationLevels };
 			}
 
-			if (graduationYears && graduationYears.length > 0) {
-				queryConditions.graduationYear = { in: graduationYears };
+			if (majors && majors.length > 0) {
+				queryConditions.major = { in: majors };
 			}
 
-			if (input.referralSources && input.referralSources.length > 0) {
-				queryConditions.referralSource = { in: input.referralSources };
+			if (referralSources && referralSources.length > 0) {
+				queryConditions.referralSource = { in: referralSources };
 			}
 
 			const results = await ctx.prisma.hacker.findMany({
