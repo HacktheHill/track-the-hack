@@ -33,4 +33,21 @@ export const eventsRouter = createTRPCRouter({
 
 		return events;
 	}),
+
+	// Get all future events
+	future: publicProcedure.query(async ({ ctx }) => {
+		const events = await ctx.prisma.event.findMany({
+			where: {
+				start: {
+					gt: new Date(),
+				},
+			},
+		});
+
+		if (!events) {
+			throw new Error("No events found");
+		}
+
+		return events;
+	}),
 });
