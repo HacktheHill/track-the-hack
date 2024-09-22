@@ -10,7 +10,7 @@
 	"ethnicityDistribution": "Ethnicity Distribution",
 	"ageDistribution": "Age Distribution",
 	"locationDistribution": "Location Distribution",
-	"studyLevelDistribution": "Study Level Distribution",
+	"educationLevelDistribution": "Education Level Distribution",
 	"referralSource": "Referral Source",
 	"majorsDistribution": "Majors Distribution",
 	"major": "Major"
