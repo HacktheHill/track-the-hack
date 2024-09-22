@@ -128,6 +128,7 @@ export const presenceRouter = createTRPCRouter({
 		.input(
 			z.object({
 				id: z.string(),
+				value: z.number().optional().default(1),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -160,7 +161,7 @@ export const presenceRouter = createTRPCRouter({
 				},
 				data: {
 					value: {
-						increment: 1,
+						increment: input.value,
 					},
 				},
 			});
