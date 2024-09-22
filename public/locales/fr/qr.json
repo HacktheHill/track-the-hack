@@ -4,11 +4,11 @@
 	"scan-qr": "Prêt à scanner un code QR",
 	"no-hacker": "Aucun hacker trouvé avec ce compte.",
 	"qr-failed": "Échec de la génération du code QR.",
-	"checked-in": "Enregistré {firstName} {lastName} pour {event}",
+	"checked-in": "Enregistré {{firstName}} {{lastName}} pour {{event}}",
 	"actions": {
 		"none": "Sélectionner une action",
 		"get-hacker": "Obtenir le hacker"
 	},
-	"already-checked-in": "{firstName} {lastName} s'est déjà enregistré {counter} fois!",
-	"max-check-ins-reached": "Vous avez atteint le maximum de {maxCheckIns} enregistrements pour {firstName} {lastName}!"
+	"already-checked-in": "{{firstName}} {{lastName}} s'est déjà enregistré {{counter}} fois!",
+	"max-check-ins-reached": "Vous avez atteint le maximum de {{maxCheckIns}} enregistrements pour {{firstName}} {{lastName}}!"
 }
