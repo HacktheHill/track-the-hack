@@ -314,7 +314,11 @@ const HackerPage: NextPage<{
 													<input {...fieldAttributes} />
 												)
 											) : (
-												<p>{fieldAttributes.value}</p>
+												<p>
+													{field.type === "select" && field.value
+														? t(`${categoryName}.${field.name}.${field.value}`)
+														: field.value}
+												</p>
 											)}
 										</div>
 									);
