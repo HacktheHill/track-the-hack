@@ -105,7 +105,6 @@ const generateHackerData = () => {
 		confirmed: faker.datatype.boolean(),
 		unsubscribed: faker.datatype.boolean(),
 		walkIn: faker.datatype.boolean(),
-		winner: faker.datatype.boolean(),
 	};
 };
 
