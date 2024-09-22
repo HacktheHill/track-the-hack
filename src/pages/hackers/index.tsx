@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { trpc } from "../../server/api/api";
 import { debounce } from "../../utils/helpers";
 
+import { t } from "i18next";
 import type { GetServerSideProps } from "next";
 import { getServerSession } from "next-auth/next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
@@ -17,45 +18,68 @@ import Loading from "../../components/Loading";
 import { rolesRedirect } from "../../server/lib/redirects";
 import { getAuthOptions } from "../api/auth/[...nextauth]";
 
+interface Filters {
+	currentSchoolOrganizations: string[];
+	educationLevels: string[];
+	majors: string[];
+	referralSources: string[];
+}
+
 const Hackers: NextPage = () => {
-	interface Filters {
-		[key: string]: string[];
-	}
-
-	const [filters, setFilters] = useState<Filters>({
-		schools: [],
-		educationLevels: [],
-		major: [],
-		graduationYears: [],
-		attendanceTypes: [],
-	});
-
-	const { status, isFetching, hasNextPage, ...query } = trpc.hackers.all.useInfiniteQuery(
-		{
-			limit: 50,
-			schools: filters.schools,
-			educationLevels: filters.educationLevels,
-			major: filters.major,
-			graduationsYears: filters.graduationYears,
-			attendanceTypes: filters.attendanceTypes,
-		},
-		{
-			getNextPageParam: lastPage => lastPage.nextCursor,
-		},
-	);
+	let filterBy = {
+		currentSchoolOrganizations: [] as string[],
+		educationLevels: [] as string[],
+		majors: [] as string[],
+		referralSources: [] as string[],
+	} as Filters;
 
 	const { t } = useTranslation("hackers");
 
 	const scrollRef = useRef<HTMLDivElement>(null);
 
+	const [inputSearch, setInputSearch] = useState("");
+	const [debouncedSearch, setDebouncedSearch] = useState("");
+	const [filters, setFilters] = useState<Filters>({
+		currentSchoolOrganizations: [],
+		educationLevels: [],
+		majors: [],
+		referralSources: [],
+	});
 	const [sidebarVisible, setSidebarVisible] = useState(false);
-
-	const [search, setSearch] = useState("");
 	const [columns, setColumns] = useState(4);
 
-	function toggleFilter() {
-		setSidebarVisible(!sidebarVisible);
+	useEffect(() => {
+		const handler = setTimeout(() => {
+			setDebouncedSearch(inputSearch);
+		}, 500);
+
+		return () => {
+			clearTimeout(handler);
+		};
+	}, [inputSearch]);
+
+	const { status, isFetching, hasNextPage, ...query } = trpc.hackers.all.useInfiniteQuery(
+		{
+			limit: 50,
+			search: debouncedSearch,
+			currentSchoolOrganizations: filters.currentSchoolOrganizations,
+			educationLevels: filters.educationLevels,
+			majors: filters.majors,
+			referralSources: filters.referralSources,
+		},
+		{
+			getNextPageParam: lastPage => lastPage.nextCursor,
+		},
+	);
+	const { data } = trpc.hackers.filterOptions.useQuery();
+
+	if (data) {
+		filterBy = data.filterOptions;
 	}
+
+	const hackers = query.data?.pages.map(page => page.results).flat();
+
+	const toggleFilter = () => setSidebarVisible(!sidebarVisible);
 
 	const updateColumns = useCallback(() => {
 		setColumns(Math.floor(window.innerWidth / 300));
@@ -80,53 +104,6 @@ const Hackers: NextPage = () => {
 		};
 	}, [updateColumns]);
 
-	let filterBy = {
-		currentSchoolOrganizations: [],
-		educationLevels: [],
-		majors: [],
-		referralSources: [],
-	} as {
-		currentSchoolOrganizations: string[];
-		educationLevels: string[];
-		majors: string[];
-		referralSources: string[];
-	};
-
-	const { data } = trpc.hackers.filterOptions.useQuery();
-
-	if (data) {
-		filterBy = data.filterOptions;
-	}
-
-	if (status === "loading") {
-		return (
-			<App className="h-full bg-default-gradient px-16 py-12">
-				<Filter value={[RoleName.ORGANIZER, RoleName.MAYOR, RoleName.PREMIER]} method="some">
-					<Loading />
-					<Error message={t("common:unauthorized")} />
-				</Filter>
-			</App>
-		);
-	} else if (status === "error") {
-		return (
-			<App className="h-full bg-default-gradient px-16 py-12">
-				<Error message={query.error?.message ?? ""} />
-			</App>
-		);
-	}
-
-	const hackers = query.data?.pages.map(page => page.results).flat();
-
-	const filteredQuery =
-		search.length == 0
-			? hackers
-			: hackers?.filter(
-					hacker =>
-						hacker.currentSchoolOrganization?.toLowerCase().includes(search.toLowerCase()) ||
-						hacker.major?.toLowerCase().includes(search.toLowerCase()) ||
-						`${hacker.firstName} ${hacker.lastName}`.toLowerCase().includes(search.toLowerCase()),
-				);
-
 	return (
 		<App
 			className="flex flex-col overflow-y-auto bg-default-gradient"
@@ -142,7 +119,7 @@ const Hackers: NextPage = () => {
 					>
 						Filters
 					</button>
-					<Search setSearch={setSearch} />
+					<Search search={inputSearch} setSearch={setInputSearch} />
 				</div>
 			</div>
 			<div className="flex flex-row" ref={scrollRef}>
@@ -154,11 +131,9 @@ const Hackers: NextPage = () => {
 				/>
 				<div
 					className="mx-auto grid h-fit flex-col gap-4 overflow-x-hidden px-4 py-4 sm:px-10"
-					style={{
-						gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
-					}}
+					style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
 				>
-					{filteredQuery?.map(hacker => (
+					{hackers?.map(hacker => (
 						<Card
 							key={hacker.id}
 							id={hacker.id}
@@ -170,7 +145,7 @@ const Hackers: NextPage = () => {
 					))}
 				</div>
 			</div>
-			{filteredQuery?.length == 0 && (
+			{hackers?.length == 0 && (
 				<div className="flex h-full w-full flex-col items-center justify-center gap-4 text-2xl text-dark-color">
 					<svg className="h-20 w-20" fill="currentColor" viewBox="0 0 24 24">
 						<path d="M10 0h24v24H0z" fill="none" />
@@ -195,7 +170,7 @@ const Card = ({ firstName, lastName, currentSchoolOrganization, major, id }: Car
 		>
 			<Filter value={[RoleName.ACCEPTANCE]} method="some" silent>
 				<button
-					className="text-[8pt] absolute right-2 top-1"
+					className="absolute right-2 top-1 text-[8pt]"
 					onClick={e => {
 						e.preventDefault();
 						e.stopPropagation();
@@ -215,10 +190,11 @@ const Card = ({ firstName, lastName, currentSchoolOrganization, major, id }: Car
 };
 
 type SearchProps = {
-	setSearch: (search: string) => void;
+	search: string;
+	setSearch: (value: string) => void;
 };
 
-const Search = ({ setSearch }: SearchProps) => {
+const Search = ({ search, setSearch }: SearchProps) => {
 	return (
 		<div className="relative mx-auto flex max-w-xl flex-col ">
 			<div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-dark-color">
@@ -243,8 +219,9 @@ const Search = ({ setSearch }: SearchProps) => {
 				id="search"
 				name="search"
 				className="block w-full rounded-lg bg-light-tertiary-color p-4 pl-12 text-sm placeholder:text-dark-color"
-				placeholder="Search Hackers"
+				placeholder={t("search-hackers")}
 				onChange={event => setSearch(event.target.value)}
+				value={search}
 			/>
 		</div>
 	);
