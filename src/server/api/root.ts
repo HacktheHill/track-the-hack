@@ -5,6 +5,7 @@ import { presenceRouter } from "./routers/presence";
 import { teamsRouter } from "./routers/teams";
 import { sponsorshipGmailDraftsRouter } from "./routers/sponsorshipGmailDrafts";
 import { userRouter } from "./routers/users";
+import { metricsRoute } from "./routers/metrics";
 import { createTRPCRouter } from "./trpc";
 
 /**
@@ -20,6 +21,7 @@ export const appRouter = createTRPCRouter({
 	sponsorshipGmailDrafts: sponsorshipGmailDraftsRouter,
 	log: logRouter,
 	teams: teamsRouter,
+	metrics: metricsRoute,
 });
 
 // export type definition of API
