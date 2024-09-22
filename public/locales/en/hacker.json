@@ -101,7 +101,17 @@
 			"belowStandards": "Below standards",
 			"none": "None"
 		},
-		"acceptanceExpiry": "Acceptance Expiry"
+		"acceptanceExpiry": "Acceptance Expiry",
+		"confirmed": {
+			"label": "Confirmed",
+			"true": "Yes",
+			"false": "No"
+		},
+		"walkIn": {
+			"label": "Walk-in",
+			"true": "Yes",
+			"false": "No"
+		}
 	},
 	"next": "Next",
 	"previous": "Previous",
