@@ -7,14 +7,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { trpc } from "../../server/api/api";
 import { debounce } from "../../utils/helpers";
 
-import { t } from "i18next";
 import type { GetServerSideProps } from "next";
 import { getServerSession } from "next-auth/next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import App from "../../components/App";
-import Error from "../../components/Error";
 import Filter from "../../components/Filter";
-import Loading from "../../components/Loading";
 import { rolesRedirect } from "../../server/lib/redirects";
 import { getAuthOptions } from "../api/auth/[...nextauth]";
 
@@ -26,6 +23,8 @@ interface Filters {
 }
 
 const Hackers: NextPage = () => {
+	const { t } = useTranslation("hackers");
+
 	let filterBy = {
 		currentSchoolOrganizations: [] as string[],
 		educationLevels: [] as string[],
@@ -33,10 +32,7 @@ const Hackers: NextPage = () => {
 		referralSources: [] as string[],
 	} as Filters;
 
-	const { t } = useTranslation("hackers");
-
 	const scrollRef = useRef<HTMLDivElement>(null);
-
 	const [inputSearch, setInputSearch] = useState("");
 	const [debouncedSearch, setDebouncedSearch] = useState("");
 	const [filters, setFilters] = useState<Filters>({
@@ -58,7 +54,7 @@ const Hackers: NextPage = () => {
 		};
 	}, [inputSearch]);
 
-	const { status, isFetching, hasNextPage, ...query } = trpc.hackers.all.useInfiniteQuery(
+	const { isFetching, hasNextPage, ...query } = trpc.hackers.all.useInfiniteQuery(
 		{
 			limit: 50,
 			search: debouncedSearch,
@@ -71,6 +67,7 @@ const Hackers: NextPage = () => {
 			getNextPageParam: lastPage => lastPage.nextCursor,
 		},
 	);
+
 	const { data } = trpc.hackers.filterOptions.useQuery();
 
 	if (data) {
@@ -117,7 +114,7 @@ const Hackers: NextPage = () => {
 						className="border-dark m-1 mr-3 rounded-xl bg-medium-primary-color px-6 text-sm text-light-color"
 						onClick={toggleFilter}
 					>
-						Filters
+						{t("filterSection.filtersButton")}
 					</button>
 					<Search search={inputSearch} setSearch={setInputSearch} />
 				</div>
@@ -143,17 +140,17 @@ const Hackers: NextPage = () => {
 							major={hacker.major}
 						/>
 					))}
+					{hackers?.length === 0 && (
+						<div className="flex h-full w-full flex-col items-center justify-center gap-4 text-2xl text-dark-color">
+							<svg className="h-20 w-20" fill="currentColor" viewBox="0 0 24 24">
+								<path d="M10 0h24v24H0z" fill="none" />
+								<path d="M14 2C14 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+							</svg>
+							<p>{t("filterSection.noHackersFound")}</p>
+						</div>
+					)}
 				</div>
 			</div>
-			{hackers?.length == 0 && (
-				<div className="flex h-full w-full flex-col items-center justify-center gap-4 text-2xl text-dark-color">
-					<svg className="h-20 w-20" fill="currentColor" viewBox="0 0 24 24">
-						<path d="M10 0h24v24H0z" fill="none" />
-						<path d="M14 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
-					</svg>
-					<p>No hackers found</p>
-				</div>
-			)}
 		</App>
 	);
 };
@@ -162,6 +159,7 @@ type CardProps = Pick<Hacker, "currentSchoolOrganization" | "firstName" | "lastN
 
 const Card = ({ firstName, lastName, currentSchoolOrganization, major, id }: CardProps) => {
 	const [copied, setCopied] = useState(false);
+	const { t } = useTranslation("hackers");
 
 	return (
 		<Link
@@ -179,7 +177,7 @@ const Card = ({ firstName, lastName, currentSchoolOrganization, major, id }: Car
 						setTimeout(() => setCopied(false), 2000);
 					}}
 				>
-					<small>{copied ? "Copied" : id}</small>
+					<small>{copied ? t("card.copied") : t("card.copyID")}</small>
 				</button>
 			</Filter>
 			<h3 className="text-2xl font-bold tracking-tight">{`${firstName} ${lastName}`}</h3>
@@ -195,8 +193,10 @@ type SearchProps = {
 };
 
 const Search = ({ search, setSearch }: SearchProps) => {
+	const { t } = useTranslation("hackers");
+
 	return (
-		<div className="relative mx-auto flex max-w-xl flex-col ">
+		<div className="relative mx-auto flex max-w-xl flex-col">
 			<div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-dark-color">
 				<svg
 					aria-hidden="true"
@@ -219,7 +219,7 @@ const Search = ({ search, setSearch }: SearchProps) => {
 				id="search"
 				name="search"
 				className="block w-full rounded-lg bg-light-tertiary-color p-4 pl-12 text-sm placeholder:text-dark-color"
-				placeholder={t("search-hackers")}
+				placeholder={t("searchPlaceholder")}
 				onChange={event => setSearch(event.target.value)}
 				value={search}
 			/>
@@ -244,7 +244,9 @@ type FilterProps = {
 };
 
 const FilterOptions = ({ filters, setFilters, filterOptions, sidebarVisible }: FilterProps) => {
-	const handleCheckBox = (option: string, filterSection: string) => {
+	const { t } = useTranslation("hackers");
+
+	const handleCheckBox = (option: string, filterSection: keyof Filters) => {
 		if (filters[filterSection]?.[0] === option) {
 			const tempFilters = { ...filters, [filterSection]: [] };
 			setFilters(tempFilters);
@@ -254,113 +256,48 @@ const FilterOptions = ({ filters, setFilters, filterOptions, sidebarVisible }: F
 		}
 	};
 
+	const renderFilterSection = (options: string[], filterSection: keyof Filters) => (
+		<li className="block">
+			<div className="text-dark font-bold">{t(`filterSection.${filterSection}`)}</div>
+			<ul className="flex flex-wrap gap-2">
+				{options?.map(option => (
+					<li key={option} className="flex w-full">
+						<input
+							id={`${filterSection}-${option}`}
+							type="checkbox"
+							className="hidden"
+							checked={filters[filterSection]?.[0] === option}
+							onChange={() => handleCheckBox(option, filterSection)}
+						/>
+						<label
+							htmlFor={`${filterSection}-${option}`}
+							className={`w-full cursor-pointer rounded-lg border-2 border-dark-color px-4 py-2 text-center ${
+								filters[filterSection]?.[0] === option
+									? "bg-medium-primary-color text-light-color"
+									: "bg-light-tertiary-color text-dark-color"
+							} transition-all duration-200 hover:bg-medium-primary-color hover:text-light-color`}
+						>
+							{`${option.charAt(0).toUpperCase()}${option.slice(1)}`}
+						</label>
+					</li>
+				))}
+			</ul>
+		</li>
+	);
+
 	return (
 		<>
 			{sidebarVisible && (
-				<div className="border-dark text-dark ml-10 mt-5 flex flex-col align-middle">
-					<div className="z-40 w-60 rounded-lg border-b border-dark-color bg-light-quaternary-color p-5 text-center ">
-						<div className="mb-4 font-bold lg:text-lg xl:text-xl">Filter Options</div>
-						<ul>
-							<li className="mb-4">
-								<div className="text-dark mb-2 text-left font-bold lg:text-base xl:text-lg">
-									Level of Study
-								</div>
-								<ul>
-									{filterOptions.educationLevels?.map(option => (
-										<li key={option} className="text-dark mb-2 flex items-center justify-between">
-											<span>
-												{option.charAt(0).toUpperCase()}
-												{option.slice(1)}
-											</span>
-											<input
-												type="checkbox"
-												className="h-6 w-6"
-												checked={
-													filters["educationLevels"]
-														? filters["educationLevels"][0] == option
-														: false
-												}
-												onChange={() => {
-													handleCheckBox(option, "educationLevels");
-												}}
-											/>
-										</li>
-									))}
-								</ul>
-							</li>
-							<li>
-								<div className="text-dark mb-2 text-left font-bold lg:text-base xl:text-lg">School</div>
-								<ul>
-									{filterOptions.currentSchoolOrganizations?.map(option => (
-										<li key={option} className="text-dark mb-2 flex items-center justify-between">
-											<span>
-												{option.charAt(0).toUpperCase()}
-												{option.slice(1)}
-											</span>
-											<input
-												checked={
-													filters["currentSchoolOrganizations"]
-														? filters["currentSchoolOrganizations"][0] == option
-														: false
-												}
-												onChange={() => {
-													handleCheckBox(option, "currentSchoolOrganizations");
-												}}
-												type="checkbox"
-												className="z-50 h-6 w-6"
-											/>
-										</li>
-									))}
-								</ul>
-							</li>
-							<li>
-								<div className="text-dark mb-2 text-left font-bold lg:text-base xl:text-lg">Major</div>
-								<ul>
-									{filterOptions.majors?.map(option => (
-										<li key={option} className="text-dark mb-2 flex items-center justify-between">
-											<span>
-												{option.charAt(0).toUpperCase()}
-												{option.slice(1)}
-											</span>
-											<input
-												checked={filters["majors"] ? filters["majors"][0] == option : false}
-												onChange={() => {
-													handleCheckBox(option, "majors");
-												}}
-												type="checkbox"
-												className="z-50 h-6 w-6"
-											/>
-										</li>
-									))}
-								</ul>
-							</li>
-							<li>
-								<div className="text-dark mb-2 text-left font-bold lg:text-base xl:text-lg">
-									Referral Source
-								</div>
-								<ul>
-									{filterOptions.referralSources?.map(option => (
-										<li key={option} className="text-dark mb-2 flex items-center justify-between">
-											<span>
-												{option.charAt(0).toUpperCase()}
-												{option.slice(1)}
-											</span>
-											<input
-												checked={
-													filters["referralSources"]
-														? filters["referralSources"][0] == option
-														: false
-												}
-												onChange={() => {
-													handleCheckBox(option, "referralSources");
-												}}
-												type="checkbox"
-												className="z-50 h-6 w-6"
-											/>
-										</li>
-									))}
-								</ul>
-							</li>
+				<div className="border-dark text-dark flex flex-col">
+					<div className="m-4 w-60 rounded-lg border-dark-color bg-light-quaternary-color p-4 text-center">
+						<ul className="flex flex-col gap-4">
+							{renderFilterSection(filterOptions.educationLevels, "educationLevels")}
+							{renderFilterSection(
+								filterOptions.currentSchoolOrganizations,
+								"currentSchoolOrganizations",
+							)}
+							{renderFilterSection(filterOptions.majors, "majors")}
+							{renderFilterSection(filterOptions.referralSources, "referralSources")}
 						</ul>
 					</div>
 				</div>
