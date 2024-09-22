@@ -101,7 +101,7 @@ const Hackers: NextPage = () => {
 	if (status === "loading") {
 		return (
 			<App className="h-full bg-default-gradient px-16 py-12">
-				<Filter value={[RoleName.ORGANIZER, RoleName.SPONSOR]} method="some">
+				<Filter value={[RoleName.ORGANIZER, RoleName.MAYOR, RoleName.PREMIER]} method="some">
 					<Loading />
 					<Error message={t("common:unauthorized")} />
 				</Filter>
@@ -395,7 +395,7 @@ const FilterOptions = ({ filters, setFilters, filterOptions, sidebarVisible }: F
 export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
 	const session = await getServerSession(req, res, getAuthOptions(req));
 	return {
-		redirect: await rolesRedirect(session, "/hackers", [RoleName.ORGANIZER, RoleName.SPONSOR]),
+		redirect: await rolesRedirect(session, "/hackers", [RoleName.ORGANIZER, RoleName.MAYOR, RoleName.PREMIER]),
 		props: {
 			...(await serverSideTranslations(locale ?? "en", ["hackers", "navbar", "common"])),
 		},

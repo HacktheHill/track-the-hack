@@ -123,7 +123,7 @@ export const hackerRouter = createTRPCRouter({
 				throw new Error("User not found");
 			}
 
-			if (!hasRoles(user, [RoleName.SPONSOR, RoleName.ORGANIZER])) {
+			if (!hasRoles(user, [RoleName.MAYOR, RoleName.PREMIER, RoleName.ORGANIZER])) {
 				throw new Error("You do not have permission to do this");
 			}
 
@@ -207,7 +207,7 @@ export const hackerRouter = createTRPCRouter({
 			throw new Error("User not found");
 		}
 
-		if (!hasRoles(user, [RoleName.SPONSOR, RoleName.ORGANIZER])) {
+		if (!hasRoles(user, [RoleName.MAYOR, RoleName.PREMIER, RoleName.ORGANIZER])) {
 			throw new Error("You do not have permission to do this");
 		}
 
