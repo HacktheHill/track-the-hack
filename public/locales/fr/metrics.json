@@ -1,0 +1,17 @@
+{
+	"metrics": "Statistiques",
+	"overview": "Vue d'ensemble",
+	"applied": "Candidatures",
+	"confirmed": "Confirmé",
+	"checkedIn": "Enregistré",
+	"walkIn": "Sans inscription",
+	"attendance": "Présence",
+	"genderDistribution": "Répartition par sexe",
+	"ethnicityDistribution": "Répartition ethnique",
+	"ageDistribution": "Répartition par âge",
+	"locationDistribution": "Répartition géographique",
+	"yearOfStudyDistribution": "Répartition par année d'études",
+	"referralSource": "Source de référence",
+	"majorsDistribution": "Répartition des majeures",
+	"major": "Majeure"
+}
