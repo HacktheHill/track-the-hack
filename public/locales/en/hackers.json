@@ -1,3 +1,17 @@
 {
-	"title": "Hackers"
+	"title": "Hackers",
+	"filterSection": {
+		"educationLevels": "Level of Study",
+		"currentSchoolOrganizations": "School",
+		"majors": "Major",
+		"referralSources": "Referral Source",
+		"filtersButton": "Filters",
+		"noHackersFound": "No hackers found"
+	},
+	"searchPlaceholder": "Search hackers...",
+	"copied": "Copied",
+	"card": {
+		"copied": "Copied",
+		"copyID": "Copy ID"
+	}
 }
