@@ -82,7 +82,7 @@ const Links = ({ bottom }: LinkProps) => {
 						href="/metrics"
 						bottom={bottom}
 						text={t("metrics")}
-						src="/assets/list.svg"
+						src="/assets/metrics.svg"
 						alt={t("metrics")}
 					/>
 				</Filter>
