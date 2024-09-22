@@ -694,10 +694,7 @@ const SponsorshipGmailDrafts: NextPage = () => {
 export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
 	const session = await getServerSession(req, res, getAuthOptions(req));
 	return {
-		redirect: await rolesRedirect(session, "/internal/sponsorship-gmail-drafts", [
-			RoleName.ORGANIZER,
-			RoleName.SPONSOR,
-		]),
+		redirect: await rolesRedirect(session, "/internal/sponsorship-gmail-drafts", [RoleName.ORGANIZER]),
 		props: {
 			...(await serverSideTranslations(locale ?? "en", ["sponsorship-gmail-drafts", "navbar", "common"])),
 		},

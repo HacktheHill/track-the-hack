@@ -160,7 +160,7 @@ const HackerPage: NextPage<{
 	if (hackerQuery.isLoading || hackerQuery.data == null) {
 		return (
 			<App className="h-full bg-default-gradient px-16 py-12">
-				<Filter value={[RoleName.ORGANIZER, RoleName.SPONSOR]} method="some">
+				<Filter value={[RoleName.ORGANIZER, RoleName.MAYOR, RoleName.PREMIER]} method="some">
 					<Loading />
 					<Error message={t("common:unauthorized")} />
 				</Filter>

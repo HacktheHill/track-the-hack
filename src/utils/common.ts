@@ -1,7 +1,13 @@
 import { AcceptanceStatus, Locale, RoleName, TShirtSize } from "@prisma/client";
 import { z } from "zod";
 
-export const roleHierarchy: RoleName[] = [RoleName.HACKER, RoleName.SPONSOR, RoleName.ORGANIZER, RoleName.ADMIN];
+export const roleHierarchy: RoleName[] = [
+	RoleName.HACKER,
+	RoleName.MAYOR,
+	RoleName.PREMIER,
+	RoleName.ORGANIZER,
+	RoleName.ADMIN,
+];
 
 // prettier-ignore
 export const countryCodes = [

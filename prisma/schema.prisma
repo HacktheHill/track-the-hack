@@ -219,8 +219,9 @@ enum RoleName {
   ADMIN
   HACKER
   ORGANIZER
-  SPONSOR
   ACCEPTANCE
+  MAYOR
+  PREMIER
 }
 
 enum EventType {
