@@ -1,0 +1,17 @@
+{
+	"title": "Metrics",
+	"overview": "Overview",
+	"applied": "Applied",
+	"confirmed": "Confirmed",
+	"checkedIn": "Checked-In",
+	"walkIn": "Walk-In",
+	"attendance": "Attendance",
+	"genderDistribution": "Gender Distribution",
+	"ethnicityDistribution": "Ethnicity Distribution",
+	"ageDistribution": "Age Distribution",
+	"locationDistribution": "Location Distribution",
+	"studyLevelDistribution": "Study Level Distribution",
+	"referralSource": "Referral Source",
+	"majorsDistribution": "Majors Distribution",
+	"major": "Major"
+}

@@ -40,12 +40,6 @@ const Internal: NextPage = () => {
 						>
 							{t("sponsorship-gmail-drafts")}
 						</Link>
-						<Link
-							href="/internal/metrics"
-							className="cursor-pointer whitespace-nowrap rounded-xl border-none bg-medium-primary-color px-8 py-2 font-rubik text-light-color shadow-md transition-all duration-500 hover:bg-light-primary-color"
-						>
-							{t("metrics")}
-						</Link>
 					</div>
 				</div>
 			</Filter>

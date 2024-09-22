@@ -76,6 +76,17 @@ const Links = ({ bottom }: LinkProps) => {
 					/>
 				</Filter>
 			)}
+			{sessionData?.user && (
+				<Filter value={[RoleName.PREMIER, RoleName.ORGANIZER]} silent method="some">
+					<LinkItem
+						href="/metrics"
+						bottom={bottom}
+						text={t("metrics")}
+						src="/assets/list.svg"
+						alt={t("metrics")}
+					/>
+				</Filter>
+			)}
 			{sessionData?.user && sessionData.user.hackerId && (
 				<Filter value={[RoleName.HACKER]} silent method="only">
 					<LinkItem
@@ -115,11 +126,7 @@ const Navbar = ({ integrated }: NavbarProps) => {
 			}`}
 			aria-label={t("navigation")}
 		>
-			<div
-				className={`${
-					integrated ? "items-center justify-center" : "justify-between"
-				} flex w-full  font-coolvetica mobile:w-auto`}
-			>
+			<div className="flex w-full justify-between font-coolvetica mobile:w-auto">
 				<Link href="/">
 					<Image
 						className="block"
