@@ -1,6 +1,4 @@
 import { RoleName, type Hacker } from "@prisma/client";
-import { observable } from "@trpc/server/observable";
-import { EventEmitter } from "events";
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
@@ -10,24 +8,7 @@ import { sendApplyEmail } from "../../lib/email";
 import { log } from "../../lib/log";
 import { generatePresignedGetUrl, generatePresignedPutUrl, generateS3Filename } from "../../lib/s3";
 
-const ee = new EventEmitter();
-
 export const hackerRouter = createTRPCRouter({
-	onMutation: publicProcedure.subscription(() => {
-		// return an `observable` with a callback which is triggered immediately
-		return observable<Hacker>(emit => {
-			const onMutation = (data: Hacker) => {
-				// emit data to client
-				emit.next(data);
-			};
-			// trigger `onMutation()` when `add` is triggered in our event emitter
-			ee.on("add", onMutation);
-			// unsubscribe function when client disconnects or stops subscribing
-			return () => {
-				ee.off("add", onMutation);
-			};
-		});
-	}),
 	// Get a hacker by id or email
 	get: publicProcedure
 		.input(
@@ -295,8 +276,6 @@ export const hackerRouter = createTRPCRouter({
 				throw new Error("Hacker not found");
 			}
 
-			ee.emit("add", hacker);
-
 			await ctx.prisma.hacker.update({
 				where: {
 					id: input.id,
@@ -365,8 +344,6 @@ export const hackerRouter = createTRPCRouter({
 				throw new Error("invalid-unsubscribe-token");
 			}
 
-			ee.emit("add", hacker);
-
 			return ctx.prisma.hacker.updateMany({
 				where: {
 					email: input.email,
@@ -423,8 +400,6 @@ export const hackerRouter = createTRPCRouter({
 			details: `${input.firstName} ${input.lastName} walked in.`,
 			author: user.name ?? "Unknown",
 		});
-
-		ee.emit("add", hacker);
 
 		return hacker;
 	}),
@@ -485,8 +460,6 @@ export const hackerRouter = createTRPCRouter({
 			author: user.name ?? "Unknown",
 			details: `${input.firstName} ${input.lastName} applied.`,
 		});
-
-		ee.emit("add", hacker);
 
 		return {
 			...hacker,
