@@ -17,7 +17,7 @@ export const metricsRoute = createTRPCRouter({
 		// Overall metrics
 		const applied = await ctx.prisma.hacker.count();
 		const confirmed = await ctx.prisma.hacker.count({ where: { confirmed: true } });
-		const checkedIn = await ctx.prisma.presence.count();
+		const checkedIn = await ctx.prisma.presence.count({ where: { label: "checkedIn" } });
 		const walkIn = await ctx.prisma.hacker.count({ where: { walkIn: true } });
 
 		// Gender distribution
@@ -48,7 +48,7 @@ export const metricsRoute = createTRPCRouter({
 				const age = item.age || 0;
 				const category = categorizeAge(age);
 				const existingCategory = acc.find(i => i.age === category);
-			if (existingCategory?._count.age) {
+				if (existingCategory?._count.age) {
 					existingCategory._count.age += item._count.age;
 				} else {
 					acc.push({ _count: { age: item._count.age }, age: category });
