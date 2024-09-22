@@ -27,8 +27,8 @@ export const isExpired = (expiry: Date | string | null | undefined) => {
  * @param roles Roles to check against
  * @returns True if role matches one of the given roles
  * @example
- * matchesRole(RoleName.SPONSOR, [RoleName.ORGANIZER, RoleName.SPONSOR])
- * // => true if role is RoleName.ORGANIZER or RoleName.SPONSOR
+ * matchesRole(RoleName.ADMIN, [RoleName.ORGANIZER, RoleName.ADMIN])
+ * // => true if role is RoleName.ORGANIZER or RoleName.ADMIN
  * // => false otherwise
  */
 export const matchesRole = (role: RoleName | null, roles: RoleName[]) => {
@@ -46,8 +46,8 @@ export const matchesRole = (role: RoleName | null, roles: RoleName[]) => {
  * @param roles Roles to check
  * @returns True if user has one of the given roles
  * @example
- * hasRoles(user, [RoleName.ORGANIZER, RoleName.SPONSOR])
- * // => true if user.role is RoleName.ORGANIZER or RoleName.SPONSOR
+ * hasRoles(user, [RoleName.ORGANIZER, RoleName.ADMIN])
+ * // => true if user.role is RoleName.ORGANIZER or RoleName.ADMIN
  * // => false otherwise
  */
 export const hasRoles = (
