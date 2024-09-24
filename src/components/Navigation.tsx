@@ -107,13 +107,14 @@ type NavbarProps = {
 };
 
 const Navbar = ({ integrated }: NavbarProps) => {
-	const { t } = useTranslation("navbar");
+	const { t, i18n } = useTranslation("navbar");
 	const { data: sessionData } = useSession();
 
 	const router = useRouter();
 	const { locale } = router;
 
 	const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+		void i18n.changeLanguage(e.target.value.toLocaleLowerCase());
 		void router.push(router.pathname, router.asPath, {
 			locale: e.target.value.toLocaleLowerCase(),
 		});

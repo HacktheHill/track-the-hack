@@ -6,7 +6,6 @@
 	"qr-failed": "Failed to generate QR code.",
 	"checked-in": "Checked in {{firstName}} {{lastName}} for {{event}}",
 	"actions": {
-		"none": "Select an action",
 		"get-hacker": "Get hacker"
 	}
 	,
