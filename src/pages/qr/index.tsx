@@ -24,18 +24,18 @@ type Hacker = RouterOutput["hackers"]["get"];
 type Presence = RouterOutput["presence"]["getFromHackerId"][0];
 
 enum ACTIONS {
-	NONE = "actions.none",
 	GET_HACKER = "actions.get-hacker",
 }
 
 const QR = () => {
-	const { t } = useTranslation("qr");
+	const { t, i18n } = useTranslation("qr");
 	const router = useRouter();
 	const [error, setError] = useState(false);
 
-	const selectedAction = useRef<string>(ACTIONS.NONE);
-	const actions: string[] = Object.keys(ACTIONS).map(key => ACTIONS[key as keyof typeof ACTIONS]);
+	const selectedAction = useRef<string>(ACTIONS.GET_HACKER);
 	const { data: events } = trpc.events.all.useQuery();
+
+	const [menuOptions, setMenuOptions] = useState<string[]>([]);
 
 	const prevHackerId = useRef<string>("");
 
@@ -45,6 +45,33 @@ const QR = () => {
 	const [display, setDisplay] = useState(<></>);
 
 	const utils = trpc.useUtils();
+
+	useEffect(() => {
+		const now = new Date();
+		const actions: string[] = Object.keys(ACTIONS).map(key => ACTIONS[key as keyof typeof ACTIONS]);
+
+		const validEvents =
+			events
+				?.filter(event => event.end >= now)
+				.filter((event, index, self) => self.findIndex(e => e.name === event.name) === index)
+				.sort((a, b) => a.start.getTime() - b.start.getTime())
+				.map(event => event.name) ?? [];
+
+		setMenuOptions([...actions, ...validEvents]);
+	}, [events]);
+
+	// Reload page to re-render a new QRScanner
+	useEffect(() => {
+		const handleLanguageChange = () => {
+			window.location.reload();
+		};
+
+		i18n.on("languageChanged", handleLanguageChange);
+
+		return () => {
+			i18n.off("languageChanged", handleLanguageChange);
+		};
+	}, [i18n]);
 
 	const handleEvent = useCallback(
 		async (hacker: Hacker, presences: Presence[]) => {
@@ -94,8 +121,6 @@ const QR = () => {
 			if (hackerId === "") return;
 
 			switch (selectedAction.current) {
-				case ACTIONS.NONE:
-					break;
 				case ACTIONS.GET_HACKER:
 					router.push(`/hackers/hacker?id=${hackerId}`);
 					break;
@@ -126,6 +151,7 @@ const QR = () => {
 		},
 		[handleScanResult],
 	);
+
 	return (
 		<App
 			className="relative flex h-full flex-col items-center justify-center gap-16 bg-default-gradient"
@@ -142,22 +168,15 @@ const QR = () => {
 								setDisplay(<></>);
 							}}
 						>
-							{actions.map(event => {
+							{menuOptions.map(event => {
 								return (
 									<option key={event} value={event}>
 										{t(event)}
 									</option>
 								);
 							})}
-							{events?.map(event => {
-								return (
-									<option key={event.name} value={event.name}>
-										{t(event.name)}
-									</option>
-								);
-							})}
 						</select>
-						{selectedAction.current !== ACTIONS.NONE ? <QRScanner onScan={onScan} /> : null}
+						<QRScanner onScan={onScan} />
 						<PhysicalScanner onScan={onScan} />
 						{!error && (
 							<p className="z-10 max-w-xl text-center text-lg font-bold text-dark-color">
