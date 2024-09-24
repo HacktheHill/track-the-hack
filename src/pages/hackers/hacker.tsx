@@ -91,8 +91,8 @@ const HackerPage: NextPage<{
 		setEdit(false);
 	}, [acceptance, hackerQuery.data, t]);
 
-	const handlePresenceIncrement = async (id: string) => {
-		await presenceMutation.mutateAsync({ id });
+	const handlePresenceIncrement = async (id: string, value: number) => {
+		await presenceMutation.mutateAsync({ id, value });
 
 		if (presenceMutation.isSuccess) {
 			await presenceQuery.refetch();
@@ -252,18 +252,30 @@ const HackerPage: NextPage<{
 				</div>
 
 				<Filter value={[RoleName.ORGANIZER]} method="some" silent>
-					<div className="grid grid-flow-row grid-cols-2 gap-4 rounded-lg bg-light-tertiary-color p-4">
+					<div className="grid grid-flow-row gap-4 rounded-lg bg-light-tertiary-color p-4 mobile:grid-cols-2">
 						{presenceQuery.data?.map((presence, index) => (
-							<div key={index} className="flex justify-between gap-4">
-								<p>
+							<div key={index} className="grid grid-flow-col grid-cols-4 items-center">
+								<p className="col-span-2">
 									<b>{presence.label}</b>
 								</p>
 								<p>{presence.value}</p>
 								<button
-									className="rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
-									onClick={() => void handlePresenceIncrement(presence.id)}
+									className="w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-1 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
+									onClick={() => {
+										void handlePresenceIncrement(presence.id, -1);
+										presence.value -= 1;
+									}}
 								>
-									{presence.value >= 2 ? "+" : presence.value === 1 ? "True" : "False"}
+									—
+								</button>
+								<button
+									className="w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-1 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
+									onClick={() => {
+										void handlePresenceIncrement(presence.id, 1);
+										presence.value += 1;
+									}}
+								>
+									+
 								</button>
 							</div>
 						))}
