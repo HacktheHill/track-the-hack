@@ -25,7 +25,7 @@ type RouterOutput = inferRouterOutputs<AppRouter>;
 type Hacker = RouterOutput["hackers"]["get"];
 type Presence = RouterOutput["presence"]["getFromHackerId"][0];
 
-const DEFAULT_ACTION = "Get Hacker";
+const DEFAULT_ACTION = "get-hacker";
 
 const QR = ({ encryptedId }: { encryptedId: string }) => {
 	const { t, i18n } = useTranslation("qr");
