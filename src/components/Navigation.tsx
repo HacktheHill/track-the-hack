@@ -39,7 +39,7 @@ const Links = ({ bottom }: LinkProps) => {
 			const hasOrganizerRole = roles.includes(RoleName.ORGANIZER);
 			const isValidHacker = roles.includes(RoleName.HACKER) && !!sessionData?.user?.hackerId;
 
-			return (hasOrganizerRole || isValidHacker) && !(hasOrganizerRole && !isValidHacker);
+			return hasOrganizerRole || isValidHacker;
 		},
 		[sessionData?.user?.hackerId],
 	);
