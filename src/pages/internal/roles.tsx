@@ -43,15 +43,15 @@ const Roles: NextPage = () => {
 	};
 
 	return (
-		<App className="overflow-y-auto bg-default-gradient" integrated={true} title={t("title")}>
+		<App className="overflow-y-auto bg-default-gradient" integrated={true} title={t("roles")}>
 			<Filter value={RoleName.ADMIN} method="above">
 				<div className="flex h-full flex-col items-center">
-					<h1 className="p-10 font-rubik text-4xl font-bold">{t("title")}</h1>
+					<h1 className="p-8 font-rubik text-4xl font-bold">{t("roles")}</h1>
 					<form className="flex w-full max-w-lg flex-col gap-4" onSubmit={handleSubmit}>
 						<input
 							type="search"
 							placeholder="Search"
-							className="py-u2 rounded-[100px] border-none bg-light-primary-color p-2 px-4 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+							className="w-full rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 placeholder:text-dark-primary-color hover:bg-light-primary-color/50"
 							onChange={e => setQuery(e.target.value)}
 						/>
 						<div className="flex h-[30vh] flex-col gap-4 overflow-auto rounded-lg border border-dark-primary-color bg-light-tertiary-color p-4">
@@ -101,7 +101,7 @@ const Roles: NextPage = () => {
 							type="submit"
 							className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
 						>
-							Submit
+							{t("submit")}
 						</button>
 					</form>
 				</div>

@@ -1,12 +1,18 @@
 import { RoleName, type Hacker } from "@prisma/client";
+import crypto from "crypto";
 import { z } from "zod";
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
+import { env } from "../../../env/server.mjs";
 import { hackerSchema } from "../../../utils/common";
 import { hasRoles } from "../../../utils/helpers";
-import { sendApplyEmail } from "../../lib/email";
+// import { sendApplyEmail } from "../../lib/email";
 import { log } from "../../lib/log";
 import { generatePresignedGetUrl, generatePresignedPutUrl, generateS3Filename } from "../../lib/s3";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+
+const generateWalkInCode = (userId: string) => {
+	return crypto.createHash("sha256").update(env.WALK_IN_SECRET_KEY).update(userId).digest("hex").slice(0, 6);
+};
 
 export const hackerRouter = createTRPCRouter({
 	// Get a hacker by id or email
@@ -19,6 +25,12 @@ export const hackerRouter = createTRPCRouter({
 				.or(
 					z.object({
 						email: z.string(),
+					}),
+				)
+				.or(
+					z.object({
+						firstName: z.string(),
+						lastName: z.string(),
 					}),
 				),
 		)
@@ -34,6 +46,13 @@ export const hackerRouter = createTRPCRouter({
 				hacker = await ctx.prisma.hacker.findFirst({
 					where: {
 						email: input.email,
+					},
+				});
+			} else if ("firstName" in input && "lastName" in input) {
+				hacker = await ctx.prisma.hacker.findFirst({
+					where: {
+						firstName: input.firstName,
+						lastName: input.lastName,
 					},
 				});
 			}
@@ -143,7 +162,11 @@ export const hackerRouter = createTRPCRouter({
 				educationLevel?: { in: string[] };
 				major?: { in: string[] };
 				referralSource?: { in: string[] };
-				OR?: { firstName?: { contains: string }; lastName?: { contains: string }; email?: { contains: string } }[];
+				OR?: {
+					firstName?: { contains: string };
+					lastName?: { contains: string };
+					email?: { contains: string };
+				}[];
 			} = {};
 
 			if (search) {
@@ -371,55 +394,139 @@ export const hackerRouter = createTRPCRouter({
 			});
 		}),
 
-	// Create a walk-in hacker
-	walkIn: protectedProcedure.input(hackerSchema).mutation(async ({ ctx, input }) => {
-		const userId = ctx.session.user.id;
-		const user = await ctx.prisma.user.findUnique({
-			where: {
-				id: userId,
-			},
-			select: {
-				name: true,
-				roles: {
-					select: {
-						name: true,
+	verifyWalkInCode: protectedProcedure
+		.input(
+			z.object({
+				code: z.string(),
+			}),
+		)
+		.query(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+			const user = await ctx.prisma.user.findUnique({
+				where: {
+					id: userId,
+				},
+				select: {
+					name: true,
+					roles: {
+						select: {
+							name: true,
+						},
 					},
 				},
-			},
-		});
+			});
 
-		if (!user) {
-			throw new Error("User not found");
-		}
+			if (!user) {
+				throw new Error("User not found");
+			}
 
-		if (!hasRoles(user, [RoleName.ORGANIZER])) {
-			throw new Error("You do not have permission to do this");
-		}
+			return {
+				valid: input.code === generateWalkInCode(userId),
+			};
+		}),
 
-		const hacker = await ctx.prisma.hacker.create({
-			data: {
-				...input,
-				walkIn: true,
-				presences: {
-					create: {
-						value: 1,
-						label: "Checked In",
+	getWalkInCode: protectedProcedure
+		.input(
+			z.object({
+				id: z.string(),
+			}),
+		)
+		.query(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+			const user = await ctx.prisma.user.findUnique({
+				where: {
+					id: userId,
+				},
+				select: {
+					name: true,
+					roles: {
+						select: {
+							name: true,
+						},
 					},
 				},
-			},
-		});
+			});
 
-		await log(ctx, {
-			sourceId: hacker.id,
-			sourceType: "Hacker",
-			route: "/walk-in",
-			action: "WalkIn",
-			details: `${input.firstName} ${input.lastName} walked in.`,
-			author: user.name ?? "Unknown",
-		});
+			if (!user) {
+				throw new Error("User not found");
+			}
 
-		return hacker;
-	}),
+			if (!hasRoles(user, [RoleName.ORGANIZER])) {
+				throw new Error("You do not have permission to do this");
+			}
+
+			return {
+				code: generateWalkInCode(input.id),
+			};
+		}),
+
+	walkIn: protectedProcedure
+		.input(
+			hackerSchema.extend({
+				code: z.string(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+			const user = await ctx.prisma.user.findUnique({
+				where: {
+					id: userId,
+				},
+				select: {
+					name: true,
+					roles: {
+						select: {
+							name: true,
+						},
+					},
+				},
+			});
+
+			if (!user) {
+				throw new Error("User not found");
+			}
+
+			// Check if the walk-in code is correct
+			const { code, ...data } = input;
+			if (code !== generateWalkInCode(userId)) {
+				throw new Error("Invalid walk-in code");
+			}
+
+			await ctx.prisma.hacker.deleteMany({
+				where: {
+					userId: userId,
+				},
+			});
+
+			const hacker = await ctx.prisma.hacker.create({
+				data: {
+					...data,
+					walkIn: true,
+					User: {
+						connect: {
+							id: userId,
+						},
+					},
+				},
+			});
+
+			const filename = generateS3Filename(hacker.id, `${hacker.firstName}_${hacker.lastName}_Resume`, "pdf");
+			const presignedUrl = await generatePresignedPutUrl(filename, "resumes");
+
+			await log(ctx, {
+				sourceId: hacker.id,
+				sourceType: "Hacker",
+				route: "/apply",
+				action: "Walk-In",
+				author: user.name ?? "Unknown",
+				details: `${input.firstName} ${input.lastName} applied as a walk-in.`,
+			});
+
+			return {
+				...hacker,
+				presignedUrl,
+			};
+		}),
 
 	apply: protectedProcedure.input(hackerSchema).mutation(async ({ ctx, input }) => {
 		const userId = ctx.session.user.id;
