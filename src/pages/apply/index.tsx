@@ -19,6 +19,7 @@ import { sessionRedirect } from "../../server/lib/redirects";
 import { processFormData, saveToLocalStorage } from "../../utils/apply";
 import { hackerSchema, pageSchemas } from "../../utils/common";
 import { getAuthOptions } from "../api/auth/[...nextauth]";
+import { z } from "zod";
 
 type ApplyProps = {
 	applicationQuestions: ApplicationQuestionsType[number][];
@@ -32,6 +33,7 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 	const formRef = useRef<HTMLFormElement>(null);
 	const formDataRef = useRef<FormData>(new FormData());
 
+	const [code, setCode] = useState<string | null>(null);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [success, setSuccess] = useState(false);
@@ -40,8 +42,9 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 	const [errors, setErrors] = useState<Record<string, Record<string, string[]>>>({});
 
 	const isHacker = trpc.users.isHacker.useQuery();
-	const mutation = trpc.hackers.apply.useMutation();
+	const mutation = trpc.hackers.walkIn.useMutation();
 	const revertMutation = trpc.hackers.delete.useMutation();
+	const utils = trpc.useUtils();
 
 	const updateFormData = () => {
 		if (!formRef.current) return;
@@ -105,7 +108,7 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 	};
 
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-		/* e.preventDefault();
+		e.preventDefault();
 
 		updateFormData();
 
@@ -118,9 +121,14 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 		const data = {
 			...processFormData(formDataRef.current),
 			hasResume: !!resume,
+			code,
 		};
 
-		const parse = await hackerSchema.safeParseAsync(data, { errorMap });
+		const parse = await hackerSchema
+			.extend({
+				code: z.string(),
+			})
+			.safeParseAsync(data, { errorMap });
 
 		if (!parse.success) {
 			setError(t("invalid-form"));
@@ -152,7 +160,24 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 			console.error(err);
 		} finally {
 			setLoading(false);
-		} */
+		}
+	};
+
+	const handleSubmitWalkInCode = async (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+
+		const formData = new FormData(e.currentTarget);
+		const code = formData.get("code") as string | null;
+		if (!code) return;
+
+		const result = await utils.hackers.verifyWalkInCode.fetch({ code });
+		if (!result.valid) {
+			setError(t("invalid-walk-in-code"));
+			return;
+		}
+
+		setError(null);
+		setCode(code);
 	};
 
 	useEffect(() => {
@@ -173,85 +198,106 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 
 	return (
 		<App className="overflow-y-auto bg-default-gradient" title={t("title")}>
-			{(loading || error || success || (isHacker.data && !ignoreAlreadyHacker)) && (
-				<div className="fixed inset-0 z-50 flex items-center justify-center bg-light-tertiary-color bg-opacity-90">
-					<div className="flex w-full max-w-lg flex-col gap-4 rounded border border-dark-primary-color bg-light-quaternary-color p-8 text-center">
-						{loading ? (
-							<Loading />
-						) : error ? (
-							<>
-								<ErrorComponent message={error} />
-								<button
-									type="button"
-									className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
-									onClick={() => setError(null)}
-								>
-									{t("return-to-form")}
-								</button>
-							</>
-						) : success ? (
-							<>
-								<h3 className="text-4xl font-bold text-dark-color">{t("success")}</h3>
-								<p>{t("application-submitted-successfully")}</p>
-								<button
-									type="button"
-									className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
-									onClick={() => void router.replace("/")}
-								>
-									{t("back-home")}
-								</button>
-							</>
-						) : isHacker.data && !ignoreAlreadyHacker ? (
-							<>
-								<h3 className="text-4xl font-bold text-dark-color">{t("attention")}</h3>
-								<p>{t("overwriting-submission")}</p>
-								<div className="flex justify-center gap-4">
-									<button
-										type="button"
-										className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
-										onClick={() => void router.replace("/")}
-									>
-										{t("back-home")}
-									</button>
-									<button
-										type="button"
-										className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
-										onClick={() => setIgnoreAlreadyHacker(true)}
-									>
-										{t("return-to-form")}
-									</button>
-								</div>
-							</>
-						) : null}
+			{code ? (
+				<>
+					{(loading || error || success || (isHacker.data && !ignoreAlreadyHacker)) && (
+						<div className="fixed inset-0 z-50 flex items-center justify-center bg-light-tertiary-color bg-opacity-90">
+							<div className="flex w-full max-w-lg flex-col gap-4 rounded border border-dark-primary-color bg-light-quaternary-color p-8 text-center">
+								{loading ? (
+									<Loading />
+								) : error ? (
+									<>
+										<ErrorComponent message={error} />
+										<button
+											type="button"
+											className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
+											onClick={() => setError(null)}
+										>
+											{t("return-to-form")}
+										</button>
+									</>
+								) : success ? (
+									<>
+										<h3 className="text-4xl font-bold text-dark-color">{t("success")}</h3>
+										<p>{t("application-submitted-successfully")}</p>
+										<button
+											type="button"
+											className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
+											onClick={() => void router.replace("/")}
+										>
+											{t("back-home")}
+										</button>
+									</>
+								) : isHacker.data && !ignoreAlreadyHacker ? (
+									<>
+										<h3 className="text-4xl font-bold text-dark-color">{t("attention")}</h3>
+										<p>{t("overwriting-submission")}</p>
+										<div className="flex justify-center gap-4">
+											<button
+												type="button"
+												className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
+												onClick={() => void router.replace("/")}
+											>
+												{t("back-home")}
+											</button>
+											<button
+												type="button"
+												className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
+												onClick={() => setIgnoreAlreadyHacker(true)}
+											>
+												{t("return-to-form")}
+											</button>
+										</div>
+									</>
+								) : null}
+							</div>
+						</div>
+					)}
+					<form ref={formRef} onSubmit={e => void handleSubmit(e)}>
+						{applicationQuestions.slice(0, step + 1).map((page, index) => (
+							<Page
+								key={page.name}
+								page={page}
+								formData={formDataRef.current}
+								index={index}
+								isLastPage={index === applicationQuestions.length - 1}
+								setStep={setStep}
+								errors={errors[page.name] ?? {}}
+								validatePage={validatePage}
+							/>
+						))}
+					</form>
+				</>
+			) : (
+				<>
+					<div className="flex h-full flex-col items-center justify-center gap-4">
+						<h2 className="text-4xl font-bold text-dark-color">{t("walk-in-code")}</h2>
+						<form className="flex flex-col gap-4" onSubmit={e => void handleSubmitWalkInCode(e)}>
+							<input
+								type="text"
+								name="code"
+								className="rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-xl text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+							/>
+							<button
+								type="submit"
+								className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
+							>
+								{t("submit")}
+							</button>
+							{error && <ErrorComponent message={error} />}
+						</form>
 					</div>
-				</div>
+				</>
 			)}
-			<form ref={formRef} onSubmit={e => void handleSubmit(e)}>
-				{applicationQuestions.slice(0, step + 1).map((page, index) => (
-					<Page
-						key={page.name}
-						page={page}
-						formData={formDataRef.current}
-						index={index}
-						isLastPage={index === applicationQuestions.length - 1}
-						setStep={setStep}
-						errors={errors[page.name] ?? {}}
-						validatePage={validatePage}
-					/>
-				))}
-			</form>
 		</App>
 	);
 };
 
 export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
-	// const session = await getServerSession(req, res, getAuthOptions(req));
+	const session = await getServerSession(req, res, getAuthOptions(req));
 
 	return {
-		// sessionRedirect(session, "/apply")
-		redirect: {
-			destination: "/",
-		},
+		redirect: sessionRedirect(session, "/apply"),
 		props: {
 			...(await serverSideTranslations(locale ?? "en", ["apply", "zod", "navbar", "common"])),
 			applicationQuestions: getApplicationQuestions(
