@@ -1,9 +1,10 @@
 import type { GetStaticProps } from "next";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
-import App from "../../components/App";
-import { sponsorsData, sizeByTier, SponsorTier } from "../../client/sponsors";
+import Image from "next/image";
 import Link from "next/link";
+import { sizeByTier, sponsorsData, SponsorTier } from "../../client/sponsors";
+import App from "../../components/App";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
@@ -32,8 +33,7 @@ const Sponsors = () => {
 								className="flex flex-col items-center justify-center drop-shadow-xl transition-transform hover:scale-105"
 								href={`/sponsors/${sponsor.id}`}
 							>
-								{/* eslint-disable-next-line @next/next/no-img-element */}
-								<img
+								<Image
 									src={sponsor.logo}
 									alt={sponsor.name}
 									width={sizeByTier[sponsor.tier]}

@@ -2,10 +2,11 @@ import type { GetStaticPaths, GetStaticProps } from "next";
 import Link from "next/link";
 
 import { useTranslation } from "next-i18next";
+import { serverSideTranslations } from "next-i18next/serverSideTranslations";
+import Image from "next/image";
+import { i18n } from "../../../next-i18next.config";
 import { sponsorsData, type SponsorData } from "../../client/sponsors";
 import App from "../../components/App";
-import { serverSideTranslations } from "next-i18next/serverSideTranslations";
-import { i18n } from "../../../next-i18next.config";
 
 export const getStaticPaths: GetStaticPaths = () => {
 	const paths = sponsorsData.flatMap(({ id }) =>
@@ -43,8 +44,7 @@ const SponsorPage = ({ id, name, tier, logo, hiringLink, websiteLink, additional
 	return (
 		<App className="flex flex-col justify-center bg-default-gradient p-8" title={t("title")}>
 			<div className="m-auto flex max-w-md flex-col items-center gap-8">
-				{/* eslint-disable-next-line @next/next/no-img-element */}
-				<img src={logo} alt={name} className="h-48" />
+				<Image src={logo} alt={name} className="h-48" />
 				<h2 className="text-2xl font-semibold">{t("tier", { tier: t(`tiers.${tier}`) })}</h2>
 				<p className="text-lg">{t(`descriptions.${id}`)}</p>
 				<div className="flex items-center justify-center gap-4">
