@@ -10,7 +10,7 @@ const categorizeAge = (age: number) => {
 	return "Unknown";
 };
 
-export const metricsRoute = createTRPCRouter({
+export const metricsRouter = createTRPCRouter({
 	getMetrics: publicProcedure.query(async ({ ctx }) => {
 		const threshold = 3;
 
