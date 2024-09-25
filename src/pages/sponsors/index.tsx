@@ -2,7 +2,7 @@ import type { GetStaticProps } from "next";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import App from "../../components/App";
-import { sponsorsData, sizeByTier, SponsorTier } from "./sponsors";
+import { sponsorsData, sizeByTier, SponsorTier } from "../../client/sponsors";
 import Link from "next/link";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {

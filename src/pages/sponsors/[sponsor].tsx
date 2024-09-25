@@ -2,7 +2,7 @@ import type { GetStaticPaths, GetStaticProps } from "next";
 import Link from "next/link";
 
 import { useTranslation } from "next-i18next";
-import { sponsorsData, type SponsorData } from "./sponsors";
+import { sponsorsData, type SponsorData } from "../../client/sponsors";
 import App from "../../components/App";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { i18n } from "../../../next-i18next.config";
