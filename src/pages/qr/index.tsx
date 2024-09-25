@@ -23,16 +23,14 @@ type RouterOutput = inferRouterOutputs<AppRouter>;
 type Hacker = RouterOutput["hackers"]["get"];
 type Presence = RouterOutput["presence"]["getFromHackerId"][0];
 
-enum ACTIONS {
-	GET_HACKER = "actions.get-hacker",
-}
+const defaultAction = "Get Hacker";
 
 const QR = () => {
 	const { t, i18n } = useTranslation("qr");
 	const router = useRouter();
 	const [error, setError] = useState(false);
 
-	const selectedAction = useRef<string>(ACTIONS.GET_HACKER);
+	const selectedAction = useRef<string>(defaultAction);
 	const { data: events } = trpc.events.all.useQuery();
 
 	const [menuOptions, setMenuOptions] = useState<string[]>([]);
@@ -48,7 +46,6 @@ const QR = () => {
 
 	useEffect(() => {
 		const now = new Date();
-		const actions: string[] = Object.keys(ACTIONS).map(key => ACTIONS[key as keyof typeof ACTIONS]);
 
 		const validEvents =
 			events
@@ -57,7 +54,7 @@ const QR = () => {
 				.sort((a, b) => a.start.getTime() - b.start.getTime())
 				.map(event => event.name) ?? [];
 
-		setMenuOptions([...actions, ...validEvents]);
+		setMenuOptions([defaultAction, ...validEvents]);
 	}, [events]);
 
 	// Reload page to re-render a new QRScanner
@@ -120,23 +117,19 @@ const QR = () => {
 
 			if (hackerId === "") return;
 
-			switch (selectedAction.current) {
-				case ACTIONS.GET_HACKER:
-					router.push(`/hackers/hacker?id=${hackerId}`);
-					break;
-				default:
-					try {
-						const hacker = await utils.hackers.get.fetch({ id: hackerId });
-						const presences = await utils.presence.getFromHackerId.fetch({ id: hackerId });
-						await handleEvent(hacker, presences);
-					} catch (error) {
-						if (error instanceof TRPCClientError) {
-							setDisplay(<Error message={error.message} />);
-							break;
-						}
-						setDisplay(<UnknownError />);
+			if (selectedAction.current === defaultAction) {
+				router.push(`/hackers/hacker?id=${hackerId}`);
+			} else {
+				try {
+					const hacker = await utils.hackers.get.fetch({ id: hackerId });
+					const presences = await utils.presence.getFromHackerId.fetch({ id: hackerId });
+					await handleEvent(hacker, presences);
+				} catch (error) {
+					if (error instanceof TRPCClientError) {
+						setDisplay(<Error message={error.message} />);
 					}
-					break;
+					setDisplay(<UnknownError />);
+				}
 			}
 		},
 		[handleEvent, router, utils],
