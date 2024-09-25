@@ -1,0 +1,20 @@
+{
+	"title": "Sponsors",
+	"description": "We would like to thank our sponsors for their generous support. Find out more about our sponsors below.",
+	"tier": "{{tier}} Sponsor",
+	"tiers": {
+		"councillor": "Councillor",
+		"mayor": "Mayor",
+		"premier": "Premier"
+	},
+	"hiring": "Hiring Website",
+	"website": "Website",
+	"additional": "Additional Information",
+	"descriptions": {
+		"ross": "Ross Video is a Canadian company that specialises in the design and manufacturing of high-quality video production equipment and solutions for broadcast, live event, and media production industries. Founded in 1974, the company provides a wide range of products, including production switchers, robotic camera systems, graphics systems, and infrastructure solutions. Ross Video is known for its innovative technology, user-friendly designs, and commitment to customer support, serving clients worldwide in television, sports, news, corporate, and educational markets.",
+		"ciena": "Ciena is a global networking systems, services, and software company that provides solutions for high-speed data transmission and telecommunications. Their technology focuses on enabling efficient, reliable, and scalable network infrastructure, allowing businesses to adapt to the ever-evolving demands of digital transformation. Ciena's innovations in optical and packet networking help service providers, enterprises, and government organizations optimize their networks and enhance connectivity.",
+		"lonehaven": "Lonehaven is a media agency specializing in photography, cinematography, full-scale media production, and product branding. They focus on delivering high-quality visual content that effectively tells stories and enhances brand identities for their clients across various industries.",
+		"cse": "The Communications Security Establishment (CSE) is a federal agency responsible for protecting Canada's communications and information systems. CSE provides cybersecurity, cryptographic services, and foreign signals intelligence, helping to safeguard national security and the privacy of Canadians. They collaborate with other government agencies and international partners to address emerging threats in the digital landscape.",
+		"red-bull": "Red Bull Canada is the Canadian branch of the global energy drink brand Red Bull. Known for its innovative marketing, Red Bull Canada engages in local sponsorships, partnerships, and events across the country, including extreme sports competitions, cultural festivals, and music events. Red Bull Canada is committed to embodying the company's values of energy, adventure, and high performance, while also focusing on expanding the brand's presence in Canadian markets."
+	}
+}

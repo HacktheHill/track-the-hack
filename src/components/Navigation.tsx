@@ -65,6 +65,13 @@ const Links = ({ bottom }: LinkProps) => {
 				src="/assets/resources.svg"
 				alt="Resources"
 			/>
+			<LinkItem
+				href="/sponsors"
+				bottom={bottom}
+				text={t("sponsors")}
+				src="/assets/sponsors.svg"
+				alt={t("sponsors")}
+			/>
 			{sessionData?.user && (
 				<Filter value={[RoleName.MAYOR, RoleName.PREMIER, RoleName.ORGANIZER]} silent method="some">
 					<LinkItem

@@ -1,0 +1,78 @@
+import type { GetStaticPaths, GetStaticProps } from "next";
+import Link from "next/link";
+
+import { useTranslation } from "next-i18next";
+import { sponsorsData, type SponsorData } from "./sponsors";
+import App from "../../components/App";
+import { serverSideTranslations } from "next-i18next/serverSideTranslations";
+import { i18n } from "../../../next-i18next.config";
+
+export const getStaticPaths: GetStaticPaths = () => {
+	const paths = sponsorsData.flatMap(({ id }) =>
+		i18n.locales.map(locale => ({
+			params: { locale, sponsor: id },
+		})),
+	);
+
+	return {
+		paths,
+		fallback: true,
+	};
+};
+
+export const getStaticProps: GetStaticProps = async ({ params, locale }) => {
+	const sponsor = sponsorsData.find(({ id }) => id === params?.sponsor);
+
+	if (!sponsor) {
+		return {
+			notFound: true,
+		};
+	}
+
+	return {
+		props: {
+			...sponsor,
+			...(await serverSideTranslations(locale ?? "en", ["common", "navbar", "sponsors"])),
+		},
+	};
+};
+
+const SponsorPage = ({ id, name, tier, logo, hiringLink, websiteLink, additionalLink }: SponsorData) => {
+	const { t } = useTranslation("sponsors");
+
+	return (
+		<App className="flex flex-col justify-center bg-default-gradient p-8" title={t("title")}>
+			<div className="m-auto flex max-w-md flex-col items-center gap-8">
+				{/* eslint-disable-next-line @next/next/no-img-element */}
+				<img src={logo} alt={name} className="h-48" />
+				<h2 className="text-2xl font-semibold">{t("tier", { tier: t(`tiers.${tier}`) })}</h2>
+				<p className="text-lg">{t(`descriptions.${id}`)}</p>
+				<div className="flex items-center justify-center gap-4">
+					{hiringLink && (
+						<Link href={hiringLink} target="_blank" rel="noopener noreferrer">
+							<button className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors">
+								{t("hiring")}
+							</button>
+						</Link>
+					)}
+					{websiteLink && (
+						<Link href={websiteLink} target="_blank" rel="noopener noreferrer">
+							<button className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors">
+								{t("website")}
+							</button>
+						</Link>
+					)}
+					{additionalLink && (
+						<Link href={additionalLink} target="_blank" rel="noopener noreferrer">
+							<button className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors">
+								{t("additional")}
+							</button>
+						</Link>
+					)}
+				</div>
+			</div>
+		</App>
+	);
+};
+
+export default SponsorPage;
