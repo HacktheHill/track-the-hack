@@ -1,0 +1,20 @@
+{
+	"title": "Commanditaires",
+	"description": "Nous tenons à remercier nos commanditaires pour leur généreux soutien. Découvrez-en plus sur nos commanditaires ci-dessous.",
+	"tier": "Commanditaire {{tier}}",
+	"tiers": {
+		"councillor": "Conseiller",
+		"mayor": "Maire",
+		"premier": "Premier"
+	},
+	"hiring": "Site Web de Recrutement",
+	"website": "Site Web",
+	"additional": "Informations Supplémentaires",
+	"descriptions": {
+		"ross": "Ross Video est une entreprise canadienne spécialisée dans la conception et la fabrication d'équipements de production vidéo de haute qualité et de solutions pour les industries de la radiodiffusion, des événements en direct et de la production médiatique. Fondée en 1974, l'entreprise propose une large gamme de produits, y compris des mélangeurs de production, des systèmes de caméras robotisées, des systèmes graphiques et des solutions d'infrastructure. Ross Video est connue pour sa technologie innovante, ses conceptions conviviales et son engagement envers le support client, desservant des clients du monde entier dans les marchés de la télévision, du sport, de l'actualité, de l'entreprise et de l'éducation.",
+		"ciena": "Ciena est une entreprise mondiale de systèmes, de services et de logiciels de réseautage qui fournit des solutions pour la transmission de données à haute vitesse et les télécommunications. Leur technologie se concentre sur la création d'une infrastructure réseau efficace, fiable et évolutive, permettant aux entreprises de s'adapter aux exigences en constante évolution de la transformation numérique. Les innovations de Ciena en matière de réseautage optique et par paquets aident les fournisseurs de services, les entreprises et les organisations gouvernementales à optimiser leurs réseaux et à améliorer la connectivité.",
+		"lonehaven": "Lonehaven est une agence média spécialisée dans la photographie, la cinématographie, la production médiatique à grande échelle et le branding de produits. Ils se concentrent sur la livraison de contenu visuel de haute qualité qui raconte efficacement des histoires et améliore les identités de marque de leurs clients dans diverses industries.",
+		"cse": "Le Centre de la sécurité des télécommunications (CST) est un organisme fédéral responsable de la protection des communications et des systèmes d'information du Canada. Le CST fournit des services de cybersécurité, de cryptographie et de renseignement sur les signaux étrangers, contribuant à la sauve garde de la sécurité nationale et de la vie privée des Canadiens. Ils collaborent avec d'autres organismes gouvernementaux et partenaires internationaux pour faire face aux menaces émergentes dans le paysage numérique.",
+		"red-bull": "Red Bull Canada est la filiale canadienne de la marque mondiale de boissons énergisantes Red Bull. Connu pour son marketing innovant, Red Bull Canada participe à des parrainages locaux, des partenariats et des événements à travers le pays, y compris des compétitions de sports extrêmes, des festivals culturels et des événements musicaux. Red Bull Canada s'engage à incarner les valeurs de l'entreprise en matière d'énergie, d'aventure et de haute performance, tout en se concentrant sur l'expansion de la présence de la marque sur les marchés canadiens."
+	}
+}
