@@ -1,5 +1,7 @@
 {
 	"title": "Apply",
+	"walk-in-code": "Walk-In Code",
+	"invalid-walk-in-code": "Invalid Walk-In Code",
 	"next": "Next",
 	"submit": "Submit",
 	"success": "Success",
@@ -13,7 +15,7 @@
 
 	"introduction": {
 		"title": "Introduction",
-		"description": "Welcome to Hack the Hill! We’re excited to announce that applications for the first round are now open. This hackathon is a fantastic opportunity to challenge yourself, collaborate with peers, and unleash your creativity in a vibrant and dynamic environment. We are eager to consider applicants who demonstrate a keen interest in technology and innovation. This is your chance to show off your skills, learn from others, and potentially create something extraordinary."
+		"description": "Welcome to Hack the Hill! This hackathon is a fantastic opportunity to challenge yourself, collaborate with peers, and unleash your creativity in a vibrant and dynamic environment. We are eager to consider applicants who demonstrate a keen interest in technology and innovation. This is your chance to show off your skills, learn from others, and potentially create something extraordinary."
 	},
 	"preferredLanguage": {
 		"title": "Preferred Language",

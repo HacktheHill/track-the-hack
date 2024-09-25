@@ -41,7 +41,6 @@ export const processFormData = (formData: FormData) => {
 				processedEntries.push([key, processedValue]);
 			}
 		}
-		console.log(processedEntries);
 	});
 
 	return Object.fromEntries(processedEntries);
@@ -62,5 +61,4 @@ export const saveToLocalStorage = (formData: FormData) => {
 	});
 
 	localStorage.setItem("applyFormData", JSON.stringify(data));
-	console.log(data);
 };

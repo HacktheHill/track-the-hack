@@ -27,18 +27,17 @@ const Internal: NextPage = () => {
 								{t("roles")}
 							</Link>
 						</Filter>
-
-						<Link
-							href="/internal/logs"
-							className="cursor-pointer whitespace-nowrap rounded-xl border-none bg-medium-primary-color px-8 py-2 font-rubik text-light-color shadow-md transition-all duration-500 hover:bg-light-primary-color"
-						>
-							{t("logs")}
-						</Link>
 						<Link
 							href="/internal/sponsorship-gmail-drafts"
 							className="cursor-pointer whitespace-nowrap rounded-xl border-none bg-medium-primary-color px-8 py-2 font-rubik text-light-color shadow-md transition-all duration-500 hover:bg-light-primary-color"
 						>
 							{t("sponsorship-gmail-drafts")}
+						</Link>
+						<Link
+							href="/internal/walk-in-code"
+							className="cursor-pointer whitespace-nowrap rounded-xl border-none bg-medium-primary-color px-8 py-2 font-rubik text-light-color shadow-md transition-all duration-500 hover:bg-light-primary-color"
+						>
+							{t("walk-in-code")}
 						</Link>
 					</div>
 				</div>

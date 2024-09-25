@@ -1,5 +1,7 @@
 {
 	"title": "Appliquer",
+	"walk-in-code": "Code d'entrée",
+	"invalid-walk-in-code": "Code d'entrée invalide",
 	"next": "Suivant",
 	"submit": "Soumettre",
 	"success": "Succès",
@@ -13,7 +15,7 @@
 
 	"introduction": {
 		"title": "Introduction",
-		"description": "Bienvenue à Hack the Hill! Nous sommes ravis d'annoncer que les candidatures pour le premier tour sont maintenant ouvertes. Ce hackathon est une formidable opportunité de vous mettre au défi, de collaborer avec vos pairs et de libérer votre créativité dans un environnement vibrant et dynamique. Nous sommes impatients de considérer les candidats qui démontrent un vif intérêt pour la technologie et l'innovation. C'est votre chance de montrer vos compétences, d'apprendre des autres et de potentiellement créer quelque chose d'extraordinaire."
+		"description": "Bienvenue à Hack the Hill! Ce hackathon est une formidable opportunité de vous mettre au défi, de collaborer avec vos pairs et de libérer votre créativité dans un environnement vibrant et dynamique. Nous sommes impatients de considérer les candidats qui démontrent un vif intérêt pour la technologie et l'innovation. C'est votre chance de montrer vos compétences, d'apprendre des autres et de potentiellement créer quelque chose d'extraordinaire."
 	},
 	"preferredLanguage": {
 		"title": "Langue préférée",

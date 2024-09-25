@@ -1,7 +1,8 @@
 {
 	"title": "Internal",
 	"roles": "Roles",
-	"logs": "Audit Logs",
+	"walk-in-code": "Walk-In Code Generator",
 	"sponsorship-gmail-drafts": "Sponsorship Gmail Drafts",
-	"metrics": "Metrics"
+	"metrics": "Metrics",
+	"submit": "Submit"
 }

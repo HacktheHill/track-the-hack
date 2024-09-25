@@ -1,7 +1,8 @@
 {
 	"title": "Interne",
 	"roles": "Rôles",
-	"logs": "Journaux d'audit",
+	"walk-in-code": "Générateur de code d'entrée",
 	"sponsorship-gmail-drafts": "Brouillons Gmail de l'équipe de parrainage",
-	"metrics": "Métriques"
+	"metrics": "Métriques",
+	"submit": "Soumettre"
 }
