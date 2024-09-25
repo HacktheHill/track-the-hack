@@ -4,10 +4,7 @@
 	"scan-qr": "Ready to scan a QR code",
 	"qr-failed": "Failed to generate QR code.",
 	"checked-in": "Checked in {{firstName}} {{lastName}} for {{event}}",
-	"actions": {
-		"get-hacker": "Get hacker"
-	}
-	,
+	"get-hacker": "Get hacker",
 	"already-checked-in": "{{firstName}} {{lastName}} has already checked in {{counter}} times!",
 	"max-check-ins-reached": "You have reached the maximum of {{maxCheckIns}} check-ins for {{firstName}} {{lastName}}!"
 }
