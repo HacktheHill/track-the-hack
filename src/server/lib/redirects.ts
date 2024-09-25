@@ -16,24 +16,16 @@ export async function qrRedirect(session: Session | null, callbackUrl: string) {
 			},
 		}));
 
-	if (user?.roles.map(role => role.name).includes(RoleName.HACKER)) {
-		const hacker = await prisma.hacker.findFirst({
-			where: {
-				userId: user.id,
-			},
-		});
-
-		if (!hacker) {
-			return {
-				destination: "/",
-				permanent: false,
-			};
-		}
-	}
-
 	if (!user) {
 		return {
 			destination: `/api/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`,
+			permanent: false,
+		};
+	}
+
+	if (!user.roles.some(role => role.name === RoleName.ORGANIZER || role.name === RoleName.HACKER)) {
+		return {
+			destination: "/",
 			permanent: false,
 		};
 	}
