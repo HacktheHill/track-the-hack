@@ -4,18 +4,20 @@ import type { inferRouterOutputs } from "@trpc/server";
 import type { GetServerSideProps } from "next";
 import { getServerSession } from "next-auth/next";
 import { useTranslation } from "next-i18next";
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { AppRouter } from "../../server/api/root";
 
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
+import router from "next/router";
 import App from "../../components/App";
 import Error from "../../components/Error";
 import Filter from "../../components/Filter";
 import PhysicalScanner from "../../components/PhysicalScanner";
 import QRCode from "../../components/QRCode";
 import QRScanner from "../../components/QRScanner";
+import { env } from "../../env/server.mjs";
 import { trpc } from "../../server/api/api";
+import { encrypt } from "../../server/api/routers/qr";
 import { qrRedirect } from "../../server/lib/redirects";
 import { getAuthOptions } from "../api/auth/[...nextauth]";
 
@@ -23,14 +25,13 @@ type RouterOutput = inferRouterOutputs<AppRouter>;
 type Hacker = RouterOutput["hackers"]["get"];
 type Presence = RouterOutput["presence"]["getFromHackerId"][0];
 
-const defaultAction = "Get Hacker";
+const DEFAULT_ACTION = "Get Hacker";
 
-const QR = () => {
+const QR = ({ encryptedId }: { encryptedId: string }) => {
 	const { t, i18n } = useTranslation("qr");
-	const router = useRouter();
-	const [error, setError] = useState(false);
+	const [error, setError] = useState("");
 
-	const selectedAction = useRef<string>(defaultAction);
+	const selectedAction = useRef<string>(DEFAULT_ACTION);
 	const { data: events } = trpc.events.all.useQuery();
 
 	const [menuOptions, setMenuOptions] = useState<string[]>([]);
@@ -54,7 +55,7 @@ const QR = () => {
 				.sort((a, b) => a.start.getTime() - b.start.getTime())
 				.map(event => event.name) ?? [];
 
-		setMenuOptions([defaultAction, ...validEvents]);
+		setMenuOptions([DEFAULT_ACTION, ...validEvents]);
 	}, [events]);
 
 	// Reload page to re-render a new QRScanner
@@ -117,8 +118,8 @@ const QR = () => {
 
 			if (hackerId === "") return;
 
-			if (selectedAction.current === defaultAction) {
-				router.push(`/hackers/hacker?id=${hackerId}`);
+			if (selectedAction.current === DEFAULT_ACTION) {
+				void router.push(`/hackers/hacker?id=${hackerId}`);
 			} else {
 				try {
 					const hacker = await utils.hackers.get.fetch({ id: hackerId });
@@ -132,7 +133,7 @@ const QR = () => {
 				}
 			}
 		},
-		[handleEvent, router, utils],
+		[handleEvent, utils],
 	);
 
 	// Memoize function to prevent re-rendering QRScanner. QRScanner should never be re-rendered or it will break.
@@ -159,6 +160,7 @@ const QR = () => {
 								selectedAction.current = e.target.value;
 								prevHackerId.current = "";
 								setDisplay(<></>);
+								setError("");
 							}}
 						>
 							{menuOptions.map(event => {
@@ -169,7 +171,7 @@ const QR = () => {
 								);
 							})}
 						</select>
-						<QRScanner onScan={onScan} />
+						<QRScanner onScan={onScan} setError={setError} />
 						<PhysicalScanner onScan={onScan} />
 						{!error && (
 							<p className="z-10 max-w-xl text-center text-lg font-bold text-dark-color">
@@ -178,13 +180,14 @@ const QR = () => {
 						)}
 					</>
 					<>
-						<QRCode setError={setError} />
+						<QRCode setError={setError} id={encryptedId} />
 						{!error && (
 							<p className="z-10 max-w-xl text-center text-lg font-bold text-dark-color">{t("use-qr")}</p>
 						)}
 					</>
 				</Filter>
 				{display}
+				{error && <Error message={error} />}
 			</div>
 		</App>
 	);
@@ -276,10 +279,18 @@ const RepeatedVisitor = ({ hacker, presence, maxCheckIns, incrementFn }: Repeate
 };
 
 export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
+	const secretKey = env.QR_SECRET_KEY;
 	const session = await getServerSession(req, res, getAuthOptions(req));
+
+	const timestamp = Math.floor(Date.now() / 60000);
+	const encryptedId = session?.user?.hackerId
+		? encrypt(`${session.user.hackerId}:${timestamp}`, secretKey)
+		: null;
+
 	return {
 		redirect: await qrRedirect(session, "/qr"),
 		props: {
+			encryptedId,
 			...(await serverSideTranslations(locale ?? "en", ["qr", "navbar", "common"])),
 		},
 	};
