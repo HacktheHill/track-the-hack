@@ -1,47 +1,45 @@
-import { RoleName } from "@prisma/client";
-import { useSession } from "next-auth/react";
 import { useTranslation } from "next-i18next";
 import Image from "next/image";
 import qrcode from "qrcode";
 import { useEffect, useState } from "react";
 
+import router from "next/router";
 import Error from "./Error";
 
 type QRCodeProps = {
-	setError?: (error: boolean) => void;
-	id?: string;
+	id: string;
+	setError: (message: string) => void;
 };
 
-const QRCode = ({ setError, id }: QRCodeProps) => {
+const QRCode = ({ id, setError }: QRCodeProps) => {
 	const { t } = useTranslation("qr");
-	const { data: sessionData } = useSession();
+
 	const [qrCode, setQRCode] = useState<string | null>(null);
 
 	useEffect(() => {
-		async function getQRCode() {
-			if (sessionData?.user?.roles.includes(RoleName.HACKER) && sessionData?.user?.hackerId) {
-				try {
-					const qr = await qrcode.toDataURL(sessionData.user?.hackerId);
-					setQRCode(qr);
-				} catch (error) {
-					console.error(error);
-				}
+		async function generateQRCode() {
+			if (!id) return;
+			try {
+				const qr = await qrcode.toDataURL(id);
+				setQRCode(qr);
+			} catch (error) {
+				setError(t("qr-failed"));
+				console.error(error);
 			}
 		}
-		void getQRCode();
-	}, [id, sessionData?.user?.hackerId, sessionData?.user?.roles]);
+		void generateQRCode();
+
+		// Refresh the QR code every minute
+		const intervalId = setInterval(() => {
+			void router.replace(router.asPath);
+		}, 60 * 1000);
+
+		return () => clearInterval(intervalId);
+	}, [id, setError, t]);
 
 	if (!qrCode) {
-		setError?.(true);
-
-		if (!sessionData?.user?.hackerId) {
-			return <Error message={t("no-hacker")} />;
-		}
-
 		return <Error message={t("qr-failed")} />;
 	}
-
-	setError?.(false);
 
 	return (
 		<Image

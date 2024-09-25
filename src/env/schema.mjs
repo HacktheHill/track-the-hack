@@ -34,6 +34,7 @@ export const serverSchema = z.object({
 	S3_AUTH_KEY: z.string(),
 	DISCORD_BOT_SECRET_KEY: z.string(),
 	DISCORD_BOT_URL: z.string().url(),
+	QR_SECRET_KEY: z.string(),
 });
 
 /**
@@ -64,6 +65,7 @@ export const serverEnv = {
 	S3_AUTH_KEY: process.env.S3_AUTH_KEY,
 	DISCORD_BOT_SECRET_KEY: process.env.DISCORD_BOT_SECRET_KEY,
 	DISCORD_BOT_URL: process.env.DISCORD_BOT_URL,
+	QR_SECRET_KEY: process.env.QR_SECRET_KEY,
 };
 
 /**
