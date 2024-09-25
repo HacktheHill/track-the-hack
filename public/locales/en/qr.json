@@ -2,7 +2,6 @@
 	"title": "QR Code",
 	"use-qr": "Show this QR code to organizers",
 	"scan-qr": "Ready to scan a QR code",
-	"no-hacker": "No hacker found with this account.",
 	"qr-failed": "Failed to generate QR code.",
 	"checked-in": "Checked in {{firstName}} {{lastName}} for {{event}}",
 	"actions": {
