@@ -42,9 +42,9 @@ const SponsorPage = ({ id, name, tier, logo, hiringLink, websiteLink, additional
 	const { t } = useTranslation("sponsors");
 
 	return (
-		<App className="flex flex-col justify-center bg-default-gradient p-8" title={t("title")}>
+		<App className="flex flex-col justify-center overflow-y-auto bg-default-gradient p-8" title={t("title")}>
 			<div className="m-auto flex max-w-md flex-col items-center gap-8">
-				<Image src={logo} alt={name} className="h-48" />
+				<Image src={logo} alt={name} className="h-48" height={200} width={200} />
 				<h2 className="text-2xl font-semibold">{t("tier", { tier: t(`tiers.${tier}`) })}</h2>
 				<p className="text-lg">{t(`descriptions.${id}`)}</p>
 				<div className="flex items-center justify-center gap-4">

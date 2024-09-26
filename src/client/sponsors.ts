@@ -12,12 +12,16 @@ enum SponsorTier {
 	PREMIER = "premier",
 	MAYOR = "mayor",
 	COUNCILLOR = "councillor",
+	BACKBENCHER = "backbencher",
+	IN_KIND = "in-kind",
 }
 
 const sizeByTier = {
 	[SponsorTier.PREMIER]: 500,
 	[SponsorTier.MAYOR]: 250,
 	[SponsorTier.COUNCILLOR]: 100,
+	[SponsorTier.BACKBENCHER]: 75,
+	[SponsorTier.IN_KIND]: 50,
 } satisfies Record<SponsorTier, number>;
 
 const sponsorsData = [
@@ -60,6 +64,24 @@ const sponsorsData = [
 		logo: "https://2024.hackthehill.com/Logos/Redbull.svg",
 		hiringLink: "https://jobs.redbull.com/ca-en",
 		websiteLink: "https://www.redbull.com/ca-en",
+	},
+	{
+		id: "p&g",
+		name: "Procter & Gamble",
+		tier: SponsorTier.BACKBENCHER,
+		logo: "https://2024.hackthehill.com/Logos/P&G.svg",
+	},
+	{
+		id: "liquid-iv",
+		name: "Liquid IV",
+		tier: SponsorTier.BACKBENCHER,
+		logo: "https://2024.hackthehill.com/Logos/LiquidIV.png",
+	},
+	{
+		id: "fantuan",
+		name: "Fantuan",
+		tier: SponsorTier.BACKBENCHER,
+		logo: "https://2024.hackthehill.com/Logos/Fantuan.jpg",
 	},
 ] as const as SponsorData[];
 
