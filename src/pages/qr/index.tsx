@@ -29,19 +29,17 @@ const DEFAULT_ACTION = "get-hacker";
 
 const QR = ({ encryptedId }: { encryptedId: string }) => {
 	const { t, i18n } = useTranslation("qr");
-	const [error, setError] = useState("");
 
 	const selectedAction = useRef<string>(DEFAULT_ACTION);
-	const { data: events } = trpc.events.all.useQuery();
-
-	const [menuOptions, setMenuOptions] = useState<string[]>([]);
-
 	const prevHackerId = useRef<string>("");
 
+	const [error, setError] = useState("");
+	const [menuOptions, setMenuOptions] = useState<string[]>([]);
+	const [display, setDisplay] = useState(<></>);
+
+	const { data: events } = trpc.events.all.useQuery();
 	const { mutateAsync: presenceUpsertMutateAsync } = trpc.presence.upsert.useMutation();
 	const { mutateAsync: presenceIncrementMutateAsync } = trpc.presence.increment.useMutation();
-
-	const [display, setDisplay] = useState(<></>);
 
 	const utils = trpc.useUtils();
 
