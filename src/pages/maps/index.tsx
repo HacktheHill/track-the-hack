@@ -14,14 +14,14 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
 const Maps = () => {
 	const { t } = useTranslation("maps");
 
-	const mapsLink = (floor: number) => `https://cdn1.hackthehill.com/crx/floorplan/${floor}.png`;
+	const mapsLink = (floor: number) => `/assets/maps/floor${floor}.svg`;
 	const MAX_FLOORS = 6;
 
 	return (
 		<App className="flex h-0 flex-col items-center bg-default-gradient" title={t("title")}>
-			<div className="w-full justify-center overflow-y-auto mobile:px-0">
+			<div className="w-full justify-center overflow-y-auto p-5">
 				{[...Array(MAX_FLOORS).keys()].map(i => (
-					<>
+					<div key={i}>
 						<h1 className="py-3 text-center text-xl text-dark-color">
 							{t("floor", {
 								floor: i,
@@ -44,7 +44,7 @@ const Maps = () => {
 								</TransformComponent>
 							</div>
 						</TransformWrapper>
-					</>
+					</div>
 				))}
 			</div>
 		</App>
