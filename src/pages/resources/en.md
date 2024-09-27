@@ -2,7 +2,7 @@
 
 Welcome to Hack the Hill II! Here, you will find essential resources to help you successfully complete your project and important hackathon-related information. Happy hacking!
 
-## 📅 Event Details
+---
 
 ### 📱 Social Media
 
@@ -34,8 +34,6 @@ Here are the important documents and policies that you should review during the 
 - **uOttawa Emergency Handbook**: [Emergency Handbook (English)](https://www.uottawa.ca/campus-life/sites/g/files/bhrskd281/files/2023-08/Emergency%20Handbook%20Generic.pdf)
 
 ---
-
-## 🧑‍💻 Hackathon Project Resources
 
 ### 🙋‍♂️ Getting Help with Tech Issues 🙋‍♀️
 
