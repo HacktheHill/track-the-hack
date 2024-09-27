@@ -1,4 +1,4 @@
-import { RoleName } from "@prisma/client";
+import { AcceptanceStatus, RoleName } from "@prisma/client";
 import { TRPCClientError } from "@trpc/client";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { GetServerSideProps } from "next";
@@ -20,6 +20,7 @@ import { trpc } from "../../server/api/api";
 import { encrypt } from "../../server/api/routers/qr";
 import { qrRedirect } from "../../server/lib/redirects";
 import { getAuthOptions } from "../api/auth/[...nextauth]";
+import Tabs from "../../components/Tabs";
 
 type RouterOutput = inferRouterOutputs<AppRouter>;
 type Hacker = RouterOutput["hackers"]["get"];
@@ -74,6 +75,11 @@ const QR = ({ encryptedId }: { encryptedId: string }) => {
 			const maxCheckIns = events?.find(event => event.name === selectedAction.current)?.maxCheckIns as
 				| number
 				| null;
+
+			// If user does not have hacker role
+			if (hacker.acceptanceStatus !== AcceptanceStatus.ACCEPTED) {
+				return setDisplay(<NotHackerError />);
+			}
 
 			// If hacker has already checked-in -> Show RepeatedVisitor component with increment button
 			for (const presence of presences) {
@@ -178,10 +184,17 @@ const QR = ({ encryptedId }: { encryptedId: string }) => {
 						)}
 					</>
 					<>
-						<QRCode setError={setError} id={encryptedId} />
-						{!error && (
-							<p className="z-10 max-w-xl text-center text-lg font-bold text-dark-color">{t("use-qr")}</p>
-						)}
+						<Tabs names={["QR", "Scan"]}>
+							<>
+								<QRCode setError={setError} id={encryptedId} />
+								{!error && (
+									<p className="z-10 max-w-xl text-center text-lg font-bold text-dark-color">
+										{t("use-qr")}
+									</p>
+								)}
+							</>
+							<QRScanner onScan={onScan} setError={setError} />
+						</Tabs>
 					</>
 				</Filter>
 				{display}
@@ -195,6 +208,12 @@ const UnknownError = () => {
 	const { t } = useTranslation("qr");
 
 	return <Error message={t("unknown-error")} />;
+};
+
+const NotHackerError = () => {
+	const { t } = useTranslation("qr");
+
+	return <Error message={t("not-hacker")} />;
 };
 
 type FirstTimeVisitor = {
@@ -281,9 +300,7 @@ export const getServerSideProps: GetServerSideProps = async ({ req, res, locale 
 	const session = await getServerSession(req, res, getAuthOptions(req));
 
 	const timestamp = Math.floor(Date.now() / 60000);
-	const encryptedId = session?.user?.hackerId
-		? encrypt(`${session.user.hackerId}:${timestamp}`, secretKey)
-		: null;
+	const encryptedId = session?.user?.hackerId ? encrypt(`${session.user.hackerId}:${timestamp}`, secretKey) : null;
 
 	return {
 		redirect: await qrRedirect(session, "/qr"),
