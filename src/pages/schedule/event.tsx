@@ -1,3 +1,4 @@
+import type { Event } from "@prisma/client";
 import { EventType } from "@prisma/client";
 import type { GetStaticProps, NextPage } from "next";
 import { useTranslation } from "next-i18next";
@@ -5,11 +6,12 @@ import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
+
 import App from "../../components/App";
 import Error from "../../components/Error";
 import Loading from "../../components/Loading";
-
 import { trpc } from "../../server/api/api";
+import { useEffect } from "react";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
@@ -17,32 +19,12 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	};
 };
 
-const Event: NextPage = () => {
+const EventPage: NextPage = () => {
 	const { t } = useTranslation("event");
 	const router = useRouter();
-	const { locale } = router;
 	const [id] = [router.query.id].flat();
 
 	const query = trpc.events.get.useQuery({ id: id ?? "" }, { enabled: !!id });
-
-	if (query.isLoading || query.data == null || router.isFallback) {
-		return (
-			<App className="flex h-full w-full flex-col items-center justify-start gap-8 bg-light-tertiary-color p-8">
-				<Loading />
-			</App>
-		);
-	} else if (query.isError) {
-		return (
-			<App className="flex h-full w-full flex-col items-center justify-start gap-8 bg-light-tertiary-color p-8">
-				<Error message={query.error.message} />
-			</App>
-		);
-	}
-
-	let dateLocale = "en-CA";
-	if (locale === "fr") {
-		dateLocale = "fr-CA";
-	}
 
 	const types = {
 		[EventType.ALL]: t("type.ALL"),
@@ -52,18 +34,64 @@ const Event: NextPage = () => {
 		[EventType.WORKSHOP]: t("type.WORKSHOP"),
 	};
 
-	const { start, end, name, nameFr, room, description, descriptionFr, type, host, image, link, linkText, linkTextFr, tiktok } = query.data;
-	if (!(start instanceof Date) || !(end instanceof Date)) return null;
+	// Redirect to schedule page if no event ID is provided, happens with the locale changes
+	useEffect(() => {
+		if (id === undefined) {
+			void router.push("/schedule");
+		}
+	}, [id, router]);
 
 	return (
 		<App
 			className="relative flex h-full w-full flex-col items-center justify-start gap-8 overflow-y-auto bg-light-tertiary-color p-8 text-center"
-			title={locale === "fr" ? nameFr : name}
+			title={t("title")}
 			integrated={true}
 		>
+			{query.isError ? (
+				<Error message={query.error.message} />
+			) : query.data === null || query.isLoading ? (
+				<Loading />
+			) : (
+				<EventView event={query.data} types={types} />
+			)}
+		</App>
+	);
+};
+
+type EventViewProps = {
+	event: Event;
+	types: Record<EventType, string>;
+};
+
+const EventView = ({ event, types }: EventViewProps) => {
+	const { t } = useTranslation("event");
+	const router = useRouter();
+	const { locale } = router;
+
+	const {
+		name,
+		nameFr,
+		start,
+		end,
+		room,
+		type,
+		host,
+		description,
+		descriptionFr,
+		image,
+		link,
+		linkText,
+		linkTextFr,
+		tiktok,
+	} = event;
+
+	const dateLocale = locale === "fr" ? "fr-CA" : "en-CA";
+
+	return (
+		<>
 			<button
 				className="absolute right-4 top-4 text-dark-primary-color transition-all duration-500 hover:scale-110 hover:text-dark-color"
-				onClick={() => router.back()}
+				onClick={() => void router.push("/schedule")}
 			>
 				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 					<title>{t("close-event")}</title>
@@ -123,8 +151,7 @@ const Event: NextPage = () => {
 
 			<div className="flex flex-col font-rubik">
 				<p className="text-xl">
-					{(locale === "fr" ? descriptionFr :
-					description).split("\\n").map((line, i, arr) => (
+					{(locale === "fr" ? descriptionFr : description).split("\\n").map((line, i, arr) => (
 						<span key={i}>
 							{line}
 							{arr.length - 1 !== i && <br />}
@@ -146,8 +173,8 @@ const Event: NextPage = () => {
 					<h1 className="text-xl">{t("tiktok-video-link")}</h1>
 				</Link>
 			)}
-		</App>
+		</>
 	);
 };
 
-export default Event;
+export default EventPage;
