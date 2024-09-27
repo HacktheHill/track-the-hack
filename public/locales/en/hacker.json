@@ -120,5 +120,6 @@
 	"save": "Save",
 	"invalid-form": "Please fill out all required fields.",
 	"success": "Saved changes successfully.",
-	"return-to-form": "Return to form"
+	"return-to-form": "Return to form",
+	"team": "Team"
 }

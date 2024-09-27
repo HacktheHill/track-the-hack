@@ -21,6 +21,17 @@ const HackerViewableFields = {
 	linkedin: true,
 	github: true,
 	personalWebsite: true,
+	Team: {
+		select: {
+			name: true,
+			hackers: {
+				select: {
+					firstName: true,
+					lastName: true,
+				},
+			},
+		},
+	},
 };
 
 export const hackerRouter = createTRPCRouter({
@@ -71,32 +82,53 @@ export const hackerRouter = createTRPCRouter({
 			}
 
 			let hacker: Hacker | null = null;
-			const fields = user.roles.some(role => role.name == RoleName.HACKER) ? HackerViewableFields : null;
+			const isHacker = user.roles.some(role => role.name == RoleName.HACKER);
+			const isSelfView = "id" in input && input.id === user.Hacker?.id;
 
-			if ("id" in input) {
-				hacker = await ctx.prisma.hacker.findUnique({
-					where: {
-						id: input.id,
-					},
-					select: input.id !== user.Hacker?.id ? fields : null,
-				});
-			} else if ("email" in input) {
+			const fields = isHacker ? HackerViewableFields : null;
+			const whereQuery = (() => {
+				switch (true) {
+					case "id" in input:
+						return { id: input.id };
+					case "email" in input:
+						return { email: input.email };
+					case "firstName" in input && "lastName" in input:
+						return { firstName: input.firstName, lastName: input.lastName };
+					default:
+						return {};
+				}
+			})();
+
+			if (isHacker && !isSelfView) {
+				if ("id" in input) {
+					hacker = await ctx.prisma.hacker.findUnique({
+						where: whereQuery as never,
+						select: input.id !== user.Hacker?.id ? fields : null,
+					});
+				} else if ("email" in input) {
+					hacker = await ctx.prisma.hacker.findFirst({
+						where: whereQuery as never,
+						select: input.email !== user.Hacker?.email ? fields : null,
+					});
+				} else if ("firstName" in input && "lastName" in input) {
+					hacker = await ctx.prisma.hacker.findFirst({
+						where: whereQuery as never,
+						select:
+							input.firstName !== user.Hacker?.firstName || input.lastName !== user.Hacker?.lastName
+								? fields
+								: null,
+					});
+				}
+			} else {
 				hacker = await ctx.prisma.hacker.findFirst({
-					where: {
-						email: input.email,
+					where: whereQuery as never,
+					include: {
+						Team: {
+							include: {
+								hackers: true,
+							},
+						},
 					},
-					select: input.email !== user.Hacker?.email ? fields : null,
-				});
-			} else if ("firstName" in input && "lastName" in input) {
-				hacker = await ctx.prisma.hacker.findFirst({
-					where: {
-						firstName: input.firstName,
-						lastName: input.lastName,
-					},
-					select:
-						input.firstName !== user.Hacker?.firstName || input.lastName !== user.Hacker?.lastName
-							? fields
-							: null,
 				});
 			}
 
