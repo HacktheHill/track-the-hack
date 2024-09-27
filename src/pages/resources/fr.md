@@ -2,7 +2,7 @@
 
 Bienvenue à Hack the Hill II ! Ici, vous trouverez des ressources essentielles pour vous aider à mener à bien votre projet ainsi que des informations importantes sur le hackathon. Bon hack !
 
-## 📅 Détails de l'événement
+---
 
 ### 📱 Réseaux sociaux
 
@@ -34,8 +34,6 @@ Voici les documents et politiques importants que vous devriez consulter pendant 
 - **Guide d'urgence de l'uOttawa** : [Guide d'urgence (français)](https://www.uottawa.ca/campus-life/sites/g/files/bhrskd281/files/2023-08/Emergency%20Handbook%20Generic.pdf)
 
 ---
-
-## 🧑‍💻 Ressources pour les projets du hackathon
 
 ### 🙋‍♂️ Obtenir de l'aide avec les problèmes techniques 🙋‍♀️
 
