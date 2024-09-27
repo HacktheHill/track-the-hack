@@ -7,6 +7,7 @@ import { useRouter } from "next/router";
 import { useCallback, useEffect, useState } from "react";
 import { trpc } from "../../server/api/api";
 
+import { useSession } from "next-auth/react";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { getHackerFields } from "../../client/hacker";
@@ -27,6 +28,7 @@ const HackerPage: NextPage<{
 	const router = useRouter();
 	const [id] = [router.query.id].flat();
 	const { t } = useTranslation("hacker");
+	const { data: sessionData } = useSession();
 
 	const hackerQuery = trpc.hackers.get.useQuery({ id: id ?? "" }, { enabled: !!id });
 	const presenceQuery = trpc.presence.getFromHackerId.useQuery(
@@ -147,8 +149,9 @@ const HackerPage: NextPage<{
 	};
 
 	useEffect(() => {
-		resetInputFields();
-	}, [hackerQuery.data, resetInputFields, t]);
+		[RoleName.ORGANIZER, RoleName.MAYOR, RoleName.PREMIER].some(role => sessionData?.user?.roles.includes(role)) ||
+			(sessionData?.user?.hackerId == id && resetInputFields());
+	}, [hackerQuery.data, id, resetInputFields, sessionData, t]);
 
 	const statusColorMap: { [key: string]: string } = {
 		PENDING: "bg-blue-400/75",
@@ -243,157 +246,192 @@ const HackerPage: NextPage<{
 					{hackerQuery.data.pronouns && <>({hackerQuery.data.pronouns})</>}
 				</h1>
 
-				<div
-					className={`rounded px-4 py-2 text-center font-coolvetica text-2xl font-normal text-dark-color ${
-						statusColorMap[hackerQuery.data.acceptanceStatus] ?? "bg-gray-500"
-					}`}
-				>
-					{t(`other.acceptanceStatus.${hackerQuery.data.acceptanceStatus}`)}
-				</div>
-
-				<Filter value={[RoleName.ORGANIZER]} method="some" silent>
-					<div className="grid grid-flow-row gap-4 rounded-lg bg-light-tertiary-color p-4 mobile:grid-cols-2">
-						{presenceQuery.data?.map((presence, index) => (
-							<div key={index} className="grid grid-flow-col grid-cols-4 items-center">
-								<p className="col-span-2">
-									<b>{presence.label}</b>
-								</p>
-								<p>{presence.value}</p>
-								<button
-									className="w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-1 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
-									onClick={() => {
-										void handlePresenceIncrement(presence.id, -1);
-										presence.value -= 1;
-									}}
-								>
-									—
-								</button>
-								<button
-									className="w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-1 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
-									onClick={() => {
-										void handlePresenceIncrement(presence.id, 1);
-										presence.value += 1;
-									}}
-								>
-									+
-								</button>
-							</div>
-						))}
-					</div>
-				</Filter>
-
-				<form onSubmit={e => void handleSubmit(e)} className="flex flex-col gap-4">
-					{Object.entries(getHackerFields(hackerQuery.data, acceptance)).map(
-						([categoryName, fields], index) => (
-							<div className="flex flex-col gap-4" key={index}>
-								<h3 className="text-center font-coolvetica text-2xl text-dark-color">
-									{t(`${categoryName}.title`)}
-								</h3>
-								{fields.map((field, index) => {
-									const fieldAttributes = {
-										id: field.name,
-										name: field.name,
-										type: field.type,
-										className:
-											"w-1/2 rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50",
-										value: inputValues[field.name] ?? "",
-										onChange: (
-											e: React.ChangeEvent<
-												HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-											>,
-										) => handleInputChange(field.name, e.target.value),
-									};
-
-									return (
-										<div key={index} className="flex justify-between gap-2">
-											<strong className="text-left font-bold">
-												{"options" in field && field.options
-													? t(`${categoryName}.${field.name}.label`)
-													: t(`${categoryName}.${field.name}`)}
-											</strong>
-											{"editable" in field && field.editable ? (
-												field.type === "select" ? (
-													<select {...fieldAttributes}>
-														{field.options?.map((option, index) => (
-															<option key={index} value={option}>
-																{option}
-															</option>
-														))}
-													</select>
-												) : field.type === "textarea" ? (
-													<textarea {...fieldAttributes} />
-												) : (
-													<input {...fieldAttributes} />
-												)
-											) : (
-												<p>
-													{field.type === "select" && field.value
-														? t(`${categoryName}.${field.name}.${field.value}`)
-														: field.value}
-												</p>
-											)}
-										</div>
-									);
-								})}
-							</div>
-						),
-					)}
-					<div className="flex flex-col gap-4">
-						<h3 className="text-center font-coolvetica text-2xl text-dark-color">{t("links.title")}</h3>
-
-						{!acceptance && (
-							<input
-								name="resume"
-								className="w-fit rounded-md border border-dark-primary-color p-2"
-								type="file"
-								accept="application/pdf"
-								onChange={e => {
-									handleInputChange("resume", e.target.value);
-								}}
-							/>
-						)}
-
-						<p className="flex flex-row flex-wrap justify-center gap-4">
-							{Object.entries({
-								resume: downloadResume.data,
-								linkedin: hackerQuery.data.linkedin,
-								github: hackerQuery.data.github,
-								personalWebsite: hackerQuery.data.personalWebsite,
-							}).map(
-								([key, value]) =>
-									value && (
-										<a
-											key={key}
-											href={value}
-											target="_blank"
-											rel="noreferrer"
-											className="flex items-center justify-center gap-2 rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
-										>
-											{t(`links.${key}`)}
-										</a>
-									),
-							)}
-						</p>
-					</div>
-
-					{edit && (
-						<div className="sticky bottom-0 mx-2 flex justify-center  font-coolvetica">
-							<div className="flex max-w-md rounded-md bg-dark-primary-color px-2 py-2 text-light-color transition delay-150 ease-in-out">
-								<p className="px-5 py-2 text-center">{t("unsavedChanges")}</p>
-								{loading && <Loading />}
-								<button className="px-4 py-2 text-light-quaternary-color" onClick={resetInputFields}>
-									{t("reset")}
-								</button>
-								<button
-									className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 text-dark-color transition-all duration-500 hover:bg-light-tertiary-color"
-									type="submit"
-								>
-									{t("save")}
-								</button>
-							</div>
+				{[RoleName.ORGANIZER, RoleName.MAYOR, RoleName.PREMIER].some(
+					role => sessionData?.user?.roles.includes(role),
+				) || sessionData?.user?.hackerId == id ? (
+					<div className="organizerView">
+						<div
+							className={`rounded px-4 py-2 text-center font-coolvetica text-2xl font-normal text-dark-color ${
+								statusColorMap[hackerQuery.data.acceptanceStatus] ?? "bg-gray-500"
+							}`}
+						>
+							{t(`other.acceptanceStatus.${hackerQuery.data.acceptanceStatus}`)}
 						</div>
-					)}
-				</form>
+
+						<div className="grid grid-flow-row gap-4 rounded-lg bg-light-tertiary-color p-4 mobile:grid-cols-2">
+							{presenceQuery.data?.map((presence, index) => (
+								<div key={index} className="grid grid-flow-col grid-cols-4 items-center">
+									<p className="col-span-2">
+										<b>{presence.label}</b>
+									</p>
+									<p>{presence.value}</p>
+									<button
+										className="w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-1 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
+										onClick={() => {
+											void handlePresenceIncrement(presence.id, -1);
+											presence.value -= 1;
+										}}
+									>
+										—
+									</button>
+									<button
+										className="w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-1 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
+										onClick={() => {
+											void handlePresenceIncrement(presence.id, 1);
+											presence.value += 1;
+										}}
+									>
+										+
+									</button>
+								</div>
+							))}
+						</div>
+						<form onSubmit={e => void handleSubmit(e)} className="flex flex-col gap-4">
+							{Object.entries(getHackerFields(hackerQuery.data, acceptance)).map(
+								([categoryName, fields], index) => (
+									<div className="flex flex-col gap-4" key={index}>
+										<h3 className="text-center font-coolvetica text-2xl text-dark-color">
+											{t(`${categoryName}.title`)}
+										</h3>
+										{fields.map((field, index) => {
+											const fieldAttributes = {
+												id: field.name,
+												name: field.name,
+												type: field.type,
+												className:
+													"w-1/2 rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50",
+												value: inputValues[field.name] ?? "",
+												onChange: (
+													e: React.ChangeEvent<
+														HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+													>,
+												) => handleInputChange(field.name, e.target.value),
+											};
+
+											return (
+												<div key={index} className="flex justify-between gap-2">
+													<strong className="text-left font-bold">
+														{"options" in field && field.options
+															? t(`${categoryName}.${field.name}.label`)
+															: t(`${categoryName}.${field.name}`)}
+													</strong>
+													{"editable" in field && field.editable ? (
+														field.type === "select" ? (
+															<select {...fieldAttributes}>
+																{field.options?.map((option, index) => (
+																	<option key={index} value={option}>
+																		{option}
+																	</option>
+																))}
+															</select>
+														) : field.type === "textarea" ? (
+															<textarea {...fieldAttributes} />
+														) : (
+															<input {...fieldAttributes} />
+														)
+													) : (
+														<p>
+															{field.type === "select" && field.value
+																? t(`${categoryName}.${field.name}.${field.value}`)
+																: field.value}
+														</p>
+													)}
+												</div>
+											);
+										})}
+									</div>
+								),
+							)}
+							<div className="flex flex-col gap-4">
+								<h3 className="text-center font-coolvetica text-2xl text-dark-color">
+									{t("links.title")}
+								</h3>
+
+								{!acceptance && (
+									<input
+										name="resume"
+										className="w-fit rounded-md border border-dark-primary-color p-2"
+										type="file"
+										accept="application/pdf"
+										onChange={e => {
+											handleInputChange("resume", e.target.value);
+										}}
+									/>
+								)}
+
+								<p className="flex flex-row flex-wrap justify-center gap-4">
+									{Object.entries({
+										resume: downloadResume.data,
+										linkedin: hackerQuery.data.linkedin,
+										github: hackerQuery.data.github,
+										personalWebsite: hackerQuery.data.personalWebsite,
+									}).map(
+										([key, value]) =>
+											value && (
+												<a
+													key={key}
+													href={value}
+													target="_blank"
+													rel="noreferrer"
+													className="flex items-center justify-center gap-2 rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
+												>
+													{t(`links.${key}`)}
+												</a>
+											),
+									)}
+								</p>
+							</div>
+
+							{edit && (
+								<div className="sticky bottom-0 mx-2 flex justify-center  font-coolvetica">
+									<div className="flex max-w-md rounded-md bg-dark-primary-color px-2 py-2 text-light-color transition delay-150 ease-in-out">
+										<p className="px-5 py-2 text-center">{t("unsavedChanges")}</p>
+										{loading && <Loading />}
+										<button
+											className="px-4 py-2 text-light-quaternary-color"
+											onClick={resetInputFields}
+										>
+											{t("reset")}
+										</button>
+										<button
+											className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 text-dark-color transition-all duration-500 hover:bg-light-tertiary-color"
+											type="submit"
+										>
+											{t("save")}
+										</button>
+									</div>
+								</div>
+							)}
+						</form>
+					</div>
+				) : (
+					<div className="HackerView">
+						<div className="flex flex-col gap-4">
+							<h3 className="text-center font-coolvetica text-2xl text-dark-color">{t("links.title")}</h3>
+
+							<p className="flex flex-row flex-wrap justify-center gap-4">
+								{Object.entries({
+									linkedin: hackerQuery.data.linkedin,
+									github: hackerQuery.data.github,
+									personalWebsite: hackerQuery.data.personalWebsite,
+								}).map(
+									([key, value]) =>
+										value && (
+											<a
+												key={key}
+												href={value}
+												target="_blank"
+												rel="noreferrer"
+												className="flex items-center justify-center gap-2 rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
+											>
+												{t(`links.${key}`)}
+											</a>
+										),
+								)}
+							</p>
+						</div>
+					</div>
+				)}
 			</div>
 		</App>
 	);
