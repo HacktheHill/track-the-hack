@@ -122,9 +122,16 @@ const Navbar = ({ integrated }: NavbarProps) => {
 
 	const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
 		void i18n.changeLanguage(e.target.value.toLocaleLowerCase());
-		void router.push(router.pathname, router.asPath, {
-			locale: e.target.value.toLocaleLowerCase(),
-		});
+		void router.push(
+			{
+				pathname: router.pathname,
+				query: router.query,
+			},
+			router.asPath,
+			{
+				locale: e.target.value.toLocaleLowerCase(),
+			},
+		);
 	};
 
 	return (

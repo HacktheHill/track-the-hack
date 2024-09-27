@@ -11,7 +11,6 @@ import App from "../../components/App";
 import Error from "../../components/Error";
 import Loading from "../../components/Loading";
 import { trpc } from "../../server/api/api";
-import { useEffect } from "react";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
@@ -33,13 +32,6 @@ const EventPage: NextPage = () => {
 		[EventType.SOCIAL]: t("type.SOCIAL"),
 		[EventType.WORKSHOP]: t("type.WORKSHOP"),
 	};
-
-	// Redirect to schedule page if no event ID is provided, happens with the locale changes
-	useEffect(() => {
-		if (id === undefined) {
-			void router.push("/schedule");
-		}
-	}, [id, router]);
 
 	return (
 		<App
