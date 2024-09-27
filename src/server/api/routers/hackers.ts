@@ -626,12 +626,28 @@ export const hackerRouter = createTRPCRouter({
 							id: userId,
 						},
 					},
+					acceptanceStatus: "ACCEPTED",
 				},
 			});
+
+			const hackerRoleExists = user.roles.some(role => role.name === "HACKER");
+			if (!hackerRoleExists) {
+				await ctx.prisma.user.update({
+					where: { id: userId },
+					data: {
+						roles: {
+							connect: {
+								name: RoleName.HACKER,
+							},
+						},
+					},
+				});
+			}
 
 			const filename = generateS3Filename(hacker.id, `${hacker.firstName}_${hacker.lastName}_Resume`, "pdf");
 			const presignedUrl = await generatePresignedPutUrl(filename, "resumes");
 
+			// Log the walk-in action
 			await log(ctx, {
 				sourceId: hacker.id,
 				sourceType: "Hacker",
