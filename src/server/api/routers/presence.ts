@@ -1,4 +1,3 @@
-import type { Hacker } from "@prisma/client";
 import { RoleName } from "@prisma/client";
 import { z } from "zod";
 
