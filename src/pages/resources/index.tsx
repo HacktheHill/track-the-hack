@@ -30,7 +30,7 @@ type ComponentProps = {
 const components = {
 	/* eslint-disable  @typescript-eslint/no-unused-vars */
 	h1: ({ children, node, ...props }: ComponentProps) => (
-		<h1 className="my-2 text-4xl font-bold" {...props}>
+		<h1 className="mt-8 text-4xl font-bold" {...props}>
 			{React.Children.map(children, child => {
 				if (typeof child === "string") {
 					return child;
@@ -42,7 +42,7 @@ const components = {
 		</h1>
 	),
 	h2: ({ children, node, ...props }: ComponentProps) => (
-		<h2 className="my-2 text-3xl font-bold" {...props}>
+		<h2 className="mt-8 text-2xl text-center font-bold" {...props}>
 			{React.Children.map(children, child => {
 				if (typeof child === "string") {
 					return child;
@@ -54,7 +54,7 @@ const components = {
 		</h2>
 	),
 	h3: ({ children, node, ...props }: ComponentProps) => (
-		<h3 className="my-2 text-2xl font-bold" {...props}>
+		<h3 className="mt-8 text-xl font-bold" {...props}>
 			{React.Children.map(children, child => {
 				if (typeof child === "string") {
 					return child;
@@ -66,7 +66,7 @@ const components = {
 		</h3>
 	),
 	h4: ({ children, node, ...props }: ComponentProps) => (
-		<h4 className="my-2 text-xl font-bold" {...props}>
+		<h4 className="mt-8 text-lg font-bold" {...props}>
 			{React.Children.map(children, child => {
 				if (typeof child === "string") {
 					return child;
@@ -78,7 +78,7 @@ const components = {
 		</h4>
 	),
 	h5: ({ children, node, ...props }: ComponentProps) => (
-		<h5 className="my-2 text-lg font-bold" {...props}>
+		<h5 className="mt-8 text-sm font-bold" {...props}>
 			{React.Children.map(children, child => {
 				if (typeof child === "string") {
 					return child;
@@ -90,7 +90,7 @@ const components = {
 		</h5>
 	),
 	h6: ({ children, node, ...props }: ComponentProps) => (
-		<h6 className="my-2 text-base font-bold" {...props}>
+		<h6 className="mt-8 text-xs font-bold" {...props}>
 			{React.Children.map(children, child => {
 				if (typeof child === "string") {
 					return child;
@@ -106,11 +106,11 @@ const components = {
 			{children}
 		</p>
 	),
-	/* a: ({ children, node, ...props }: ComponentProps) => (
-		<a className="text-blue-900" {...props}>
+	a: ({ children, node, ...props }: ComponentProps) => (
+		<a className="text-highlight-color hover:underline" {...props}>
 			{children}
 		</a>
-	), */
+	),
 	ul: ({ children, node, ...props }: ComponentProps) => {
 		const { depth, ordered, className, ...rest } = props as {
 			depth: number;
@@ -158,11 +158,11 @@ const components = {
 			</li>
 		);
 	},
-	/* blockquote: ({ children, node, ...props }: ComponentProps) => (
-		<blockquote className="border-l-4 border-gray-300 pl-4" {...props}>
+	blockquote: ({ children, node, ...props }: ComponentProps) => (
+		<blockquote className="border-l-4 border-dark-primary-color pl-4" {...props}>
 			{children}
 		</blockquote>
-	), */
+	),
 	table: ({ children, node, ...props }: ComponentProps) => (
 		<table className="table-auto border-collapse border border-gray-300" {...props}>
 			{children}
@@ -204,10 +204,9 @@ const components = {
 			</td>
 		);
 	},
-	code: ({ children, inline, ...props }: ComponentProps) => {
-		const className = inline ? "rounded-lg bg-gray-200 px-2 py-1" : "rounded-lg bg-gray-300 p-4";
+	code: ({ children, ...props }: ComponentProps) => {
 		return (
-			<code className={className} {...props}>
+			<code className="text-medium-primary-color" {...props}>
 				{children}
 			</code>
 		);
@@ -227,7 +226,7 @@ const components = {
 			{children}
 		</del>
 	),
-	hr: ({ ...props }: ComponentProps) => <hr className="border-gray-300" {...props} />,
+	hr: ({ ...props }: ComponentProps) => <hr className="my-4 border-dark-primary-color" {...props} />,
 	img: ({ ...props }) => {
 		const { src, alt, width, height } = props as { src: string; alt: string; width: number; height: number };
 		return <Image src={src} alt={alt} width={width} height={height} />;
