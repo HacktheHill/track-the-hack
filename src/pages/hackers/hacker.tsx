@@ -20,6 +20,11 @@ import { hackerRedirect } from "../../server/lib/redirects";
 import { hackerSchema } from "../../utils/common";
 import { getAuthOptions } from "../api/auth/[...nextauth]";
 import { makeZodI18nMap } from "zod-i18n-map";
+import type { inferRouterOutputs } from "@trpc/server";
+import type { AppRouter } from "../../server/api/root";
+
+type RouterOutput = inferRouterOutputs<AppRouter>;
+type Hacker = RouterOutput["hackers"]["get"];
 
 const HackerPage: NextPage<{
 	organizer: boolean;
@@ -149,8 +154,14 @@ const HackerPage: NextPage<{
 	};
 
 	useEffect(() => {
-		[RoleName.ORGANIZER, RoleName.MAYOR, RoleName.PREMIER].some(role => sessionData?.user?.roles.includes(role)) ||
-			(sessionData?.user?.hackerId == id && resetInputFields());
+		if (
+			[RoleName.ORGANIZER, RoleName.MAYOR, RoleName.PREMIER].some(
+				role => sessionData?.user?.roles.includes(role),
+			) ||
+			sessionData?.user?.hackerId == id
+		) {
+			resetInputFields();
+		}
 	}, [hackerQuery.data, id, resetInputFields, sessionData, t]);
 
 	const statusColorMap: { [key: string]: string } = {
@@ -382,6 +393,8 @@ const HackerPage: NextPage<{
 								</p>
 							</div>
 
+							<TeamList hacker={hackerQuery.data as unknown as HackerViewData} />
+
 							{edit && (
 								<div className="sticky bottom-0 mx-2 flex justify-center  font-coolvetica">
 									<div className="flex max-w-md rounded-md bg-dark-primary-color px-2 py-2 text-light-color transition delay-150 ease-in-out">
@@ -429,6 +442,7 @@ const HackerPage: NextPage<{
 										),
 								)}
 							</p>
+							<TeamList hacker={hackerQuery.data as unknown as HackerViewData} />
 						</div>
 					</div>
 				)}
@@ -437,6 +451,35 @@ const HackerPage: NextPage<{
 	);
 };
 
+type HackerViewData = {
+	id: string;
+	firstName: string;
+	lastName: string;
+	Team: {
+		name: string;
+		hackers: Hacker[];
+	};
+};
+
+const TeamList = ({ hacker }: { hacker: HackerViewData }) => {
+	const { t } = useTranslation("hacker");
+	return (
+		<>
+			<h3 className="text-center font-coolvetica text-2xl text-dark-color">
+				{t("team")}: {hacker?.Team?.name}
+			</h3>
+			<ul className="text-center">
+				{hacker?.Team?.hackers.map((member, index) => (
+					<li key={index} className="flex flex-col gap-2">
+						<p>
+							{member.firstName} {member.lastName}
+						</p>
+					</li>
+				))}
+			</ul>
+		</>
+	);
+};
 export const getServerSideProps: GetServerSideProps = async ({ req, res, query, locale }) => {
 	const session = await getServerSession(req, res, getAuthOptions(req));
 
