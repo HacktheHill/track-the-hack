@@ -52,13 +52,13 @@ const Event: NextPage = () => {
 		[EventType.WORKSHOP]: t("type.WORKSHOP"),
 	};
 
-	const { name, start, end, room, description, type, host, image, link, linkText, tiktok } = query.data;
+	const { start, end, name, nameFr, room, description, descriptionFr, type, host, image, link, linkText, linkTextFr, tiktok } = query.data;
 	if (!(start instanceof Date) || !(end instanceof Date)) return null;
 
 	return (
 		<App
 			className="relative flex h-full w-full flex-col items-center justify-start gap-8 overflow-y-auto bg-light-tertiary-color p-8 text-center"
-			title={name}
+			title={locale === "fr" ? nameFr : name}
 			integrated={true}
 		>
 			<button
@@ -85,7 +85,7 @@ const Event: NextPage = () => {
 			</button>
 
 			<div className="flex flex-col font-rubik text-dark-color">
-				<h1 className="font-coolvetica text-4xl">{name}</h1>
+				<h1 className="font-coolvetica text-4xl">{locale === "fr" ? nameFr : name}</h1>
 				<p className="text-lg">
 					{start.toLocaleDateString(dateLocale, {
 						weekday: "long",
@@ -117,13 +117,14 @@ const Event: NextPage = () => {
 					rel="noreferrer"
 					className="flex whitespace-nowrap rounded-lg border border-dark-color bg-light-primary-color px-8 py-2 font-coolvetica text-dark-color transition-colors hover:bg-dark-secondary-color"
 				>
-					{linkText}
+					{locale === "fr" ? linkTextFr : linkText}
 				</Link>
 			)}
 
 			<div className="flex flex-col font-rubik">
 				<p className="text-xl">
-					{description.split("\\n").map((line, i, arr) => (
+					{(locale === "fr" ? descriptionFr :
+					description).split("\\n").map((line, i, arr) => (
 						<span key={i}>
 							{line}
 							{arr.length - 1 !== i && <br />}

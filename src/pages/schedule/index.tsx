@@ -69,6 +69,7 @@ const Schedule: NextPage = () => {
 			: EventType.ALL;
 
 	const events = query.data
+		.filter(event => !event.hidden)
 		?.filter(event => EventType[event.type] === tab || tab === EventType.ALL)
 		.reduce((acc, event) => {
 			if (event.end.getDate() === event.start.getDate()) {
@@ -132,7 +133,9 @@ const Schedule: NextPage = () => {
 												event.type,
 											)}`}
 										>
-											<h1 className="text-center text-xl">{event.name}</h1>
+											<h1 className="text-center text-xl">
+												{locale === "fr" ? event.nameFr : event.name}
+											</h1>
 											<p className="text-center leading-3">
 												{event.start.toLocaleTimeString(dateLocale, {
 													hour: "numeric",
