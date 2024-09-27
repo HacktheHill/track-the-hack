@@ -14,9 +14,18 @@ const generateWalkInCode = (userId: string) => {
 	return crypto.createHash("sha256").update(env.WALK_IN_SECRET_KEY).update(userId).digest("hex").slice(0, 6);
 };
 
+const HackerViewableFields = {
+	firstName: true,
+	lastName: true,
+	pronouns: true,
+	linkedin: true,
+	github: true,
+	personalWebsite: true,
+};
+
 export const hackerRouter = createTRPCRouter({
 	// Get a hacker by id or email
-	get: publicProcedure
+	get: protectedProcedure
 		.input(
 			z
 				.object({
@@ -35,18 +44,48 @@ export const hackerRouter = createTRPCRouter({
 				),
 		)
 		.query(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+			const user = await ctx.prisma.user.findUnique({
+				where: {
+					id: userId,
+				},
+				select: {
+					roles: {
+						select: {
+							name: true,
+						},
+					},
+					Hacker: {
+						select: {
+							id: true,
+							email: true,
+							firstName: true,
+							lastName: true,
+						},
+					},
+				},
+			});
+
+			if (!user) {
+				throw new Error("User not found");
+			}
+
 			let hacker: Hacker | null = null;
+			const fields = user.roles.some(role => role.name == RoleName.HACKER) ? HackerViewableFields : null;
+
 			if ("id" in input) {
 				hacker = await ctx.prisma.hacker.findUnique({
 					where: {
 						id: input.id,
 					},
+					select: input.id !== user.Hacker?.id ? fields : null,
 				});
 			} else if ("email" in input) {
 				hacker = await ctx.prisma.hacker.findFirst({
 					where: {
 						email: input.email,
 					},
+					select: input.email !== user.Hacker?.email ? fields : null,
 				});
 			} else if ("firstName" in input && "lastName" in input) {
 				hacker = await ctx.prisma.hacker.findFirst({
@@ -54,6 +93,10 @@ export const hackerRouter = createTRPCRouter({
 						firstName: input.firstName,
 						lastName: input.lastName,
 					},
+					select:
+						input.firstName !== user.Hacker?.firstName || input.lastName !== user.Hacker?.lastName
+							? fields
+							: null,
 				});
 			}
 
@@ -65,13 +108,35 @@ export const hackerRouter = createTRPCRouter({
 		}),
 
 	// Get next hacker in db from an id
-	getNext: publicProcedure
+	getNext: protectedProcedure
 		.input(
 			z.object({
 				id: z.string(),
 			}),
 		)
 		.query(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+			const user = await ctx.prisma.user.findUnique({
+				where: {
+					id: userId,
+				},
+				select: {
+					roles: {
+						select: {
+							name: true,
+						},
+					},
+				},
+			});
+
+			if (!user) {
+				throw new Error("User not found");
+			}
+
+			if (!hasRoles(user, [RoleName.MAYOR, RoleName.PREMIER, RoleName.ORGANIZER])) {
+				throw new Error("You do not have permission to do this");
+			}
+
 			let hacker: Hacker | null = null;
 			if ("id" in input) {
 				hacker = await ctx.prisma.hacker.findFirst({
@@ -87,13 +152,35 @@ export const hackerRouter = createTRPCRouter({
 		}),
 
 	// Get prev hacker in db from an id
-	getPrev: publicProcedure
+	getPrev: protectedProcedure
 		.input(
 			z.object({
 				id: z.string(),
 			}),
 		)
 		.query(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+			const user = await ctx.prisma.user.findUnique({
+				where: {
+					id: userId,
+				},
+				select: {
+					roles: {
+						select: {
+							name: true,
+						},
+					},
+				},
+			});
+
+			if (!user) {
+				throw new Error("User not found");
+			}
+
+			if (!hasRoles(user, [RoleName.MAYOR, RoleName.PREMIER, RoleName.ORGANIZER])) {
+				throw new Error("You do not have permission to do this");
+			}
+
 			let hacker: Hacker | null = null;
 			if ("id" in input) {
 				hacker = await ctx.prisma.hacker.findFirst({
