@@ -45,11 +45,9 @@ const QR = ({ encryptedId }: { encryptedId: string }) => {
 	const utils = trpc.useUtils();
 
 	useEffect(() => {
-		const now = new Date();
-
 		const validEvents =
 			events
-				?.filter(event => event.end >= now)
+				?.filter(event => event.end.getTime() + 30 * 60 * 1000 > Date.now())
 				.filter((event, index, self) => self.findIndex(e => e.name === event.name) === index)
 				.sort((a, b) => a.start.getTime() - b.start.getTime())
 				.map(event => event.name) ?? [];
