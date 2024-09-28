@@ -70,6 +70,7 @@ const Schedule: NextPage = () => {
 
 	const events = query.data
 		.filter(event => !event.hidden)
+		.filter(event => event.end.getTime() >= Date.now())
 		.filter(event => EventType[event.type] === tab || tab === EventType.ALL)
 		.sort((a, b) => {
 			if (a.start.getTime() === b.start.getTime()) {
@@ -93,7 +94,7 @@ const Schedule: NextPage = () => {
 				<div className="mx-auto flex max-w-2xl flex-col gap-4">
 					{events.map((event, i) => (
 						<div key={i} className="flex gap-4">
-							<div className="bg-dark/50 grid basis-1/3 place-content-center rounded-lg p-4 font-coolvetica text-2xl text-dark-color">
+							<div className="bg-dark/50 grid rounded-lg p-4 font-coolvetica text-2xl text-dark-color">
 								{event[0]?.start.toLocaleDateString(dateLocale, {
 									month: "short",
 									day: "numeric",
