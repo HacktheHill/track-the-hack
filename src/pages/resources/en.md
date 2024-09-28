@@ -2,6 +2,8 @@
 
 Welcome to Hack the Hill II! Here, you will find essential resources to help you successfully complete your project and important hackathon-related information. Happy hacking!
 
+[Hacker Booklet](https://drive.google.com/file/d/1dp9ut4b8qc4IxhBLQ-orBUkegqJrdmmD/view)
+
 ---
 
 ### 📱 Social Media
