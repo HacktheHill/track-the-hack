@@ -70,31 +70,7 @@ const Schedule: NextPage = () => {
 
 	const events = query.data
 		.filter(event => !event.hidden)
-		?.filter(event => EventType[event.type] === tab || tab === EventType.ALL)
-		.reduce((acc, event) => {
-			if (event.end.getDate() === event.start.getDate()) {
-				acc.push(event);
-			} else {
-				const start = new Date(event.start);
-				const end = new Date(event.end);
-				const days = end.getDate() - start.getDate();
-				for (let i = 0; i <= days; i++) {
-					const newEvent = {
-						...event,
-						start:
-							i === 0
-								? event.start
-								: new Date(start.getFullYear(), start.getMonth(), start.getDate() + i, 0, 0, 0),
-						end:
-							i === days
-								? event.end
-								: new Date(end.getFullYear(), end.getMonth(), end.getDate() + i, 24, 0, 0),
-					};
-					acc.push(newEvent);
-				}
-			}
-			return acc;
-		}, [] as Event[])
+		.filter(event => EventType[event.type] === tab || tab === EventType.ALL)
 		.sort((a, b) => {
 			if (a.start.getTime() === b.start.getTime()) {
 				return a.end.getTime() - b.end.getTime();
@@ -102,7 +78,7 @@ const Schedule: NextPage = () => {
 			return a.start.getTime() - b.start.getTime();
 		})
 		.reduce((acc, event, i, array) => {
-			if (array[i]?.start.getDate() === array[i - 1]?.start.getDate()) {
+			if (array[i]?.start.toLocaleDateString(dateLocale) === array[i - 1]?.start.toLocaleDateString(dateLocale)) {
 				acc[acc.length - 1]?.push(event);
 			} else {
 				acc.push([event]);
