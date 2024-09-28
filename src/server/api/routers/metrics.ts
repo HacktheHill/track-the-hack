@@ -17,7 +17,7 @@ export const metricsRouter = createTRPCRouter({
 		// Overall metrics
 		const applied = await ctx.prisma.hacker.count();
 		const confirmed = await ctx.prisma.hacker.count({ where: { confirmed: true } });
-		const checkedIn = await ctx.prisma.presence.count({ where: { label: "checkedIn" } });
+		const checkedIn = await ctx.prisma.presence.count({ where: { label: "Check-In" } });
 		const walkIn = await ctx.prisma.hacker.count({ where: { walkIn: true } });
 
 		// Gender distribution
