@@ -111,5 +111,8 @@
 	"invalid-form": "Veuillez remplir tous les champs obligatoires.",
 	"success": "Modifications enregistrées avec succès.",
 	"return-to-form": "Retour au formulaire",
-	"team": "Équipe"
+	"team": "Équipe",
+	"create-team": "Créer équipe",
+	"enter-team": "Entrer le nom de l'équipe",
+	"join-team": "Rejoindre l'équipe"
 }
