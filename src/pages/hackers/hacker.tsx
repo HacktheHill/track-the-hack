@@ -298,6 +298,20 @@ const HackerPage: NextPage<{
 							))}
 						</div>
 						<form onSubmit={e => void handleSubmit(e)} className="flex flex-col gap-4">
+							<div className="mt-4 grid gap-4">
+								<div className="flex justify-between gap-2">
+									<strong className="text-left font-bold">Login email:</strong>
+									<span className="w-1/2 rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50">
+										{(hackerQuery.data as unknown as HackerViewData).User.email}
+									</span>
+								</div>
+								<div className="flex justify-between gap-2">
+									<strong className="text-left font-bold">Login Provider:</strong>
+									<span className="w-1/2 rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50">
+										{(hackerQuery.data as unknown as HackerViewData).User.accounts[0]?.provider}
+									</span>
+								</div>
+							</div>
 							{Object.entries(getHackerFields(hackerQuery.data, acceptance)).map(
 								([categoryName, fields], index) => (
 									<div className="flex flex-col gap-4" key={index}>
@@ -455,6 +469,12 @@ type HackerViewData = {
 	id: string;
 	firstName: string;
 	lastName: string;
+	User: {
+		email: string;
+		accounts: {
+			provider: string;
+		}[];
+	};
 	Team: {
 		name: string;
 		hackers: Hacker[];

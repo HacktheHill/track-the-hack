@@ -123,6 +123,11 @@ export const hackerRouter = createTRPCRouter({
 				hacker = await ctx.prisma.hacker.findFirst({
 					where: whereQuery as never,
 					include: {
+						User: {
+							include: {
+								accounts: true,
+							},
+						},
 						Team: {
 							include: {
 								hackers: true,
