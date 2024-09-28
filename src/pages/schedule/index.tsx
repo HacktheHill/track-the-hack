@@ -70,7 +70,7 @@ const Schedule: NextPage = () => {
 
 	const events = query.data
 		.filter(event => !event.hidden)
-		.filter(event => event.end.getTime() >= Date.now())
+		.filter(event => event.end.getTime() + 30 * 60 * 1000 > Date.now())
 		.filter(event => EventType[event.type] === tab || tab === EventType.ALL)
 		.sort((a, b) => {
 			if (a.start.getTime() === b.start.getTime()) {
