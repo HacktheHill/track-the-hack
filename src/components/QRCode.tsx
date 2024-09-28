@@ -31,8 +31,8 @@ const QRCode = ({ id, setError }: QRCodeProps) => {
 
 		// Refresh the QR code every minute
 		const intervalId = setInterval(() => {
-			void router.replace(router.asPath);
-		}, 60 * 1000);
+			window.location.reload();
+		}, 30 * 1000);
 
 		return () => clearInterval(intervalId);
 	}, [id, setError, t]);
