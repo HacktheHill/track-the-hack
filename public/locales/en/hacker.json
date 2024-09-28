@@ -121,5 +121,8 @@
 	"invalid-form": "Please fill out all required fields.",
 	"success": "Saved changes successfully.",
 	"return-to-form": "Return to form",
-	"team": "Team"
+	"team": "Team",
+	"enter-team": "Enter team name",
+	"create-team": "Create team",
+	"join-team": "Join team"
 }

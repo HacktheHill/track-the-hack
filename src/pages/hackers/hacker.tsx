@@ -22,6 +22,7 @@ import { getAuthOptions } from "../api/auth/[...nextauth]";
 import { makeZodI18nMap } from "zod-i18n-map";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "../../server/api/root";
+import TeamCreation from "../../components/TeamCreation";
 
 type RouterOutput = inferRouterOutputs<AppRouter>;
 type Hacker = RouterOutput["hackers"]["get"];
@@ -302,13 +303,13 @@ const HackerPage: NextPage<{
 								<div className="flex justify-between gap-2">
 									<strong className="text-left font-bold">Login email:</strong>
 									<span className="w-1/2 rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50">
-										{(hackerQuery.data as unknown as HackerViewData).User.email}
+										{(hackerQuery.data as unknown as HackerViewData).User?.email}
 									</span>
 								</div>
 								<div className="flex justify-between gap-2">
 									<strong className="text-left font-bold">Login Provider:</strong>
 									<span className="w-1/2 rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50">
-										{(hackerQuery.data as unknown as HackerViewData).User.accounts[0]?.provider}
+										{(hackerQuery.data as unknown as HackerViewData).User?.accounts[0]?.provider}
 									</span>
 								</div>
 							</div>
@@ -375,7 +376,7 @@ const HackerPage: NextPage<{
 								{!acceptance && (
 									<input
 										name="resume"
-										className="w-fit rounded-md border border-dark-primary-color p-2"
+										className="m-auto w-fit rounded-md border border-dark-primary-color p-2"
 										type="file"
 										accept="application/pdf"
 										onChange={e => {
@@ -407,7 +408,11 @@ const HackerPage: NextPage<{
 								</p>
 							</div>
 
-							<TeamList hacker={hackerQuery.data as unknown as HackerViewData} />
+							{hackerQuery.data.teamId ? (
+								<TeamList hacker={hackerQuery.data as unknown as HackerViewData} />
+							) : (
+								<TeamCreation hacker={hackerQuery.data as unknown as HackerViewData} />
+							)}
 
 							{edit && (
 								<div className="sticky bottom-0 mx-2 flex justify-center  font-coolvetica">

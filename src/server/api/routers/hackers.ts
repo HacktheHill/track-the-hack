@@ -472,7 +472,12 @@ export const hackerRouter = createTRPCRouter({
 			});
 
 			const filename = generateS3Filename(hacker.id, `${hacker.firstName}_${hacker.lastName}_Signature`, "png");
-			const presignedUrl = await generatePresignedPutUrl(filename, "signatures");
+			let presignedUrl: string;
+			try {
+				presignedUrl = await generatePresignedPutUrl(filename, "signatures");
+			} catch (e) {
+				presignedUrl = "";
+			}
 
 			return {
 				...hacker,
