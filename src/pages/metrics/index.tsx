@@ -64,6 +64,12 @@ const Metrics = () => {
 								<p className="text-lg">
 									{t("walkIn")}: <span className="font-semibold">{data.walkIn}</span>
 								</p>
+								<p className="text-lg">
+									{t("presences")}: <span className="font-semibold">{data.presences}</span>
+								</p>
+								<p className="text-lg">
+									{t("attendees")}: <span className="font-semibold">{data.attendees}</span>
+								</p>
 							</>
 						)}
 

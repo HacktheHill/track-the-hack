@@ -10,6 +10,11 @@ const categorizeAge = (age: number) => {
 	return "Unknown";
 };
 
+const ORGANIZER_COUNT = 59;
+const MENTOR_COUNT = 7;
+const SPONSOR_COUNT = 23;
+const GUEST_COUNT = 4;
+
 export const metricsRouter = createTRPCRouter({
 	getMetrics: publicProcedure.query(async ({ ctx }) => {
 		const threshold = 3;
@@ -19,6 +24,20 @@ export const metricsRouter = createTRPCRouter({
 		const confirmed = await ctx.prisma.hacker.count({ where: { confirmed: true } });
 		const checkedIn = await ctx.prisma.presence.count({ where: { label: "Check-In" } });
 		const walkIn = await ctx.prisma.hacker.count({ where: { walkIn: true } });
+		const presences = (
+			await ctx.prisma.presence.findMany({
+				select: {
+					value: true,
+				},
+			})
+		).reduce((sum, presence) => sum + presence.value, 0);
+		const attendees =
+			(await ctx.prisma.hacker.count({ where: { confirmed: true } })) +
+			(await ctx.prisma.hacker.count({ where: { walkIn: true } })) +
+			ORGANIZER_COUNT +
+			MENTOR_COUNT +
+			SPONSOR_COUNT +
+			GUEST_COUNT;
 
 		// Gender distribution
 		const genderData = await ctx.prisma.hacker.groupBy({
@@ -75,10 +94,13 @@ export const metricsRouter = createTRPCRouter({
 			},
 		});
 
-		// Attendance count
+		/** @type {*} */
 		const attendanceData = await ctx.prisma.presence.groupBy({
 			by: ["label"],
 			_sum: { value: true },
+			having: {
+				label: { _count: { gte: threshold } },
+			},
 		});
 
 		// Referral Source distribution
@@ -101,9 +123,11 @@ export const metricsRouter = createTRPCRouter({
 
 		return {
 			applied,
+			attendees,
 			confirmed,
 			checkedIn,
 			walkIn,
+			presences,
 			genderData,
 			ethnicityData,
 			ageData,
