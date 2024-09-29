@@ -5,6 +5,8 @@
 	"confirmed": "Confirmed",
 	"checkedIn": "Checked-In",
 	"walkIn": "Walk-In",
+	"presences": "Presences",
+	"attendees": "Attendees",
 	"attendance": "Attendance",
 	"genderDistribution": "Gender Distribution",
 	"ethnicityDistribution": "Ethnicity Distribution",
