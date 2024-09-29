@@ -39,6 +39,15 @@ export const metricsRouter = createTRPCRouter({
 			SPONSOR_COUNT +
 			GUEST_COUNT;
 
+		// Attendance distribution
+		const attendanceData = await ctx.prisma.presence.groupBy({
+			by: ["label"],
+			_sum: { value: true },
+			having: {
+				label: { _count: { gte: threshold * 10 } },
+			},
+		});
+
 		// Gender distribution
 		const genderData = await ctx.prisma.hacker.groupBy({
 			by: ["gender"],
@@ -91,15 +100,6 @@ export const metricsRouter = createTRPCRouter({
 			_count: { educationLevel: true },
 			having: {
 				educationLevel: { _count: { gte: threshold } },
-			},
-		});
-
-		/** @type {*} */
-		const attendanceData = await ctx.prisma.presence.groupBy({
-			by: ["label"],
-			_sum: { value: true },
-			having: {
-				label: { _count: { gte: threshold } },
 			},
 		});
 
