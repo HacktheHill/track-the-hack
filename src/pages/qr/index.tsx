@@ -21,6 +21,7 @@ import { encrypt } from "../../server/api/routers/qr";
 import { qrRedirect } from "../../server/lib/redirects";
 import { getAuthOptions } from "../api/auth/[...nextauth]";
 import Tabs from "../../components/Tabs";
+import { playErrorSound, playNeutralSound, playSuccessSound } from "../../client/sound";
 
 type RouterOutput = inferRouterOutputs<AppRouter>;
 type Hacker = RouterOutput["hackers"]["get"];
@@ -76,12 +77,14 @@ const QR = ({ encryptedId }: { encryptedId: string }) => {
 
 			// If user does not have hacker role
 			if (hacker.acceptanceStatus !== AcceptanceStatus.ACCEPTED) {
+				playErrorSound();
 				return setDisplay(<NotHackerError />);
 			}
 
 			// If hacker has already checked-in -> Show RepeatedVisitor component with increment button
 			for (const presence of presences) {
 				if (presence.label != selectedAction.current) continue;
+				playNeutralSound();
 				return setDisplay(
 					<RepeatedVisitor
 						hacker={hacker}
@@ -94,6 +97,7 @@ const QR = ({ encryptedId }: { encryptedId: string }) => {
 
 			try {
 				await presenceUpsertMutateAsync({ hackerId: hacker.id, value: 1, label: selectedAction.current });
+				playSuccessSound();
 				return setDisplay(
 					<FirstTimeVisitor
 						hacker={hacker}
@@ -102,6 +106,7 @@ const QR = ({ encryptedId }: { encryptedId: string }) => {
 					/>,
 				);
 			} catch (error) {
+				playErrorSound();
 				if (error instanceof TRPCClientError) {
 					return setDisplay(<Error message={error.message} />);
 				}
@@ -128,6 +133,7 @@ const QR = ({ encryptedId }: { encryptedId: string }) => {
 					const presences = await utils.presence.getFromHackerId.fetch({ id: hackerId });
 					await handleEvent(hacker, presences);
 				} catch (error) {
+					playErrorSound();
 					if (error instanceof TRPCClientError) {
 						setDisplay(<Error message={error.message} />);
 					}
