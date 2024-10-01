@@ -81,7 +81,7 @@ const sponsorsData = [
 		id: "fantuan",
 		name: "Fantuan",
 		tier: SponsorTier.BACKBENCHER,
-		logo: "https://2024.hackthehill.com/Logos/Fantuan.jpg",
+		logo: "https://2024.hackthehill.com/Logos/Fantuan.png",
 	},
 ] as const as SponsorData[];
 
