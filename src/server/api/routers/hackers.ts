@@ -10,6 +10,8 @@ import { log } from "../../lib/log";
 import { generatePresignedGetUrl, generatePresignedPutUrl, generateS3Filename } from "../../lib/s3";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
+const FILTER_OPTION_THRESHOLD = 3;
+
 const generateWalkInCode = (userId: string) => {
 	return crypto.createHash("sha256").update(env.WALK_IN_SECRET_KEY).update(userId).digest("hex").slice(0, 6);
 };
@@ -396,18 +398,12 @@ export const hackerRouter = createTRPCRouter({
 			throw new Error("You do not have permission to do this");
 		}
 
-		const filterOptions = {
-			currentSchoolOrganizations: [],
-			educationLevels: [],
-			majors: [],
-			referralSources: [],
-			presences: [],
-		} as {
-			currentSchoolOrganizations: string[];
-			educationLevels: string[];
-			majors: string[];
-			referralSources: string[];
-			presences: string[];
+		const counts = {
+			currentSchoolOrganizations: {} as Record<string, number>,
+			educationLevels: {} as Record<string, number>,
+			majors: {} as Record<string, number>,
+			referralSources: {} as Record<string, number>,
+			presences: {} as Record<string, number>,
 		};
 
 		const hackers = await ctx.prisma.hacker.findMany({
@@ -418,38 +414,46 @@ export const hackerRouter = createTRPCRouter({
 
 		hackers?.forEach(hacker => {
 			if (hacker.currentSchoolOrganization) {
-				if (!filterOptions.currentSchoolOrganizations.includes(hacker.currentSchoolOrganization)) {
-					filterOptions.currentSchoolOrganizations.push(hacker.currentSchoolOrganization);
-				}
+				counts.currentSchoolOrganizations[hacker.currentSchoolOrganization] =
+					(counts.currentSchoolOrganizations[hacker.currentSchoolOrganization] || 0) + 1;
 			}
 
 			if (hacker.educationLevel) {
-				if (!filterOptions.educationLevels.includes(hacker.educationLevel)) {
-					filterOptions.educationLevels.push(hacker.educationLevel);
-				}
+				counts.educationLevels[hacker.educationLevel] =
+					(counts.educationLevels[hacker.educationLevel] || 0) + 1;
 			}
 
 			if (hacker.major) {
-				if (!filterOptions.majors.includes(hacker.major)) {
-					filterOptions.majors.push(hacker.major);
-				}
+				counts.majors[hacker.major] = (counts.majors[hacker.major] || 0) + 1;
 			}
 
 			if (hacker.referralSource) {
-				if (!filterOptions.referralSources.includes(hacker.referralSource)) {
-					filterOptions.referralSources.push(hacker.referralSource);
-				}
+				counts.referralSources[hacker.referralSource] =
+					(counts.referralSources[hacker.referralSource] || 0) + 1;
 			}
 
 			if (hacker.presences) {
-				console.log("ABC", hacker.referralSource);
 				hacker.presences.forEach(presence => {
-					if (!filterOptions.presences.includes(presence.label)) {
-						filterOptions.presences.push(presence.label);
-					}
+					counts.presences[presence.label] = (counts.presences[presence.label] || 0) + 1;
 				});
 			}
 		});
+
+		const filterOptions = {
+			currentSchoolOrganizations: Object.keys(counts.currentSchoolOrganizations).filter(
+				key => counts.currentSchoolOrganizations[key] ?? 0 >= FILTER_OPTION_THRESHOLD,
+			),
+			educationLevels: Object.keys(counts.educationLevels).filter(
+				key => counts.educationLevels?.[key] ?? 0 >= FILTER_OPTION_THRESHOLD,
+			),
+			majors: Object.keys(counts.majors).filter(key => counts.majors?.[key] ?? 0 >= FILTER_OPTION_THRESHOLD),
+			referralSources: Object.keys(counts.referralSources).filter(
+				key => counts.referralSources?.[key] ?? 0 >= FILTER_OPTION_THRESHOLD,
+			),
+			presences: Object.keys(counts.presences).filter(
+				key => counts.presences?.[key] ?? 0 >= FILTER_OPTION_THRESHOLD,
+			),
+		};
 
 		return {
 			filterOptions,
