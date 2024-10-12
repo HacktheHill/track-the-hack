@@ -146,7 +146,7 @@ const Hackers: NextPage = () => {
 					))}
 				</div>
 				{hackers?.length === 0 && (
-					<div className="flex h-full w-full flex-col items-center justify-center gap-4 text-2xl text-dark-color m-4">
+					<div className="m-4 flex h-full w-full flex-col items-center justify-center gap-4 text-2xl text-dark-color">
 						<svg className="h-20 w-20" fill="currentColor" viewBox="0 0 24 24">
 							<path d="M10 0h24v24H0z" fill="none" />
 							<path d="M14 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
@@ -231,10 +231,6 @@ const Search = ({ search, setSearch }: SearchProps) => {
 	);
 };
 
-interface Filters {
-	[key: string]: string[];
-}
-
 type FilterProps = {
 	filters: Filters;
 	setFilters: (filters: Filters) => void;
@@ -251,6 +247,21 @@ type FilterProps = {
 const FilterOptions = ({ filters, setFilters, filterOptions, sidebarVisible }: FilterProps) => {
 	const { t } = useTranslation("hackers");
 
+	const [collapsedCategories, setCollapsedCategories] = useState<Record<keyof Filters, boolean>>({
+		educationLevels: true,
+		currentSchoolOrganizations: true,
+		majors: true,
+		referralSources: true,
+		presences: true,
+	});
+
+	const toggleCollapse = (category: keyof Filters) => {
+		setCollapsedCategories(prev => ({
+			...prev,
+			[category]: !prev[category],
+		}));
+	};
+
 	const handleCheckBox = (option: string, filterSection: keyof Filters) => {
 		if (filters[filterSection]?.[0] === option) {
 			const tempFilters = { ...filters, [filterSection]: [] };
@@ -261,34 +272,57 @@ const FilterOptions = ({ filters, setFilters, filterOptions, sidebarVisible }: F
 		}
 	};
 
-	const renderFilterSection = (options: string[], filterSection: keyof Filters) => (
-		<li className="block">
-			<div className="text-dark font-bold">{t(`filterSection.${filterSection}`)}</div>
-			<ul className="flex flex-wrap gap-2">
-				{options?.map(option => (
-					<li key={option} className="flex w-full">
-						<input
-							id={`${filterSection}-${option}`}
-							type="checkbox"
-							className="hidden"
-							checked={filters[filterSection]?.[0] === option}
-							onChange={() => handleCheckBox(option, filterSection)}
-						/>
-						<label
-							htmlFor={`${filterSection}-${option}`}
-							className={`w-full cursor-pointer rounded-lg border-2 border-dark-color px-4 py-2 text-center ${
-								filters[filterSection]?.[0] === option
-									? "bg-medium-primary-color text-light-color"
-									: "bg-light-tertiary-color text-dark-color"
-							} transition-all duration-200 hover:bg-medium-primary-color hover:text-light-color`}
-						>
-							{`${option.charAt(0).toUpperCase()}${option.slice(1)}`}
-						</label>
-					</li>
-				))}
-			</ul>
-		</li>
-	);
+	const renderFilterSection = (options: string[], filterSection: keyof Filters) => {
+		const isCollapsed = collapsedCategories[filterSection];
+		const collapsibleId = `${filterSection}-collapsible`;
+
+		return (
+			<li className="block">
+				<button
+					className="text-dark flex w-full items-center justify-between py-2 text-left font-bold"
+					onClick={() => toggleCollapse(filterSection)}
+					aria-expanded={!isCollapsed}
+					aria-controls={collapsibleId}
+				>
+					<span>{t(`filterSection.${filterSection}`)}</span>
+					<span>{isCollapsed ? "+" : "-"}</span> {/* Toggle indicator */}
+				</button>
+
+				{/* Collapsible content with Tailwind CSS transition */}
+				<div
+					id={collapsibleId}
+					className={`overflow-hidden transition-[max-height] duration-500 ease-in-out ${
+						isCollapsed ? "max-h-0" : "max-h-[1000px]"
+					}`}
+					aria-hidden={isCollapsed}
+				>
+					<ul className="flex flex-wrap gap-2 pt-2">
+						{options?.map(option => (
+							<li key={option} className="flex w-full">
+								<input
+									id={`${filterSection}-${option}`}
+									type="checkbox"
+									className="hidden"
+									checked={filters[filterSection]?.[0] === option}
+									onChange={() => handleCheckBox(option, filterSection)}
+								/>
+								<label
+									htmlFor={`${filterSection}-${option}`}
+									className={`w-full cursor-pointer rounded-lg border-2 border-dark-color px-4 py-2 text-center ${
+										filters[filterSection]?.[0] === option
+											? "bg-medium-primary-color text-light-color"
+											: "bg-light-tertiary-color text-dark-color"
+									} transition-colors duration-200 hover:bg-medium-primary-color hover:text-light-color`}
+								>
+									{`${option.charAt(0).toUpperCase()}${option.slice(1)}`}
+								</label>
+							</li>
+						))}
+					</ul>
+				</div>
+			</li>
+		);
+	};
 
 	return (
 		<>
