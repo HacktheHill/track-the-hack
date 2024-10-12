@@ -20,6 +20,7 @@ interface Filters {
 	educationLevels: string[];
 	majors: string[];
 	referralSources: string[];
+	presences: string[];
 }
 
 const Hackers: NextPage = () => {
@@ -30,6 +31,7 @@ const Hackers: NextPage = () => {
 		educationLevels: [] as string[],
 		majors: [] as string[],
 		referralSources: [] as string[],
+		presences: [] as string[],
 	} as Filters;
 
 	const scrollRef = useRef<HTMLDivElement>(null);
@@ -40,6 +42,7 @@ const Hackers: NextPage = () => {
 		educationLevels: [],
 		majors: [],
 		referralSources: [],
+		presences: [],
 	});
 	const [sidebarVisible, setSidebarVisible] = useState(false);
 	const [columns, setColumns] = useState(4);
@@ -62,6 +65,7 @@ const Hackers: NextPage = () => {
 			educationLevels: filters.educationLevels,
 			majors: filters.majors,
 			referralSources: filters.referralSources,
+			presences: filters.presences,
 		},
 		{
 			getNextPageParam: lastPage => lastPage.nextCursor,
@@ -239,6 +243,7 @@ type FilterProps = {
 		educationLevels: string[];
 		majors: string[];
 		referralSources: string[];
+		presences: string[];
 	};
 	sidebarVisible: boolean;
 };
@@ -298,6 +303,7 @@ const FilterOptions = ({ filters, setFilters, filterOptions, sidebarVisible }: F
 							)}
 							{renderFilterSection(filterOptions.majors, "majors")}
 							{renderFilterSection(filterOptions.referralSources, "referralSources")}
+							{renderFilterSection(filterOptions.presences, "presences")}
 						</ul>
 					</div>
 				</div>

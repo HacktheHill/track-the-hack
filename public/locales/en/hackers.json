@@ -5,6 +5,7 @@
 		"currentSchoolOrganizations": "School",
 		"majors": "Major",
 		"referralSources": "Referral Source",
+		"presences": "Presence",
 		"filtersButton": "Filters",
 		"noHackersFound": "No hackers found"
 	},
