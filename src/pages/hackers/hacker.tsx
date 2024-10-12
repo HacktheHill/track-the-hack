@@ -1,28 +1,28 @@
 import type { AcceptanceStatus } from "@prisma/client";
 import { RoleName } from "@prisma/client";
+import type { inferRouterOutputs } from "@trpc/server";
 import type { GetServerSideProps, NextPage } from "next";
+import { getServerSession } from "next-auth";
+import { useSession } from "next-auth/react";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState } from "react";
-import { trpc } from "../../server/api/api";
-
-import { useSession } from "next-auth/react";
-import { getServerSession } from "next-auth";
 import { z } from "zod";
+import { makeZodI18nMap } from "zod-i18n-map";
+
 import { getHackerFields } from "../../client/hacker";
 import { uploadResume } from "../../client/s3";
 import App from "../../components/App";
 import Error from "../../components/Error";
 import Filter from "../../components/Filter";
 import Loading from "../../components/Loading";
+import TeamCreation from "../../components/TeamCreation";
+import { trpc } from "../../server/api/api";
+import type { AppRouter } from "../../server/api/root";
 import { hackerRedirect } from "../../server/lib/redirects";
 import { hackerSchema } from "../../utils/common";
 import { getAuthOptions } from "../api/auth/[...nextauth]";
-import { makeZodI18nMap } from "zod-i18n-map";
-import type { inferRouterOutputs } from "@trpc/server";
-import type { AppRouter } from "../../server/api/root";
-import TeamCreation from "../../components/TeamCreation";
 
 type RouterOutput = inferRouterOutputs<AppRouter>;
 type Hacker = RouterOutput["hackers"]["get"];
