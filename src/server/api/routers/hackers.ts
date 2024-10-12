@@ -243,6 +243,7 @@ export const hackerRouter = createTRPCRouter({
 					educationLevels: z.array(z.string()).optional(),
 					majors: z.array(z.string()).optional(),
 					referralSources: z.array(z.string()).optional(),
+					presences: z.array(z.string()).optional(), // Add presences as input
 					cursor: z.string().nullish(),
 				})
 				.optional(),
@@ -278,14 +279,23 @@ export const hackerRouter = createTRPCRouter({
 				};
 			}
 
-			const { limit, cursor, search, currentSchoolOrganizations, educationLevels, majors, referralSources } =
-				input;
+			const {
+				limit,
+				cursor,
+				search,
+				currentSchoolOrganizations,
+				educationLevels,
+				majors,
+				referralSources,
+				presences,
+			} = input;
 
 			const queryConditions: {
 				currentSchoolOrganization?: { in: string[] };
 				educationLevel?: { in: string[] };
 				major?: { in: string[] };
 				referralSource?: { in: string[] };
+				presences?: { some: { label: { in: string[] } } };
 				OR?: {
 					firstName?: { contains: string };
 					lastName?: { contains: string };
@@ -329,10 +339,21 @@ export const hackerRouter = createTRPCRouter({
 				queryConditions.referralSource = { in: referralSources };
 			}
 
+			if (presences && presences.length > 0) {
+				queryConditions.presences = {
+					some: {
+						label: { in: presences },
+					},
+				};
+			}
+
 			const results = await ctx.prisma.hacker.findMany({
 				take: limit + 1, // get an extra item at the end which we'll use as next cursor
 				cursor: cursor ? { id: cursor } : undefined,
 				where: queryConditions,
+				include: {
+					presences: true,
+				},
 				orderBy: {
 					createdAt: "asc",
 				},
@@ -380,14 +401,20 @@ export const hackerRouter = createTRPCRouter({
 			educationLevels: [],
 			majors: [],
 			referralSources: [],
+			presences: [],
 		} as {
 			currentSchoolOrganizations: string[];
 			educationLevels: string[];
 			majors: string[];
 			referralSources: string[];
+			presences: string[];
 		};
 
-		const hackers = await ctx.prisma.hacker.findMany();
+		const hackers = await ctx.prisma.hacker.findMany({
+			include: {
+				presences: true,
+			},
+		});
 
 		hackers?.forEach(hacker => {
 			if (hacker.currentSchoolOrganization) {
@@ -412,6 +439,15 @@ export const hackerRouter = createTRPCRouter({
 				if (!filterOptions.referralSources.includes(hacker.referralSource)) {
 					filterOptions.referralSources.push(hacker.referralSource);
 				}
+			}
+
+			if (hacker.presences) {
+				console.log("ABC", hacker.referralSource);
+				hacker.presences.forEach(presence => {
+					if (!filterOptions.presences.includes(presence.label)) {
+						filterOptions.presences.push(presence.label);
+					}
+				});
 			}
 		});
 
