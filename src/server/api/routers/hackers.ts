@@ -713,7 +713,7 @@ export const hackerRouter = createTRPCRouter({
 			};
 		}),
 
-	apply: protectedProcedure.input(hackerSchema).mutation(async ({ ctx, input }) => {
+	apply: protectedProcedure.input(hackerSchema).mutation(async ({ ctx }) => {
 		const userId = ctx.session.user.id;
 		const user = await ctx.prisma.user.findUnique({
 			where: {
