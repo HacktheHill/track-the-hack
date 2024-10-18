@@ -155,6 +155,12 @@ export const hackerSchema = z.object({
 	acceptanceReason: z.string().optional(),
 });
 
+export const passwordSchema = z
+	.string()
+	.min(8)
+	.max(100)
+	.regex(/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/);
+
 export const sponsorshipGmailDraftsSchema = z.object({
 	organizerFullName: z.string(),
 	companyEmail: z.string().email(),

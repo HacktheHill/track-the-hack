@@ -1,33 +1,26 @@
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import NextAuth, { type NextAuthOptions } from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
 import DiscordProvider from "next-auth/providers/discord";
 import EmailProvider from "next-auth/providers/email";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
-
-// Prisma adapter for NextAuth, optional and can be removed
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
-
-import { env } from "../../../env/server.mjs";
-import { prisma } from "../../../server/db";
+import { getSession } from "next-auth/react";
 
 import type { IncomingMessage } from "http";
 import type { NextApiRequest, NextApiResponse } from "next";
-import { getSession } from "next-auth/react";
+import argon2 from "argon2";
 
-const getUser = async (email: string) =>
-	await prisma.user.findFirst({
-		where: {
-			email,
-		},
-	});
+import { env } from "../../../env/server.mjs";
+import { prisma } from "../../../server/db";
 
 export const getAuthOptions = (req: IncomingMessage) =>
 	({
 		// Include user.id on session
 		callbacks: {
-			async session({ session, user }) {
+			async session({ session, token }) {
 				const newSession = await prisma.user.findUnique({
-					where: { id: user.id },
+					where: { id: token.sub },
 					select: {
 						id: true,
 						roles: {
@@ -78,7 +71,11 @@ export const getAuthOptions = (req: IncomingMessage) =>
 				}
 
 				// Fetch the user by email
-				const existingUser = await getUser(user.email);
+				const existingUser = await prisma.user.findUnique({
+					where: {
+						email: user.email,
+					},
+				});
 
 				// If the user doesn't exist, redirect to signup
 				if (!existingUser) {
@@ -115,8 +112,14 @@ export const getAuthOptions = (req: IncomingMessage) =>
 
 				return true;
 			},
+			jwt({ token, user }) {
+				if (user) {
+					token.sub = user.id;
+				}
+
+				return token;
+			},
 		},
-		// Configure one or more authentication providers
 		adapter: PrismaAdapter(prisma),
 		providers: [
 			DiscordProvider({
@@ -142,6 +145,46 @@ export const getAuthOptions = (req: IncomingMessage) =>
 				},
 				from: `Hack the Hill <${env.EMAIL_FROM}>`,
 			}),
+			CredentialsProvider({
+				credentials: {
+					email: {
+						type: "email",
+					},
+					password: {
+						type: "password",
+					},
+				},
+				async authorize(credentials) {
+					if (!credentials || !credentials.email || !credentials.password) {
+						return null;
+					}
+
+					const user = await prisma.user.findUnique({
+						where: {
+							email: credentials.email,
+						},
+					});
+
+					if (user && user.passwordHash) {
+						try {
+							if (await argon2.verify(user.passwordHash, credentials.password)) {
+								return {
+									id: user.id,
+									name: user.name,
+									email: user.email,
+								};
+							} else {
+								return null;
+							}
+						} catch (err) {
+							console.error(err);
+							return null;
+						}
+					}
+
+					return null;
+				},
+			}),
 		],
 		theme: {
 			logo: "/assets/hackthehill-logo.svg",
@@ -153,7 +196,7 @@ export const getAuthOptions = (req: IncomingMessage) =>
 			verifyRequest: "/auth/verify-request",
 		},
 		session: {
-			jwt: true,
+			strategy: "jwt",
 		},
 	}) as NextAuthOptions;
 

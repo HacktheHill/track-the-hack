@@ -61,6 +61,7 @@ model User {
   id            String    @id @default(cuid())
   name          String?
   email         String?   @unique
+  passwordHash  String?
   image         String?
   emailVerified DateTime?
   roles         Role[]
@@ -169,7 +170,7 @@ model Event {
   type          EventType @default(ALL)
   host          String?
   description   String    @db.Text
-  descriptionFr String   @db.Text
+  descriptionFr String    @db.Text
   room          String
   tiktok        String?
   image         String?
