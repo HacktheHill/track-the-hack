@@ -170,12 +170,29 @@ const Navbar = ({ integrated }: NavbarProps) => {
 				))}
 			</select>
 
-			<button
-				className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors sm:visible"
-				onClick={sessionData ? () => void signOut() : () => void signIn()}
-			>
-				{sessionData ? t("sign-out") : t("sign-in")}
-			</button>
+			{sessionData ? (
+				<button
+					className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors sm:visible"
+					onClick={() => void signOut()}
+				>
+					{t("sign-out")}
+				</button>
+			) : (
+				<>
+					<button
+						className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors sm:visible"
+						onClick={() => void signIn()}
+					>
+						{t("sign-in")}
+					</button>
+					<button
+						className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors sm:visible"
+						onClick={() => void router.push("/auth/sign-up")}
+					>
+						{t("sign-up")}
+					</button>
+				</>
+			)}
 
 			{sessionData?.user?.image && (
 				// eslint-disable-next-line @next/next/no-img-element

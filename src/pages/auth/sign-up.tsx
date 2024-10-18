@@ -5,13 +5,16 @@ import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import Error from "../../components/Error";
 import Head from "../../components/Head";
 import Loading from "../../components/Loading";
+import Modal from "../../components/Modal";
 import { trpc } from "../../server/api/api";
+import { passwordSchema } from "../../utils/common";
 import { getAuthOptions } from "../api/auth/[...nextauth]";
+import { z } from "zod";
 
 type Providers = Record<string, { id: string; name: string }>;
 
@@ -23,17 +26,12 @@ export const getServerSideProps: GetServerSideProps<{ providers: Providers }> = 
 		return { redirect: { permanent: false, destination: "/" } };
 	}
 
-	// If there is no email in the query
-	if (new URLSearchParams(req.url).get("email") === null) {
-		return { redirect: { permanent: false, destination: "/auth/sign-in" } };
-	}
-
 	const providers = (await getProviders()) ?? ({} as Providers);
 
 	return {
 		props: {
 			providers,
-			...(await serverSideTranslations(locale ?? "en", ["common", "auth"])),
+			...(await serverSideTranslations(locale ?? "en", ["common", "auth", "zod"])),
 		},
 	};
 };
@@ -41,28 +39,59 @@ export const getServerSideProps: GetServerSideProps<{ providers: Providers }> = 
 const SignUp = ({ providers }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
 	const { t } = useTranslation("auth");
 	const router = useRouter();
-
-	const [error] = [router.query.error].flat();
 	const [noUser] = [router.query["no-user"]].flat();
-	const email = decodeURIComponent([router.query.email].flat()[0] ?? "");
 
 	const mutation = trpc.users.signUp.useMutation();
 
-	const [loading, setLoading] = useState(false);
+	const [submissionData, setSubmissionData] = useState<{
+		formData: FormData | null;
+		providerId: string | null;
+	}>({ formData: null, providerId: null });
 
-	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>, providerId: string) => {
+	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+	const [showConfirmation, setShowConfirmation] = useState(false);
+
+	const handleSubmit = (e: React.FormEvent<HTMLFormElement>, providerId: string) => {
 		e.preventDefault();
 		const formData = new FormData(e.target as HTMLFormElement);
 
-		if (!email) return;
+		if (providerId === "credentials") {
+			const password = formData.get("password") as string;
+			const passwordValidation = passwordSchema.safeParse(password);
+			if (!passwordValidation.success) {
+				setError(t("password-strength"));
+				setShowConfirmation(false);
+				return;
+			}
+		}
+
+		setSubmissionData({ formData, providerId });
+		setShowConfirmation(true);
+	};
+
+	const handleSignUp = async () => {
+		const { formData, providerId } = submissionData;
+		if (!formData || !providerId) return;
+
+		const email = (formData.get("email") as string) ?? router.query.email;
+		const password = (formData.get("password") as string) ?? undefined;
 
 		setLoading(true);
 
-		await mutation.mutateAsync({ email });
+		if (email) {
+			await mutation.mutateAsync({ email, password });
+		}
 
-		if (providerId === "email") {
+		if (providerId === "credentials") {
 			void signIn(providerId, {
-				email: formData.get("email"),
+				email: email,
+				password: password,
+				redirectTo: "/",
+			});
+		} else if (providerId === "email") {
+			void signIn(providerId, {
+				email,
 				redirectTo: "/",
 			});
 		} else {
@@ -71,6 +100,15 @@ const SignUp = ({ providers }: InferGetServerSidePropsType<typeof getServerSideP
 			});
 		}
 	};
+
+	useEffect(() => {
+		if (router.query.error) {
+			setError(t(`next-auth.${router.query.error as string}`));
+		}
+		if (mutation.error) {
+			setError(mutation.error.message);
+		}
+	}, [mutation.error, router.query.error, t]);
 
 	if (!providers) {
 		return <Error message={t("no-auth-providers")} />;
@@ -94,8 +132,13 @@ const SignUp = ({ providers }: InferGetServerSidePropsType<typeof getServerSideP
 					</h1>
 				</div>
 				<div className="flex w-full max-w-md flex-col gap-4">
-					{noUser && <p className="w-96 text-dark-color">{t("no-user-sign-up")}</p>}
-					{email}
+					{noUser && (
+						<p className="text-dark-color">
+							{t("no-user", {
+								email: router.query.email,
+							})}
+						</p>
+					)}
 					{Object.values(providers).map(provider => (
 						<form
 							key={provider.id}
@@ -111,11 +154,29 @@ const SignUp = ({ providers }: InferGetServerSidePropsType<typeof getServerSideP
 									className="w-full rounded-lg border border-dark-primary-color bg-light-primary-color px-4 py-2 font-rubik text-lg text-light-color shadow-md transition-all duration-500 placeholder:text-light-quaternary-color hover:bg-light-primary-color/75 hover:shadow-lg"
 								/>
 							)}
+							{provider.id === "credentials" && (
+								<>
+									<input
+										type="email"
+										name="email"
+										placeholder={t("email-address")}
+										required
+										className="w-full rounded-lg border border-dark-primary-color bg-light-primary-color px-4 py-2 font-rubik text-lg text-light-color shadow-md transition-all duration-500 placeholder:text-light-quaternary-color hover:bg-light-primary-color/75 hover:shadow-lg"
+									/>
+									<input
+										type="password"
+										name="password"
+										placeholder={t("password")}
+										required
+										className="w-full rounded-lg border border-dark-primary-color bg-light-primary-color px-4 py-2 font-rubik text-lg text-light-color shadow-md transition-all duration-500 placeholder:text-light-quaternary-color hover:bg-light-primary-color/75 hover:shadow-lg"
+									/>
+								</>
+							)}
 							<button
 								type="submit"
 								className="flex w-full justify-center gap-4 whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-lg text-dark-primary-color transition-all duration-500 hover:bg-light-tertiary-color hover:shadow-lg"
 							>
-								{provider.id !== "email" && (
+								{provider.id !== "email" && provider.id !== "credentials" && (
 									<>
 										{/* eslint-disable-next-line @next/next/no-img-element */}
 										<img
@@ -125,13 +186,31 @@ const SignUp = ({ providers }: InferGetServerSidePropsType<typeof getServerSideP
 										/>
 									</>
 								)}
-								{provider.id === "email" ? t("email-sign-up") : provider.name}
+								{provider.id === "email" && t("email-sign-up")}
+								{provider.id === "credentials" && t("credentials-sign-up")}
+								{provider.id !== "email" && provider.id !== "credentials" && provider.name}
 							</button>
 						</form>
 					))}
-					{error && <Error message={t(`next-auth.${error}`)} />}
-					{loading && <Loading />}
+					{error && <Error message={error} />}
 				</div>
+				{showConfirmation && (
+					<Modal
+						buttons={[
+							{
+								label: t("confirm"),
+								onClick: () => void handleSignUp(),
+							},
+							{
+								label: t("sign-in-instead"),
+								onClick: () => void router.push("/auth/sign-in"),
+							},
+						]}
+					>
+						<h3 className="text-dark-color">{t("sign-up-confirmation")}</h3>
+						{loading && <Loading />}
+					</Modal>
+				)}
 			</main>
 		</>
 	);

@@ -23,6 +23,7 @@ const MyApp: AppType<{ session: Session | null }> = ({ Component, pageProps: { s
 	return (
 		<SessionProvider session={session}>
 			<Component {...pageProps} />
+			<div id="modal-root" />
 		</SessionProvider>
 	);
 };

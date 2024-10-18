@@ -76,6 +76,12 @@ const SignIn = ({ providers }: InferGetServerSidePropsType<typeof getServerSideP
 										email: formData.get("email"),
 										redirectTo: callbackUrl,
 									});
+								} else if (provider.id === "credentials") {
+									void signIn(provider.id, {
+										email: formData.get("email") as string,
+										password: formData.get("password") as string,
+										redirectTo: callbackUrl,
+									});
 								} else {
 									void signIn(provider.id, { callbackUrl });
 								}
@@ -90,11 +96,29 @@ const SignIn = ({ providers }: InferGetServerSidePropsType<typeof getServerSideP
 									className="w-full rounded-lg border border-dark-primary-color bg-light-primary-color px-4 py-2 font-rubik text-lg text-light-color shadow-md transition-all duration-500 placeholder:text-light-quaternary-color hover:bg-light-primary-color/75 hover:shadow-lg"
 								/>
 							)}
+							{provider.id === "credentials" && (
+								<>
+									<input
+										type="email"
+										name="email"
+										placeholder={t("email-address")}
+										required
+										className="w-full rounded-lg border border-dark-primary-color bg-light-primary-color px-4 py-2 font-rubik text-lg text-light-color shadow-md transition-all duration-500 placeholder:text-light-quaternary-color hover:bg-light-primary-color/75 hover:shadow-lg"
+									/>
+									<input
+										type="password"
+										name="password"
+										placeholder={t("password")}
+										required
+										className="w-full rounded-lg border border-dark-primary-color bg-light-primary-color px-4 py-2 font-rubik text-lg text-light-color shadow-md transition-all duration-500 placeholder:text-light-quaternary-color hover:bg-light-primary-color/75 hover:shadow-lg"
+									/>
+								</>
+							)}
 							<button
 								type="submit"
 								className="flex w-full justify-center gap-4 whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-lg text-dark-primary-color transition-all duration-500 hover:bg-light-tertiary-color hover:shadow-lg"
 							>
-								{provider.id !== "email" && (
+								{provider.id !== "email" && provider.id !== "credentials" && (
 									<>
 										{/* eslint-disable-next-line @next/next/no-img-element */}
 										<img
@@ -104,7 +128,9 @@ const SignIn = ({ providers }: InferGetServerSidePropsType<typeof getServerSideP
 										/>
 									</>
 								)}
-								{provider.id === "email" ? t("email-sign-in") : provider.name}
+								{provider.id === "email" && t("email-sign-in")}
+								{provider.id === "credentials" && t("credentials-sign-in")}
+								{provider.id !== "email" && provider.id !== "credentials" && provider.name}
 							</button>
 						</form>
 					))}
