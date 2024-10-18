@@ -23,6 +23,7 @@ import type { AppRouter } from "../../server/api/root";
 import { hackerRedirect } from "../../server/lib/redirects";
 import { hackerSchema } from "../../utils/common";
 import { getAuthOptions } from "../api/auth/[...nextauth]";
+import Modal from "../../components/Modal";
 
 type RouterOutput = inferRouterOutputs<AppRouter>;
 type Hacker = RouterOutput["hackers"]["get"];
@@ -213,25 +214,25 @@ const HackerPage: NextPage<{
 			title={`${hackerQuery.data.firstName} ${hackerQuery.data.lastName}`}
 		>
 			{(loading || error || success) && (
-				<div className="fixed inset-0 z-50 flex items-center justify-center bg-light-tertiary-color bg-opacity-90">
-					<div className="w-full max-w-lg rounded border border-dark-primary-color bg-light-quaternary-color p-8 text-center">
-						{loading && <Loading />}
-						{error && <Error message={error} />}
-						{success && <h3 className="text-4xl font-bold text-dark-color">{t("success")}</h3>}
-						{(error || success) && (
-							<button
-								type="button"
-								className="mt-4 whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
-								onClick={() => {
-									setError(null);
-									setSuccess(false);
-								}}
-							>
-								{t("return-to-form")}
-							</button>
-						)}
-					</div>
-				</div>
+				<Modal
+					buttons={
+						error || success
+							? [
+									{
+										label: t("return-to-form"),
+										onClick: () => {
+											setError(null);
+											setSuccess(false);
+										},
+									},
+								]
+							: []
+					}
+				>
+					{loading && <Loading />}
+					{error && <Error message={error} />}
+					{success && <h3 className="text-4xl font-bold text-dark-color">{t("success")}</h3>}
+				</Modal>
 			)}
 			<div className="mx-auto flex max-w-2xl flex-col gap-4">
 				<div className="flex justify-between">
