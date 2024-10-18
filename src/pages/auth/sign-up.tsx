@@ -14,7 +14,6 @@ import Modal from "../../components/Modal";
 import { trpc } from "../../server/api/api";
 import { passwordSchema } from "../../utils/common";
 import { getAuthOptions } from "../api/auth/[...nextauth]";
-import { z } from "zod";
 
 type Providers = Record<string, { id: string; name: string }>;
 

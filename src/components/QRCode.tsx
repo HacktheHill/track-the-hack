@@ -3,7 +3,6 @@ import Image from "next/image";
 import qrcode from "qrcode";
 import { useEffect, useState } from "react";
 
-import router from "next/router";
 import Error from "./Error";
 
 type QRCodeProps = {
