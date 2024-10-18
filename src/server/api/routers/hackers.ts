@@ -9,6 +9,7 @@ import { hasRoles } from "../../../utils/helpers";
 import { log } from "../../lib/log";
 import { generatePresignedGetUrl, generatePresignedPutUrl, generateS3Filename } from "../../lib/s3";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+import { sendApplyEmail } from "../../lib/email";
 
 const FILTER_OPTION_THRESHOLD = 3;
 
@@ -713,7 +714,7 @@ export const hackerRouter = createTRPCRouter({
 			};
 		}),
 
-	apply: protectedProcedure.input(hackerSchema).mutation(async ({ ctx }) => {
+	apply: protectedProcedure.input(hackerSchema).mutation(async ({ ctx, input }) => {
 		const userId = ctx.session.user.id;
 		const user = await ctx.prisma.user.findUnique({
 			where: {
@@ -733,47 +734,49 @@ export const hackerRouter = createTRPCRouter({
 			throw new Error("User not found");
 		}
 
-		throw new Error("The application deadline has passed");
+		if (new Date() > new Date("2024-09-31T00:00:00.000Z")) {
+			throw new Error("The application deadline has passed");
+		} else {
+			await ctx.prisma.hacker.deleteMany({
+				where: {
+					userId: userId,
+				},
+			});
 
-		/* await ctx.prisma.hacker.deleteMany({
-			where: {
-				userId: userId,
-			},
-		});
-
-		const hacker = await ctx.prisma.hacker.create({
-			data: {
-				...input,
-				User: {
-					connect: {
-						id: userId,
+			const hacker = await ctx.prisma.hacker.create({
+				data: {
+					...input,
+					User: {
+						connect: {
+							id: userId,
+						},
 					},
 				},
-			},
-		});
+			});
 
-		const filename = generateS3Filename(hacker.id, `${hacker.firstName}_${hacker.lastName}_Resume`, "pdf");
-		const presignedUrl = await generatePresignedPutUrl(filename, "resumes");
+			const filename = generateS3Filename(hacker.id, `${hacker.firstName}_${hacker.lastName}_Resume`, "pdf");
+			const presignedUrl = await generatePresignedPutUrl(filename, "resumes");
 
-		await sendApplyEmail({
-			email: input.email,
-			name: input.firstName,
-			locale: input.preferredLanguage ?? "EN",
-		});
+			await sendApplyEmail({
+				email: input.email,
+				name: input.firstName,
+				locale: input.preferredLanguage ?? "EN",
+			});
 
-		await log(ctx, {
-			sourceId: hacker.id,
-			sourceType: "Hacker",
-			route: "/apply",
-			action: "Apply",
-			author: user.name ?? "Unknown",
-			details: `${input.firstName} ${input.lastName} applied.`,
-		});
+			await log(ctx, {
+				sourceId: hacker.id,
+				sourceType: "Hacker",
+				route: "/apply",
+				action: "Apply",
+				author: user.name ?? "Unknown",
+				details: `${input.firstName} ${input.lastName} applied.`,
+			});
 
-		return {
-			...hacker,
-			presignedUrl,
-		}; */
+			return {
+				...hacker,
+				presignedUrl,
+			};
+		}
 	}),
 
 	delete: protectedProcedure
