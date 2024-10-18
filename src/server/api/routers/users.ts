@@ -1,9 +1,11 @@
 import { RoleName } from "@prisma/client";
+import argon2 from "argon2";
 import { z } from "zod";
 import { env } from "../../../env/server.mjs";
 import { hasRoles } from "../../../utils/helpers";
 import { log } from "../../lib/log";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+import { passwordSchema } from "../../../utils/common";
 
 export const userRouter = createTRPCRouter({
 	// Sign up a new user
@@ -11,6 +13,7 @@ export const userRouter = createTRPCRouter({
 		.input(
 			z.object({
 				email: z.string(),
+				password: passwordSchema.optional(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -24,9 +27,12 @@ export const userRouter = createTRPCRouter({
 				return existingUser;
 			}
 
+			const passwordHash = input.password ? await argon2.hash(input.password) : undefined;
+
 			const user = await ctx.prisma.user.create({
 				data: {
 					email: input.email,
+					passwordHash,
 				},
 			});
 
