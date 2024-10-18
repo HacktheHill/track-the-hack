@@ -16,6 +16,7 @@ import type { ApplicationQuestionsType } from "../../server/lib/apply";
 import { getApplicationQuestions } from "../../server/lib/apply";
 import { processFormData, saveToLocalStorage } from "../../utils/apply";
 import { hackerSchema, pageSchemas } from "../../utils/common";
+import Modal from "../../components/Modal";
 
 type ApplyProps = {
 	applicationQuestions: ApplicationQuestionsType[number][];
@@ -197,57 +198,54 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 			{/* {code ? (
 				<> */}
 			{(loading || error || success || (isHacker.data && !ignoreAlreadyHacker)) && (
-				<div className="fixed inset-0 z-50 flex items-center justify-center bg-light-tertiary-color bg-opacity-90">
-					<div className="flex w-full max-w-lg flex-col gap-4 rounded border border-dark-primary-color bg-light-quaternary-color p-8 text-center">
-						{loading ? (
-							<Loading />
-						) : error ? (
-							<>
-								<ErrorComponent message={error} />
-								<button
-									type="button"
-									className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
-									onClick={() => setError(null)}
-								>
-									{t("return-to-form")}
-								</button>
-							</>
-						) : success ? (
-							<>
-								<h3 className="text-4xl font-bold text-dark-color">{t("success")}</h3>
-								<p>{t("application-submitted-successfully")}</p>
-								<button
-									type="button"
-									className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
-									onClick={() => void router.replace("/")}
-								>
-									{t("back-home")}
-								</button>
-							</>
-						) : isHacker.data && !ignoreAlreadyHacker ? (
-							<>
-								<h3 className="text-4xl font-bold text-dark-color">{t("attention")}</h3>
-								<p>{t("overwriting-submission")}</p>
-								<div className="flex justify-center gap-4">
-									<button
-										type="button"
-										className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
-										onClick={() => void router.replace("/")}
-									>
-										{t("back-home")}
-									</button>
-									<button
-										type="button"
-										className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
-										onClick={() => setIgnoreAlreadyHacker(true)}
-									>
-										{t("return-to-form")}
-									</button>
-								</div>
-							</>
-						) : null}
-					</div>
-				</div>
+				<Modal
+					buttons={
+						error
+							? [
+									{
+										label: t("return-to-form"),
+										onClick: () => setError(null),
+									},
+								]
+							: success
+								? [
+										{
+											label: t("back-home"),
+											onClick: () => void router.replace("/"),
+										},
+									]
+								: isHacker.data && !ignoreAlreadyHacker
+									? [
+											{
+												label: t("back-home"),
+												onClick: () => void router.replace("/"),
+											},
+											{
+												label: t("return-to-form"),
+												onClick: () => setIgnoreAlreadyHacker(true),
+											},
+										]
+									: []
+					}
+				>
+					{loading ? (
+						<Loading />
+					) : error ? (
+						<>
+							<ErrorComponent message={error} />
+						</>
+					) : success ? (
+						<>
+							<h3 className="text-4xl font-bold text-dark-color">{t("success")}</h3>
+							<p>{t("application-submitted-successfully")}</p>
+						</>
+					) : isHacker.data && !ignoreAlreadyHacker ? (
+						<>
+							<h3 className="text-4xl font-bold text-dark-color">{t("attention")}</h3>
+							<p>{t("overwriting-submission")}</p>
+						</>
+					) : null}
+				</Modal>
 			)}
 			<form ref={formRef} onSubmit={e => void handleSubmit(e)}>
 				{applicationQuestions.slice(0, step + 1).map((page, index) => (
