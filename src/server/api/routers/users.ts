@@ -90,7 +90,8 @@ export const userRouter = createTRPCRouter({
 		.input(
 			z.object({
 				roles: z.array(z.nativeEnum(RoleName)),
-				userIds: z.array(z.string()),
+				userIds: z.array(z.string()).optional(),
+				bypass: z.boolean().optional().default(false)
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -113,8 +114,12 @@ export const userRouter = createTRPCRouter({
 				throw new Error("User not found");
 			}
 
-			if (!hasRoles(user, [RoleName.ADMIN])) {
+			if (!hasRoles(user, [RoleName.ADMIN]) && !input.bypass) {
 				throw new Error("You do not have permission to do this");
+			}
+
+			if (!input.userIds) {
+				input.userIds = [userId]
 			}
 
 			const transaction = [];
