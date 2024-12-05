@@ -73,6 +73,15 @@ const Links = ({ bottom }: LinkProps) => {
 				alt={t("sponsors")}
 			/>
 			{sessionData?.user && (
+				<LinkItem
+					href="/cuHacked"
+					bottom={bottom}
+					text={t("cuHacked")}
+					src="/assets/cuHacked.svg"
+					alt={t("cuHacked")}
+				/>
+			)}
+			{sessionData?.user && (
 				<Filter value={[RoleName.MAYOR, RoleName.PREMIER, RoleName.ORGANIZER]} silent method="some">
 					<LinkItem
 						href="/hackers"
