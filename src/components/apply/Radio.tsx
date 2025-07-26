@@ -37,7 +37,7 @@ const Radio = ({ field, className, formData }: RadioProps) => {
 					/>
 					<label
 						htmlFor={`${field.name}-${k}`}
-						className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color peer-checked:bg-light-primary-color/50 short:text-base"
+						className="bg-midnight-blue-color peer-checked:bg-text-white/50 whitespace-nowrap rounded-lg  border px-4 py-2 font-coolvetica text-sm text-white transition-colors hover:bg-light-tertiary-color short:text-base"
 					>
 						{t(v)}
 					</label>
