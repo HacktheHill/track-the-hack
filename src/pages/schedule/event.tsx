@@ -82,7 +82,7 @@ const EventView = ({ event, types }: EventViewProps) => {
 	return (
 		<>
 			<button
-				className="absolute right-4 top-4 text-dark-primary-color transition-all duration-500 hover:scale-110 hover:text-dark-color"
+				className="absolute right-4 top-4 text-white transition-all duration-500 hover:scale-110 hover:text-dark-color"
 				onClick={() => void router.push("/schedule")}
 			>
 				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -135,7 +135,7 @@ const EventView = ({ event, types }: EventViewProps) => {
 					href={link}
 					target="_blank"
 					rel="noreferrer"
-					className="flex whitespace-nowrap rounded-lg border border-dark-color bg-light-primary-color px-8 py-2 font-coolvetica text-dark-color transition-colors hover:bg-dark-secondary-color"
+					className="bg-text-white flex whitespace-nowrap rounded-lg border border-dark-color px-8 py-2 font-coolvetica text-dark-color transition-colors hover:bg-dark-secondary-color"
 				>
 					{locale === "fr" ? linkTextFr : linkText}
 				</Link>

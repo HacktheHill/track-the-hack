@@ -42,7 +42,7 @@ const components = {
 		</h1>
 	),
 	h2: ({ children, node, ...props }: ComponentProps) => (
-		<h2 className="mt-8 text-2xl text-center font-bold" {...props}>
+		<h2 className="mt-8 text-center text-2xl font-bold" {...props}>
 			{React.Children.map(children, child => {
 				if (typeof child === "string") {
 					return child;
@@ -107,7 +107,7 @@ const components = {
 		</p>
 	),
 	a: ({ children, node, ...props }: ComponentProps) => (
-		<a className="text-highlight-color hover:underline" {...props}>
+		<a className="text-midnight-blue-color hover:underline" {...props}>
 			{children}
 		</a>
 	),
@@ -159,7 +159,7 @@ const components = {
 		);
 	},
 	blockquote: ({ children, node, ...props }: ComponentProps) => (
-		<blockquote className="border-l-4 border-dark-primary-color pl-4" {...props}>
+		<blockquote className="border-l-4  pl-4" {...props}>
 			{children}
 		</blockquote>
 	),
@@ -226,7 +226,7 @@ const components = {
 			{children}
 		</del>
 	),
-	hr: ({ ...props }: ComponentProps) => <hr className="my-4 border-dark-primary-color" {...props} />,
+	hr: ({ ...props }: ComponentProps) => <hr className="my-4 " {...props} />,
 	img: ({ ...props }) => {
 		const { src, alt, width, height } = props as { src: string; alt: string; width: number; height: number };
 		return <Image src={src} alt={alt} width={width} height={height} />;
@@ -261,7 +261,7 @@ const Resources: NextPage = () => {
 
 	return (
 		<App
-			className="flex h-full flex-col gap-10 overflow-y-auto bg-default-gradient py-12"
+			className="flex h-full flex-col gap-10 overflow-y-auto bg-default-gradient py-12 text-white"
 			noIndex
 			title={t("title")}
 		>

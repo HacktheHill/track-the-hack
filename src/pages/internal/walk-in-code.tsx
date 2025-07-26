@@ -33,14 +33,14 @@ const WalkInCode: NextPage = () => {
 						<input
 							type="search"
 							placeholder="Search"
-							className="w-full rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 placeholder:text-dark-primary-color hover:bg-light-primary-color/50"
+							className="bg-text-white/75 hover:bg-text-white/50 w-full rounded border-none px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 placeholder:text-white"
 							onChange={e => setQuery(e.target.value)}
 						/>
-						<div className="flex h-[30vh] flex-col overflow-auto rounded-lg border border-dark-primary-color bg-light-tertiary-color p-4">
+						<div className="flex h-[30vh] flex-col overflow-auto rounded-lg border  bg-light-tertiary-color p-4">
 							{users.data?.map(user => (
 								<div
 									key={user.id}
-									className="flex cursor-pointer rounded-lg p-2 hover:bg-light-primary-color/25 active:bg-light-primary-color/50"
+									className="hover:bg-text-white/25 active:bg-text-white/50 flex cursor-pointer rounded-lg p-2"
 									onClick={() => handleUserSelect(user.id)}
 								>
 									<label
@@ -57,7 +57,7 @@ const WalkInCode: NextPage = () => {
 							))}
 						</div>
 						{walkInCode.data && (
-							<div className="relative flex flex-col gap-4 rounded-lg border border-dark-primary-color bg-light-tertiary-color p-4">
+							<div className="relative flex flex-col gap-4 rounded-lg border  bg-light-tertiary-color p-4">
 								<code className="select-all text-center font-rubik text-4xl">
 									{walkInCode.data.code}
 								</code>

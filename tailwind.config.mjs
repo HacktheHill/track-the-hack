@@ -1,14 +1,11 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-	content: [
-		"./src/**/*.{js,ts,jsx,tsx}",
-		"./node_modules/@tremor/**/*.{js,ts,jsx,tsx}",
-	],
+	content: ["./src/**/*.{js,ts,jsx,tsx}", "./node_modules/@tremor/**/*.{js,ts,jsx,tsx}"],
 	theme: {
 		current: "currentColor",
 		extend: {
 			backgroundImage: {
-				"default-gradient": "linear-gradient(#C7734F, #EA8A60, #EE9E6F, #F6BC83)",
+				"default-gradient": "linear-gradient(#7500FF, #B9AFC5)",
 				"medium-gradient": "linear-gradient(#f8cc8d, #dd484d)",
 			},
 			screens: {
@@ -23,11 +20,12 @@ module.exports = {
 				"medium-secondary-color": "#f8cc8d",
 				"dark-secondary-color": "#f6bf70",
 				"light-tertiary-color": "#ea885f",
-				"light-primary-color": "#dd484d",
+				"light-purple": "#7500FF",
 				"medium-primary-color": "#c11f25",
 				"dark-primary-color": "#84010b",
 				"highlight-color": "#650014",
 				"light-quaternary-color": "#F5C18C",
+				"midnight-blue-color": "#320369",
 			},
 			content: {
 				check: `url(data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20512%20512%22%3E%3Cpath%20d%3D%22M470.6%20105.4c12.5%2012.5%2012.5%2032.8%200%2045.3l-256%20256c-12.5%2012.5-32.8%2012.5-45.3%200l-128-128c-12.5-12.5-12.5-32.8%200-45.3s32.8-12.5%2045.3%200L192%20338.7%20425.4%20105.4c12.5-12.5%2032.8-12.5%2045.3%200z%22%2F%3E%3C%2Fsvg%3E)`,
@@ -72,5 +70,5 @@ module.exports = {
 			},
 		},
 	},
-	plugins: []
+	plugins: [],
 };

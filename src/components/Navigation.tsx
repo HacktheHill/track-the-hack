@@ -18,9 +18,7 @@ type LinkItemProps = {
 const LinkItem = ({ href, bottom, text, src, alt }: LinkItemProps) => (
 	<Link
 		href={href}
-		className={
-			bottom ? "" : "hover:text-light mx-4 flex items-center font-coolvetica text-2xl text-dark-primary-color"
-		}
+		className={bottom ? "" : "hover:text-light mx-4 flex items-center font-coolvetica text-2xl text-white"}
 	>
 		{bottom ? <Image priority src={src} height={32} width={32} alt={alt} /> : text}
 	</Link>
@@ -136,8 +134,8 @@ const Navbar = ({ integrated }: NavbarProps) => {
 
 	return (
 		<nav
-			className={`sticky top-0 z-10 flex gap-4 whitespace-nowrap bg-light-quaternary-color p-4 ${
-				integrated ? "" : "border-b border-dark-primary-color shadow-navbar"
+			className={`bg-midnight-blue-color sticky top-0 z-10 flex gap-4 whitespace-nowrap p-4 ${
+				integrated ? "" : ""
 			}`}
 			aria-label={t("navigation")}
 		>
@@ -159,7 +157,7 @@ const Navbar = ({ integrated }: NavbarProps) => {
 			</div>
 
 			<select
-				className="hover:bg-light-quaternary ml-auto whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors sm:visible"
+				className="hover:bg-light-quaternary bg-midnight-blue-color ml-auto whitespace-nowrap rounded-lg border px-4 py-2 font-coolvetica text-white transition-colors sm:visible"
 				onChange={handleLanguageChange}
 				value={locale ?? "en"}
 			>
@@ -172,7 +170,7 @@ const Navbar = ({ integrated }: NavbarProps) => {
 
 			{sessionData ? (
 				<button
-					className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors sm:visible"
+					className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border bg-midnight-blue-color px-4 py-2 font-coolvetica text-white transition-colors sm:visible"
 					onClick={() => void signOut()}
 				>
 					{t("sign-out")}
@@ -180,13 +178,13 @@ const Navbar = ({ integrated }: NavbarProps) => {
 			) : (
 				<>
 					<button
-						className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors sm:visible"
+						className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border bg-midnight-blue-color px-4 py-2 font-coolvetica text-white transition-colors sm:visible"
 						onClick={() => void signIn()}
 					>
 						{t("sign-in")}
 					</button>
 					<button
-						className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors sm:visible"
+						className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border bg-midnight-blue-color px-4 py-2 font-coolvetica text-white transition-colors sm:visible"
 						onClick={() => void router.push("/auth/sign-up")}
 					>
 						{t("sign-up")}
@@ -207,7 +205,7 @@ const BottomMenu = () => {
 
 	return (
 		<nav
-			className="z-10 flex w-full items-center justify-evenly gap-4 whitespace-nowrap bg-light-quaternary-color p-4 mobile:hidden xs:gap-8"
+			className="z-10 flex w-full items-center justify-evenly gap-4 whitespace-nowrap bg-midnight-blue-color p-4 mobile:hidden xs:gap-8"
 			aria-label={t("bottom-navigation")}
 		>
 			<Links bottom />

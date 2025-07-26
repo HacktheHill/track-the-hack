@@ -220,7 +220,7 @@ const Confirm: NextPage = () => {
 								<button
 									type="button"
 									onClick={handleEdit}
-									className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
+									className="bg-midnight-blue-color whitespace-nowrap rounded-lg border  px-4 py-2 font-coolvetica text-sm text-white transition-colors hover:bg-light-tertiary-color short:text-base"
 								>
 									{t("undo-edit-response")}
 								</button>
@@ -252,7 +252,7 @@ const Confirm: NextPage = () => {
 									name="team-name"
 									value={teamName}
 									onChange={handleTeamNameChange}
-									className="w-full rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+									className="bg-text-white/75 hover:bg-text-white/50 w-full rounded border-none px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500"
 								/>
 								{team ? (
 									<p className="text-sm">
@@ -265,7 +265,7 @@ const Confirm: NextPage = () => {
 										type="button"
 										disabled={teamName.length < 3}
 										onClick={handleCreateTeam}
-										className="rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-light-quaternary-color short:text-base"
+										className="bg-midnight-blue-color disabled:hover:bg-midnight-blue-color rounded-lg border  px-4 py-2 font-coolvetica text-sm text-white transition-colors hover:bg-light-tertiary-color disabled:cursor-not-allowed disabled:opacity-50 short:text-base"
 									>
 										{t("create-team")}
 									</button>
@@ -281,7 +281,7 @@ const Confirm: NextPage = () => {
 											name={item.id}
 											checked={checkboxes[item.id as keyof typeof checkboxes]}
 											onChange={() => handleCheckboxChange(item.id as keyof typeof checkboxes)}
-											className="h-4 w-4 appearance-none bg-transparent text-black after:block after:h-full after:w-full after:rounded-lg after:border after:border-dark-primary-color after:p-0.5 after:leading-[calc(100%*1/2)] after:checked:content-check"
+											className="after: h-4 w-4 appearance-none bg-transparent text-white after:block after:h-full after:w-full after:rounded-lg after:border after:p-0.5 after:leading-[calc(100%*1/2)] after:checked:content-check"
 										/>
 										<label htmlFor={item.id} className="flex-1">
 											<Trans
@@ -293,7 +293,7 @@ const Confirm: NextPage = () => {
 														href={link}
 														target="_blank"
 														rel="noopener noreferrer"
-														className="text-dark-primary-color underline"
+														className="text-white underline"
 													/>
 												))}
 											/>
@@ -310,14 +310,14 @@ const Confirm: NextPage = () => {
 										<SignaturePad
 											ref={sigCanvas}
 											canvasProps={{
-												className: "border border-dark-primary-color rounded-lg w-full h-24",
+												className: "border  rounded-lg w-full h-24",
 											}}
 											onEnd={handleSignatureEnd}
 										/>
 										<button
 											type="button"
 											onClick={handleClearSignature}
-											className="absolute bottom-2 right-2 rounded-lg border border-dark-primary-color bg-light-quaternary-color px-2 py-1 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
+											className="bg-midnight-blue-color absolute bottom-2 right-2 rounded-lg border  px-2 py-1 font-coolvetica text-sm text-white transition-colors hover:bg-light-tertiary-color short:text-base"
 										>
 											{t("clear")}
 										</button>
@@ -330,7 +330,7 @@ const Confirm: NextPage = () => {
 
 							<button
 								type="submit"
-								className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
+								className="bg-midnight-blue-color whitespace-nowrap rounded-lg border  px-4 py-2 font-coolvetica text-sm text-white transition-colors hover:bg-light-tertiary-color short:text-base"
 							>
 								{t("ill-be-there")}
 							</button>

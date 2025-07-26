@@ -24,8 +24,8 @@ const Tabs = (props: { names: string[]; children: React.ReactNode }) => {
 					<button
 						key={index}
 						className={`flex cursor-pointer flex-row items-center justify-center gap-2 rounded-lg ${
-							activeTab == index ? "bg-dark-primary-color" : ""
-						} p-4 font-coolvetica text-light-color`}
+							activeTab == index ? "bg-midnight-blue-color" : ""
+						} p-4 font-coolvetica text-white`}
 						onClick={() => setActiveTab(index)}
 					>
 						{name}

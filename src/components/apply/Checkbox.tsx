@@ -16,7 +16,7 @@ const Checkbox = ({ field, formData }: CheckboxProps) => {
 				id={field.name}
 				name={field.name}
 				type="checkbox"
-				className="h-4 w-4 appearance-none bg-transparent text-black after:block after:h-full after:w-full after:rounded-lg after:border after:border-dark-primary-color after:p-0.5 after:leading-[calc(100%*1/2)] after:checked:content-check"
+				className="after: h-4 w-4 appearance-none bg-transparent text-white after:block after:h-full after:w-full after:rounded-lg after:border after:p-0.5 after:leading-[calc(100%*1/2)] after:checked:content-check"
 				required={field.required}
 				checked={checked}
 				onChange={e => {
@@ -27,6 +27,5 @@ const Checkbox = ({ field, formData }: CheckboxProps) => {
 		</>
 	);
 };
-
 
 export default Checkbox;

@@ -51,15 +51,15 @@ const Schedule: NextPage = () => {
 	const eventColor = (eventType: string) => {
 		switch (eventType) {
 			case EventType.WORKSHOP:
-				return "bg-dark-primary-color text-light-color";
+				return "bg-midnight-blue-color text-white";
 			case EventType.CAREER_FAIR:
-				return "bg-light-primary-color text-light-color";
+				return "bg-text-white text-white";
 			case EventType.FOOD:
-				return "bg-medium-primary-color text-light-color";
+				return "bg-medium-primary-color text-white";
 			case EventType.SOCIAL:
-				return "bg-highlight-color text-light-color";
+				return "bg-highlight-color text-white";
 			default:
-				return "bg-dark-color text-light-color";
+				return "bg-dark-color text-white";
 		}
 	};
 
@@ -144,7 +144,7 @@ type TabsProps = {
 
 const Tabs = ({ tab, setTab }: TabsProps) => {
 	return (
-		<div className="w-full border-b border-dark-color bg-light-quaternary-color px-4 pb-4 pt-2 shadow-navbar">
+		<div className="bg-midnight-blue-color w-full border-b border-dark-color px-4 pb-4 pt-2 shadow-navbar">
 			<div className="mx-auto grid max-w-2xl grid-cols-3 gap-3 sm:grid-cols-5">
 				{Object.keys(EventType)
 					.sort(a => (a === EventType.ALL ? -1 : 0))
@@ -180,7 +180,7 @@ const Tab = ({ type, active, onClick }: TabProps) => {
 
 	return (
 		<div
-			className={`flex cursor-pointer flex-row items-center justify-center gap-2 rounded-lg bg-dark-primary-color p-2 font-coolvetica text-light-color outline sm:p-4 ${
+			className={`bg-midnight-blue-color flex cursor-pointer flex-row items-center justify-center gap-2 rounded-lg p-2 font-coolvetica text-white outline sm:p-4 ${
 				type === active ? "outline-4 outline-light-color" : "outline-0"
 			}`}
 			onClick={onClick}

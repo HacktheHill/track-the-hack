@@ -239,7 +239,7 @@ const HackerPage: NextPage<{
 					{prevHackerQuery.data && (
 						<a
 							href={`/hackers/hacker?id=${prevHackerQuery.data.id}`}
-							className="flex items-center justify-center gap-2 rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
+							className="bg-midnight-blue-color flex items-center justify-center gap-2 rounded-lg border  px-4 py-2 font-coolvetica text-sm text-white transition-colors hover:bg-light-tertiary-color"
 						>
 							{t("previous")}
 						</a>
@@ -247,7 +247,7 @@ const HackerPage: NextPage<{
 					{nextHackerQuery.data && (
 						<a
 							href={`/hackers/hacker?id=${nextHackerQuery.data.id}`}
-							className="flex items-center justify-center gap-2 rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
+							className="bg-midnight-blue-color flex items-center justify-center gap-2 rounded-lg border  px-4 py-2 font-coolvetica text-sm text-white transition-colors hover:bg-light-tertiary-color"
 						>
 							{t("next")}
 						</a>
@@ -279,7 +279,7 @@ const HackerPage: NextPage<{
 									</p>
 									<p>{presence.value}</p>
 									<button
-										className="w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-1 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
+										className="bg-midnight-blue-color w-fit whitespace-nowrap rounded-lg border  px-4 py-1 font-coolvetica text-white transition-colors hover:bg-light-tertiary-color"
 										onClick={() => {
 											void handlePresenceIncrement(presence.id, -1);
 											presence.value -= 1;
@@ -288,7 +288,7 @@ const HackerPage: NextPage<{
 										—
 									</button>
 									<button
-										className="w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-1 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
+										className="bg-midnight-blue-color w-fit whitespace-nowrap rounded-lg border  px-4 py-1 font-coolvetica text-white transition-colors hover:bg-light-tertiary-color"
 										onClick={() => {
 											void handlePresenceIncrement(presence.id, 1);
 											presence.value += 1;
@@ -303,13 +303,13 @@ const HackerPage: NextPage<{
 							<div className="mt-4 grid gap-4">
 								<div className="flex justify-between gap-2">
 									<strong className="text-left font-bold">Login email:</strong>
-									<span className="w-1/2 rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50">
+									<span className="bg-text-white/75 hover:bg-text-white/50 w-1/2 rounded border-none px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500">
 										{(hackerQuery.data as unknown as HackerViewData).User?.email}
 									</span>
 								</div>
 								<div className="flex justify-between gap-2">
 									<strong className="text-left font-bold">Login Provider:</strong>
-									<span className="w-1/2 rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50">
+									<span className="bg-text-white/75 hover:bg-text-white/50 w-1/2 rounded border-none px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500">
 										{(hackerQuery.data as unknown as HackerViewData).User?.accounts[0]?.provider}
 									</span>
 								</div>
@@ -326,7 +326,7 @@ const HackerPage: NextPage<{
 												name: field.name,
 												type: field.type,
 												className:
-													"w-1/2 rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50",
+													"w-1/2 rounded border-none bg-text-white/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-text-white/50",
 												value: inputValues[field.name] ?? "",
 												onChange: (
 													e: React.ChangeEvent<
@@ -377,7 +377,7 @@ const HackerPage: NextPage<{
 								{!acceptance && (
 									<input
 										name="resume"
-										className="m-auto w-fit rounded-md border border-dark-primary-color p-2"
+										className="m-auto w-fit rounded-md border  p-2"
 										type="file"
 										accept="application/pdf"
 										onChange={e => {
@@ -400,7 +400,7 @@ const HackerPage: NextPage<{
 													href={value}
 													target="_blank"
 													rel="noreferrer"
-													className="flex items-center justify-center gap-2 rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
+													className="bg-midnight-blue-color flex items-center justify-center gap-2 rounded-lg border  px-4 py-2 font-coolvetica text-sm text-white transition-colors hover:bg-light-tertiary-color"
 												>
 													{t(`links.${key}`)}
 												</a>
@@ -417,17 +417,14 @@ const HackerPage: NextPage<{
 
 							{edit && (
 								<div className="sticky bottom-0 mx-2 flex justify-center  font-coolvetica">
-									<div className="flex max-w-md rounded-md bg-dark-primary-color px-2 py-2 text-light-color transition delay-150 ease-in-out">
+									<div className="bg-midnight-blue-color flex max-w-md rounded-md px-2 py-2 text-white transition delay-150 ease-in-out">
 										<p className="px-5 py-2 text-center">{t("unsavedChanges")}</p>
 										{loading && <Loading />}
-										<button
-											className="px-4 py-2 text-light-quaternary-color"
-											onClick={resetInputFields}
-										>
+										<button className="px-4 py-2 text-white" onClick={resetInputFields}>
 											{t("reset")}
 										</button>
 										<button
-											className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 text-dark-color transition-all duration-500 hover:bg-light-tertiary-color"
+											className="bg-midnight-blue-color whitespace-nowrap rounded-lg border  px-4 py-2 text-dark-color transition-all duration-500 hover:bg-light-tertiary-color"
 											type="submit"
 										>
 											{t("save")}
@@ -455,7 +452,7 @@ const HackerPage: NextPage<{
 												href={value}
 												target="_blank"
 												rel="noreferrer"
-												className="flex items-center justify-center gap-2 rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
+												className="bg-midnight-blue-color flex items-center justify-center gap-2 rounded-lg border  px-4 py-2 font-coolvetica text-sm text-white transition-colors hover:bg-light-tertiary-color"
 											>
 												{t(`links.${key}`)}
 											</a>

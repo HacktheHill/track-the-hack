@@ -18,7 +18,7 @@ type FieldProps = Readonly<{
 const Field = ({ field, formData, errors }: FieldProps) => {
 	const fieldError = errors?.[field.name];
 	const errorClass = fieldError ? "border-red-500" : "";
-	const className = `w-full rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50 ${errorClass}`;
+	const className = `w-full rounded border-none bg-text-white/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-text-white/50 ${errorClass}`;
 
 	if (field.name === "preferredLanguage") {
 		return <Language field={field} />;
@@ -32,7 +32,7 @@ const Field = ({ field, formData, errors }: FieldProps) => {
 		case "multiselect":
 			return <MultiSelect field={field} className={className} formData={formData} />;
 		case "checkbox":
-			return <Checkbox field={field} formData={formData}/>;
+			return <Checkbox field={field} formData={formData} />;
 		case "textarea":
 			return <TextArea field={field} className={className} formData={formData} />;
 		case "typeahead":

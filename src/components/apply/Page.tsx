@@ -71,10 +71,8 @@ const Page = ({ page, formData, index, isLastPage, setStep, errors, validatePage
 			ref={pageRef}
 			className="m-auto flex min-h-[calc(100dvh-140px)] w-full transform opacity-0 transition-opacity duration-1000 ease-in-out mobile:min-h-[calc(100dvh-75px)]"
 		>
-			<div className="m-auto flex w-full flex-col gap-4 rounded border-dark-primary-color p-4 mobile:w-2/3 mobile:gap-8 mobile:border mobile:bg-light-quaternary-color/50 mobile:p-8">
-				<h3 className="text-center font-rubik text-4xl font-bold text-dark-primary-color">
-					{t(`${page.name}.title`)}
-				</h3>
+			<div className="mobile:bg-midnight-blue-color/50 m-auto flex w-full flex-col gap-4 rounded  p-4 mobile:w-2/3 mobile:gap-8 mobile:border mobile:p-8">
+				<h3 className="text-center font-rubik text-4xl font-bold text-white">{t(`${page.name}.title`)}</h3>
 				<p className="text-center">{t(`${page.name}.description`)}</p>
 				{page.questions.length === 0 ? (
 					<Image
@@ -93,7 +91,7 @@ const Page = ({ page, formData, index, isLastPage, setStep, errors, validatePage
 				{isLastPage ? (
 					<button
 						type="submit"
-						className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
+						className="bg-midnight-blue-color whitespace-nowrap rounded-lg border  px-4 py-2 font-coolvetica text-sm text-white transition-colors hover:bg-light-tertiary-color short:text-base"
 					>
 						{t("submit")}
 					</button>
@@ -101,7 +99,7 @@ const Page = ({ page, formData, index, isLastPage, setStep, errors, validatePage
 					<button
 						type="button"
 						onClick={() => void handleNext()}
-						className="mx-auto flex w-fit items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
+						className="bg-midnight-blue-color mx-auto flex w-fit items-center justify-center gap-2 whitespace-nowrap rounded-lg border  px-4 py-2 font-coolvetica text-sm text-white transition-colors hover:bg-light-tertiary-color short:text-base"
 					>
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 12" fill="currentColor" className="w-4">
 							<path d="M0 0 L12 12 L24 0 Z" />
