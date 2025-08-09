@@ -23,7 +23,7 @@ const PhysicalScanner = (props: PhysicalScannerProps) => {
 				name="scannerInput"
 				type="text"
 				autoFocus
-				className="w-full rounded-[100px] border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+				className="bg-text-white hover:bg-text-white/50 w-full rounded-[100px] border-none px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500"
 				onChange={onChange}
 				value={scannedCode}
 			/>

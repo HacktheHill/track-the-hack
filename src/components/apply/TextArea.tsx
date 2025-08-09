@@ -32,7 +32,7 @@ const TextArea = ({ field, className, formData }: TextAreaProps) => {
 				}}
 			/>
 			{field.charLimit && (
-				<p className="absolute bottom-2 right-2 text-right text-light-color">
+				<p className="absolute bottom-2 right-2 text-right text-white">
 					{charCount}/{field.charLimit}
 				</p>
 			)}

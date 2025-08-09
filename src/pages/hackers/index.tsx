@@ -112,10 +112,10 @@ const Hackers: NextPage = () => {
 			title={t("title")}
 			onScroll={handleScroll}
 		>
-			<div className="border-b border-dark-color bg-light-quaternary-color px-4 pb-4 pt-2 shadow-navbar sm:px-10">
+			<div className="bg-midnight-blue-color border-b border-dark-color px-4 pb-4 pt-2 shadow-navbar sm:px-10">
 				<div className="flex">
 					<button
-						className="border-dark m-1 mr-3 rounded-xl bg-medium-primary-color px-6 text-sm text-light-color"
+						className="border-dark m-1 mr-3 rounded-xl bg-medium-primary-color px-6 text-sm text-white"
 						onClick={toggleFilter}
 					>
 						{t("filterSection.filtersButton")}
@@ -168,7 +168,7 @@ const Card = ({ firstName, lastName, currentSchoolOrganization, major, id }: Car
 	return (
 		<Link
 			href={`/hackers/hacker?id=${id}`}
-			className="hover:bg-medium relative block w-full rounded-lg bg-medium-primary-color p-6 text-light-color shadow"
+			className="hover:bg-medium relative block w-full rounded-lg bg-medium-primary-color p-6 text-white shadow"
 		>
 			<Filter value={[RoleName.ACCEPTANCE]} method="some" silent>
 				<button
@@ -310,9 +310,9 @@ const FilterOptions = ({ filters, setFilters, filterOptions, sidebarVisible }: F
 									htmlFor={`${filterSection}-${option}`}
 									className={`w-full cursor-pointer rounded-lg border-2 border-dark-color px-4 py-2 text-center ${
 										filters[filterSection]?.[0] === option
-											? "bg-medium-primary-color text-light-color"
+											? "bg-medium-primary-color text-white"
 											: "bg-light-tertiary-color text-dark-color"
-									} transition-colors duration-200 hover:bg-medium-primary-color hover:text-light-color`}
+									} transition-colors duration-200 hover:bg-medium-primary-color hover:text-white`}
 								>
 									{`${option.charAt(0).toUpperCase()}${option.slice(1)}`}
 								</label>
@@ -328,7 +328,7 @@ const FilterOptions = ({ filters, setFilters, filterOptions, sidebarVisible }: F
 		<>
 			{sidebarVisible && (
 				<div className="border-dark text-dark flex flex-col">
-					<div className="m-4 w-60 rounded-lg border-dark-color bg-light-quaternary-color p-4 text-center">
+					<div className="bg-midnight-blue-color m-4 w-60 rounded-lg border-dark-color p-4 text-center">
 						<ul className="flex flex-col gap-4">
 							{renderFilterSection(filterOptions.educationLevels, "educationLevels")}
 							{renderFilterSection(

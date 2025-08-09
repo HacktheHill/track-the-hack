@@ -33,8 +33,8 @@ const Language = ({ field }: LanguageProps) => {
 						/>
 						<label
 							htmlFor={`${field.name}-${key}`}
-							className={`cursor-pointer whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-4xl text-dark-primary-color transition-colors hover:bg-light-tertiary-color ${
-								isSelected ? "peer-checked:bg-light-primary-color/50" : ""
+							className={`bg-midnight-blue-color cursor-pointer whitespace-nowrap rounded-lg border  px-4 py-2 font-coolvetica text-4xl text-white transition-colors hover:bg-light-tertiary-color ${
+								isSelected ? "peer-checked:bg-text-white/50" : ""
 							}`}
 						>
 							{t(value)}

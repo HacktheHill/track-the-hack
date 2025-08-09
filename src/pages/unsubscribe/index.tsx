@@ -72,7 +72,7 @@ const Unsubscribe: NextPage = () => {
 				})}
 			</h3>
 			<button
-				className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
+				className="bg-midnight-blue-color whitespace-nowrap rounded-lg border  px-4 py-2 font-coolvetica text-sm text-white transition-colors hover:bg-light-tertiary-color short:text-base"
 				disabled={query.isLoading}
 			>
 				{isUnsubscribed ? t("resubscribe") : t("unsubscribe")}

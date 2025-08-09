@@ -51,10 +51,10 @@ const Roles: NextPage = () => {
 						<input
 							type="search"
 							placeholder="Search"
-							className="w-full rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 placeholder:text-dark-primary-color hover:bg-light-primary-color/50"
+							className="bg-text-white/75 hover:bg-text-white/50 w-full rounded border-none px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 placeholder:text-white"
 							onChange={e => setQuery(e.target.value)}
 						/>
-						<div className="flex h-[30vh] flex-col gap-4 overflow-auto rounded-lg border border-dark-primary-color bg-light-tertiary-color p-4">
+						<div className="flex h-[30vh] flex-col gap-4 overflow-auto rounded-lg border  bg-light-tertiary-color p-4">
 							{users.data?.map(user => {
 								const roles = user.roles.map(role => role.name);
 								return (
@@ -99,7 +99,7 @@ const Roles: NextPage = () => {
 						</div>
 						<button
 							type="submit"
-							className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
+							className="bg-midnight-blue-color whitespace-nowrap rounded-lg border  px-4 py-2 font-coolvetica text-sm text-white transition-colors hover:bg-light-tertiary-color short:text-base"
 						>
 							{t("submit")}
 						</button>

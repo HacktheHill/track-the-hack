@@ -71,7 +71,7 @@ const FieldLabel = ({ page, field }: FieldLabelProps) => {
 								<Link
 									href={url}
 									key={url}
-									className="text-dark-primary-color underline"
+									className="text-white underline"
 									target="_blank"
 									rel="noopener noreferrer"
 								/>
