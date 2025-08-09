@@ -194,7 +194,7 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 	}, []);
 
 	return (
-		<App className="overflow-y-auto bg-default-gradient" title={t("title")}>
+		<App className="overflow-y-auto bg-default-gradient text-light-color" title={t("title")}>
 			{/* {code ? (
 				<> */}
 			{(loading || error || success || (isHacker.data && !ignoreAlreadyHacker)) && (
@@ -207,25 +207,25 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 										onClick: () => setError(null),
 									},
 								]
-							: success
-								? [
-										{
-											label: t("back-home"),
-											onClick: () => void router.replace("/"),
-										},
-									]
-								: isHacker.data && !ignoreAlreadyHacker
-									? [
-											{
-												label: t("back-home"),
-												onClick: () => void router.replace("/"),
-											},
-											{
-												label: t("return-to-form"),
-												onClick: () => setIgnoreAlreadyHacker(true),
-											},
-										]
-									: []
+						: success
+							? [
+									{
+										label: t("back-home"),
+										onClick: () => void router.replace("/"),
+									},
+								]
+						: isHacker.data && !ignoreAlreadyHacker
+							? [
+									{
+										label: t("back-home"),
+										onClick: () => void router.replace("/"),
+									},
+									{
+										label: t("return-to-form"),
+										onClick: () => setIgnoreAlreadyHacker(true),
+									},
+								]
+						: []
 					}
 				>
 					{loading ? (
@@ -236,12 +236,12 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 						</>
 					) : success ? (
 						<>
-							<h3 className="text-4xl font-bold text-dark-color">{t("success")}</h3>
+							<h3 className="text-4xl font-bold text-light-color">{t("success")}</h3>
 							<p>{t("application-submitted-successfully")}</p>
 						</>
 					) : isHacker.data && !ignoreAlreadyHacker ? (
 						<>
-							<h3 className="text-4xl font-bold text-dark-color">{t("attention")}</h3>
+							<h3 className="text-4xl font-bold text-light-color">{t("attention")}</h3>
 							<p>{t("overwriting-submission")}</p>
 						</>
 					) : null}
@@ -287,14 +287,9 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 	);
 };
 
-export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
+export const getServerSideProps: GetServerSideProps = async ({ /* req, res, */ locale }) => {
 	// const session = await getServerSession(req, res, getAuthOptions(req));
-
 	return {
-		// sessionRedirect(session, "/apply")
-		redirect: {
-			destination: "/",
-		},
 		props: {
 			...(await serverSideTranslations(locale ?? "en", ["apply", "zod", "navbar", "common"])),
 			applicationQuestions: getApplicationQuestions(

@@ -734,7 +734,7 @@ export const hackerRouter = createTRPCRouter({
 			throw new Error("User not found");
 		}
 
-		if (new Date() > new Date("2024-09-31T00:00:00.000Z")) {
+		if (new Date() > new Date("2025-10-07T00:00:00.000Z")) {
 			throw new Error("The application deadline has passed");
 		} else {
 			await ctx.prisma.hacker.deleteMany({

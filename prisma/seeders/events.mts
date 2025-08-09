@@ -1,6 +1,6 @@
 import { EventType } from "@prisma/client";
 
-const day1 = "2024-09-27";
+const day1 = "2025-09-27";
 
 const events = [
 	{
