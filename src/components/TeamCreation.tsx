@@ -59,7 +59,9 @@ const TeamCreation = ({ hacker }: { hacker: HackerData }) => {
 		if (teamName && teamName != "") {
 			try {
 				await createTeamMutation.mutateAsync({ hackerId: hacker.id, teamName });
-				window.location.reload();
+				await utils.hackers.get.invalidate({ id: hacker.id });
+				await utils.hackers.get.invalidate();
+				setDisplay(<div className="text-green-500">{t("team-created")}</div>);
 			} catch (error) {
 				if (error instanceof TRPCClientError) {
 					return setDisplay(<div>Error: {error.message}</div>);
@@ -72,7 +74,9 @@ const TeamCreation = ({ hacker }: { hacker: HackerData }) => {
 	const joinTeamHandler = async () => {
 		try {
 			await hackerConfirmMutation.mutateAsync({ id: hacker.id, teamName });
-			window.location.reload();
+			await utils.hackers.get.invalidate({ id: hacker.id });
+			await utils.hackers.get.invalidate();
+			setDisplay(<div className="text-green-500">{t("team-joined")}</div>);
 		} catch (error) {
 			if (error instanceof TRPCClientError) {
 				return setDisplay(<div>Error: {error.message}</div>);
