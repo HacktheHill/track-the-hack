@@ -110,7 +110,7 @@ export const getAuthOptions = (req: IncomingMessage) =>
 			async jwt({ token, user }) {
 				const meta = token as TokenWithMeta;
 				if (user) token.sub = user.id;
-				if (meta.roles && meta.hackerId !== undefined) return token;
+				// Removed early return so roles/hackerId refresh on each JWT callback
 				if (token.sub) {
 					try {
 						const dbUser = await prisma.user.findUnique({

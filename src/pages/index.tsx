@@ -8,7 +8,7 @@ import Image from "next/image";
 import { useRouter } from "next/router";
 import App from "../components/App";
 import { trpc } from "../server/api/api";
-import { AcceptanceStatus } from "@prisma/client";
+import { AcceptanceStatus, RoleName } from "@prisma/client";
 
 import buildingSVG from "../../public/assets/hero/building.svg";
 import hackSVG from "../../public/assets/hero/hack.svg";
@@ -30,10 +30,12 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
 
 const Home: NextPage = () => {
 	const { t } = useTranslation("index");
+	const { t: tNavbar } = useTranslation("navbar");
 	const { data: sessionData } = useSession();
 	const router = useRouter();
 	const { data: acceptanceStatus } = trpc.users.acceptanceStatus.useQuery(undefined, { enabled: !!sessionData });
 	const hasApplied = !!sessionData?.user?.hackerId;
+	const isOrganizer = sessionData?.user?.roles.includes(RoleName.ORGANIZER);
 
 	return (
 		<App className="items-left relative flex flex-col justify-center gap-2 bg-default-gradient px-8 py-6 short:gap-8">
@@ -60,16 +62,32 @@ const Home: NextPage = () => {
 				>
 					{t("get-started")}
 				</button>
+			) : isOrganizer ? (
+				// Organizer view (hide Apply CTA)
+				<div className="z-10 flex flex-wrap gap-4">
+					<button
+						className="text-light-secondary-highlight w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica transition-colors hover:bg-light-tertiary-color mobile:px-6 mobile:py-3 mobile:text-2xl"
+						onClick={() => void router.push("/qr")}
+					>
+						{t("qr")}
+					</button>
+					<button
+						className="text-light-secondary-highlight w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica transition-colors hover:bg-light-tertiary-color mobile:px-6 mobile:py-3 mobile:text-2xl"
+						onClick={() => void router.push("/hackers")}
+					>
+						{tNavbar("hackers")}
+					</button>
+				</div>
 			) : acceptanceStatus === AcceptanceStatus.ACCEPTED ? (
 				<div className="z-10 flex gap-4">
 					<button
-						className="w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-light-secondary-highlight transition-colors hover:bg-light-tertiary-color mobile:px-6 mobile:py-3 mobile:text-2xl"
+						className="text-light-secondary-highlight w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica transition-colors hover:bg-light-tertiary-color mobile:px-6 mobile:py-3 mobile:text-2xl"
 						onClick={() => void router.push(`/hacker?id=${sessionData?.user?.hackerId ?? ""}`)}
 					>
 						{t("profile")}
 					</button>
 					<button
-						className="w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-light-secondary-highlight transition-colors hover:bg-light-tertiary-color mobile:px-6 mobile:py-3 mobile:text-2xl"
+						className="text-light-secondary-highlight w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica transition-colors hover:bg-light-tertiary-color mobile:px-6 mobile:py-3 mobile:text-2xl"
 						onClick={() => void router.push("/qr")}
 					>
 						{t("qr")}
@@ -78,7 +96,7 @@ const Home: NextPage = () => {
 			) : acceptanceStatus === AcceptanceStatus.WAITLISTED ? (
 				<div className="z-10 flex gap-4">
 					<button
-						className="w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-light-secondary-highlight transition-colors hover:bg-light-tertiary-color mobile:px-6 mobile:py-3 mobile:text-2xl"
+						className="text-light-secondary-highlight w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica transition-colors hover:bg-light-tertiary-color mobile:px-6 mobile:py-3 mobile:text-2xl"
 						onClick={() => void router.push(`/hacker?id=${sessionData?.user?.hackerId ?? ""}`)}
 					>
 						{t("profile")}
@@ -88,7 +106,7 @@ const Home: NextPage = () => {
 			) : acceptanceStatus === AcceptanceStatus.REJECTED ? (
 				<div className="z-10 flex gap-4">
 					<button
-						className="w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-light-secondary-highlight transition-colors hover:bg-light-tertiary-color mobile:px-6 mobile:py-3 mobile:text-2xl"
+						className="text-light-secondary-highlight w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica transition-colors hover:bg-light-tertiary-color mobile:px-6 mobile:py-3 mobile:text-2xl"
 						onClick={() => void router.push(`/hacker?id=${sessionData?.user?.hackerId ?? ""}`)}
 					>
 						{t("profile")}
@@ -98,12 +116,14 @@ const Home: NextPage = () => {
 			) : hasApplied ? (
 				<div className="z-10 flex items-center gap-4">
 					<button
-						className="w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-light-secondary-highlight transition-colors hover:bg-light-tertiary-color mobile:px-6 mobile:py-3 mobile:text-2xl"
+						className="text-light-secondary-highlight w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica transition-colors hover:bg-light-tertiary-color mobile:px-6 mobile:py-3 mobile:text-2xl"
 						onClick={() => void router.push(`/hacker?id=${sessionData?.user?.hackerId ?? ""}`)}
 					>
 						{t("profile")}
 					</button>
-					<span className="font-coolvetica text-xl text-blue-300 mobile:text-3xl">{t("pending-admission")}</span>
+					<span className="font-coolvetica text-xl text-blue-300 mobile:text-3xl">
+						{t("pending-admission")}
+					</span>
 				</div>
 			) : (
 				<button
