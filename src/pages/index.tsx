@@ -7,6 +7,8 @@ import type { StaticImageData } from "next/image";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import App from "../components/App";
+import { trpc } from "../server/api/api";
+import { AcceptanceStatus } from "@prisma/client";
 
 import buildingSVG from "../../public/assets/hero/building.svg";
 import hackSVG from "../../public/assets/hero/hack.svg";
@@ -30,18 +32,16 @@ const Home: NextPage = () => {
 	const { t } = useTranslation("index");
 	const { data: sessionData } = useSession();
 	const router = useRouter();
+	const { data: acceptanceStatus } = trpc.users.acceptanceStatus.useQuery(undefined, { enabled: !!sessionData });
+	const hasApplied = !!sessionData?.user?.hackerId;
 
 	return (
 		<App className="items-left relative flex flex-col justify-center gap-2 bg-default-gradient px-8 py-6 short:gap-8">
 			<Image priority src={stars} alt="Leaves" className="absolute inset-0 top-auto w-full" />
 			<h2 className="z-10 w-1/2 font-coolvetica text-lg text-dark-primary-color sm:text-4xl lg:min-w-full">
-				{t("description")}</h2>
-			<Image
-				priority
-				src={stars}
-				alt="Leaves"
-				className="absolute inset-0 top-0 w-full"
-			/>
+				{t("description")}
+			</h2>
+			<Image priority src={stars} alt="Leaves" className="absolute inset-0 top-0 w-full" />
 			<Image
 				priority
 				className="absolute bottom-0 left-1/4 z-10 h-fit max-h-[90%] sm:left-1/2 mobile:left-2/3"
@@ -60,6 +60,51 @@ const Home: NextPage = () => {
 				>
 					{t("get-started")}
 				</button>
+			) : acceptanceStatus === AcceptanceStatus.ACCEPTED ? (
+				<div className="z-10 flex gap-4">
+					<button
+						className="w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color mobile:px-6 mobile:py-3 mobile:text-2xl"
+						onClick={() => void router.push(`/hackers/hacker?id=${sessionData?.user?.hackerId ?? ""}`)}
+					>
+						Profile
+					</button>
+					<button
+						className="w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color mobile:px-6 mobile:py-3 mobile:text-2xl"
+						onClick={() => void router.push("/qr")}
+					>
+						QR
+					</button>
+				</div>
+			) : acceptanceStatus === AcceptanceStatus.WAITLISTED ? (
+				<div className="z-10 flex gap-4">
+					<button
+						className="w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color mobile:px-6 mobile:py-3 mobile:text-2xl"
+						onClick={() => void router.push(`/hackers/hacker?id=${sessionData?.user?.hackerId ?? ""}`)}
+					>
+						Profile
+					</button>
+					<span className="font-coolvetica text-xl text-blue-300 mobile:text-3xl">Waitlisted</span>
+				</div>
+			) : acceptanceStatus === AcceptanceStatus.REJECTED ? (
+				<div className="z-10 flex gap-4">
+					<button
+						className="w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color mobile:px-6 mobile:py-3 mobile:text-2xl"
+						onClick={() => void router.push(`/hackers/hacker?id=${sessionData?.user?.hackerId ?? ""}`)}
+					>
+						Profile
+					</button>
+					<span className="font-coolvetica text-xl text-red-200 mobile:text-3xl">Rejected</span>
+				</div>
+			) : hasApplied ? (
+				<div className="z-10 flex items-center gap-4">
+					<button
+						className="w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color mobile:px-6 mobile:py-3 mobile:text-2xl"
+						onClick={() => void router.push(`/hackers/hacker?id=${sessionData?.user?.hackerId ?? ""}`)}
+					>
+						Profile
+					</button>
+					<span className="font-coolvetica text-xl text-blue-300 mobile:text-3xl">Pending admission</span>
+				</div>
 			) : (
 				<button
 					className="z-10 w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color mobile:px-8 mobile:py-4 mobile:text-4xl"

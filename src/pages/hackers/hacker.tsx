@@ -238,7 +238,7 @@ const HackerPage: NextPage<{
 				<div className="flex justify-between">
 					{prevHackerQuery.data && (
 						<a
-							href={`/hackers/hacker?id=${prevHackerQuery.data.id}`}
+							href={`/hackers/hackers/hacker?id=${prevHackerQuery.data.id}`}
 							className="flex items-center justify-center gap-2 rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
 						>
 							{t("previous")}
@@ -246,7 +246,7 @@ const HackerPage: NextPage<{
 					)}
 					{nextHackerQuery.data && (
 						<a
-							href={`/hackers/hacker?id=${nextHackerQuery.data.id}`}
+							href={`/hackers/hackers/hacker?id=${nextHackerQuery.data.id}`}
 							className="flex items-center justify-center gap-2 rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
 						>
 							{t("next")}

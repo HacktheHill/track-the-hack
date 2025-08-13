@@ -4,8 +4,9 @@ import { useTranslation } from "next-i18next";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useCallback } from "react";
 import Filter from "./Filter";
+import { trpc } from "../server/api/api";
+import { AcceptanceStatus } from "@prisma/client";
 
 type LinkItemProps = {
 	href: string;
@@ -33,23 +34,19 @@ type LinkProps = {
 const Links = ({ bottom }: LinkProps) => {
 	const { t } = useTranslation("navbar");
 	const { data: sessionData } = useSession();
+	// Fetch acceptance status to decide when to show QR even if HACKER role not yet granted
+	const { data: acceptanceStatus } = trpc.users.acceptanceStatus.useQuery(undefined, { enabled: !!sessionData });
 
-	const qrFilter = useCallback(
-		(roles: RoleName[]) => {
-			const hasOrganizerRole = roles.includes(RoleName.ORGANIZER);
-			const isValidHacker = roles.includes(RoleName.HACKER) && !!sessionData?.user?.hackerId;
-
-			return hasOrganizerRole || isValidHacker;
-		},
-		[sessionData?.user?.hackerId],
-	);
+	const isOrganizer = sessionData?.user?.roles.includes(RoleName.ORGANIZER);
+	const hasApplied = !!sessionData?.user?.hackerId; // application submitted
+	const isAccepted = acceptanceStatus === AcceptanceStatus.ACCEPTED;
 
 	return (
 		<>
 			<LinkItem href="/" bottom={bottom} text={t("home")} src="/assets/home.svg" alt={t("home")} />
-			<Filter value={qrFilter} silent method="function">
+			{(isOrganizer || (isAccepted && hasApplied)) && (
 				<LinkItem href="/qr" bottom={bottom} text={t("qr")} src="/assets/qr.svg" alt={t("qr")} />
-			</Filter>
+			)}
 			<LinkItem
 				href="/schedule"
 				bottom={bottom}
@@ -94,16 +91,15 @@ const Links = ({ bottom }: LinkProps) => {
 					/>
 				</Filter>
 			)}
-			{sessionData?.user && sessionData.user.hackerId && (
-				<Filter value={[RoleName.HACKER]} silent method="only">
-					<LinkItem
-						href="/profile"
-						bottom={bottom}
-						text={t("profile")}
-						src="/assets/profile.svg"
-						alt={t("profile")}
-					/>
-				</Filter>
+			{/* Show profile link if user has applied (hackerId), even if not yet accepted */}
+			{hasApplied && (
+				<LinkItem
+					href={`/hackers/hacker?id=${sessionData?.user?.hackerId ?? ""}`}
+					bottom={bottom}
+					text={t("profile")}
+					src="/assets/profile.svg"
+					alt={t("profile")}
+				/>
 			)}
 		</>
 	);

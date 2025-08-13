@@ -10,6 +10,7 @@ import { log } from "../../lib/log";
 import { generatePresignedGetUrl, generatePresignedPutUrl, generateS3Filename } from "../../lib/s3";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { sendApplyEmail } from "../../lib/email";
+import { APPLICATION_DEADLINE } from "../../lib/shared-constants";
 
 const FILTER_OPTION_THRESHOLD = 3;
 
@@ -605,7 +606,7 @@ export const hackerRouter = createTRPCRouter({
 			const userId = ctx.session.user.id;
 			const user = await ctx.prisma.user.findUnique({
 				where: {
-					id: userId,
+				id: userId,
 				},
 				select: {
 					name: true,
@@ -734,7 +735,7 @@ export const hackerRouter = createTRPCRouter({
 			throw new Error("User not found");
 		}
 
-		if (new Date() > new Date("2025-10-07T00:00:00.000Z")) {
+		if (new Date() > new Date(APPLICATION_DEADLINE)) {
 			throw new Error("The application deadline has passed");
 		} else {
 			await ctx.prisma.hacker.deleteMany({
@@ -753,6 +754,19 @@ export const hackerRouter = createTRPCRouter({
 					},
 				},
 			});
+
+			// Ensure user has HACKER role after applying (needed to access profile page)
+			const hackerRoleExists = user.roles.some(role => role.name === "HACKER");
+			if (!hackerRoleExists) {
+				await ctx.prisma.user.update({
+					where: { id: userId },
+					data: {
+						roles: {
+							connect: { name: RoleName.HACKER },
+						},
+					},
+				});
+			}
 
 			const filename = generateS3Filename(hacker.id, `${hacker.firstName}_${hacker.lastName}_Resume`, "pdf");
 			const presignedUrl = await generatePresignedPutUrl(filename, "resumes");
