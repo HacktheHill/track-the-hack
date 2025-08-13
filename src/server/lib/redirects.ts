@@ -1,4 +1,4 @@
-import { PrismaClient, RoleName } from "@prisma/client";
+import { PrismaClient, RoleName, AcceptanceStatus } from "@prisma/client";
 import type { Session } from "next-auth";
 
 export async function qrRedirect(session: Session | null, callbackUrl: string) {
@@ -23,12 +23,25 @@ export async function qrRedirect(session: Session | null, callbackUrl: string) {
 		};
 	}
 
-	if (!user.roles.some(role => role.name === RoleName.ORGANIZER || role.name === RoleName.HACKER)) {
-		return {
-			destination: "/",
-			permanent: false,
-		};
+	// Allow if user already has required role(s)
+	if (user.roles.some(role => role.name === RoleName.ORGANIZER || role.name === RoleName.HACKER)) {
+		return; // no redirect
 	}
+
+	// If user does not yet have HACKER role but their application is accepted, allow access
+	const hacker = await prisma.hacker.findFirst({
+		where: { userId: user.id },
+		select: { acceptanceStatus: true },
+	});
+
+	if (hacker?.acceptanceStatus === AcceptanceStatus.ACCEPTED) {
+		return; // accepted hacker can access QR page even before role assignment
+	}
+
+	return {
+		destination: "/",
+		permanent: false,
+	};
 }
 
 // Allow organizers to view all, hackers to view only themselves

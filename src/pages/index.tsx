@@ -38,7 +38,7 @@ const Home: NextPage = () => {
 	return (
 		<App className="items-left relative flex flex-col justify-center gap-2 bg-default-gradient px-8 py-6 short:gap-8">
 			<Image priority src={stars} alt="Leaves" className="absolute inset-0 top-auto w-full" />
-			<h2 className="z-10 w-1/2 font-coolvetica text-lg text-dark-primary-color sm:text-4xl lg:min-w-full">
+			<h2 className="z-10 w-1/2 font-coolvetica text-lg text-light-secondary-color sm:text-4xl lg:min-w-full">
 				{t("description")}
 			</h2>
 			<Image priority src={stars} alt="Leaves" className="absolute inset-0 top-0 w-full" />
@@ -55,7 +55,7 @@ const Home: NextPage = () => {
 			</h1>
 			{!sessionData ? (
 				<button
-					className="z-10 w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color mobile:px-8 mobile:py-4 mobile:text-4xl"
+					className="z-10 w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-light-secondary-color transition-colors hover:bg-light-tertiary-color mobile:px-8 mobile:py-4 mobile:text-4xl"
 					onClick={() => void router.push("/auth/sign-up")}
 				>
 					{t("get-started")}
@@ -63,51 +63,51 @@ const Home: NextPage = () => {
 			) : acceptanceStatus === AcceptanceStatus.ACCEPTED ? (
 				<div className="z-10 flex gap-4">
 					<button
-						className="w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color mobile:px-6 mobile:py-3 mobile:text-2xl"
-						onClick={() => void router.push(`/hackers/hacker?id=${sessionData?.user?.hackerId ?? ""}`)}
+						className="w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-light-secondary-highlight transition-colors hover:bg-light-tertiary-color mobile:px-6 mobile:py-3 mobile:text-2xl"
+						onClick={() => void router.push(`/hacker?id=${sessionData?.user?.hackerId ?? ""}`)}
 					>
-						Profile
+						{t("profile")}
 					</button>
 					<button
-						className="w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color mobile:px-6 mobile:py-3 mobile:text-2xl"
+						className="w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-light-secondary-highlight transition-colors hover:bg-light-tertiary-color mobile:px-6 mobile:py-3 mobile:text-2xl"
 						onClick={() => void router.push("/qr")}
 					>
-						QR
+						{t("qr")}
 					</button>
 				</div>
 			) : acceptanceStatus === AcceptanceStatus.WAITLISTED ? (
 				<div className="z-10 flex gap-4">
 					<button
-						className="w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color mobile:px-6 mobile:py-3 mobile:text-2xl"
-						onClick={() => void router.push(`/hackers/hacker?id=${sessionData?.user?.hackerId ?? ""}`)}
+						className="w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-light-secondary-highlight transition-colors hover:bg-light-tertiary-color mobile:px-6 mobile:py-3 mobile:text-2xl"
+						onClick={() => void router.push(`/hacker?id=${sessionData?.user?.hackerId ?? ""}`)}
 					>
-						Profile
+						{t("profile")}
 					</button>
-					<span className="font-coolvetica text-xl text-blue-300 mobile:text-3xl">Waitlisted</span>
+					<span className="font-coolvetica text-xl text-blue-300 mobile:text-3xl">{t("waitlisted")}</span>
 				</div>
 			) : acceptanceStatus === AcceptanceStatus.REJECTED ? (
 				<div className="z-10 flex gap-4">
 					<button
-						className="w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color mobile:px-6 mobile:py-3 mobile:text-2xl"
-						onClick={() => void router.push(`/hackers/hacker?id=${sessionData?.user?.hackerId ?? ""}`)}
+						className="w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-light-secondary-highlight transition-colors hover:bg-light-tertiary-color mobile:px-6 mobile:py-3 mobile:text-2xl"
+						onClick={() => void router.push(`/hacker?id=${sessionData?.user?.hackerId ?? ""}`)}
 					>
-						Profile
+						{t("profile")}
 					</button>
-					<span className="font-coolvetica text-xl text-red-200 mobile:text-3xl">Rejected</span>
+					<span className="font-coolvetica text-xl text-red-200 mobile:text-3xl">{t("rejected")}</span>
 				</div>
 			) : hasApplied ? (
 				<div className="z-10 flex items-center gap-4">
 					<button
-						className="w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color mobile:px-6 mobile:py-3 mobile:text-2xl"
-						onClick={() => void router.push(`/hackers/hacker?id=${sessionData?.user?.hackerId ?? ""}`)}
+						className="w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-light-secondary-highlight transition-colors hover:bg-light-tertiary-color mobile:px-6 mobile:py-3 mobile:text-2xl"
+						onClick={() => void router.push(`/hacker?id=${sessionData?.user?.hackerId ?? ""}`)}
 					>
-						Profile
+						{t("profile")}
 					</button>
-					<span className="font-coolvetica text-xl text-blue-300 mobile:text-3xl">Pending admission</span>
+					<span className="font-coolvetica text-xl text-blue-300 mobile:text-3xl">{t("pending-admission")}</span>
 				</div>
 			) : (
 				<button
-					className="z-10 w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color mobile:px-8 mobile:py-4 mobile:text-4xl"
+					className="z-10 w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-light-secondary-color transition-colors hover:bg-light-tertiary-color mobile:px-8 mobile:py-4 mobile:text-4xl"
 					onClick={() => void router.push("/apply")}
 				>
 					{t("apply")}

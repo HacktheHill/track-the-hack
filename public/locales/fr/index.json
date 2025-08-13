@@ -3,5 +3,8 @@
 	"get-started": "Commencez",
 	"apply": "Postulez maintenant!",
 	"profile": "Profil",
-	"qr": "QR"
+	"qr": "QR",
+	"waitlisted": "En liste d'attente",
+	"rejected": "Rejeté",
+	"pending-admission": "En attente d'admission"
 }
