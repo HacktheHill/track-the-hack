@@ -126,7 +126,7 @@ const QR = ({ encryptedId }: { encryptedId: string }) => {
 			if (hackerId === "") return;
 
 			if (selectedAction.current === DEFAULT_ACTION) {
-				void router.push(`/hackers/hacker?id=${hackerId}`);
+				void router.push(`/hackers/hackers/hacker?id=${hackerId}`);
 			} else {
 				try {
 					const hacker = await utils.hackers.get.fetch({ id: hackerId });

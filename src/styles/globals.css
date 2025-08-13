@@ -53,4 +53,14 @@ body {
 		"Droid Sans", "Helvetica Neue", sans-serif;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
+	color: white;
+	background: linear-gradient(#6D4998, #7500FF);
+}
+
+:root {
+	color-scheme: light dark;
+}
+
+a, button {
+	color: white;
 }

@@ -93,7 +93,7 @@ const Page = ({ page, formData, index, isLastPage, setStep, errors, validatePage
 				{isLastPage ? (
 					<button
 						type="submit"
-						className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
+						className="whitespace-nowrap rounded-lg border border-highlight-color bg-highlight-color px-4 py-2 font-coolvetica text-sm text-light-color transition-colors hover:brightness-110 short:text-base"
 					>
 						{t("submit")}
 					</button>
@@ -101,7 +101,7 @@ const Page = ({ page, formData, index, isLastPage, setStep, errors, validatePage
 					<button
 						type="button"
 						onClick={() => void handleNext()}
-						className="mx-auto flex w-fit items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
+						className="mx-auto flex w-fit items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-highlight-color bg-highlight-color px-4 py-2 font-coolvetica text-sm text-light-color transition-colors hover:brightness-110 short:text-base"
 					>
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 12" fill="currentColor" className="w-4">
 							<path d="M0 0 L12 12 L24 0 Z" />
