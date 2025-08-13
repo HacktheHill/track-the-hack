@@ -28,6 +28,7 @@ module.exports = {
 				"medium-primary-color": "#320369",
 				"dark-primary-color": "#000000",
 				"highlight-color": "#7500FF",
+				"light-secondary-highlight": "#deacff",
 				"light-quaternary-color": "#320369",
 				"light-grey-color": "#9d96a5",
 			},

@@ -20,7 +20,7 @@ const LinkItem = ({ href, bottom, text, src, alt }: LinkItemProps) => (
 	<Link
 		href={href}
 		className={
-			bottom ? "" : "hover:text-light mx-4 flex items-center font-coolvetica text-2xl text-dark-primary-color"
+			bottom ? "" : "hover:text-light mx-4 flex items-center font-coolvetica text-2xl text-light-secondary-color"
 		}
 	>
 		{bottom ? <Image priority src={src} height={32} width={32} alt={alt} /> : text}
@@ -94,7 +94,7 @@ const Links = ({ bottom }: LinkProps) => {
 			{/* Show profile link if user has applied (hackerId), even if not yet accepted */}
 			{hasApplied && (
 				<LinkItem
-					href={`/hackers/hacker?id=${sessionData?.user?.hackerId ?? ""}`}
+					href={`/hacker?id=${sessionData?.user?.hackerId ?? ""}`}
 					bottom={bottom}
 					text={t("profile")}
 					src="/assets/profile.svg"
@@ -155,7 +155,7 @@ const Navbar = ({ integrated }: NavbarProps) => {
 			</div>
 
 			<select
-				className="hover:bg-light-quaternary ml-auto whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors sm:visible"
+				className="hover:bg-light-quaternary ml-auto whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-light-secondary-color transition-colors sm:visible"
 				onChange={handleLanguageChange}
 				value={locale ?? "en"}
 			>
@@ -168,7 +168,7 @@ const Navbar = ({ integrated }: NavbarProps) => {
 
 			{sessionData ? (
 				<button
-					className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors sm:visible"
+					className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-light-secondary-color transition-colors sm:visible"
 					onClick={() => void signOut()}
 				>
 					{t("sign-out")}
@@ -176,13 +176,13 @@ const Navbar = ({ integrated }: NavbarProps) => {
 			) : (
 				<>
 					<button
-						className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors sm:visible"
+						className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-light-secondary-color transition-colors sm:visible"
 						onClick={() => void signIn()}
 					>
 						{t("sign-in")}
 					</button>
 					<button
-						className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors sm:visible"
+						className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-light-secondary-color transition-colors sm:visible"
 						onClick={() => void router.push("/auth/sign-up")}
 					>
 						{t("sign-up")}

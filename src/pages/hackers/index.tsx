@@ -167,7 +167,7 @@ const Card = ({ firstName, lastName, currentSchoolOrganization, major, id }: Car
 
 	return (
 		<Link
-			href={`/hackers/hackers/hacker?id=${id}`}
+			href={`/hacker?id=${id}`}
 			className="hover:bg-medium relative block w-full rounded-lg bg-medium-primary-color p-6 text-light-color shadow"
 		>
 			<Filter value={[RoleName.ACCEPTANCE]} method="some" silent>
