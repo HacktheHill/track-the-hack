@@ -32,7 +32,7 @@ jobs:
               run: npm run build
 
             - name: Deploy to production directory
-              run: rsync -avz --delete ./ /home/azure/track-the-hack/
+              run: rsync -avz --delete --exclude='.git' ./ /home/azure/track-the-hack/
 
             - name: Update the database schema
               working-directory: /home/azure/track-the-hack
