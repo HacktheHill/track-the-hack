@@ -1,9 +1,9 @@
 {
 	"apply": {
-		"subject": "Thank you for applying to Hack the Hill II!",
-		"preview": "Thank you for applying for the Hack the Hill II hackathon!",
+		"subject": "Thank you for applying to Hack The Hill III!",
+		"preview": "Thank you for applying for the Hack The Hill III hackathon!",
 		"greeting": "Hi {{name}},",
-		"body": "Thank you for applying for the Hack the Hill II hackathon. We appreciate your interest and are excited to have you on board. Stay tuned for more updates!",
+		"body": "Thank you for applying for the Hack The Hill III hackathon. We appreciate your interest and are excited to have you on board. Stay tuned for more updates!",
 		"closing": "If you have any questions, feel free to reply to this email.",
 		"signature": "Hack the Hill"
 	}
