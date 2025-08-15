@@ -265,22 +265,23 @@ const Resources: NextPage = () => {
 			noIndex
 			title={t("title")}
 		>
-			<ReactMarkdown
-				components={components}
-				remarkPlugins={plugins}
-				rehypePlugins={[
-					rehypeSlug,
-					[
-						rehypeAutolinkHeadings,
-						{
-							behavior: "wrap",
-						},
-					],
-				]}
-				className="mx-auto w-full max-w-2xl px-4 sm:px-16"
-			>
-				{locale === "fr" ? fr : en}
-			</ReactMarkdown>
+			<div className="mx-auto w-full max-w-2xl rounded-xl bg-black/70 p-6 text-white shadow-lg sm:p-10">
+				<ReactMarkdown
+					components={components}
+					remarkPlugins={plugins}
+					rehypePlugins={[
+						rehypeSlug,
+						[
+							rehypeAutolinkHeadings,
+							{
+								behavior: "wrap",
+							},
+						],
+					]}
+				>
+					{locale === "fr" ? fr : en}
+				</ReactMarkdown>
+			</div>
 		</App>
 	);
 };

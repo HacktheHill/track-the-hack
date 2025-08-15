@@ -52,11 +52,10 @@ const SignIn = ({ providers }: InferGetServerSidePropsType<typeof getServerSideP
 			<main className="flex h-screen flex-col items-center justify-center gap-4 bg-default-gradient bg-no-repeat p-4 text-center supports-[height:100cqh]:h-[100cqh] supports-[height:100svh]:h-[100svh]">
 				<div className="flex flex-col items-center">
 					<Image
-						src="https://hackthehill.com/Logos/hackthehill-logo.svg"
+						src="/assets/hackthehill-logo.svg"
 						alt={t("common:hack-the-hill-logo-alt")}
-						width={128}
-						height={128}
-						className="h-auto w-auto"
+						width={192}
+						height={192}
 						priority
 					/>
 					<h1 className="font-coolvetica text-[clamp(1rem,3.5vmin,5rem)] font-normal text-dark-color">
