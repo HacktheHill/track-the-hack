@@ -54,7 +54,7 @@ const sendApplyEmail = async ({ email, name, locale }: { email: string; name: st
 
 	await sendEmail({
 		to: email,
-		from: "Hack the Hill <hello@hackthehill.com>",
+		from: "Hack the Hill <info@ctn-rtc.org>",
 		subject: t("apply.subject"),
 		html: html`
 			<body>

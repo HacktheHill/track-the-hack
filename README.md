@@ -25,6 +25,6 @@ If you're part of the Hack the Hill team, refer to our [Contribution guidelines]
 
 ## Contact
 
-For inquiries, please contact us at [development@hackthehill.com](mailto:development@hackthehill.com).
+For inquiries, please contact us at [development@ctn-rtc.org](mailto:development@ctn-rtc.org).
 
 Copyright © 2023 Hack the Hill. All Rights Reserved.

@@ -21,7 +21,7 @@ Stay connected with us on these platforms to receive updates, ask questions, and
 
 Need assistance? Get in touch with us via email or our help desk at the venue:
 
-- **Email**: [info@hackthehill.com](mailto:info@hackthehill.com)
+- **Email**: [info@ctn-rtc.org](mailto:info@ctn-rtc.org)
 - **Help Desk Location**: CRX C223
 - **For Emergencies**: uOttawa Protection Services: (613) 562-5411, or dial 911 if off-campus.
 - **Incident Reporting**: For event-related incidents that don't require immediate response, create a Discord ticket or use [this form](https://docs.google.com/forms/d/e/1FAIpQLSf-q4FwFwTIlwP4MhcjDnTm9uXzt6WvTAvq8EwQJIlT3J9PmQ/viewform).
