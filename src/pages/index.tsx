@@ -35,7 +35,7 @@ const Home: NextPage = () => {
 	const router = useRouter();
 	const { data: acceptanceStatus } = trpc.users.acceptanceStatus.useQuery(undefined, { enabled: !!sessionData });
 	const hasApplied = !!sessionData?.user?.hackerId;
-	const isOrganizer = sessionData?.user?.roles.includes(RoleName.ORGANIZER);
+	const isOrganizer = sessionData?.user?.roles.includes(RoleName.ORGANIZER); 
 
 	return (
 		<App className="items-left relative flex flex-col justify-center gap-2 bg-default-gradient px-8 py-6 short:gap-8">
