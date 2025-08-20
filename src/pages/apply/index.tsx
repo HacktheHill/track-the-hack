@@ -270,11 +270,11 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 							<input
 								type="text"
 								name="code"
-								className="rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-xl text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+								className="rounded border-none bg-text-white/75 px-4 py-2 font-rubik text-xl text-dark-color shadow-md transition-all duration-500 hover:bg-text-white/50"
 							/>
 							<button
 								type="submit"
-								className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
+								className="whitespace-nowrap rounded-lg border  bg-midnight-blue-color px-4 py-2 font-coolvetica text-sm text-white transition-colors hover:bg-light-tertiary-color short:text-base"
 							>
 								{t("submit")}
 							</button>

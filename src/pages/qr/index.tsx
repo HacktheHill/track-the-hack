@@ -230,7 +230,7 @@ const FirstTimeVisitor = ({ hacker, event }: FirstTimeVisitor) => {
 	const { t } = useTranslation("qr");
 
 	return (
-		<div className="flex flex-col items-center justify-center gap-4 rounded-lg bg-light-primary-color p-6 text-light-color">
+		<div className="bg-text-white flex flex-col items-center justify-center gap-4 rounded-lg p-6 text-white">
 			{t("checked-in", {
 				firstName: hacker.firstName,
 				lastName: hacker.lastName,
@@ -269,18 +269,18 @@ const RepeatedVisitor = ({ hacker, presence, maxCheckIns, incrementFn }: Repeate
 	};
 
 	return (
-		<div className="flex flex-col items-center justify-center gap-4 rounded-lg bg-light-primary-color p-6 text-light-color">
+		<div className="bg-text-white flex flex-col items-center justify-center gap-4 rounded-lg p-6 text-white">
 			<div>{t("already-checked-in", { firstName: hacker.firstName, lastName: hacker.lastName, counter })}</div>
 			{!maxCheckIns || maxCheckIns > presence.value ? (
 				<div className="flex w-full justify-center gap-16">
 					<button
-						className="z-10 w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
+						className="bg-midnight-blue-color z-10 w-fit whitespace-nowrap rounded-lg border  px-4 py-2 font-coolvetica text-white transition-colors hover:bg-light-tertiary-color"
 						onClick={() => void handleIncrement(-1)}
 					>
 						—
 					</button>
 					<button
-						className="z-10 w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
+						className="bg-midnight-blue-color z-10 w-fit whitespace-nowrap rounded-lg border  px-4 py-2 font-coolvetica text-white transition-colors hover:bg-light-tertiary-color"
 						onClick={() => void handleIncrement(1)}
 					>
 						+
