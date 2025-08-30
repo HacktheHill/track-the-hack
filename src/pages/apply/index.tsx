@@ -17,6 +17,9 @@ import { getApplicationQuestions } from "../../server/lib/apply";
 import { processFormData, saveToLocalStorage } from "../../utils/apply";
 import { hackerSchema, pageSchemas } from "../../utils/common";
 import Modal from "../../components/Modal";
+import { getServerSession } from "next-auth/next";
+import { getAuthOptions } from "../api/auth/[...nextauth]";
+import { sessionRedirect } from "../../server/lib/redirects";
 
 type ApplyProps = {
 	applicationQuestions: ApplicationQuestionsType[number][];
@@ -30,7 +33,6 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 	const formRef = useRef<HTMLFormElement>(null);
 	const formDataRef = useRef<FormData>(new FormData());
 
-	const [code, setCode] = useState<string | null>(null);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [success, setSuccess] = useState(false);
@@ -41,7 +43,6 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 	const isHacker = trpc.users.isHacker.useQuery();
 	const mutation = trpc.hackers.apply.useMutation(); // or walkIn
 	const revertMutation = trpc.hackers.delete.useMutation();
-	const utils = trpc.useUtils();
 
 	const updateFormData = () => {
 		if (!formRef.current) return;
@@ -118,14 +119,9 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 		const data = {
 			...processFormData(formDataRef.current),
 			hasResume: !!resume,
-			// code,
 		};
 
-		const parse = await hackerSchema
-			/* .extend({
-				code: z.string(),
-			}) */
-			.safeParseAsync(data, { errorMap });
+		const parse = await hackerSchema.safeParseAsync(data, { errorMap });
 
 		if (!parse.success) {
 			setError(t("invalid-form"));
@@ -160,23 +156,6 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 		}
 	};
 
-	const handleSubmitWalkInCode = async (e: React.FormEvent<HTMLFormElement>) => {
-		e.preventDefault();
-
-		const formData = new FormData(e.currentTarget);
-		const code = formData.get("code") as string | null;
-		if (!code) return;
-
-		const result = await utils.hackers.verifyWalkInCode.fetch({ code });
-		if (!result.valid) {
-			setError(t("invalid-walk-in-code"));
-			return;
-		}
-
-		setError(null);
-		setCode(code);
-	};
-
 	useEffect(() => {
 		const savedData = localStorage.getItem("applyFormData");
 		if (savedData) {
@@ -195,8 +174,6 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 
 	return (
 		<App className="overflow-y-auto bg-default-gradient text-light-color" title={t("title")}>
-			{/* {code ? (
-				<> */}
 			{(loading || error || success || (isHacker.data && !ignoreAlreadyHacker)) && (
 				<Modal
 					buttons={
@@ -261,37 +238,17 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 					/>
 				))}
 			</form>
-			{/* </>
-			) : (
-				<>
-					<div className="flex h-full flex-col items-center justify-center gap-4">
-						<h2 className="text-4xl font-bold text-dark-color">{t("walk-in-code")}</h2>
-						<form className="flex flex-col gap-4" onSubmit={e => void handleSubmitWalkInCode(e)}>
-							<input
-								type="text"
-								name="code"
-								className="rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-xl text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
-							/>
-							<button
-								type="submit"
-								className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
-							>
-								{t("submit")}
-							</button>
-							{error && <ErrorComponent message={error} />}
-						</form>
-					</div>
-				</>
-			)} */}
 		</App>
 	);
 };
 
 export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
+	const session = await getServerSession(req, res, getAuthOptions(req));
+	const redirect = sessionRedirect(session, "/apply");
+	if (redirect) {
+		return { redirect };
+	}
 	return {
-		redirect: {
-			destination: "/",
-		},
 		props: {
 			...(await serverSideTranslations(locale ?? "en", ["apply", "zod", "navbar", "common"])),
 			applicationQuestions: getApplicationQuestions(
