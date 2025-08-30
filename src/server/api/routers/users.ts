@@ -229,11 +229,18 @@ export const userRouter = createTRPCRouter({
 	isHacker: protectedProcedure.query(async ({ ctx }) => {
 		const userId = ctx.session.user.id;
 		const hacker = await ctx.prisma.hacker.findUnique({
-			where: {
-				userId,
-			},
+			where: { userId },
 		});
-
 		return !!hacker;
+	}),
+
+	// Get current user's acceptance status (null if no application yet)
+	acceptanceStatus: protectedProcedure.query(async ({ ctx }) => {
+		const userId = ctx.session.user.id;
+		const hacker = await ctx.prisma.hacker.findUnique({
+			where: { userId },
+			select: { acceptanceStatus: true },
+		});
+		return hacker?.acceptanceStatus ?? null;
 	}),
 });

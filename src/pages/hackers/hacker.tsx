@@ -239,7 +239,7 @@ const HackerPage: NextPage<{
 					{prevHackerQuery.data && (
 						<a
 							href={`/hackers/hacker?id=${prevHackerQuery.data.id}`}
-							className="flex items-center justify-center gap-2 rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
+							className="flex items-center justify-center gap-2 rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
 						>
 							{t("previous")}
 						</a>
@@ -247,7 +247,7 @@ const HackerPage: NextPage<{
 					{nextHackerQuery.data && (
 						<a
 							href={`/hackers/hacker?id=${nextHackerQuery.data.id}`}
-							className="flex items-center justify-center gap-2 rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
+							className="flex items-center justify-center gap-2 rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
 						>
 							{t("next")}
 						</a>
@@ -279,7 +279,7 @@ const HackerPage: NextPage<{
 									</p>
 									<p>{presence.value}</p>
 									<button
-										className="w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-1 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
+										className="w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-1 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
 										onClick={() => {
 											void handlePresenceIncrement(presence.id, -1);
 											presence.value -= 1;
@@ -288,7 +288,7 @@ const HackerPage: NextPage<{
 										—
 									</button>
 									<button
-										className="w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-1 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
+										className="w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-1 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
 										onClick={() => {
 											void handlePresenceIncrement(presence.id, 1);
 											presence.value += 1;
@@ -400,7 +400,7 @@ const HackerPage: NextPage<{
 													href={value}
 													target="_blank"
 													rel="noreferrer"
-													className="flex items-center justify-center gap-2 rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
+													className="flex items-center justify-center gap-2 rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-sm text-light-secondary-color transition-colors hover:bg-light-tertiary-color"
 												>
 													{t(`links.${key}`)}
 												</a>
@@ -421,13 +421,13 @@ const HackerPage: NextPage<{
 										<p className="px-5 py-2 text-center">{t("unsavedChanges")}</p>
 										{loading && <Loading />}
 										<button
-											className="px-4 py-2 text-light-quaternary-color"
+											className="px-4 py-2 text-medium-primary-color"
 											onClick={resetInputFields}
 										>
 											{t("reset")}
 										</button>
 										<button
-											className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 text-dark-color transition-all duration-500 hover:bg-light-tertiary-color"
+											className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 text-dark-color transition-all duration-500 hover:bg-light-tertiary-color"
 											type="submit"
 										>
 											{t("save")}
@@ -455,7 +455,7 @@ const HackerPage: NextPage<{
 												href={value}
 												target="_blank"
 												rel="noreferrer"
-												className="flex items-center justify-center gap-2 rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
+												className="flex items-center justify-center gap-2 rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
 											>
 												{t(`links.${key}`)}
 											</a>

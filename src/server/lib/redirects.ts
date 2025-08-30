@@ -1,4 +1,4 @@
-import { PrismaClient, RoleName } from "@prisma/client";
+import { PrismaClient, RoleName, AcceptanceStatus } from "@prisma/client";
 import type { Session } from "next-auth";
 
 export async function qrRedirect(session: Session | null, callbackUrl: string) {
@@ -23,12 +23,15 @@ export async function qrRedirect(session: Session | null, callbackUrl: string) {
 		};
 	}
 
-	if (!user.roles.some(role => role.name === RoleName.ORGANIZER || role.name === RoleName.HACKER)) {
-		return {
-			destination: "/",
-			permanent: false,
-		};
+	// Allow if user already has required role(s)
+	if (user.roles.some(role => role.name === RoleName.ORGANIZER || role.name === RoleName.HACKER)) {
+		return; // no redirect
 	}
+
+	return {
+		destination: "/",
+		permanent: false,
+	};
 }
 
 // Allow organizers to view all, hackers to view only themselves

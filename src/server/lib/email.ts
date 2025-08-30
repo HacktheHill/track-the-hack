@@ -54,7 +54,7 @@ const sendApplyEmail = async ({ email, name, locale }: { email: string; name: st
 
 	await sendEmail({
 		to: email,
-		from: "Hack the Hill <info@ctn-rtc.org>",
+		from: "Hack the Hill <hello@hackthehill.com>",
 		subject: t("apply.subject"),
 		html: html`
 			<body>
@@ -75,7 +75,7 @@ const sendApplyEmail = async ({ email, name, locale }: { email: string; name: st
 									<td>
 										<img
 											src="https://i.imgur.com/QfJlO1J.png"
-											alt="Hack the Hill II"
+											alt="Hack The Hill III"
 											style="width: 100%; height: 100%; object-fit: cover; object-position: center;"
 										/>
 									</td>

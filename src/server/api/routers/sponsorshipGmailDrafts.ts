@@ -50,7 +50,7 @@ export const sponsorshipGmailDraftsRouter = createTRPCRouter({
 			subject,
 			message: emailHTML,
 			labels: ["UNREAD", "2023-24", name],
-			sender: "sponsorship@ctn-rtc.org",
+			sender: "sponsorship@hackthehill.com",
 			recipient: companyEmail,
 		});
 	}),

@@ -1,6 +1,7 @@
 import { RoleName } from "@prisma/client";
 import type { GetServerSideProps, NextPage } from "next";
 import { getServerSession } from "next-auth";
+import { useSession } from "next-auth/react";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { rolesRedirect } from "../../server/lib/redirects";
@@ -19,7 +20,13 @@ const Roles: NextPage = () => {
 	const [roles, setRoles] = useState<RoleName[]>([]);
 
 	const users = trpc.users.search.useQuery({ query });
-	const mutation = trpc.users.updateRoles.useMutation();
+	const trpcUtils = trpc.useUtils();
+	const mutation = trpc.users.updateRoles.useMutation({
+		onSuccess: async () => {
+			await trpcUtils.users.search.invalidate();
+		},
+	});
+	useSession(); // keep hook to ensure session context updates without unused var warning
 
 	const handleSelectUser = (id: string, roles: RoleName[]) => {
 		setRoles(roles);
@@ -39,7 +46,6 @@ const Roles: NextPage = () => {
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		mutation.mutate({ roles, userIds });
-		window.location.reload();
 	};
 
 	return (
@@ -99,10 +105,13 @@ const Roles: NextPage = () => {
 						</div>
 						<button
 							type="submit"
-							className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
+							className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
 						>
 							{t("submit")}
 						</button>
+						{mutation.isSuccess && (
+							<p className="text-green-500">{t("roles-updated")}</p>
+						)}
 					</form>
 				</div>
 			</Filter>
