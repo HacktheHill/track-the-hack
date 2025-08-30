@@ -50,21 +50,21 @@ const SponsorPage = ({ id, name, tier, logo, hiringLink, websiteLink, additional
 				<div className="flex items-center justify-center gap-4">
 					{hiringLink && (
 						<Link href={hiringLink} target="_blank" rel="noopener noreferrer">
-							<button className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors">
+							<button className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors">
 								{t("hiring")}
 							</button>
 						</Link>
 					)}
 					{websiteLink && (
 						<Link href={websiteLink} target="_blank" rel="noopener noreferrer">
-							<button className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors">
+							<button className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors">
 								{t("website")}
 							</button>
 						</Link>
 					)}
 					{additionalLink && (
 						<Link href={additionalLink} target="_blank" rel="noopener noreferrer">
-							<button className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors">
+							<button className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors">
 								{t("additional")}
 							</button>
 						</Link>

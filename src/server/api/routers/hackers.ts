@@ -755,19 +755,6 @@ export const hackerRouter = createTRPCRouter({
 				},
 			});
 
-			// Ensure user has HACKER role after applying (needed to access profile page)
-			const hackerRoleExists = user.roles.some(role => role.name === "HACKER");
-			if (!hackerRoleExists) {
-				await ctx.prisma.user.update({
-					where: { id: userId },
-					data: {
-						roles: {
-							connect: { name: RoleName.HACKER },
-						},
-					},
-				});
-			}
-
 			const filename = generateS3Filename(hacker.id, `${hacker.firstName}_${hacker.lastName}_Resume`, "pdf");
 			const presignedUrl = await generatePresignedPutUrl(filename, "resumes");
 

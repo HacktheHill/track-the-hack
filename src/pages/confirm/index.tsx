@@ -220,7 +220,7 @@ const Confirm: NextPage = () => {
 								<button
 									type="button"
 									onClick={handleEdit}
-									className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
+									className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
 								>
 									{t("undo-edit-response")}
 								</button>
@@ -265,7 +265,7 @@ const Confirm: NextPage = () => {
 										type="button"
 										disabled={teamName.length < 3}
 										onClick={handleCreateTeam}
-										className="rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-light-quaternary-color short:text-base"
+										className="rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-medium-primary-color short:text-base"
 									>
 										{t("create-team")}
 									</button>
@@ -317,7 +317,7 @@ const Confirm: NextPage = () => {
 										<button
 											type="button"
 											onClick={handleClearSignature}
-											className="absolute bottom-2 right-2 rounded-lg border border-dark-primary-color bg-light-quaternary-color px-2 py-1 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
+											className="absolute bottom-2 right-2 rounded-lg border border-dark-primary-color bg-medium-primary-color px-2 py-1 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
 										>
 											{t("clear")}
 										</button>
@@ -330,7 +330,7 @@ const Confirm: NextPage = () => {
 
 							<button
 								type="submit"
-								className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
+								className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
 							>
 								{t("ill-be-there")}
 							</button>

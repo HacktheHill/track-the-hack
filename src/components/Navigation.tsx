@@ -37,16 +37,20 @@ const Links = ({ bottom }: LinkProps) => {
 	// Fetch acceptance status to decide when to show QR even if HACKER role not yet granted
 	const { data: acceptanceStatus } = trpc.users.acceptanceStatus.useQuery(undefined, { enabled: !!sessionData });
 
-	const isOrganizer = sessionData?.user?.roles.includes(RoleName.ORGANIZER);
 	const hasApplied = !!sessionData?.user?.hackerId; // application submitted
 	const isAccepted = acceptanceStatus === AcceptanceStatus.ACCEPTED;
 
 	return (
 		<>
 			<LinkItem href="/" bottom={bottom} text={t("home")} src="/assets/home.svg" alt={t("home")} />
-			{(isOrganizer || (isAccepted && hasApplied)) && (
+			{/* QR link shown to ORGANIZERs OR accepted applicants who have applied */}
+			<Filter
+				silent
+				method="function"
+				value={(roles) => roles.includes(RoleName.ORGANIZER) || (isAccepted && hasApplied)}
+			>
 				<LinkItem href="/qr" bottom={bottom} text={t("qr")} src="/assets/qr.svg" alt={t("qr")} />
-			)}
+			</Filter>
 			<LinkItem
 				href="/schedule"
 				bottom={bottom}
@@ -92,7 +96,7 @@ const Links = ({ bottom }: LinkProps) => {
 				</Filter>
 			)}
 			{/* Show profile link if user has applied (hackerId), even if not yet accepted */}
-			{hasApplied && (
+			<Filter silent method="function" value={(roles) => hasApplied && roles.length >= 0}>
 				<LinkItem
 					href={`/hacker?id=${sessionData?.user?.hackerId ?? ""}`}
 					bottom={bottom}
@@ -100,7 +104,7 @@ const Links = ({ bottom }: LinkProps) => {
 					src="/assets/profile.svg"
 					alt={t("profile")}
 				/>
-			)}
+			</Filter>
 		</>
 	);
 };
@@ -132,7 +136,7 @@ const Navbar = ({ integrated }: NavbarProps) => {
 
 	return (
 		<nav
-			className={`sticky top-0 z-10 flex gap-4 whitespace-nowrap bg-light-quaternary-color p-4 ${
+			className={`sticky top-0 z-10 flex gap-4 whitespace-nowrap bg-medium-primary-color p-4 ${
 				integrated ? "" : "border-b border-dark-primary-color shadow-navbar"
 			}`}
 			aria-label={t("navigation")}
@@ -155,7 +159,7 @@ const Navbar = ({ integrated }: NavbarProps) => {
 			</div>
 
 			<select
-				className="hover:bg-light-quaternary ml-auto whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-light-secondary-color transition-colors sm:visible"
+				className="hover:bg-light-quaternary ml-auto whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-light-secondary-color transition-colors sm:visible"
 				onChange={handleLanguageChange}
 				value={locale ?? "en"}
 			>
@@ -168,7 +172,7 @@ const Navbar = ({ integrated }: NavbarProps) => {
 
 			{sessionData ? (
 				<button
-					className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-light-secondary-color transition-colors sm:visible"
+					className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-light-secondary-color transition-colors sm:visible"
 					onClick={() => void signOut()}
 				>
 					{t("sign-out")}
@@ -176,13 +180,13 @@ const Navbar = ({ integrated }: NavbarProps) => {
 			) : (
 				<>
 					<button
-						className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-light-secondary-color transition-colors sm:visible"
+						className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-light-secondary-color transition-colors sm:visible"
 						onClick={() => void signIn()}
 					>
 						{t("sign-in")}
 					</button>
 					<button
-						className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-light-secondary-color transition-colors sm:visible"
+						className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-light-secondary-color transition-colors sm:visible"
 						onClick={() => void router.push("/auth/sign-up")}
 					>
 						{t("sign-up")}
@@ -203,7 +207,7 @@ const BottomMenu = () => {
 
 	return (
 		<nav
-			className="z-10 flex w-full items-center justify-evenly gap-4 whitespace-nowrap bg-light-quaternary-color p-4 mobile:hidden xs:gap-8"
+			className="z-10 flex w-full items-center justify-evenly gap-4 whitespace-nowrap bg-medium-primary-color p-4 mobile:hidden xs:gap-8"
 			aria-label={t("bottom-navigation")}
 		>
 			<Links bottom />

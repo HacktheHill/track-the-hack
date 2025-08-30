@@ -69,3 +69,5 @@ Submit your project on **Devpost** to be considered for judging.
 
 - [Terms of Service](https://docs.google.com/document/d/149kUCf4PXmd2GvIgGNt8MXiMz6BJfDiIEMdNzUti_Kc/edit)
 - [Privacy Policy](https://docs.google.com/document/d/1hhsl6WrrZtDz_mbeW7wDBS70Ozrbe6-aL06vqIh2550/edit)
+
+> The original concept for this app was conceived by a caffeine-addicted visionary from a distant land.

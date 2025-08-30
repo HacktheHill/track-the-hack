@@ -60,7 +60,3 @@ body {
 :root {
 	color-scheme: light dark;
 }
-
-a, button {
-	color: #ffffff; /* light-secondary-color */
-}
