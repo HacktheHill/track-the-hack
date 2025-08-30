@@ -274,7 +274,7 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 							/>
 							<button
 								type="submit"
-								className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
+								className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
 							>
 								{t("submit")}
 							</button>
@@ -287,9 +287,11 @@ const Apply = ({ applicationQuestions }: ApplyProps) => {
 	);
 };
 
-export const getServerSideProps: GetServerSideProps = async ({ /* req, res, */ locale }) => {
-	// const session = await getServerSession(req, res, getAuthOptions(req));
+export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
 	return {
+		redirect: {
+			destination: "/",
+		},
 		props: {
 			...(await serverSideTranslations(locale ?? "en", ["apply", "zod", "navbar", "common"])),
 			applicationQuestions: getApplicationQuestions(

@@ -71,7 +71,7 @@ const Page = ({ page, formData, index, isLastPage, setStep, errors, validatePage
 			ref={pageRef}
 			className="m-auto flex min-h-[calc(100dvh-140px)] w-full transform opacity-0 transition-opacity duration-1000 ease-in-out mobile:min-h-[calc(100dvh-75px)]"
 		>
-			<div className="m-auto flex w-full flex-col gap-4 rounded border-dark-primary-color p-4 mobile:w-2/3 mobile:gap-8 mobile:border mobile:bg-light-quaternary-color/50 mobile:p-8">
+			<div className="m-auto flex w-full flex-col gap-4 rounded border-dark-primary-color p-4 mobile:w-2/3 mobile:gap-8 mobile:border mobile:bg-medium-primary-color/50 mobile:p-8">
 				<h3 className="text-center font-rubik text-4xl font-bold text-dark-primary-color">
 					{t(`${page.name}.title`)}
 				</h3>

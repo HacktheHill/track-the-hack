@@ -28,16 +28,6 @@ export async function qrRedirect(session: Session | null, callbackUrl: string) {
 		return; // no redirect
 	}
 
-	// If user does not yet have HACKER role but their application is accepted, allow access
-	const hacker = await prisma.hacker.findFirst({
-		where: { userId: user.id },
-		select: { acceptanceStatus: true },
-	});
-
-	if (hacker?.acceptanceStatus === AcceptanceStatus.ACCEPTED) {
-		return; // accepted hacker can access QR page even before role assignment
-	}
-
 	return {
 		destination: "/",
 		permanent: false,

@@ -12,6 +12,11 @@ type QRCodeProps = {
 	setError: (message: string) => void;
 };
 
+// features:
+// Sync with server rotation: calculates msToNextMinute and triggers a one-shot refetch exactly at the next minute boundary, matching how the server generates timestamped tokens.
+// No full reload: only refetches the encryptedId, keeping the page and camera stable.
+// Works with the 60s refetchInterval: after that first aligned tick, the built-in interval keeps it updated; the guard (isFetching || data) avoids double scheduling if the query is already active.
+
 const QRCode = ({ id, setError }: QRCodeProps) => {
 	const { t } = useTranslation("qr");
 
@@ -26,6 +31,7 @@ const QRCode = ({ id, setError }: QRCodeProps) => {
 	const effectiveId = encryptedIdQuery.data ?? id;
 
 	useEffect(() => {
+		// cancelled ensures setState runs only when it is safe: can be a problem otherwise if moving to page mid-reload
 		let cancelled = false;
 		async function generateQRCode(currentId: string) {
 			if (!currentId) return;

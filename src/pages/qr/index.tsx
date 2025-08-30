@@ -128,7 +128,7 @@ const QR = ({ encryptedId }: { encryptedId: string }) => {
 			if (hackerId === "") return;
 
 			if (selectedAction.current === DEFAULT_ACTION) {
-				void router.push(`/hacker?id=${hackerId}`);
+				void router.push(`/hackers/hacker?id=${hackerId}`);
 			} else {
 				try {
 					const hacker = await utils.hackers.get.fetch({ id: hackerId });
@@ -166,7 +166,7 @@ const QR = ({ encryptedId }: { encryptedId: string }) => {
 				<Filter value={[RoleName.ORGANIZER]} method="some">
 					<>
 						<select
-							className="p-3 text-center text-lg font-bold text-light-secondary-color bg-light-quaternary-color rounded-lg"
+							className="p-3 text-center text-lg font-bold text-light-secondary-color bg-medium-primary-color rounded-lg"
 							onChange={e => {
 								selectedAction.current = e.target.value;
 								prevHackerId.current = "";
@@ -277,13 +277,13 @@ const RepeatedVisitor = ({ hacker, presence, maxCheckIns, incrementFn }: Repeate
 			{!maxCheckIns || maxCheckIns > presence.value ? (
 				<div className="flex w-full justify-center gap-16">
 					<button
-						className="z-10 w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
+						className="z-10 w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
 						onClick={() => void handleIncrement(-1)}
 					>
 						—
 					</button>
 					<button
-						className="z-10 w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
+						className="z-10 w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
 						onClick={() => void handleIncrement(1)}
 					>
 						+

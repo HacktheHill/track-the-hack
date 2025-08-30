@@ -34,7 +34,7 @@ export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
 	// Redirect to the hacker profile page
 	return {
 		redirect: {
-			destination: `/hacker?id=${session?.user?.hackerId}`,
+			destination: `/hackers/hacker?id=${session?.user?.hackerId}`,
 			permanent: false,
 		},
 	};
