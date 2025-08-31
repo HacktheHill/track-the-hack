@@ -6,9 +6,11 @@ import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import type { StaticImageData } from "next/image";
 import Image from "next/image";
 import { useRouter } from "next/router";
+import { useEffect, useMemo, useState } from "react";
 import App from "../components/App";
 import { trpc } from "../server/api/api";
 import { AcceptanceStatus, RoleName } from "@prisma/client";
+import { env } from "../env/client.mjs";
 
 import buildingSVG from "../../public/assets/hero/building.svg";
 import hackSVG from "../../public/assets/hero/hack.svg";
@@ -36,6 +38,23 @@ const Home: NextPage = () => {
 	const { data: acceptanceStatus } = trpc.users.acceptanceStatus.useQuery(undefined, { enabled: !!sessionData });
 	const hasApplied = !!sessionData?.user?.hackerId;
 	const isOrganizer = sessionData?.user?.roles.includes(RoleName.ORGANIZER);
+
+	// Countdown state for applications open date
+	const openAtStr = env.NEXT_PUBLIC_APPLICATIONS_OPEN_AT;
+	const openAt = useMemo(() => (openAtStr ? new Date(openAtStr) : null), [openAtStr]);
+	const [now, setNow] = useState<Date>(new Date());
+	useEffect(() => {
+		if (!openAt) return;
+		const id = setInterval(() => setNow(new Date()), 1000);
+		return () => clearInterval(id);
+	}, [openAt]);
+	const isOpen = !openAt || now >= openAt;
+	const remainingMs = openAt ? Math.max(0, openAt.getTime() - now.getTime()) : 0;
+	const totalSeconds = Math.floor(remainingMs / 1000);
+	const days = Math.floor(totalSeconds / 86400);
+	const hours = Math.floor((totalSeconds % 86400) / 3600);
+	const minutes = Math.floor((totalSeconds % 3600) / 60);
+	const seconds = totalSeconds % 60;
 
 	return (
 		<App className="items-left relative flex flex-col justify-center gap-2 bg-default-gradient px-8 py-6 short:gap-8">
@@ -125,13 +144,28 @@ const Home: NextPage = () => {
 						{t("pending-admission")}
 					</span>
 				</div>
-			) : (
+			) : isOpen ? (
 				<button
 					className="z-10 w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-light-secondary-color transition-colors hover:bg-light-tertiary-color mobile:px-8 mobile:py-4 mobile:text-4xl"
 					onClick={() => void router.push("/apply")}
 				>
 					{t("apply")}
 				</button>
+			) : (
+				<div className="z-10 flex flex-col items-start gap-2">
+					<p className="font-coolvetica text-xl text-light-secondary-color mobile:text-3xl">
+						{t("applications-open-in", { defaultValue: "Applications open in" })}
+					</p>
+					<div
+						className="flex gap-5 font-coolvetica text-5xl mobile:text-7xl text-light-tertiary-color-2 font-bold filter drop-shadow-[0_0_30px_rgba(255,255,255,0.25)]"
+						style={{ textShadow: "0 3px 10px rgba(0,0,0,0.5)" }}
+					>
+						<span>{String(days).padStart(2, "0")}d</span>
+						<span>{String(hours).padStart(2, "0")}h</span>
+						<span>{String(minutes).padStart(2, "0")}m</span>
+						<span>{String(seconds).padStart(2, "0")}s</span>
+					</div>
+				</div>
 			)}
 		</App>
 	);

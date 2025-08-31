@@ -76,6 +76,8 @@ export const serverEnv = {
  * To expose them to the client, prefix them with `NEXT_PUBLIC_`.
  */
 export const clientSchema = z.object({
+	// Public date-time (ISO string) when applications open. Example: "2025-09-15T17:00:00Z"
+	NEXT_PUBLIC_APPLICATIONS_OPEN_AT: z.string().optional(),
 });
 
 /**
@@ -85,4 +87,5 @@ export const clientSchema = z.object({
  * @type {{ [k in keyof z.infer<typeof clientSchema>]: z.infer<typeof clientSchema>[k] | undefined }}
  */
 export const clientEnv = {
+	NEXT_PUBLIC_APPLICATIONS_OPEN_AT: process.env.NEXT_PUBLIC_APPLICATIONS_OPEN_AT,
 };
