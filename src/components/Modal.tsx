@@ -32,7 +32,7 @@ const Modal = ({ children, buttons }: ModalProps) => {
 							{buttons.map((button, index) => (
 								<button
 									key={index}
-									className={`whitespace-nowrap rounded-lg border border-dark-primary-color px-4 py-2 text-dark-primary-color transition-colors hover:bg-light-tertiary-color ${
+									className={`whitespace-nowrap rounded-lg border border-dark-primary-color px-4 py-2 text-light-color transition-colors hover:bg-light-tertiary-color ${
 										button.className || ""
 									}`}
 									onClick={button.onClick}

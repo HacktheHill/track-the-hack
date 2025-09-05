@@ -180,7 +180,7 @@ const SignUp = ({ providers }: InferGetServerSidePropsType<typeof getServerSideP
 										<img
 											src={`https://authjs.dev/img/providers/${provider.id}.svg`}
 											alt={provider.name}
-											className="h-8 w-auto brightness-0"
+											className="h-8 w-auto brightness-1"
 										/>
 									</>
 								)}
@@ -205,7 +205,7 @@ const SignUp = ({ providers }: InferGetServerSidePropsType<typeof getServerSideP
 							},
 						]}
 					>
-						<h3 className="text-dark-color">{t("sign-up-confirmation")}</h3>
+						<h3 className="text-light-colour">{t("sign-up-confirmation")}</h3>
 						{loading && <Loading />}
 					</Modal>
 				)}
