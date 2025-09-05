@@ -381,7 +381,9 @@ const HackerPage: NextPage<{
 										type="file"
 										accept="application/pdf"
 										onChange={e => {
-											handleInputChange("resume", e.target.value);
+											const file = e.currentTarget.files?.[0] ?? null;
+											// Store a placeholder to trigger edit state; actual file is read from the form on submit
+											handleInputChange("resume", file ? file.name : "");
 										}}
 									/>
 								)}
