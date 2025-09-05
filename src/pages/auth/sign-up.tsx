@@ -125,7 +125,7 @@ const SignUp = ({ providers }: InferGetServerSidePropsType<typeof getServerSideP
 						height={192}
 						priority
 					/>
-					<h1 className="font-coolvetica text-[clamp(1rem,3.5vmin,5rem)] font-normal text-dark-color">
+					<h1 className="font-coolvetica text-[clamp(1rem,3.5vmin,5rem)] font-normal text-light-color">
 						{t("sign-up")}
 					</h1>
 				</div>
@@ -172,7 +172,7 @@ const SignUp = ({ providers }: InferGetServerSidePropsType<typeof getServerSideP
 							)}
 							<button
 								type="submit"
-								className="flex w-full justify-center gap-4 whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-lg text-dark-primary-color transition-all duration-500 hover:bg-light-tertiary-color hover:shadow-lg"
+								className="flex w-full justify-center gap-4 whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-lg text-light-color transition-all duration-500 hover:bg-light-tertiary-color hover:shadow-lg"
 							>
 								{provider.id !== "email" && provider.id !== "credentials" && (
 									<>
