@@ -50,6 +50,7 @@ const SignUp = ({ providers }: InferGetServerSidePropsType<typeof getServerSideP
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [showConfirmation, setShowConfirmation] = useState(false);
+	const [showEmailField, setShowEmailField] = useState(false);
 
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>, providerId: string) => {
 		e.preventDefault();
@@ -113,20 +114,25 @@ const SignUp = ({ providers }: InferGetServerSidePropsType<typeof getServerSideP
 		return <Error message={t("no-auth-providers")} />;
 	}
 
+	// Reordered providers similar to sign-in: third-party first, then credentials, then email
+	const providerList = Object.values(providers);
+	const credentialsProvider = providerList.find(p => p.id === "credentials");
+	const emailProvider = providerList.find(p => p.id === "email");
+	const otherProviders = providerList.filter(p => p.id !== "credentials" && p.id !== "email");
+
 	return (
 		<>
 			<Head title={t("sign-up")} />
 			<main className="flex h-screen flex-col items-center justify-center gap-4 bg-default-gradient bg-no-repeat p-4 text-center supports-[height:100cqh]:h-[100cqh] supports-[height:100svh]:h-[100svh]">
 				<div className="flex flex-col items-center">
 					<Image
-						src="https://hackthehill.com/Logos/hackthehill-logo.svg"
+						src="/assets/hackthehill-logo.svg"
 						alt={t("common:hack-the-hill-logo-alt")}
-						width={128}
-						height={128}
-						className="h-auto w-auto"
+						width={192}
+						height={192}
 						priority
 					/>
-					<h1 className="font-coolvetica text-[clamp(1rem,3.5vmin,5rem)] font-normal text-dark-color">
+					<h1 className="font-coolvetica text-[clamp(1rem,3.5vmin,5rem)] font-normal text-light-color">
 						{t("sign-up")}
 					</h1>
 				</div>
@@ -138,59 +144,102 @@ const SignUp = ({ providers }: InferGetServerSidePropsType<typeof getServerSideP
 							})}
 						</p>
 					)}
-					{Object.values(providers).map(provider => (
+
+					{/* Third-party connections at the top */}
+					{otherProviders.map(provider => (
 						<form
 							key={provider.id}
 							className="flex flex-wrap gap-4 mobile:flex-nowrap"
-							onSubmit={e => void handleSubmit(e, provider.id)}
+							onSubmit={e => {
+								e.preventDefault();
+								void handleSubmit(e as unknown as React.FormEvent<HTMLFormElement>, provider.id);
+							}}
 						>
-							{provider.id === "email" && (
+							<button
+								type="submit"
+								className="flex w-full justify-center gap-4 whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-lg text-light-color transition-all duration-500 hover:bg-light-tertiary-color hover:shadow-lg"
+							>
+								{/* eslint-disable-next-line @next/next/no-img-element */}
+								<img
+									src={`https://authjs.dev/img/providers/${provider.id}.svg`}
+									alt={provider.name}
+									className="brightness-1 h-8 w-auto"
+								/>
+								{provider.name}
+							</button>
+						</form>
+					))}
+
+					{/* Credentials sign-up */}
+					{credentialsProvider && (
+						<form
+							key={credentialsProvider.id}
+							className="flex flex-col gap-4"
+							onSubmit={e => void handleSubmit(e, credentialsProvider.id)}
+						>
+							<input
+								type="email"
+								name="email"
+								placeholder={t("email-address")}
+								required
+								className="hover:bg-light-color-secondary w-full rounded-lg border border-dark-primary-color bg-light-color px-4 py-2 font-rubik text-lg text-dark-primary-color shadow-md transition-all duration-500 placeholder:text-medium-primary-color hover:shadow-lg"
+							/>
+							<input
+								type="password"
+								name="password"
+								placeholder={t("password")}
+								required
+								className="hover:bg-light-color-secondary w-full rounded-lg border border-dark-primary-color bg-light-color px-4 py-2 font-rubik text-lg text-dark-primary-color shadow-md transition-all duration-500 placeholder:text-medium-primary-color hover:shadow-lg"
+							/>
+							<div className="flex items-center justify-between">
+								<div className="flex w-full justify-between gap-4">
+									<button
+										type="submit"
+										className="flex-1 justify-center gap-4 whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-lg text-light-color transition-all duration-500 hover:bg-light-tertiary-color hover:shadow-lg"
+									>
+										{t("credentials-sign-up")}
+									</button>
+
+									<button
+										type="button"
+										onClick={() => setShowEmailField(true)}
+										className="text-light-color-secondary text-sm hover:underline"
+									>
+										Passwordless
+									</button>
+								</div>
+							</div>
+						</form>
+					)}
+
+					{/* Email magic-link sign-up below credentials; input hidden until reveal is clicked */}
+					{emailProvider && (
+						<form
+							key={emailProvider.id}
+							className="flex items-center gap-4"
+							onSubmit={e => void handleSubmit(e, emailProvider.id)}
+						>
+							{showEmailField && (
 								<input
 									type="email"
 									name="email"
 									placeholder={t("email-address")}
 									required
-									className="w-full rounded-lg border border-dark-primary-color bg-light-primary-color px-4 py-2 font-rubik text-lg text-light-color shadow-md transition-all duration-500 placeholder:text-light-quaternary-color hover:bg-light-primary-color/75 hover:shadow-lg"
+									className="hover:bg-light-color-secondary flex-1 rounded-lg border border-dark-primary-color bg-light-color px-4 py-2 font-rubik text-lg text-dark-primary-color shadow-md transition-all duration-500 placeholder:text-medium-primary-color hover:shadow-lg"
 								/>
 							)}
-							{provider.id === "credentials" && (
-								<>
-									<input
-										type="email"
-										name="email"
-										placeholder={t("email-address")}
-										required
-										className="w-full rounded-lg border border-dark-primary-color bg-light-primary-color px-4 py-2 font-rubik text-lg text-light-color shadow-md transition-all duration-500 placeholder:text-light-quaternary-color hover:bg-light-primary-color/75 hover:shadow-lg"
-									/>
-									<input
-										type="password"
-										name="password"
-										placeholder={t("password")}
-										required
-										className="w-full rounded-lg border border-dark-primary-color bg-light-primary-color px-4 py-2 font-rubik text-lg text-light-color shadow-md transition-all duration-500 placeholder:text-light-quaternary-color hover:bg-light-primary-color/75 hover:shadow-lg"
-									/>
-								</>
+							{showEmailField && (
+								<button
+									type="submit"
+									disabled={!showEmailField}
+									className="ml-auto flex justify-center gap-4 whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-lg text-light-color transition-all duration-500 hover:bg-light-tertiary-color hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
+								>
+									{t("email-sign-up")}
+								</button>
 							)}
-							<button
-								type="submit"
-								className="flex w-full justify-center gap-4 whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-lg text-dark-primary-color transition-all duration-500 hover:bg-light-tertiary-color hover:shadow-lg"
-							>
-								{provider.id !== "email" && provider.id !== "credentials" && (
-									<>
-										{/* eslint-disable-next-line @next/next/no-img-element */}
-										<img
-											src={`https://authjs.dev/img/providers/${provider.id}.svg`}
-											alt={provider.name}
-											className="h-8 w-auto brightness-0"
-										/>
-									</>
-								)}
-								{provider.id === "email" && t("email-sign-up")}
-								{provider.id === "credentials" && t("credentials-sign-up")}
-								{provider.id !== "email" && provider.id !== "credentials" && provider.name}
-							</button>
 						</form>
-					))}
+					)}
+
 					{error && <Error message={error} />}
 				</div>
 				{showConfirmation && (
@@ -206,7 +255,7 @@ const SignUp = ({ providers }: InferGetServerSidePropsType<typeof getServerSideP
 							},
 						]}
 					>
-						<h3 className="text-dark-color">{t("sign-up-confirmation")}</h3>
+						<h3 className="text-light-colour">{t("sign-up-confirmation")}</h3>
 						{loading && <Loading />}
 					</Modal>
 				)}

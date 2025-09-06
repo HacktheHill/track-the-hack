@@ -1,5 +1,10 @@
 {
-	"description": "Sept 27 – 29, 2024 in Ottawa, Canada",
+	"description": "November 14 - 16, 2025 in Ottawa, Canada",
 	"get-started": "Get Started",
-	"apply": "Apply now!"
+	"apply": "Apply now!",
+	"profile": "Profile",
+	"qr": "QR",
+	"waitlisted": "Waitlisted",
+	"rejected": "Rejected",
+	"pending-admission": "Pending admission"
 }

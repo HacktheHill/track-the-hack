@@ -28,7 +28,7 @@ const FormPage = ({ children, onSubmit, error, invalid, loading, title }: FormPa
 					>
 						<div className="m-auto flex flex-col items-center">
 							<Image
-								src="https://hackthehill.com/Logos/hackthehill-logo.svg"
+								src="/assets/hackthehill-logo.svg"
 								alt={t("hack-the-hill-logo-alt")}
 								width={128}
 								height={128}

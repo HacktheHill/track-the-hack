@@ -66,7 +66,7 @@ const Discord: NextPage = () => {
 					</h3>
 					{validationMessage && <p className="text-red-500">{validationMessage}</p>}
 					<button
-						className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
+						className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
 						onClick={() => void signIn()}
 					>
 						{t("sign-in")}
@@ -80,7 +80,7 @@ const Discord: NextPage = () => {
 					{validationMessage && <p className="text-red-500">{validationMessage}</p>}
 					<button
 						type="submit"
-						className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
+						className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
 					>
 						{t("verify")}
 					</button>

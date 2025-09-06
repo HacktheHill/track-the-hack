@@ -1,15 +1,13 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-	content: [
-		"./src/**/*.{js,ts,jsx,tsx}",
-		"./node_modules/@tremor/**/*.{js,ts,jsx,tsx}",
-	],
+	content: ["./src/**/*.{js,ts,jsx,tsx}", "./node_modules/@tremor/**/*.{js,ts,jsx,tsx}"],
 	theme: {
 		current: "currentColor",
 		extend: {
 			backgroundImage: {
-				"default-gradient": "linear-gradient(#C7734F, #EA8A60, #EE9E6F, #F6BC83)",
-				"medium-gradient": "linear-gradient(#f8cc8d, #dd484d)",
+				// Updated to purple / neon gradient
+				"default-gradient": "linear-gradient(#6D4998, #7500FF)",
+				"medium-gradient": "linear-gradient(#482C69, #7500FF)",
 			},
 			screens: {
 				mobile: "900px",
@@ -18,16 +16,18 @@ module.exports = {
 			},
 			colors: {
 				"light-color": "white",
-				"dark-color": "black",
-				"light-secondary-color": "#fff3b6",
-				"medium-secondary-color": "#f8cc8d",
-				"dark-secondary-color": "#f6bf70",
-				"light-tertiary-color": "#ea885f",
+				"light-color-secondary": "#dddddd",
+				"light-tertiary-color-2": "#ffb5f9",
+				"light-tertiary-color": "#000000",
 				"light-primary-color": "#dd484d",
-				"medium-primary-color": "#c11f25",
-				"dark-primary-color": "#84010b",
-				"highlight-color": "#650014",
-				"light-quaternary-color": "#F5C18C",
+				"light-secondary-highlight": "#deacff",
+				"light-grey-color": "#9d96a5",
+				"medium-secondary-color": "#f8cc8d",
+				"medium-primary-color": "#320369",
+				"dark-color": "black",
+				"dark-secondary-color": "#f6bf70",
+				"dark-primary-color": "#000000",
+				"highlight-color": "#7500FF",
 			},
 			content: {
 				check: `url(data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20512%20512%22%3E%3Cpath%20d%3D%22M470.6%20105.4c12.5%2012.5%2012.5%2032.8%200%2045.3l-256%20256c-12.5%2012.5-32.8%2012.5-45.3%200l-128-128c-12.5-12.5-12.5-32.8%200-45.3s32.8-12.5%2045.3%200L192%20338.7%20425.4%20105.4c12.5-12.5%2032.8-12.5%2045.3%200z%22%2F%3E%3C%2Fsvg%3E)`,
@@ -72,5 +72,5 @@ module.exports = {
 			},
 		},
 	},
-	plugins: []
+	plugins: [],
 };

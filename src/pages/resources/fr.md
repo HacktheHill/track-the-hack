@@ -1,6 +1,6 @@
-# Ressources pour Hack the Hill II
+# Ressources pour Hack The Hill III
 
-Bienvenue à Hack the Hill II ! Ici, vous trouverez des ressources essentielles pour vous aider à mener à bien votre projet ainsi que des informations importantes sur le hackathon. Bon hack !
+Bienvenue à Hack The Hill III ! Ici, vous trouverez des ressources essentielles pour vous aider à mener à bien votre projet ainsi que des informations importantes sur le hackathon. Bon hack !
 
 [Livret Hacker](https://drive.google.com/file/d/1pXXV3SX8MKX23KIFO08_8BMc4GFNPfWx/view)
 
@@ -11,7 +11,7 @@ Bienvenue à Hack the Hill II ! Ici, vous trouverez des ressources essentielles 
 Restez connecté avec nous sur ces plateformes pour recevoir des mises à jour, poser des questions et partager votre expérience !
 
 - **Discord** : [Rejoignez Discord](https://discord.gg/Hkn8PCk8uR)
-- **Devpost** : [Hack the Hill II Devpost](https://hackthehill-ii.devpost.com/)
+- **Devpost** : [Hack The Hill III Devpost](https://hackthehill-ii.devpost.com/)
 - **Instagram** : [Suivez-nous sur Instagram](https://www.instagram.com/hackthehill/)
 - **X (Twitter)** : [Suivez-nous sur X](https://x.com/hackthehill_)
 - **LinkedIn** : [Connectez-vous sur LinkedIn](https://linkedin.com/company/hackthehill)
@@ -21,7 +21,7 @@ Restez connecté avec nous sur ces plateformes pour recevoir des mises à jour, 
 
 Besoin d'aide ? Contactez-nous par email ou visitez notre bureau d'assistance sur place :
 
-- **Email** : [info@ctn-rtc.org](mailto:info@ctn-rtc.org)
+- **Email** : [info@hackthehill.com](mailto:info@hackthehill.com)
 - **Emplacement du bureau d’assistance** : CRX C223
 - **En cas d'urgence** : Services de protection de l'uOttawa : (613) 562-5411, ou composez le 911 si vous êtes hors campus.
 - **Signalement d'incidents** : Pour signaler un incident lié à l'événement qui ne nécessite pas de réponse immédiate, créez un ticket sur Discord ou utilisez [ce formulaire](https://docs.google.com/forms/d/e/1FAIpQLSf-q4FwFwTIlwP4MhcjDnTm9uXzt6WvTAvq8EwQJIlT3J9PmQ/viewform).
@@ -30,7 +30,7 @@ Besoin d'aide ? Contactez-nous par email ou visitez notre bureau d'assistance su
 
 Voici les documents et politiques importants que vous devriez consulter pendant le hackathon :
 
-- **Règlement du hackathon** : [Consultez les règles de Hack the Hill II](https://docs.google.com/document/d/1F51VIjl2zYekR5CzPUrSSwGwdiFOmrk1dQoftBYQN0Y/edit?usp=sharing)
+- **Règlement du hackathon** : [Consultez les règles de Hack The Hill III](https://docs.google.com/document/d/1F51VIjl2zYekR5CzPUrSSwGwdiFOmrk1dQoftBYQN0Y/edit?usp=sharing)
 - **Code de conduite** : [Lire le Code de Conduite](https://docs.google.com/document/d/1thE_Ia595Cz9YaD8gTbyZ3gnZiBSgkLgl0wwGSANczc/edit?usp=sharing)
 - **Politique de remboursement de voyage** : [Politique de remboursement](https://docs.google.com/document/d/1MejSNJ-8YAfW_ENU6bRZVji4k_gsXD1pDRkhX1Bkx5A/edit?usp=sharing)
 - **Guide d'urgence de l'uOttawa** : [Guide d'urgence (français)](https://www.uottawa.ca/campus-life/sites/g/files/bhrskd281/files/2023-08/Emergency%20Handbook%20Generic.pdf)

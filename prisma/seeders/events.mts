@@ -1,6 +1,6 @@
 import { EventType } from "@prisma/client";
 
-const day1 = "2024-09-27";
+const day1 = "2025-09-27";
 
 const events = [
 	{
@@ -19,8 +19,8 @@ const events = [
 		name: "Opening Ceremony",
 		nameFr: "Cérémonie d'ouverture",
 		type: EventType.ALL,
-		description: "Welcome to the Hack the Hill III event! We're excited to have you here.",
-		descriptionFr: "Bienvenue à l'événement Hack the Hill III! Nous sommes ravis de vous avoir ici.",
+		description: "Welcome to the Hack The Hill III event! We're excited to have you here.",
+		descriptionFr: "Bienvenue à l'événement Hack The Hill III! Nous sommes ravis de vous avoir ici.",
 		room: "Room 2",
 		maxCheckIns: 1,
 	},

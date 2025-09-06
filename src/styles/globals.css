@@ -53,4 +53,10 @@ body {
 		"Droid Sans", "Helvetica Neue", sans-serif;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
+	color: #ffffff; /* light-color */
+	background: linear-gradient(#795e99, #7500FF);
+}
+
+:root {
+	color-scheme: light dark;
 }

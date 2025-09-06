@@ -37,7 +37,7 @@ const validatePDFContent = (file: File) => {
 
 		reader.onload = () => {
 			const content = reader.result as string;
-			if (content.startsWith("%PDF-")) {
+			if (content.includes("%PDF-")) {
 				resolve(true);
 			} else {
 				resolve(false);

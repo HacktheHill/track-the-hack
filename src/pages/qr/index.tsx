@@ -38,6 +38,7 @@ const QR = ({ encryptedId }: { encryptedId: string }) => {
 	const [error, setError] = useState("");
 	const [menuOptions, setMenuOptions] = useState<string[]>([]);
 	const [display, setDisplay] = useState(<></>);
+	const [force, setForce] = useState(0);
 
 	const { data: events } = trpc.events.all.useQuery();
 	const { mutateAsync: presenceUpsertMutateAsync } = trpc.presence.upsert.useMutation();
@@ -56,10 +57,11 @@ const QR = ({ encryptedId }: { encryptedId: string }) => {
 		setMenuOptions([DEFAULT_ACTION, ...validEvents]);
 	}, [events]);
 
-	// Reload page to re-render a new QRScanner
+	// Replace language change full page reload with local state trigger to re-render
 	useEffect(() => {
 		const handleLanguageChange = () => {
-			window.location.reload();
+			// trigger local rerender instead of full reload
+			setForce(f => f + 1);
 		};
 
 		i18n.on("languageChanged", handleLanguageChange);
@@ -158,12 +160,13 @@ const QR = ({ encryptedId }: { encryptedId: string }) => {
 		<App
 			className="relative flex h-full flex-col items-center justify-center gap-16 bg-default-gradient"
 			title={t("title")}
+			key={force}
 		>
 			<div className="flex flex-col items-center gap-6">
 				<Filter value={[RoleName.ORGANIZER]} method="some">
 					<>
 						<select
-							className="p-3 text-center text-lg font-bold text-dark-color"
+							className="p-3 text-center text-lg font-bold text-light-color bg-medium-primary-color rounded-lg"
 							onChange={e => {
 								selectedAction.current = e.target.value;
 								prevHackerId.current = "";
@@ -182,7 +185,7 @@ const QR = ({ encryptedId }: { encryptedId: string }) => {
 						<QRScanner onScan={onScan} setError={setError} />
 						<PhysicalScanner onScan={onScan} />
 						{!error && (
-							<p className="z-10 max-w-xl text-center text-lg font-bold text-dark-color">
+							<p className="z-10 max-w-xl text-center text-lg font-bold text-light-color">
 								{t("scan-qr")}
 							</p>
 						)}
@@ -192,7 +195,7 @@ const QR = ({ encryptedId }: { encryptedId: string }) => {
 							<>
 								<QRCode setError={setError} id={encryptedId} />
 								{!error && (
-									<p className="z-10 max-w-xl text-center text-lg font-bold text-dark-color">
+									<p className="z-10 max-w-xl text-center text-lg font-bold text-light-color">
 										{t("use-qr")}
 									</p>
 								)}
@@ -274,13 +277,13 @@ const RepeatedVisitor = ({ hacker, presence, maxCheckIns, incrementFn }: Repeate
 			{!maxCheckIns || maxCheckIns > presence.value ? (
 				<div className="flex w-full justify-center gap-16">
 					<button
-						className="z-10 w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
+						className="z-10 w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
 						onClick={() => void handleIncrement(-1)}
 					>
 						—
 					</button>
 					<button
-						className="z-10 w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
+						className="z-10 w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
 						onClick={() => void handleIncrement(1)}
 					>
 						+

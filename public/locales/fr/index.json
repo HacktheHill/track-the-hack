@@ -1,5 +1,10 @@
 {
-	"description": "27 – 29 septembre 2024 à Ottawa, Canada",
+	"description": "14 - 16 novembre 2024 à Ottawa, Canada",
 	"get-started": "Commencez",
-	"apply": "Postulez maintenant!"
+	"apply": "Postulez maintenant!",
+	"profile": "Profil",
+	"qr": "QR",
+	"waitlisted": "En liste d'attente",
+	"rejected": "Rejeté",
+	"pending-admission": "En attente d'admission"
 }

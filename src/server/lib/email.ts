@@ -73,11 +73,12 @@ const sendApplyEmail = async ({ email, name, locale }: { email: string; name: st
 							>
 								<tr>
 									<td>
-										<img
-											src="https://i.imgur.com/QfJlO1J.png"
-											alt="Hack the Hill II"
-											style="width: 100%; height: 100%; object-fit: cover; object-position: center;"
-										/>
+										//TODO CHANGE THE LINK HERE
+										// <img
+										// 	src="https://i.imgur.com/QfJlO1J.png"
+										// 	alt="Hack The Hill III"
+										// 	style="width: 100%; height: 100%; object-fit: cover; object-position: center;"
+										// />
 									</td>
 								</tr>
 								<tr>

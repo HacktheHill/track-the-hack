@@ -112,7 +112,7 @@ const Hackers: NextPage = () => {
 			title={t("title")}
 			onScroll={handleScroll}
 		>
-			<div className="border-b border-dark-color bg-light-quaternary-color px-4 pb-4 pt-2 shadow-navbar sm:px-10">
+			<div className="border-b border-dark-color bg-medium-primary-color px-4 pb-4 pt-2 shadow-navbar sm:px-10">
 				<div className="flex">
 					<button
 						className="border-dark m-1 mr-3 rounded-xl bg-medium-primary-color px-6 text-sm text-light-color"
@@ -328,7 +328,7 @@ const FilterOptions = ({ filters, setFilters, filterOptions, sidebarVisible }: F
 		<>
 			{sidebarVisible && (
 				<div className="border-dark text-dark flex flex-col">
-					<div className="m-4 w-60 rounded-lg border-dark-color bg-light-quaternary-color p-4 text-center">
+					<div className="m-4 w-60 rounded-lg border-dark-color bg-medium-primary-color p-4 text-center">
 						<ul className="flex flex-col gap-4">
 							{renderFilterSection(filterOptions.educationLevels, "educationLevels")}
 							{renderFilterSection(
