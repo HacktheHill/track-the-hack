@@ -108,7 +108,7 @@ const TeamCreation = ({ hacker }: { hacker: HackerData }) => {
 				) : (
 					<button
 					//TODO might want to replace bg-light-tertiary-color with bg-light-primary-color/40
-						className="flex items-center justify-center gap-2 rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-sm text-light-secondary-colors transition-colors hover:bg-light-tertiary-color"
+						className="flex items-center justify-center gap-2 rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-sm text-light-colors transition-colors hover:bg-light-tertiary-color"
 						onClick={e => {
 							e.preventDefault();
 							void createTeamHandler();

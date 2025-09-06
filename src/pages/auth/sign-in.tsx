@@ -5,6 +5,7 @@ import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Image from "next/image";
 import { useRouter } from "next/router";
+import { useState } from "react";
 
 import Error from "../../components/Error";
 import Head from "../../components/Head";
@@ -41,10 +42,17 @@ const SignIn = ({ providers }: InferGetServerSidePropsType<typeof getServerSideP
 	const router = useRouter();
 	const [callbackUrl] = [router.query.callbackUrl].flat();
 	const [error] = [router.query.error].flat();
+	const [showEmailField, setShowEmailField] = useState(false);
 
 	if (!providers) {
 		return <Error message={t("no-auth-providers")} />;
 	}
+
+	// Determine providers and custom order
+	const providerList = Object.values(providers);
+	const credentialsProvider = providerList.find(p => p.id === "credentials");
+	const emailProvider = providerList.find(p => p.id === "email");
+	const otherProviders = providerList.filter(p => p.id !== "credentials" && p.id !== "email");
 
 	return (
 		<>
@@ -63,76 +71,113 @@ const SignIn = ({ providers }: InferGetServerSidePropsType<typeof getServerSideP
 					</h1>
 				</div>
 				<div className="flex w-full max-w-md flex-col gap-4">
-					{Object.values(providers).map(provider => (
+					{/* 3rd party auth */}
+					{otherProviders.map(provider => (
 						<form
 							key={provider.id}
 							className="flex flex-wrap gap-4 mobile:flex-nowrap"
 							onSubmit={e => {
 								e.preventDefault();
-								const formData = new FormData(e.target as HTMLFormElement);
-								if (provider.id === "email") {
-									void signIn(provider.id, {
-										email: formData.get("email"),
-										redirectTo: callbackUrl,
-									});
-								} else if (provider.id === "credentials") {
-									void signIn(provider.id, {
-										email: formData.get("email") as string,
-										password: formData.get("password") as string,
-										redirectTo: callbackUrl,
-									});
-								} else {
-									void signIn(provider.id, { callbackUrl });
-								}
+								void signIn(provider.id, { callbackUrl });
 							}}
 						>
-							{provider.id === "email" && (
+							<button
+								type="submit"
+								className="flex w-full justify-center gap-4 whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-lg text-light-color transition-all duration-500 hover:bg-light-tertiary-color hover:shadow-lg"
+							>
+								{/* eslint-disable-next-line @next/next/no-img-element */}
+								<img
+									src={`https://authjs.dev/img/providers/${provider.id}.svg`}
+									alt={provider.name}
+									className="h-8 w-auto brightness-1"
+								/>
+								{provider.name}
+							</button>
+						</form>
+					))}
+					
+					{/* Credentials sign-in */}
+					{credentialsProvider && (
+						<form
+							key={credentialsProvider.id}
+							className="flex flex-col gap-4"
+							onSubmit={e => {
+								e.preventDefault();
+								const formData = new FormData(e.target as HTMLFormElement);
+								void signIn(credentialsProvider.id, {
+									email: formData.get("email") as string,
+									password: formData.get("password") as string,
+									redirectTo: callbackUrl,
+								});
+							}}
+						>
+							<input
+								type="email"
+								name="email"
+								placeholder={t("email-address")}
+								required
+								className="w-full rounded-lg border border-dark-primary-color bg-light-color px-4 py-2 font-rubik text-lg text-dark-primary-color shadow-md transition-all duration-500 placeholder:text-medium-primary-color hover:bg-light-color-secondary hover:shadow-lg"
+							/>
+							<input
+								type="password"
+								name="password"
+								placeholder={t("password")}
+								required
+								className="w-full rounded-lg border border-dark-primary-color bg-light-color px-4 py-2 font-rubik text-lg text-dark-primary-color shadow-md transition-all duration-500 placeholder:text-medium-primary-color hover:bg-light-color-secondary hover:shadow-lg"
+							/>
+							<div className="flex items-center justify-between">
+								<button
+									type="submit"
+									className="flex w-full justify-center gap-4 whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-lg text-light-color transition-all duration-500 hover:bg-light-tertiary-color hover:shadow-lg"
+								>
+									{t("credentials-sign-in")}
+								</button>
+								<button
+									type="button"
+									onClick={() => setShowEmailField(true)}
+									className="text-light-color-secondary text-sm hover:underline"
+								>
+									Forgot password?
+								</button>
+							</div>
+						</form>
+					)}
+
+					{/* Email magic-link sign-in below credentials; input hidden until Forgot Password is clicked */}
+					{emailProvider && (
+						<form
+							key={emailProvider.id}
+							className="flex items-center gap-4"
+							onSubmit={e => {
+								e.preventDefault();
+								const formData = new FormData(e.target as HTMLFormElement);
+								void signIn(emailProvider.id, {
+									email: formData.get("email"),
+									redirectTo: callbackUrl,
+								});
+							}}
+						>
+							{showEmailField && (
 								<input
 									type="email"
 									name="email"
 									placeholder={t("email-address")}
 									required
-									className="w-full rounded-lg border border-dark-primary-color bg-light-primary-color px-4 py-2 font-rubik text-lg text-light-color shadow-md transition-all duration-500 placeholder:text-medium-primary-color hover:bg-light-primary-color/75 hover:shadow-lg"
+									className="w-full rounded-lg border border-dark-primary-color bg-light-color px-4 py-2 font-rubik text-lg text-dark-primary-color shadow-md transition-all duration-500 placeholder:text-medium-primary-color hover:bg-light-color-secondary hover:shadow-lg"
 								/>
 							)}
-							{provider.id === "credentials" && (
-								<>
-									<input
-										type="email"
-										name="email"
-										placeholder={t("email-address")}
-										required
-										className="w-full rounded-lg border border-dark-primary-color bg-light-primary-color px-4 py-2 font-rubik text-lg text-light-color shadow-md transition-all duration-500 placeholder:text-medium-primary-color hover:bg-light-primary-color/75 hover:shadow-lg"
-									/>
-									<input
-										type="password"
-										name="password"
-										placeholder={t("password")}
-										required
-										className="w-full rounded-lg border border-dark-primary-color bg-light-primary-color px-4 py-2 font-rubik text-lg text-light-color shadow-md transition-all duration-500 placeholder:text-medium-primary-color hover:bg-light-primary-color/75 hover:shadow-lg"
-									/>
-								</>
+							{showEmailField && (
+								<button
+									type="submit"
+									disabled={!showEmailField}
+									className="ml-auto flex justify-center gap-4 whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-lg text-light-color transition-all duration-500 hover:bg-light-tertiary-color hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
+								>
+									{t("email-sign-in")}
+								</button>
 							)}
-							<button
-								type="submit"
-								className="flex w-full justify-center gap-4 whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-lg text-light-color transition-all duration-500 hover:bg-light-tertiary-color hover:shadow-lg"
-							>
-								{provider.id !== "email" && provider.id !== "credentials" && (
-									<>
-										{/* eslint-disable-next-line @next/next/no-img-element */}
-										<img
-											src={`https://authjs.dev/img/providers/${provider.id}.svg`}
-											alt={provider.name}
-											className="h-8 w-auto brightness-1"
-										/>
-									</>
-								)}
-								{provider.id === "email" && t("email-sign-in")}
-								{provider.id === "credentials" && t("credentials-sign-in")}
-								{provider.id !== "email" && provider.id !== "credentials" && provider.name}
-							</button>
 						</form>
-					))}
+					)}
+					
 					{error && <Error message={t(`next-auth.${error}`)} />}
 				</div>
 			</main>

@@ -16,9 +16,9 @@ module.exports = {
 			},
 			colors: {
 				"light-color": "white",
-				"light-secondary-color": "#ffffff",
+				"light-color-secondary": "#dddddd",
 				"light-tertiary-color-2": "#ffb5f9",
-				"light-tertiary-color": "#ea885f",
+				"light-tertiary-color": "#000000",
 				"light-primary-color": "#dd484d",
 				"light-secondary-highlight": "#deacff",
 				"light-grey-color": "#9d96a5",

@@ -402,7 +402,7 @@ const HackerPage: NextPage<{
 													href={value}
 													target="_blank"
 													rel="noreferrer"
-													className="flex items-center justify-center gap-2 rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-sm text-light-secondary-color transition-colors hover:bg-light-tertiary-color"
+													className="flex items-center justify-center gap-2 rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-sm text-light-color transition-colors hover:bg-light-tertiary-color"
 												>
 													{t(`links.${key}`)}
 												</a>

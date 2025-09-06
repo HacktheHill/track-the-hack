@@ -166,7 +166,7 @@ const QR = ({ encryptedId }: { encryptedId: string }) => {
 				<Filter value={[RoleName.ORGANIZER]} method="some">
 					<>
 						<select
-							className="p-3 text-center text-lg font-bold text-light-secondary-color bg-medium-primary-color rounded-lg"
+							className="p-3 text-center text-lg font-bold text-light-color bg-medium-primary-color rounded-lg"
 							onChange={e => {
 								selectedAction.current = e.target.value;
 								prevHackerId.current = "";
@@ -185,7 +185,7 @@ const QR = ({ encryptedId }: { encryptedId: string }) => {
 						<QRScanner onScan={onScan} setError={setError} />
 						<PhysicalScanner onScan={onScan} />
 						{!error && (
-							<p className="z-10 max-w-xl text-center text-lg font-bold text-light-secondary-color">
+							<p className="z-10 max-w-xl text-center text-lg font-bold text-light-color">
 								{t("scan-qr")}
 							</p>
 						)}
@@ -195,7 +195,7 @@ const QR = ({ encryptedId }: { encryptedId: string }) => {
 							<>
 								<QRCode setError={setError} id={encryptedId} />
 								{!error && (
-									<p className="z-10 max-w-xl text-center text-lg font-bold text-light-secondary-color">
+									<p className="z-10 max-w-xl text-center text-lg font-bold text-light-color">
 										{t("use-qr")}
 									</p>
 								)}

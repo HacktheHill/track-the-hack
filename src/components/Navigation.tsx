@@ -20,7 +20,7 @@ const LinkItem = ({ href, bottom, text, src, alt }: LinkItemProps) => (
 	<Link
 		href={href}
 		className={
-			bottom ? "" : "hover:text-light mx-4 flex items-center font-coolvetica text-2xl text-light-secondary-color"
+			bottom ? "" : "hover:text-light mx-4 flex items-center font-coolvetica text-2xl text-light-color"
 		}
 	>
 		{bottom ? <Image priority src={src} height={32} width={32} alt={alt} /> : text}
@@ -47,32 +47,51 @@ const Links = ({ bottom }: LinkProps) => {
 			<Filter
 				silent
 				method="function"
-				value={(roles) => roles.includes(RoleName.ORGANIZER) || (isAccepted && hasApplied)}
+				value={roles => roles.includes(RoleName.ORGANIZER) || (isAccepted && hasApplied)}
 			>
 				<LinkItem href="/qr" bottom={bottom} text={t("qr")} src="/assets/qr.svg" alt={t("qr")} />
 			</Filter>
-			<LinkItem
-				href="/schedule"
-				bottom={bottom}
-				text={t("schedule")}
-				src="/assets/schedule.svg"
-				alt={t("schedule")}
-			/>
-			<LinkItem href="/maps" bottom={bottom} text={t("maps")} src="/assets/maps.svg" alt={t("maps")} />
-			<LinkItem
-				href="/resources"
-				bottom={bottom}
-				text={t("resources")}
-				src="/assets/resources.svg"
-				alt="Resources"
-			/>
-			<LinkItem
-				href="/sponsors"
-				bottom={bottom}
-				text={t("sponsors")}
-				src="/assets/sponsors.svg"
-				alt={t("sponsors")}
-			/>
+
+			{/* Schedule: visible to admin currently till finalised */}
+			{sessionData?.user && (
+				<Filter value={[RoleName.ADMIN]} method="some" silent>
+					<LinkItem
+						href="/schedule"
+						bottom={bottom}
+						text={t("schedule")}
+						src="/assets/schedule.svg"
+						alt={t("schedule")}
+					/>
+				</Filter>
+			)}
+
+			<Filter value={[RoleName.ADMIN]} method="some" silent>
+				<LinkItem href="/maps" bottom={bottom} text={t("maps")} src="/assets/maps.svg" alt={t("maps")} />
+			</Filter>
+
+			<Filter value={[RoleName.ADMIN]} method="some" silent>
+				<LinkItem
+					href="/resources"
+					bottom={bottom}
+					text={t("resources")}
+					src="/assets/resources.svg"
+					alt="Resources"
+				/>
+			</Filter>
+
+			{/* Sponsors: visible to admin currently till finalised */}
+			{sessionData?.user && (
+				<Filter value={[RoleName.ADMIN]} method="some" silent>
+					<LinkItem
+						href="/sponsors"
+						bottom={bottom}
+						text={t("sponsors")}
+						src="/assets/sponsors.svg"
+						alt={t("sponsors")}
+					/>
+				</Filter>
+			)}
+
 			{sessionData?.user && (
 				<Filter value={[RoleName.MAYOR, RoleName.PREMIER, RoleName.ORGANIZER]} silent method="some">
 					<LinkItem
@@ -96,7 +115,7 @@ const Links = ({ bottom }: LinkProps) => {
 				</Filter>
 			)}
 			{/* Show profile link if user has applied (hackerId), even if not yet accepted */}
-			<Filter silent method="function" value={(roles) => hasApplied && roles.length >= 0}>
+			<Filter silent method="function" value={roles => hasApplied && roles.length >= 0}>
 				<LinkItem
 					href={`/hacker?id=${sessionData?.user?.hackerId ?? ""}`}
 					bottom={bottom}
@@ -159,7 +178,7 @@ const Navbar = ({ integrated }: NavbarProps) => {
 			</div>
 
 			<select
-				className="hover:bg-light-quaternary ml-auto whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-light-secondary-color transition-colors sm:visible"
+				className="hover:bg-light-quaternary ml-auto whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-light-color transition-colors sm:visible"
 				onChange={handleLanguageChange}
 				value={locale ?? "en"}
 			>
@@ -172,7 +191,7 @@ const Navbar = ({ integrated }: NavbarProps) => {
 
 			{sessionData ? (
 				<button
-					className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-light-secondary-color transition-colors sm:visible"
+					className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-light-color transition-colors sm:visible"
 					onClick={() => void signOut()}
 				>
 					{t("sign-out")}
@@ -180,13 +199,13 @@ const Navbar = ({ integrated }: NavbarProps) => {
 			) : (
 				<>
 					<button
-						className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-light-secondary-color transition-colors sm:visible"
+						className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-light-color transition-colors sm:visible"
 						onClick={() => void signIn()}
 					>
 						{t("sign-in")}
 					</button>
 					<button
-						className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-light-secondary-color transition-colors sm:visible"
+						className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-light-color transition-colors sm:visible"
 						onClick={() => void router.push("/auth/sign-up")}
 					>
 						{t("sign-up")}

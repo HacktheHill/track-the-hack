@@ -59,7 +59,7 @@ const Home: NextPage = () => {
 	return (
 		<App className="items-left relative flex flex-col justify-center gap-2 bg-default-gradient px-8 py-6 short:gap-8">
 			<Image priority src={stars} alt="Leaves" className="absolute inset-0 top-auto w-full" />
-			<h2 className="z-10 w-1/2 font-coolvetica text-lg text-light-secondary-color sm:text-4xl lg:min-w-full">
+			<h2 className="z-10 w-1/2 font-coolvetica text-lg text-light-color sm:text-4xl lg:min-w-full">
 				{t("description")}
 			</h2>
 			<Image priority src={stars} alt="Leaves" className="absolute inset-0 top-0 w-full" />
@@ -76,7 +76,7 @@ const Home: NextPage = () => {
 			</h1>
 			{!sessionData ? (
 				<button
-					className="z-10 w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-light-secondary-color transition-colors hover:bg-light-tertiary-color mobile:px-8 mobile:py-4 mobile:text-4xl"
+					className="z-10 w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-light-color transition-colors hover:bg-light-tertiary-color mobile:px-8 mobile:py-4 mobile:text-4xl"
 					onClick={() => void router.push("/auth/sign-up")}
 				>
 					{t("get-started")}
@@ -146,14 +146,14 @@ const Home: NextPage = () => {
 				</div>
 			) : isOpen ? (
 				<button
-					className="z-10 w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-light-secondary-color transition-colors hover:bg-light-tertiary-color mobile:px-8 mobile:py-4 mobile:text-4xl"
+					className="z-10 w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-medium-primary-color px-4 py-2 font-coolvetica text-light-color transition-colors hover:bg-light-tertiary-color mobile:px-8 mobile:py-4 mobile:text-4xl"
 					onClick={() => void router.push("/apply")}
 				>
 					{t("apply")}
 				</button>
 			) : (
 				<div className="z-10 flex flex-col items-start gap-2">
-					<p className="font-coolvetica text-xl text-light-secondary-color mobile:text-3xl">
+					<p className="font-coolvetica text-xl text-light-color mobile:text-3xl">
 						{t("applications-open-in", { defaultValue: "Applications open in" })}
 					</p>
 					<div
