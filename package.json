@@ -29,7 +29,7 @@
 		"next-auth": "^4.24.13",
 		"next-i18next": "^15.1.1",
 		"next-pwa": "^5.6.0",
-		"nodemailer": "^7.0.11",
+		"nodemailer": "^8.0.4",
 		"qr-scanner": "^1.4.2",
 		"qrcode": "^1.5.3",
 		"raw-loader": "^4.0.2",
