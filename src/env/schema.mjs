@@ -32,7 +32,7 @@ export const serverSchema = z.object({
 	SPONSORSHIP_GOOGLE_REFRESH_TOKEN: z.string(),
 	S3_URL: z.string().url(),
 	S3_AUTH_KEY: z.string(),
-	DISCORD_BOT_SECRET_KEY: z.string(),
+	INTERNAL_API_SECRET: z.string().min(32),
 	DISCORD_BOT_URL: z.string().url(),
 	QR_SECRET_KEY: z.string(),
 	WALK_IN_SECRET_KEY: z.string(),
@@ -64,7 +64,9 @@ export const serverEnv = {
 	SPONSORSHIP_GOOGLE_REFRESH_TOKEN: process.env.SPONSORSHIP_GOOGLE_REFRESH_TOKEN,
 	S3_URL: process.env.S3_URL,
 	S3_AUTH_KEY: process.env.S3_AUTH_KEY,
-	DISCORD_BOT_SECRET_KEY: process.env.DISCORD_BOT_SECRET_KEY,
+	// The fallback keeps existing build environments working during the rollout;
+	// requests are always sent with HMAC and the legacy value can be removed after cutover.
+	INTERNAL_API_SECRET: process.env.INTERNAL_API_SECRET ?? process.env.DISCORD_BOT_SECRET_KEY,
 	DISCORD_BOT_URL: process.env.DISCORD_BOT_URL,
 	QR_SECRET_KEY: process.env.QR_SECRET_KEY,
 	WALK_IN_SECRET_KEY: process.env.WALK_IN_SECRET_KEY,
