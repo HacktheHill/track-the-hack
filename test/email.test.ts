@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import type { SESv2Client } from "@aws-sdk/client-sesv2";
+import type { Transporter } from "nodemailer";
+import type SMTPTransport from "nodemailer/lib/smtp-transport";
 import { renderApplicationEmail } from "../src/server/lib/email-content";
-import { sendApplicationEmail } from "../src/server/lib/ses-email";
+import { sendApplicationEmail } from "../src/server/lib/smtp-email";
 
 test("renders localized HTML and text while escaping the applicant name", async () => {
 	const english = await renderApplicationEmail({ name: '<script>alert("x")</script>', locale: "en" });
@@ -20,13 +21,13 @@ test("renders localized HTML and text while escaping the applicant name", async 
 
 test("uses the approved sender, reply-to, configuration set, HTML, and text", async () => {
 	let input: Record<string, unknown> | undefined;
-	const client = {
-		send: async (command: { input: Record<string, unknown> }) => {
-			input = command.input;
-			return { MessageId: "message-id" };
+	const transport = {
+		sendMail: async (message: Record<string, unknown>) => {
+			input = message;
+			return { messageId: "message-id" };
 		},
-	} as unknown as Pick<SESv2Client, "send">;
-	const result = await sendApplicationEmail(client, {
+	} as unknown as Pick<Transporter<SMTPTransport.SentMessageInfo>, "sendMail">;
+	const result = await sendApplicationEmail(transport, {
 		subject: "Subject",
 		html: "<p>Hello</p>",
 		text: "Hello",
@@ -38,16 +39,16 @@ test("uses the approved sender, reply-to, configuration set, HTML, and text", as
 		configurationSet: "my-first-configuration-set",
 	});
 	assert.equal(result, "message-id");
-	assert.equal(input?.FromEmailAddress, "Hack the Hill <info@hackthehill.com>");
-	assert.deepEqual(input?.ReplyToAddresses, ["info@hackthehill.com"]);
-	assert.equal(input?.ConfigurationSetName, "my-first-configuration-set");
+	assert.deepEqual(input?.from, { name: "Hack the Hill", address: "info@hackthehill.com" });
+	assert.equal(input?.replyTo, "info@hackthehill.com");
+	assert.deepEqual(input?.headers, { "X-SES-CONFIGURATION-SET": "my-first-configuration-set" });
 });
 
-test("propagates SES failures and rejects empty content", async () => {
-	const client = {
-		send: async () => { throw new Error("SES unavailable"); },
-	} as unknown as Pick<SESv2Client, "send">;
-	await assert.rejects(sendApplicationEmail(client, {
+test("propagates SMTP failures and rejects empty content", async () => {
+	const transport = {
+		sendMail: async () => { throw new Error("SMTP unavailable"); },
+	} as unknown as Pick<Transporter<SMTPTransport.SentMessageInfo>, "sendMail">;
+	await assert.rejects(sendApplicationEmail(transport, {
 		subject: "Subject", html: "<p>Hello</p>", text: "Hello",
 	}, {
 		to: "person@example.com",
@@ -55,8 +56,8 @@ test("propagates SES failures and rejects empty content", async () => {
 		fromName: "Hack the Hill",
 		replyTo: "info@hackthehill.com",
 		configurationSet: "my-first-configuration-set",
-	}), /SES unavailable/);
-	await assert.rejects(sendApplicationEmail(client, {
+	}), /SMTP unavailable/);
+	await assert.rejects(sendApplicationEmail(transport, {
 		subject: "Subject", html: "", text: "",
 	}, {
 		to: "person@example.com",

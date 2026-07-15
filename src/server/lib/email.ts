@@ -1,14 +1,19 @@
 import type { Locale } from "@prisma/client";
-import { SESv2Client } from "@aws-sdk/client-sesv2";
-import { NodeHttpHandler } from "@smithy/node-http-handler";
+import nodemailer from "nodemailer";
 import { env } from "../../env/server.mjs";
 import { renderApplicationEmail } from "./email-content";
-import { sendApplicationEmail } from "./ses-email";
+import { sendApplicationEmail } from "./smtp-email";
 
-const ses = new SESv2Client({
-	region: env.AWS_REGION,
-	maxAttempts: 2,
-	requestHandler: new NodeHttpHandler({ connectionTimeout: 10_000, requestTimeout: 15_000 }),
+const mailer = nodemailer.createTransport({
+	host: env.EMAIL_SERVER_HOST,
+	port: env.EMAIL_SERVER_PORT,
+	secure: env.EMAIL_SERVER_PORT === 465,
+	auth: {
+		user: env.EMAIL_SERVER_USER,
+		pass: env.EMAIL_SERVER_PASSWORD,
+	},
+	connectionTimeout: 10_000,
+	socketTimeout: 15_000,
 });
 
 export async function sendApplyEmail({
@@ -21,11 +26,11 @@ export async function sendApplyEmail({
 	locale: Locale;
 }): Promise<void> {
 	const message = await renderApplicationEmail({ name, locale: locale.toLowerCase() === "fr" ? "fr" : "en" });
-	await sendApplicationEmail(ses, message, {
+	await sendApplicationEmail(mailer, message, {
 		to: email,
-		from: "info@hackthehill.com",
+		from: env.EMAIL_FROM,
 		fromName: "Hack the Hill",
-		replyTo: "info@hackthehill.com",
+		replyTo: env.EMAIL_FROM,
 		configurationSet: env.SES_CONFIGURATION_SET,
 	});
 }
