@@ -46,10 +46,10 @@ else
     --image "$bootstrap_image" \
     --cpu 0.5 \
     --memory 1Gi \
-    --user-assigned "$MIGRATOR_IDENTITY_ID" \
+    --mi-user-assigned "$MIGRATOR_IDENTITY_ID" \
     --registry-server "$AZURE_ACR_LOGIN_SERVER" \
     --registry-identity "$MIGRATOR_IDENTITY_ID" \
-    --secrets "database-url=keyvaultref:https://${MIGRATOR_VAULT_NAME}.vault.azure.net/secrets/database-url,identityref:${MIGRATOR_IDENTITY_ID}" \
+    --secrets "database-url=keyvaultref:https://${MIGRATOR_VAULT_NAME}.vault.azure.net/secrets/app-database-url,identityref:${MIGRATOR_IDENTITY_ID}" \
     --env-vars DATABASE_URL=secretref:database-url \
     --output none
 fi

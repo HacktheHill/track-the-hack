@@ -53,41 +53,7 @@ jobs:
         with:
           node-version: 24.x
           cache: npm
-      - run: npm ci
-      - run: npm run test:email
+      - run: npm ci --include=dev
       - run: npx tsc --noEmit
       - run: npm run build
 
-  legacy-deploy:
-    if: github.event_name != 'pull_request' && vars.AZURE_MIGRATION_ACTIVE != 'true'
-    needs: test
-    runs-on: self-hosted
-    timeout-minutes: 20
-    environment: Production
-    steps:
-      - name: Checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - name: Use Node.js 24.x
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version: 24.x
-          cache: npm
-      - name: Install dependencies
-        run: npm ci --prefer-offline --no-audit
-      - name: Create .env file
-        run: node ./.github/workflows/create-env.mjs "$SECRETS" "$VARS"
-        env:
-          SECRETS: ${{ toJson(secrets) }}
-          VARS: ${{ toJson(vars) }}
-      - name: Test application email
-        run: npm run test:email
-      - name: Build
-        run: npm run build
-      - name: Deploy to production directory
-        run: rsync -avz --delete --exclude='.git' ./ /home/azure/track-the-hack/
-      - name: Update the database schema
-        working-directory: /home/azure/track-the-hack
-        run: npx prisma migrate deploy
-      - name: Restart the application with PM2
-        working-directory: /home/azure/track-the-hack
-        run: pm2 reload track-the-hack --update-env

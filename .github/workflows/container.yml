@@ -39,7 +39,7 @@ jobs:
           cache-from: type=gha
 
   deploy:
-    if: github.event_name != 'pull_request' && vars.AZURE_MIGRATION_ACTIVE == 'true'
+    if: github.event_name != 'pull_request'
     needs: validate-images
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -74,35 +74,42 @@ jobs:
           push: true
           tags: ${{ vars.AZURE_ACR_LOGIN_SERVER }}/track-the-hack-migrate:${{ github.sha }}
           cache-from: type=gha
-      - uses: azure/cli@d4515bc8e518874d3c814bf5c307a1cb08ec9b35 # v2
-        with:
-          inlineScript: |
-            set -euo pipefail
-            migration_image="${{ vars.AZURE_ACR_LOGIN_SERVER }}/track-the-hack-migrate:${{ github.sha }}"
-            az containerapp job update \
-              --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
+      - name: Run migration and deploy
+        shell: bash
+        env:
+          AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+          AZURE_ACR_LOGIN_SERVER: ${{ vars.AZURE_ACR_LOGIN_SERVER }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          # Use built-in containerapp commands instead of the preview extension
+          # which sends unsupported imageType in PUT bodies.
+          az extension remove -n containerapp 2>/dev/null || true
+
+          migration_image="${AZURE_ACR_LOGIN_SERVER}/track-the-hack-migrate:${GITHUB_SHA}"
+          az containerapp job update \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --name track-the-hack-migrate \
+            --image "$migration_image"
+          execution="$(az containerapp job start \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --name track-the-hack-migrate \
+            --query name --output tsv)"
+          for attempt in $(seq 1 60); do
+            status="$(az containerapp job execution show \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
               --name track-the-hack-migrate \
-              --image "$migration_image"
-            execution="$(az containerapp job start \
-              --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
-              --name track-the-hack-migrate \
-              --query name --output tsv)"
-            for attempt in $(seq 1 60); do
-              status="$(az containerapp job execution show \
-                --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
-                --name track-the-hack-migrate \
-                --job-execution-name "$execution" \
-                --query properties.status --output tsv)"
-              case "$status" in
-                Succeeded) break ;;
-                Failed) exit 1 ;;
-              esac
-              sleep 5
-            done
-            test "$status" = Succeeded
-            az containerapp update \
-              --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
-              --name track-the-hack \
-              --image "${{ vars.AZURE_ACR_LOGIN_SERVER }}/track-the-hack:${{ github.sha }}"
-            AZURE_RESOURCE_GROUP="${{ vars.AZURE_RESOURCE_GROUP }}" \
-              ./infra/configure-health-probes.sh
+              --job-execution-name "$execution" \
+              --query properties.status --output tsv)"
+            case "$status" in
+              Succeeded) break ;;
+              Failed) exit 1 ;;
+            esac
+            sleep 5
+          done
+          test "$status" = Succeeded
+          az containerapp update \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --name track-the-hack \
+            --image "${AZURE_ACR_LOGIN_SERVER}/track-the-hack:${GITHUB_SHA}"
+          ./infra/configure-health-probes.sh
