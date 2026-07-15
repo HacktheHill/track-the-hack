@@ -96,21 +96,30 @@ jobs:
           GITHUB_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
+          retry_az() {
+            local attempt
+            for attempt in $(seq 1 12); do
+              if "$@"; then return 0; fi
+              if [[ "$attempt" -eq 12 ]]; then return 1; fi
+              echo "Azure operation failed during a concurrent control-plane update; retrying ($attempt/12)" >&2
+              sleep 10
+            done
+          }
           # Use built-in containerapp commands instead of the preview extension
           # which sends unsupported imageType in PUT bodies.
           az extension remove -n containerapp 2>/dev/null || true
 
           migration_image="${AZURE_ACR_LOGIN_SERVER}/track-the-hack-migrate:${GITHUB_SHA}"
-          az containerapp job update \
+          retry_az az containerapp job update \
             --resource-group "$AZURE_RESOURCE_GROUP" \
             --name track-the-hack-migrate \
             --image "$migration_image"
-          execution="$(az containerapp job start \
+          execution="$(retry_az az containerapp job start \
             --resource-group "$AZURE_RESOURCE_GROUP" \
             --name track-the-hack-migrate \
             --query name --output tsv)"
           for attempt in $(seq 1 60); do
-            status="$(az containerapp job execution show \
+            status="$(retry_az az containerapp job execution show \
               --resource-group "$AZURE_RESOURCE_GROUP" \
               --name track-the-hack-migrate \
               --job-execution-name "$execution" \
@@ -122,15 +131,15 @@ jobs:
             sleep 5
           done
           test "$status" = Succeeded
-          az containerapp update \
+          retry_az az containerapp update \
             --resource-group "$AZURE_RESOURCE_GROUP" \
             --name track-the-hack \
             --image "${AZURE_ACR_LOGIN_SERVER}/track-the-hack:${GITHUB_SHA}"
-          az containerapp ingress traffic set \
+          retry_az az containerapp ingress traffic set \
             --resource-group "$AZURE_RESOURCE_GROUP" \
             --name track-the-hack \
             --revision-weight latest=100
-          az containerapp update \
+          retry_az az containerapp update \
             --resource-group "$AZURE_RESOURCE_GROUP" \
             --name track-the-hack-prisma \
             --image "${AZURE_ACR_LOGIN_SERVER}/track-the-hack-prisma:${GITHUB_SHA}"
