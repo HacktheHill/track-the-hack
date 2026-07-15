@@ -1,5 +1,3 @@
-import type { OAuth2Client } from "google-auth-library";
-import type { ImpersonatedJWTInput, JWTInput } from "google-auth-library/build/src/auth/credentials";
 import type { gmail_v1 } from "googleapis";
 import { google } from "googleapis";
 import type { AttachmentOptions } from "mimetext";
@@ -11,14 +9,13 @@ import { env } from "../../env/server.mjs";
  *
  * @return {OAuth2Client} Credentials
  */
-const loadCredentials = (): OAuth2Client => {
-	const credentials = {
-		type: "authorized_user",
-		client_id: env.SPONSORSHIP_GOOGLE_CLIENT_ID,
-		client_secret: env.SPONSORSHIP_GOOGLE_CLIENT_SECRET,
-		refresh_token: env.SPONSORSHIP_GOOGLE_REFRESH_TOKEN,
-	} as JWTInput | ImpersonatedJWTInput;
-	return google.auth.fromJSON(credentials) as OAuth2Client;
+const loadCredentials = () => {
+	const client = new google.auth.OAuth2(
+		env.SPONSORSHIP_GOOGLE_CLIENT_ID,
+		env.SPONSORSHIP_GOOGLE_CLIENT_SECRET,
+	);
+	client.setCredentials({ refresh_token: env.SPONSORSHIP_GOOGLE_REFRESH_TOKEN });
+	return client;
 };
 
 /**
