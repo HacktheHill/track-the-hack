@@ -1,50 +1,92 @@
-name: Track the Hack CI/CD
+name: Track the Hack CI
 
 on:
-    push:
-        branches: ["main"]
-    workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
-    contents: read
+  contents: read
+
+concurrency:
+  group: track-the-hack-ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-    build-and-deploy:
-        runs-on: self-hosted
-        timeout-minutes: 20
-        environment: Production
-        steps:
-            - name: Checkout
-              uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SKIP_ENV_VALIDATION: '1'
+      DATABASE_URL: mysql://build:build@127.0.0.1:3306/build
+      NODE_ENV: production
+      NEXTAUTH_SECRET: build-only-secret
+      NEXTAUTH_URL: https://build.invalid
+      DISCORD_CLIENT_ID: build
+      DISCORD_CLIENT_SECRET: build
+      GITHUB_CLIENT_ID: build
+      GITHUB_CLIENT_SECRET: build
+      GOOGLE_CLIENT_ID: build
+      GOOGLE_CLIENT_SECRET: build
+      EMAIL_SERVER_HOST: build.invalid
+      EMAIL_SERVER_PORT: '587'
+      EMAIL_SERVER_USER: build
+      EMAIL_SERVER_PASSWORD: build
+      EMAIL_FROM: build@invalid.example
+      AWS_REGION: ca-central-1
+      SES_CONFIGURATION_SET: build-configuration-set
+      SPONSORSHIP_GOOGLE_CLIENT_ID: build
+      SPONSORSHIP_GOOGLE_CLIENT_SECRET: build
+      SPONSORSHIP_GOOGLE_REFRESH_TOKEN: build
+      S3_URL: https://build.invalid
+      S3_AUTH_KEY: build
+      DISCORD_BOT_SECRET_KEY: build-only-discord-secret-with-at-least-32-characters
+      DISCORD_BOT_URL: https://build.invalid
+      QR_SECRET_KEY: build
+      WALK_IN_SECRET_KEY: build
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 20.x
+          cache: npm
+      - run: npm ci
+      - run: npm run test:email
+      - run: npx tsc --noEmit
+      - run: npm run build
 
-            - name: Use Node.js 20.x
-              uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-              with:
-                  node-version: 20.x
-                  cache: "npm"
-
-            - name: Install dependencies
-              run: npm ci --prefer-offline --no-audit
-
-            - name: Create .env file
-              run: node ./.github/workflows/create-env.mjs "$SECRETS" "$VARS"
-              env:
-                  SECRETS: ${{ toJson(secrets) }}
-                  VARS: ${{ toJson(vars) }}
-
-            - name: Test application email
-              run: npm run test:email
-
-            - name: Build
-              run: npm run build
-
-            - name: Deploy to production directory
-              run: rsync -avz --delete --exclude='.git' ./ /home/azure/track-the-hack/
-
-            - name: Update the database schema
-              working-directory: /home/azure/track-the-hack
-              run: npx prisma migrate deploy
-
-            - name: Restart the application with PM2
-              working-directory: /home/azure/track-the-hack
-              run: pm2 reload track-the-hack --update-env
+  legacy-deploy:
+    if: github.event_name != 'pull_request' && vars.AZURE_MIGRATION_ACTIVE != 'true'
+    needs: test
+    runs-on: self-hosted
+    timeout-minutes: 20
+    environment: Production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - name: Use Node.js 20.x
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 20.x
+          cache: npm
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+      - name: Create .env file
+        run: node ./.github/workflows/create-env.mjs "$SECRETS" "$VARS"
+        env:
+          SECRETS: ${{ toJson(secrets) }}
+          VARS: ${{ toJson(vars) }}
+      - name: Test application email
+        run: npm run test:email
+      - name: Build
+        run: npm run build
+      - name: Deploy to production directory
+        run: rsync -avz --delete --exclude='.git' ./ /home/azure/track-the-hack/
+      - name: Update the database schema
+        working-directory: /home/azure/track-the-hack
+        run: npx prisma migrate deploy
+      - name: Restart the application with PM2
+        working-directory: /home/azure/track-the-hack
+        run: pm2 reload track-the-hack --update-env

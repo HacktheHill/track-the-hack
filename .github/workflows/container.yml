@@ -1,0 +1,108 @@
+name: Build and deploy Track the Hack
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: track-the-hack-container-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  validate-images:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          target: runtime
+          push: false
+          tags: track-the-hack:test
+          secret-files: env=.github/workflows/build.env
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          target: migration
+          push: false
+          tags: track-the-hack-migrate:test
+          cache-from: type=gha
+
+  deploy:
+    if: github.event_name != 'pull_request' && vars.AZURE_MIGRATION_ACTIVE == 'true'
+    needs: validate-images
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: Production
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - uses: azure/login@1384c340ab2dda50fed2bee3041d1d87018aa5e8 # v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Log in to Azure Container Registry
+        env:
+          ACR_LOGIN_SERVER: ${{ vars.AZURE_ACR_LOGIN_SERVER }}
+        run: az acr login --name "${ACR_LOGIN_SERVER%%.*}"
+      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          target: runtime
+          push: true
+          tags: ${{ vars.AZURE_ACR_LOGIN_SERVER }}/track-the-hack:${{ github.sha }}
+          secret-files: env=.github/workflows/build.env
+          cache-from: type=gha
+      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          target: migration
+          push: true
+          tags: ${{ vars.AZURE_ACR_LOGIN_SERVER }}/track-the-hack-migrate:${{ github.sha }}
+          cache-from: type=gha
+      - uses: azure/cli@d4515bc8e518874d3c814bf5c307a1cb08ec9b35 # v2
+        with:
+          inlineScript: |
+            set -euo pipefail
+            migration_image="${{ vars.AZURE_ACR_LOGIN_SERVER }}/track-the-hack-migrate:${{ github.sha }}"
+            az containerapp job update \
+              --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
+              --name track-the-hack-migrate \
+              --image "$migration_image"
+            execution="$(az containerapp job start \
+              --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
+              --name track-the-hack-migrate \
+              --query name --output tsv)"
+            for attempt in $(seq 1 60); do
+              status="$(az containerapp job execution show \
+                --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
+                --name track-the-hack-migrate \
+                --job-execution-name "$execution" \
+                --query properties.status --output tsv)"
+              case "$status" in
+                Succeeded) break ;;
+                Failed) exit 1 ;;
+              esac
+              sleep 5
+            done
+            test "$status" = Succeeded
+            az containerapp update \
+              --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
+              --name track-the-hack \
+              --image "${{ vars.AZURE_ACR_LOGIN_SERVER }}/track-the-hack:${{ github.sha }}"
+            AZURE_RESOURCE_GROUP="${{ vars.AZURE_RESOURCE_GROUP }}" \
+              ./infra/configure-health-probes.sh
