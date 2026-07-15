@@ -1,6 +1,7 @@
 import { RoleName } from "@prisma/client";
 import argon2 from "argon2";
 import { z } from "zod";
+import { createHmac } from "node:crypto";
 import { env } from "../../../env/server.mjs";
 import { hasRoles } from "../../../utils/helpers";
 import { log } from "../../lib/log";
@@ -198,15 +199,19 @@ export const userRouter = createTRPCRouter({
 				throw new Error("You have not yet been accepted as a hacker");
 			}
 
+			const body = JSON.stringify({ discordId: input.discordId });
+			const timestamp = Math.floor(Date.now() / 1000).toString();
+			const signature = createHmac("sha256", env.DISCORD_BOT_SECRET_KEY)
+				.update(`${timestamp}.${body}`)
+				.digest("hex");
 			const response = await fetch(`${env.DISCORD_BOT_URL}/verify`, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
+					"x-track-the-hack-timestamp": timestamp,
+					"x-track-the-hack-signature": signature,
 				},
-				body: JSON.stringify({
-					discordId: input.discordId,
-					secretKey: env.DISCORD_BOT_SECRET_KEY,
-				}),
+				body,
 			});
 
 			if (!response.ok) {
