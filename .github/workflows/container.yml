@@ -19,9 +19,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
-      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+      - uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
           context: .
           target: runtime
@@ -30,7 +30,7 @@ jobs:
           secret-files: env=.github/workflows/build.env
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+      - uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
           context: .
           target: migration
@@ -39,7 +39,7 @@ jobs:
           cache-from: type=gha
 
   deploy:
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     needs: validate-images
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -48,8 +48,8 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
       - uses: azure/login@1384c340ab2dda50fed2bee3041d1d87018aa5e8 # v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
@@ -59,7 +59,7 @@ jobs:
         env:
           ACR_LOGIN_SERVER: ${{ vars.AZURE_ACR_LOGIN_SERVER }}
         run: az acr login --name "${ACR_LOGIN_SERVER%%.*}"
-      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+      - uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
           context: .
           target: runtime
@@ -67,7 +67,7 @@ jobs:
           tags: ${{ vars.AZURE_ACR_LOGIN_SERVER }}/track-the-hack:${{ github.sha }}
           secret-files: env=.github/workflows/build.env
           cache-from: type=gha
-      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+      - uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
           context: .
           target: migration
@@ -79,6 +79,8 @@ jobs:
         env:
           AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
           AZURE_ACR_LOGIN_SERVER: ${{ vars.AZURE_ACR_LOGIN_SERVER }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          SES_CONFIGURATION_SET: ${{ vars.SES_CONFIGURATION_SET }}
           GITHUB_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
@@ -108,8 +110,11 @@ jobs:
             sleep 5
           done
           test "$status" = Succeeded
+          test -n "$AWS_REGION"
+          test -n "$SES_CONFIGURATION_SET"
           az containerapp update \
             --resource-group "$AZURE_RESOURCE_GROUP" \
             --name track-the-hack \
-            --image "${AZURE_ACR_LOGIN_SERVER}/track-the-hack:${GITHUB_SHA}"
+            --image "${AZURE_ACR_LOGIN_SERVER}/track-the-hack:${GITHUB_SHA}" \
+            --set-env-vars "AWS_REGION=$AWS_REGION" "SES_CONFIGURATION_SET=$SES_CONFIGURATION_SET"
           ./infra/configure-health-probes.sh
