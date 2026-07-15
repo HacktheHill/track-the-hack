@@ -17,6 +17,15 @@ Track the Hack is a comprehensive event management solution designed to streamli
 3. Run `npx prisma db push` to push the database schema and create the tables.
 4. Run `npx prisma db seed` to seed the database.
 
+## Azure Container Apps deployment
+
+The `container.yml` workflow deploys only from `main` through the `Production`
+environment. Configure the environment variables `AZURE_RESOURCE_GROUP`,
+`AZURE_ACR_LOGIN_SERVER`, `AWS_REGION`, and `SES_CONFIGURATION_SET` in that
+GitHub environment. The workflow runs the migration job first, waits for a
+successful execution, and only then promotes the web image. AWS/SES settings
+are required at runtime because the server validates them during startup.
+
 ## Contributing
 
 We appreciate your interest, but please note that we currently do not accept external contributions.
