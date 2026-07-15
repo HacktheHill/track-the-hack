@@ -201,7 +201,7 @@ export const userRouter = createTRPCRouter({
 
 			const body = JSON.stringify({ discordId: input.discordId });
 			const timestamp = Math.floor(Date.now() / 1000).toString();
-			const signature = createHmac("sha256", env.DISCORD_BOT_SECRET_KEY)
+			const signature = createHmac("sha256", env.INTERNAL_API_SECRET)
 				.update(`${timestamp}.${body}`)
 				.digest("hex");
 			const response = await fetch(`${env.DISCORD_BOT_URL}/verify`, {

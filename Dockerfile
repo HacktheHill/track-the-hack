@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7
-FROM node:20-bookworm-slim AS studio
+FROM node:24-bookworm-slim AS studio
 WORKDIR /app
 ENV NODE_ENV=production
 RUN apt-get update \
@@ -8,6 +8,7 @@ RUN apt-get update \
 	&& groupadd --system --gid 1001 app \
 	&& useradd --system --uid 1001 --gid app --create-home app
 COPY package*.json ./
+COPY .npmrc ./
 COPY prisma ./prisma
 RUN npm ci --include=dev && npm cache clean --force
 USER app
@@ -15,7 +16,7 @@ EXPOSE 5555
 STOPSIGNAL SIGTERM
 CMD ["npx", "prisma", "studio", "--browser", "none", "--hostname", "0.0.0.0", "--port", "5555"]
 
-FROM node:20-bookworm-slim AS migration
+FROM node:24-bookworm-slim AS migration
 WORKDIR /app
 ENV NODE_ENV=production
 RUN apt-get update \
@@ -24,18 +25,20 @@ RUN apt-get update \
 	&& groupadd --system --gid 1001 app \
 	&& useradd --system --uid 1001 --gid app app
 COPY package*.json ./
+COPY .npmrc ./
 COPY prisma ./prisma
 RUN npm ci --include=dev && npm cache clean --force
 USER app
 STOPSIGNAL SIGTERM
 CMD ["npx", "prisma", "migrate", "deploy"]
 
-FROM node:20-bookworm-slim AS build
+FROM node:24-bookworm-slim AS build
 WORKDIR /app
 RUN apt-get update \
 	&& apt-get install -y --no-install-recommends ca-certificates openssl \
 	&& rm -rf /var/lib/apt/lists/*
 COPY package*.json ./
+COPY .npmrc ./
 COPY prisma ./prisma
 RUN npm ci
 COPY . .
@@ -45,7 +48,7 @@ RUN --mount=type=secret,id=env \
 	set -a && . /run/secrets/env && set +a && npm run build
 RUN npm prune --omit=dev && npm cache clean --force
 
-FROM node:20-bookworm-slim AS runtime
+FROM node:24-bookworm-slim AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000

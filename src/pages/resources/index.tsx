@@ -7,7 +7,7 @@ import React from "react";
 import type { Components } from "react-markdown";
 import ReactMarkdown from "react-markdown";
 
-import type { PluggableList } from "react-markdown/lib";
+import type { PluggableList } from "unified";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeSlug from "rehype-slug";
 import remarkToc from "remark-toc";
