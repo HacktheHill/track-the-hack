@@ -35,7 +35,7 @@
 		"i18next": "^26.3.6",
 		"i18next-fs-backend": "^2.6.6",
 		"mimetext": "^3.0.28",
-		"next": "^15.5.20",
+		"next": "^15.5.22",
 		"next-auth": "^4.24.14",
 		"next-i18next": "^15.4.3",
 		"next-pwa": "^5.6.0",
