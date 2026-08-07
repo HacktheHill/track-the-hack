@@ -135,10 +135,6 @@ jobs:
             --resource-group "$AZURE_RESOURCE_GROUP" \
             --name track-the-hack \
             --image "${AZURE_ACR_LOGIN_SERVER}/track-the-hack:${GITHUB_SHA}"
-          retry_az az containerapp ingress traffic set \
-            --resource-group "$AZURE_RESOURCE_GROUP" \
-            --name track-the-hack \
-            --revision-weight latest=100
           retry_az az containerapp update \
             --resource-group "$AZURE_RESOURCE_GROUP" \
             --name track-the-hack-prisma \
