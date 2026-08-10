@@ -58,7 +58,7 @@ const TeamCreation = ({ hacker }: { hacker: HackerData }) => {
 	const createTeamHandler = async () => {
 		if (teamName && teamName != "") {
 			try {
-				await createTeamMutation.mutateAsync({ hackerId: hacker.id, teamName });
+				await createTeamMutation.mutateAsync({ teamName });
 				window.location.reload();
 			} catch (error) {
 				if (error instanceof TRPCClientError) {

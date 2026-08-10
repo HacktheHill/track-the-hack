@@ -17,5 +17,5 @@
 		"noUncheckedIndexedAccess": true
 	},
 	"include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.cjs", "**/*.mjs", "**/*.mts", "**/*.cts", "**/*.js"],
-	"exclude": ["node_modules"]
+	"exclude": ["node_modules", "apps/discord-bot"]
 }

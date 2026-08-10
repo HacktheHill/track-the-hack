@@ -1,8 +1,6 @@
-import { createTRPCRouter, publicProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { z } from "zod";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { assignHackerToTeam } from "../../team-operations";
 
 export const teamsRouter = createTRPCRouter({
 	// Check if a team exists
@@ -12,8 +10,8 @@ export const teamsRouter = createTRPCRouter({
 				name: z.string().min(1, "Team name is required"),
 			}),
 		)
-		.query(async ({ input }) => {
-			const team = await prisma.team.findUnique({
+		.query(async ({ ctx, input }) => {
+			const team = await ctx.prisma.team.findUnique({
 				where: {
 					name: input.name,
 				},
@@ -39,54 +37,22 @@ export const teamsRouter = createTRPCRouter({
 		}),
 
 	// Create a new team
-	create: publicProcedure
+	create: protectedProcedure
 		.input(
 			z.object({
 				teamName: z.string().min(3).max(50),
-				hackerId: z.string(),
 			}),
 		)
-		.mutation(async ({ input }) => {
-			const existingTeam = await prisma.team.findUnique({
-				where: {
-					name: input.teamName,
-				},
+		.mutation(async ({ ctx, input }) => {
+			const hacker = await ctx.prisma.hacker.findUnique({
+				where: { userId: ctx.session.user.id },
+				select: { id: true },
 			});
-
-			if (existingTeam) {
-				throw new Error("Team already exists");
-			}
-
-			const newTeam = await prisma.team.create({
-				data: {
-					name: input.teamName,
-					hackers: {
-						connect: {
-							id: input.hackerId,
-						},
-					},
-				},
-				select: {
-					name: true,
-					hackers: {
-						select: {
-							firstName: true,
-						},
-					},
-				},
-			});
-
-			await prisma.team.deleteMany({
-				where: {
-					hackers: {
-						none: {},
-					},
-				},
-			});
-
+			if (!hacker) throw new Error("Hacker not found");
+			const team = await assignHackerToTeam({ prisma: ctx.prisma }, hacker.id, input.teamName);
 			return {
-				name: newTeam.name,
-				members: newTeam.hackers.map(hacker => hacker.firstName),
+				name: team.name,
+				members: team.members.map(member => member.firstName),
 			};
 		}),
 });
