@@ -1,5 +1,4 @@
 import { faker } from "@faker-js/faker";
-import { count } from "console";
 
 // generates dummy presences
 export const presences = () => {
