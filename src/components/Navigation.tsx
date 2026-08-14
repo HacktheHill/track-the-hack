@@ -1,10 +1,9 @@
-import { Locale, RoleName } from "@prisma/client";
+import { RoleName } from "@prisma/client";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { useTranslation } from "next-i18next";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useCallback } from "react";
 import Filter from "./Filter";
 
 type LinkItemProps = {
@@ -34,20 +33,10 @@ const Links = ({ bottom }: LinkProps) => {
 	const { t } = useTranslation("navbar");
 	const { data: sessionData } = useSession();
 
-	const qrFilter = useCallback(
-		(roles: RoleName[]) => {
-			const hasOrganizerRole = roles.includes(RoleName.ORGANIZER);
-			const isValidHacker = roles.includes(RoleName.HACKER) && !!sessionData?.user?.hackerId;
-
-			return hasOrganizerRole || isValidHacker;
-		},
-		[sessionData?.user?.hackerId],
-	);
-
 	return (
 		<>
 			<LinkItem href="/" bottom={bottom} text={t("home")} src="/assets/home.svg" alt={t("home")} />
-			<Filter value={qrFilter} silent method="function">
+			<Filter value={[RoleName.ORGANIZER, RoleName.ADMIN]} silent method="some">
 				<LinkItem href="/qr" bottom={bottom} text={t("qr")} src="/assets/qr.svg" alt={t("qr")} />
 			</Filter>
 			<LinkItem
@@ -73,17 +62,6 @@ const Links = ({ bottom }: LinkProps) => {
 				alt={t("sponsors")}
 			/>
 			{sessionData?.user && (
-				<Filter value={[RoleName.MAYOR, RoleName.PREMIER, RoleName.ORGANIZER]} silent method="some">
-					<LinkItem
-						href="/hackers"
-						bottom={bottom}
-						text={t("hackers")}
-						src="/assets/list.svg"
-						alt={t("hackers")}
-					/>
-				</Filter>
-			)}
-			{sessionData?.user && (
 				<Filter value={[RoleName.PREMIER, RoleName.ORGANIZER]} silent method="some">
 					<LinkItem
 						href="/metrics"
@@ -91,17 +69,6 @@ const Links = ({ bottom }: LinkProps) => {
 						text={t("metrics")}
 						src="/assets/metrics.svg"
 						alt={t("metrics")}
-					/>
-				</Filter>
-			)}
-			{sessionData?.user && sessionData.user.hackerId && (
-				<Filter value={[RoleName.HACKER]} silent method="only">
-					<LinkItem
-						href="/profile"
-						bottom={bottom}
-						text={t("profile")}
-						src="/assets/profile.svg"
-						alt={t("profile")}
 					/>
 				</Filter>
 			)}
@@ -163,7 +130,7 @@ const Navbar = ({ integrated }: NavbarProps) => {
 				onChange={handleLanguageChange}
 				value={locale ?? "en"}
 			>
-				{Object.keys(Locale).map(locale => (
+				{["EN", "FR"].map(locale => (
 					<option key={locale} value={locale.toLocaleLowerCase()}>
 						{locale}
 					</option>
@@ -178,20 +145,12 @@ const Navbar = ({ integrated }: NavbarProps) => {
 					{t("sign-out")}
 				</button>
 			) : (
-				<>
-					<button
-						className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors sm:visible"
-						onClick={() => void signIn()}
-					>
-						{t("sign-in")}
-					</button>
-					<button
-						className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors sm:visible"
-						onClick={() => void router.push("/auth/sign-up")}
-					>
-						{t("sign-up")}
-					</button>
-				</>
+				<button
+					className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors sm:visible"
+					onClick={() => void signIn("google")}
+				>
+					{t("sign-in")}
+				</button>
 			)}
 
 			{sessionData?.user?.image && (

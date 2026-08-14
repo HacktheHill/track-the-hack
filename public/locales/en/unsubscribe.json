@@ -1,7 +1,0 @@
-{
-	"are-you-sure": "Are you sure you want to {{unsubscribe}} to email notifications for {{email}}?",
-	"unsubscribe": "Unsubscribe",
-	"resubscribe": "Resubscribe",
-	"invalid-email": "Invalid email address",
-	"invalid-unsubscribe-token": "Invalid Unsubscribe token. Please use the link in the footer of the most recent email we sent you."
-}

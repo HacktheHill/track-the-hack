@@ -1,0 +1,14 @@
+{
+	"title": "Confirmer votre présence",
+	"explanation": "Confirmez seulement si vous prévoyez participer à Hack the Hill. L’ouverture de cette page ne modifie pas votre RSVP.",
+	"confirm": "Confirmer ma présence",
+	"confirming": "Confirmation…",
+	"confirmed": "Votre présence est confirmée. Les instructions d’annulation seront envoyées par le processus de courriel de l’événement.",
+	"cancel-title": "Annuler votre présence",
+	"cancel-explanation": "L’annulation demeure possible après la date limite de RSVP. L’ouverture de cette page ne modifie pas votre RSVP.",
+	"cancel": "Annuler ma présence",
+	"cancelling": "Annulation…",
+	"cancelled": "Votre présence a été annulée.",
+	"invalid-cancellation-link": "Ce lien d’annulation est invalide.",
+	"temporarily-unavailable": "Cette action est temporairement indisponible. Veuillez réessayer."
+}

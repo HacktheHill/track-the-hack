@@ -49,25 +49,15 @@ model Session {
   @@index([userId])
 }
 
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
-}
-
 model User {
   id            String    @id @default(cuid())
   name          String?
   email         String?   @unique
-  passwordHash  String?
   image         String?
   emailVerified DateTime?
   roles         Role[]
   accounts      Account[]
   sessions      Session[]
-  Hacker        Hacker?
   Log           Log[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @default(now()) @updatedAt
@@ -82,64 +72,33 @@ model Role {
 }
 
 model Hacker {
-  id String @id @default(cuid())
+  // Supplied by the authoritative Sheet. It has no generated default on purpose.
+  id               String       @id
+  tShirtSize       TShirtSize
+  mealCategory     MealCategory
+  confirmed        Boolean      @default(false)
+  walkIn           Boolean      @default(false)
+  acceptanceExpiry DateTime
 
-  preferredLanguage                Locale
-  firstName                        String
-  lastName                         String
-  email                            String
-  phoneNumber                      String
-  country                          String
-  age                              Int
-  gender                           String?
-  pronouns                         String?
-  raceEthnicity                    String?
-  currentSchoolOrganization        String
-  educationLevel                   String
-  major                            String
-  linkedin                         String?
-  github                           String?
-  personalWebsite                  String?
-  hackathonBefore                  Boolean
-  hackathonDetails                 String     @db.Text
-  programmingLanguagesTechnologies String     @db.Text
-  projectDescription               String     @db.Text
-  participationReason              String     @db.Text
-  learningGoals                    String     @db.Text
-  emergencyContactName             String
-  emergencyContactRelation         String
-  emergencyContactPhoneNumber      String
-  tShirtSize                       TShirtSize
-  dietaryRestrictions              String
-  specialAccommodations            String?    @db.Text
-  additionalInfo                   String?    @db.Text
-  travelOrigin                     String?
-  referralSource                   String?
-  agreements                       Boolean
-  promotions                       Boolean
-  hasResume                        Boolean    @default(false)
-
-  acceptanceStatus AcceptanceStatus @default(PENDING)
-  acceptanceReason String           @default("none")
-  acceptanceExpiry DateTime?
-
-  unsubscribed     Boolean @default(false)
-  unsubscribeToken String? @unique @default(cuid())
-
-  confirmed Boolean @default(false)
-  walkIn    Boolean @default(false)
-
-  Team      Team?      @relation(fields: [teamId], references: [id])
-  teamId    String?
-  User      User?      @relation(fields: [userId], references: [id])
-  userId    String?    @unique
-  presences Presence[]
+  Team                   Team?                   @relation(fields: [teamId], references: [id])
+  teamId                 String?
+  presences              Presence[]
+  cancellationCapability CancellationCapability?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
-  @@index([userId])
   @@index([teamId])
+}
+
+// The raw cancellation token is never persisted. A token contains this random
+// capability id plus an HMAC generated from the server-only cancellation key.
+model CancellationCapability {
+  id        String   @id
+  hackerId  String   @unique
+  hacker    Hacker   @relation(fields: [hackerId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model Presence {
@@ -212,16 +171,9 @@ model Hardware {
   @@index([name])
 }
 
-enum Locale {
-  EN
-  FR
-}
-
 enum RoleName {
   ADMIN
-  HACKER
   ORGANIZER
-  ACCEPTANCE
   MAYOR
   PREMIER
 }
@@ -243,9 +195,10 @@ enum TShirtSize {
   XXL
 }
 
-enum AcceptanceStatus {
-  PENDING
-  ACCEPTED
-  WAITLISTED
-  REJECTED
+enum MealCategory {
+  STANDARD
+  VEGETARIAN
+  VEGAN
+  HALAL
+  OTHER
 }

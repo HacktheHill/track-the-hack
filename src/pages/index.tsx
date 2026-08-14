@@ -1,11 +1,9 @@
 import type { GetStaticProps } from "next";
 import { type NextPage } from "next";
-import { useSession } from "next-auth/react";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import type { StaticImageData } from "next/image";
 import Image from "next/image";
-import { useRouter } from "next/router";
 import App from "../components/App";
 
 import buildingSVG from "../../public/assets/hero/building.svg";
@@ -28,8 +26,6 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
 
 const Home: NextPage = () => {
 	const { t } = useTranslation("index");
-	const { data: sessionData } = useSession();
-	const router = useRouter();
 
 	return (
 		<App className="items-left relative flex flex-col justify-center gap-2 bg-default-gradient px-8 py-6 short:gap-8">
@@ -48,14 +44,6 @@ const Home: NextPage = () => {
 				<Image priority src={The} alt=" the " height={120} />
 				<Image priority src={Hill} alt="Hill" height={140} />
 			</h1>
-			{!sessionData && (
-				<button
-					className="z-10 w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color mobile:px-8 mobile:py-4 mobile:text-4xl"
-					onClick={() => void router.push("/auth/sign-up")}
-				>
-					{t("get-started")}
-				</button>
-			)}
 		</App>
 	);
 };
