@@ -1,11 +1,5 @@
 {
-	"title": "Code QR",
-	"use-qr": "Montrer ce code QR aux organisateurs",
-	"scan-qr": "Prêt à scanner un code QR",
-	"qr-failed": "Échec de la génération du code QR.",
-	"checked-in": "Enregistré {{firstName}} {{lastName}} pour {{event}}",
-	"get-hacker": "Obtenir le hacker",
-	"not-hacker": "Cet utilisateur n'a pas encore été accepté pour participer au Hackathon.",
-	"already-checked-in": "{{firstName}} {{lastName}} s'est déjà enregistré {{counter}} fois!",
-	"max-check-ins-reached": "Vous avez atteint le maximum de {{maxCheckIns}} enregistrements pour {{firstName}} {{lastName}}!"
+	"title": "Lecteur QR opérationnel",
+	"view-participant": "Afficher le dossier opérationnel du participant",
+	"unknown-error": "Le participant ou l’action de l’événement n’a pas pu être chargé."
 }

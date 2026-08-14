@@ -278,34 +278,6 @@ const templates = [
 				opening or closing ceremonies?
 			</p>
 			<p>
-				Here is a Google Drive containing the
-				<a
-					href="https://drive.google.com/"
-					role="button"
-					target="_blank"
-					style="display:inline-flex;align-items:center;height:1rem;"
-				>
-					<img
-						src="https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png"
-						style="height: 100%;"
-					/>
-					<strong>resumes of attending hackers</strong></a
-				>, and here is another drive containing
-				<a
-					href="https://drive.google.com/"
-					role="button"
-					target="_blank"
-					style="display:inline-flex;align-items:center;height:1rem;"
-				>
-					<img
-						src="https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png"
-						style="height: 100%;"
-					/>
-					<strong>our organizer team’s resumes</strong></a
-				>
-				for Hack the Hill 2024.
-			</p>
-			<p>
 				Thank you so much for your continued support of Hack the Hill. We want to make this experience as
 				memorable as possible for both of us. If you have any questions or concerns, please let us know.
 			</p>
@@ -341,31 +313,6 @@ const templates = [
 				Furthermore, let us know how you would like to contribute to the opening and closing ceremonies. It can
 				be a speech or a presentation about your esteemed company from your employees. We want the participants
 				to establish a lasting connection with your brand and let them know of your presence in the field.
-			</p>
-			<p>
-				<strong>
-					To support your recruitment efforts, I have also provided two Google Drive links below.
-				</strong>
-				The first link contains resumes of all attending hackers, giving you access to a diverse pool of
-				talented individuals. The second link contains the resumes of our organizer team for Hack the Hill 2024,
-				providing you with insight into the skills and qualifications of the dedicated individuals behind the
-				event.
-				<br />
-				<a href="" role="button" target="_blank" style="display:inline-flex;align-items:center;height:1rem;">
-					<img
-						src="https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png"
-						style="height: 100%;"
-					/>
-					<strong>Resumes of attending hackers</strong>
-				</a>
-				<br />
-				<a href="" role="button" target="_blank" style="display:inline-flex;align-items:center;height:1rem;">
-					<img
-						src="https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png"
-						style="height: 100%;"
-					/>
-					<strong>Resumes of Hack the Hill 2024 organizer team</strong>
-				</a>
 			</p>
 			<p>
 				We genuinely appreciate your commitment to Hack the Hill and want to ensure that this experience is as
@@ -692,7 +639,7 @@ const SponsorshipGmailDrafts: NextPage = () => {
 };
 
 export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
-	const session = await getServerSession(req, res, getAuthOptions(req));
+	const session = await getServerSession(req, res, getAuthOptions());
 	return {
 		redirect: await rolesRedirect(session, "/internal/sponsorship-gmail-drafts", [RoleName.ORGANIZER]),
 		props: {
