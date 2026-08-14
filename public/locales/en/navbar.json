@@ -5,13 +5,10 @@
 	"maps": "Maps",
 	"resources": "Resources",
 	"sponsors": "Sponsors",
-	"hackers": "Hackers",
 	"metrics": "Metrics",
-	"profile": "Profile",
 	"navigation": "Navigation",
 	"logo": "Logo",
 	"sign-out": "Sign Out",
-	"sign-in": "Sign In",
-	"sign-up": "Sign Up",
+	"sign-in": "Organizer Sign In",
 	"bottom-navigation": "Bottom Navigation"
 }

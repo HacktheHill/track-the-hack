@@ -2,6 +2,8 @@
 
 Track the Hack is a comprehensive event management solution designed to streamline hackathon organization. This software is developed by and for [Hack the Hill](https://hackthehill.com), Ottawa's largest hackathon.
 
+The Sheet provisioning, RSVP, cancellation, reconciliation, and organizer-authentication contracts are documented in [docs/PHASE_1_INTEGRATIONS.md](docs/PHASE_1_INTEGRATIONS.md).
+
 ## Getting Started
 
 1. Clone this repository and navigate to the project directory.
@@ -23,9 +25,7 @@ The `container.yml` workflow deploys only from `main` through the `Production`
 environment. Configure `AZURE_RESOURCE_GROUP` and `AZURE_ACR_LOGIN_SERVER` in
 that GitHub environment. The workflow runs the migration job first, waits for a
 successful execution, and only then promotes the web and Prisma Studio images.
-Application and sign-in mail use the configured `EMAIL_SERVER_*` SMTP
-credentials. Set `SES_CONFIGURATION_SET` only when that SMTP endpoint is Amazon
-SES and configuration-set telemetry is desired.
+Organizer sign-in uses Google, and the Sheet integration uses a separate bearer key.
 
 ## Contributing
 

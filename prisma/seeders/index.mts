@@ -3,7 +3,6 @@ import { PrismaClient, RoleName } from "@prisma/client";
 import { insertRecords } from "./utils.mjs";
 import { events } from "./events.mjs";
 import { generateHackers } from "./hackers.mjs";
-import { generateUsers } from "./users.mjs";
 import { generatePresences } from "./presences.mjs";
 
 const prisma = new PrismaClient();
@@ -19,10 +18,6 @@ async function main() {
 			}),
 		),
 	);
-
-	console.info("Creating dummy users...");
-	const users = generateUsers(10);
-	await insertRecords(prisma.user, users);
 
 	console.info("Creating dummy events...");
 	await insertRecords(prisma.event, events);
