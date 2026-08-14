@@ -33,12 +33,6 @@ const Internal: NextPage = () => {
 						>
 							{t("sponsorship-gmail-drafts")}
 						</Link>
-						<Link
-							href="/internal/walk-in-code"
-							className="cursor-pointer whitespace-nowrap rounded-xl border-none bg-medium-primary-color px-8 py-2 font-rubik text-light-color shadow-md transition-all duration-500 hover:bg-light-primary-color"
-						>
-							{t("walk-in-code")}
-						</Link>
 					</div>
 				</div>
 			</Filter>
@@ -47,7 +41,7 @@ const Internal: NextPage = () => {
 };
 
 export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
-	const session = await getServerSession(req, res, getAuthOptions(req));
+	const session = await getServerSession(req, res, getAuthOptions());
 	return {
 		redirect: await rolesRedirect(session, "/", [RoleName.ORGANIZER, RoleName.ADMIN]),
 		props: {

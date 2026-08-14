@@ -1,7 +1,0 @@
-{
-	"are-you-sure": "Voulez-vous vraiment vous {{unsubscribe}} de recevoir des notifications par e-mail pour {{email}} ?",
-	"resubscribe": "Réabonner",
-	"unsubscribe": "Désabonner",
-	"invalid-email": "Adresse e-mail non valide",
-	"invalid-unsubscribe-token": "Jeton de désabonnement invalide. Veuillez utiliser le lien figurant dans le pied de page du dernier courriel que nous vous avons envoyé."
-}

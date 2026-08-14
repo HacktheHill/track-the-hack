@@ -9,7 +9,6 @@ declare module "next-auth" {
 			id: string;
 		} & DefaultSession["user"] & {
 				roles: RoleName[];
-				hackerId?: string;
 			};
 	}
 }
