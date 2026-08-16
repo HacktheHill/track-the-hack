@@ -5,13 +5,10 @@
 	"maps": "Carte",
 	"resources": "Ressources",
 	"sponsors": "Commanditaires",
-	"hackers": "Hackeurs",
 	"metrics": "Metrics",
-	"profile": "Profil",
 	"navigation": "Navigation",
 	"logo": "Logo",
 	"sign-out": "Déconnexion",
-	"sign-in": "Connexion",
-	"sign-up": "Inscription",
+	"sign-in": "Connexion organisateur",
 	"bottom-navigation": "Navigation du bas"
 }

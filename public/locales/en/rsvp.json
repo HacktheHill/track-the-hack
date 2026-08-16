@@ -1,0 +1,14 @@
+{
+	"title": "Confirm your attendance",
+	"explanation": "Confirm only if you plan to attend Hack the Hill. Opening this page does not change your RSVP.",
+	"confirm": "Confirm attendance",
+	"confirming": "Confirming…",
+	"confirmed": "Your attendance is confirmed. You will receive cancellation instructions through the event email workflow.",
+	"cancel-title": "Cancel your attendance",
+	"cancel-explanation": "Cancellation is available even after the RSVP deadline. Opening this page does not change your RSVP.",
+	"cancel": "Cancel attendance",
+	"cancelling": "Cancelling…",
+	"cancelled": "Your attendance has been cancelled.",
+	"invalid-cancellation-link": "This cancellation link is invalid.",
+	"temporarily-unavailable": "This action is temporarily unavailable. Please try again."
+}

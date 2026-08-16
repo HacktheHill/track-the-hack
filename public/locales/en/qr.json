@@ -1,11 +1,5 @@
 {
-	"title": "QR Code",
-	"use-qr": "Show this QR code to organizers",
-	"scan-qr": "Ready to scan a QR code",
-	"qr-failed": "Failed to generate QR code.",
-	"checked-in": "Checked in {{firstName}} {{lastName}} for {{event}}",
-	"get-hacker": "Get hacker",
-	"not-hacker": "This hacker has not yet been accepted to attend the Hackathon.",
-	"already-checked-in": "{{firstName}} {{lastName}} has already checked in {{counter}} times!",
-	"max-check-ins-reached": "You have reached the maximum of {{maxCheckIns}} check-ins for {{firstName}} {{lastName}}!"
+	"title": "Operational QR scanner",
+	"view-participant": "View operational participant record",
+	"unknown-error": "The participant or event action could not be loaded."
 }
