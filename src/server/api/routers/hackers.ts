@@ -888,28 +888,26 @@ export const hackerRouter = createTRPCRouter({
 			const updates = new Map<keyof typeof input, string | boolean | number | Date | undefined>();
 
 			for (const key in input) {
-				for (const key2 in hacker) {
-					if (
-						key === key2 &&
-						input[key as keyof typeof input] !== hacker[key2 as keyof typeof hacker] &&
-						input[key as keyof typeof input] !== null &&
-						hacker[key2 as keyof typeof hacker] !== null
-					) {
-						const field = key as keyof typeof input;
-						const before = hacker[key2 as keyof typeof hacker];
-						const after = input[key as keyof typeof input];
+				const field = key as keyof typeof input;
+				if (
+					key in hacker &&
+					input[field] !== hacker[field as keyof typeof hacker] &&
+					input[field] !== null &&
+					hacker[field as keyof typeof hacker] !== null
+				) {
+					const before = hacker[field as keyof typeof hacker];
+					const after = input[field];
 
-						await log(ctx, {
-							sourceId: input.id,
-							sourceType: "Hacker",
-							route: "/update-hacker-info",
-							details: `Updated field ${field} from ${String(before)} to ${String(after ?? "empty")}`,
-							action: "UpdateHackerInfo",
-							author: user.name ?? "Unknown",
-						});
+					await log(ctx, {
+						sourceId: input.id,
+						sourceType: "Hacker",
+						route: "/update-hacker-info",
+						details: `Updated field ${field} from ${String(before)} to ${String(after ?? "empty")}`,
+						action: "UpdateHackerInfo",
+						author: user.name ?? "Unknown",
+					});
 
-						updates.set(field, after);
-					}
+					updates.set(field, after);
 				}
 			}
 
