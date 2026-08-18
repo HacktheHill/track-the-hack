@@ -19,7 +19,6 @@ function encrypt(text: string, secretKey: string): string {
 }
 
 function decrypt(encryptedText: string, secretKey: string): string {
-	console.log(encryptedText);
 	const [ivHex, encryptedData] = encryptedText.split(":");
 
 	if (!ivHex || !encryptedData) {

@@ -5,6 +5,7 @@ import { createHmac } from "node:crypto";
 import { env } from "../../../env/server.mjs";
 import { hasRoles } from "../../../utils/helpers";
 import { log } from "../../lib/log";
+import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { passwordSchema } from "../../../utils/common";
 
@@ -57,6 +58,28 @@ export const userRouter = createTRPCRouter({
 			}),
 		)
 		.query(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+			const user = await ctx.prisma.user.findUnique({
+				where: {
+					id: userId,
+				},
+				select: {
+					roles: {
+						select: {
+							name: true,
+						},
+					},
+				},
+			});
+
+			if (!user) {
+				throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+			}
+
+			if (!hasRoles(user, [RoleName.ADMIN, RoleName.ORGANIZER])) {
+				throw new TRPCError({ code: "FORBIDDEN", message: "You do not have permission to do this" });
+			}
+
 			return ctx.prisma.user.findMany({
 				where: {
 					OR: [
@@ -118,27 +141,25 @@ export const userRouter = createTRPCRouter({
 				throw new Error("You do not have permission to do this");
 			}
 
+			const userIds = [...new Set(input.userIds)];
+			const foundUsers = await ctx.prisma.user.findMany({
+				where: {
+					id: {
+						in: userIds,
+					},
+				},
+				select: {
+					id: true,
+				},
+			});
+
+			if (foundUsers.length !== userIds.length) {
+				throw new Error("User not found");
+			}
+
 			const transaction = [];
 
-			for (const userId of input.userIds) {
-				const user = await ctx.prisma.user.findUnique({
-					where: {
-						id: userId,
-					},
-					select: {
-						id: true,
-						roles: {
-							select: {
-								name: true,
-							},
-						},
-					},
-				});
-
-				if (!user) {
-					throw new Error("User not found");
-				}
-
+			for (const userId of userIds) {
 				transaction.push(
 					ctx.prisma.user.update({
 						where: {
