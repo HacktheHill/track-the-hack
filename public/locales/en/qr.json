@@ -1,5 +1,11 @@
 {
 	"title": "Operational QR scanner",
 	"view-participant": "View operational participant record",
-	"unknown-error": "The participant or event action could not be loaded."
+	"unknown-error": "The participant or event action could not be loaded.",
+	"confirmed": "Confirmed: {{value}}",
+	"yes": "Yes",
+	"no": "No",
+	"t-shirt": "T-shirt: {{value}}",
+	"meal": "Meal: {{value}}",
+	"walk-in": "Walk-in"
 }
