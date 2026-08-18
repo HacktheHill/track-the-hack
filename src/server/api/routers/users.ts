@@ -118,27 +118,25 @@ export const userRouter = createTRPCRouter({
 				throw new Error("You do not have permission to do this");
 			}
 
+			const userIds = [...new Set(input.userIds)];
+			const foundUsers = await ctx.prisma.user.findMany({
+				where: {
+					id: {
+						in: userIds,
+					},
+				},
+				select: {
+					id: true,
+				},
+			});
+
+			if (foundUsers.length !== userIds.length) {
+				throw new Error("User not found");
+			}
+
 			const transaction = [];
 
-			for (const userId of input.userIds) {
-				const user = await ctx.prisma.user.findUnique({
-					where: {
-						id: userId,
-					},
-					select: {
-						id: true,
-						roles: {
-							select: {
-								name: true,
-							},
-						},
-					},
-				});
-
-				if (!user) {
-					throw new Error("User not found");
-				}
-
+			for (const userId of userIds) {
 				transaction.push(
 					ctx.prisma.user.update({
 						where: {
