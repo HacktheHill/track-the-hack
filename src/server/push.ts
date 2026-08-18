@@ -1,7 +1,4 @@
-import { PrismaClient } from "@prisma/client";
-
-import { env } from "../env/server.mjs";
-import { prisma } from "./db";
+import type { PrismaClient } from "@prisma/client";
 
 export type PushSubscriptionPayload = {
     endpoint: string;
@@ -24,8 +21,19 @@ const subscriptions = new Map<string, EventPushSubscription[]>();
 const notifiedEventIds = new Set<string>();
 let reminderScheduler: NodeJS.Timeout | undefined;
 
+const getServerEnv = async () => {
+    const { env } = await import("../env/server.mjs");
+    return env;
+};
+
+const getPrismaClient = async () => {
+    const { prisma } = await import("./db");
+    return prisma;
+};
+
 const getWebPush = async () => {
     const webPush = await import("web-push");
+    const env = await getServerEnv();
 
     if (env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY) {
         webPush.default.setVapidDetails(
@@ -134,9 +142,10 @@ export const sendEventStartNotification = async (eventId: string, title: string,
     return delivered;
 };
 
-export const sendDueEventNotifications = async (prismaClient: PrismaClient = prisma) => {
+export const sendDueEventNotifications = async (prismaClient?: PrismaClient) => {
+    const client = prismaClient ?? (await getPrismaClient());
     const now = new Date();
-    const dueEvents = await prismaClient.event.findMany({
+    const dueEvents = await client.event.findMany({
         where: {
             start: {
                 lte: now,

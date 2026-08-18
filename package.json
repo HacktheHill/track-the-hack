@@ -17,6 +17,7 @@
 		"postinstall": "prisma generate",
 		"lint": "next lint",
 		"start": "next start",
+		"test": "node --experimental-strip-types --test",
 		"format": "prettier --write ."
 	},
 	"dependencies": {
@@ -28,6 +29,7 @@
 		"@trpc/next": "^10.45.3",
 		"@trpc/react-query": "^10.45.3",
 		"@trpc/server": "^10.45.3",
+		"@types/web-push": "^3.6.4",
 		"argon2": "^0.41.1",
 		"csvtojson": "^2.0.14",
 		"google-auth-library": "^10.9.0",
@@ -56,6 +58,7 @@
 		"remark-toc": "^9.0.0",
 		"superjson": "2.2.1",
 		"unified": "^11.0.5",
+		"web-push": "^3.6.7",
 		"zod": "^3.22.4",
 		"zod-i18n-map": "^2.27.0"
 	},
