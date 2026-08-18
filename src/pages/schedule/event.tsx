@@ -6,11 +6,74 @@ import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
 
 import App from "../../components/App";
 import Error from "../../components/Error";
 import Loading from "../../components/Loading";
 import { trpc } from "../../server/api/api";
+
+const EVENT_NOTIFICATION_STORAGE_KEY = "track-the-hack:event-notification-requests";
+
+const getRequestedEventNotifications = () => {
+	if (typeof window === "undefined") {
+		return [] as string[];
+	}
+
+	const raw = window.localStorage.getItem(EVENT_NOTIFICATION_STORAGE_KEY);
+	if (!raw) {
+		return [] as string[];
+	}
+
+	try {
+		const parsed = JSON.parse(raw) as unknown;
+		if (!Array.isArray(parsed)) {
+			return [] as string[];
+		}
+
+		return parsed.filter((value): value is string => typeof value === "string");
+	} catch {
+		return [] as string[];
+	}
+};
+
+const isEventNotificationRequested = (eventId: string) => {
+	if (typeof window === "undefined") {
+		return false;
+	}
+
+	return getRequestedEventNotifications().includes(eventId);
+};
+
+const setRequestedEventNotifications = (requestedEvents: string[]) => {
+	if (typeof window === "undefined") {
+		return;
+	}
+
+	window.localStorage.setItem(EVENT_NOTIFICATION_STORAGE_KEY, JSON.stringify(requestedEvents));
+};
+
+const toggleEventNotificationRequest = (eventId: string) => {
+	const requestedEvents = getRequestedEventNotifications();
+	const alreadyRequested = requestedEvents.includes(eventId);
+	const nextRequested = alreadyRequested
+		? requestedEvents.filter(requestedEventId => requestedEventId !== eventId)
+		: [...requestedEvents, eventId];
+
+	setRequestedEventNotifications(nextRequested);
+	return !alreadyRequested;
+};
+
+const clearEventNotificationRequest = (eventId: string) => {
+	const requestedEvents = getRequestedEventNotifications();
+	const wasRequested = requestedEvents.includes(eventId);
+	if (!wasRequested) {
+		return false;
+	}
+
+	setRequestedEventNotifications(requestedEvents.filter(requestedEventId => requestedEventId !== eventId));
+	return true;
+};
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
@@ -59,6 +122,57 @@ const EventView = ({ event, types }: EventViewProps) => {
 	const { t } = useTranslation("event");
 	const router = useRouter();
 	const { locale } = router;
+	const [notifyRequested, setNotifyRequested] = useState(() => isEventNotificationRequested(event.id));
+
+	useEffect(() => {
+		setNotifyRequested(isEventNotificationRequested(event.id));
+	}, [event.id]);
+
+	useEffect(() => {
+		if (!notifyRequested || typeof window === "undefined" || !("Notification" in window)) {
+			return;
+		}
+
+		const eventStartMs = new Date(event.start).getTime();
+		const timeUntilStart = eventStartMs - Date.now();
+		const MAX_TIMEOUT = 2_147_483_647;
+		if (timeUntilStart <= 0 || timeUntilStart > MAX_TIMEOUT) {
+			return;
+		}
+
+		const timer = window.setTimeout(() => {
+			if (Notification.permission === "granted") {
+				new Notification(locale === "fr" ? event.nameFr : event.name, {
+					body: locale === "fr" ? "L'événement vient de commencer." : "This event has started.",
+					tag: `event-${event.id}`,
+				});
+			}
+		}, timeUntilStart);
+
+		return () => window.clearTimeout(timer);
+	}, [event.id, event.name, event.nameFr, event.start, locale, notifyRequested]);
+
+	const handleNotifyToggle = async () => {
+		if (typeof window === "undefined") {
+			return;
+		}
+
+		const nextState = toggleEventNotificationRequest(event.id);
+		setNotifyRequested(nextState);
+
+		if (!nextState || !("Notification" in window)) {
+			return;
+		}
+
+		if (Notification.permission === "default") {
+			const permission = await Notification.requestPermission();
+			if (permission !== "granted") {
+				clearEventNotificationRequest(event.id);
+				setNotifyRequested(false);
+				return;
+			}
+		}
+	};
 
 	const {
 		name,
@@ -122,6 +236,17 @@ const EventView = ({ event, types }: EventViewProps) => {
 				<h3 className="text-md">{room}</h3>
 				{type !== "ALL" && <h3 className="text-md">{types[type]}</h3>}
 				<h3 className="text-sm">{host}</h3>
+				<button
+					type="button"
+					onClick={() => void handleNotifyToggle()}
+					aria-pressed={notifyRequested}
+					className={`mt-4 w-fit rounded-lg border px-4 py-2 font-coolvetica text-base transition-colors ${notifyRequested
+						? "border-dark-color bg-dark-color text-light-color"
+						: "border-dark-color bg-light-primary-color text-dark-color hover:bg-dark-secondary-color"
+						}`}
+				>
+					{notifyRequested ? t("notify-me-active") : t("notify-me")}
+				</button>
 			</div>
 
 			{image && (
