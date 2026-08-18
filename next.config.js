@@ -18,6 +18,7 @@ const withPWA = require("next-pwa")({
 module.exports = withPWA({
 	reactStrictMode: true,
 	i18n,
+	turbopack: {},
 	webpack: config => {
 		config.module.rules.push({
 			test: /\.md$/,

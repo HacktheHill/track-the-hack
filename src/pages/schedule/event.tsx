@@ -13,6 +13,21 @@ import Error from "../../components/Error";
 import Loading from "../../components/Loading";
 import { trpc } from "../../server/api/api";
 
+const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
+
+const urlBase64ToUint8Array = (value: string) => {
+	const padded = value.padEnd(Math.ceil(value.length / 4) * 4, "=");
+	const normalized = padded.replace(/-/g, "+").replace(/_/g, "/");
+	const binary = atob(normalized);
+	const bytes = new Uint8Array(binary.length);
+
+	for (let index = 0; index < binary.length; index += 1) {
+		bytes[index] = binary.charCodeAt(index);
+	}
+
+	return bytes;
+};
+
 const EVENT_NOTIFICATION_STORAGE_KEY = "track-the-hack:event-notification-requests";
 
 const getRequestedEventNotifications = () => {
@@ -38,11 +53,11 @@ const getRequestedEventNotifications = () => {
 };
 
 const isEventNotificationRequested = (eventId: string) => {
-	if (typeof window === "undefined") {
+	if (typeof window === "undefined" || !("Notification" in window)) {
 		return false;
 	}
 
-	return getRequestedEventNotifications().includes(eventId);
+	return Notification.permission === "granted" && getRequestedEventNotifications().includes(eventId);
 };
 
 const setRequestedEventNotifications = (requestedEvents: string[]) => {
@@ -51,17 +66,6 @@ const setRequestedEventNotifications = (requestedEvents: string[]) => {
 	}
 
 	window.localStorage.setItem(EVENT_NOTIFICATION_STORAGE_KEY, JSON.stringify(requestedEvents));
-};
-
-const toggleEventNotificationRequest = (eventId: string) => {
-	const requestedEvents = getRequestedEventNotifications();
-	const alreadyRequested = requestedEvents.includes(eventId);
-	const nextRequested = alreadyRequested
-		? requestedEvents.filter(requestedEventId => requestedEventId !== eventId)
-		: [...requestedEvents, eventId];
-
-	setRequestedEventNotifications(nextRequested);
-	return !alreadyRequested;
 };
 
 const clearEventNotificationRequest = (eventId: string) => {
@@ -73,6 +77,22 @@ const clearEventNotificationRequest = (eventId: string) => {
 
 	setRequestedEventNotifications(requestedEvents.filter(requestedEventId => requestedEventId !== eventId));
 	return true;
+};
+
+const requestEventNotificationPermission = async () => {
+	if (typeof window === "undefined" || !("Notification" in window)) {
+		return false;
+	}
+
+	if (Notification.permission === "granted") {
+		return true;
+	}
+
+	if (Notification.permission === "denied") {
+		return false;
+	}
+
+	return (await Notification.requestPermission()) === "granted";
 };
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
@@ -128,50 +148,82 @@ const EventView = ({ event, types }: EventViewProps) => {
 		setNotifyRequested(isEventNotificationRequested(event.id));
 	}, [event.id]);
 
-	useEffect(() => {
-		if (!notifyRequested || typeof window === "undefined" || !("Notification" in window)) {
-			return;
-		}
-
-		const eventStartMs = new Date(event.start).getTime();
-		const timeUntilStart = eventStartMs - Date.now();
-		const MAX_TIMEOUT = 2_147_483_647;
-		if (timeUntilStart <= 0 || timeUntilStart > MAX_TIMEOUT) {
-			return;
-		}
-
-		const timer = window.setTimeout(() => {
-			if (Notification.permission === "granted") {
-				new Notification(locale === "fr" ? event.nameFr : event.name, {
-					body: locale === "fr" ? "L'événement vient de commencer." : "This event has started.",
-					tag: `event-${event.id}`,
-				});
-			}
-		}, timeUntilStart);
-
-		return () => window.clearTimeout(timer);
-	}, [event.id, event.name, event.nameFr, event.start, locale, notifyRequested]);
-
 	const handleNotifyToggle = async () => {
 		if (typeof window === "undefined") {
 			return;
 		}
 
-		const nextState = toggleEventNotificationRequest(event.id);
-		setNotifyRequested(nextState);
+		if (notifyRequested) {
+			try {
+				if ("serviceWorker" in navigator && "PushManager" in window) {
+					const registrations = await navigator.serviceWorker.getRegistrations();
+					for (const registration of registrations) {
+						const existingSubscription = await registration.pushManager.getSubscription();
+						if (existingSubscription) {
+							await existingSubscription.unsubscribe();
+						}
+					}
+				}
+			} catch {
+				// Ignore cleanup failures and still clear the UI state.
+			}
 
-		if (!nextState || !("Notification" in window)) {
+			const wasRemoved = clearEventNotificationRequest(event.id);
+			if (!wasRemoved) {
+				const requestedEvents = getRequestedEventNotifications();
+				setRequestedEventNotifications(requestedEvents.filter(requestedEventId => requestedEventId !== event.id));
+			}
+			setNotifyRequested(false);
 			return;
 		}
 
-		if (Notification.permission === "default") {
-			const permission = await Notification.requestPermission();
-			if (permission !== "granted") {
-				clearEventNotificationRequest(event.id);
-				setNotifyRequested(false);
-				return;
-			}
+		const permissionGranted = await requestEventNotificationPermission();
+		if (!permissionGranted) {
+			setNotifyRequested(false);
+			return;
 		}
+
+		if (!("serviceWorker" in navigator) || !("PushManager" in window) || !VAPID_PUBLIC_KEY) {
+			const requestedEvents = getRequestedEventNotifications();
+			const nextRequestedEvents = requestedEvents.includes(event.id)
+				? requestedEvents
+				: [...requestedEvents, event.id];
+			setRequestedEventNotifications(nextRequestedEvents);
+			setNotifyRequested(true);
+			return;
+		}
+
+		try {
+			const registration = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+			const subscription = await registration.pushManager.subscribe({
+				userVisibleOnly: true,
+				applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+			});
+
+			const response = await fetch("/api/push/register", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					eventId: event.id,
+					enabled: true,
+					subscription: subscription.toJSON(),
+				}),
+			});
+
+			if (!response.ok) {
+				throw new globalThis.Error("Failed to register push subscription");
+			}
+		} catch {
+			setNotifyRequested(false);
+			return;
+		}
+
+		const requestedEvents = getRequestedEventNotifications();
+		const nextRequestedEvents = requestedEvents.includes(event.id)
+			? requestedEvents
+			: [...requestedEvents, event.id];
+		setRequestedEventNotifications(nextRequestedEvents);
+		setNotifyRequested(true);
 	};
 
 	const {

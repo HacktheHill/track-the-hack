@@ -1,3 +1,5 @@
+'use client';
+
 import type { GetStaticProps } from "next";
 import { useTranslation } from "next-i18next";
 import { useState } from "react";
@@ -5,7 +7,6 @@ import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Image from "next/image";
 import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
 import App from "../../components/App";
-//import React, { useState } from "react";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
@@ -46,7 +47,7 @@ const MapFloor = ({ floor }: { floor: number }) => {
 								onChange={e => updateZoom(Number(e.target.value))}
 								className="w-48"
 							/>
-							<button onClick={() => updateZoom(1)}>Reset</button>
+							<button type="button" onClick={() => updateZoom(1)}>Reset</button>
 							<span className="text-sm text-dark-color">{zoom.toFixed(1)}x</span>
 						</div>
 
