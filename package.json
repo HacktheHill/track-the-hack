@@ -38,6 +38,9 @@
 		"@trpc/next": "^10.45.3",
 		"@trpc/react-query": "^10.45.3",
 		"@trpc/server": "^10.45.3",
+		"@types/web-push": "^3.6.4",
+		"argon2": "^0.41.1",
+		"csvtojson": "^2.0.14",
 		"google-auth-library": "^10.9.0",
 		"googleapis": "^150.0.1",
 		"i18next": "^26.3.6",
@@ -61,7 +64,9 @@
 		"remark-toc": "^9.0.0",
 		"superjson": "2.2.1",
 		"unified": "^11.0.5",
-		"zod": "^3.22.4"
+		"web-push": "^3.6.7",
+		"zod": "^3.22.4",
+		"zod-i18n-map": "^2.27.0"
 	},
 	"devDependencies": {
 		"@faker-js/faker": "^10.5.0",
