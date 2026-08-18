@@ -129,11 +129,14 @@ model Hacker {
   confirmed Boolean @default(false)
   walkIn    Boolean @default(false)
 
-  Team      Team?      @relation(fields: [teamId], references: [id])
-  teamId    String?
-  User      User?      @relation(fields: [userId], references: [id])
-  userId    String?    @unique
-  presences Presence[]
+  Team                 Team?         @relation(fields: [teamId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  teamId               String?
+  captainedTeam        Team?         @relation("TeamCaptain")
+  createdTeamRequests  TeamRequest[] @relation("TeamRequestCreator")
+  targetedTeamRequests TeamRequest[] @relation("TeamRequestTargetHacker")
+  User                 User?         @relation(fields: [userId], references: [id])
+  userId               String?       @unique
+  presences            Presence[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -155,9 +158,45 @@ model Presence {
 }
 
 model Team {
-  id      String   @id @default(cuid())
-  name    String   @unique
-  hackers Hacker[]
+  id              String        @id @default(cuid())
+  name            String        @unique
+  captainHackerId String?       @unique
+  captain         Hacker?       @relation("TeamCaptain", fields: [captainHackerId], references: [id], onDelete: SetNull)
+  hackers         Hacker[]
+  sourceRequests  TeamRequest[] @relation("TeamRequestSourceTeam")
+  targetRequests  TeamRequest[] @relation("TeamRequestTargetTeam")
+}
+
+model TeamRequest {
+  id                          String            @id @default(cuid())
+  listingDiscordThreadId      String
+  conversationDiscordThreadId String            @unique
+  createdByHackerId           String
+  sourceTeamId                String?
+  targetHackerId              String
+  targetTeamId                String?
+  requesterRank               Int?
+  ownerRank                   Int?
+  status                      TeamRequestStatus @default(INTERESTED)
+  createdAt                   DateTime          @default(now())
+  updatedAt                   DateTime          @default(now()) @updatedAt
+  createdByHacker             Hacker            @relation("TeamRequestCreator", fields: [createdByHackerId], references: [id], onDelete: Cascade)
+  sourceTeam                  Team?             @relation("TeamRequestSourceTeam", fields: [sourceTeamId], references: [id], onDelete: SetNull)
+  targetHacker                Hacker            @relation("TeamRequestTargetHacker", fields: [targetHackerId], references: [id], onDelete: Cascade)
+  targetTeam                  Team?             @relation("TeamRequestTargetTeam", fields: [targetTeamId], references: [id], onDelete: SetNull)
+
+  @@index([createdByHackerId])
+  @@index([sourceTeamId])
+  @@index([targetHackerId])
+  @@index([targetTeamId])
+  @@index([listingDiscordThreadId])
+}
+
+model InternalApiRequest {
+  id        String   @id
+  expiresAt DateTime
+
+  @@index([expiresAt])
 }
 
 model Event {
@@ -248,4 +287,12 @@ enum AcceptanceStatus {
   ACCEPTED
   WAITLISTED
   REJECTED
+}
+
+enum TeamRequestStatus {
+  INTERESTED
+  OFFERED
+  ACCEPTED
+  REJECTED
+  DECLINED
 }

@@ -1,0 +1,3 @@
+[submodule "apps/discord-bot"]
+	path = apps/discord-bot
+	url = https://github.com/HacktheHill/track-the-hack-bot.git

@@ -7,6 +7,7 @@ import { hasRoles } from "../../../utils/helpers";
 import { log } from "../../lib/log";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { passwordSchema } from "../../../utils/common";
+import { ensureDiscordAccountCanLink, linkDiscordAccount, verifyDiscordLinkProof } from "../../discord-identity";
 
 export const userRouter = createTRPCRouter({
 	// Sign up a new user
@@ -171,7 +172,9 @@ export const userRouter = createTRPCRouter({
 	verifyDiscord: protectedProcedure
 		.input(
 			z.object({
-				discordId: z.string(),
+				discordId: z.string().regex(/^\d{17,20}$/),
+				timestamp: z.string().regex(/^\d{10,12}$/),
+				signature: z.string().regex(/^[a-f0-9]{64}$/i),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -198,6 +201,8 @@ export const userRouter = createTRPCRouter({
 			if (!hasRoles(user, [RoleName.HACKER]) || !user.Hacker) {
 				throw new Error("You have not yet been accepted as a hacker");
 			}
+			verifyDiscordLinkProof(env.INTERNAL_API_SECRET, input);
+			await ensureDiscordAccountCanLink(ctx.prisma, userId, input.discordId);
 
 			const body = JSON.stringify({ discordId: input.discordId });
 			const timestamp = Math.floor(Date.now() / 1000).toString();
@@ -217,6 +222,7 @@ export const userRouter = createTRPCRouter({
 			if (!response.ok) {
 				throw new Error("Failed to verify Discord ID");
 			}
+			await linkDiscordAccount({ prisma: ctx.prisma }, userId, input.discordId);
 
 			await log(ctx, {
 				sourceId: userId,
