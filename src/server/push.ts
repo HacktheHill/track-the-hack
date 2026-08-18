@@ -71,6 +71,7 @@ export const startEventReminderScheduler = () => {
     reminderScheduler = setInterval(() => {
         void sendDueEventNotifications().catch(() => undefined);
     }, 60_000);
+    reminderScheduler.unref?.();
 
     void sendDueEventNotifications().catch(() => undefined);
     return reminderScheduler;
