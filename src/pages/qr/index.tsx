@@ -19,7 +19,9 @@ const VIEW_PARTICIPANT = "__view__";
 const QR = () => {
 	const { t } = useTranslation("qr");
 	const utils = trpc.useContext();
+
 	const eventData = trpc.events.future.useQuery().data;
+
 	const events = useMemo(() => eventData ?? [], [eventData]);
 	const upsertPresence = trpc.presence.upsert.useMutation();
 	const incrementPresence = trpc.presence.increment.useMutation();
@@ -99,15 +101,20 @@ const QR = () => {
 	);
 };
 
-const ParticipantCard = ({ hacker }: { hacker: Hacker }) => (
-	<div className="rounded-lg bg-light-primary-color p-6 font-rubik text-light-color">
-		<p className="break-all font-bold">{hacker.id}</p>
-		<p>Confirmed: {hacker.confirmed ? "Yes" : "No"}</p>
-		<p>T-shirt: {hacker.tShirtSize}</p>
-		<p>Meal: {hacker.mealCategory}</p>
-		{hacker.walkIn && <p>Walk-in</p>}
-	</div>
-);
+// Labels go through next-i18next so the card matches the rest of the interface.
+const ParticipantCard = ({ hacker }: { hacker: Hacker }) => {
+	const { t } = useTranslation("qr");
+
+	return (
+		<div className="rounded-lg bg-light-primary-color p-6 font-rubik text-light-color">
+			<p className="break-all font-bold">{hacker.id}</p>
+			<p>{t("confirmed", { value: hacker.confirmed ? t("yes") : t("no") })}</p>
+			<p>{t("t-shirt", { value: hacker.tShirtSize })}</p>
+			<p>{t("meal", { value: hacker.mealCategory })}</p>
+			{hacker.walkIn && <p>{t("walk-in")}</p>}
+		</div>
+	);
+};
 
 const PresenceCard = ({ hacker, event, value }: { hacker: Hacker; event: string; value: number }) => (
 	<div className="rounded-lg bg-light-primary-color p-6 font-rubik text-light-color">
