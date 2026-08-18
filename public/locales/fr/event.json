@@ -1,5 +1,8 @@
 {
 	"title": "Événement",
+	"close-event": "Fermer l'événement",
+	"notify-me": "M'avertir lorsque cet événement commence",
+	"notify-me-active": "Vous serez averti lorsque cet événement commencera",
 	"type": {
 		"ALL": "Tout",
 		"WORKSHOP": "Atelier",
