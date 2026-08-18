@@ -35,19 +35,23 @@ export const eventsRouter = createTRPCRouter({
 	}),
 
 	// Get all future events
+	// Events an organizer can still scan for. An event stays selectable while it
+	// is running and for 30 minutes after it ends, so late arrivals can still be
+	// checked in. Filtering by start would hide an event the moment it begins,
+	// which is exactly when the scanner is used.
 	future: publicProcedure.query(async ({ ctx }) => {
-		const events = await ctx.prisma.event.findMany({
+		const gracePeriodMs = 30 * 60 * 1000;
+		const cutoff = new Date(Date.now() - gracePeriodMs);
+
+		return ctx.prisma.event.findMany({
 			where: {
-				start: {
-					gt: new Date(),
+				end: {
+					gt: cutoff,
 				},
 			},
+			orderBy: {
+				start: "asc",
+			},
 		});
-
-		if (!events) {
-			throw new Error("No events found");
-		}
-
-		return events;
 	}),
 });
