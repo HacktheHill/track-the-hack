@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { getDueEventNotificationIds, resetEventNotificationState } from "../src/server/push";
+import { getDueEventNotificationIds, resetEventNotificationState } from "../src/server/push.ts";
 
 test("only returns events that are due and have not already been notified", () => {
     resetEventNotificationState();
