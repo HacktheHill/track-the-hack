@@ -6,11 +6,94 @@ import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
 
 import App from "../../components/App";
 import Error from "../../components/Error";
 import Loading from "../../components/Loading";
 import { trpc } from "../../server/api/api";
+
+const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
+
+const urlBase64ToUint8Array = (value: string) => {
+	const padded = value.padEnd(Math.ceil(value.length / 4) * 4, "=");
+	const normalized = padded.replace(/-/g, "+").replace(/_/g, "/");
+	const binary = atob(normalized);
+	const bytes = new Uint8Array(binary.length);
+
+	for (let index = 0; index < binary.length; index += 1) {
+		bytes[index] = binary.charCodeAt(index);
+	}
+
+	return bytes;
+};
+
+const EVENT_NOTIFICATION_STORAGE_KEY = "track-the-hack:event-notification-requests";
+
+const getRequestedEventNotifications = () => {
+	if (typeof window === "undefined") {
+		return [] as string[];
+	}
+
+	const raw = window.localStorage.getItem(EVENT_NOTIFICATION_STORAGE_KEY);
+	if (!raw) {
+		return [] as string[];
+	}
+
+	try {
+		const parsed = JSON.parse(raw) as unknown;
+		if (!Array.isArray(parsed)) {
+			return [] as string[];
+		}
+
+		return parsed.filter((value): value is string => typeof value === "string");
+	} catch {
+		return [] as string[];
+	}
+};
+
+const isEventNotificationRequested = (eventId: string) => {
+	if (typeof window === "undefined" || !("Notification" in window)) {
+		return false;
+	}
+
+	return Notification.permission === "granted" && getRequestedEventNotifications().includes(eventId);
+};
+
+const setRequestedEventNotifications = (requestedEvents: string[]) => {
+	if (typeof window === "undefined") {
+		return;
+	}
+
+	window.localStorage.setItem(EVENT_NOTIFICATION_STORAGE_KEY, JSON.stringify(requestedEvents));
+};
+
+const clearEventNotificationRequest = (eventId: string) => {
+	const requestedEvents = getRequestedEventNotifications();
+	const wasRequested = requestedEvents.includes(eventId);
+	if (!wasRequested) {
+		return false;
+	}
+
+	setRequestedEventNotifications(requestedEvents.filter(requestedEventId => requestedEventId !== eventId));
+	return true;
+};
+
+const requestEventNotificationPermission = async () => {
+	if (typeof window === "undefined" || !("Notification" in window)) {
+		return false;
+	}
+
+	if (Notification.permission === "granted") {
+		return true;
+	}
+
+	if (Notification.permission === "denied") {
+		return false;
+	}
+
+	return (await Notification.requestPermission()) === "granted";
+};
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
@@ -59,6 +142,89 @@ const EventView = ({ event, types }: EventViewProps) => {
 	const { t } = useTranslation("event");
 	const router = useRouter();
 	const { locale } = router;
+	const [notifyRequested, setNotifyRequested] = useState(() => isEventNotificationRequested(event.id));
+
+	useEffect(() => {
+		setNotifyRequested(isEventNotificationRequested(event.id));
+	}, [event.id]);
+
+	const handleNotifyToggle = async () => {
+		if (typeof window === "undefined") {
+			return;
+		}
+
+		if (notifyRequested) {
+			try {
+				if ("serviceWorker" in navigator && "PushManager" in window) {
+					const registrations = await navigator.serviceWorker.getRegistrations();
+					for (const registration of registrations) {
+						const existingSubscription = await registration.pushManager.getSubscription();
+						if (existingSubscription) {
+							await existingSubscription.unsubscribe();
+						}
+					}
+				}
+			} catch {
+				// Ignore cleanup failures and still clear the UI state.
+			}
+
+			const wasRemoved = clearEventNotificationRequest(event.id);
+			if (!wasRemoved) {
+				const requestedEvents = getRequestedEventNotifications();
+				setRequestedEventNotifications(requestedEvents.filter(requestedEventId => requestedEventId !== event.id));
+			}
+			setNotifyRequested(false);
+			return;
+		}
+
+		const permissionGranted = await requestEventNotificationPermission();
+		if (!permissionGranted) {
+			setNotifyRequested(false);
+			return;
+		}
+
+		if (!("serviceWorker" in navigator) || !("PushManager" in window) || !VAPID_PUBLIC_KEY) {
+			const requestedEvents = getRequestedEventNotifications();
+			const nextRequestedEvents = requestedEvents.includes(event.id)
+				? requestedEvents
+				: [...requestedEvents, event.id];
+			setRequestedEventNotifications(nextRequestedEvents);
+			setNotifyRequested(true);
+			return;
+		}
+
+		try {
+			const registration = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+			const subscription = await registration.pushManager.subscribe({
+				userVisibleOnly: true,
+				applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+			});
+
+			const response = await fetch("/api/push/register", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					eventId: event.id,
+					enabled: true,
+					subscription: subscription.toJSON(),
+				}),
+			});
+
+			if (!response.ok) {
+				throw new globalThis.Error("Failed to register push subscription");
+			}
+		} catch {
+			setNotifyRequested(false);
+			return;
+		}
+
+		const requestedEvents = getRequestedEventNotifications();
+		const nextRequestedEvents = requestedEvents.includes(event.id)
+			? requestedEvents
+			: [...requestedEvents, event.id];
+		setRequestedEventNotifications(nextRequestedEvents);
+		setNotifyRequested(true);
+	};
 
 	const {
 		name,
@@ -122,6 +288,17 @@ const EventView = ({ event, types }: EventViewProps) => {
 				<h3 className="text-md">{room}</h3>
 				{type !== "ALL" && <h3 className="text-md">{types[type]}</h3>}
 				<h3 className="text-sm">{host}</h3>
+				<button
+					type="button"
+					onClick={() => void handleNotifyToggle()}
+					aria-pressed={notifyRequested}
+					className={`mt-4 w-fit rounded-lg border px-4 py-2 font-coolvetica text-base transition-colors ${notifyRequested
+						? "border-dark-color bg-dark-color text-light-color"
+						: "border-dark-color bg-light-primary-color text-dark-color hover:bg-dark-secondary-color"
+						}`}
+				>
+					{notifyRequested ? t("notify-me-active") : t("notify-me")}
+				</button>
 			</div>
 
 			{image && (
