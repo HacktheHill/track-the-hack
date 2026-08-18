@@ -24,16 +24,15 @@ export const metricsRouter = createTRPCRouter({
 		const confirmed = await ctx.prisma.hacker.count({ where: { confirmed: true } });
 		const checkedIn = await ctx.prisma.presence.count({ where: { label: "Check-In" } });
 		const walkIn = await ctx.prisma.hacker.count({ where: { walkIn: true } });
-		const presences = (
-			await ctx.prisma.presence.findMany({
-				select: {
-					value: true,
-				},
-			})
-		).reduce((sum, presence) => sum + presence.value, 0);
+		const presencesAggregate = await ctx.prisma.presence.aggregate({
+			_sum: {
+				value: true,
+			},
+		});
+		const presences = presencesAggregate._sum.value ?? 0;
 		const attendees =
-			(await ctx.prisma.hacker.count({ where: { confirmed: true } })) +
-			(await ctx.prisma.hacker.count({ where: { walkIn: true } })) +
+			confirmed +
+			walkIn +
 			ORGANIZER_COUNT +
 			MENTOR_COUNT +
 			SPONSOR_COUNT +
