@@ -1,5 +1,11 @@
 {
 	"title": "Lecteur QR opérationnel",
 	"view-participant": "Afficher le dossier opérationnel du participant",
-	"unknown-error": "Le participant ou l’action de l’événement n’a pas pu être chargé."
+	"unknown-error": "Le participant ou l’action de l’événement n’a pas pu être chargé.",
+	"confirmed": "Confirmé : {{value}}",
+	"yes": "Oui",
+	"no": "Non",
+	"t-shirt": "T-shirt : {{value}}",
+	"meal": "Repas : {{value}}",
+	"walk-in": "Inscrit sur place"
 }
