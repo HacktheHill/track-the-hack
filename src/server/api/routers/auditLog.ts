@@ -27,8 +27,6 @@ export const logRouter = createTRPCRouter({
 				throw new Error("Audit Log unsuccessful");
 			}
 
-			console.log(log);
-
 			return log;
 		}),
 
