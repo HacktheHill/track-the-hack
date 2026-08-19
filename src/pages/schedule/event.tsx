@@ -84,8 +84,9 @@ const EventView = ({ event, types }: EventViewProps) => {
 			<button
 				className="absolute right-4 top-4 text-dark-primary-color transition-all duration-500 hover:scale-110 hover:text-dark-color"
 				onClick={() => void router.push("/schedule")}
+				aria-label={t("close-event")}
 			>
-				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
 					<title>{t("close-event")}</title>
 					<path
 						d="M24 0L0 24"
