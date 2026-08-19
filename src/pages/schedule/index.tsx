@@ -3,6 +3,7 @@ import { EventType } from "@prisma/client";
 import type { GetStaticProps, NextPage } from "next";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
+import { useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import App from "../../components/App";
@@ -29,6 +30,36 @@ const Schedule: NextPage = () => {
 	if (locale === "fr") {
 		dateLocale = "fr-CA";
 	}
+
+	const tab =
+		typeof router.query.tab === "string" && Object.keys(EventType).includes(router.query.tab)
+			? (router.query.tab as EventType)
+			: EventType.ALL;
+
+	// ⚡ Bolt Performance Optimization:
+	// Memoize events array processing to prevent expensive array methods and
+	// `toLocaleDateString` execution on every re-render.
+	const events = useMemo(() => {
+		if (!query.data) return [];
+		return query.data
+			.filter(event => !event.hidden)
+			.filter(event => event.end.getTime() + 30 * 60 * 1000 > Date.now())
+			.filter(event => EventType[event.type] === tab || tab === EventType.ALL)
+			.sort((a, b) => {
+				if (a.start.getTime() === b.start.getTime()) {
+					return a.end.getTime() - b.end.getTime();
+				}
+				return a.start.getTime() - b.start.getTime();
+			})
+			.reduce((acc, event, i, array) => {
+				if (array[i]?.start.toLocaleDateString(dateLocale) === array[i - 1]?.start.toLocaleDateString(dateLocale)) {
+					acc[acc.length - 1]?.push(event);
+				} else {
+					acc.push([event]);
+				}
+				return acc;
+			}, [] as Event[][]);
+	}, [query.data, tab, dateLocale]);
 
 	if (query.isLoading || query.data == null) {
 		return (
@@ -62,30 +93,6 @@ const Schedule: NextPage = () => {
 				return "bg-dark-color text-light-color";
 		}
 	};
-
-	const tab =
-		typeof router.query.tab === "string" && Object.keys(EventType).includes(router.query.tab)
-			? (router.query.tab as EventType)
-			: EventType.ALL;
-
-	const events = query.data
-		.filter(event => !event.hidden)
-		.filter(event => event.end.getTime() + 30 * 60 * 1000 > Date.now())
-		.filter(event => EventType[event.type] === tab || tab === EventType.ALL)
-		.sort((a, b) => {
-			if (a.start.getTime() === b.start.getTime()) {
-				return a.end.getTime() - b.end.getTime();
-			}
-			return a.start.getTime() - b.start.getTime();
-		})
-		.reduce((acc, event, i, array) => {
-			if (array[i]?.start.toLocaleDateString(dateLocale) === array[i - 1]?.start.toLocaleDateString(dateLocale)) {
-				acc[acc.length - 1]?.push(event);
-			} else {
-				acc.push([event]);
-			}
-			return acc;
-		}, [] as Event[][]);
 
 	return (
 		<App className="flex h-0 flex-col items-center bg-default-gradient" integrated={true} title={t("title")}>

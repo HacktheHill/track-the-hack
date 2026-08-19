@@ -1,0 +1,3 @@
+## 2025-02-23 - Expensive synchrononous array operations during React render
+**Learning:** Found a codebase-specific anti-pattern in Next.js pages (`src/pages/schedule/index.tsx`) where multiple `.filter`, `.sort`, and `.reduce` operations (which inside use expensive native `toLocaleDateString` methods) were being run synchronously on every React render without `useMemo`. This blocks the main thread on every re-render (which occurs on tab changes or other state updates).
+**Action:** Always wrap heavy synchronous calculations of props/data arrays in `useMemo` in React components, especially if they are mapping over data received from TRPC queries or using expensive native methods like `Intl` or `Date.toLocaleString`.
