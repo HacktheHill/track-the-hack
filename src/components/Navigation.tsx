@@ -4,6 +4,7 @@ import { useTranslation } from "next-i18next";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import { useHasParticipantPass } from "../utils/participant-pass";
 import Filter from "./Filter";
 
 type LinkItemProps = {
@@ -32,10 +33,14 @@ type LinkProps = {
 const Links = ({ bottom }: LinkProps) => {
 	const { t } = useTranslation("navbar");
 	const { data: sessionData } = useSession();
+	const hasPass = useHasParticipantPass();
 
 	return (
 		<>
 			<LinkItem href="/" bottom={bottom} text={t("home")} src="/assets/home.svg" alt={t("home")} />
+			{hasPass && (
+				<LinkItem href="/profile" bottom={bottom} text={t("pass")} src="/assets/qr.svg" alt={t("pass")} />
+			)}
 			<Filter value={[RoleName.ORGANIZER, RoleName.ADMIN]} silent method="some">
 				<LinkItem href="/qr" bottom={bottom} text={t("qr")} src="/assets/qr.svg" alt={t("qr")} />
 			</Filter>
