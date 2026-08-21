@@ -1,8 +1,8 @@
-import { PrismaClient } from "@prisma/client";
+import { RoleName } from "@prisma/client";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { hasRoles } from "../../../utils/helpers";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-
-const prisma = new PrismaClient();
 
 export const logRouter = createTRPCRouter({
 	new: protectedProcedure
@@ -18,8 +18,22 @@ export const logRouter = createTRPCRouter({
 				sourceType: z.string(),
 			}),
 		)
-		.mutation(async ({ input }) => {
-			const log = await prisma.log.create({
+		.mutation(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+			const user = await ctx.prisma.user.findUnique({
+				where: { id: userId },
+				select: { roles: { select: { name: true } } },
+			});
+
+			if (!user) {
+				throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+			}
+
+			if (!hasRoles(user, [RoleName.ADMIN])) {
+				throw new TRPCError({ code: "FORBIDDEN", message: "You do not have permission to do this" });
+			}
+
+			const log = await ctx.prisma.log.create({
 				data: input,
 			});
 
@@ -30,8 +44,22 @@ export const logRouter = createTRPCRouter({
 			return log;
 		}),
 
-	all: protectedProcedure.query(async () => {
-		const logs = await prisma.log.findMany({
+	all: protectedProcedure.query(async ({ ctx }) => {
+		const userId = ctx.session.user.id;
+		const user = await ctx.prisma.user.findUnique({
+			where: { id: userId },
+			select: { roles: { select: { name: true } } },
+		});
+
+		if (!user) {
+			throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+		}
+
+		if (!hasRoles(user, [RoleName.ADMIN])) {
+			throw new TRPCError({ code: "FORBIDDEN", message: "You do not have permission to do this" });
+		}
+
+		const logs = await ctx.prisma.log.findMany({
 			orderBy: [
 				{
 					timestamp: "desc",
@@ -43,6 +71,6 @@ export const logRouter = createTRPCRouter({
 			throw new Error("No audit logs found");
 		}
 
-		return logs
+		return logs;
 	}),
 });
