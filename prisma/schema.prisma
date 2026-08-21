@@ -84,6 +84,7 @@ model Hacker {
   teamId                 String?
   presences              Presence[]
   cancellationCapability CancellationCapability?
+  claimToken             ClaimToken?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -99,6 +100,19 @@ model CancellationCapability {
   hacker    Hacker   @relation(fields: [hackerId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
+}
+
+// The raw claim token is never persisted. A token contains this random claim id
+// plus an HMAC generated from the server-only claim key. One row per hacker, so
+// issuing access again replaces a token that has not been used yet.
+model ClaimToken {
+  id         String    @id
+  hackerId   String    @unique
+  hacker     Hacker    @relation(fields: [hackerId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @default(now()) @updatedAt
 }
 
 model Presence {
