@@ -70,6 +70,39 @@ export class PrismaHackerLifecycleRepository implements HackerLifecycleRepositor
 		});
 	}
 
+	async replaceClaimToken(hackerId: string, claimId: string, expiresAt: Date) {
+		const hacker = await this.prisma.hacker.findUnique({ where: { id: hackerId }, select: { id: true } });
+		if (!hacker) return false;
+
+		// One row per participant, so re-issuing access kills the previous QR.
+		await this.prisma.claimToken.upsert({
+			where: { hackerId },
+			create: { id: claimId, hackerId, expiresAt },
+			update: { id: claimId, expiresAt, consumedAt: null },
+		});
+		return true;
+	}
+
+	async redeemClaimToken(claimId: string, now: Date) {
+		return this.prisma.$transaction(async transaction => {
+			// The conditions live in the UPDATE rather than a read followed by a
+			// write, so two devices scanning at once cannot both be handed a
+			// session. Whoever gets count 1 won.
+			const redeemed = await transaction.claimToken.updateMany({
+				where: { id: claimId, consumedAt: null, expiresAt: { gt: now } },
+				data: { consumedAt: now },
+			});
+
+			if (redeemed.count === 0) return null;
+
+			const claim = await transaction.claimToken.findUnique({
+				where: { id: claimId },
+				select: { hackerId: true },
+			});
+			return claim?.hackerId ?? null;
+		});
+	}
+
 	async reconcile(ids: string[]) {
 		const hackers = await this.prisma.hacker.findMany({
 			where: { id: { in: ids } },
