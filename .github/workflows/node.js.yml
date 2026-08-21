@@ -28,6 +28,8 @@ jobs:
             GOOGLE_CLIENT_SECRET: build
             SHEETS_INTEGRATION_API_KEY: build-only-sheets-key-with-at-least-32-characters
             CANCELLATION_TOKEN_SECRET: build-only-cancellation-secret-at-least-32-characters
+            CLAIM_TOKEN_SECRET: build-only-claim-token-secret-at-least-32-characters
+            PARTICIPANT_SESSION_SECRET: build-only-participant-session-secret-at-least-32-chars
             SPONSORSHIP_GOOGLE_CLIENT_ID: build
             SPONSORSHIP_GOOGLE_CLIENT_SECRET: build
             SPONSORSHIP_GOOGLE_REFRESH_TOKEN: build
