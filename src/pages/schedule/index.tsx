@@ -1,6 +1,7 @@
 import type { Event } from "@prisma/client";
 import { EventType } from "@prisma/client";
 import type { GetStaticProps, NextPage } from "next";
+import { useMemo, useEffect, useState } from "react";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Link from "next/link";
@@ -29,6 +30,44 @@ const Schedule: NextPage = () => {
 	if (locale === "fr") {
 		dateLocale = "fr-CA";
 	}
+
+	const [now, setNow] = useState(Date.now());
+
+	useEffect(() => {
+		const interval = setInterval(() => {
+			setNow(Date.now());
+		}, 60000); // update now every minute
+		return () => clearInterval(interval);
+	}, []);
+
+	const tab =
+		typeof router.query.tab === "string" && Object.keys(EventType).includes(router.query.tab)
+			? (router.query.tab as EventType)
+			: EventType.ALL;
+
+	// ⚡ Bolt Optimization: Memoize the expensive array formatting, filtering, and sorting
+	// to prevent blocking the main thread on every render. Reduces CPU cycles on re-renders.
+	const events = useMemo(() => {
+		if (!query.data) return [];
+		return query.data
+			.filter(event => !event.hidden)
+			.filter(event => event.end.getTime() + 30 * 60 * 1000 > now)
+			.filter(event => EventType[event.type] === tab || tab === EventType.ALL)
+			.sort((a, b) => {
+				if (a.start.getTime() === b.start.getTime()) {
+					return a.end.getTime() - b.end.getTime();
+				}
+				return a.start.getTime() - b.start.getTime();
+			})
+			.reduce((acc, event, i, array) => {
+				if (array[i]?.start.toLocaleDateString(dateLocale) === array[i - 1]?.start.toLocaleDateString(dateLocale)) {
+					acc[acc.length - 1]?.push(event);
+				} else {
+					acc.push([event]);
+				}
+				return acc;
+			}, [] as Event[][]);
+	}, [query.data, tab, dateLocale, now]);
 
 	if (query.isLoading || query.data == null) {
 		return (
@@ -62,30 +101,6 @@ const Schedule: NextPage = () => {
 				return "bg-dark-color text-light-color";
 		}
 	};
-
-	const tab =
-		typeof router.query.tab === "string" && Object.keys(EventType).includes(router.query.tab)
-			? (router.query.tab as EventType)
-			: EventType.ALL;
-
-	const events = query.data
-		.filter(event => !event.hidden)
-		.filter(event => event.end.getTime() + 30 * 60 * 1000 > Date.now())
-		.filter(event => EventType[event.type] === tab || tab === EventType.ALL)
-		.sort((a, b) => {
-			if (a.start.getTime() === b.start.getTime()) {
-				return a.end.getTime() - b.end.getTime();
-			}
-			return a.start.getTime() - b.start.getTime();
-		})
-		.reduce((acc, event, i, array) => {
-			if (array[i]?.start.toLocaleDateString(dateLocale) === array[i - 1]?.start.toLocaleDateString(dateLocale)) {
-				acc[acc.length - 1]?.push(event);
-			} else {
-				acc.push([event]);
-			}
-			return acc;
-		}, [] as Event[][]);
 
 	return (
 		<App className="flex h-0 flex-col items-center bg-default-gradient" integrated={true} title={t("title")}>

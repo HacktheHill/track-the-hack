@@ -1,0 +1,3 @@
+## 2024-05-24 - Expensive Synchronous Array Operations in Render Phase
+**Learning:** Found a recurring anti-pattern where expensive synchronous array operations (.filter, .sort, .reduce) and formatting (e.g., Date.toLocaleDateString) are executed directly in the render phase of top-level pages receiving TRPC queries. Attempting to just memoize `Date.now()` breaks auto-updating behavior.
+**Action:** Always wrap these derived data calculations in `useMemo` hooks to prevent main thread blocking on every re-render. Be careful with implicit dependencies like `Date.now()` and replace them with state that periodically updates via `setInterval`.
