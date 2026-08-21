@@ -1,0 +1,15 @@
+{
+	"title": "Your event pass",
+	"qr-alt": "Your event QR code",
+	"qr-explanation": "Show this to an organizer for check-in, meals, merchandise and workshops. It works without a connection.",
+	"details": "Your details",
+	"confirmed": "Attendance confirmed",
+	"t-shirt": "T-shirt size",
+	"meal": "Meal category",
+	"team": "Team",
+	"walk-in": "Walk-in",
+	"attendance": "Your attendance",
+	"no-attendance": "Nothing recorded yet.",
+	"yes": "Yes",
+	"no": "No"
+}
