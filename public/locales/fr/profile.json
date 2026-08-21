@@ -1,0 +1,15 @@
+{
+	"title": "Votre laissez-passer",
+	"qr-alt": "Votre code QR pour l’événement",
+	"qr-explanation": "Présentez-le à un organisateur pour l’enregistrement, les repas, les articles promotionnels et les ateliers. Il fonctionne sans connexion.",
+	"details": "Vos informations",
+	"confirmed": "Présence confirmée",
+	"t-shirt": "Taille de t-shirt",
+	"meal": "Catégorie de repas",
+	"team": "Équipe",
+	"walk-in": "Inscrit sur place",
+	"attendance": "Votre participation",
+	"no-attendance": "Rien d’enregistré pour l’instant.",
+	"yes": "Oui",
+	"no": "Non"
+}
