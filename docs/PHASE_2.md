@@ -1,5 +1,10 @@
 # Phase 2: Day-of participant access and event operations
 
+> Historical implementation brief. The bound Google Sheets Apps Script was
+> subsequently implemented and is versioned in
+> [`integrations/google-sheets`](../integrations/google-sheets); current behavior
+> is documented in [`PHASE_2_IMPLEMENTED.md`](./PHASE_2_IMPLEMENTED.md).
+
 ## Objective
 
 Implement the complete day-of path in this repository: an organizer issues access from an accepted Sheet row, the participant claims it on their device, Track the Hack creates a participant session that is separate from NextAuth, and the participant can use their operational profile and QR throughout the event.

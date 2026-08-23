@@ -1,5 +1,5 @@
 import { RoleName } from "@prisma/client";
-import { signIn, signOut, useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { useTranslation } from "next-i18next";
 import Image from "next/image";
 import Link from "next/link";
@@ -150,7 +150,9 @@ const Navbar = ({ integrated }: NavbarProps) => {
 			) : (
 				<button
 					className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors sm:visible"
-					onClick={() => void signIn("google")}
+					onClick={() =>
+						void router.push({ pathname: "/auth/sign-in", query: { callbackUrl: router.asPath } })
+					}
 				>
 					{t("sign-in")}
 				</button>

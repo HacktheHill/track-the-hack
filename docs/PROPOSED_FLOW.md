@@ -82,8 +82,8 @@ Full participant access is issued in person after identity verification. RSVP an
 ### Check-In Flow
 
 1. The participant presents government-issued ID. An organizer verifies it visually and finds the participant's accepted row in the Sheet; ID details are not recorded.
-2. The organizer selects the row and uses a Google Sheets sidebar action to issue app access.
-3. The Apps Script backend calls a restricted Track the Hack endpoint with the participant ID, required operational fields from the selected row, and an API key kept in server-side Apps Script configuration rather than spreadsheet cells or the browser sidebar.
+2. The organizer selects the row and uses the Google Sheets `Track the Hack` menu to issue app access.
+3. The Apps Script backend calls a restricted Track the Hack endpoint with the participant ID, required operational fields from the selected row, and an API key kept in server-side Apps Script configuration rather than spreadsheet cells or client-side dialogs.
 4. Track the Hack creates or updates the minimal Hacker record and returns a random, short-lived, single-use claim URL.
 5. The participant scans the QR code on the device they will use. Track the Hack atomically consumes the claim token and creates the participant session in an HTTP-only, Secure, SameSite cookie.
 
@@ -91,7 +91,7 @@ The claim QR contains the one-time token, not the participant ID. Only one parti
 
 ### Walk-Ins
 
-A walk-in completes the same Tally application at the event. After the submission syncs to the Sheet, an organizer reviews it, assigns a participant ID, and uses the same sidebar action to create the minimal Track the Hack record with walkIn \= true and issue access. No separate Track the Hack walk-in form is needed.
+A walk-in completes the same Tally application at the event. After the submission syncs to the Sheet, an organizer reviews it, assigns a participant ID, and uses the explicit walk-in action in the `Track the Hack` Sheet menu to create the minimal record with walkIn \= true and issue access. No separate Track the Hack walk-in form is needed.
 
 ## Operational Event QR and Scanning
 
@@ -147,7 +147,7 @@ New functionality required by this proposal:
 - mealCategory
 - RSVP confirmation and cancellation capability
 - RSVP reconciliation back to the Sheet and confirmation-email export
-- Google Sheets sidebar access issuance and its protected Track the Hack endpoint
+- Google Sheets Apps Script access issuance and its protected Track the Hack endpoint
 - Single-use claim tokens and participant sessions independent of NextAuth
 - Operational participant QR using Hacker.id
 - The walk-in flow through Tally, the Sheet, and the same access-issuance path
@@ -157,7 +157,7 @@ New functionality required by this proposal:
 1. Move application, waiver, and guardian-consent collection to Tally/Sheets and remove the corresponding Track the Hack application/review data paths.
 2. Reduce the Hacker model and update operational scanner/profile code to the minimal fields.
 3. Implement RSVP confirmation, cancellation capability, reconciliation, and React Email templates.
-4. Implement the Sheets sidebar endpoint, one-time claim flow, participant session, and walk-in path.
+4. Implement the bound Apps Script integration, one-time claim flow, participant session, and walk-in path.
 5. Update participant profile, event QR, and metrics; remove team storage because Discord is the source of truth.
 
 This design targets a clean, empty database. Legacy database records and participant files are outside the Phase 1 implementation: this repository does not migrate, archive, retain, or delete them. Their handling belongs to the relevant data owner and infrastructure operator under a separately approved retention process.

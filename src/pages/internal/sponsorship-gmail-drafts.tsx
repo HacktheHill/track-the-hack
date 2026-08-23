@@ -3,7 +3,7 @@ import { useSession } from "next-auth/react";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import type { GetServerSideProps, NextPage } from "next/types";
-import { createRef, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import App from "@/components/App";
 import Error from "@/components/Error";
@@ -397,17 +397,13 @@ const SponsorshipGmailDrafts: NextPage = () => {
 	const [customizeTemplate, setCustomizeTemplate] = useState(false);
 	const [customTemplate, setCustomTemplate] = useState("");
 
-	const emailPreview = createRef<HTMLDivElement>();
-
 	const copyToClipBoard = async () => {
-		if (emailPreview.current) {
-			await navigator.clipboard.writeText(emailPreview.current.innerHTML);
-			setCopied(true);
-			setTimeout(() => setCopied(false), 1000);
-		}
+		await navigator.clipboard.writeText(htmlPreview);
+		setCopied(true);
+		setTimeout(() => setCopied(false), 1000);
 	};
 
-	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
 
 		const formData = new FormData(event.currentTarget);
@@ -426,8 +422,9 @@ const SponsorshipGmailDrafts: NextPage = () => {
 		if (!parse.success) {
 			setError(t("invalid-form"));
 		} else {
-			mutation.mutate(parse.data);
-			if (!mutation.error) {
+			setError("");
+			try {
+				await mutation.mutateAsync(parse.data);
 				setError("");
 				setDrafted(true);
 				setTimeout(() => {
@@ -447,8 +444,8 @@ const SponsorshipGmailDrafts: NextPage = () => {
 					setCustomizeTemplate(false);
 					setCustomTemplate("");
 				}, 1000);
-			} else {
-				setError(mutation.error.message);
+			} catch (error) {
+				setError(error instanceof globalThis.Error ? error.message : t("common:unknown-error"));
 			}
 		}
 	};
@@ -468,7 +465,10 @@ const SponsorshipGmailDrafts: NextPage = () => {
 	return (
 		<App className="overflow-y-auto bg-default-gradient p-8 sm:p-12" title={t("title")}>
 			<Filter value={RoleName.ORGANIZER} method="above">
-				<form onSubmit={handleSubmit} className="m-auto flex w-fit flex-col items-center gap-4">
+				<form
+					onSubmit={event => void handleSubmit(event)}
+					className="m-auto flex w-fit flex-col items-center gap-4"
+				>
 					<h1 className="font-rubik text-4xl font-bold">{t("title")}</h1>
 					<div className="flex w-full flex-col items-center gap-2 sm:flex-row">
 						<label htmlFor="organizer-full-name" className="flex-[50%] font-rubik">
@@ -600,7 +600,7 @@ const SponsorshipGmailDrafts: NextPage = () => {
 							<p className="text-center font-rubik text-red-500">{error}</p>
 						</div>
 					)}
-					<div className="relative h-[500px] w-full rounded-md bg-light-color shadow-md" ref={emailPreview}>
+					<div className="relative h-[500px] w-full rounded-md bg-light-color shadow-md">
 						<button
 							type="button"
 							className="bg-ligh-color hover:bg-medium absolute bottom-4 right-4 rounded-[100px] border-none px-4 py-2 font-rubik text-light-color shadow-md transition-all duration-1000 disabled:hover:bg-light-color"
@@ -614,7 +614,7 @@ const SponsorshipGmailDrafts: NextPage = () => {
 					<button
 						type="submit"
 						className="cursor-pointer whitespace-nowrap rounded-xl border-none bg-medium-primary-color px-8 py-2 font-rubik text-light-color shadow-md transition-all duration-500 hover:bg-light-primary-color"
-						disabled={drafted}
+						disabled={drafted || mutation.isLoading}
 					>
 						{drafted ? t("created-draft-email") : t("create-draft-email")}
 					</button>

@@ -7,10 +7,7 @@ they can show an event QR that organisers scan all weekend.
 Applications, identity and waiver evidence stay in Tally and the Sheet. Nothing
 added here stores a name, an email or a phone number.
 
-## Read this before wiring anything up
-
-Two integration boundaries are external on purpose. Neither should be handled
-by loosening this app.
+## Integration boundaries
 
 1. **Participant ids come from the Sheet.** `Hacker.id` has no `@default`, which
    is Waaberi's decision from phase 1. Adding one breaks the contract, since the
@@ -19,11 +16,12 @@ by loosening this app.
    carries a timestamp. Creating a `Hacker` with no id fails loudly today, and
    that is what we want.
 
-2. **The Sheets sidebar is what calls these endpoints.** It lives outside this
-   repository as Apps Script. This repository defines and enforces only the
-   request and response contract it uses.
+2. **The bound Apps Script calls these endpoints.** Its source is versioned in
+   [`integrations/google-sheets/Code.gs`](../integrations/google-sheets/Code.gs).
+   It owns Sheet column mapping; the application still owns and enforces every
+   lifecycle rule behind the API contract.
 
-Locally you need neither. `npx prisma db seed` makes up ids, and the
+Locally you need neither external service. `npx prisma db seed` creates fixture ids, and the
 provisioning endpoint accepts any valid id you post at it. To experiment,
 change your environment rather than the schema.
 
@@ -39,9 +37,9 @@ The **event QR** shows on the participant's phone and an organiser scans it
 through `/qr`. It holds `Hacker.id` and nothing else, lasts the whole event, and
 only identifies someone at a station.
 
-This repository never draws the claim QR. We return a URL and the sidebar turns
-it into a QR. `/claim` is where the participant lands after scanning, not where
-the code is shown.
+The Apps Script opens `/claim/qr#<token>` on the organiser's screen. That page
+draws the returned claim URL locally in the browser; `/claim` remains the page
+the participant lands on after scanning.
 
 ## The flow
 
@@ -56,7 +54,7 @@ replaceParticipantAccess()     provision, replace claim, revoke session atomical
     v
 { "claimUrl": "https://<host>/claim#<claimId>.<HMAC>", "expiresAt": "..." }
     |
-    | the sidebar renders this as a QR, the participant scans it
+    | /claim/qr renders this as a QR, the participant scans it
     v
 /claim reads window.location.hash and waits for an explicit tap
     |
@@ -83,6 +81,7 @@ Set-Cookie: participant_pass=1
 6. Event-linked Presence counters with unique `(hackerId, eventId)` identity and atomic caps
 7. Scanner responses limited to the fields required by the selected workflow
 8. Focused lifecycle, scanner-workflow, and offline-pass tests
+9. The bound Google Sheets adapter and organiser claim-QR display
 
 `qrcode` went back into `package.json`, since phase 1 removed it along with the
 old encrypted QR component.
@@ -203,46 +202,27 @@ client, so neither needs a database.
 ## Trying it locally
 
 ```sh
-docker compose up -d
-npx prisma migrate deploy
-npx prisma db seed
+npm run dev:setup
 npm run dev
 ```
 
-The npm script pins webpack because Next 16 defaults to Turbopack and refuses
-to start next to this repository's webpack config.
+The setup is deterministic and rerunnable. Local organizer auth, Tally/Sheet
+fixtures, loopback SMTP email capture, the database-backed lifecycle check, and
+the production-like offline check are documented in [`DEV_E2E.md`](./DEV_E2E.md).
+The local organizer provider is loopback-only; use real Google OAuth rather than
+exposing it on a LAN.
 
-Get a seeded id, which `prisma/seeders/hackers.mts` makes up locally:
+## Google Sheets adapter
 
-```sh
-docker exec track-the-hack-mysql-1 mysql -uroot -proot -N -B \
-  -e "SELECT id FROM Hacker LIMIT 1;" track-the-hack
-```
+The bound Apps Script source is versioned in
+[`integrations/google-sheets/Code.gs`](../integrations/google-sheets/Code.gs).
+It maps the real bilingual Tally response headers, generates opaque participant
+IDs, provisions selected accepted rows, reconciles RSVP state, and opens the
+returned five-minute claim as a QR rendered by `/claim/qr`. Identity, contact,
+waiver, Tally-ID, and detailed dietary data are never included in API payloads.
 
-```sh
-curl -X POST http://localhost:3000/api/integrations/sheets/claim \
-  -H "Authorization: Bearer $SHEETS_INTEGRATION_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"id":"<participant id>","tShirtSize":"M","mealCategory":"HALAL","acceptanceExpiry":"2026-09-01T03:59:59.000Z","walkIn":false}'
-```
-
-Open the returned `claimUrl` and press the button. Pressing it again gives the
-generic failure. Worth checking too: reloading `/claim` first leaves the token
-unused, "My pass" appears once you are through, reopening `/claim` bounces you
-to `/profile`, and no fragment is left in the address bar.
-
-For a phone, the URL is built from `NEXTAUTH_URL`, so point it at the machine's
-LAN address, run with `--hostname 0.0.0.0`, and put it back afterwards. Use a
-private tab to start clean. `/qr` cannot be reached
-locally at all without Google OAuth on a verified `@ctn-rtc.org` account.
-
-## Outside this repository
-
-The in-repository Phase 2 path is implemented. The Google Sheets Apps Script
-still has to send the exact request object documented above and draw the
-returned `claimUrl` as a QR. Sheet/Tally column mapping and participant-id
-generation remain external-system work; this app intentionally does not accept
-alternate field names or infer missing values.
+The three deployment values that remain environment configuration are listed in
+[`integrations/google-sheets/README.md`](../integrations/google-sheets/README.md).
 
 ## Phase 3
 

@@ -39,6 +39,9 @@ const withPWA = require("next-pwa")({
 	dest: "public",
 	register: true,
 	disable: process.env.NODE_ENV === "development",
+	// Next 16 emits this file into .next but does not serve it from /_next.
+	// Precaching it makes the whole service-worker installation fail on a 404.
+	buildExcludes: [/dynamic-css-manifest\.json$/],
 	additionalManifestEntries: passPrecacheEntries,
 	runtimeCaching: [apiNetworkOnly, ...participantProfileNetworkOnly, ...defaultRuntimeCaching],
 });
@@ -46,6 +49,7 @@ const withPWA = require("next-pwa")({
 module.exports = withPWA({
 	reactStrictMode: true,
 	i18n,
+	distDir: process.env.NEXT_DIST_DIR || ".next",
 	experimental: { useTypeScriptCli: false },
 	webpack: (config, { buildId }) => {
 		for (const entry of passPrecacheEntries) entry.revision = buildId;
@@ -57,6 +61,9 @@ module.exports = withPWA({
 	},
 
 	images: {
-		domains: ["cdn1.hackthehill.com", "2024.hackthehill.com"],
+		remotePatterns: [
+			{ protocol: "https", hostname: "cdn1.hackthehill.com", pathname: "/**" },
+			{ protocol: "https", hostname: "2024.hackthehill.com", pathname: "/Logos/**" },
+		],
 	},
 });

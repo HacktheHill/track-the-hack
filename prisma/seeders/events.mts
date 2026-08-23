@@ -11,6 +11,7 @@ const at = (hours: number, minutes = 0) => {
 
 const events = [
 	{
+		id: "dev-event-check-in",
 		start: at(9),
 		end: at(11),
 		name: "Check In",
@@ -23,6 +24,7 @@ const events = [
 		maxCheckIns: 1,
 	},
 	{
+		id: "dev-event-merchandise",
 		start: at(9),
 		end: at(11),
 		name: "Merchandise Pickup",
@@ -35,6 +37,7 @@ const events = [
 		maxCheckIns: 1,
 	},
 	{
+		id: "dev-event-opening",
 		start: at(11),
 		end: at(12),
 		name: "Opening Ceremony",
@@ -47,6 +50,7 @@ const events = [
 		maxCheckIns: 1,
 	},
 	{
+		id: "dev-event-lunch",
 		start: at(12),
 		end: at(12, 30),
 		name: "Lunch",
@@ -58,6 +62,7 @@ const events = [
 		room: "Room 3",
 	},
 	{
+		id: "dev-event-hardware-workshop",
 		start: at(12, 30),
 		end: at(14),
 		name: "Hardware Workshop",
@@ -69,6 +74,7 @@ const events = [
 		room: "Room 4",
 	},
 	{
+		id: "dev-event-resume-workshop",
 		start: at(12, 30),
 		end: at(14),
 		name: "Resume Workshop",
@@ -80,6 +86,7 @@ const events = [
 		room: "Room 5",
 	},
 	{
+		id: "dev-event-3d-printing",
 		start: at(12, 30),
 		end: at(14),
 		name: "3D Printing",
@@ -91,6 +98,7 @@ const events = [
 		room: "Room 6",
 	},
 	{
+		id: "dev-event-career-fair",
 		start: at(18),
 		end: at(20),
 		name: "Career Fair",
@@ -104,6 +112,7 @@ const events = [
 		room: "Room 2",
 	},
 	{
+		id: "dev-event-dinner",
 		start: at(20),
 		end: at(21),
 		name: "Dinner",
