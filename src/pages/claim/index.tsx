@@ -1,6 +1,7 @@
 import type { GetServerSideProps } from "next";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
+import { useRouter } from "next/router";
 import { useState } from "react";
 import App from "@/components/App";
 import { env } from "@/env/server.mjs";
@@ -12,7 +13,7 @@ const repository = new PrismaHackerLifecycleRepository(prisma);
 
 // The token rides in the fragment, so it never reaches the server on this GET
 // and stays out of access logs.
-export const getServerSideProps: GetServerSideProps = async ({ req, locale }) => {
+export const getServerSideProps: GetServerSideProps = async ({ req, locale, defaultLocale }) => {
 	// Someone with a session reopened their link or pressed back. Send them to
 	// the pass rather than a button that can only fail.
 	if (
@@ -20,7 +21,12 @@ export const getServerSideProps: GetServerSideProps = async ({ req, locale }) =>
 			repository.findParticipantSession(verifier, now),
 		)
 	) {
-		return { redirect: { destination: "/profile", permanent: false } };
+		return {
+			redirect: {
+				destination: locale && locale !== defaultLocale ? `/${locale}/profile` : "/profile",
+				permanent: false,
+			},
+		};
 	}
 
 	return { props: await serverSideTranslations(locale ?? "en", ["claim", "navbar", "common"]) };
@@ -28,6 +34,7 @@ export const getServerSideProps: GetServerSideProps = async ({ req, locale }) =>
 
 const Claim = () => {
 	const { t } = useTranslation("claim");
+	const router = useRouter();
 	const [submitting, setSubmitting] = useState(false);
 	const [error, setError] = useState("");
 
@@ -42,14 +49,15 @@ const Claim = () => {
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ token: window.location.hash.slice(1) }),
 			});
-			const body = (await response.json()) as { ok: boolean; message?: string };
-			if (!body.ok) {
-				setError(body.message ?? t("unavailable"));
+			if (!response.ok) {
+				setError(t("unavailable"));
 				return;
 			}
 
 			// replace, not push: the token must not survive in session history.
-			window.location.replace("/profile");
+			const profile =
+				router.locale && router.locale !== router.defaultLocale ? `/${router.locale}/profile` : "/profile";
+			window.location.replace(profile);
 		} catch {
 			setError(t("unavailable"));
 		} finally {
