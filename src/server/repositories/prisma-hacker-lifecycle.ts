@@ -49,11 +49,9 @@ export class PrismaHackerLifecycleRepository implements HackerLifecycleRepositor
 		now: Date,
 		cancellationCapabilityId: string,
 	): Promise<ConfirmationResult> {
-		const hacker = await transaction.hacker.findUnique({
-			where: { id },
-			select: { acceptanceExpiry: true },
-		});
-
+		const [hacker] = await transaction.$queryRaw<Array<{ acceptanceExpiry: Date }>>`
+			SELECT acceptanceExpiry FROM \`Hacker\` WHERE id = ${id} FOR UPDATE
+		`;
 		if (!hacker) return "missing";
 		if (hacker.acceptanceExpiry.getTime() <= now.getTime()) return "expired";
 

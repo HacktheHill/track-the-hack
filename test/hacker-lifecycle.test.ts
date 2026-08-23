@@ -52,7 +52,7 @@ class MemoryRepository implements HackerLifecycleRepository {
 	confirmAndRotate(id: string, now: Date, capabilityId: string) {
 		const hacker = this.hackers.get(id);
 		if (!hacker) return Promise.resolve("missing" as const);
-		if (hacker.acceptanceExpiry < now) return Promise.resolve("expired" as const);
+		if (hacker.acceptanceExpiry <= now) return Promise.resolve("expired" as const);
 		hacker.confirmed = true;
 		this.capabilities.set(id, capabilityId);
 		return Promise.resolve("confirmed" as const);
@@ -183,6 +183,35 @@ void test("confirmation enforces expiry and rotates cancellation authorization",
 	hacker.acceptanceExpiry = new Date("2020-01-01T00:00:00Z");
 	await cancelRsvp(repository, createCancellationToken("c".repeat(43), cancellationSecret), cancellationSecret);
 	assert.equal(repository.hackers.get(participantId)?.confirmed, false);
+});
+
+void test("confirmation locks the participant before checking the current expiry", async () => {
+	const now = new Date("2026-08-20T00:00:00Z");
+	const queries: string[] = [];
+	const transaction = {
+		$queryRaw: (query: TemplateStringsArray) => {
+			queries.push(query.join("?"));
+			return Promise.resolve([{ acceptanceExpiry: now }]);
+		},
+		hacker: {
+			update: () => {
+				throw new Error("An expired participant must not be confirmed");
+			},
+		},
+		cancellationCapability: {
+			upsert: () => {
+				throw new Error("An expired participant must not receive a cancellation capability");
+			},
+		},
+	};
+	const prisma = {
+		$transaction: (run: (client: typeof transaction) => Promise<unknown>) => run(transaction),
+	} as unknown as PrismaClient;
+	const repository = new PrismaHackerLifecycleRepository(prisma);
+
+	assert.equal(await repository.confirmAndRotate(participantId, now, "new-capability"), "expired");
+	assert.equal(queries.length, 1);
+	assert.match(queries[0] ?? "", /SELECT acceptanceExpiry FROM `Hacker` WHERE id = \? FOR UPDATE/);
 });
 
 void test("cancellation rejects a capability replaced before its participant lock", async () => {
