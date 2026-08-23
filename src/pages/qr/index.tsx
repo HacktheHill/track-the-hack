@@ -21,7 +21,7 @@ const QR = () => {
 	const { t, i18n } = useTranslation("qr");
 	const utils = trpc.useContext();
 	const events = trpc.events.scannable.useQuery().data ?? [];
-	const scanPresence = trpc.presence.scan.useMutation();
+	const { mutateAsync: scanPresence } = trpc.presence.scan.useMutation();
 	const selectedAction = useRef(VIEW_PARTICIPANT);
 	const previousId = useRef("");
 	const [display, setDisplay] = useState<React.ReactNode>();
@@ -41,7 +41,7 @@ const QR = () => {
 					return;
 				}
 
-				const result = await scanPresence.mutateAsync({ eventId: selectedAction.current, hackerId });
+				const result = await scanPresence({ eventId: selectedAction.current, hackerId });
 				setDisplay(<WorkflowCard result={result} />);
 			} catch {
 				previousId.current = "";
@@ -51,6 +51,7 @@ const QR = () => {
 		},
 		[scanPresence, t, utils],
 	);
+	const handleScan = useCallback((result: string) => void scan(result), [scan]);
 
 	return (
 		<App
@@ -74,8 +75,8 @@ const QR = () => {
 				))}
 			</select>
 			<div className="grid w-full max-w-4xl gap-6 md:grid-cols-2">
-				<QRScanner onScan={result => void scan(result)} setError={setError} />
-				<PhysicalScanner onScan={result => void scan(result)} />
+				<QRScanner onScan={handleScan} setError={setError} />
+				<PhysicalScanner onScan={handleScan} />
 			</div>
 			{display}
 			{error && <ErrorDisplay message={error} />}

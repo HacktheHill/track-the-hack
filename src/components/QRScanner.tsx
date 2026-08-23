@@ -1,4 +1,5 @@
 import QrScanner from "qr-scanner";
+import { useTranslation } from "next-i18next";
 import { memo, useEffect, useRef } from "react";
 
 type QRScannerProps = {
@@ -7,6 +8,7 @@ type QRScannerProps = {
 };
 
 const QRScanner = memo(function QRScanner({ onScan, setError }: QRScannerProps) {
+	const { t } = useTranslation("qr");
 	const video = useRef<HTMLVideoElement>(null);
 
 	useEffect(() => {
@@ -15,9 +17,9 @@ const QRScanner = memo(function QRScanner({ onScan, setError }: QRScannerProps) 
 			onScan(result);
 			setError("");
 		});
-		void scanner.start().catch(() => setError("Unable to start the camera"));
+		void scanner.start().catch(() => setError(t("camera-error")));
 		return () => scanner.stop();
-	}, [onScan, setError]);
+	}, [onScan, setError, t]);
 
 	return <video ref={video} className="aspect-square rounded-3xl object-cover" width="300" height="300" />;
 });
