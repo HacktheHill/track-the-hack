@@ -13,7 +13,7 @@
 	},
 	"scripts": {
 		"build": "next build --webpack",
-		"dev": "next dev",
+		"dev": "next dev --webpack",
 		"test": "tsx --test test/**/*.test.ts",
 		"typecheck": "tsc --noEmit",
 		"organizer:provision": "tsx scripts/provision-organizer.mts",
