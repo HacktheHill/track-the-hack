@@ -22,6 +22,7 @@ void test("PWA configuration keeps participant routes deployment-safe", () => {
 
 	const config = readFileSync("next.config.js", "utf8");
 	assert.match(config, /runtimeCaching: \[apiNetworkOnly,[^\]]*\.\.\.defaultRuntimeCaching\]/);
+	assert.match(config, /buildExcludes: \[\/dynamic-css-manifest\\\.json\$\/\]/);
 	assert.match(config, /for \(const entry of passPrecacheEntries\) entry\.revision = buildId/);
 	assert.doesNotMatch(config, /revision: null/);
 

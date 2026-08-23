@@ -2,14 +2,14 @@ import type { gmail_v1 } from "googleapis";
 import { google } from "googleapis";
 import type { AttachmentOptions } from "mimetext";
 import { createMimeMessage } from "mimetext";
-import { env } from "@/env/server.mjs";
 
 /**
  * Reads authorized credentials from the environment variables
  *
  * @return {OAuth2Client} Credentials
  */
-const loadCredentials = () => {
+const loadCredentials = async () => {
+	const { env } = await import("@/env/server.mjs");
 	const client = new google.auth.OAuth2(
 		env.SPONSORSHIP_GOOGLE_CLIENT_ID,
 		env.SPONSORSHIP_GOOGLE_CLIENT_SECRET,
@@ -203,9 +203,8 @@ const generateBody = (data: Email, threadCred: ThreadCredentials): string => {
  *
  * @param {Email} data Email data
  */
-export const createDraft = async (data: Email) => {
-	const auth = loadCredentials();
-	const gmail = google.gmail({ version: "v1", auth });
+export const createDraft = async (data: Email, gmail?: gmail_v1.Gmail) => {
+	if (!gmail) gmail = google.gmail({ version: "v1", auth: await loadCredentials() });
 	const userId = "me";
 
 	// Check if a thread with the given recipient already exists
