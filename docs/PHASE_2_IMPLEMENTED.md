@@ -206,11 +206,11 @@ client, so neither needs a database.
 docker compose up -d
 npx prisma migrate deploy
 npx prisma db seed
-npx next dev --webpack
+npm run dev
 ```
 
-`--webpack` is needed because plain `npm run dev` fails on this branch: Next 16
-defaults to Turbopack and refuses to start next to a webpack config.
+The npm script pins webpack because Next 16 defaults to Turbopack and refuses
+to start next to this repository's webpack config.
 
 Get a seeded id, which `prisma/seeders/hackers.mts` makes up locally:
 
