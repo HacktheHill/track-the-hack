@@ -3,6 +3,8 @@
 const { i18n } = require("./next-i18next.config.js");
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const defaultRuntimeCaching = require("next-pwa/cache");
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const apiNetworkOnly = require("./pwa-runtime-caching.js");
 
 // /profile is personalized server-rendered data. These rules must stay ahead
 // of next-pwa's broad JSON and same-origin rules so neither the document nor a
@@ -37,7 +39,7 @@ const withPWA = require("next-pwa")({
 	register: true,
 	disable: process.env.NODE_ENV === "development",
 	additionalManifestEntries: ["/pass", "/fr/pass"].map(url => ({ url, revision: null })),
-	runtimeCaching: [...participantProfileNetworkOnly, ...defaultRuntimeCaching],
+	runtimeCaching: [apiNetworkOnly, ...participantProfileNetworkOnly, ...defaultRuntimeCaching],
 });
 
 module.exports = withPWA({
