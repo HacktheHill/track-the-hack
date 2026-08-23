@@ -1,21 +1,24 @@
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import NextAuth, { type NextAuthOptions } from "next-auth";
-import GoogleProvider from "next-auth/providers/google";
+import { getToken } from "next-auth/jwt";
+import GoogleProvider, { type GoogleProfile } from "next-auth/providers/google";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { env } from "@/env/server.mjs";
 import { prisma } from "@/server/db";
 import { canUseOrganizerAuth } from "@/server/lib/organizer-auth";
 
-export const getAuthOptions = () =>
+export const getAuthOptions = (req?: NextApiRequest) =>
 	({
 		adapter: PrismaAdapter(prisma),
 		callbacks: {
 			async signIn({ user, account, profile }) {
-				const googleProfile = profile as { email_verified?: boolean } | undefined;
+				const googleProfile = profile as Partial<Pick<GoogleProfile, "email" | "email_verified">> | undefined;
+				const sessionUserId = req ? (await getToken({ req, secret: env.NEXTAUTH_SECRET }))?.sub : undefined;
 				return canUseOrganizerAuth(
 					{
 						provider: account?.provider,
-						email: user.email,
+						profileEmail: googleProfile?.email,
+						userEmail: user.email,
 						emailVerified: googleProfile?.email_verified === true,
 					},
 					email =>
@@ -23,6 +26,7 @@ export const getAuthOptions = () =>
 							where: { email },
 							select: { id: true, roles: { select: { name: true } } },
 						}),
+					sessionUserId,
 				);
 			},
 			async session({ session, token }) {
@@ -56,5 +60,5 @@ export const getAuthOptions = () =>
 	}) satisfies NextAuthOptions;
 
 export default async function auth(req: NextApiRequest, res: NextApiResponse) {
-	await NextAuth(req, res, getAuthOptions());
+	await NextAuth(req, res, getAuthOptions(req));
 }
