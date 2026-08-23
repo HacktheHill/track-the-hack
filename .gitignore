@@ -7,6 +7,7 @@
 
 # testing
 /coverage
+/.dev-mailbox
 
 # database
 /prisma/db.sqlite
@@ -14,6 +15,8 @@
 
 # next.js
 /.next/
+/.next-dev-e2e/
+/.next-pwa-e2e/
 /out/
 next-env.d.ts
 

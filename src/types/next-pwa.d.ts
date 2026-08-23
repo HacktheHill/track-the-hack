@@ -12,6 +12,7 @@ declare module "next-pwa" {
 		dest: string;
 		register?: boolean;
 		disable?: boolean;
+		buildExcludes?: (string | RegExp)[];
 		additionalManifestEntries?: { url: string; revision: string | null }[];
 		fallbacks?: { document?: string };
 		runtimeCaching?: RuntimeCaching[];

@@ -24,6 +24,7 @@ const QR = () => {
 	const { mutateAsync: scanPresence } = trpc.presence.scan.useMutation();
 	const selectedAction = useRef(VIEW_PARTICIPANT);
 	const previousId = useRef("");
+	const scanSequence = useRef(0);
 	const [display, setDisplay] = useState<React.ReactNode>();
 	const [error, setError] = useState("");
 
@@ -31,19 +32,23 @@ const QR = () => {
 		async (rawId: string) => {
 			const hackerId = rawId.trim();
 			if (!hackerId || hackerId === previousId.current) return;
+			const sequence = ++scanSequence.current;
 			previousId.current = hackerId;
 			setError("");
 
 			try {
 				if (selectedAction.current === VIEW_PARTICIPANT) {
 					const hacker = await utils.hackers.get.fetch({ id: hackerId });
+					if (sequence !== scanSequence.current) return;
 					setDisplay(<ParticipantCard hacker={hacker} />);
 					return;
 				}
 
 				const result = await scanPresence({ eventId: selectedAction.current, hackerId });
+				if (sequence !== scanSequence.current) return;
 				setDisplay(<WorkflowCard result={result} />);
 			} catch {
+				if (sequence !== scanSequence.current) return;
 				previousId.current = "";
 				setDisplay(undefined);
 				setError(t("unknown-error"));
@@ -61,6 +66,7 @@ const QR = () => {
 			<select
 				className="p-3 text-center text-lg font-bold text-dark-color"
 				onChange={event => {
+					scanSequence.current += 1;
 					selectedAction.current = event.target.value;
 					previousId.current = "";
 					setDisplay(undefined);
@@ -155,11 +161,17 @@ const PresenceCounter = ({
 	const adjustPresence = trpc.presence.adjust.useMutation();
 	const [value, setValue] = useState(initialValue);
 	const [atLimit, setAtLimit] = useState(initialAtLimit);
+	const [error, setError] = useState("");
 
 	const change = async (amount: -1 | 1) => {
-		const next = await adjustPresence.mutateAsync({ eventId, hackerId, amount });
-		setValue(next.value);
-		setAtLimit(next.atLimit);
+		setError("");
+		try {
+			const next = await adjustPresence.mutateAsync({ eventId, hackerId, amount });
+			setValue(next.value);
+			setAtLimit(next.atLimit);
+		} catch {
+			setError(t("adjust-error"));
+		}
 	};
 
 	return (
@@ -186,6 +198,7 @@ const PresenceCounter = ({
 					+
 				</button>
 			</div>
+			{error && <ErrorDisplay message={error} />}
 		</>
 	);
 };

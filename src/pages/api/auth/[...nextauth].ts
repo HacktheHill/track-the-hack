@@ -1,11 +1,18 @@
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import NextAuth, { type NextAuthOptions } from "next-auth";
 import { getToken } from "next-auth/jwt";
+import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider, { type GoogleProfile } from "next-auth/providers/google";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { env } from "@/env/server.mjs";
 import { prisma } from "@/server/db";
-import { canUseOrganizerAuth } from "@/server/lib/organizer-auth";
+import {
+	canUseDevelopmentOrganizerAuth,
+	canUseOrganizerAuth,
+	DEVELOPMENT_AUTH_PROVIDER_ID,
+	DEVELOPMENT_ORGANIZER_EMAIL,
+	isDevelopmentOrganizerAuthEnabled,
+} from "@/server/lib/organizer-auth";
 
 export const getAuthOptions = (req?: NextApiRequest) =>
 	({
@@ -14,6 +21,19 @@ export const getAuthOptions = (req?: NextApiRequest) =>
 			async signIn({ user, account, profile }) {
 				const googleProfile = profile as Partial<Pick<GoogleProfile, "email" | "email_verified">> | undefined;
 				const sessionUserId = req ? (await getToken({ req, secret: env.NEXTAUTH_SECRET }))?.sub : undefined;
+				if (account?.provider === DEVELOPMENT_AUTH_PROVIDER_ID) {
+					return canUseDevelopmentOrganizerAuth(
+						{
+							provider: account.provider,
+							userId: user.id,
+							userEmail: user.email,
+							sessionUserId,
+						},
+						process.env,
+						req?.headers.host,
+						req?.socket.remoteAddress,
+					);
+				}
 				return canUseOrganizerAuth(
 					{
 						provider: account?.provider,
@@ -53,6 +73,34 @@ export const getAuthOptions = (req?: NextApiRequest) =>
 				// address that already belongs to a provisioned organizer User.
 				allowDangerousEmailAccountLinking: true,
 			}),
+			...(isDevelopmentOrganizerAuthEnabled(process.env, req?.headers.host, req?.socket.remoteAddress)
+				? [
+						CredentialsProvider({
+							id: DEVELOPMENT_AUTH_PROVIDER_ID,
+							name: "Local development organizer",
+							credentials: {},
+							async authorize() {
+								const organizer = await prisma.user.findUnique({
+									where: { email: DEVELOPMENT_ORGANIZER_EMAIL },
+									select: {
+										id: true,
+										email: true,
+										name: true,
+										image: true,
+										roles: { select: { name: true } },
+									},
+								});
+								if (!organizer?.email || organizer.roles.length === 0) return null;
+								return {
+									id: organizer.id,
+									email: organizer.email,
+									name: organizer.name,
+									image: organizer.image,
+								};
+							},
+						}),
+					]
+				: []),
 		],
 		pages: { signIn: "/auth/sign-in", error: "/auth/error" },
 		session: { strategy: "jwt" },

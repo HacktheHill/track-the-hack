@@ -1,4 +1,4 @@
-import type { GetServerSideProps } from "next";
+import type { GetServerSideProps, InferGetServerSidePropsType } from "next";
 import { getServerSession } from "next-auth";
 import { signIn } from "next-auth/react";
 import { useTranslation } from "next-i18next";
@@ -8,15 +8,25 @@ import { useRouter } from "next/router";
 import Error from "@/components/Error";
 import Head from "@/components/Head";
 import { getAuthOptions } from "@/pages/api/auth/[...nextauth]";
+import { DEVELOPMENT_AUTH_PROVIDER_ID, isDevelopmentOrganizerAuthEnabled } from "@/server/lib/organizer-auth";
 
 export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
 	const session = await getServerSession(req, res, getAuthOptions());
 	return session
 		? { redirect: { permanent: false, destination: "/" } }
-		: { props: await serverSideTranslations(locale ?? "en", ["common", "auth"]) };
+		: {
+				props: {
+					...(await serverSideTranslations(locale ?? "en", ["common", "auth"])),
+					developmentAuthEnabled: isDevelopmentOrganizerAuthEnabled(
+						process.env,
+						req.headers.host,
+						req.socket.remoteAddress,
+					),
+				},
+			};
 };
 
-const SignIn = () => {
+const SignIn = ({ developmentAuthEnabled }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
 	const { t } = useTranslation("auth");
 	const router = useRouter();
 	const [callbackUrl] = [router.query.callbackUrl].flat();
@@ -41,6 +51,15 @@ const SignIn = () => {
 				>
 					{t("google-sign-in")}
 				</button>
+				{developmentAuthEnabled && (
+					<button
+						type="button"
+						onClick={() => void signIn(DEVELOPMENT_AUTH_PROVIDER_ID, { callbackUrl: callbackUrl ?? "/" })}
+						className="rounded-lg border border-dark-primary-color bg-light-quaternary-color px-6 py-3 font-coolvetica text-lg text-dark-primary-color"
+					>
+						Sign in as local organizer
+					</button>
+				)}
 				{error && <Error message={t(`next-auth.${error}`)} />}
 			</main>
 		</>

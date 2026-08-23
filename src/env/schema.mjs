@@ -24,6 +24,7 @@ export const serverSchema = z.object({
 	NEXTAUTH_URL: z.preprocess(value => resolveNextAuthUrl(value, process.env.VERCEL_URL), z.string().url()),
 	GOOGLE_CLIENT_ID: z.string(),
 	GOOGLE_CLIENT_SECRET: z.string(),
+	DEV_AUTH_ENABLED: z.enum(["0", "1"]).default("0"),
 	SHEETS_INTEGRATION_API_KEY: z.string().min(32),
 	CANCELLATION_TOKEN_SECRET: z.string().min(32),
 	CLAIM_TOKEN_SECRET: z.string().min(32),
@@ -45,6 +46,8 @@ export const serverEnv = {
 	NEXTAUTH_URL: process.env.NEXTAUTH_URL,
 	GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
 	GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+	DEV_AUTH_ENABLED:
+		process.env.DEV_AUTH_ENABLED === "1" ? "1" : process.env.DEV_AUTH_ENABLED === "0" ? "0" : undefined,
 	SHEETS_INTEGRATION_API_KEY: process.env.SHEETS_INTEGRATION_API_KEY,
 	CANCELLATION_TOKEN_SECRET: process.env.CANCELLATION_TOKEN_SECRET,
 	CLAIM_TOKEN_SECRET: process.env.CLAIM_TOKEN_SECRET,
