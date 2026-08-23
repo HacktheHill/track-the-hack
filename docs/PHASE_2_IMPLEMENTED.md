@@ -70,7 +70,7 @@ Set-Cookie: participant_session=<random 32-byte capability>; HttpOnly; SameSite=
 Set-Cookie: participant_pass=1
     |
     v
-/profile shows the event QR, confirmation, size, meal category, team, Presence
+/profile shows the event QR, confirmation, size, meal category, Presence
 ```
 
 ## What was added
@@ -175,7 +175,7 @@ After an authenticated profile load, the browser stores only exact `Hacker.id`,
 which is already the event QR payload. If a later `/profile` navigation fails
 offline, the service worker serves the precached static `/pass` shell. It never
 caches the profile HTML, profile JSON, participant cookie, T-shirt size, meal
-category, team, confirmation state, or Presence records.
+category, confirmation state, or Presence records.
 
 The fallback is scoped to `/profile`; unrelated offline pages do not render a
 participant pass.
@@ -246,17 +246,11 @@ alternate field names or infer missing values.
 
 ## Phase 3
 
-The authoritative handoff is [`PHASE_3.md`](./PHASE_3.md). Its remaining work
-starts with the team-ownership decision already identified by
-`PHASE_1_INTEGRATIONS.md` and `PROPOSED_FLOW.md`.
+The authoritative handoff is [`PHASE_3.md`](./PHASE_3.md).
 
-**Team source of truth** is still open between Track the Hack owning teams with
-the bot updating them, Discord owning them and pushing a snapshot, or teams
-living only in Discord. `teamId` is in the schema but provisioning rejects it
-until this is settled, and `/profile` shows a team name that may need revisiting.
-
-**Discord verification** is not implemented. It belongs with the Phase 3 team
-and Discord ownership decision, not the Phase 2 access/session/scanner path.
+**Team source of truth** is resolved as Option C: Discord alone owns team names
+and membership. Track the Hack has no team model, team field, team API, profile
+team display, or synchronized membership snapshot.
 
 ## Environment
 

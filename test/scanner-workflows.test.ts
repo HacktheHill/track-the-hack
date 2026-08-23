@@ -26,7 +26,6 @@ const scannerDatabase = (workflow: ScannerWorkflow, maxCheckIns: number | null =
 		mealCategory: MealCategory.OTHER,
 		walkIn: true,
 		acceptanceExpiry: new Date("2026-09-01T00:00:00Z"),
-		teamId: "private-unneeded-field",
 	};
 	const presences = new Map<
 		string,
