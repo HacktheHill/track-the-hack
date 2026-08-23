@@ -65,7 +65,7 @@ const Links = ({ bottom }: LinkProps) => {
 				alt={t("sponsors")}
 			/>
 			{sessionData?.user && (
-				<Filter value={[RoleName.PREMIER, RoleName.ORGANIZER]} silent method="some">
+				<Filter value={[RoleName.PREMIER, RoleName.ORGANIZER, RoleName.ADMIN]} silent method="some">
 					<LinkItem
 						href="/metrics"
 						bottom={bottom}
