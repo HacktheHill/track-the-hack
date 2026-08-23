@@ -15,6 +15,17 @@
 	"plugins": ["@typescript-eslint"],
 	"extends": ["next/core-web-vitals", "plugin:@typescript-eslint/recommended"],
 	"rules": {
-		"@typescript-eslint/consistent-type-imports": "warn"
+		"@typescript-eslint/consistent-type-imports": "warn",
+		"no-restricted-imports": [
+			"error",
+			{
+				"patterns": [
+					{
+						"group": ["../**"],
+						"message": "Use the @/ or @root/ alias instead of a parent-directory import."
+					}
+				]
+			}
+		]
 	}
 }

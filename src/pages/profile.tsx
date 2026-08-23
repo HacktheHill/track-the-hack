@@ -1,26 +1,34 @@
 import type { GetServerSideProps, InferGetServerSidePropsType } from "next";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
-import App from "../components/App";
-import QRCode from "../components/QRCode";
-import { env } from "../env/server.mjs";
-import { prisma } from "../server/db";
-import { readParticipantSession } from "../server/lib/participant-session";
+import { useEffect } from "react";
+import App from "@/components/App";
+import ParticipantSignOut from "@/components/ParticipantSignOut";
+import QRCode from "@/components/QRCode";
+import { env } from "@/env/server.mjs";
+import { prisma } from "@/server/db";
+import { readParticipantSession } from "@/server/lib/participant-session";
+import { PrismaHackerLifecycleRepository } from "@/server/repositories/prisma-hacker-lifecycle";
+import { storeOfflineParticipantPass } from "@/utils/participant-pass";
 
 type ProfileData = {
 	id: string;
 	confirmed: boolean;
-	walkIn: boolean;
 	tShirtSize: string;
 	mealCategory: string;
 	teamName: string | null;
 	presences: { id: string; label: string; value: number }[];
 };
 
+const lifecycleRepository = new PrismaHackerLifecycleRepository(prisma);
+
 // Backed by the day-of participant session, not NextAuth. Organiser sessions
 // never reach this page and this session never grants organiser access.
-export const getServerSideProps: GetServerSideProps<{ profile: ProfileData }> = async ({ req, locale }) => {
-	const session = readParticipantSession(req, env.PARTICIPANT_SESSION_SECRET);
+export const getServerSideProps: GetServerSideProps<{ profile: ProfileData }> = async ({ req, res, locale }) => {
+	res.setHeader("Cache-Control", "private, no-store");
+	const session = await readParticipantSession(req, env.PARTICIPANT_SESSION_SECRET, (verifier, now) =>
+		lifecycleRepository.findParticipantSession(verifier, now),
+	);
 	if (!session) {
 		return { redirect: { destination: "/", permanent: false } };
 	}
@@ -30,7 +38,6 @@ export const getServerSideProps: GetServerSideProps<{ profile: ProfileData }> = 
 		select: {
 			id: true,
 			confirmed: true,
-			walkIn: true,
 			tShirtSize: true,
 			mealCategory: true,
 			Team: { select: { name: true } },
@@ -38,8 +45,7 @@ export const getServerSideProps: GetServerSideProps<{ profile: ProfileData }> = 
 		},
 	});
 
-	// The record can be gone even with a valid cookie, since the session is not
-	// checked against the database on every request.
+	// The Hacker can still disappear between the session lookup and this query.
 	if (!hacker) {
 		return { redirect: { destination: "/", permanent: false } };
 	}
@@ -49,7 +55,6 @@ export const getServerSideProps: GetServerSideProps<{ profile: ProfileData }> = 
 			profile: {
 				id: hacker.id,
 				confirmed: hacker.confirmed,
-				walkIn: hacker.walkIn,
 				tShirtSize: hacker.tShirtSize,
 				mealCategory: hacker.mealCategory,
 				teamName: hacker.Team?.name ?? null,
@@ -62,6 +67,10 @@ export const getServerSideProps: GetServerSideProps<{ profile: ProfileData }> = 
 
 const Profile = ({ profile }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
 	const { t } = useTranslation("profile");
+
+	useEffect(() => {
+		storeOfflineParticipantPass(profile.id);
+	}, [profile.id]);
 
 	return (
 		<App
@@ -82,7 +91,6 @@ const Profile = ({ profile }: InferGetServerSidePropsType<typeof getServerSidePr
 					<Row label={t("t-shirt")} value={profile.tShirtSize} />
 					<Row label={t("meal")} value={profile.mealCategory} />
 					{profile.teamName && <Row label={t("team")} value={profile.teamName} />}
-					{profile.walkIn && <Row label={t("walk-in")} value={t("yes")} />}
 				</dl>
 			</section>
 
@@ -98,6 +106,8 @@ const Profile = ({ profile }: InferGetServerSidePropsType<typeof getServerSidePr
 					</dl>
 				)}
 			</section>
+
+			<ParticipantSignOut />
 		</App>
 	);
 };

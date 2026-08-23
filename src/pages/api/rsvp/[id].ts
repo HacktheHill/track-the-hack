@@ -1,9 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { createRsvpApiHandler } from "../../../server/http/participant-lifecycle-handlers";
-import { PrismaHackerLifecycleRepository } from "../../../server/repositories/prisma-hacker-lifecycle";
-import { confirmRsvp } from "../../../server/services/hacker-lifecycle";
-import { prisma } from "../../../server/db";
-import { log } from "../../../server/lib/log";
+import { createRsvpApiHandler } from "@/server/http/participant-lifecycle-handlers";
+import { PrismaHackerLifecycleRepository } from "@/server/repositories/prisma-hacker-lifecycle";
+import { confirmRsvp } from "@/server/services/hacker-lifecycle";
+import { prisma } from "@/server/db";
+import { log } from "@/server/lib/log";
 
 const repository = new PrismaHackerLifecycleRepository(prisma);
 

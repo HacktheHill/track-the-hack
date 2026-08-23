@@ -5,11 +5,11 @@ import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import App from "../../components/App";
-import Error from "../../components/Error";
-import Loading from "../../components/Loading";
+import App from "@/components/App";
+import Error from "@/components/Error";
+import Loading from "@/components/Loading";
 
-import { trpc } from "../../server/api/api";
+import { trpc } from "@/server/api/api";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {

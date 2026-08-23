@@ -4,11 +4,11 @@ import { getServerSession } from "next-auth";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Link from "next/link";
-import { rolesRedirect } from "../../server/lib/redirects";
-import { getAuthOptions } from "../api/auth/[...nextauth]";
+import { rolesRedirect } from "@/server/lib/redirects";
+import { getAuthOptions } from "@/pages/api/auth/[...nextauth]";
 
-import App from "../../components/App";
-import Filter from "../../components/Filter";
+import App from "@/components/App";
+import Filter from "@/components/Filter";
 
 const Internal: NextPage = () => {
 	const { t } = useTranslation("internal");

@@ -30,7 +30,10 @@ async function main() {
 	console.info("Creating dummy hackers...");
 	await insertRecords(prisma.hacker, hackers);
 
-	const presences = generatePresences(10);
+	const seededEvents = await prisma.event.findMany({
+		select: { id: true, name: true, maxCheckIns: true },
+	});
+	const presences = generatePresences(hackers, seededEvents, 10);
 	console.info("Creating dummy presences...");
 	await insertRecords(prisma.presence, presences);
 }

@@ -46,24 +46,33 @@ export type ReconciliationRecord = {
 	cancellationCapabilityId: string | null;
 };
 
+export type NewParticipantSession = {
+	verifier: string;
+	expiresAt: Date;
+};
+
+export type ParticipantSessionRecord = NewParticipantSession & {
+	hackerId: string;
+};
+
 export interface HackerLifecycleRepository {
 	upsertProvisioned(record: ProvisioningRecord): Promise<void>;
 	confirmAndRotate(id: string, now: Date, cancellationCapabilityId: string): Promise<ConfirmationResult>;
 	cancelByCapability(capabilityId: string): Promise<string | null>;
 	reconcile(ids: string[]): Promise<ReconciliationRecord[]>;
-	// Returns false when the participant does not exist.
-	replaceClaimToken(hackerId: string, claimId: string, expiresAt: Date): Promise<boolean>;
+	// Provisioning, claim replacement and active-session revocation are one operation.
+	replaceParticipantAccess(record: ProvisioningRecord, claimId: string, expiresAt: Date): Promise<void>;
 	// Returns the participant id, or null for a spent, expired, or unknown claim.
-	redeemClaimToken(claimId: string, now: Date): Promise<string | null>;
+	// A successful redemption stores the replacement participant session atomically.
+	redeemClaimToken(claimId: string, now: Date, session: NewParticipantSession): Promise<string | null>;
+	findParticipantSession(verifier: string, now: Date): Promise<ParticipantSessionRecord | null>;
+	revokeParticipantSession(verifier: string): Promise<void>;
 }
 
 export class ParticipantLifecycleError extends Error {
 	constructor(
 		public readonly code:
-			| "INVALID_OR_EXPIRED_INVITATION"
-			| "INVALID_CANCELLATION_CAPABILITY"
-			| "UNKNOWN_PARTICIPANT"
-			| "INVALID_CLAIM_TOKEN",
+			"INVALID_OR_EXPIRED_INVITATION" | "INVALID_CANCELLATION_CAPABILITY" | "INVALID_CLAIM_TOKEN",
 	) {
 		super(code);
 		this.name = "ParticipantLifecycleError";
@@ -185,30 +194,26 @@ export const reconcileRsvps = async (
 // photograph it. A narrow window plus single use keeps that photo worthless.
 export const CLAIM_TOKEN_TTL_MS = 5 * 60 * 1000;
 
-export const issueClaimToken = async (
+export const issueParticipantAccess = async (
 	repository: HackerLifecycleRepository,
-	idInput: unknown,
+	recordInput: unknown,
 	baseUrl: string,
 	secret: string,
 	now = new Date(),
 	createClaimId = () => randomBytes(32).toString("base64url"),
 ) => {
-	const hackerId = participantIdSchema.parse(idInput);
+	const record = provisioningRecordSchema.parse(recordInput);
 	const claimId = createClaimId();
 	const expiresAt = new Date(now.getTime() + CLAIM_TOKEN_TTL_MS);
 
-	// relationMode is "prisma", so nothing at the database level stops a token
-	// from pointing at a participant that was never provisioned.
-	const issued = await repository.replaceClaimToken(hackerId, claimId, expiresAt);
-	if (!issued) {
-		throw new ParticipantLifecycleError("UNKNOWN_PARTICIPANT");
-	}
+	await repository.replaceParticipantAccess(record, claimId, expiresAt);
 
 	// Fragment, not query: it never reaches the server on the GET and stays out
 	// of access logs, same as the cancellation link.
 	return {
 		claimUrl: `${baseUrl.replace(/\/$/, "")}/claim#${createClaimToken(claimId, secret)}`,
 		expiresAt,
+		hackerId: record.id,
 	};
 };
 
@@ -216,6 +221,7 @@ export const consumeClaimToken = async (
 	repository: HackerLifecycleRepository,
 	tokenInput: unknown,
 	secret: string,
+	session: NewParticipantSession,
 	now = new Date(),
 ) => {
 	const token = z.string().min(1).max(256).parse(tokenInput);
@@ -226,7 +232,7 @@ export const consumeClaimToken = async (
 
 	// Spent, expired and unknown all fail the same way on purpose: telling them
 	// apart would confirm to an attacker that a token was real.
-	const hackerId = await repository.redeemClaimToken(claimId, now);
+	const hackerId = await repository.redeemClaimToken(claimId, now, session);
 	if (!hackerId) {
 		throw new ParticipantLifecycleError("INVALID_CLAIM_TOKEN");
 	}

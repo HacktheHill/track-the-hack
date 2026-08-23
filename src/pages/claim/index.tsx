@@ -2,16 +2,24 @@ import type { GetServerSideProps } from "next";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useState } from "react";
-import App from "../../components/App";
-import { env } from "../../env/server.mjs";
-import { readParticipantSession } from "../../server/lib/participant-session";
+import App from "@/components/App";
+import { env } from "@/env/server.mjs";
+import { prisma } from "@/server/db";
+import { readParticipantSession } from "@/server/lib/participant-session";
+import { PrismaHackerLifecycleRepository } from "@/server/repositories/prisma-hacker-lifecycle";
+
+const repository = new PrismaHackerLifecycleRepository(prisma);
 
 // The token rides in the fragment, so it never reaches the server on this GET
 // and stays out of access logs.
 export const getServerSideProps: GetServerSideProps = async ({ req, locale }) => {
 	// Someone with a session reopened their link or pressed back. Send them to
 	// the pass rather than a button that can only fail.
-	if (readParticipantSession(req, env.PARTICIPANT_SESSION_SECRET)) {
+	if (
+		await readParticipantSession(req, env.PARTICIPANT_SESSION_SECRET, (verifier, now) =>
+			repository.findParticipantSession(verifier, now),
+		)
+	) {
 		return { redirect: { destination: "/profile", permanent: false } };
 	}
 

@@ -7,5 +7,13 @@
 	"no": "Non",
 	"t-shirt": "T-shirt : {{value}}",
 	"meal": "Repas : {{value}}",
-	"walk-in": "Inscrit sur place"
+	"walk-in": "Inscrit sur place",
+	"contact-food-lead": "Communiquez avec la personne responsable des repas avant de servir ce participant.",
+	"maximum-reached": "Nombre maximal d’enregistrements atteint.",
+	"workflow": {
+		"CHECK_IN": "Enregistrement",
+		"MERCHANDISE": "Marchandise",
+		"FOOD": "Repas",
+		"ATTENDANCE": "Présence"
+	}
 }

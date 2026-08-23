@@ -1,7 +1,7 @@
-import { RoleName } from "@prisma/client";
+import { RoleName, ScannerWorkflow } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
-import { hasRoles } from "../../../utils/helpers";
-import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { hasRoles } from "@/utils/helpers";
+import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 
 const ORGANIZER_COUNT = 59;
 const MENTOR_COUNT = 7;
@@ -31,7 +31,7 @@ export const metricsRouter = createTRPCRouter({
 			ctx.prisma.hacker.count(),
 			ctx.prisma.hacker.count({ where: { confirmed: true } }),
 			ctx.prisma.hacker.count({ where: { walkIn: true } }),
-			ctx.prisma.presence.count({ where: { label: "Check-In" } }),
+			ctx.prisma.presence.count({ where: { event: { scannerWorkflow: ScannerWorkflow.CHECK_IN } } }),
 			ctx.prisma.presence.findMany({ select: { value: true } }),
 			ctx.prisma.presence.groupBy({ by: ["label"], _sum: { value: true } }),
 			ctx.prisma.hacker.groupBy({ by: ["mealCategory"], _count: { mealCategory: true } }),
