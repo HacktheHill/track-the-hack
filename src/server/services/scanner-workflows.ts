@@ -1,7 +1,8 @@
-import { MealCategory, ScannerWorkflow } from "@prisma/client";
-import type { Prisma, PrismaClient, TShirtSize } from "@prisma/client";
+import { randomUUID } from "node:crypto";
+import { MealCategory, Prisma, ScannerWorkflow } from "@prisma/client";
+import type { PrismaClient, TShirtSize } from "@prisma/client";
 
-type ScannerPrisma = Pick<PrismaClient, "event" | "hacker" | "presence">;
+type ScannerPrisma = Pick<PrismaClient, "$executeRaw" | "event" | "hacker" | "presence">;
 
 type ScannerEvent = {
 	eventId: string;
@@ -118,13 +119,27 @@ export const scanParticipantForEvent = async (
 
 	const maxCheckIns = normalizeMaximum(event.maxCheckIns);
 	const initialValue = maxCheckIns === null || maxCheckIns > 0 ? 1 : 0;
-	const presence = await prisma.presence.upsert({
+	for (let attempt = 0; ; attempt += 1) {
+		try {
+			await prisma.$executeRaw`
+				INSERT INTO \`Presence\` (\`id\`, \`value\`, \`label\`, \`hackerId\`, \`eventId\`)
+				VALUES (${randomUUID()}, ${initialValue}, ${event.name}, ${hackerId}, ${eventId})
+				ON DUPLICATE KEY UPDATE \`id\` = \`id\`
+			`;
+			break;
+		} catch (error) {
+			const deadlock =
+				error instanceof Prisma.PrismaClientKnownRequestError &&
+				error.code === "P2010" &&
+				error.meta?.code === "1213";
+			if (!deadlock || attempt === 2) throw error;
+		}
+	}
+	const presence = await prisma.presence.findUnique({
 		where: { hackerId_eventId: { hackerId, eventId } },
-		create: { hackerId, eventId, label: event.name, value: initialValue },
-		// A repeated scan must show the existing counter, not silently add to it.
-		update: {},
 		select: { id: true, value: true },
 	});
+	if (!presence) throw new ScannerWorkflowError("PRESENCE_NOT_FOUND");
 
 	return {
 		eventId: event.id,
