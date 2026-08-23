@@ -16,7 +16,6 @@ type ProfileData = {
 	confirmed: boolean;
 	tShirtSize: string;
 	mealCategory: string;
-	teamName: string | null;
 	presences: { id: string; label: string; value: number }[];
 };
 
@@ -40,7 +39,6 @@ export const getServerSideProps: GetServerSideProps<{ profile: ProfileData }> = 
 			confirmed: true,
 			tShirtSize: true,
 			mealCategory: true,
-			Team: { select: { name: true } },
 			presences: { select: { id: true, label: true, value: true } },
 		},
 	});
@@ -57,7 +55,6 @@ export const getServerSideProps: GetServerSideProps<{ profile: ProfileData }> = 
 				confirmed: hacker.confirmed,
 				tShirtSize: hacker.tShirtSize,
 				mealCategory: hacker.mealCategory,
-				teamName: hacker.Team?.name ?? null,
 				presences: hacker.presences,
 			},
 			...(await serverSideTranslations(locale ?? "en", ["profile", "navbar", "common"])),
@@ -90,7 +87,6 @@ const Profile = ({ profile }: InferGetServerSidePropsType<typeof getServerSidePr
 					<Row label={t("confirmed")} value={profile.confirmed ? t("yes") : t("no")} />
 					<Row label={t("t-shirt")} value={profile.tShirtSize} />
 					<Row label={t("meal")} value={profile.mealCategory} />
-					{profile.teamName && <Row label={t("team")} value={profile.teamName} />}
 				</dl>
 			</section>
 

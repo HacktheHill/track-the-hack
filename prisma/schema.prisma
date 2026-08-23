@@ -80,8 +80,6 @@ model Hacker {
   walkIn           Boolean      @default(false)
   acceptanceExpiry DateTime
 
-  Team                   Team?                   @relation(fields: [teamId], references: [id])
-  teamId                 String?
   presences              Presence[]
   cancellationCapability CancellationCapability?
   claimToken             ClaimToken?
@@ -89,8 +87,6 @@ model Hacker {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
-
-  @@index([teamId])
 }
 
 // The raw cancellation token is never persisted. A token contains this random
@@ -141,12 +137,6 @@ model Presence {
 
   @@unique([hackerId, eventId])
   @@index([eventId])
-}
-
-model Team {
-  id      String   @id @default(cuid())
-  name    String   @unique
-  hackers Hacker[]
 }
 
 model Event {

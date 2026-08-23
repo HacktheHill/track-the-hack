@@ -3,7 +3,7 @@
 ## Background
 
 Hack the Hill II experienced a ransomware attack, which affected MLH's willingness to partner with us that year. For Hack the Hill III, the goal is to reduce the amount of participant information stored in Track the Hack and keep sensitive application data in safer third-party systems.
-Track the Hack should remain focused on RSVP, participant access, QR scanning, check-in, meals, merchandise, teams if retained, and attendance. Applications, application review, identity data, participant waivers, and guardian consent move outside the app.
+Track the Hack should remain focused on RSVP, participant access, QR scanning, check-in, meals, merchandise, and attendance. Applications, application review, identity data, participant waivers, guardian consent, and teams move outside the app.
 
 ## Data Ownership
 
@@ -11,14 +11,14 @@ Track the Hack should remain focused on RSVP, participant access, QR scanning, c
 
 Tally holds application submissions and participant identity and continuously syncs them to Google Sheets. The Sheet is the authoritative administrative view for application review, acceptance decisions, participant IDs, reconciled RSVP status, and event preparation. Track the Hack does not make an independent acceptance decision.
 
-* Identity and contact information
-* Tally application IDs, resumes, and application answers
-* School and demographic information
-* Accessibility requests and detailed dietary information
-* T-shirt size and minor/adult status
-* MLH-required consents
-* Participant waiver evidence and, for minors, guardian consent or signatures
-* Acceptance decisions and reconciled RSVP status
+- Identity and contact information
+- Tally application IDs, resumes, and application answers
+- School and demographic information
+- Accessibility requests and detailed dietary information
+- T-shirt size and minor/adult status
+- MLH-required consents
+- Participant waiver evidence and, for minors, guardian consent or signatures
+- Acceptance decisions and reconciled RSVP status
 
 Emergency contacts will not be collected.
 
@@ -29,23 +29,22 @@ The Sheet is authoritative for acceptance and participant provisioning. Track th
 
 ### Other Systems
 
-The existing bulk email CLI and React Email templates handle RSVP invitations and confirmations from filtered CSV files. The Discord bot owns Discord identity mapping, and email-list-manager owns mailing-list subscription and unsubscribe handling.
+The existing bulk email CLI and React Email templates handle RSVP invitations and confirmations from filtered CSV files. Discord owns team formation and any account linking outside Track the Hack; there is no Track-to-bot mapping contract. email-list-manager owns mailing-list subscription and unsubscribe handling.
 
 ## Target Hacker Model
 
 Use the random participant ID assigned in the Sheet as Hacker.id. It must be high-entropy, non-sequential, and not derived from an email address, name, student number, or other predictable value. Tally's own application ID remains in Tally and the Sheet and is not imported into Track the Hack.
 The participant-specific Hacker fields should be limited to:
 
-* id
-* tShirtSize
-* mealCategory
-* confirmed
-* walkIn
-* acceptanceExpiry
-* optional teamId if teams remain in Track the Hack
+- id
+- tShirtSize
+- mealCategory
+- confirmed
+- walkIn
+- acceptanceExpiry
 
 Standard createdAt and updatedAt metadata may remain.
-Keep Event, Presence, Hardware, and organizer User/Role models. Keep Team only if Track the Hack remains the source of truth for team membership. Presence semantics, counters, and maximum-check-in rules remain unchanged. Presence records are created by event workflows rather than imported from the Sheet.
+Keep Event, Presence, Hardware, and organizer User/Role models. Discord is the sole source of truth for teams, so Track the Hack has no Team model or team membership field. Presence semantics, counters, and maximum-check-in rules remain unchanged. Presence records are created by event workflows rather than imported from the Sheet.
 The current Hacker model's identity, application, demographic, emergency-contact, accessibility, detailed dietary, acceptance-review, unsubscribe, and participant-User-linkage fields are removed. Replace detailed dietaryRestrictions with the operational mealCategory field.
 
 ## Application Review and Provisioning
@@ -99,10 +98,10 @@ A walk-in completes the same Tally application at the event. After the submissio
 After claiming access, the participant can display a static event QR containing only Hacker.id. It remains available without continuous internet access and is an operational identifier for organizer-authenticated workflows, not a login credential.
 Scanner views expose only what the selected workflow needs:
 
-* Check-in: confirmation state, check-in Presence, and T-shirt size where required
-* Merchandise: size and pickup Presence
-* Food: meal category and meal Presence
-* Mini-events and workshops: attendance Presence
+- Check-in: confirmation state, check-in Presence, and T-shirt size where required
+- Merchandise: size and pickup Presence
+- Food: meal category and meal Presence
+- Mini-events and workshops: attendance Presence
 
 ## Food and Merchandise
 
@@ -114,21 +113,16 @@ Retain the existing TShirtSize enum and merchandise Presence workflow.
 Keep NextAuth and User/Role for organizers, but restrict organizer login to verified @ctn-rtc.org Google accounts. Participant access no longer uses NextAuth or a User record.
 Remove participant User linkage and the HACKER role. Remove the ACCEPTANCE role because application review moves to the Sheet. Organizer sessions, participant sessions, the Sheets integration, RSVP links, and cancellation capabilities remain separate authorization paths. Participant sessions never confer organizer permissions.
 
-## Open Decision: Team Formation
+## Team Formation
 
-There must be one source of truth for teams.
+Option C is selected: teams exist only in Discord. Discord owns team names, membership, self-service, and any team association used for judging. Track the Hack does not store a Team, team ID, or membership snapshot and exposes no Discord or team API.
 
-* Option A: Track the Hack owns teams. Keep Team; the web app and Discord bot update it through authenticated APIs using participant IDs. This is closest to the current code and supports participant self-service and judging, but requires bot integration.
-* Option B: Discord owns teams and sends a team ID or membership snapshot to Track the Hack. This reduces team UI but creates synchronization risk.
-* Option C: Teams exist only in Discord. Remove team membership from Track the Hack. This is simplest, but Track the Hack cannot use teams for participant self-service or judging.
-
-Recommendation: choose Option A if Track the Hack needs team data; otherwise choose Option C. Because full Track the Hack access is issued only at in-person check-in, pre-event team formation should remain in Discord unless a separate pre-event participant-authentication mechanism is added.
+This keeps one writable source and supports pre-event formation without adding a separate pre-event Track the Hack authentication system. Judging continues through the external Devpost workflow.
 
 ## Participant Features and Reporting
 
-Replace the current participant-facing /hackers profile/directory flow with a participant-only /profile page backed by the day-of participant session. Limit it to the participant's event QR, confirmation state, T-shirt size, meal category, applicable team information, and their own Presence information.
+Replace the current participant-facing /hackers profile/directory flow with a participant-only /profile page backed by the day-of participant session. Limit it to the participant's event QR, confirmation state, T-shirt size, meal category, and their own Presence information.
 If organizers need participant lookup inside Track the Hack, use an authenticated operational view limited to the remaining operational fields. Front-desk identity lookup stays in the Sheet. Name-, email-, and profile-based participant search is removed.
-Keep Discord verification using the participant session to prove Hacker.id while the Discord bot retains the Discord identity mapping. Track the Hack does not store or log the Discord ID.
 Keep aggregate operational metrics from Track the Hack. Demographic reporting comes from Tally or the Sheet. Sponsor reporting defaults to aggregate data; individual-level sharing requires a separate explicit opt-in, a documented purpose, and disclosure limited to the fields required for that purpose.
 Existing functionality not otherwise placed in scope, including events and schedules, maps and resources, hardware inventory, organizer role administration, and aggregate sponsorship tools, remains unchanged. Keep the audit-log framework, but participant actions should use opaque IDs and logs must not copy Tally/Sheet application or identity data.
 
@@ -136,27 +130,27 @@ Existing functionality not otherwise placed in scope, including events and sched
 
 Remove or replace the following existing Track the Hack functionality:
 
-* The /apply application workflow, resume upload/storage, and saved application data; link or redirect applicants to Tally
-* Application review in Track the Hack, including acceptanceStatus, acceptanceReason, and the ACCEPTANCE role
-* Emergency-contact fields and UI
-* The current /confirm waiver/signature flow and signature upload; RSVP becomes attendance confirmation only
-* Team selection/creation from the current confirmation page unless the final team decision explicitly keeps it there
-* The current walk-in code/form, full Hacker creation, participant User linkage, and resume upload; replace it with the Tally/Sheet walk-in path described above
-* Participant User linkage, participant NextAuth login, the HACKER role, and participant password/OAuth account flows
-* The participant-facing /hackers directory and name/email/profile search
-* unsubscribed, unsubscribeToken, and the Track the Hack unsubscribe page because email-list-manager owns that workflow
-* Participant-level demographic dashboards and optional public profile sharing
+- The /apply application workflow, resume upload/storage, and saved application data; application routing remains external at https://apply.hackthehill.com
+- Application review in Track the Hack, including acceptanceStatus, acceptanceReason, and the ACCEPTANCE role
+- Emergency-contact fields and UI
+- The current /confirm waiver/signature flow and signature upload; RSVP becomes attendance confirmation only
+- Team selection, creation, and storage; Discord owns team membership
+- The current walk-in code/form, full Hacker creation, participant User linkage, and resume upload; replace it with the Tally/Sheet walk-in path described above
+- Participant User linkage, participant NextAuth login, the HACKER role, and participant password/OAuth account flows
+- The participant-facing /hackers directory and name/email/profile search
+- unsubscribed, unsubscribeToken, and the Track the Hack unsubscribe page because email-list-manager owns that workflow
+- Participant-level demographic dashboards and optional public profile sharing
 
 New functionality required by this proposal:
 
-* Sheet-assigned participant IDs and minimal Hacker provisioning
-* mealCategory
-* RSVP confirmation and cancellation capability
-* RSVP reconciliation back to the Sheet and confirmation-email export
-* Google Sheets sidebar access issuance and its protected Track the Hack endpoint
-* Single-use claim tokens and participant sessions independent of NextAuth
-* Operational participant QR using Hacker.id
-* The walk-in flow through Tally, the Sheet, and the same access-issuance path
+- Sheet-assigned participant IDs and minimal Hacker provisioning
+- mealCategory
+- RSVP confirmation and cancellation capability
+- RSVP reconciliation back to the Sheet and confirmation-email export
+- Google Sheets sidebar access issuance and its protected Track the Hack endpoint
+- Single-use claim tokens and participant sessions independent of NextAuth
+- Operational participant QR using Hacker.id
+- The walk-in flow through Tally, the Sheet, and the same access-issuance path
 
 ## Recommended Implementation Order
 
@@ -164,6 +158,6 @@ New functionality required by this proposal:
 2. Reduce the Hacker model and update operational scanner/profile code to the minimal fields.
 3. Implement RSVP confirmation, cancellation capability, reconciliation, and React Email templates.
 4. Implement the Sheets sidebar endpoint, one-time claim flow, participant session, and walk-in path.
-5. Update participant profile, event QR, Discord verification, and metrics; then resolve and implement the team source-of-truth decision.
+5. Update participant profile, event QR, and metrics; remove team storage because Discord is the source of truth.
 
 This design targets a clean, empty database. Legacy database records and participant files are outside the Phase 1 implementation: this repository does not migrate, archive, retain, or delete them. Their handling belongs to the relevant data owner and infrastructure operator under a separately approved retention process.
