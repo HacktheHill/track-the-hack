@@ -2,6 +2,7 @@
 	"title": "Lecteur QR opérationnel",
 	"view-participant": "Afficher le dossier opérationnel du participant",
 	"unknown-error": "Le participant ou l’action de l’événement n’a pas pu être chargé.",
+	"camera-error": "Impossible de démarrer la caméra.",
 	"confirmed": "Confirmé : {{value}}",
 	"yes": "Oui",
 	"no": "Non",
