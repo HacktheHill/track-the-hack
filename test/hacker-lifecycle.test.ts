@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { RoleName } from "@prisma/client";
+import { type PrismaClient, RoleName } from "@prisma/client";
 import type { NextApiRequest, NextApiResponse } from "next";
 import {
 	createCancellationApiHandler,
@@ -8,6 +8,7 @@ import {
 	createRsvpApiHandler,
 } from "@/server/http/participant-lifecycle-handlers";
 import { canUseOrganizerAuth } from "@/server/lib/organizer-auth";
+import { PrismaHackerLifecycleRepository } from "@/server/repositories/prisma-hacker-lifecycle";
 import {
 	clearParticipantSessionCookies,
 	createParticipantSession,
@@ -182,6 +183,32 @@ void test("confirmation enforces expiry and rotates cancellation authorization",
 	hacker.acceptanceExpiry = new Date("2020-01-01T00:00:00Z");
 	await cancelRsvp(repository, createCancellationToken("c".repeat(43), cancellationSecret), cancellationSecret);
 	assert.equal(repository.hackers.get(participantId)?.confirmed, false);
+});
+
+void test("cancellation rejects a capability replaced before its participant lock", async () => {
+	const locks: string[] = [];
+	const transaction = {
+		cancellationCapability: {
+			findUnique: () => Promise.resolve({ hackerId: participantId }),
+		},
+		$queryRaw: (query: TemplateStringsArray) => {
+			const table = query.join("").includes("`Hacker`") ? "hacker" : "capability";
+			locks.push(table);
+			return Promise.resolve(table === "hacker" ? [{ id: participantId }] : [{ id: "new-capability" }]);
+		},
+		hacker: {
+			update: () => {
+				throw new Error("A replaced capability must not cancel the participant");
+			},
+		},
+	};
+	const prisma = {
+		$transaction: (run: (client: typeof transaction) => Promise<unknown>) => run(transaction),
+	} as unknown as PrismaClient;
+	const repository = new PrismaHackerLifecycleRepository(prisma);
+
+	assert.equal(await repository.cancelByCapability("old-capability"), null);
+	assert.deepEqual(locks, ["hacker", "capability"]);
 });
 
 void test("reconciliation is exact and rerunnable", async () => {
