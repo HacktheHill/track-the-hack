@@ -74,6 +74,19 @@ export class PrismaHackerLifecycleRepository implements HackerLifecycleRepositor
 			});
 
 			if (!capability) return null;
+
+			// Confirmation locks the Hacker before rotating its capability. Match
+			// that order, then reject a capability replaced while this lock waited.
+			const lockedHackers = await transaction.$queryRaw<Array<{ id: string }>>`
+				SELECT id FROM \`Hacker\` WHERE id = ${capability.hackerId} FOR UPDATE
+			`;
+			if (lockedHackers.length === 0) return null;
+
+			const [activeCapability] = await transaction.$queryRaw<Array<{ id: string }>>`
+				SELECT id FROM \`CancellationCapability\` WHERE hackerId = ${capability.hackerId} FOR UPDATE
+			`;
+			if (activeCapability?.id !== capabilityId) return null;
+
 			await transaction.hacker.update({
 				where: { id: capability.hackerId },
 				data: { confirmed: false },
