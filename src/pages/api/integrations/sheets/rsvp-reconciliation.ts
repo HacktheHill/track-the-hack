@@ -1,10 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { ZodError } from "zod";
-import { env } from "../../../../env/server.mjs";
-import { prisma } from "../../../../server/db";
-import { hasIntegrationApiKey } from "../../../../server/lib/integration-auth";
-import { PrismaHackerLifecycleRepository } from "../../../../server/repositories/prisma-hacker-lifecycle";
-import { reconcileRsvps } from "../../../../server/services/hacker-lifecycle";
+import { env } from "@/env/server.mjs";
+import { prisma } from "@/server/db";
+import { hasIntegrationApiKey } from "@/server/lib/integration-auth";
+import { PrismaHackerLifecycleRepository } from "@/server/repositories/prisma-hacker-lifecycle";
+import { reconcileRsvps } from "@/server/services/hacker-lifecycle";
 
 const repository = new PrismaHackerLifecycleRepository(prisma);
 

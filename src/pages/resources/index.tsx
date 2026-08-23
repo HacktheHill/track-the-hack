@@ -12,7 +12,7 @@ import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeSlug from "rehype-slug";
 import remarkToc from "remark-toc";
 
-import App from "../../components/App";
+import App from "@/components/App";
 import en from "./en.md";
 import fr from "./fr.md";
 

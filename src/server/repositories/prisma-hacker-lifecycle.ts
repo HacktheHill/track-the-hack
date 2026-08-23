@@ -1,5 +1,10 @@
 import type { PrismaClient } from "@prisma/client";
-import type { ConfirmationResult, HackerLifecycleRepository, ProvisioningRecord } from "../services/hacker-lifecycle";
+import type {
+	ConfirmationResult,
+	HackerLifecycleRepository,
+	NewParticipantSession,
+	ProvisioningRecord,
+} from "@/server/services/hacker-lifecycle";
 
 type TransactionClient = Omit<PrismaClient, "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends">;
 
@@ -7,7 +12,14 @@ export class PrismaHackerLifecycleRepository implements HackerLifecycleRepositor
 	constructor(private readonly prisma: PrismaClient) {}
 
 	async upsertProvisioned(record: ProvisioningRecord) {
-		await this.prisma.hacker.upsert({
+		await this.upsertProvisionedInTransaction(this.prisma, record);
+	}
+
+	private async upsertProvisionedInTransaction(
+		transaction: TransactionClient | PrismaClient,
+		record: ProvisioningRecord,
+	) {
+		await transaction.hacker.upsert({
 			where: { id: record.id },
 			create: {
 				id: record.id,
@@ -70,20 +82,24 @@ export class PrismaHackerLifecycleRepository implements HackerLifecycleRepositor
 		});
 	}
 
-	async replaceClaimToken(hackerId: string, claimId: string, expiresAt: Date) {
-		const hacker = await this.prisma.hacker.findUnique({ where: { id: hackerId }, select: { id: true } });
-		if (!hacker) return false;
+	async replaceParticipantAccess(record: ProvisioningRecord, claimId: string, expiresAt: Date) {
+		await this.prisma.$transaction(async transaction => {
+			// Keep the Phase 1 upsert semantics: operational fields are refreshed,
+			// while RSVP confirmation and every unrelated relation are preserved.
+			await this.upsertProvisionedInTransaction(transaction, record);
 
-		// One row per participant, so re-issuing access kills the previous QR.
-		await this.prisma.claimToken.upsert({
-			where: { hackerId },
-			create: { id: claimId, hackerId, expiresAt },
-			update: { id: claimId, expiresAt, consumedAt: null },
+			// One claim and one session per participant. Both changes commit with
+			// provisioning, so replacement access cannot leave the old phone live.
+			await transaction.claimToken.upsert({
+				where: { hackerId: record.id },
+				create: { id: claimId, hackerId: record.id, expiresAt },
+				update: { id: claimId, expiresAt, consumedAt: null },
+			});
+			await transaction.participantSession.deleteMany({ where: { hackerId: record.id } });
 		});
-		return true;
 	}
 
-	async redeemClaimToken(claimId: string, now: Date) {
+	async redeemClaimToken(claimId: string, now: Date, session: NewParticipantSession) {
 		return this.prisma.$transaction(async transaction => {
 			// The conditions live in the UPDATE rather than a read followed by a
 			// write, so two devices scanning at once cannot both be handed a
@@ -99,8 +115,32 @@ export class PrismaHackerLifecycleRepository implements HackerLifecycleRepositor
 				where: { id: claimId },
 				select: { hackerId: true },
 			});
-			return claim?.hackerId ?? null;
+			if (!claim) {
+				throw new Error("Consumed claim disappeared during redemption");
+			}
+
+			await transaction.participantSession.deleteMany({ where: { hackerId: claim.hackerId } });
+			await transaction.participantSession.create({
+				data: {
+					verifier: session.verifier,
+					hackerId: claim.hackerId,
+					expiresAt: session.expiresAt,
+				},
+			});
+
+			return claim.hackerId;
 		});
+	}
+
+	async findParticipantSession(verifier: string, now: Date) {
+		return this.prisma.participantSession.findFirst({
+			where: { verifier, expiresAt: { gt: now } },
+			select: { verifier: true, hackerId: true, expiresAt: true },
+		});
+	}
+
+	async revokeParticipantSession(verifier: string) {
+		await this.prisma.participantSession.deleteMany({ where: { verifier } });
 	}
 
 	async reconcile(ids: string[]) {

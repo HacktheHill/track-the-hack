@@ -2,7 +2,7 @@ import type { GetServerSideProps, InferGetServerSidePropsType } from "next";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useState } from "react";
-import App from "../../components/App";
+import App from "@/components/App";
 
 export const getServerSideProps: GetServerSideProps<{ participantId: string }> = async ({ params, locale }) => ({
 	props: {

@@ -3,7 +3,7 @@ import BrowserHead from "next/head";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useEffect, useState } from "react";
-import App from "../../components/App";
+import App from "@/components/App";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => ({
 	props: await serverSideTranslations(locale ?? "en", ["rsvp", "navbar", "common"]),

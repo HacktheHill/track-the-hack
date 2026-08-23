@@ -1,9 +1,9 @@
 import { RoleName } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { hasRoles } from "../../../utils/helpers";
-import { participantIdSchema } from "../../services/hacker-lifecycle";
-import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { hasRoles } from "@/utils/helpers";
+import { participantIdSchema } from "@/server/services/hacker-lifecycle";
+import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 
 export const hackerRouter = createTRPCRouter({
 	get: protectedProcedure.input(z.object({ id: participantIdSchema })).query(async ({ ctx, input }) => {

@@ -1,8 +1,8 @@
 import { RoleName } from "@prisma/client";
-import { sponsorshipGmailDraftsSchema } from "../../../utils/common";
-import { hasRoles } from "../../../utils/helpers";
-import { createDraft } from "../../lib/gmail";
-import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { sponsorshipGmailDraftsSchema } from "@/utils/common";
+import { hasRoles } from "@/utils/helpers";
+import { createDraft } from "@/server/lib/gmail";
+import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 
 /**
  * Get the email template

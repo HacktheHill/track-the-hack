@@ -1,6 +1,10 @@
 import type { NextApiHandler } from "next";
 import { ZodError } from "zod";
-import { ParticipantLifecycleError } from "../services/hacker-lifecycle";
+import {
+	clearParticipantSessionCookies,
+	participantSessionVerifierFromRequest,
+} from "@/server/lib/participant-session";
+import { ParticipantLifecycleError } from "@/server/services/hacker-lifecycle";
 
 const rejectNonPost = (method: string | undefined, setAllow: (value: string) => void) => {
 	if (method === "POST") return false;
@@ -57,4 +61,18 @@ export const createCancellationApiHandler =
 			console.error("RSVP cancellation failed");
 			return res.status(500).json({ ok: false, message: "Cancellation is temporarily unavailable." });
 		}
+	};
+
+export const createParticipantSignOutApiHandler =
+	(revoke: (verifier: string) => Promise<void>, secret: string): NextApiHandler =>
+	async (req, res) => {
+		res.setHeader("Cache-Control", "no-store");
+		if (rejectNonPost(req.method, value => res.setHeader("Allow", value))) {
+			return res.status(405).json({ error: "method_not_allowed" });
+		}
+
+		const verifier = participantSessionVerifierFromRequest(req, secret);
+		if (verifier) await revoke(verifier);
+		res.setHeader("Set-Cookie", clearParticipantSessionCookies());
+		return res.status(204).end();
 	};

@@ -2,7 +2,7 @@ import type { gmail_v1 } from "googleapis";
 import { google } from "googleapis";
 import type { AttachmentOptions } from "mimetext";
 import { createMimeMessage } from "mimetext";
-import { env } from "../../env/server.mjs";
+import { env } from "@/env/server.mjs";
 
 /**
  * Reads authorized credentials from the environment variables

@@ -4,10 +4,10 @@ import { getServerSession } from "next-auth";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import App from "../../components/App";
-import { trpc } from "../../server/api/api";
-import { rolesRedirect } from "../../server/lib/redirects";
-import { getAuthOptions } from "../api/auth/[...nextauth]";
+import App from "@/components/App";
+import { trpc } from "@/server/api/api";
+import { rolesRedirect } from "@/server/lib/redirects";
+import { getAuthOptions } from "@/pages/api/auth/[...nextauth]";
 
 const Metrics = () => {
 	const { t } = useTranslation("metrics");
