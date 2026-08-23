@@ -5,6 +5,7 @@ const { i18n } = require("./next-i18next.config.js");
 const defaultRuntimeCaching = require("next-pwa/cache");
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const apiNetworkOnly = require("./pwa-runtime-caching.js");
+const passPrecacheEntries = ["/pass", "/fr/pass"].map(url => ({ url, revision: "development" }));
 
 // /profile is personalized server-rendered data. These rules must stay ahead
 // of next-pwa's broad JSON and same-origin rules so neither the document nor a
@@ -38,7 +39,7 @@ const withPWA = require("next-pwa")({
 	dest: "public",
 	register: true,
 	disable: process.env.NODE_ENV === "development",
-	additionalManifestEntries: ["/pass", "/fr/pass"].map(url => ({ url, revision: null })),
+	additionalManifestEntries: passPrecacheEntries,
 	runtimeCaching: [apiNetworkOnly, ...participantProfileNetworkOnly, ...defaultRuntimeCaching],
 });
 
@@ -46,7 +47,8 @@ module.exports = withPWA({
 	reactStrictMode: true,
 	i18n,
 	experimental: { useTypeScriptCli: false },
-	webpack: config => {
+	webpack: (config, { buildId }) => {
+		for (const entry of passPrecacheEntries) entry.revision = buildId;
 		config.module.rules.push({
 			test: /\.md$/,
 			use: "raw-loader",
