@@ -1,15 +1,21 @@
 {
 	"title": "Votre laissez-passer",
+	"offline-title": "Votre laissez-passer hors ligne",
 	"qr-alt": "Votre code QR pour l’événement",
 	"qr-explanation": "Présentez-le à un organisateur pour l’enregistrement, les repas, les articles promotionnels et les ateliers. Il fonctionne sans connexion.",
+	"offline-explanation": "Ce code QR est enregistré sur cet appareil et reste disponible sans connexion.",
+	"no-offline-pass": "Aucun laissez-passer n’est enregistré sur cet appareil. Ouvrez d’abord votre profil de participant en ligne.",
 	"details": "Vos informations",
 	"confirmed": "Présence confirmée",
 	"t-shirt": "Taille de t-shirt",
 	"meal": "Catégorie de repas",
 	"team": "Équipe",
-	"walk-in": "Inscrit sur place",
 	"attendance": "Votre participation",
 	"no-attendance": "Rien d’enregistré pour l’instant.",
+	"view-profile": "Voir les informations à jour en ligne",
+	"participant-sign-out": "Se déconnecter du laissez-passer",
+	"signing-out": "Déconnexion…",
+	"sign-out-error": "Impossible de vous déconnecter. Vérifiez votre connexion et réessayez.",
 	"yes": "Oui",
 	"no": "Non"
 }

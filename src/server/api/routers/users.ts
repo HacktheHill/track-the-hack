@@ -1,9 +1,9 @@
 import { RoleName } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { hasRoles } from "../../../utils/helpers";
-import { log } from "../../lib/log";
-import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { hasRoles } from "@/utils/helpers";
+import { log } from "@/server/lib/log";
+import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 
 const getAdmin = async (ctx: Parameters<Parameters<typeof protectedProcedure.query>[0]>[0]["ctx"]) => {
 	const user = await ctx.prisma.user.findUnique({

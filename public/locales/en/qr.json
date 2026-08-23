@@ -7,5 +7,13 @@
 	"no": "No",
 	"t-shirt": "T-shirt: {{value}}",
 	"meal": "Meal: {{value}}",
-	"walk-in": "Walk-in"
+	"walk-in": "Walk-in",
+	"contact-food-lead": "Contact the food lead before serving this participant.",
+	"maximum-reached": "Maximum check-ins reached.",
+	"workflow": {
+		"CHECK_IN": "Check-in",
+		"MERCHANDISE": "Merchandise",
+		"FOOD": "Food",
+		"ATTENDANCE": "Attendance"
+	}
 }

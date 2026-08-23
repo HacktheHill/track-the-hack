@@ -5,15 +5,15 @@ import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import type { GetServerSideProps, NextPage } from "next/types";
 import { createRef, useEffect, useState } from "react";
 
-import App from "../../components/App";
-import Error from "../../components/Error";
-import Filter from "../../components/Filter";
+import App from "@/components/App";
+import Error from "@/components/Error";
+import Filter from "@/components/Filter";
 
 import { getServerSession } from "next-auth";
-import { trpc } from "../../server/api/api";
-import { rolesRedirect } from "../../server/lib/redirects";
-import { sponsorshipGmailDraftsSchema } from "../../utils/common";
-import { getAuthOptions } from "../api/auth/[...nextauth]";
+import { trpc } from "@/server/api/api";
+import { rolesRedirect } from "@/server/lib/redirects";
+import { sponsorshipGmailDraftsSchema } from "@/utils/common";
+import { getAuthOptions } from "@/pages/api/auth/[...nextauth]";
 
 const html = String.raw;
 

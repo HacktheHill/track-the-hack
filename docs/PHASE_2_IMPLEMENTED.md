@@ -9,8 +9,8 @@ added here stores a name, an email or a phone number.
 
 ## Read this before wiring anything up
 
-Two pieces are missing on purpose. Neither should be filled in by loosening the
-app.
+Two integration boundaries are external on purpose. Neither should be handled
+by loosening this app.
 
 1. **Participant ids come from the Sheet.** `Hacker.id` has no `@default`, which
    is Waaberi's decision from phase 1. Adding one breaks the contract, since the
@@ -19,9 +19,9 @@ app.
    carries a timestamp. Creating a `Hacker` with no id fails loudly today, and
    that is what we want.
 
-2. **The Sheets sidebar is what calls these endpoints.** It does not exist and
-   cannot live here, since it is Apps Script inside the Sheet. Nothing real
-   flows through this feature until someone writes it.
+2. **The Sheets sidebar is what calls these endpoints.** It lives outside this
+   repository as Apps Script. This repository defines and enforces only the
+   request and response contract it uses.
 
 Locally you need neither. `npx prisma db seed` makes up ids, and the
 provisioning endpoint accepts any valid id you post at it. To experiment,
@@ -50,8 +50,8 @@ Organiser picks the row in the Sheet
     |
     | POST /api/integrations/sheets/claim   (Bearer SHEETS_INTEGRATION_API_KEY)
     v
-issueClaimToken()        32 random bytes, expiry now + 5 minutes
-replaceClaimToken()      one row per participant, so re-issuing kills the old QR
+issueParticipantAccess()       strict operational record + 32 random bytes
+replaceParticipantAccess()     provision, replace claim, revoke session atomically
     |
     v
 { "claimUrl": "https://<host>/claim#<claimId>.<HMAC>", "expiresAt": "..." }
@@ -63,10 +63,10 @@ replaceClaimToken()      one row per participant, so re-issuing kills the old QR
     | POST /api/claim  { "token": "<claimId>.<HMAC>" }
     v
 consumeClaimToken()      check the HMAC before going near the database
-redeemClaimToken()       UPDATE ... WHERE consumedAt IS NULL AND expiresAt > now
+redeemClaimToken()       consume claim and store one keyed session verifier atomically
     |
     v
-Set-Cookie: participant_session=<hackerId>.<expiry>.<HMAC>; HttpOnly; SameSite=Lax
+Set-Cookie: participant_session=<random 32-byte capability>; HttpOnly; SameSite=Lax
 Set-Cookie: participant_pass=1
     |
     v
@@ -75,16 +75,14 @@ Set-Cookie: participant_pass=1
 
 ## What was added
 
-1. `ClaimToken` in `prisma/schema.prisma` plus its migration
-2. `issueClaimToken` and `consumeClaimToken` in `hacker-lifecycle.ts`
-3. `replaceClaimToken` and `redeemClaimToken` in `prisma-hacker-lifecycle.ts`
-4. `src/pages/api/integrations/sheets/claim.ts`, called by the sidebar
-5. `src/pages/api/claim.ts`, called by the participant's phone
-6. `src/pages/claim/index.tsx` and `src/pages/profile.tsx` with their locales
-7. `src/server/lib/participant-session.ts`, the signed session cookie
-8. `src/components/QRCode.tsx`, which draws the event QR
-9. `src/utils/participant-pass.ts` and a "My pass" link in `Navigation.tsx`
-10. Five cases in `test/hacker-lifecycle.test.ts`
+1. `ClaimToken` and `ParticipantSession`, with clean-database migrations
+2. Strict access issuance, atomic claim redemption, and revocable participant sessions
+3. The Sheet claim endpoint, participant claim endpoint, and participant sign-out endpoint
+4. The claim page, private profile, and public static `/pass` offline shell
+5. Explicit check-in, merchandise, food, and attendance scanner workflows on `Event`
+6. Event-linked Presence counters with unique `(hackerId, eventId)` identity and atomic caps
+7. Scanner responses limited to the fields required by the selected workflow
+8. Focused lifecycle, scanner-workflow, and offline-pass tests
 
 `qrcode` went back into `package.json`, since phase 1 removed it along with the
 old encrypted QR component.
@@ -96,15 +94,34 @@ token share them instead of keeping two copies. `createCancellationToken` and
 ## Endpoints
 
 `POST /api/integrations/sheets/claim`, with
-`Authorization: Bearer <SHEETS_INTEGRATION_API_KEY>` and `{ "id": "..." }`.
-Returns `claimUrl` and `expiresAt`. Errors are `400` for a malformed id, `401`
-for a bad key, `404` for an unknown participant, `405` for anything but POST.
-Re-issuing is how you recover someone who lost their code or changed phones.
+`Authorization: Bearer <SHEETS_INTEGRATION_API_KEY>`, is the only access-issuance
+call the Apps Script must make. Its complete request body is:
+
+```json
+{
+	"id": "wvY1HKlwYnFBO8t-YnQbwg",
+	"tShirtSize": "M",
+	"mealCategory": "HALAL",
+	"acceptanceExpiry": "2026-09-01T03:59:59.000Z",
+	"walkIn": false
+}
+```
+
+`walkIn` may be omitted. Omission preserves its value on an existing record and
+defaults it to `false` on a new one. Every other key is rejected. The endpoint
+creates or updates the Hacker without changing RSVP confirmation, revokes any
+active participant session, replaces any outstanding claim, and returns only
+`claimUrl` and `expiresAt`. Errors are `400` for any invalid or extra field,
+`401` for a bad key, and `405` for anything but POST.
 
 `POST /api/claim`, no API key, `{ "token": "..." }`. The signed token is the
 credential. Returns `{ "ok": true }` and the cookies, or `{ "ok": false }` with
 one generic message. Spent, expired, forged and malformed all look identical
 from outside, so the response cannot confirm a token was real.
+
+`POST /api/participant/sign-out` deletes the server-side session verifier and
+expires both participant cookies. It returns `204`, including when the browser
+no longer holds a usable session.
 
 ## Why it works this way
 
@@ -120,8 +137,18 @@ from outside, so the response cannot confirm a token was real.
    otherwise burn the code before the participant touched anything.
 6. **Separate secrets** for claims, sessions and cancellations, so leaking one
    does not compromise the others.
-7. **The session expiry is inside the signature**, so editing it breaks the
-   signature instead of extending the session.
+7. **The participant cookie is opaque.** It contains only 32 random bytes. The
+   database stores an HMAC verifier tied directly to `Hacker.id`, never the raw
+   cookie capability.
+8. **One server-side session row per participant.** It expires after 36 hours.
+   Every authenticated request checks that row, so replacement issuance and
+   sign-out revoke an old cookie immediately.
+9. **SameSite CSRF boundary.** Session-changing browser actions are POST-only;
+   the participant cookie is `HttpOnly`, `SameSite=Lax`, scoped to `/`, and is
+   also `Secure` in production.
+10. **Exact ids stay exact.** Participant ids and their claim/session references
+    use MySQL's binary collation, so changing letter case cannot select another
+    participant or capability.
 
 ## Getting back to the pass
 
@@ -141,35 +168,44 @@ decide whether to draw a menu item.
 `node:crypto` into the browser bundle, and it reads the cookie after mount so
 the server and client renders agree.
 
+## Offline pass
+
+`/profile` is always network-only and sends `Cache-Control: private, no-store`.
+After an authenticated profile load, the browser stores only exact `Hacker.id`,
+which is already the event QR payload. If a later `/profile` navigation fails
+offline, the service worker serves the precached static `/pass` shell. It never
+caches the profile HTML, profile JSON, participant cookie, T-shirt size, meal
+category, team, confirmation state, or Presence records.
+
+The fallback is scoped to `/profile`; unrelated offline pages do not render a
+participant pass.
+
 ## Tests
 
-`test/hacker-lifecycle.test.ts`, run with `npm test`. It uses a
-`MemoryRepository` instead of Prisma, so it needs no database.
+The focused files under `test/` run with `npm test`. Lifecycle tests use a
+`MemoryRepository`, and scanner tests use a narrow in-memory Prisma-shaped
+client, so neither needs a database.
 
 1. Issuance builds the URL correctly, expires in five minutes, and never stores
    the signature
-2. A claim is single use, and rejects expiry, tampering, the wrong secret and
-   unknown participants
-3. Re-issuing revokes the unused claim and leaves one row
-4. The session cookie is HttpOnly and SameSite, and rejects a wrong secret, a
-   swapped id, a hand-stretched expiry and its own expiry
-5. The navigation hint is not HttpOnly, holds no id, grants no session, and is
-   cleared alongside the real cookie
-
-Checked with a mutation run: breaking the single-use condition failed exactly
-one test and left the rest passing.
-
-The flow was also driven by hand with curl, and then end to end on an Android
-phone over the LAN with the camera app. Opening the page did not consume the
-code, activating landed on the pass, the fragment was gone afterwards, back did
-not return to the token, "My pass" appeared and stayed across pages, reopening
-the link bounced to the pass, and a spent code failed.
+2. A claim is single use, and rejects expiry, tampering, the wrong secret and reuse
+3. Concurrent redemption gives exactly one device a server-side session
+4. Re-issuing revokes both the unused claim and any live session while
+   preserving RSVP confirmation
+5. The session cookie is opaque, HttpOnly and SameSite, and requires a live,
+   unexpired keyed verifier in the database
+6. Participant sign-out revokes the verifier and clears both cookies
+7. Scanner workflows expose only their allowlisted fields and enforce event
+   counter limits
+8. The offline pass stores only a validated participant id and clears it on
+   sign-out
 
 ## Trying it locally
 
 ```sh
 docker compose up -d
-npx prisma migrate reset          # drops local data, reapplies migrations, seeds
+npx prisma migrate deploy
+npx prisma db seed
 npx next dev --webpack
 ```
 
@@ -187,7 +223,7 @@ docker exec track-the-hack-mysql-1 mysql -uroot -proot -N -B \
 curl -X POST http://localhost:3000/api/integrations/sheets/claim \
   -H "Authorization: Bearer $SHEETS_INTEGRATION_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"id":"<participant id>"}'
+  -d '{"id":"<participant id>","tShirtSize":"M","mealCategory":"HALAL","acceptanceExpiry":"2026-09-01T03:59:59.000Z","walkIn":false}'
 ```
 
 Open the returned `claimUrl` and press the button. Pressing it again gives the
@@ -197,54 +233,30 @@ to `/profile`, and no fragment is left in the address bar.
 
 For a phone, the URL is built from `NEXTAUTH_URL`, so point it at the machine's
 LAN address, run with `--hostname 0.0.0.0`, and put it back afterwards. Use a
-private tab to start clean, since there is no sign out. `/qr` cannot be reached
+private tab to start clean. `/qr` cannot be reached
 locally at all without Google OAuth on a verified `@ctn-rtc.org` account.
 
-## Left to integrate
+## Outside this repository
 
-1. **Tally form finished**, with waiver and guardian consent. Outside this repo,
-   Daniel has it in progress.
-2. **Sheet columns and participant id generation.** Outside this repo, waiting
-   on the Tally form.
-3. **Apps Script sidebar.** Outside this repo. It has to generate the id, send
-   it through the phase 1 provisioning endpoint, then call the claim endpoint
-   and draw the returned URL as a QR.
-4. **Participant session shape**, plain cookie or NextAuth. Waiting on Daniel
-   and Kai. Right now it is a plain signed cookie, because NextAuth brings
-   accounts, providers and an adapter that a participant with no account does
-   not need. Swapping it is contained to `participant-session.ts` and its
-   callers.
-5. **Session revocation on re-issue.** Nothing needs a database lookup to verify
-   a session today, which is fast but means the server cannot kill one on
-   demand. Issuing a new claim kills the old token, but a live session survives
-   until it expires. Doing it properly needs per-participant state, so it waits
-   on point 4.
-6. **Sign out.** `clearParticipantSessionCookies` exists but nothing calls it.
-   Worth deciding whether participants should have one, given access is issued
-   in person.
-7. **Workflow specific scanner views.** Blocked: the scanner works out its mode
-   from the event type, but `EventType` only has `ALL`, `WORKSHOP`, `SOCIAL`,
-   `CAREER_FAIR` and `FOOD`, so check-in and merchandise cannot be identified.
-   Someone has to decide whether to add enum values or do it another way.
-8. **Discord verification.** Nothing blocking it, just not started.
-
-Also worth fixing separately: `npm run dev` needs `--webpack` like `build`
-already has.
+The in-repository Phase 2 path is implemented. The Google Sheets Apps Script
+still has to send the exact request object documented above and draw the
+returned `claimUrl` as a QR. Sheet/Tally column mapping and participant-id
+generation remain external-system work; this app intentionally does not accept
+alternate field names or infer missing values.
 
 ## Phase 3
 
-The phase split is not written down anywhere, so this is what is left rather
-than an official list. `PHASE_1_INTEGRATIONS.md` mentions a "Phase 3 ownership
-decision" for `teamId`, which matches the last item in the implementation order
-in `PROPOSED_FLOW.md`.
+The authoritative handoff is [`PHASE_3.md`](./PHASE_3.md). Its remaining work
+starts with the team-ownership decision already identified by
+`PHASE_1_INTEGRATIONS.md` and `PROPOSED_FLOW.md`.
 
-**Team source of truth**, still open between Track the Hack owning teams with
+**Team source of truth** is still open between Track the Hack owning teams with
 the bot updating them, Discord owning them and pushing a snapshot, or teams
 living only in Discord. `teamId` is in the schema but provisioning rejects it
 until this is settled, and `/profile` shows a team name that may need revisiting.
 
-**Retention** for old application records, resumes and signatures. Phase 1
-dropped the columns, but whatever is in production still needs handling.
+**Discord verification** is not implemented. It belongs with the Phase 3 team
+and Discord ownership decision, not the Phase 2 access/session/scanner path.
 
 ## Environment
 

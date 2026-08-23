@@ -4,13 +4,13 @@ import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import type { StaticImageData } from "next/image";
 import Image from "next/image";
-import App from "../components/App";
+import App from "@/components/App";
 
-import buildingSVG from "../../public/assets/hero/building.svg";
-import hackSVG from "../../public/assets/hero/hack.svg";
-import hillSVG from "../../public/assets/hero/hill.svg";
-import leavesSVG from "../../public/assets/hero/leaves.svg";
-import theSVG from "../../public/assets/hero/the.svg";
+import buildingSVG from "@root/public/assets/hero/building.svg";
+import hackSVG from "@root/public/assets/hero/hack.svg";
+import hillSVG from "@root/public/assets/hero/hill.svg";
+import leavesSVG from "@root/public/assets/hero/leaves.svg";
+import theSVG from "@root/public/assets/hero/the.svg";
 
 const Hill = hillSVG as StaticImageData;
 const The = theSVG as StaticImageData;

@@ -1,11 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { ZodError } from "zod";
-import { env } from "../../../../env/server.mjs";
-import { prisma } from "../../../../server/db";
-import { hasIntegrationApiKey } from "../../../../server/lib/integration-auth";
-import { log } from "../../../../server/lib/log";
-import { PrismaHackerLifecycleRepository } from "../../../../server/repositories/prisma-hacker-lifecycle";
-import { issueClaimToken, ParticipantLifecycleError } from "../../../../server/services/hacker-lifecycle";
+import { env } from "@/env/server.mjs";
+import { prisma } from "@/server/db";
+import { hasIntegrationApiKey } from "@/server/lib/integration-auth";
+import { log } from "@/server/lib/log";
+import { PrismaHackerLifecycleRepository } from "@/server/repositories/prisma-hacker-lifecycle";
+import { issueParticipantAccess } from "@/server/services/hacker-lifecycle";
 
 const repository = new PrismaHackerLifecycleRepository(prisma);
 
@@ -21,13 +21,17 @@ export default async function claim(req: NextApiRequest, res: NextApiResponse) {
 	}
 
 	try {
-		const body = typeof req.body === "object" && req.body !== null ? (req.body as Record<string, unknown>) : {};
-		const result = await issueClaimToken(repository, body.id, env.NEXTAUTH_URL, env.CLAIM_TOKEN_SECRET);
+		const { hackerId, ...result } = await issueParticipantAccess(
+			repository,
+			req.body,
+			env.NEXTAUTH_URL,
+			env.CLAIM_TOKEN_SECRET,
+		);
 
 		await log(
 			{ prisma },
 			{
-				sourceId: String(body.id),
+				sourceId: hackerId,
 				sourceType: "Hacker",
 				author: "sheets-integration",
 				route: "/api/integrations/sheets/claim",
@@ -38,12 +42,8 @@ export default async function claim(req: NextApiRequest, res: NextApiResponse) {
 
 		return res.status(200).json(result);
 	} catch (error) {
-		if (error instanceof ParticipantLifecycleError) {
-			return res.status(404).json({ error: "unknown_participant" });
-		}
-
 		if (error instanceof ZodError) {
-			return res.status(400).json({ error: "invalid_participant_id", issues: error.issues });
+			return res.status(400).json({ error: "invalid_operational_record", issues: error.issues });
 		}
 
 		// Do not include the exception here: it can carry the signed claim URL.

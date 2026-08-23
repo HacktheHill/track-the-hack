@@ -1,10 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { env } from "../../../env/server.mjs";
-import { createCancellationApiHandler } from "../../../server/http/participant-lifecycle-handlers";
-import { PrismaHackerLifecycleRepository } from "../../../server/repositories/prisma-hacker-lifecycle";
-import { cancelRsvp } from "../../../server/services/hacker-lifecycle";
-import { prisma } from "../../../server/db";
-import { log } from "../../../server/lib/log";
+import { env } from "@/env/server.mjs";
+import { createCancellationApiHandler } from "@/server/http/participant-lifecycle-handlers";
+import { PrismaHackerLifecycleRepository } from "@/server/repositories/prisma-hacker-lifecycle";
+import { cancelRsvp } from "@/server/services/hacker-lifecycle";
+import { prisma } from "@/server/db";
+import { log } from "@/server/lib/log";
 
 const repository = new PrismaHackerLifecycleRepository(prisma);
 

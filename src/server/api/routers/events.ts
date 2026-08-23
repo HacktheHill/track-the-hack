@@ -1,5 +1,8 @@
+import { RoleName } from "@prisma/client";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { createTRPCRouter, publicProcedure } from "../trpc";
+import { hasRoles } from "@/utils/helpers";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "@/server/api/trpc";
 
 export const eventsRouter = createTRPCRouter({
 	// Get event
@@ -52,6 +55,31 @@ export const eventsRouter = createTRPCRouter({
 			orderBy: {
 				start: "asc",
 			},
+		});
+	}),
+
+	// The scanner gets only its server-owned action contract. Schedule content
+	// and arbitrary participant fields do not need to cross this boundary.
+	scannable: protectedProcedure.query(async ({ ctx }) => {
+		const organizer = await ctx.prisma.user.findUnique({
+			where: { id: ctx.session.user.id },
+			select: { roles: { select: { name: true } } },
+		});
+		if (!organizer || !hasRoles(organizer, [RoleName.ORGANIZER, RoleName.ADMIN])) {
+			throw new TRPCError({ code: "FORBIDDEN" });
+		}
+
+		const gracePeriodMs = 30 * 60 * 1000;
+		const cutoff = new Date(Date.now() - gracePeriodMs);
+		return ctx.prisma.event.findMany({
+			where: { end: { gt: cutoff } },
+			select: {
+				id: true,
+				name: true,
+				nameFr: true,
+				scannerWorkflow: true,
+			},
+			orderBy: { start: "asc" },
 		});
 	}),
 });
