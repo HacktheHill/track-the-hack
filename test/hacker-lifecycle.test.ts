@@ -409,36 +409,108 @@ void test("participant sign-out revokes server state and clears both browser coo
 void test("organizer auth removes participant providers and enforces verification and provisioning", async () => {
 	const findUser = (email: string) =>
 		Promise.resolve(
-			email === "organizer@ctn-rtc.org" ? { id: "user", roles: [{ name: RoleName.ORGANIZER }] } : null,
+			email === "organizer@ctn-rtc.org"
+				? { id: "user", roles: [{ name: RoleName.ORGANIZER }] }
+				: email === "replacement@ctn-rtc.org"
+					? { id: "replacement", roles: [{ name: RoleName.ORGANIZER }] }
+					: null,
 		);
 	assert.equal(
 		await canUseOrganizerAuth(
-			{ provider: "google", email: "organizer@ctn-rtc.org", emailVerified: true },
+			{
+				provider: "google",
+				profileEmail: "organizer@ctn-rtc.org",
+				userEmail: "organizer@ctn-rtc.org",
+				emailVerified: true,
+			},
 			findUser,
 		),
 		true,
 	);
 	assert.equal(
 		await canUseOrganizerAuth(
-			{ provider: "credentials", email: "organizer@ctn-rtc.org", emailVerified: true },
+			{
+				provider: "credentials",
+				profileEmail: "organizer@ctn-rtc.org",
+				userEmail: "organizer@ctn-rtc.org",
+				emailVerified: true,
+			},
 			findUser,
 		),
-		false,
-	);
-	assert.equal(
-		await canUseOrganizerAuth({ provider: "google", email: "person@example.com", emailVerified: true }, findUser),
 		false,
 	);
 	assert.equal(
 		await canUseOrganizerAuth(
-			{ provider: "google", email: "organizer@ctn-rtc.org", emailVerified: false },
+			{
+				provider: "google",
+				profileEmail: "person@example.com",
+				userEmail: "person@example.com",
+				emailVerified: true,
+			},
 			findUser,
 		),
 		false,
 	);
 	assert.equal(
-		await canUseOrganizerAuth({ provider: "google", email: "missing@ctn-rtc.org", emailVerified: true }, findUser),
+		await canUseOrganizerAuth(
+			{
+				provider: "google",
+				profileEmail: "organizer@ctn-rtc.org",
+				userEmail: "organizer@ctn-rtc.org",
+				emailVerified: false,
+			},
+			findUser,
+		),
 		false,
+	);
+	assert.equal(
+		await canUseOrganizerAuth(
+			{
+				provider: "google",
+				profileEmail: "missing@ctn-rtc.org",
+				userEmail: "missing@ctn-rtc.org",
+				emailVerified: true,
+			},
+			findUser,
+		),
+		false,
+	);
+	assert.equal(
+		await canUseOrganizerAuth(
+			{
+				provider: "google",
+				profileEmail: "replacement@ctn-rtc.org",
+				userEmail: "organizer@ctn-rtc.org",
+				emailVerified: true,
+			},
+			findUser,
+		),
+		false,
+	);
+	assert.equal(
+		await canUseOrganizerAuth(
+			{
+				provider: "google",
+				profileEmail: "replacement@ctn-rtc.org",
+				userEmail: "replacement@ctn-rtc.org",
+				emailVerified: true,
+			},
+			findUser,
+			"user",
+		),
+		false,
+	);
+	assert.equal(
+		await canUseOrganizerAuth(
+			{
+				provider: "google",
+				profileEmail: "replacement@ctn-rtc.org",
+				userEmail: "replacement@ctn-rtc.org",
+				emailVerified: true,
+			},
+			findUser,
+		),
+		true,
 	);
 });
 

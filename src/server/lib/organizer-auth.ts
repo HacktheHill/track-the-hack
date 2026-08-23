@@ -9,7 +9,8 @@ type OrganizerUser = {
 
 type OrganizerSignInInput = {
 	provider: string | null | undefined;
-	email: string | null | undefined;
+	profileEmail: string | null | undefined;
+	userEmail: string | null | undefined;
 	emailVerified: boolean;
 };
 
@@ -24,15 +25,19 @@ export const hasOrganizerEmailDomain = (email: string) => {
 export const canUseOrganizerAuth = async (
 	input: OrganizerSignInInput,
 	findUserByEmail: (email: string) => Promise<OrganizerUser | null>,
+	sessionUserId?: string,
 ) => {
-	if (input.provider !== "google" || !input.email || !input.emailVerified) {
+	if (input.provider !== "google" || !input.profileEmail || !input.userEmail || !input.emailVerified) {
 		return false;
 	}
 
-	if (!hasOrganizerEmailDomain(input.email)) {
+	if (
+		!hasOrganizerEmailDomain(input.profileEmail) ||
+		normalizeOrganizerEmail(input.profileEmail) !== normalizeOrganizerEmail(input.userEmail)
+	) {
 		return false;
 	}
 
-	const user = await findUserByEmail(normalizeOrganizerEmail(input.email));
-	return !!user && user.roles.length > 0;
+	const user = await findUserByEmail(normalizeOrganizerEmail(input.profileEmail));
+	return !!user && user.roles.length > 0 && (!sessionUserId || user.id === sessionUserId);
 };
