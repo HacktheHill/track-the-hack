@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import apiNetworkOnly from "@root/pwa-runtime-caching";
 
-void test("API requests stay network-only ahead of next-pwa caches", () => {
+void test("PWA configuration keeps participant routes deployment-safe", () => {
 	const previousSelf = Object.getOwnPropertyDescriptor(globalThis, "self");
 	Object.defineProperty(globalThis, "self", {
 		configurable: true,
@@ -22,4 +22,9 @@ void test("API requests stay network-only ahead of next-pwa caches", () => {
 
 	const config = readFileSync("next.config.js", "utf8");
 	assert.match(config, /runtimeCaching: \[apiNetworkOnly,[^\]]*\.\.\.defaultRuntimeCaching\]/);
+	assert.match(config, /for \(const entry of passPrecacheEntries\) entry\.revision = buildId/);
+	assert.doesNotMatch(config, /revision: null/);
+
+	const dockerfile = readFileSync("Dockerfile", "utf8");
+	assert.match(dockerfile, /COPY --from=build[^\n]*\/app\/pwa-runtime-caching\.js \.\//);
 });
