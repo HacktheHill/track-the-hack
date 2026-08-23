@@ -85,6 +85,7 @@ model Hacker {
   presences              Presence[]
   cancellationCapability CancellationCapability?
   claimToken             ClaimToken?
+  participantSession     ParticipantSession?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -115,16 +116,31 @@ model ClaimToken {
   updatedAt  DateTime  @default(now()) @updatedAt
 }
 
+// The browser holds the random session capability. Only its keyed verifier is
+// stored here, so a database read cannot be turned into an active session.
+// hackerId is unique because replacement access permits exactly one device.
+model ParticipantSession {
+  verifier  String   @id
+  hackerId  String   @unique
+  hacker    Hacker   @relation(fields: [hackerId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
 model Presence {
   id        String   @id @default(cuid())
   value     Int
   label     String
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
-  Hacker    Hacker?  @relation(fields: [hackerId], references: [id])
-  hackerId  String?
+  Hacker    Hacker   @relation(fields: [hackerId], references: [id], onDelete: Cascade)
+  hackerId  String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId   String
 
-  @@index([hackerId])
+  @@unique([hackerId, eventId])
+  @@index([eventId])
 }
 
 model Team {
@@ -134,25 +150,27 @@ model Team {
 }
 
 model Event {
-  id            String    @id @default(cuid())
-  start         DateTime
-  end           DateTime
-  hidden        Boolean   @default(false)
-  name          String
-  nameFr        String
-  type          EventType @default(ALL)
-  host          String?
-  description   String    @db.Text
-  descriptionFr String    @db.Text
-  room          String
-  tiktok        String?
-  image         String?
-  link          String?
-  linkText      String?
-  linkTextFr    String?
-  maxCheckIns   Int?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @default(now()) @updatedAt
+  id              String          @id @default(cuid())
+  start           DateTime
+  end             DateTime
+  hidden          Boolean         @default(false)
+  name            String
+  nameFr          String
+  type            EventType       @default(ALL)
+  scannerWorkflow ScannerWorkflow @default(ATTENDANCE)
+  host            String?
+  description     String          @db.Text
+  descriptionFr   String          @db.Text
+  room            String
+  tiktok          String?
+  image           String?
+  link            String?
+  linkText        String?
+  linkTextFr      String?
+  maxCheckIns     Int?
+  presences       Presence[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @default(now()) @updatedAt
 }
 
 model Log {
@@ -198,6 +216,13 @@ enum EventType {
   SOCIAL
   CAREER_FAIR
   FOOD
+}
+
+enum ScannerWorkflow {
+  CHECK_IN
+  MERCHANDISE
+  FOOD
+  ATTENDANCE
 }
 
 enum TShirtSize {

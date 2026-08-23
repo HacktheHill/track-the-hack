@@ -66,7 +66,7 @@ CREATE TABLE `Role` (
 
 -- CreateTable
 CREATE TABLE `Hacker` (
-    `id` VARCHAR(191) NOT NULL,
+    `id` VARCHAR(191) COLLATE utf8mb4_bin NOT NULL,
     `tShirtSize` ENUM('XS', 'S', 'M', 'L', 'XL', 'XXL') NOT NULL,
     `mealCategory` ENUM('STANDARD', 'VEGETARIAN', 'VEGAN', 'HALAL', 'OTHER') NOT NULL,
     `confirmed` BOOLEAN NOT NULL DEFAULT false,
@@ -82,8 +82,8 @@ CREATE TABLE `Hacker` (
 
 -- CreateTable
 CREATE TABLE `CancellationCapability` (
-    `id` VARCHAR(191) NOT NULL,
-    `hackerId` VARCHAR(191) NOT NULL,
+    `id` VARCHAR(191) COLLATE utf8mb4_bin NOT NULL,
+    `hackerId` VARCHAR(191) COLLATE utf8mb4_bin NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
@@ -98,7 +98,7 @@ CREATE TABLE `Presence` (
     `label` VARCHAR(191) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `hackerId` VARCHAR(191) NULL,
+    `hackerId` VARCHAR(191) COLLATE utf8mb4_bin NULL,
 
     INDEX `Presence_hackerId_idx`(`hackerId`),
     PRIMARY KEY (`id`)

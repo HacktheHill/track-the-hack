@@ -1,5 +1,5 @@
 import { PrismaClient, RoleName } from "@prisma/client";
-import { hasOrganizerEmailDomain, normalizeOrganizerEmail } from "../src/server/lib/organizer-auth";
+import { hasOrganizerEmailDomain, normalizeOrganizerEmail } from "@/server/lib/organizer-auth";
 
 const prisma = new PrismaClient();
 const [rawEmail, ...rawRoles] = process.argv.slice(2);

@@ -4,9 +4,9 @@ import Link from "next/link";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Image from "next/image";
-import { i18n } from "../../../next-i18next.config";
-import { sponsorsData, type SponsorData } from "../../client/sponsors";
-import App from "../../components/App";
+import { i18n } from "@root/next-i18next.config";
+import { sponsorsData, type SponsorData } from "@/client/sponsors";
+import App from "@/components/App";
 
 export const getStaticPaths: GetStaticPaths = () => {
 	const paths = sponsorsData.flatMap(({ id }) =>

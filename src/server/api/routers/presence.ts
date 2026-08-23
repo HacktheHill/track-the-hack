@@ -1,168 +1,95 @@
-import { RoleName } from "@prisma/client";
+import { RoleName, type PrismaClient } from "@prisma/client";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { hasRoles } from "../../../utils/helpers";
-import { log } from "../../lib/log";
-import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { hasRoles } from "@/utils/helpers";
+import { log } from "@/server/lib/log";
+import { participantIdSchema } from "@/server/services/hacker-lifecycle";
+import {
+	adjustPresenceForEvent,
+	scanParticipantForEvent,
+	ScannerWorkflowError,
+} from "@/server/services/scanner-workflows";
+import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+
+const scannerInput = z.object({
+	eventId: z.string().min(1),
+	hackerId: participantIdSchema,
+});
+
+const requireScannerOrganizer = async (ctx: { session: { user: { id: string } }; prisma: PrismaClient }) => {
+	const organizer = await ctx.prisma.user.findUnique({
+		where: { id: ctx.session.user.id },
+		select: { name: true, roles: { select: { name: true } } },
+	});
+	if (!organizer || !hasRoles(organizer, [RoleName.ORGANIZER, RoleName.ADMIN])) {
+		throw new TRPCError({ code: "FORBIDDEN" });
+	}
+	return organizer;
+};
+
+const scannerError = (error: unknown): never => {
+	if (error instanceof ScannerWorkflowError) {
+		throw new TRPCError({
+			code: "NOT_FOUND",
+			message:
+				error.reason === "EVENT_NOT_FOUND"
+					? "Event not found"
+					: error.reason === "PARTICIPANT_NOT_FOUND"
+						? "Participant not found"
+						: "Presence not found",
+		});
+	}
+	throw error;
+};
 
 export const presenceRouter = createTRPCRouter({
-	getFromHackerId: protectedProcedure
-		.input(
-			z.object({
-				id: z.string(),
-			}),
-		)
-		.query(async ({ ctx, input }) => {
-			const userId = ctx.session.user.id;
-			const user = await ctx.prisma.user.findUnique({
-				where: {
-					id: userId,
-				},
-				select: {
-					name: true,
-					roles: {
-						select: {
-							name: true,
-						},
-					},
-				},
-			});
-
-			if (!user) {
-				throw new Error("User not found");
-			}
-
-			if (!hasRoles(user, [RoleName.ORGANIZER])) {
-				throw new Error("You do not have permission to do this");
-			}
-
-			const hacker = await ctx.prisma.hacker.findUnique({
-				where: {
-					id: input.id,
-				},
-			});
-
-			if (!hacker) {
-				throw new Error("Hacker not found");
-			}
-
-			const presence = await ctx.prisma.presence.findMany({
-				where: {
-					hackerId: hacker.id,
-				},
-			});
-
-			return presence;
-		}),
-
-	upsert: protectedProcedure
-		.input(
-			z.object({
-				id: z.string().optional().default(""),
-				hackerId: z.string(),
-				value: z.number(),
-				label: z.string(),
-			}),
-		)
-		.mutation(async ({ ctx, input }) => {
-			const userId = ctx.session.user.id;
-			const user = await ctx.prisma.user.findUnique({
-				where: {
-					id: userId,
-				},
-				select: {
-					name: true,
-					roles: {
-						select: {
-							name: true,
-						},
-					},
-				},
-			});
-
-			if (!user) {
-				throw new Error("User not found");
-			}
-
-			if (!hasRoles(user, [RoleName.ORGANIZER])) {
-				throw new Error("You do not have permission to do this");
-			}
-
-			const hacker = await ctx.prisma.hacker.findUnique({
-				where: {
-					id: input.hackerId,
-				},
-			});
-
-			if (!hacker) {
-				throw new Error("Hacker not found");
-			}
-
-			await ctx.prisma.presence.upsert({
-				where: {
-					id: input.id,
-				},
-				create: {
-					value: input.value,
-					label: input.label,
-					hackerId: input.hackerId,
-				},
-				update: {
-					value: input.value,
-					label: input.label,
-				},
-			});
-
+	// A scan is keyed only by event and participant. The event owns the label,
+	// workflow, field allowlist, and maximum; none are accepted from the client.
+	scan: protectedProcedure.input(scannerInput).mutation(async ({ ctx, input }) => {
+		const organizer = await requireScannerOrganizer(ctx);
+		try {
+			const { id: presenceId, ...result } = await scanParticipantForEvent(
+				ctx.prisma,
+				input.eventId,
+				input.hackerId,
+			);
 			await log(ctx, {
-				action: "update",
-				sourceId: hacker.id,
+				action: "scan",
+				sourceId: presenceId,
 				sourceType: "Presence",
-				author: user.name ?? "Unknown",
-				route: "presence",
-				details: `Updated presence for hacker ${hacker.id} with id ${input.id}  (${input.label}) to ${input.value}`,
+				author: organizer.name ?? "Unknown",
+				route: "presence.scan",
+				details: `Scanned participant ${input.hackerId} for event ${input.eventId} (${result.workflow})`,
 			});
-		}),
+			return result;
+		} catch (error) {
+			return scannerError(error);
+		}
+	}),
 
-	increment: protectedProcedure
-		.input(
-			z.object({
-				id: z.string(),
-				value: z.number().optional().default(1),
-			}),
-		)
+	adjust: protectedProcedure
+		.input(scannerInput.extend({ amount: z.union([z.literal(-1), z.literal(1)]) }))
 		.mutation(async ({ ctx, input }) => {
-			const userId = ctx.session.user.id;
-			const user = await ctx.prisma.user.findUnique({
-				where: {
-					id: userId,
-				},
-				select: {
-					name: true,
-					roles: {
-						select: {
-							name: true,
-						},
-					},
-				},
-			});
-
-			if (!user) {
-				throw new Error("User not found");
+			const organizer = await requireScannerOrganizer(ctx);
+			try {
+				const { id: presenceId, ...result } = await adjustPresenceForEvent(
+					ctx.prisma,
+					input.eventId,
+					input.hackerId,
+					input.amount,
+				);
+				await log(ctx, {
+					action: "adjust",
+					sourceId: presenceId,
+					sourceType: "Presence",
+					author: organizer.name ?? "Unknown",
+					route: "presence.adjust",
+					details: `Adjusted participant ${input.hackerId} for event ${input.eventId} by ${input.amount}`,
+				});
+				return result;
+			} catch (error) {
+				return scannerError(error);
 			}
-
-			if (!hasRoles(user, [RoleName.ORGANIZER])) {
-				throw new Error("You do not have permission to do this");
-			}
-
-			await ctx.prisma.presence.update({
-				where: {
-					id: input.id,
-				},
-				data: {
-					value: {
-						increment: input.value,
-					},
-				},
-			});
 		}),
 });

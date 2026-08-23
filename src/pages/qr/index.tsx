@@ -1,30 +1,27 @@
-import { RoleName, type Presence } from "@prisma/client";
+import { RoleName, ScannerWorkflow } from "@prisma/client";
 import type { GetServerSideProps } from "next";
 import { getServerSession } from "next-auth";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
-import { useCallback, useMemo, useRef, useState } from "react";
-import App from "../../components/App";
-import ErrorDisplay from "../../components/Error";
-import PhysicalScanner from "../../components/PhysicalScanner";
-import QRScanner from "../../components/QRScanner";
-import type { RouterOutputs } from "../../server/api/api";
-import { trpc } from "../../server/api/api";
-import { rolesRedirect } from "../../server/lib/redirects";
-import { getAuthOptions } from "../api/auth/[...nextauth]";
+import { useCallback, useRef, useState } from "react";
+import App from "@/components/App";
+import ErrorDisplay from "@/components/Error";
+import PhysicalScanner from "@/components/PhysicalScanner";
+import QRScanner from "@/components/QRScanner";
+import type { RouterOutputs } from "@/server/api/api";
+import { trpc } from "@/server/api/api";
+import { rolesRedirect } from "@/server/lib/redirects";
+import { getAuthOptions } from "@/pages/api/auth/[...nextauth]";
 
 type Hacker = RouterOutputs["hackers"]["get"];
+type WorkflowScan = RouterOutputs["presence"]["scan"];
 const VIEW_PARTICIPANT = "__view__";
 
 const QR = () => {
-	const { t } = useTranslation("qr");
+	const { t, i18n } = useTranslation("qr");
 	const utils = trpc.useContext();
-
-	const eventData = trpc.events.future.useQuery().data;
-
-	const events = useMemo(() => eventData ?? [], [eventData]);
-	const upsertPresence = trpc.presence.upsert.useMutation();
-	const incrementPresence = trpc.presence.increment.useMutation();
+	const events = trpc.events.scannable.useQuery().data ?? [];
+	const scanPresence = trpc.presence.scan.useMutation();
 	const selectedAction = useRef(VIEW_PARTICIPANT);
 	const previousId = useRef("");
 	const [display, setDisplay] = useState<React.ReactNode>();
@@ -32,42 +29,27 @@ const QR = () => {
 
 	const scan = useCallback(
 		async (rawId: string) => {
-			const id = rawId.trim();
-			if (!id || id === previousId.current) return;
-			previousId.current = id;
+			const hackerId = rawId.trim();
+			if (!hackerId || hackerId === previousId.current) return;
+			previousId.current = hackerId;
 			setError("");
 
 			try {
-				const hacker = await utils.hackers.get.fetch({ id });
 				if (selectedAction.current === VIEW_PARTICIPANT) {
+					const hacker = await utils.hackers.get.fetch({ id: hackerId });
 					setDisplay(<ParticipantCard hacker={hacker} />);
 					return;
 				}
 
-				const event = events.find(candidate => candidate.id === selectedAction.current);
-				if (!event) throw new Error("Event not found");
-				const presences = await utils.presence.getFromHackerId.fetch({ id });
-				const existing = presences.find(presence => presence.label === event.name);
-				if (!existing) {
-					await upsertPresence.mutateAsync({ hackerId: id, value: 1, label: event.name });
-					setDisplay(<PresenceCard hacker={hacker} event={event.name} value={1} />);
-					return;
-				}
-
-				setDisplay(
-					<PresenceCounter
-						hacker={hacker}
-						presence={existing}
-						maxCheckIns={event.maxCheckIns}
-						increment={value => incrementPresence.mutateAsync({ id: existing.id, value })}
-					/>,
-				);
+				const result = await scanPresence.mutateAsync({ eventId: selectedAction.current, hackerId });
+				setDisplay(<WorkflowCard result={result} />);
 			} catch {
+				previousId.current = "";
 				setDisplay(undefined);
 				setError(t("unknown-error"));
 			}
 		},
-		[events, incrementPresence, t, upsertPresence, utils],
+		[scanPresence, t, utils],
 	);
 
 	return (
@@ -87,7 +69,7 @@ const QR = () => {
 				<option value={VIEW_PARTICIPANT}>{t("view-participant")}</option>
 				{events.map(event => (
 					<option key={event.id} value={event.id}>
-						{event.name}
+						{t(`workflow.${event.scannerWorkflow}`)} — {i18n.language === "fr" ? event.nameFr : event.name}
 					</option>
 				))}
 			</select>
@@ -101,7 +83,8 @@ const QR = () => {
 	);
 };
 
-// Labels go through next-i18next so the card matches the rest of the interface.
+// Full operational lookup is deliberately separate from workflow scans. The
+// latter never call this endpoint or receive this broader object.
 const ParticipantCard = ({ hacker }: { hacker: Hacker }) => {
 	const { t } = useTranslation("qr");
 
@@ -116,57 +99,93 @@ const ParticipantCard = ({ hacker }: { hacker: Hacker }) => {
 	);
 };
 
-const PresenceCard = ({ hacker, event, value }: { hacker: Hacker; event: string; value: number }) => (
-	<div className="rounded-lg bg-light-primary-color p-6 font-rubik text-light-color">
-		<ParticipantCard hacker={hacker} />
-		<p className="mt-3 font-bold">
-			{event}: {value}
-		</p>
-	</div>
-);
-
-const PresenceCounter = ({
-	hacker,
-	presence,
-	maxCheckIns,
-	increment,
-}: {
-	hacker: Hacker;
-	presence: Presence;
-	maxCheckIns: number | null;
-	increment: (value: number) => Promise<unknown>;
-}) => {
-	const [value, setValue] = useState(presence.value);
-	const change = async (amount: number) => {
-		if (value + amount < 0 || (amount > 0 && maxCheckIns !== null && value >= maxCheckIns)) return;
-		await increment(amount);
-		setValue(current => current + amount);
-	};
+const WorkflowCard = ({ result }: { result: WorkflowScan }) => {
+	const { t, i18n } = useTranslation("qr");
+	const eventName = i18n.language === "fr" ? result.nameFr : result.name;
 
 	return (
 		<div className="rounded-lg bg-light-primary-color p-6 font-rubik text-light-color">
-			<ParticipantCard hacker={hacker} />
+			<p className="break-all font-bold">{result.participant.id}</p>
+			{result.workflow === ScannerWorkflow.CHECK_IN && (
+				<>
+					<p>{t("confirmed", { value: result.participant.confirmed ? t("yes") : t("no") })}</p>
+					<p>{t("t-shirt", { value: result.participant.tShirtSize })}</p>
+				</>
+			)}
+			{result.workflow === ScannerWorkflow.MERCHANDISE && (
+				<p>{t("t-shirt", { value: result.participant.tShirtSize })}</p>
+			)}
+			{result.workflow === ScannerWorkflow.FOOD && (
+				<>
+					<p>{t("meal", { value: result.participant.mealCategory })}</p>
+					{result.participant.requiresFoodLead && (
+						<p className="mt-3 rounded bg-light-quaternary-color p-3 font-bold text-dark-color">
+							{t("contact-food-lead")}
+						</p>
+					)}
+				</>
+			)}
+			<PresenceCounter
+				key={`${result.eventId}:${result.participant.id}`}
+				eventId={result.eventId}
+				hackerId={result.participant.id}
+				eventName={eventName}
+				initialValue={result.value}
+				initialAtLimit={result.atLimit}
+			/>
+		</div>
+	);
+};
+
+const PresenceCounter = ({
+	eventId,
+	hackerId,
+	eventName,
+	initialValue,
+	initialAtLimit,
+}: {
+	eventId: string;
+	hackerId: string;
+	eventName: string;
+	initialValue: number;
+	initialAtLimit: boolean;
+}) => {
+	const { t } = useTranslation("qr");
+	const adjustPresence = trpc.presence.adjust.useMutation();
+	const [value, setValue] = useState(initialValue);
+	const [atLimit, setAtLimit] = useState(initialAtLimit);
+
+	const change = async (amount: -1 | 1) => {
+		const next = await adjustPresence.mutateAsync({ eventId, hackerId, amount });
+		setValue(next.value);
+		setAtLimit(next.atLimit);
+	};
+
+	return (
+		<>
 			<p className="mt-3 font-bold">
-				{presence.label}: {value}
+				{eventName}: {value}
 			</p>
+			{atLimit && <p className="mt-2">{t("maximum-reached")}</p>}
 			<div className="mt-4 flex justify-center gap-8">
 				<button
 					type="button"
-					className="rounded bg-light-quaternary-color px-5 py-2 text-dark-color"
+					disabled={value <= 0 || adjustPresence.isLoading}
+					className="rounded bg-light-quaternary-color px-5 py-2 text-dark-color disabled:opacity-50"
 					onClick={() => void change(-1)}
 				>
 					−
 				</button>
 				<button
 					type="button"
-					disabled={maxCheckIns !== null && value >= maxCheckIns}
+					disabled={atLimit || adjustPresence.isLoading}
 					className="rounded bg-light-quaternary-color px-5 py-2 text-dark-color disabled:opacity-50"
 					onClick={() => void change(1)}
 				>
 					+
 				</button>
 			</div>
-		</div>
+		</>
 	);
 };
 

@@ -1,7 +1,7 @@
 import { type GetServerSidePropsContext } from "next";
 
 import { getServerSession } from "next-auth";
-import { getAuthOptions } from "../pages/api/auth/[...nextauth]";
+import { getAuthOptions } from "@/pages/api/auth/[...nextauth]";
 
 /**
  * Wrapper for getServerSession, used in trpc createContext and the

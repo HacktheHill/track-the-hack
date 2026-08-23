@@ -1,15 +1,15 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { ZodError } from "zod";
-import { env } from "../../env/server.mjs";
-import { prisma } from "../../server/db";
-import { log } from "../../server/lib/log";
+import { env } from "@/env/server.mjs";
+import { prisma } from "@/server/db";
+import { log } from "@/server/lib/log";
 import {
+	createParticipantSession,
 	createParticipantHintCookie,
 	createParticipantSessionCookie,
-	participantSessionExpiry,
-} from "../../server/lib/participant-session";
-import { PrismaHackerLifecycleRepository } from "../../server/repositories/prisma-hacker-lifecycle";
-import { consumeClaimToken, ParticipantLifecycleError } from "../../server/services/hacker-lifecycle";
+} from "@/server/lib/participant-session";
+import { PrismaHackerLifecycleRepository } from "@/server/repositories/prisma-hacker-lifecycle";
+import { consumeClaimToken, ParticipantLifecycleError } from "@/server/services/hacker-lifecycle";
 
 const repository = new PrismaHackerLifecycleRepository(prisma);
 
@@ -24,11 +24,19 @@ export default async function claim(req: NextApiRequest, res: NextApiResponse) {
 
 	try {
 		const body = typeof req.body === "object" && req.body !== null ? (req.body as Record<string, unknown>) : {};
-		const { hackerId } = await consumeClaimToken(repository, body.token, env.CLAIM_TOKEN_SECRET);
+		const now = new Date();
+		const session = createParticipantSession(env.PARTICIPANT_SESSION_SECRET, now);
+		const { hackerId } = await consumeClaimToken(
+			repository,
+			body.token,
+			env.CLAIM_TOKEN_SECRET,
+			{ verifier: session.verifier, expiresAt: session.expiresAt },
+			now,
+		);
 
 		res.setHeader("Set-Cookie", [
-			createParticipantSessionCookie(hackerId, env.PARTICIPANT_SESSION_SECRET, participantSessionExpiry()),
-			createParticipantHintCookie(),
+			createParticipantSessionCookie(session.token, session.expiresAt, now),
+			createParticipantHintCookie(session.expiresAt, now),
 		]);
 
 		await log(

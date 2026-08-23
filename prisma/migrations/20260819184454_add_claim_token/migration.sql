@@ -1,7 +1,7 @@
 -- CreateTable
 CREATE TABLE `ClaimToken` (
-    `id` VARCHAR(191) NOT NULL,
-    `hackerId` VARCHAR(191) NOT NULL,
+    `id` VARCHAR(191) COLLATE utf8mb4_bin NOT NULL,
+    `hackerId` VARCHAR(191) COLLATE utf8mb4_bin NOT NULL,
     `expiresAt` DATETIME(3) NOT NULL,
     `consumedAt` DATETIME(3) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),

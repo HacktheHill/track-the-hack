@@ -2,9 +2,9 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import NextAuth, { type NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import type { NextApiRequest, NextApiResponse } from "next";
-import { env } from "../../../env/server.mjs";
-import { prisma } from "../../../server/db";
-import { canUseOrganizerAuth } from "../../../server/lib/organizer-auth";
+import { env } from "@/env/server.mjs";
+import { prisma } from "@/server/db";
+import { canUseOrganizerAuth } from "@/server/lib/organizer-auth";
 
 export const getAuthOptions = () =>
 	({

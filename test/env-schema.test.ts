@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { resolveNextAuthUrl, serverSchema } from "../src/env/schema.mjs";
+import { resolveNextAuthUrl, serverSchema } from "@/env/schema.mjs";
 
 void test("an explicit NEXTAUTH_URL takes precedence over VERCEL_URL", () => {
 	const previousVercelUrl = process.env.VERCEL_URL;
