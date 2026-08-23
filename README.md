@@ -14,7 +14,7 @@ Track the Hack is a comprehensive event management solution designed to streamli
 
 1. Install [Docker](https://docs.docker.com/get-docker/).
 2. Run `docker compose up -d` to start the database.
-3. Run `npx prisma db push` to push the database schema and create the tables.
+3. Run `npx prisma migrate deploy` to create the tables with the required identifier collations.
 4. Run `npx prisma db seed` to seed the database.
 
 ## Azure Container Apps deployment

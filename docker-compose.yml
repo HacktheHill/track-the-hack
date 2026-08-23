@@ -6,7 +6,7 @@
 # Usage
 # docker compose up -d
 # DATABASE_URL="mysql://root:password@localhost/track-the-hack"
-# npx prisma db push
+# npx prisma migrate deploy
 
 services:
     mysql:
