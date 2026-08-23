@@ -36,7 +36,7 @@ Sheet endpoints require `Authorization: Bearer <SHEETS_INTEGRATION_API_KEY>`. Ke
 }
 ```
 
-All properties are required except `walkIn`. The accepted enums are the Prisma `TShirtSize` values and exactly `STANDARD`, `VEGETARIAN`, `VEGAN`, `HALAL`, `OTHER`. Unknown properties—including email, name, Tally IDs, application fields, and `confirmed`—are rejected. Repeating a request updates the exact `id` without creating a duplicate and does not overwrite RSVP state. `teamId` remains schema-only until the Phase 3 ownership decision and is not accepted by this endpoint.
+All properties are required except `walkIn`. The accepted enums are the Prisma `TShirtSize` values and exactly `STANDARD`, `VEGETARIAN`, `VEGAN`, `HALAL`, `OTHER`. Unknown properties—including email, name, Tally IDs, application fields, `confirmed`, and `teamId`—are rejected. Repeating a request updates the exact `id` without creating a duplicate and does not overwrite RSVP state. Discord owns teams; Track the Hack accepts no team data.
 
 ## RSVP and cancellation
 

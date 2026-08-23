@@ -20,7 +20,6 @@ const Metrics = () => {
 			["checkedIn", data.checkedIn],
 			["walkIn", data.walkIn],
 			["presences", data.presences],
-			["attendees", data.attendees],
 		] as const);
 
 	return (

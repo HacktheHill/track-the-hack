@@ -45,7 +45,7 @@ This is one coherent implementation phase. Keep its schema, API, authentication,
 ## Participant profile and operational QR
 
 - Restore `/profile` as a participant-session-only page. It must not depend on NextAuth, `User`, email, name, or an organizer role.
-- Limit the profile to the participant's operational event QR, confirmation state, T-shirt size, meal category, applicable team information already present in the schema, and that participant's own Presence records.
+- Limit the profile to the participant's operational event QR, confirmation state, T-shirt size, meal category, and that participant's own Presence records.
 - The operational event QR contains only exact `Hacker.id`. It is an identifier for organizer-authenticated scanner workflows and is never accepted as a login or participant-session credential.
 - Keep the participant's QR available without continuous internet access after it has been loaded on their device. Cache only the minimum data required to render the QR and do not cache identity data or bearer session secrets in client-readable storage.
 - A participant must never be able to request another Hacker's profile, QR, Presence records, or operational fields by changing a route or API parameter.
@@ -55,10 +55,10 @@ This is one coherent implementation phase. Keep its schema, API, authentication,
 - Keep `/qr` and all scanner mutations organizer-authenticated through NextAuth and roles. Participant sessions and bare Hacker IDs must not authorize scanner actions.
 - Preserve current Presence semantics, counters, and per-event maximum-check-in rules.
 - Limit each scanner workflow to the fields it requires:
-  - Check-in: confirmation state, check-in Presence, and T-shirt size where operationally required.
-  - Merchandise: T-shirt size and merchandise-pickup Presence.
-  - Food: meal category and food Presence.
-  - Mini-events and workshops: attendance Presence.
+    - Check-in: confirmation state, check-in Presence, and T-shirt size where operationally required.
+    - Merchandise: T-shirt size and merchandise-pickup Presence.
+    - Food: meal category and food Presence.
+    - Mini-events and workshops: attendance Presence.
 - `MealCategory.OTHER` must tell the volunteer to contact the food lead with access to the restricted external information. Do not encode detailed dietary information in Track the Hack or use wristbands, stickers, or another physical dietary marker.
 - Any organizer participant lookup in Track the Hack must use only the remaining operational fields. Front-desk identity lookup stays in the restricted Sheet; do not add name, email, profile, application, or demographic search.
 - Audit participant and Presence actions using opaque participant IDs and operational details only. Do not copy identity or application data into logs.

@@ -7,5 +7,5 @@ review. Completed behavior and the exact external Sheet request contract are
 documented in [`PHASE_2_IMPLEMENTED.md`](./PHASE_2_IMPLEMENTED.md).
 
 This statement excludes external Google Sheets/Apps Script implementation and
-the Phase 3 Discord/team ownership decision. It also assumes the clean database
-required by [`PHASE_2.md`](./PHASE_2.md).
+Phase 3 reporting, privacy cleanup, and external-team ownership. It also assumes
+the clean database required by [`PHASE_2.md`](./PHASE_2.md).
