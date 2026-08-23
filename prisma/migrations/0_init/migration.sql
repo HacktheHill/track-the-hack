@@ -136,7 +136,7 @@ CREATE TABLE `Log` (
     `author` VARCHAR(191) NOT NULL DEFAULT '',
     `route` VARCHAR(191) NOT NULL,
     `action` VARCHAR(191) NOT NULL,
-    `details` VARCHAR(191) NULL,
+    `details` TEXT NULL,
     `userId` VARCHAR(191) NULL,
 
     INDEX `Log_userId_idx`(`userId`),

@@ -9,6 +9,22 @@ void test("operational metrics expose only aggregate database-derived values", a
 	const hackerGroupings: string[][] = [];
 	let presenceAggregate: { value: boolean } | undefined;
 	const prisma = {
+		event: {
+			findMany: ({
+				where,
+				select,
+			}: {
+				where: { id: { in: string[] } };
+				select: { id: boolean; name: boolean };
+			}) => {
+				assert.deepEqual(where, { id: { in: ["event-1", "event-2"] } });
+				assert.deepEqual(select, { id: true, name: true });
+				return Promise.resolve([
+					{ id: "event-1", name: "Lunch" },
+					{ id: "event-2", name: "Lunch" },
+				]);
+			},
+		},
 		hacker: {
 			count: ({ where }: { where?: { confirmed?: boolean; walkIn?: boolean } } = {}) =>
 				Promise.resolve(where?.confirmed ? 8 : where?.walkIn ? 2 : 10),
@@ -32,8 +48,11 @@ void test("operational metrics expose only aggregate database-derived values", a
 				return Promise.resolve({ _sum: { value: 5 } });
 			},
 			groupBy: ({ by }: { by: string[] }) => {
-				assert.deepEqual(by, ["label"]);
-				return Promise.resolve([{ label: "Opening", _sum: { value: 5 } }]);
+				assert.deepEqual(by, ["eventId"]);
+				return Promise.resolve([
+					{ eventId: "event-1", _sum: { value: 3 } },
+					{ eventId: "event-2", _sum: { value: 2 } },
+				]);
 			},
 		},
 	} as unknown as MetricsDatabase;
@@ -46,7 +65,10 @@ void test("operational metrics expose only aggregate database-derived values", a
 		walkIn: 2,
 		checkedIn: 7,
 		presences: 5,
-		attendanceData: [{ label: "Opening", _sum: { value: 5 } }],
+		attendanceData: [
+			{ eventId: "event-1", label: "Lunch", _sum: { value: 3 } },
+			{ eventId: "event-2", label: "Lunch", _sum: { value: 2 } },
+		],
 		mealCategoryData: [{ mealCategory: MealCategory.HALAL, _count: { mealCategory: 4 } }],
 		tShirtSizeData: [{ tShirtSize: TShirtSize.M, _count: { tShirtSize: 3 } }],
 	});
