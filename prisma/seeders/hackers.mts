@@ -1,13 +1,23 @@
-import { randomBytes } from "node:crypto";
-import { faker } from "@faker-js/faker";
 import { MealCategory, TShirtSize } from "@prisma/client";
 
-export const generateHackers = (count = 10) =>
-	Array.from({ length: count }, () => ({
-		id: randomBytes(16).toString("base64url"),
-		tShirtSize: faker.helpers.arrayElement(Object.values(TShirtSize)),
-		mealCategory: faker.helpers.arrayElement(Object.values(MealCategory)),
-		confirmed: faker.datatype.boolean(),
-		walkIn: faker.datatype.boolean(),
-		acceptanceExpiry: faker.date.future(),
-	}));
+const acceptanceExpiry = new Date();
+acceptanceExpiry.setDate(acceptanceExpiry.getDate() + 30);
+
+export const hackers = [
+	{
+		id: "dev-participant-normal-01",
+		tShirtSize: TShirtSize.M,
+		mealCategory: MealCategory.STANDARD,
+		confirmed: false,
+		walkIn: false,
+		acceptanceExpiry,
+	},
+	{
+		id: "dev-participant-walkin-01",
+		tShirtSize: TShirtSize.L,
+		mealCategory: MealCategory.VEGAN,
+		confirmed: true,
+		walkIn: true,
+		acceptanceExpiry,
+	},
+];

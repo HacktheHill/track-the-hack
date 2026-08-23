@@ -13,10 +13,16 @@
 	},
 	"scripts": {
 		"build": "next build --webpack",
-		"dev": "next dev --webpack",
-		"test": "tsx --test test/**/*.test.ts",
+		"dev": "next dev --webpack --hostname 127.0.0.1",
+		"dev:participant": "node --env-file=.env scripts/dev-participant.mjs",
+		"dev:setup": "node scripts/setup-dev.mjs && node --env-file=.env scripts/assert-local-dev-db.mjs && docker compose up -d --wait && prisma migrate deploy && prisma db seed",
+		"preview": "npm run build && next start --hostname 127.0.0.1",
+		"test": "node --import tsx --test test/**/*.test.ts",
+		"test:e2e:dev": "npm run dev:setup && NEXT_DIST_DIR=.next-dev-e2e node --env-file=.env scripts/test-dev-e2e.mjs",
+		"test:e2e:pwa": "npm run dev:setup && NEXT_DIST_DIR=.next-pwa-e2e node scripts/run-pwa-e2e.mjs",
 		"typecheck": "tsc --noEmit",
-		"organizer:provision": "tsx scripts/provision-organizer.mts",
+		"verify:dev": "npm test && npm run typecheck && npm run lint && npm run test:e2e:dev && npm run test:e2e:pwa",
+		"organizer:provision": "node --env-file-if-exists=.env --import tsx scripts/provision-organizer.mts",
 		"postinstall": "prisma generate",
 		"lint": "eslint src prisma scripts test next.config.js next-i18next.config.js tailwind.config.mjs --ext .js,.mjs,.ts,.tsx,.mts",
 		"start": "next start",
@@ -67,9 +73,12 @@
 		"autoprefixer": "^10.4.16",
 		"eslint": "^8.56.0",
 		"eslint-config-next": "^15.5.20",
+		"nodemailer": "^9.1.1",
+		"playwright-core": "1.62.1",
 		"postcss": "^8.5.26",
 		"prettier": "^3.1.1",
 		"prettier-plugin-tailwindcss": "^0.5.9",
+		"smtp-server": "^3.19.3",
 		"tailwindcss": "^3.3.7",
 		"tsx": "4.23.0",
 		"typescript": "^5.9.3"
@@ -78,6 +87,6 @@
 		"initVersion": "7.3.1"
 	},
 	"prisma": {
-		"seed": "npx tsx prisma/seeders/index.mts"
+		"seed": "tsx prisma/seeders/index.mts"
 	}
 }

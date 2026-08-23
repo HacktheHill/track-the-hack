@@ -16,7 +16,7 @@ The external RSVP CSV is `email,id` with optional `name`. Email and name are tem
 
 ## Authentication
 
-Sheet endpoints require `Authorization: Bearer <SHEETS_INTEGRATION_API_KEY>`. Keep this key in server-side Apps Script properties, never in a Sheet cell or browser sidebar. Requests and responses are JSON. A request may contain at most 500 records or IDs.
+Sheet endpoints require `Authorization: Bearer <SHEETS_INTEGRATION_API_KEY>`. Keep this key in server-side Apps Script properties, never in a Sheet cell or client-side dialog. Requests and responses are JSON. A request may contain at most 500 records or IDs.
 
 ## Minimal provisioning
 
