@@ -34,6 +34,18 @@ const scannerDatabase = (workflow: ScannerWorkflow, maxCheckIns: number | null =
 	const key = `${hackerId}:${eventId}`;
 
 	const prisma = {
+		$executeRaw: () => {
+			if (!presences.has(key)) {
+				presences.set(key, {
+					id: "presence-1",
+					hackerId,
+					eventId,
+					label: event.name,
+					value: maxCheckIns === null || maxCheckIns > 0 ? 1 : 0,
+				});
+			}
+			return Promise.resolve(1);
+		},
 		event: {
 			findUnique: ({ where, select }: { where: { id: string }; select: Record<string, boolean> }) =>
 				Promise.resolve(where.id === eventId ? project(event, select) : null),
@@ -43,19 +55,6 @@ const scannerDatabase = (workflow: ScannerWorkflow, maxCheckIns: number | null =
 				Promise.resolve(where.id === hackerId ? project(hacker, select) : null),
 		},
 		presence: {
-			upsert: ({ create }: { create: { hackerId: string; eventId: string; label: string; value: number } }) => {
-				const existing = presences.get(key);
-				if (existing) return Promise.resolve({ id: existing.id, value: existing.value });
-				const created = {
-					id: "presence-1",
-					hackerId: create.hackerId,
-					eventId: create.eventId,
-					label: create.label,
-					value: create.value,
-				};
-				presences.set(key, created);
-				return Promise.resolve({ id: created.id, value: created.value });
-			},
 			updateMany: ({
 				where,
 				data,
@@ -112,6 +111,15 @@ void test("repeated scans preserve the event-linked counter", async () => {
 	assert.equal((await adjustPresenceForEvent(prisma, eventId, hackerId, 1)).value, 2);
 	assert.equal((await scanParticipantForEvent(prisma, eventId, hackerId)).value, 2);
 	assert.equal(value(), 2);
+});
+
+void test("concurrent first scans share one event-linked counter", async () => {
+	const { prisma, value } = scannerDatabase(ScannerWorkflow.CHECK_IN, 2);
+	const results = await Promise.all(
+		Array.from({ length: 8 }, () => scanParticipantForEvent(prisma, eventId, hackerId)),
+	);
+	assert.ok(results.every(result => result.value === 1));
+	assert.equal(value(), 1);
 });
 
 void test("concurrent scanner increments cannot cross the server-owned maximum", async () => {
