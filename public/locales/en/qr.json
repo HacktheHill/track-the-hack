@@ -2,6 +2,7 @@
 	"title": "Operational QR scanner",
 	"view-participant": "View operational participant record",
 	"unknown-error": "The participant or event action could not be loaded.",
+	"camera-error": "Unable to start the camera.",
 	"confirmed": "Confirmed: {{value}}",
 	"yes": "Yes",
 	"no": "No",
