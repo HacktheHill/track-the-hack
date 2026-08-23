@@ -96,14 +96,10 @@ const templates = [
 				Hack the Hill is an event that will gather up to
 				<strong>1000 passionate North American students</strong> who are ready to push the boundaries of
 				software and hardware solutions. We are shaping the future of technology through the joint effort of
-				notable student organizations from both <strong>the University of Ottawa</strong> and <<<<<<<
-				HEAD:src/pages/sponsorship/gmail-drafts.tsx <strong>Carleton University</strong>. In the
-				<strong>Fall of 2024</strong>, we will transform the campus into a hub for new ideas and flourishing
-				projects. This is where ideas come to life, where technology thrives, and where your company's brand can
-				truly shine. ======= <strong>Carleton University</strong>. In the <strong>Fall of 2024</strong>, we will
-				transform the campus into a hub for new ideas and flourishing projects. This is where ideas come to
-				life, where technology thrives, and where your company's brand can truly shine. >>>>>>> 0c9cd59 (chore:
-				update email template dates to fall 2024):src/pages/tools/sponsorship-gmail-drafts.tsx
+				notable student organizations from both <strong>the University of Ottawa</strong> and
+				<strong>Carleton University</strong>. In the <strong>Fall of 2024</strong>, we will transform the campus
+				into a hub for new ideas and flourishing projects. This is where ideas come to life, where technology
+				thrives, and where your company's brand can truly shine.
 			</p>
 			<p>
 				By becoming a sponsor of Hack the Hill, you will be supporting the growth and development of talented
@@ -247,18 +243,11 @@ const templates = [
 				throughout the year.
 			</p>
 			<p>
-				<<<<<<< HEAD:src/pages/sponsorship/gmail-drafts.tsx In the Fall of 2024, <strong>we/they</strong> will
-				be hosting about 1,000 participants from across North America who will receive the opportunity to
-				innovate software and hardware solutions. Events like these could not happen without the support of our
-				sponsors.<strong>we/they</strong> ======= In the Fall of 2024, <strong>we/they</strong> will be hosting
-				about 1,000 participants from across North America who will receive the opportunity to innovate software
-				and hardware solutions. Events like these could not happen without the support of our sponsors.<strong
-					>we/they</strong
-				>
-				>>>>>>> 0c9cd59 (chore: update email template dates to fall
-				2024):src/pages/tools/sponsorship-gmail-drafts.tsx encourage you to take a look at the sponsorship
-				package, which I have attached.
-				<strong>we/they</strong> are more than happy to answer any questions you may have!
+				In the Fall of 2024, <strong>we/they</strong> will be hosting about 1,000 participants from across North
+				America who will receive the opportunity to innovate software and hardware solutions. Events like these
+				could not happen without the support of our sponsors. <strong>We/they</strong> encourage you to take a
+				look at the sponsorship package, which I have attached. <strong>we/they</strong> are more than happy to
+				answer any questions you may have!
 			</p>
 			<p>Thank you for your time and consideration!</p> `,
 	},
@@ -425,7 +414,6 @@ const SponsorshipGmailDrafts: NextPage = () => {
 
 		const data = Object.fromEntries(formData) as Record<string, string | number | undefined>;
 		data.emailHTML = htmlPreview;
-		console.info(data);
 
 		// Remove empty values
 		Object.keys(data).forEach(key => {
@@ -437,7 +425,6 @@ const SponsorshipGmailDrafts: NextPage = () => {
 		const parse = sponsorshipGmailDraftsSchema.safeParse(data);
 		if (!parse.success) {
 			setError(t("invalid-form"));
-			console.error(parse.error);
 		} else {
 			mutation.mutate(parse.data);
 			if (!mutation.error) {

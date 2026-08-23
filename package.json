@@ -31,7 +31,6 @@
 		"@trpc/next": "^10.45.3",
 		"@trpc/react-query": "^10.45.3",
 		"@trpc/server": "^10.45.3",
-		"csvtojson": "^2.0.14",
 		"google-auth-library": "^10.9.0",
 		"googleapis": "^150.0.1",
 		"i18next": "^26.3.6",
@@ -59,7 +58,6 @@
 	},
 	"devDependencies": {
 		"@faker-js/faker": "^8.3.1",
-		"@types/csvtojson": "^2.0.0",
 		"@types/node": "^24.13.3",
 		"@types/qrcode": "^1.5.6",
 		"@types/react": "^18.3.3",

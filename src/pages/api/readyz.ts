@@ -5,8 +5,8 @@ export default async function readyz(_request: NextApiRequest, response: NextApi
 	try {
 		await prisma.$queryRaw`SELECT 1`;
 		response.status(200).json({ status: "ready" });
-	} catch (error) {
-		console.error("Readiness database check failed", { error: (error as Error).message });
+	} catch {
+		console.error("Readiness database check failed");
 		response.status(503).json({ status: "not_ready" });
 	}
 }

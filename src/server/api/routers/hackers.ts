@@ -24,7 +24,6 @@ export const hackerRouter = createTRPCRouter({
 				confirmed: true,
 				walkIn: true,
 				acceptanceExpiry: true,
-				teamId: true,
 			},
 		});
 		if (!hacker) throw new TRPCError({ code: "NOT_FOUND", message: "Participant not found" });
