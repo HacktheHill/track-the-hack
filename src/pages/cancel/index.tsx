@@ -28,10 +28,12 @@ const CancelRsvp = () => {
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ token }),
 			});
-			const body = (await response.json()) as { ok: boolean; message: string };
-			setResult(body);
-			if (body.ok) {
-				window.history.replaceState(null, "", "/cancel");
+			setResult({
+				ok: response.ok,
+				message: response.status === 400 ? t("invalid-cancellation-link") : t("temporarily-unavailable"),
+			});
+			if (response.ok) {
+				window.history.replaceState(null, "", window.location.pathname);
 				setToken("");
 			}
 		} catch {

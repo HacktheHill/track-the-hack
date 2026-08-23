@@ -25,8 +25,10 @@ const Rsvp = ({ participantId }: InferGetServerSidePropsType<typeof getServerSid
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ confirm: true }),
 			});
-			const body = (await response.json()) as { ok: boolean; message: string };
-			setResult(body);
+			setResult({
+				ok: response.ok,
+				message: response.status === 400 ? t("invalid-invitation") : t("temporarily-unavailable"),
+			});
 		} catch {
 			setResult({ ok: false, message: t("temporarily-unavailable") });
 		} finally {
