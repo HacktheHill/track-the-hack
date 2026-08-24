@@ -4,7 +4,7 @@ const Loading = () => {
 	const { t } = useTranslation("common");
 
 	return (
-		<div className="flex flex-col items-center justify-center">
+		<div className="flex flex-col items-center justify-center" role="status" aria-label={t("loading")}>
 			<svg
 				className="h-10 w-10 animate-spin text-dark-color"
 				xmlns="http://www.w3.org/2000/svg"
