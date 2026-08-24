@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Event } from "@prisma/client";
 import Modal from "./Modal";
+import { trpc } from "../server/api/api";
 
 type EventEditorProps = {
 	event: Event | null;
@@ -34,12 +35,35 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 	const [links, setLinks] = useState<EventLink[]>(
 		event?.link ? [{ title: event.linkText ?? "", url: event.link }] : [],
 	);
-	const addLink = () => {
-		setLinks([...links, { title: "", url: "" }]);
-	};
 	const [imagePreview, setImagePreview] = useState<string | null>(event?.image ?? null);
 	const [imageFile, setImageFile] = useState<File | null>(null);
 	const [error, setError] = useState<string | null>(null);
+
+	const utils = trpc.useUtils();
+
+	const createEvent = trpc.events.create.useMutation({
+		onSuccess: async () => {
+			await utils.events.all.invalidate();
+			onClose();
+		},
+		onError: error => {
+			setError(error.message);
+		},
+	});
+
+	const updateEvent = trpc.events.update.useMutation({
+		onSuccess: async () => {
+			await utils.events.all.invalidate();
+			onClose();
+		},
+		onError: error => {
+			setError(error.message);
+		},
+	});
+
+	const addLink = () => {
+		setLinks([...links, { title: "", url: "" }]);
+	};
 
 	const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
@@ -97,16 +121,32 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 			return;
 		}
 
-		console.log({
-			name,
-			room,
-			start,
-			end,
-			description,
-			imageFile,
-			links,
+		const firstLink = links[0];
+
+		const eventData = {
+			name: name.trim(),
+			room: room.trim(),
+			start: new Date(start),
+			end: new Date(end),
+			description: description.trim(),
 			hidden: !visible,
-		});
+
+			// Image upload is not connected yet
+			image: event?.image ?? null,
+
+			// Database currently only supports one link
+			link: firstLink?.url || null,
+			linkText: firstLink?.title || null,
+		};
+
+		if (event) {
+			updateEvent.mutate({
+				id: event.id,
+				...eventData,
+			});
+		} else {
+			createEvent.mutate(eventData);
+		}
 	};
 
 	const updateLink = (index: number, field: keyof EventLink, value: string) => {
@@ -145,7 +185,7 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 
 			<div className="flex flex-col gap-4 text-left">
 				<div className="flex flex-col gap-1">
-					<label htmlFor="event-name">Event name</label>
+					<label htmlFor="event-name">Event name (En)</label>
 
 					<input
 						id="event-name"

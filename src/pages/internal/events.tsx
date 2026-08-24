@@ -8,6 +8,10 @@ import { trpc } from "../../server/api/api";
 import { useState } from "react";
 import type { Event } from "@prisma/client";
 import EventEditor from "../../components/EventEditor";
+import { RoleName } from "@prisma/client";
+import { getServerSession } from "next-auth";
+import { rolesRedirect } from "../../server/lib/redirects";
+import { getAuthOptions } from "../api/auth/[...nextauth]";
 
 const Events: NextPage = () => {
 	const { t } = useTranslation("internal");
@@ -113,4 +117,5 @@ export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
 		},
 	};
 };
+
 export default Events;
