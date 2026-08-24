@@ -51,10 +51,20 @@ export interface HackerLifecycleRepository {
 	confirmAndRotate(id: string, now: Date, cancellationCapabilityId: string): Promise<ConfirmationResult>;
 	cancelByCapability(capabilityId: string): Promise<string | null>;
 	reconcile(ids: string[]): Promise<ReconciliationRecord[]>;
+	// Returns false when the participant does not exist.
+	replaceClaimToken(hackerId: string, claimId: string, expiresAt: Date): Promise<boolean>;
+	// Returns the participant id, or null for a spent, expired, or unknown claim.
+	redeemClaimToken(claimId: string, now: Date): Promise<string | null>;
 }
 
 export class ParticipantLifecycleError extends Error {
-	constructor(public readonly code: "INVALID_OR_EXPIRED_INVITATION" | "INVALID_CANCELLATION_CAPABILITY") {
+	constructor(
+		public readonly code:
+			| "INVALID_OR_EXPIRED_INVITATION"
+			| "INVALID_CANCELLATION_CAPABILITY"
+			| "UNKNOWN_PARTICIPANT"
+			| "INVALID_CLAIM_TOKEN",
+	) {
 		super(code);
 		this.name = "ParticipantLifecycleError";
 	}
@@ -86,27 +96,40 @@ export const confirmRsvp = async (
 	return { confirmed: true as const };
 };
 
-const capabilitySignature = (capabilityId: string, secret: string) =>
-	createHmac("sha256", secret).update(capabilityId).digest("base64url");
+const signOpaqueId = (opaqueId: string, secret: string) =>
+	createHmac("sha256", secret).update(opaqueId).digest("base64url");
 
-export const createCancellationToken = (capabilityId: string, secret: string) =>
-	`${capabilityId}.${capabilitySignature(capabilityId, secret)}`;
+// Tokens are `<random id>.<signature>`. Only the id is stored, so a database
+// dump on its own cannot be turned into working links.
+const createSignedToken = (opaqueId: string, secret: string) => `${opaqueId}.${signOpaqueId(opaqueId, secret)}`;
 
-export const readCancellationToken = (token: string, secret: string) => {
-	const [capabilityId, suppliedSignature, extra] = token.split(".");
-	if (!capabilityId || !suppliedSignature || extra !== undefined || !/^[A-Za-z0-9_-]{43}$/.test(capabilityId)) {
+const readSignedToken = (token: string, secret: string) => {
+	const [opaqueId, suppliedSignature, extra] = token.split(".");
+	// Reject the obviously malformed before spending time on the HMAC.
+	if (!opaqueId || !suppliedSignature || extra !== undefined || !/^[A-Za-z0-9_-]{43}$/.test(opaqueId)) {
 		return null;
 	}
 
-	const expectedSignature = capabilitySignature(capabilityId, secret);
 	const supplied = Buffer.from(suppliedSignature);
-	const expected = Buffer.from(expectedSignature);
+	const expected = Buffer.from(signOpaqueId(opaqueId, secret));
+	// Constant time, otherwise the failure timing leaks the signature.
 	if (supplied.length !== expected.length || !timingSafeEqual(supplied, expected)) {
 		return null;
 	}
 
-	return capabilityId;
+	return opaqueId;
 };
+
+// Cancellation and claim links use separate secrets so leaking one does not
+// compromise the other.
+export const createCancellationToken = (capabilityId: string, secret: string) =>
+	createSignedToken(capabilityId, secret);
+
+export const readCancellationToken = (token: string, secret: string) => readSignedToken(token, secret);
+
+export const createClaimToken = (claimId: string, secret: string) => createSignedToken(claimId, secret);
+
+export const readClaimToken = (token: string, secret: string) => readSignedToken(token, secret);
 
 export const cancelRsvp = async (repository: HackerLifecycleRepository, tokenInput: unknown, secret: string) => {
 	const token = z.string().min(1).max(256).parse(tokenInput);
@@ -156,4 +179,59 @@ export const reconcileRsvps = async (
 		}),
 		missingIds: uniqueIds.filter(id => !foundById.has(id)),
 	};
+};
+
+// The claim QR is shown on the organizer's screen where anyone nearby can
+// photograph it. A narrow window plus single use keeps that photo worthless.
+export const CLAIM_TOKEN_TTL_MS = 5 * 60 * 1000;
+
+export const issueClaimToken = async (
+	repository: HackerLifecycleRepository,
+	idInput: unknown,
+	baseUrl: string,
+	secret: string,
+	now = new Date(),
+	createClaimId = () => randomBytes(32).toString("base64url"),
+) => {
+	const hackerId = participantIdSchema.parse(idInput);
+	const claimId = createClaimId();
+	const expiresAt = new Date(now.getTime() + CLAIM_TOKEN_TTL_MS);
+
+	// relationMode is "prisma", so nothing at the database level stops a token
+	// from pointing at a participant that was never provisioned.
+	const issued = await repository.replaceClaimToken(hackerId, claimId, expiresAt);
+	if (!issued) {
+		throw new ParticipantLifecycleError("UNKNOWN_PARTICIPANT");
+	}
+
+	// Fragment, not query: it never reaches the server on the GET and stays out
+	// of access logs, same as the cancellation link.
+	return {
+		claimUrl: `${baseUrl.replace(/\/$/, "")}/claim#${createClaimToken(claimId, secret)}`,
+		expiresAt,
+	};
+};
+
+
+
+export const consumeClaimToken = async (
+	repository: HackerLifecycleRepository,
+	tokenInput: unknown,
+	secret: string,
+	now = new Date(),
+) => {
+	const token = z.string().min(1).max(256).parse(tokenInput);
+	const claimId = readClaimToken(token, secret);
+	if (!claimId) {
+		throw new ParticipantLifecycleError("INVALID_CLAIM_TOKEN");
+	}
+
+	// Spent, expired and unknown all fail the same way on purpose: telling them
+	// apart would confirm to an attacker that a token was real.
+	const hackerId = await repository.redeemClaimToken(claimId, now);
+	if (!hackerId) {
+		throw new ParticipantLifecycleError("INVALID_CLAIM_TOKEN");
+	}
+
+	return { hackerId };
 };

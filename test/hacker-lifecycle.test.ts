@@ -5,9 +5,19 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { createCancellationApiHandler, createRsvpApiHandler } from "../src/server/http/participant-lifecycle-handlers";
 import { canUseOrganizerAuth } from "../src/server/lib/organizer-auth";
 import {
+	clearParticipantSessionCookies,
+	createParticipantHintCookie,
+	createParticipantSessionCookie,
+	participantSessionExpiry,
+	readParticipantSession,
+} from "../src/server/lib/participant-session";
+import {
 	cancelRsvp,
 	confirmRsvp,
+	consumeClaimToken,
 	createCancellationToken,
+	createClaimToken,
+	issueClaimToken,
 	provisionHackers,
 	provisioningRecordSchema,
 	reconcileRsvps,
@@ -17,10 +27,12 @@ import {
 
 const participantId = "wvY1HKlwYnFBO8t-YnQbwg";
 const cancellationSecret = "a".repeat(32);
+const claimSecret = "b".repeat(32);
 
 class MemoryRepository implements HackerLifecycleRepository {
 	readonly hackers = new Map<string, ProvisioningRecord & { confirmed: boolean }>();
 	readonly capabilities = new Map<string, string>();
+	readonly claims = new Map<string, { hackerId: string; expiresAt: Date; consumedAt: Date | null }>();
 
 	upsertProvisioned(record: ProvisioningRecord) {
 		const existing = this.hackers.get(record.id);
@@ -55,6 +67,22 @@ class MemoryRepository implements HackerLifecycleRepository {
 					: [];
 			}),
 		);
+	}
+
+	replaceClaimToken(hackerId: string, claimId: string, expiresAt: Date) {
+		if (!this.hackers.has(hackerId)) return Promise.resolve(false);
+		for (const [existingId, claim] of this.claims) {
+			if (claim.hackerId === hackerId) this.claims.delete(existingId);
+		}
+		this.claims.set(claimId, { hackerId, expiresAt, consumedAt: null });
+		return Promise.resolve(true);
+	}
+
+	redeemClaimToken(claimId: string, now: Date) {
+		const claim = this.claims.get(claimId);
+		if (!claim || claim.consumedAt || claim.expiresAt <= now) return Promise.resolve(null);
+		claim.consumedAt = now;
+		return Promise.resolve(claim.hackerId);
 	}
 }
 
@@ -150,6 +178,118 @@ void test("reconciliation is exact and rerunnable", async () => {
 	assert.deepEqual(first.missingIds, [missingId]);
 	assert.match(first.records[0]?.cancellationLink ?? "", /^https:\/\/track\.example\/cancel#/);
 	assert.deepEqual(second.records, first.records.slice(0, 1));
+});
+
+void test("claim issuance stores the opaque id only and hands back a fragment link", async () => {
+	const repository = new MemoryRepository();
+	await provisionHackers(repository, { hackers: [provisionInput()] });
+	const claimId = "e".repeat(43);
+
+	const issued = await issueClaimToken(
+		repository,
+		participantId,
+		"https://track.example/",
+		claimSecret,
+		new Date("2026-08-20T00:00:00Z"),
+		() => claimId,
+	);
+
+	assert.equal(issued.claimUrl, `https://track.example/claim#${createClaimToken(claimId, claimSecret)}`);
+	assert.equal(issued.expiresAt.toISOString(), "2026-08-20T00:05:00.000Z");
+
+	// The signature must never reach storage, otherwise a dump is a set of links.
+	const stored = repository.claims.get(claimId);
+	assert.ok(stored);
+	assert.equal(stored.hackerId, participantId);
+	assert.equal(stored.consumedAt, null);
+});
+
+void test("a claim is single use and rejects tampering, expiry, and unknown participants", async () => {
+	const repository = new MemoryRepository();
+	await provisionHackers(repository, { hackers: [provisionInput()] });
+	const issuedAt = new Date("2026-08-20T00:00:00Z");
+	const claimId = "f".repeat(43);
+
+	const issued = await issueClaimToken(
+		repository,
+		participantId,
+		"https://track.example",
+		claimSecret,
+		issuedAt,
+		() => claimId,
+	);
+	const token = issued.claimUrl.split("#")[1] ?? "";
+
+	await assert.rejects(consumeClaimToken(repository, token, claimSecret, new Date("2026-08-20T00:06:00Z")));
+	await assert.rejects(consumeClaimToken(repository, `${claimId}.${"A".repeat(43)}`, claimSecret, issuedAt));
+	await assert.rejects(consumeClaimToken(repository, token, "z".repeat(32), issuedAt));
+
+	assert.equal((await consumeClaimToken(repository, token, claimSecret, issuedAt)).hackerId, participantId);
+	await assert.rejects(consumeClaimToken(repository, token, claimSecret, issuedAt));
+
+	await assert.rejects(issueClaimToken(repository, "z".repeat(22), "https://track.example", claimSecret));
+});
+
+void test("issuing access again revokes the claim that was not used", async () => {
+	const repository = new MemoryRepository();
+	await provisionHackers(repository, { hackers: [provisionInput()] });
+	const now = new Date("2026-08-20T00:00:00Z");
+
+	const first = await issueClaimToken(repository, participantId, "https://track.example", claimSecret, now, () =>
+		"g".repeat(43),
+	);
+	await issueClaimToken(repository, participantId, "https://track.example", claimSecret, now, () => "h".repeat(43));
+
+	await assert.rejects(consumeClaimToken(repository, first.claimUrl.split("#")[1] ?? "", claimSecret, now));
+	assert.equal(repository.claims.size, 1);
+});
+
+void test("the participant session is signed, hidden from scripts, and cannot be extended by hand", () => {
+	const sessionSecret = "s".repeat(32);
+	const now = new Date("2026-08-20T00:00:00Z");
+	const expiresAt = participantSessionExpiry(now);
+	const cookie = createParticipantSessionCookie(participantId, sessionSecret, expiresAt);
+
+	assert.match(cookie, /HttpOnly/);
+	assert.match(cookie, /SameSite=Lax/);
+
+	const value = cookie.split(";")[0]?.split("=")[1] ?? "";
+	const request = { headers: { cookie: `participant_session=${value}` } };
+	assert.deepEqual(readParticipantSession(request, sessionSecret, now), { hackerId: participantId });
+
+	// Wrong secret, tampered participant, and a hand extended expiry all fail.
+	assert.equal(readParticipantSession(request, "t".repeat(32), now), null);
+	const [, expiryText = "", signature = ""] = value.split(".");
+	const swapped = { headers: { cookie: `participant_session=${"z".repeat(22)}.${expiryText}.${signature}` } };
+	assert.equal(readParticipantSession(swapped, sessionSecret, now), null);
+	const stretched = {
+		headers: { cookie: `participant_session=${participantId}.${now.getTime() + 10 ** 12}.${signature}` },
+	};
+	assert.equal(readParticipantSession(stretched, sessionSecret, now), null);
+
+	// A genuine cookie still stops working once its own expiry passes.
+	assert.equal(readParticipantSession(request, sessionSecret, new Date(expiresAt.getTime() + 1000)), null);
+	assert.equal(readParticipantSession({ headers: {} }, sessionSecret, now), null);
+});
+
+void test("the navigation hint carries nothing and is not accepted as a session", () => {
+	const sessionSecret = "s".repeat(32);
+	const now = new Date("2026-08-20T00:00:00Z");
+	const hint = createParticipantHintCookie();
+
+	// Readable by scripts, so it must never be HttpOnly, and it must not carry
+	// the participant id.
+	assert.match(hint, /^participant_pass=1;/);
+	assert.doesNotMatch(hint, /HttpOnly/);
+	assert.doesNotMatch(hint, new RegExp(participantId));
+
+	// Holding the hint on its own must not get you a session.
+	assert.equal(readParticipantSession({ headers: { cookie: hint } }, sessionSecret, now), null);
+
+	// Signing out has to drop both cookies, not just the signed one.
+	const cleared = clearParticipantSessionCookies();
+	assert.equal(cleared.length, 2);
+	assert.ok(cleared.every(cookie => cookie.includes("Max-Age=0")));
 });
 
 void test("organizer auth removes participant providers and enforces verification and provisioning", async () => {
