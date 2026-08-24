@@ -8,8 +8,67 @@ import type {
 
 type TransactionClient = Omit<PrismaClient, "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends">;
 
+export type HackerLifecycleLockingTransaction = {
+	findLockedAcceptanceExpiry(id: string): Promise<Date | null>;
+	findCancellationCapabilityOwner(capabilityId: string): Promise<string | null>;
+	lockHacker(id: string): Promise<boolean>;
+	findLockedCancellationCapabilityId(hackerId: string): Promise<string | null>;
+	updateHackerConfirmation(id: string, confirmed: boolean): Promise<void>;
+	rotateCancellationCapability(hackerId: string, capabilityId: string): Promise<void>;
+};
+
+export type HackerLifecycleTransactionRunner = <Result>(
+	operation: (transaction: HackerLifecycleLockingTransaction) => Promise<Result>,
+) => Promise<Result>;
+
+const createTransactionRunner =
+	(prisma: PrismaClient): HackerLifecycleTransactionRunner =>
+	operation =>
+		prisma.$transaction(async transaction =>
+			operation({
+				findLockedAcceptanceExpiry: async id => {
+					const [hacker] = await transaction.$queryRaw<Array<{ acceptanceExpiry: Date }>>`
+					SELECT acceptanceExpiry FROM \`Hacker\` WHERE id = ${id} FOR UPDATE
+				`;
+					return hacker?.acceptanceExpiry ?? null;
+				},
+				findCancellationCapabilityOwner: async capabilityId => {
+					const capability = await transaction.cancellationCapability.findUnique({
+						where: { id: capabilityId },
+						select: { hackerId: true },
+					});
+					return capability?.hackerId ?? null;
+				},
+				lockHacker: async id => {
+					const lockedHackers = await transaction.$queryRaw<Array<{ id: string }>>`
+					SELECT id FROM \`Hacker\` WHERE id = ${id} FOR UPDATE
+				`;
+					return lockedHackers.length > 0;
+				},
+				findLockedCancellationCapabilityId: async hackerId => {
+					const [capability] = await transaction.$queryRaw<Array<{ id: string }>>`
+					SELECT id FROM \`CancellationCapability\` WHERE hackerId = ${hackerId} FOR UPDATE
+				`;
+					return capability?.id ?? null;
+				},
+				updateHackerConfirmation: async (id, confirmed) => {
+					await transaction.hacker.update({ where: { id }, data: { confirmed } });
+				},
+				rotateCancellationCapability: async (hackerId, capabilityId) => {
+					await transaction.cancellationCapability.upsert({
+						where: { hackerId },
+						create: { id: capabilityId, hackerId },
+						update: { id: capabilityId },
+					});
+				},
+			}),
+		);
+
 export class PrismaHackerLifecycleRepository implements HackerLifecycleRepository {
-	constructor(private readonly prisma: PrismaClient) {}
+	constructor(
+		private readonly prisma: PrismaClient,
+		private readonly runLockingTransaction: HackerLifecycleTransactionRunner = createTransactionRunner(prisma),
+	) {}
 
 	async upsertProvisioned(record: ProvisioningRecord) {
 		await this.upsertProvisionedInTransaction(this.prisma, record);
@@ -38,58 +97,40 @@ export class PrismaHackerLifecycleRepository implements HackerLifecycleRepositor
 	}
 
 	async confirmAndRotate(id: string, now: Date, cancellationCapabilityId: string) {
-		return this.prisma.$transaction(async transaction =>
+		return this.runLockingTransaction(async transaction =>
 			this.confirmInTransaction(transaction, id, now, cancellationCapabilityId),
 		);
 	}
 
 	private async confirmInTransaction(
-		transaction: TransactionClient,
+		transaction: HackerLifecycleLockingTransaction,
 		id: string,
 		now: Date,
 		cancellationCapabilityId: string,
 	): Promise<ConfirmationResult> {
-		const [hacker] = await transaction.$queryRaw<Array<{ acceptanceExpiry: Date }>>`
-			SELECT acceptanceExpiry FROM \`Hacker\` WHERE id = ${id} FOR UPDATE
-		`;
-		if (!hacker) return "missing";
-		if (hacker.acceptanceExpiry.getTime() <= now.getTime()) return "expired";
+		const acceptanceExpiry = await transaction.findLockedAcceptanceExpiry(id);
+		if (!acceptanceExpiry) return "missing";
+		if (acceptanceExpiry.getTime() <= now.getTime()) return "expired";
 
-		await transaction.hacker.update({ where: { id }, data: { confirmed: true } });
-		await transaction.cancellationCapability.upsert({
-			where: { hackerId: id },
-			create: { id: cancellationCapabilityId, hackerId: id },
-			update: { id: cancellationCapabilityId },
-		});
+		await transaction.updateHackerConfirmation(id, true);
+		await transaction.rotateCancellationCapability(id, cancellationCapabilityId);
 		return "confirmed";
 	}
 
 	async cancelByCapability(capabilityId: string) {
-		return this.prisma.$transaction(async transaction => {
-			const capability = await transaction.cancellationCapability.findUnique({
-				where: { id: capabilityId },
-				select: { hackerId: true },
-			});
-
-			if (!capability) return null;
+		return this.runLockingTransaction(async transaction => {
+			const hackerId = await transaction.findCancellationCapabilityOwner(capabilityId);
+			if (!hackerId) return null;
 
 			// Confirmation locks the Hacker before rotating its capability. Match
 			// that order, then reject a capability replaced while this lock waited.
-			const lockedHackers = await transaction.$queryRaw<Array<{ id: string }>>`
-				SELECT id FROM \`Hacker\` WHERE id = ${capability.hackerId} FOR UPDATE
-			`;
-			if (lockedHackers.length === 0) return null;
+			if (!(await transaction.lockHacker(hackerId))) return null;
 
-			const [activeCapability] = await transaction.$queryRaw<Array<{ id: string }>>`
-				SELECT id FROM \`CancellationCapability\` WHERE hackerId = ${capability.hackerId} FOR UPDATE
-			`;
-			if (activeCapability?.id !== capabilityId) return null;
+			const activeCapabilityId = await transaction.findLockedCancellationCapabilityId(hackerId);
+			if (activeCapabilityId !== capabilityId) return null;
 
-			await transaction.hacker.update({
-				where: { id: capability.hackerId },
-				data: { confirmed: false },
-			});
-			return capability.hackerId;
+			await transaction.updateHackerConfirmation(hackerId, false);
+			return hackerId;
 		});
 	}
 

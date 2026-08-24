@@ -18,13 +18,13 @@
 		"dev:setup": "node scripts/setup-dev.mjs && node --env-file=.env scripts/assert-local-dev-db.mjs && docker compose up -d --wait && prisma migrate deploy && prisma db seed",
 		"preview": "npm run build && next start --hostname 127.0.0.1",
 		"test": "node --import tsx --test test/**/*.test.ts",
-		"test:e2e:dev": "npm run dev:setup && NEXT_DIST_DIR=.next-dev-e2e node --env-file=.env scripts/test-dev-e2e.mjs",
+		"test:e2e:dev": "npm run dev:setup && NEXT_DIST_DIR=.next-dev-e2e node --env-file=.env --import tsx scripts/test-dev-e2e.mts",
 		"test:e2e:pwa": "npm run dev:setup && NEXT_DIST_DIR=.next-pwa-e2e node scripts/run-pwa-e2e.mjs",
-		"typecheck": "tsc --noEmit",
+		"typecheck": "tsc --noEmit && node scripts/check-google-apps-script.mjs",
 		"verify:dev": "npm test && npm run typecheck && npm run lint && npm run test:e2e:dev && npm run test:e2e:pwa",
 		"organizer:provision": "node --env-file-if-exists=.env --import tsx scripts/provision-organizer.mts",
 		"postinstall": "prisma generate",
-		"lint": "eslint src prisma scripts test next.config.js next-i18next.config.js tailwind.config.mjs --ext .js,.mjs,.ts,.tsx,.mts",
+		"lint": "eslint src prisma scripts test integrations/google-sheets/Code.gs next.config.js next-i18next.config.js tailwind.config.mjs --ext .gs,.js,.mjs,.ts,.tsx,.mts",
 		"start": "next start",
 		"format": "prettier --write ."
 	},
@@ -64,10 +64,13 @@
 	},
 	"devDependencies": {
 		"@faker-js/faker": "^10.5.0",
+		"@types/google-apps-script": "^2.0.12",
 		"@types/node": "^24.13.3",
+		"@types/nodemailer": "^8.0.1",
 		"@types/qrcode": "^1.5.6",
 		"@types/react": "^18.3.3",
 		"@types/react-dom": "^18.3.0",
+		"@types/smtp-server": "^3.5.13",
 		"@typescript-eslint/eslint-plugin": "^5.51.0",
 		"@typescript-eslint/parser": "^5.51.0",
 		"autoprefixer": "^10.4.16",
@@ -81,7 +84,9 @@
 		"smtp-server": "^3.19.3",
 		"tailwindcss": "^3.3.7",
 		"tsx": "4.23.0",
-		"typescript": "^5.9.3"
+		"typescript": "^5.9.3",
+		"webpack": "5.98.0",
+		"workbox-build": "6.6.0"
 	},
 	"ct3aMetadata": {
 		"initVersion": "7.3.1"

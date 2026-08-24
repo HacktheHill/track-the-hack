@@ -7,6 +7,7 @@ import { log } from "@/server/lib/log";
 import { participantIdSchema } from "@/server/services/hacker-lifecycle";
 import {
 	adjustPresenceForEvent,
+	createPrismaScannerRepository,
 	scanParticipantForEvent,
 	ScannerWorkflowError,
 } from "@/server/services/scanner-workflows";
@@ -50,7 +51,7 @@ export const presenceRouter = createTRPCRouter({
 		const organizer = await requireScannerOrganizer(ctx);
 		try {
 			const { id: presenceId, ...result } = await scanParticipantForEvent(
-				ctx.prisma,
+				createPrismaScannerRepository(ctx.prisma),
 				input.eventId,
 				input.hackerId,
 			);
@@ -74,7 +75,7 @@ export const presenceRouter = createTRPCRouter({
 			const organizer = await requireScannerOrganizer(ctx);
 			try {
 				const { id: presenceId, ...result } = await adjustPresenceForEvent(
-					ctx.prisma,
+					createPrismaScannerRepository(ctx.prisma),
 					input.eventId,
 					input.hackerId,
 					input.amount,

@@ -10,6 +10,7 @@ const passPrecacheEntries = ["/pass", "/fr/pass"].map(url => ({ url, revision: "
 // /profile is personalized server-rendered data. These rules must stay ahead
 // of next-pwa's broad JSON and same-origin rules so neither the document nor a
 // client-navigation data request can ever enter a runtime cache.
+/** @satisfies {import("workbox-build").RuntimeCaching[]} */
 const participantProfileNetworkOnly = [
 	{
 		urlPattern: /\/_next\/data\/[^/]+\/(?:en\/|fr\/)?profile\.json(?:[?#]|$)/i,
@@ -51,6 +52,14 @@ module.exports = withPWA({
 	i18n,
 	distDir: process.env.NEXT_DIST_DIR || ".next",
 	experimental: { useTypeScriptCli: false },
+	/**
+	 * @template {import("webpack").Configuration & {
+	 *   module: import("webpack").ModuleOptions & { rules: import("webpack").RuleSetRule[] }
+	 * }} T
+	 * @param {T} config
+	 * @param {{ buildId: string }} context
+	 * @returns {T}
+	 */
 	webpack: (config, { buildId }) => {
 		for (const entry of passPrecacheEntries) entry.revision = buildId;
 		config.module.rules.push({

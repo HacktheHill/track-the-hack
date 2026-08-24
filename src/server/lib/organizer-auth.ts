@@ -1,4 +1,5 @@
 import type { RoleName } from "@prisma/client";
+import { z } from "zod";
 
 export const ORGANIZER_EMAIL_DOMAIN = "ctn-rtc.org";
 export const DEVELOPMENT_AUTH_PROVIDER_ID = "development";
@@ -60,9 +61,23 @@ type OrganizerSignInInput = {
 
 type DevelopmentOrganizerSignInInput = {
 	provider: string | null | undefined;
-	userId: string | undefined;
+	userId: string;
 	userEmail: string | null | undefined;
 	sessionUserId: string | undefined;
+};
+
+const googleOrganizerProfileSchema = z.object({
+	email: z.string().email(),
+	email_verified: z.boolean(),
+});
+
+export const parseGoogleOrganizerProfile = (profile: unknown) => {
+	const result = googleOrganizerProfileSchema.safeParse(profile);
+	if (!result.success) return undefined;
+	return {
+		email: result.data.email,
+		emailVerified: result.data.email_verified,
+	};
 };
 
 export const normalizeOrganizerEmail = (email: string) => email.trim().toLowerCase();
@@ -75,9 +90,10 @@ export const canUseDevelopmentOrganizerAuth = (
 ) =>
 	isDevelopmentOrganizerAuthEnabled(environment, requestHost, requestPeerAddress) &&
 	input.provider === DEVELOPMENT_AUTH_PROVIDER_ID &&
+	input.userId.length > 0 &&
 	!!input.userEmail &&
 	normalizeOrganizerEmail(input.userEmail) === DEVELOPMENT_ORGANIZER_EMAIL &&
-	(!input.sessionUserId || input.sessionUserId === input.userId);
+	(input.sessionUserId === undefined || input.sessionUserId === input.userId);
 
 export const hasOrganizerEmailDomain = (email: string) => {
 	const normalized = normalizeOrganizerEmail(email);
@@ -102,5 +118,5 @@ export const canUseOrganizerAuth = async (
 	}
 
 	const user = await findUserByEmail(normalizeOrganizerEmail(input.profileEmail));
-	return !!user && user.roles.length > 0 && (!sessionUserId || user.id === sessionUserId);
+	return !!user && user.roles.length > 0 && (sessionUserId === undefined || user.id === sessionUserId);
 };
