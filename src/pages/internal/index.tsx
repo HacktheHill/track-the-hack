@@ -39,6 +39,12 @@ const Internal: NextPage = () => {
 						>
 							{t("walk-in-code")}
 						</Link>
+						<Link
+							href="/internal/events"
+							className="cursor-pointer whitespace-nowrap rounded-xl border-none bg-medium-primary-color px-8 py-2 font-rubik text-light-color shadow-md transition-all duration-500 hover:bg-light-primary-color"
+						>
+							Events
+						</Link>
 					</div>
 				</div>
 			</Filter>
