@@ -5,6 +5,7 @@ import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import { useState, useEffect, useMemo } from "react";
 import App from "../../components/App";
 import Error from "../../components/Error";
 import Loading from "../../components/Loading";
@@ -25,10 +26,49 @@ const Schedule: NextPage = () => {
 
 	const query = trpc.events.all.useQuery();
 
+	// Use state to track current time and update periodically, rather than using Date.now() in the useMemo
+	// which wouldn't trigger updates
+	const [currentTime, setCurrentTime] = useState(Date.now());
+	useEffect(() => {
+		const intervalId = setInterval(() => {
+			setCurrentTime(Date.now());
+		}, 60 * 1000); // Update every 60 seconds
+		return () => clearInterval(intervalId);
+	}, []);
+
+	const tab =
+		typeof router.query.tab === "string" && Object.keys(EventType).includes(router.query.tab)
+			? (router.query.tab as EventType)
+			: EventType.ALL;
+
 	let dateLocale = "en-CA";
 	if (locale === "fr") {
 		dateLocale = "fr-CA";
 	}
+
+	// ⚡ Bolt: wrap expensive synchronous derived calculations in useMemo.
+	// Replacing direct render-time operations reduces main thread blocking during React reconciliation.
+	const events = useMemo(() => {
+		if (!query.data) return [];
+		return query.data
+			.filter(event => !event.hidden)
+			.filter(event => event.end.getTime() + 30 * 60 * 1000 > currentTime)
+			.filter(event => EventType[event.type] === tab || tab === EventType.ALL)
+			.sort((a, b) => {
+				if (a.start.getTime() === b.start.getTime()) {
+					return a.end.getTime() - b.end.getTime();
+				}
+				return a.start.getTime() - b.start.getTime();
+			})
+			.reduce((acc, event, i, array) => {
+				if (array[i]?.start.toLocaleDateString(dateLocale) === array[i - 1]?.start.toLocaleDateString(dateLocale)) {
+					acc[acc.length - 1]?.push(event);
+				} else {
+					acc.push([event]);
+				}
+				return acc;
+			}, [] as Event[][]);
+	}, [query.data, tab, dateLocale, currentTime]);
 
 	if (query.isLoading || query.data == null) {
 		return (
@@ -62,30 +102,6 @@ const Schedule: NextPage = () => {
 				return "bg-dark-color text-light-color";
 		}
 	};
-
-	const tab =
-		typeof router.query.tab === "string" && Object.keys(EventType).includes(router.query.tab)
-			? (router.query.tab as EventType)
-			: EventType.ALL;
-
-	const events = query.data
-		.filter(event => !event.hidden)
-		.filter(event => event.end.getTime() + 30 * 60 * 1000 > Date.now())
-		.filter(event => EventType[event.type] === tab || tab === EventType.ALL)
-		.sort((a, b) => {
-			if (a.start.getTime() === b.start.getTime()) {
-				return a.end.getTime() - b.end.getTime();
-			}
-			return a.start.getTime() - b.start.getTime();
-		})
-		.reduce((acc, event, i, array) => {
-			if (array[i]?.start.toLocaleDateString(dateLocale) === array[i - 1]?.start.toLocaleDateString(dateLocale)) {
-				acc[acc.length - 1]?.push(event);
-			} else {
-				acc.push([event]);
-			}
-			return acc;
-		}, [] as Event[][]);
 
 	return (
 		<App className="flex h-0 flex-col items-center bg-default-gradient" integrated={true} title={t("title")}>

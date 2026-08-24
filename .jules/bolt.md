@@ -1,0 +1,3 @@
+## 2024-08-23 - Expensive synchronous array operations in render
+**Learning:** Found a common anti-pattern where expensive array operations (`.filter`, `.sort`, `.reduce`) and string formatting are executed synchronously during the render phase in top-level pages. Because `Date.now()` is frequently used as a filter condition, it breaks basic memoization attempts as `Date.now()` evaluates on every render.
+**Action:** Wrap derived data calculations in `useMemo` hooks. For `Date.now()` dependencies, replace them with a state variable (`currentTime`) that is periodically updated via a `setInterval` in a `useEffect` hook, providing deterministic re-evaluation for `useMemo` and ensuring the UI remains updated without triggering constant re-renders.
