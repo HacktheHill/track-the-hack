@@ -1,4 +1,5 @@
 import { PrismaClient, RoleName } from "@prisma/client";
+import { z } from "zod";
 import { hasOrganizerEmailDomain, normalizeOrganizerEmail } from "@/server/lib/organizer-auth";
 
 const prisma = new PrismaClient();
@@ -9,10 +10,11 @@ if (!rawEmail || !hasOrganizerEmailDomain(rawEmail)) {
 }
 
 const email = normalizeOrganizerEmail(rawEmail);
-const roles = rawRoles.length ? rawRoles : [RoleName.ORGANIZER];
-if (!roles.every((role): role is RoleName => Object.values(RoleName).includes(role as RoleName))) {
+const parsedRoles = z.array(z.nativeEnum(RoleName)).safeParse(rawRoles.length ? rawRoles : [RoleName.ORGANIZER]);
+if (!parsedRoles.success) {
 	throw new Error(`Roles must be one of: ${Object.values(RoleName).join(", ")}`);
 }
+const roles = parsedRoles.data;
 
 await prisma.$transaction([
 	...roles.map(name => prisma.role.upsert({ where: { name }, create: { name }, update: {} })),

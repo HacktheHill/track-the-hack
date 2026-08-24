@@ -2,7 +2,7 @@ import { RoleName } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { hasRoles } from "@/utils/helpers";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
-import { getOperationalMetrics } from "@/server/services/operational-metrics";
+import { createPrismaOperationalMetricsRepository, getOperationalMetrics } from "@/server/services/operational-metrics";
 
 export const metricsRouter = createTRPCRouter({
 	getMetrics: protectedProcedure.query(async ({ ctx }) => {
@@ -14,6 +14,6 @@ export const metricsRouter = createTRPCRouter({
 			throw new TRPCError({ code: "FORBIDDEN" });
 		}
 
-		return getOperationalMetrics(ctx.prisma);
+		return getOperationalMetrics(createPrismaOperationalMetricsRepository(ctx.prisma));
 	}),
 });

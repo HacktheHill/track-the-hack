@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { spawn } from "node:child_process";
+import { spawn, type ChildProcess } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { once } from "node:events";
 import { constants as fsConstants } from "node:fs";
@@ -8,10 +8,12 @@ import { request as httpRequest } from "node:http";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, type ScannerWorkflow } from "@prisma/client";
 import { createTRPCProxyClient, httpBatchLink } from "@trpc/client";
-import { chromium } from "playwright-core";
+import { chromium, type Browser, type BrowserContext } from "playwright-core";
 import superjson from "superjson";
+import { z } from "zod";
+import type { AppRouter } from "@/server/api/root";
 import { deliverLocalParticipantEmail } from "./dev-email.mjs";
 import {
 	acceptedSheetRowsToOperationalRecords,
@@ -19,10 +21,46 @@ import {
 	syncTallyFixtureToSheet,
 } from "./dev-tally-sheet.mjs";
 
-const wait = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
+type OperationalRecord = ReturnType<typeof acceptedSheetRowsToOperationalRecords>[number];
+type JsonRequestBody =
+	OperationalRecord | { hackers: OperationalRecord[] } | { ids: string[] } | { confirm: boolean } | { token: string };
+type JsonRequestOptions = { headers?: HeadersInit; jar?: CookieJar };
+
+const processedResponseSchema = z.object({ processed: z.number().int().nonnegative() }).strict();
+const reconciliationResponseSchema = z
+	.object({
+		records: z.array(
+			z
+				.object({
+					id: z.string().min(1),
+					confirmed: z.boolean(),
+					cancellationLink: z.string().url().optional(),
+				})
+				.strict(),
+		),
+		missingIds: z.array(z.string()),
+	})
+	.strict();
+const claimResponseSchema = z.object({ claimUrl: z.string().url(), expiresAt: z.string().datetime() }).strict();
+const authProviderSchema = z
+	.object({
+		id: z.string(),
+		name: z.string(),
+		type: z.enum(["credentials", "oauth"]),
+		signinUrl: z.string().url(),
+		callbackUrl: z.string().url(),
+	})
+	.strict();
+const authProvidersSchema = z
+	.object({ google: authProviderSchema, development: authProviderSchema.optional() })
+	.strict();
+const sessionSchema = z.object({ user: z.object({ roles: z.array(z.string()) }) });
+const unauthorizedErrorSchema = z.object({ data: z.object({ code: z.literal("UNAUTHORIZED") }) });
+
+const wait = (milliseconds: number) => new Promise<void>(resolve => setTimeout(resolve, milliseconds));
 
 const getOpenPort = () =>
-	new Promise((resolve, reject) => {
+	new Promise<number>((resolve, reject) => {
 		const server = createServer();
 		server.once("error", reject);
 		server.listen(0, "127.0.0.1", () => {
@@ -37,11 +75,12 @@ const getOpenPort = () =>
 	});
 
 class CookieJar {
-	cookies = new Map();
+	cookies = new Map<string, string>();
 
-	read(headers) {
+	read(headers: Headers) {
 		for (const cookie of headers.getSetCookie()) {
 			const [pair, ...attributes] = cookie.split(";");
+			if (!pair) continue;
 			const separator = pair.indexOf("=");
 			if (separator < 1) continue;
 			const name = pair.slice(0, separator);
@@ -57,8 +96,8 @@ class CookieJar {
 	}
 }
 
-const serverOutput = [];
-const rememberOutput = chunk => {
+const serverOutput: string[] = [];
+const rememberOutput = (chunk: Buffer | string) => {
 	serverOutput.push(String(chunk));
 	if (serverOutput.length > 200) serverOutput.shift();
 };
@@ -73,15 +112,15 @@ const configuredServerIsReady =
 		.catch(() => false));
 
 let baseUrl = configuredUrl.origin;
-let next = null;
-let browser = null;
-let participantContext = null;
+let next: ChildProcess | null = null;
+let browser: Browser | null = null;
+let participantContext: BrowserContext | null = null;
 if (configuredServerIsReady) {
 	console.info(`Reusing the healthy development server at ${baseUrl}.`);
 } else {
 	const port = await getOpenPort();
 	baseUrl = `http://127.0.0.1:${port}`;
-	next = spawn(
+	const spawnedNext = spawn(
 		process.execPath,
 		["node_modules/next/dist/bin/next", "dev", "--webpack", "--hostname", "127.0.0.1", "--port", String(port)],
 		{
@@ -95,8 +134,9 @@ if (configuredServerIsReady) {
 			stdio: ["ignore", "pipe", "pipe"],
 		},
 	);
-	next.stdout.on("data", rememberOutput);
-	next.stderr.on("data", rememberOutput);
+	next = spawnedNext;
+	spawnedNext.stdout.on("data", rememberOutput);
+	spawnedNext.stderr.on("data", rememberOutput);
 }
 
 const stopServer = async () => {
@@ -110,7 +150,7 @@ const stopServer = async () => {
 	]);
 };
 
-const request = async (path, init = {}, jar) => {
+const request = async (path: string, init: RequestInit = {}, jar?: CookieJar) => {
 	const headers = new Headers(init.headers);
 	if (jar?.header()) headers.set("Cookie", jar.header());
 	const response = await fetch(new URL(path, baseUrl), { redirect: "manual", ...init, headers });
@@ -118,7 +158,7 @@ const request = async (path, init = {}, jar) => {
 	return response;
 };
 
-const jsonRequest = async (path, body, options = {}) =>
+const jsonRequest = async (path: string, body: JsonRequestBody, options: JsonRequestOptions = {}) =>
 	request(
 		path,
 		{
@@ -129,8 +169,8 @@ const jsonRequest = async (path, body, options = {}) =>
 		options.jar,
 	);
 
-const getJsonWithHost = (path, host) =>
-	new Promise((resolve, reject) => {
+const getAuthProvidersWithHost = (path: string, host: string) =>
+	new Promise<{ status: number | undefined; body: z.infer<typeof authProvidersSchema> }>((resolve, reject) => {
 		const url = new URL(path, baseUrl);
 		const outgoing = httpRequest(
 			{
@@ -140,14 +180,14 @@ const getJsonWithHost = (path, host) =>
 				headers: { Host: host },
 			},
 			response => {
-				const chunks = [];
-				response.on("data", chunk => chunks.push(Buffer.from(chunk)));
+				const chunks: Buffer[] = [];
+				response.on("data", (chunk: Uint8Array) => chunks.push(Buffer.from(chunk)));
 				response.once("error", reject);
 				response.once("end", () => {
 					try {
 						resolve({
 							status: response.statusCode,
-							body: JSON.parse(Buffer.concat(chunks).toString("utf8")),
+							body: authProvidersSchema.parse(JSON.parse(Buffer.concat(chunks).toString("utf8"))),
 						});
 					} catch (error) {
 						reject(error);
@@ -167,7 +207,7 @@ const findChromium = async () => {
 		"/usr/bin/google-chrome",
 		"/usr/bin/google-chrome-stable",
 		"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-	].filter(Boolean);
+	].filter((candidate): candidate is string => candidate !== undefined);
 
 	for (const candidate of candidates) {
 		try {
@@ -187,6 +227,10 @@ const getBrowser = async () => {
 		args: ["--no-sandbox", "--disable-dev-shm-usage"],
 	});
 	return browser;
+};
+
+const closeBrowser = async () => {
+	if (browser) await browser.close();
 };
 
 const runOrganizerScannerBrowserE2E = async () => {
@@ -235,7 +279,9 @@ const waitForReady = async () => {
 	throw new Error("Next did not become ready within 60 seconds");
 };
 
-const integrationHeaders = { Authorization: `Bearer ${process.env.SHEETS_INTEGRATION_API_KEY}` };
+const sheetsIntegrationApiKey = process.env.SHEETS_INTEGRATION_API_KEY;
+if (!sheetsIntegrationApiKey) throw new Error("SHEETS_INTEGRATION_API_KEY is required for the development E2E test.");
+const integrationHeaders = { Authorization: `Bearer ${sheetsIntegrationApiKey}` };
 const participantId = randomBytes(16).toString("base64url");
 const walkInId = randomBytes(16).toString("base64url");
 const prisma = new PrismaClient();
@@ -278,7 +324,7 @@ try {
 		{ headers: integrationHeaders },
 	);
 	assert.equal(provision.status, 200);
-	assert.deepEqual(await provision.json(), { processed: 2 });
+	assert.deepEqual(processedResponseSchema.parse(await provision.json()), { processed: 2 });
 
 	const invitationEmail = await deliverLocalParticipantEmail({
 		type: "invitation",
@@ -290,9 +336,11 @@ try {
 	assert.equal(invitationEmail.from, "no-reply@track.local");
 	assert.deepEqual(invitationEmail.to, ["participant@example.test"]);
 	assert.deepEqual(invitationEmail.links, [`${baseUrl}/rsvp/${participantId}`]);
+	const invitationLink = invitationEmail.links[0];
+	assert.ok(invitationLink);
 	participantContext = await (await getBrowser()).newContext();
 	const participantPage = await participantContext.newPage();
-	await participantPage.goto(invitationEmail.links[0], { waitUntil: "domcontentloaded" });
+	await participantPage.goto(invitationLink, { waitUntil: "domcontentloaded" });
 	await participantPage.getByRole("button", { name: "Confirm attendance" }).click();
 	await participantPage
 		.getByRole("status")
@@ -305,7 +353,7 @@ try {
 		{ headers: integrationHeaders },
 	);
 	assert.equal(reconciliation.status, 200);
-	const reconciled = await reconciliation.json();
+	const reconciled = reconciliationResponseSchema.parse(await reconciliation.json());
 	const confirmedRecord = reconciled.records.find(record => record.id === participantId);
 	assert.ok(confirmedRecord, "Reconciliation must include the invited participant");
 	assert.equal(confirmedRecord.confirmed, true);
@@ -319,7 +367,9 @@ try {
 	assert.equal(confirmationEmail.type, "confirmation");
 	assert.equal(confirmationEmail.subject, "Track the Hack RSVP confirmed");
 	assert.deepEqual(confirmationEmail.links, [confirmedRecord.cancellationLink]);
-	const cancellationUrl = new URL(confirmationEmail.links[0]);
+	const confirmationLink = confirmationEmail.links[0];
+	assert.ok(confirmationLink);
+	const cancellationUrl = new URL(confirmationLink);
 	await participantPage.goto(cancellationUrl.toString(), { waitUntil: "domcontentloaded" });
 	await participantPage.getByRole("button", { name: "Cancel attendance" }).click();
 	await participantPage
@@ -330,10 +380,13 @@ try {
 	const reconfirmation = await jsonRequest(`/api/rsvp/${participantId}`, { confirm: true });
 	assert.equal(reconfirmation.status, 200);
 
-	const issueClaim = record => jsonRequest("/api/integrations/sheets/claim", record, { headers: integrationHeaders });
-	const claimResponse = await issueClaim(records[0]);
+	const [normalRecord, walkInRecord] = records;
+	assert.ok(normalRecord && walkInRecord, "The reviewed Sheet fixture must provide normal and walk-in records");
+	const issueClaim = (record: OperationalRecord) =>
+		jsonRequest("/api/integrations/sheets/claim", record, { headers: integrationHeaders });
+	const claimResponse = await issueClaim(normalRecord);
 	assert.equal(claimResponse.status, 200);
-	const claim = await claimResponse.json();
+	const claim = claimResponseSchema.parse(await claimResponse.json());
 	const claimUrl = new URL(claim.claimUrl);
 	assert.equal((await request(claimUrl.pathname)).status, 200);
 	assert.equal((await request(claimUrl.pathname)).status, 200, "GET/reload must not consume a claim");
@@ -360,8 +413,8 @@ try {
 	await participantContext.close();
 	participantContext = null;
 
-	const replacementResponse = await issueClaim(records[0]);
-	const replacement = await replacementResponse.json();
+	const replacementResponse = await issueClaim(normalRecord);
+	const replacement = claimResponseSchema.parse(await replacementResponse.json());
 	const revokedProfile = await request("/profile", {}, participantCookies);
 	assert.ok([302, 307, 308].includes(revokedProfile.status), "Replacement access must revoke the old device");
 
@@ -372,10 +425,10 @@ try {
 		200,
 	);
 
-	const walkInClaimResponse = await issueClaim(records[1]);
+	const walkInClaimResponse = await issueClaim(walkInRecord);
 	assert.equal(walkInClaimResponse.status, 200);
 	const walkInCookies = new CookieJar();
-	const walkInToken = new URL((await walkInClaimResponse.json()).claimUrl).hash.slice(1);
+	const walkInToken = new URL(claimResponseSchema.parse(await walkInClaimResponse.json()).claimUrl).hash.slice(1);
 	assert.equal((await jsonRequest("/api/claim", { token: walkInToken }, { jar: walkInCookies })).status, 200);
 	assert.equal((await request("/profile", {}, walkInCookies)).status, 200);
 	assert.equal(
@@ -391,33 +444,33 @@ try {
 
 	const providersResponse = await request("/api/auth/providers");
 	assert.equal(providersResponse.status, 200);
-	const providers = await providersResponse.json();
-	assert.equal(providers.development.type, "credentials");
+	const providers = authProvidersSchema.parse(await providersResponse.json());
+	assert.equal(providers.development?.type, "credentials");
 	assert.equal(providers.google.type, "oauth");
-	const externalProvidersResponse = await getJsonWithHost("/api/auth/providers", "track.example");
+	const externalProvidersResponse = await getAuthProvidersWithHost("/api/auth/providers", "track.example");
 	assert.equal(externalProvidersResponse.status, 200);
 	const externalProviders = externalProvidersResponse.body;
 	assert.equal(externalProviders.development, undefined, "The local organizer provider must be loopback-only");
 	assert.equal(externalProviders.google.type, "oauth");
 	assert.ok([302, 307, 308].includes((await request("/qr")).status), "Anonymous organizers must be redirected");
-	const anonymousTrpc = createTRPCProxyClient({
+	const anonymousTrpc = createTRPCProxyClient<AppRouter>({
 		transformer: superjson,
 		links: [httpBatchLink({ url: `${baseUrl}/api/trpc` })],
 	});
 	await assert.rejects(
 		anonymousTrpc.presence.scan.mutate({ eventId: "dev-event-check-in", hackerId: participantId }),
-		error => error?.data?.code === "UNAUTHORIZED",
+		error => unauthorizedErrorSchema.safeParse(error).success,
 		"Anonymous scanner mutations must be rejected",
 	);
 
 	const organizerCookies = await runOrganizerScannerBrowserE2E();
 	const session = await request("/api/auth/session", {}, organizerCookies);
-	const sessionBody = await session.json();
+	const sessionBody = sessionSchema.parse(await session.json());
 	assert.ok(sessionBody.user.roles.includes("ORGANIZER"), "Development login must produce an organizer session");
 	assert.equal((await request("/qr", {}, organizerCookies)).status, 200);
 	assert.equal((await request("/metrics", {}, organizerCookies)).status, 200);
 
-	const trpc = createTRPCProxyClient({
+	const trpc = createTRPCProxyClient<AppRouter>({
 		transformer: superjson,
 		links: [
 			httpBatchLink({
@@ -427,20 +480,23 @@ try {
 		],
 	});
 	const events = await trpc.events.scannable.query();
-	const event = workflow => {
+	const event = (workflow: ScannerWorkflow) => {
 		const match = events.find(candidate => candidate.scannerWorkflow === workflow);
 		assert.ok(match, `Seed data must contain a ${workflow} scanner event`);
 		return match;
 	};
 	const checkIn = await trpc.presence.scan.mutate({ eventId: event("CHECK_IN").id, hackerId: participantId });
+	assert.equal(checkIn.workflow, "CHECK_IN");
 	assert.equal(checkIn.participant.confirmed, true);
 	assert.equal(checkIn.atLimit, true);
 	const merchandise = await trpc.presence.scan.mutate({
 		eventId: event("MERCHANDISE").id,
 		hackerId: participantId,
 	});
+	assert.equal(merchandise.workflow, "MERCHANDISE");
 	assert.equal(merchandise.participant.tShirtSize, "M");
 	const food = await trpc.presence.scan.mutate({ eventId: event("FOOD").id, hackerId: participantId });
+	assert.equal(food.workflow, "FOOD");
 	assert.equal(food.participant.requiresFoodLead, true);
 	await trpc.presence.scan.mutate({ eventId: event("ATTENDANCE").id, hackerId: participantId });
 	await trpc.presence.scan.mutate({ eventId: event("CHECK_IN").id, hackerId: walkInId });
@@ -474,7 +530,7 @@ try {
 	throw error;
 } finally {
 	await participantContext?.close().catch(() => undefined);
-	await browser?.close().catch(() => undefined);
+	await closeBrowser().catch(() => undefined);
 	await cleanUp().catch(error => console.error("E2E cleanup failed:", error));
 	await rm(mailboxDirectory, { recursive: true, force: true });
 	await prisma.$disconnect();

@@ -1,32 +1,63 @@
 import { readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { runInNewContext } from "node:vm";
+import { z } from "zod";
 
-/**
- * @typedef {object} TallySubmission
- * @property {string} submissionId
- * @property {string} email
- * @property {string} fullName
- * @property {boolean} waiverSigned
- * @property {string} dietaryDetails
- * @property {Record<string, string>} sheetValues
- * @property {boolean} walkIn
- */
+const tallySubmissionSchema = z
+	.object({
+		submissionId: z.string().min(1),
+		email: z.string().email(),
+		fullName: z.string().min(1),
+		waiverSigned: z.boolean(),
+		dietaryDetails: z.string(),
+		sheetValues: z.record(z.string()),
+		walkIn: z.boolean(),
+	})
+	.strict();
+const sheetReviewSchema = z
+	.object({
+		submissionId: z.string().min(1),
+		decision: z.enum(["ACCEPTED", "REJECTED"]),
+		participantId: z.string().min(1).nullable(),
+		acceptanceDays: z.number().int().nonnegative(),
+	})
+	.strict();
+const tallySheetFixtureSchema = z
+	.object({
+		tallySubmissions: z.array(tallySubmissionSchema),
+		sheetReviews: z.array(sheetReviewSchema),
+	})
+	.strict();
+const operationalRecordSchema = z
+	.object({
+		id: z.string().min(1),
+		tShirtSize: z.enum(["XS", "S", "M", "L", "XL", "XXL"]),
+		mealCategory: z.enum(["STANDARD", "VEGETARIAN", "VEGAN", "HALAL", "OTHER"]),
+		acceptanceExpiry: z.string().datetime(),
+		walkIn: z.boolean(),
+	})
+	.strict();
 
-/**
- * @typedef {object} SheetReview
- * @property {string} submissionId
- * @property {"ACCEPTED" | "REJECTED"} decision
- * @property {string | null} participantId
- * @property {number} acceptanceDays
- */
-
-/** @typedef {{ tallySubmissions: TallySubmission[], sheetReviews: SheetReview[] }} TallySheetFixture */
+/** @typedef {z.infer<typeof tallySubmissionSchema>} TallySubmission */
+/** @typedef {z.infer<typeof sheetReviewSchema>} SheetReview */
+/** @typedef {z.infer<typeof tallySheetFixtureSchema>} TallySheetFixture */
 /** @typedef {TallySubmission & SheetReview} ReviewedSheetRow */
 
 const appsScriptSource = readFileSync(new URL("../integrations/google-sheets/Code.gs", import.meta.url), "utf8");
-const { applicationRowToOperationalRecord_ } = runInNewContext(
-	`${appsScriptSource}\n({ applicationRowToOperationalRecord_ })`,
+const appsScriptAdapterSchema = z.object({
+	applicationRowToOperationalRecord_: z
+		.function()
+		.args(
+			z.array(z.string()),
+			z.array(z.string()),
+			z.string(),
+			z.union([z.string(), z.date()]),
+			z.boolean().optional(),
+		)
+		.returns(operationalRecordSchema),
+});
+const { applicationRowToOperationalRecord_ } = appsScriptAdapterSchema.parse(
+	runInNewContext(`${appsScriptSource}\n({ applicationRowToOperationalRecord_ })`),
 );
 
 /**
@@ -34,7 +65,7 @@ const { applicationRowToOperationalRecord_ } = runInNewContext(
  * @returns {Promise<TallySheetFixture>}
  */
 export const loadTallySheetFixture = async fixtureUrl =>
-	/** @type {TallySheetFixture} */ (JSON.parse(await readFile(fixtureUrl, "utf8")));
+	tallySheetFixtureSchema.parse(JSON.parse(await readFile(fixtureUrl, "utf8")));
 
 /**
  * @param {TallySheetFixture} fixture
@@ -81,5 +112,5 @@ export const acceptedSheetRowsToOperationalRecords = (
 				new Date(now + row.acceptanceDays * 24 * 60 * 60 * 1000).toISOString(),
 				row.walkIn,
 			);
-			return JSON.parse(JSON.stringify(record));
+			return record;
 		});

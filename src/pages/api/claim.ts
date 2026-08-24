@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { ZodError } from "zod";
+import { z, ZodError } from "zod";
 import { env } from "@/env/server.mjs";
 import { prisma } from "@/server/db";
 import { log } from "@/server/lib/log";
@@ -12,6 +12,7 @@ import { PrismaHackerLifecycleRepository } from "@/server/repositories/prisma-ha
 import { consumeClaimToken, ParticipantLifecycleError } from "@/server/services/hacker-lifecycle";
 
 const repository = new PrismaHackerLifecycleRepository(prisma);
+const claimBodySchema = z.object({ token: z.string().min(1).max(256) });
 
 // No API key here, unlike the Sheet endpoints. The caller is an anonymous phone
 // and the signed token is the credential.
@@ -23,12 +24,12 @@ export default async function claim(req: NextApiRequest, res: NextApiResponse) {
 	}
 
 	try {
-		const body = typeof req.body === "object" && req.body !== null ? (req.body as Record<string, unknown>) : {};
+		const { token } = claimBodySchema.parse(req.body);
 		const now = new Date();
 		const session = createParticipantSession(env.PARTICIPANT_SESSION_SECRET, now);
 		const { hackerId } = await consumeClaimToken(
 			repository,
-			body.token,
+			token,
 			env.CLAIM_TOKEN_SECRET,
 			{ verifier: session.verifier, expiresAt: session.expiresAt },
 			now,

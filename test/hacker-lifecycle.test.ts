@@ -1,14 +1,19 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { type PrismaClient, RoleName } from "@prisma/client";
-import type { NextApiRequest, NextApiResponse } from "next";
+import { PrismaClient, RoleName } from "@prisma/client";
 import {
 	createCancellationApiHandler,
 	createParticipantSignOutApiHandler,
 	createRsvpApiHandler,
+	type LifecycleApiResponse,
+	type LifecycleApiResponseBody,
 } from "@/server/http/participant-lifecycle-handlers";
 import { canUseOrganizerAuth } from "@/server/lib/organizer-auth";
-import { PrismaHackerLifecycleRepository } from "@/server/repositories/prisma-hacker-lifecycle";
+import {
+	PrismaHackerLifecycleRepository,
+	type HackerLifecycleLockingTransaction,
+	type HackerLifecycleTransactionRunner,
+} from "@/server/repositories/prisma-hacker-lifecycle";
 import {
 	clearParticipantSessionCookies,
 	createParticipantSession,
@@ -36,6 +41,16 @@ import {
 const participantId = "wvY1HKlwYnFBO8t-YnQbwg";
 const cancellationSecret = "a".repeat(32);
 const claimSecret = "b".repeat(32);
+type LifecycleHandler = ReturnType<typeof createRsvpApiHandler>;
+type LifecycleRequest = Parameters<LifecycleHandler>[0];
+
+const requestMock = (overrides: Partial<LifecycleRequest>): LifecycleRequest => ({
+	headers: {},
+	method: "GET",
+	query: {},
+	body: undefined,
+	...overrides,
+});
 
 class MemoryRepository implements HackerLifecycleRepository {
 	readonly hackers = new Map<string, ProvisioningRecord & { confirmed: boolean }>();
@@ -147,12 +162,12 @@ void test("RSVP and cancellation GET requests cannot change state", async () => 
 		return Promise.resolve();
 	});
 	const rsvpResponse = responseMock();
-	await rsvp({ method: "GET", query: { id: participantId } } as unknown as NextApiRequest, rsvpResponse.response);
+	await rsvp(requestMock({ query: { id: participantId } }), rsvpResponse.response);
 	assert.equal(rsvpResponse.statusCode, 405);
 	assert.equal(confirmations, 0);
 	const postResponse = responseMock();
 	await rsvp(
-		{ method: "POST", query: { id: participantId }, body: { confirm: true } } as unknown as NextApiRequest,
+		requestMock({ method: "POST", query: { id: participantId }, body: { confirm: true } }),
 		postResponse.response,
 	);
 	assert.equal(postResponse.statusCode, 200);
@@ -164,7 +179,7 @@ void test("RSVP and cancellation GET requests cannot change state", async () => 
 		return Promise.resolve();
 	});
 	const cancelResponse = responseMock();
-	await cancel({ method: "GET", body: {} } as unknown as NextApiRequest, cancelResponse.response);
+	await cancel(requestMock({ body: {} }), cancelResponse.response);
 	assert.equal(cancelResponse.statusCode, 405);
 	assert.equal(cancellations, 0);
 });
@@ -185,56 +200,51 @@ void test("confirmation enforces expiry and rotates cancellation authorization",
 	assert.equal(repository.hackers.get(participantId)?.confirmed, false);
 });
 
-void test("confirmation locks the participant before checking the current expiry", async () => {
+void test("confirmation locks the participant before checking the current expiry", async t => {
 	const now = new Date("2026-08-20T00:00:00Z");
-	const queries: string[] = [];
-	const transaction = {
-		$queryRaw: (query: TemplateStringsArray) => {
-			queries.push(query.join("?"));
-			return Promise.resolve([{ acceptanceExpiry: now }]);
+	const locks: string[] = [];
+	const prisma = new PrismaClient();
+	t.after(() => prisma.$disconnect());
+	const transaction: HackerLifecycleLockingTransaction = {
+		findLockedAcceptanceExpiry: () => {
+			locks.push("hacker");
+			return Promise.resolve(now);
 		},
-		hacker: {
-			update: () => {
-				throw new Error("An expired participant must not be confirmed");
-			},
-		},
-		cancellationCapability: {
-			upsert: () => {
-				throw new Error("An expired participant must not receive a cancellation capability");
-			},
-		},
+		findCancellationCapabilityOwner: () => Promise.reject(new Error("Cancellation must not be queried")),
+		lockHacker: () => Promise.reject(new Error("A second hacker lock must not be taken")),
+		findLockedCancellationCapabilityId: () => Promise.reject(new Error("Capability must not be queried")),
+		updateHackerConfirmation: () => Promise.reject(new Error("An expired participant must not be confirmed")),
+		rotateCancellationCapability: () =>
+			Promise.reject(new Error("An expired participant must not receive a cancellation capability")),
 	};
-	const prisma = {
-		$transaction: (run: (client: typeof transaction) => Promise<unknown>) => run(transaction),
-	} as unknown as PrismaClient;
-	const repository = new PrismaHackerLifecycleRepository(prisma);
+	const runTransaction: HackerLifecycleTransactionRunner = operation => operation(transaction);
+	const repository = new PrismaHackerLifecycleRepository(prisma, runTransaction);
 
 	assert.equal(await repository.confirmAndRotate(participantId, now, "new-capability"), "expired");
-	assert.equal(queries.length, 1);
-	assert.match(queries[0] ?? "", /SELECT acceptanceExpiry FROM `Hacker` WHERE id = \? FOR UPDATE/);
+	assert.deepEqual(locks, ["hacker"]);
 });
 
-void test("cancellation rejects a capability replaced before its participant lock", async () => {
+void test("cancellation rejects a capability replaced before its participant lock", async t => {
 	const locks: string[] = [];
-	const transaction = {
-		cancellationCapability: {
-			findUnique: () => Promise.resolve({ hackerId: participantId }),
+	const prisma = new PrismaClient();
+	t.after(() => prisma.$disconnect());
+	const transaction: HackerLifecycleLockingTransaction = {
+		findLockedAcceptanceExpiry: () => Promise.reject(new Error("Acceptance expiry must not be queried")),
+		findCancellationCapabilityOwner: () => Promise.resolve(participantId),
+		lockHacker: () => {
+			locks.push("hacker");
+			return Promise.resolve(true);
 		},
-		$queryRaw: (query: TemplateStringsArray) => {
-			const table = query.join("").includes("`Hacker`") ? "hacker" : "capability";
-			locks.push(table);
-			return Promise.resolve(table === "hacker" ? [{ id: participantId }] : [{ id: "new-capability" }]);
+		findLockedCancellationCapabilityId: () => {
+			locks.push("capability");
+			return Promise.resolve("new-capability");
 		},
-		hacker: {
-			update: () => {
-				throw new Error("A replaced capability must not cancel the participant");
-			},
-		},
+		updateHackerConfirmation: () =>
+			Promise.reject(new Error("A replaced capability must not cancel the participant")),
+		rotateCancellationCapability: () => Promise.reject(new Error("Capability must not be rotated")),
 	};
-	const prisma = {
-		$transaction: (run: (client: typeof transaction) => Promise<unknown>) => run(transaction),
-	} as unknown as PrismaClient;
-	const repository = new PrismaHackerLifecycleRepository(prisma);
+	const runTransaction: HackerLifecycleTransactionRunner = operation => operation(transaction);
+	const repository = new PrismaHackerLifecycleRepository(prisma, runTransaction);
 
 	assert.equal(await repository.cancelByCapability("old-capability"), null);
 	assert.deepEqual(locks, ["hacker", "capability"]);
@@ -443,10 +453,10 @@ void test("participant sign-out revokes server state and clears both browser coo
 	}, sessionSecret);
 	const result = responseMock();
 	await signOut(
-		{
+		requestMock({
 			method: "POST",
 			headers: { cookie: `participant_session=${session.token}; ${hint}` },
-		} as unknown as NextApiRequest,
+		}),
 		result.response,
 	);
 
@@ -456,9 +466,11 @@ void test("participant sign-out revokes server state and clears both browser coo
 	assert.equal(participantSessionVerifierFromRequest({ headers: {} }, sessionSecret), null);
 	assert.equal(createParticipantSessionVerifier(session.token, sessionSecret), revokedVerifier);
 	const cleared = result.headers["Set-Cookie"];
-	assert.ok(Array.isArray(cleared));
+	if (cleared === undefined || typeof cleared === "string" || typeof cleared === "number") {
+		assert.fail("Expected both cleared participant cookies");
+	}
 	assert.equal(cleared.length, 2);
-	assert.ok((cleared as readonly string[]).every(cookie => cookie.includes("Max-Age=0")));
+	assert.ok(cleared.every(cookie => cookie.includes("Max-Age=0")));
 	assert.deepEqual(clearParticipantSessionCookies(), cleared);
 });
 
@@ -560,6 +572,19 @@ void test("organizer auth removes participant providers and enforces verificatio
 		await canUseOrganizerAuth(
 			{
 				provider: "google",
+				profileEmail: "organizer@ctn-rtc.org",
+				userEmail: "organizer@ctn-rtc.org",
+				emailVerified: true,
+			},
+			findUser,
+			"",
+		),
+		false,
+	);
+	assert.equal(
+		await canUseOrganizerAuth(
+			{
+				provider: "google",
 				profileEmail: "replacement@ctn-rtc.org",
 				userEmail: "replacement@ctn-rtc.org",
 				emailVerified: true,
@@ -571,35 +596,42 @@ void test("organizer auth removes participant providers and enforces verificatio
 });
 
 const responseMock = () => {
-	const result: {
+	const state: {
 		statusCode: number;
-		body?: unknown;
+		body?: LifecycleApiResponseBody;
 		headers: Record<string, number | string | readonly string[]>;
 		ended: boolean;
-		response: NextApiResponse;
 	} = {
 		statusCode: 0,
 		headers: {},
 		ended: false,
-		response: {} as NextApiResponse,
 	};
-	result.response = {
+	const response: LifecycleApiResponse = {
 		setHeader: (name: string, value: number | string | readonly string[]) => {
-			result.headers[name] = value;
-			return result.response;
+			state.headers[name] = value;
 		},
 		status: (code: number) => {
-			result.statusCode = code;
-			return result.response;
+			state.statusCode = code;
+			return response;
 		},
-		json: (body: unknown) => {
-			result.body = body;
-			return result.response;
+		json: (body: LifecycleApiResponseBody) => {
+			state.body = body;
 		},
 		end: () => {
-			result.ended = true;
-			return result.response;
+			state.ended = true;
 		},
-	} as unknown as NextApiResponse;
-	return result;
+	};
+	return {
+		get statusCode() {
+			return state.statusCode;
+		},
+		get body() {
+			return state.body;
+		},
+		headers: state.headers,
+		get ended() {
+			return state.ended;
+		},
+		response,
+	};
 };

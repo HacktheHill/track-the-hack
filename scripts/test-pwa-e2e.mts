@@ -7,12 +7,25 @@ import { access, rm } from "node:fs/promises";
 import { createServer } from "node:net";
 import { join } from "node:path";
 import { PrismaClient } from "@prisma/client";
-import { chromium } from "playwright-core";
+import { chromium, type Browser } from "playwright-core";
+import { z } from "zod";
 
-const wait = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
+const participantSchema = z
+	.object({
+		id: z.string().min(1),
+		tShirtSize: z.enum(["XS", "S", "M", "L", "XL", "XXL"]),
+		mealCategory: z.enum(["STANDARD", "VEGETARIAN", "VEGAN", "HALAL", "OTHER"]),
+		acceptanceExpiry: z.string().datetime(),
+		walkIn: z.boolean(),
+	})
+	.strict();
+const processedResponseSchema = z.object({ processed: z.number().int().nonnegative() }).strict();
+const claimResponseSchema = z.object({ claimUrl: z.string().url(), expiresAt: z.string().datetime() }).strict();
+
+const wait = (milliseconds: number) => new Promise<void>(resolve => setTimeout(resolve, milliseconds));
 
 const getOpenPort = () =>
-	new Promise((resolve, reject) => {
+	new Promise<number>((resolve, reject) => {
 		const server = createServer();
 		server.once("error", reject);
 		server.listen(0, "127.0.0.1", () => {
@@ -34,7 +47,7 @@ const findChromium = async () => {
 		"/usr/bin/google-chrome",
 		"/usr/bin/google-chrome-stable",
 		"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-	].filter(Boolean);
+	].filter((candidate): candidate is string => candidate !== undefined);
 
 	for (const candidate of candidates) {
 		try {
@@ -49,8 +62,8 @@ const findChromium = async () => {
 
 const port = await getOpenPort();
 const baseUrl = `http://127.0.0.1:${port}`;
-const serverOutput = [];
-const rememberOutput = chunk => {
+const serverOutput: string[] = [];
+const rememberOutput = (chunk: Buffer | string) => {
 	serverOutput.push(String(chunk));
 	if (serverOutput.length > 200) serverOutput.shift();
 };
@@ -97,19 +110,25 @@ const waitForReady = async () => {
 };
 
 const participantId = randomBytes(16).toString("base64url");
-const participant = {
+const participant = participantSchema.parse({
 	id: participantId,
 	tShirtSize: "M",
 	mealCategory: "OTHER",
 	acceptanceExpiry: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
 	walkIn: false,
-};
+});
+const sheetsIntegrationApiKey = process.env.SHEETS_INTEGRATION_API_KEY;
+if (!sheetsIntegrationApiKey) throw new Error("SHEETS_INTEGRATION_API_KEY is required for the PWA E2E test.");
 const integrationHeaders = {
-	Authorization: `Bearer ${process.env.SHEETS_INTEGRATION_API_KEY}`,
+	Authorization: `Bearer ${sheetsIntegrationApiKey}`,
 	"Content-Type": "application/json",
 };
 const prisma = new PrismaClient();
-let browser;
+let browser: Browser | undefined;
+
+const closeBrowser = async () => {
+	if (browser) await browser.close();
+};
 
 const cleanUp = async () => {
 	const presences = await prisma.presence.findMany({ where: { hackerId: participantId }, select: { id: true } });
@@ -138,6 +157,7 @@ try {
 		body: JSON.stringify({ hackers: [participant] }),
 	});
 	assert.equal(provision.status, 200);
+	assert.deepEqual(processedResponseSchema.parse(await provision.json()), { processed: 1 });
 
 	const issueClaim = await fetch(`${baseUrl}/api/integrations/sheets/claim`, {
 		method: "POST",
@@ -145,7 +165,7 @@ try {
 		body: JSON.stringify(participant),
 	});
 	assert.equal(issueClaim.status, 200);
-	const claimToken = new URL((await issueClaim.json()).claimUrl).hash.slice(1);
+	const claimToken = new URL(claimResponseSchema.parse(await issueClaim.json()).claimUrl).hash.slice(1);
 
 	browser = await chromium.launch({
 		executablePath: await findChromium(),
@@ -190,7 +210,7 @@ try {
 	console.error(serverOutput.join(""));
 	throw error;
 } finally {
-	await browser?.close();
+	await closeBrowser();
 	await cleanUp().catch(error => console.error("PWA E2E cleanup failed:", error));
 	await prisma.$disconnect();
 	await stopServer();

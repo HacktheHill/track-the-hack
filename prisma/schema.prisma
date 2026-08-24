@@ -58,7 +58,7 @@ model User {
   roles         Role[]
   accounts      Account[]
   sessions      Session[]
-  Log           Log[]
+  logs          Log[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @default(now()) @updatedAt
 }
@@ -173,7 +173,7 @@ model Log {
   action     String
   details    String?  @db.Text
   userId     String?
-  user       User[]
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([userId])
 }
