@@ -13,11 +13,12 @@ const secretNames = [
 const developmentDefaults = { DEV_AUTH_ENABLED: "1" };
 
 let created = false;
+/** @type {string} */
 let contents;
 try {
 	contents = await readFile(envPath, "utf8");
 } catch (error) {
-	if (error?.code !== "ENOENT") throw error;
+	if (!(error instanceof Error) || !("code" in error) || error.code !== "ENOENT") throw error;
 	contents = await readFile(examplePath, "utf8");
 	created = true;
 }
@@ -26,16 +27,15 @@ const generated = [];
 for (const name of secretNames) {
 	const active = new RegExp(`^([ \\t]*)${name}[ \\t]*=(.*)$`, "m");
 	const current = contents.match(active);
-	if (current && !["", '""', "''"].includes(current[2].trim())) continue;
+	const currentValue = current?.[2];
+	if (currentValue !== undefined && !["", '""', "''"].includes(currentValue.trim())) continue;
 
 	const line = `${name}=${randomBytes(32).toString("base64url")}`;
 	if (current) {
 		contents = contents.replace(active, line);
 	} else {
 		const commented = new RegExp(`^[ \\t]*#[ \\t]*${name}[ \\t]*=.*$`, "m");
-		contents = commented.test(contents)
-			? contents.replace(commented, line)
-			: `${contents.trimEnd()}\n${line}\n`;
+		contents = commented.test(contents) ? contents.replace(commented, line) : `${contents.trimEnd()}\n${line}\n`;
 	}
 	generated.push(name);
 }
@@ -43,7 +43,8 @@ for (const name of secretNames) {
 for (const [name, value] of Object.entries(developmentDefaults)) {
 	const active = new RegExp(`^([ \\t]*)${name}[ \\t]*=(.*)$`, "m");
 	const current = contents.match(active);
-	if (current && !["", '""', "''"].includes(current[2].trim())) continue;
+	const currentValue = current?.[2];
+	if (currentValue !== undefined && !["", '""', "''"].includes(currentValue.trim())) continue;
 
 	const line = `${name}=${value}`;
 	contents = current ? contents.replace(active, line) : `${contents.trimEnd()}\n${line}\n`;
@@ -54,4 +55,6 @@ if (created || generated.length > 0) await writeFile(envPath, contents, { mode: 
 await chmod(envPath, 0o600);
 
 const action = created ? "Created" : generated.length > 0 ? "Updated" : "Kept";
-console.info(`${action} .env${generated.length > 0 ? `; generated ${generated.join(", ")}` : "; all values already set"}.`);
+console.info(
+	`${action} .env${generated.length > 0 ? `; generated ${generated.join(", ")}` : "; all values already set"}.`,
+);

@@ -1,15 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { MealCategory, ScannerWorkflow, TShirtSize } from "@prisma/client";
-import { adjustPresenceForEvent, scanParticipantForEvent } from "@/server/services/scanner-workflows";
-
-type ScannerClient = Parameters<typeof scanParticipantForEvent>[0];
+import {
+	adjustPresenceForEvent,
+	scanParticipantForEvent,
+	type ScannerRepository,
+} from "@/server/services/scanner-workflows";
 
 const eventId = "event-1";
 const hackerId = "wvY1HKlwYnFBO8t-YnQbwg";
-
-const project = (source: Record<string, unknown>, select: Record<string, boolean>) =>
-	Object.fromEntries(Object.keys(select).flatMap(key => (select[key] ? [[key, source[key]]] : [])));
 
 const scannerDatabase = (workflow: ScannerWorkflow, maxCheckIns: number | null = 3) => {
 	const event = {
@@ -24,8 +23,6 @@ const scannerDatabase = (workflow: ScannerWorkflow, maxCheckIns: number | null =
 		confirmed: true,
 		tShirtSize: TShirtSize.L,
 		mealCategory: MealCategory.OTHER,
-		walkIn: true,
-		acceptanceExpiry: new Date("2026-09-01T00:00:00Z"),
 	};
 	const presences = new Map<
 		string,
@@ -33,52 +30,49 @@ const scannerDatabase = (workflow: ScannerWorkflow, maxCheckIns: number | null =
 	>();
 	const key = `${hackerId}:${eventId}`;
 
-	const prisma = {
-		$executeRaw: () => {
+	const repository: ScannerRepository = {
+		findEvent: id => Promise.resolve(id === eventId ? event : null),
+		findEventMaximum: id => Promise.resolve(id === eventId ? { maxCheckIns } : null),
+		findCheckInParticipant: id =>
+			Promise.resolve(
+				id === hackerId ? { id: hacker.id, confirmed: hacker.confirmed, tShirtSize: hacker.tShirtSize } : null,
+			),
+		findMerchandiseParticipant: id =>
+			Promise.resolve(id === hackerId ? { id: hacker.id, tShirtSize: hacker.tShirtSize } : null),
+		findFoodParticipant: id =>
+			Promise.resolve(id === hackerId ? { id: hacker.id, mealCategory: hacker.mealCategory } : null),
+		findAttendanceParticipant: id => Promise.resolve(id === hackerId ? { id: hacker.id } : null),
+		ensurePresence: ({ id, eventId: scannedEventId, hackerId: scannedHackerId, label, initialValue }) => {
 			if (!presences.has(key)) {
 				presences.set(key, {
-					id: "presence-1",
-					hackerId,
-					eventId,
-					label: event.name,
-					value: maxCheckIns === null || maxCheckIns > 0 ? 1 : 0,
+					id,
+					hackerId: scannedHackerId,
+					eventId: scannedEventId,
+					label,
+					value: initialValue,
 				});
 			}
-			return Promise.resolve(1);
+			return Promise.resolve();
 		},
-		event: {
-			findUnique: ({ where, select }: { where: { id: string }; select: Record<string, boolean> }) =>
-				Promise.resolve(where.id === eventId ? project(event, select) : null),
+		adjustPresence: ({ eventId: adjustedEventId, hackerId: adjustedHackerId, amount, maximum }) => {
+			const presence = presences.get(`${adjustedHackerId}:${adjustedEventId}`);
+			if (
+				!presence ||
+				(amount < 0 && presence.value <= 0) ||
+				(amount > 0 && maximum !== null && presence.value >= maximum)
+			) {
+				return Promise.resolve();
+			}
+			presence.value += amount;
+			return Promise.resolve();
 		},
-		hacker: {
-			findUnique: ({ where, select }: { where: { id: string }; select: Record<string, boolean> }) =>
-				Promise.resolve(where.id === hackerId ? project(hacker, select) : null),
+		findPresence: (searchedEventId, searchedHackerId) => {
+			const presence = presences.get(`${searchedHackerId}:${searchedEventId}`);
+			return Promise.resolve(presence ? { id: presence.id, value: presence.value } : null);
 		},
-		presence: {
-			updateMany: ({
-				where,
-				data,
-			}: {
-				where: { hackerId: string; eventId: string; value?: { lt?: number; gt?: number } };
-				data: { value: { increment: number } };
-			}) => {
-				const presence = presences.get(`${where.hackerId}:${where.eventId}`);
-				if (!presence) return Promise.resolve({ count: 0 });
-				if (where.value?.lt !== undefined && presence.value >= where.value.lt)
-					return Promise.resolve({ count: 0 });
-				if (where.value?.gt !== undefined && presence.value <= where.value.gt)
-					return Promise.resolve({ count: 0 });
-				presence.value += data.value.increment;
-				return Promise.resolve({ count: 1 });
-			},
-			findUnique: () => {
-				const presence = presences.get(key);
-				return Promise.resolve(presence ? { id: presence.id, value: presence.value } : null);
-			},
-		},
-	} as unknown as ScannerClient;
+	};
 
-	return { prisma, value: () => presences.get(key)?.value };
+	return { repository, value: () => presences.get(key)?.value };
 };
 
 void test("each scanner workflow returns only its allowed participant fields", async () => {
@@ -90,15 +84,15 @@ void test("each scanner workflow returns only its allowed participant fields", a
 	] as const;
 
 	for (const [workflow, fields] of cases) {
-		const { prisma } = scannerDatabase(workflow);
-		const result = await scanParticipantForEvent(prisma, eventId, hackerId);
+		const { repository } = scannerDatabase(workflow);
+		const result = await scanParticipantForEvent(repository, eventId, hackerId);
 		assert.deepEqual(Object.keys(result.participant).sort(), [...fields].sort());
 	}
 });
 
 void test("food OTHER tells the scanner to contact the food lead", async () => {
-	const { prisma } = scannerDatabase(ScannerWorkflow.FOOD);
-	const result = await scanParticipantForEvent(prisma, eventId, hackerId);
+	const { repository } = scannerDatabase(ScannerWorkflow.FOOD);
+	const result = await scanParticipantForEvent(repository, eventId, hackerId);
 	assert.equal(result.workflow, ScannerWorkflow.FOOD);
 	if (result.workflow !== ScannerWorkflow.FOOD) assert.fail("Expected the food workflow");
 	assert.equal(result.participant.mealCategory, MealCategory.OTHER);
@@ -106,33 +100,33 @@ void test("food OTHER tells the scanner to contact the food lead", async () => {
 });
 
 void test("repeated scans preserve the event-linked counter", async () => {
-	const { prisma, value } = scannerDatabase(ScannerWorkflow.ATTENDANCE, 3);
-	assert.equal((await scanParticipantForEvent(prisma, eventId, hackerId)).value, 1);
-	assert.equal((await adjustPresenceForEvent(prisma, eventId, hackerId, 1)).value, 2);
-	assert.equal((await scanParticipantForEvent(prisma, eventId, hackerId)).value, 2);
+	const { repository, value } = scannerDatabase(ScannerWorkflow.ATTENDANCE, 3);
+	assert.equal((await scanParticipantForEvent(repository, eventId, hackerId)).value, 1);
+	assert.equal((await adjustPresenceForEvent(repository, eventId, hackerId, 1)).value, 2);
+	assert.equal((await scanParticipantForEvent(repository, eventId, hackerId)).value, 2);
 	assert.equal(value(), 2);
 });
 
 void test("concurrent first scans share one event-linked counter", async () => {
-	const { prisma, value } = scannerDatabase(ScannerWorkflow.CHECK_IN, 2);
+	const { repository, value } = scannerDatabase(ScannerWorkflow.CHECK_IN, 2);
 	const results = await Promise.all(
-		Array.from({ length: 8 }, () => scanParticipantForEvent(prisma, eventId, hackerId)),
+		Array.from({ length: 8 }, () => scanParticipantForEvent(repository, eventId, hackerId)),
 	);
 	assert.ok(results.every(result => result.value === 1));
 	assert.equal(value(), 1);
 });
 
 void test("concurrent scanner increments cannot cross the server-owned maximum", async () => {
-	const { prisma, value } = scannerDatabase(ScannerWorkflow.CHECK_IN, 2);
-	await scanParticipantForEvent(prisma, eventId, hackerId);
-	await Promise.all(Array.from({ length: 8 }, () => adjustPresenceForEvent(prisma, eventId, hackerId, 1)));
+	const { repository, value } = scannerDatabase(ScannerWorkflow.CHECK_IN, 2);
+	await scanParticipantForEvent(repository, eventId, hackerId);
+	await Promise.all(Array.from({ length: 8 }, () => adjustPresenceForEvent(repository, eventId, hackerId, 1)));
 	assert.equal(value(), 2);
-	assert.equal((await adjustPresenceForEvent(prisma, eventId, hackerId, 1)).atLimit, true);
+	assert.equal((await adjustPresenceForEvent(repository, eventId, hackerId, 1)).atLimit, true);
 });
 
 void test("an uncapped counter can be incremented again after reaching zero", async () => {
-	const { prisma } = scannerDatabase(ScannerWorkflow.ATTENDANCE, null);
-	await scanParticipantForEvent(prisma, eventId, hackerId);
-	assert.equal((await adjustPresenceForEvent(prisma, eventId, hackerId, -1)).value, 0);
-	assert.equal((await adjustPresenceForEvent(prisma, eventId, hackerId, 1)).value, 1);
+	const { repository } = scannerDatabase(ScannerWorkflow.ATTENDANCE, null);
+	await scanParticipantForEvent(repository, eventId, hackerId);
+	assert.equal((await adjustPresenceForEvent(repository, eventId, hackerId, -1)).value, 0);
+	assert.equal((await adjustPresenceForEvent(repository, eventId, hackerId, 1)).value, 1);
 });

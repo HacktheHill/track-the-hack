@@ -2,57 +2,115 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { runInNewContext } from "node:vm";
+import { z } from "zod";
 
-type SheetAdapter = {
-	applicationRowToOperationalRecord_: (
-		headers: string[],
-		row: string[],
-		participantId: string,
-		acceptanceExpiry: string,
-		walkIn?: boolean,
-	) => Record<string, unknown>;
-	createParticipantId_: () => string;
-	trackConfig_: () => { baseUrl: string; apiKey: string; deadline: string };
-	claimDisplayUrl_: (claimUrl: unknown) => string;
-	operationalRecordFromRow_: (row: unknown[]) => Record<string, unknown>;
-	applyRsvpReconciliation_: (
-		rows: unknown[][],
-		byId: Record<string, { confirmed: boolean; cancellationLink?: string } | null>,
-		now: Date,
-	) => unknown[][];
-	apiPost_: (config: { baseUrl: string; apiKey: string }, path: string, payload: unknown) => Record<string, unknown>;
-};
+const operationalRecordSchema = z
+	.object({
+		id: z.string(),
+		tShirtSize: z.enum(["XS", "S", "M", "L", "XL", "XXL"]),
+		mealCategory: z.enum(["STANDARD", "VEGETARIAN", "VEGAN", "HALAL", "OTHER"]),
+		acceptanceExpiry: z.string().datetime(),
+		walkIn: z.boolean(),
+	})
+	.strict();
+const sheetCellSchema = z.union([z.string(), z.number(), z.boolean(), z.date()]);
+const trackConfigSchema = z.object({
+	baseUrl: z.string().url(),
+	apiKey: z.string().min(1),
+	deadline: z.string().datetime(),
+});
+const rsvpRecordSchema = z.object({
+	id: z.string(),
+	confirmed: z.boolean(),
+	cancellationLink: z.string().optional(),
+});
+const reconciliationResponseSchema = z.object({
+	records: z.array(rsvpRecordSchema),
+	missingIds: z.array(z.string()),
+});
+const claimResponseSchema = z.object({ claimUrl: z.string().url(), expiresAt: z.string().datetime() });
+const sheetAdapterSchema = z.object({
+	applicationRowToOperationalRecord_: z
+		.function()
+		.args(
+			z.array(z.string()),
+			z.array(z.string()),
+			z.string(),
+			z.union([z.string(), z.date()]),
+			z.boolean().optional(),
+		)
+		.returns(operationalRecordSchema),
+	createParticipantId_: z.function().args().returns(z.string()),
+	trackConfig_: z.function().args().returns(trackConfigSchema),
+	claimDisplayUrl_: z.function().args(z.string()).returns(z.string().url()),
+	operationalRecordFromRow_: z.function().args(z.array(sheetCellSchema)).returns(operationalRecordSchema),
+	applyRsvpReconciliation_: z
+		.function()
+		.args(z.array(z.array(sheetCellSchema)), z.record(rsvpRecordSchema.nullable()), z.date())
+		.returns(z.array(z.array(sheetCellSchema))),
+	apiPost_: z
+		.function()
+		.args(
+			trackConfigSchema,
+			z.string(),
+			z.union([
+				operationalRecordSchema,
+				z.object({ hackers: z.array(operationalRecordSchema) }),
+				z.object({ ids: z.array(z.string()) }),
+			]),
+		)
+		.returns(z.string()),
+	processedResponse_: z
+		.function()
+		.args(z.string())
+		.returns(z.object({ processed: z.number().int().nonnegative() })),
+	rsvpReconciliationResponse_: z.function().args(z.string()).returns(reconciliationResponseSchema),
+	claimResponse_: z.function().args(z.string()).returns(claimResponseSchema),
+});
 
 const source = readFileSync(new URL("../integrations/google-sheets/Code.gs", import.meta.url), "utf8");
-const requests: Array<{ url: string; options: Record<string, unknown> }> = [];
+const sheetFetchOptionsSchema = z
+	.object({
+		method: z.literal("post"),
+		contentType: z.literal("application/json"),
+		headers: z.object({ Authorization: z.string().startsWith("Bearer ") }).strict(),
+		payload: z.string(),
+		muteHttpExceptions: z.literal(true),
+	})
+	.strict();
+type SheetFetchOptions = z.infer<typeof sheetFetchOptionsSchema>;
+const requests: Array<{ url: string; options: SheetFetchOptions }> = [];
 const scriptProperties: Record<string, string> = {};
-const adapter = runInNewContext(
-	`${source}\n({
+const adapter = sheetAdapterSchema.parse(
+	runInNewContext(
+		`${source}\n({
 	applicationRowToOperationalRecord_,
 	createParticipantId_,
 	apiPost_,
+	processedResponse_,
+	rsvpReconciliationResponse_,
+	claimResponse_,
 	trackConfig_,
 	claimDisplayUrl_,
 	operationalRecordFromRow_,
 	applyRsvpReconciliation_,
 })`,
-	{
-		Utilities: {
-			getUuid: () => "123e4567-e89b-42d3-a456-426614174000",
-		},
-		PropertiesService: {
-			getScriptProperties: () => ({ getProperty: (name: string) => scriptProperties[name] }),
-		},
-		UrlFetchApp: {
-			fetch: (url: string, options: Record<string, unknown>) => {
-				requests.push({ url, options });
-				return { getResponseCode: () => 200, getContentText: () => '{"processed":1}' };
+		{
+			Utilities: {
+				getUuid: () => "123e4567-e89b-42d3-a456-426614174000",
+			},
+			PropertiesService: {
+				getScriptProperties: () => ({ getProperty: (name: string) => scriptProperties[name] }),
+			},
+			UrlFetchApp: {
+				fetch: (url: string, options: unknown) => {
+					requests.push({ url, options: sheetFetchOptionsSchema.parse(options) });
+					return { getResponseCode: () => 200, getContentText: () => '{"processed":1}' };
+				},
 			},
 		},
-	},
-) as SheetAdapter;
-
-const plain = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
+	),
+);
 
 void test("the real Sheet adapter maps the live English headers to an allow-listed record", () => {
 	const headers = [
@@ -67,9 +125,10 @@ void test("the real Sheet adapter maps the live English headers to an allow-list
 		["tally-secret", "private@example.test", "XL", "Vegan", "FALSE"],
 		"participant_012345678901234567890123",
 		"2026-09-01T03:59:59.000Z",
+		false,
 	);
 
-	assert.deepEqual(plain(record), {
+	assert.deepEqual(record, {
 		id: "participant_012345678901234567890123",
 		tShirtSize: "XL",
 		mealCategory: "VEGAN",
@@ -91,7 +150,7 @@ void test("the real Sheet adapter maps the live French headers and detailed rest
 		true,
 	);
 
-	assert.deepEqual(plain(record), {
+	assert.deepEqual(record, {
 		id: "participant_abcdefghijklmnopqrstuvwxyz",
 		tShirtSize: "S",
 		mealCategory: "OTHER",
@@ -107,22 +166,46 @@ void test("the Sheet adapter generates opaque IDs and authenticates its API requ
 	assert.doesNotMatch(id, /^\d+$/);
 
 	assert.deepEqual(
-		plain(
+		adapter.processedResponse_(
 			adapter.apiPost_(
-				{ baseUrl: "https://track.example", apiKey: "sheet-secret" },
+				{
+					baseUrl: "https://track.example",
+					apiKey: "sheet-secret",
+					deadline: "2026-09-01T03:59:59.000Z",
+				},
 				"/api/integrations/sheets/hackers",
-				{ hackers: [{ id }] },
+				{
+					hackers: [
+						{
+							id,
+							tShirtSize: "M",
+							mealCategory: "STANDARD",
+							acceptanceExpiry: "2026-09-01T03:59:59.000Z",
+							walkIn: false,
+						},
+					],
+				},
 			),
 		),
 		{ processed: 1 },
 	);
-	assert.deepEqual(plain(requests.at(-1)), {
+	assert.deepEqual(requests.at(-1), {
 		url: "https://track.example/api/integrations/sheets/hackers",
 		options: {
 			method: "post",
 			contentType: "application/json",
 			headers: { Authorization: "Bearer sheet-secret" },
-			payload: JSON.stringify({ hackers: [{ id }] }),
+			payload: JSON.stringify({
+				hackers: [
+					{
+						id,
+						tShirtSize: "M",
+						mealCategory: "STANDARD",
+						acceptanceExpiry: "2026-09-01T03:59:59.000Z",
+						walkIn: false,
+					},
+				],
+			}),
 			muteHttpExceptions: true,
 		},
 	});
@@ -137,7 +220,7 @@ void test("the Sheet adapter requires HTTPS configuration and validates claim li
 	assert.throws(() => adapter.trackConfig_(), /HTTPS TRACK_BASE_URL/);
 
 	scriptProperties.TRACK_BASE_URL = "https://track.example/";
-	assert.deepEqual(plain(adapter.trackConfig_()), {
+	assert.deepEqual(adapter.trackConfig_(), {
 		baseUrl: "https://track.example",
 		apiKey: "sheet-secret",
 		deadline: "2026-09-01T03:59:59.000Z",
@@ -148,6 +231,18 @@ void test("the Sheet adapter requires HTTPS configuration and validates claim li
 	);
 	assert.throws(() => adapter.claimDisplayUrl_("http://track.example/claim#secret-token"), /invalid claim URL/);
 	assert.throws(() => adapter.claimDisplayUrl_("https://track.example/claim/secret-token"), /invalid claim URL/);
+});
+
+void test("the Sheet adapter rejects malformed API response bodies at its boundary", () => {
+	assert.throws(() => adapter.processedResponse_('{"processed":"1"}'), /invalid processed response/);
+	assert.throws(
+		() => adapter.rsvpReconciliationResponse_('{"records":[{"id":1,"confirmed":true}],"missingIds":[]}'),
+		/invalid RSVP reconciliation record/,
+	);
+	assert.throws(
+		() => adapter.claimResponse_('{"claimUrl":"https://track.example/claim#token"}'),
+		/invalid claim response/,
+	);
 });
 
 void test("the operations row preserves walk-in status when access is issued", () => {
@@ -166,7 +261,7 @@ void test("the operations row preserves walk-in status when access is issued", (
 		true,
 	];
 
-	assert.deepEqual(plain(adapter.operationalRecordFromRow_(operationRow)), {
+	assert.deepEqual(adapter.operationalRecordFromRow_(operationRow), {
 		id: "participant_walk_in",
 		tShirtSize: "L",
 		mealCategory: "STANDARD",
@@ -212,29 +307,20 @@ void test("reconciliation skips blank operation rows and rejects incomplete API 
 	const now = new Date("2026-08-23T12:00:00.000Z");
 
 	assert.deepEqual(
-		plain(
-			adapter.applyRsvpReconciliation_(
-				[blank, participant],
-				{ participant_1: { confirmed: true, cancellationLink: "https://track.example/cancel/token" } },
-				now,
-			),
+		adapter.applyRsvpReconciliation_(
+			[blank, participant],
+			{
+				participant_1: {
+					id: "participant_1",
+					confirmed: true,
+					cancellationLink: "https://track.example/cancel/token",
+				},
+			},
+			now,
 		),
 		[
 			Array.from({ length: 12 }, () => ""),
-			[
-				"",
-				"",
-				"participant_1",
-				"",
-				"",
-				"",
-				"",
-				"CONFIRMED",
-				"https://track.example/cancel/token",
-				"",
-				"2026-08-23T12:00:00.000Z",
-				"",
-			],
+			["", "", "participant_1", "", "", "", "", "CONFIRMED", "https://track.example/cancel/token", "", now, ""],
 		],
 	);
 

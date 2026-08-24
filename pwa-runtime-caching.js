@@ -5,6 +5,7 @@
 const isApiRequest = ({ url }) =>
 	self.origin === url.origin && (url.pathname === "/api" || url.pathname.startsWith("/api/"));
 
+/** @satisfies {import("workbox-build").RuntimeCaching} */
 const apiNetworkOnly = {
 	urlPattern: isApiRequest,
 	handler: "NetworkOnly",
