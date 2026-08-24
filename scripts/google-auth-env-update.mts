@@ -46,7 +46,7 @@ const main = async () => {
 	});
 	if (client.credentials) {
 		console.info("Credentials obtained, saving to file");
-		await saveCredentials(client);
+		await saveCredentials(client as unknown as OAuth2Client);
 	}
 };
 
