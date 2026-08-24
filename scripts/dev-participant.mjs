@@ -4,6 +4,31 @@ import {
 	syncTallyFixtureToSheet,
 } from "./dev-tally-sheet.mjs";
 import { deliverLocalParticipantEmail } from "./dev-email.mjs";
+import { z } from "zod";
+
+/** @typedef {ReturnType<typeof acceptedSheetRowsToOperationalRecords>[number]} OperationalRecord */
+/** @typedef {OperationalRecord | {hackers: OperationalRecord[]} | {ids: string[]}} ParticipantRequest */
+
+const processedResponseSchema = z.object({ processed: z.number().int().nonnegative() }).strict();
+const httpUrlSchema = z
+	.string()
+	.url()
+	.refine(value => new Set(["http:", "https:"]).has(new URL(value).protocol), "Expected an HTTP(S) URL");
+const reconciliationResponseSchema = z
+	.object({
+		records: z.array(
+			z
+				.object({
+					id: z.string().min(1),
+					confirmed: z.boolean(),
+					cancellationLink: httpUrlSchema.optional(),
+				})
+				.strict(),
+		),
+		missingIds: z.array(z.string()),
+	})
+	.strict();
+const claimResponseSchema = z.object({ claimUrl: httpUrlSchema, expiresAt: z.string().datetime() }).strict();
 
 const command = process.argv[2] ?? "rsvp";
 const baseUrl = new URL(process.env.NEXTAUTH_URL ?? "http://localhost:3000");
@@ -19,7 +44,14 @@ const participants = {
 };
 if (!participants.normal || !participants.walkIn) throw new Error("The dev fixture needs normal and walk-in records.");
 
-const post = async (path, body) => {
+/**
+ * @template T
+ * @param {string} path
+ * @param {ParticipantRequest} body
+ * @param {z.ZodType<T>} responseSchema
+ * @returns {Promise<T>}
+ */
+const post = async (path, body, responseSchema) => {
 	const response = await fetch(new URL(path, baseUrl), {
 		method: "POST",
 		headers: {
@@ -28,27 +60,30 @@ const post = async (path, body) => {
 		},
 		body: JSON.stringify(body),
 	});
-	const result = await response.json();
-	if (!response.ok) throw new Error(`${path} returned ${response.status}: ${JSON.stringify(result)}`);
-	return result;
+	if (!response.ok) throw new Error(`${path} returned ${response.status}: ${await response.text()}`);
+	return responseSchema.parse(await response.json());
 };
 
 try {
 	switch (command) {
 		case "rsvp": {
-			await post("/api/integrations/sheets/hackers", { hackers: [participants.normal] });
+			await post("/api/integrations/sheets/hackers", { hackers: [participants.normal] }, processedResponseSchema);
 			const email = await deliverLocalParticipantEmail({
 				type: "invitation",
 				link: new URL(`/rsvp/${participants.normal.id}`, baseUrl).href,
 			});
 			console.info(`Invitation email delivered through local SMTP: ${email.file}`);
-			console.info(`RSVP link: ${email.links[0]}`);
+			const invitationLink = email.links[0];
+			if (!invitationLink) throw new Error("The captured invitation email did not contain its RSVP link.");
+			console.info(`RSVP link: ${invitationLink}`);
 			break;
 		}
 		case "reconcile": {
-			const result = await post("/api/integrations/sheets/rsvp-reconciliation", {
-				ids: [participants.normal.id],
-			});
+			const result = await post(
+				"/api/integrations/sheets/rsvp-reconciliation",
+				{ ids: [participants.normal.id] },
+				reconciliationResponseSchema,
+			);
 			const participant = result.records[0];
 			console.info(`RSVP status: ${participant?.confirmed ? "confirmed" : "not confirmed"}`);
 			if (participant?.cancellationLink) {
@@ -57,7 +92,10 @@ try {
 					link: participant.cancellationLink,
 				});
 				console.info(`Confirmation email delivered through local SMTP: ${email.file}`);
-				console.info(`Cancellation link: ${email.links[0]}`);
+				const cancellationLink = email.links[0];
+				if (!cancellationLink)
+					throw new Error("The captured confirmation email did not contain its cancellation link.");
+				console.info(`Cancellation link: ${cancellationLink}`);
 			} else {
 				console.info(
 					"Confirm the RSVP in the browser, then rerun this command to receive its cancellation email.",
@@ -68,7 +106,7 @@ try {
 		case "claim":
 		case "walk-in": {
 			const participant = command === "walk-in" ? participants.walkIn : participants.normal;
-			const result = await post("/api/integrations/sheets/claim", participant);
+			const result = await post("/api/integrations/sheets/claim", participant, claimResponseSchema);
 			console.info(`Simulated Sheet claim link: ${result.claimUrl}`);
 			console.info(`Scanner input: ${participant.id}`);
 			break;
@@ -77,8 +115,13 @@ try {
 			throw new Error("Usage: npm run dev:participant -- rsvp|reconcile|claim|walk-in");
 	}
 } catch (error) {
-	if (error instanceof TypeError && error.cause?.code === "ECONNREFUSED") {
-		throw new Error(`Start the app with npm run dev; nothing is listening at ${baseUrl}.`);
+	if (
+		error instanceof TypeError &&
+		error.cause instanceof Error &&
+		"code" in error.cause &&
+		error.cause.code === "ECONNREFUSED"
+	) {
+		throw new Error(`Start the app with npm run dev; nothing is listening at ${baseUrl.href}.`);
 	}
 	throw error;
 }

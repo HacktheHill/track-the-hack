@@ -5,6 +5,10 @@ import { createMimeMessage } from "mimetext";
 import nodemailer from "nodemailer";
 import { SMTPServer } from "smtp-server";
 
+/** @typedef {"invitation" | "confirmation"} ParticipantEmailType */
+/** @typedef {{raw: Buffer, from: string, to: string[]}} CapturedMessage */
+
+/** @type {Record<ParticipantEmailType, {subject: string, text: (link: string) => string, html: (link: string) => string}>} */
 const templates = {
 	invitation: {
 		subject: "Track the Hack RSVP invitation",
@@ -19,12 +23,9 @@ const templates = {
 };
 
 const startSmtpSink = async () => {
-	let resolveMessage;
-	let rejectMessage;
-	const message = new Promise((resolveMessagePromise, rejectMessagePromise) => {
-		resolveMessage = resolveMessagePromise;
-		rejectMessage = rejectMessagePromise;
-	});
+	/** @type {PromiseWithResolvers<CapturedMessage>} */
+	const messageState = Promise.withResolvers();
+	const { promise: message, resolve: resolveMessage, reject: rejectMessage } = messageState;
 
 	const server = new SMTPServer({
 		authOptional: true,
@@ -32,23 +33,27 @@ const startSmtpSink = async () => {
 		logger: false,
 		size: 256 * 1024,
 		onData(stream, session, callback) {
+			/** @type {Buffer[]} */
 			const chunks = [];
-			stream.on("data", chunk => chunks.push(Buffer.from(chunk)));
+			/** @param {Uint8Array} chunk */
+			const collectChunk = chunk => chunks.push(Buffer.from(chunk));
+			stream.on("data", collectChunk);
 			stream.once("error", error => {
 				rejectMessage(error);
 				callback(error);
 			});
 			stream.once("end", () => {
 				if (stream.sizeExceeded) {
-					const error = new Error("Local development email exceeded 256 KiB");
-					error.responseCode = 552;
+					const error = Object.assign(new Error("Local development email exceeded 256 KiB"), {
+						responseCode: 552,
+					});
 					rejectMessage(error);
 					callback(error);
 					return;
 				}
 				resolveMessage({
 					raw: Buffer.concat(chunks),
-					from: session.envelope.mailFrom?.address ?? "",
+					from: session.envelope.mailFrom ? session.envelope.mailFrom.address : "",
 					to: session.envelope.rcptTo.map(recipient => recipient.address),
 				});
 				callback(null, "Captured by the Track the Hack development SMTP sink");
@@ -57,7 +62,9 @@ const startSmtpSink = async () => {
 	});
 	server.on("error", rejectMessage);
 
-	await new Promise((resolveListen, rejectListen) => {
+	/** @type {Promise<void>} */
+	const listening = new Promise((resolveListen, rejectListen) => {
+		/** @param {Error} error */
 		const onError = error => rejectListen(error);
 		server.server.once("error", onError);
 		server.listen(0, "127.0.0.1", () => {
@@ -65,25 +72,37 @@ const startSmtpSink = async () => {
 			resolveListen();
 		});
 	});
+	await listening;
 
 	const address = server.server.address();
 	if (!address || typeof address === "string") throw new Error("Could not start the local SMTP sink");
 
+	const close = () => {
+		/** @type {Promise<void>} */
+		const closed = new Promise(resolveClose => server.close(resolveClose));
+		return closed;
+	};
+
 	return {
 		message,
 		port: address.port,
-		close: () => new Promise(resolveClose => server.close(resolveClose)),
+		close,
 	};
 };
 
+/** @param {Buffer} message */
 const parseCapturedMessage = message => {
 	const raw = message.toString("utf8");
 	const headers = raw.slice(0, raw.search(/\r?\n\r?\n/));
+	/** @param {string} name */
 	const header = name => {
 		const value = headers.match(new RegExp(`^${name}:\\s*(.+)$`, "im"))?.[1]?.trim() ?? "";
-		return value.replace(/=\?utf-8\?B\?([^?]+)\?=/gi, (_match, encoded) =>
-			Buffer.from(encoded, "base64").toString("utf8"),
-		);
+		/**
+		 * @param {string} _match
+		 * @param {string} encoded
+		 */
+		const decodeHeader = (_match, encoded) => Buffer.from(encoded, "base64").toString("utf8");
+		return value.replace(/=\?utf-8\?B\?([^?]+)\?=/gi, decodeHeader);
 	};
 	const text = raw.match(/Content-Type: text\/plain[^\r\n]*\r?\n[\s\S]*?\r?\n\r?\n([\s\S]*?)\r?\n--/)?.[1];
 	if (text === undefined) throw new Error("The captured development email has no text/plain MIME part");
@@ -100,7 +119,7 @@ const parseCapturedMessage = message => {
  * Sends one real SMTP message to an ephemeral loopback capture server and
  * stores the captured RFC message in a local mailbox directory.
  *
- * @param {{ type: keyof typeof templates, link: string, mailboxDirectory?: string }} input
+ * @param {{ type: ParticipantEmailType, link: string, mailboxDirectory?: string }} input
  */
 export const deliverLocalParticipantEmail = async ({
 	type,

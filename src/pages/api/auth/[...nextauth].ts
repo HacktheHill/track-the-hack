@@ -2,7 +2,7 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import NextAuth, { type NextAuthOptions } from "next-auth";
 import { getToken } from "next-auth/jwt";
 import CredentialsProvider from "next-auth/providers/credentials";
-import GoogleProvider, { type GoogleProfile } from "next-auth/providers/google";
+import GoogleProvider from "next-auth/providers/google";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { env } from "@/env/server.mjs";
 import { prisma } from "@/server/db";
@@ -12,6 +12,7 @@ import {
 	DEVELOPMENT_AUTH_PROVIDER_ID,
 	DEVELOPMENT_ORGANIZER_EMAIL,
 	isDevelopmentOrganizerAuthEnabled,
+	parseGoogleOrganizerProfile,
 } from "@/server/lib/organizer-auth";
 
 export const getAuthOptions = (req?: NextApiRequest) =>
@@ -19,7 +20,6 @@ export const getAuthOptions = (req?: NextApiRequest) =>
 		adapter: PrismaAdapter(prisma),
 		callbacks: {
 			async signIn({ user, account, profile }) {
-				const googleProfile = profile as Partial<Pick<GoogleProfile, "email" | "email_verified">> | undefined;
 				const sessionUserId = req ? (await getToken({ req, secret: env.NEXTAUTH_SECRET }))?.sub : undefined;
 				if (account?.provider === DEVELOPMENT_AUTH_PROVIDER_ID) {
 					return canUseDevelopmentOrganizerAuth(
@@ -34,12 +34,13 @@ export const getAuthOptions = (req?: NextApiRequest) =>
 						req?.socket.remoteAddress,
 					);
 				}
+				const googleProfile = parseGoogleOrganizerProfile(profile);
 				return canUseOrganizerAuth(
 					{
 						provider: account?.provider,
 						profileEmail: googleProfile?.email,
 						userEmail: user.email,
-						emailVerified: googleProfile?.email_verified === true,
+						emailVerified: googleProfile?.emailVerified === true,
 					},
 					email =>
 						prisma.user.findUnique({
@@ -50,6 +51,7 @@ export const getAuthOptions = (req?: NextApiRequest) =>
 				);
 			},
 			async session({ session, token }) {
+				if (!token.sub) return { ...session, user: undefined };
 				const organizer = await prisma.user.findUnique({
 					where: { id: token.sub },
 					select: { id: true, roles: { select: { name: true } } },
@@ -59,7 +61,7 @@ export const getAuthOptions = (req?: NextApiRequest) =>
 					...session,
 					user: {
 						...session.user,
-						id: organizer?.id ?? token.sub ?? "",
+						id: organizer?.id ?? token.sub,
 						roles: organizer?.roles.map(role => role.name) ?? [],
 					},
 				};

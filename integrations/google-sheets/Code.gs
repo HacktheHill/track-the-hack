@@ -1,5 +1,18 @@
 /** @OnlyCurrentDoc */
 
+/** @typedef {"XS" | "S" | "M" | "L" | "XL" | "XXL"} TShirtSize */
+/** @typedef {"STANDARD" | "VEGETARIAN" | "VEGAN" | "HALAL" | "OTHER"} MealCategory */
+/** @typedef {string | number | boolean | Date} SheetCell */
+/** @typedef {SheetCell[]} SheetRow */
+/** @typedef {{id: string, tShirtSize: TShirtSize, mealCategory: MealCategory, acceptanceExpiry: string, walkIn: boolean}} OperationalRecord */
+/** @typedef {{baseUrl: string, apiKey: string, deadline: string}} TrackConfig */
+/** @typedef {{id: string, confirmed: boolean, cancellationLink?: string}} RsvpRecord */
+/** @typedef {{records: RsvpRecord[], missingIds: string[]}} RsvpReconciliation */
+/** @typedef {{claimUrl: string, expiresAt: string}} ClaimResponse */
+/** @typedef {{processed: number}} ProcessedResponse */
+/** @typedef {{sourceRow: number, submissionId: string, record: OperationalRecord}} AcceptedApplication */
+/** @typedef {OperationalRecord | {hackers: OperationalRecord[]} | {ids: string[]}} ApiPayload */
+
 const TRACK_OPERATIONS_SHEET = "Track Operations";
 const TRACK_PROPERTIES = {
 	baseUrl: "TRACK_BASE_URL",
@@ -46,6 +59,7 @@ function acceptSelectedWalkInApplications() {
 	acceptSelectedApplications_(true);
 }
 
+/** @param {boolean} walkIn */
 function acceptSelectedApplications_(walkIn) {
 	const config = trackConfig_();
 	const source = SpreadsheetApp.getActiveSheet();
@@ -54,16 +68,19 @@ function acceptSelectedApplications_(walkIn) {
 	}
 
 	const selection = source.getActiveRange();
+	if (!selection) throw new Error("Select one or more application rows first.");
 	const firstRow = Math.max(2, selection.getRow());
 	const rowCount = selection.getLastRow() - firstRow + 1;
 	if (rowCount < 1 || rowCount > 500) throw new Error("Select between 1 and 500 application rows.");
 
 	const columnCount = source.getLastColumn();
 	const headers = source.getRange(1, 1, 1, columnCount).getDisplayValues()[0];
+	if (!headers) throw new Error("The Tally response sheet has no header row.");
 	const rows = source.getRange(firstRow, 1, rowCount, columnCount).getDisplayValues();
 	const operations = ensureOperationsSheet_();
 	const existing = existingParticipantsBySubmission_(operations);
 
+	/** @type {AcceptedApplication[]} */
 	const accepted = rows.map((row, offset) => {
 		const submissionId = requiredCell_(headers, row, ["Submission ID"]);
 		const participantId = existing[submissionId] || createParticipantId_();
@@ -74,9 +91,11 @@ function acceptSelectedApplications_(walkIn) {
 		};
 	});
 
-	apiPost_(config, "/api/integrations/sheets/hackers", {
-		hackers: accepted.map(item => item.record),
-	});
+	processedResponse_(
+		apiPost_(config, "/api/integrations/sheets/hackers", {
+			hackers: accepted.map(item => item.record),
+		}),
+	);
 	upsertOperations_(operations, accepted, config.baseUrl);
 	SpreadsheetApp.getUi().alert(`${accepted.length} participant(s) provisioned.`);
 }
@@ -91,12 +110,15 @@ function refreshRsvpStatus() {
 	const idColumn = TRACK_OPERATION_HEADERS.indexOf("Participant ID");
 	const ids = rows.map(row => String(row[idColumn] || "")).filter(Boolean);
 	if (!ids.length) throw new Error("There are no participant IDs to reconcile.");
+	/** @type {Record<string, RsvpRecord | null>} */
 	const byId = {};
 
 	for (let offset = 0; offset < ids.length; offset += 500) {
-		const response = apiPost_(config, "/api/integrations/sheets/rsvp-reconciliation", {
-			ids: ids.slice(offset, offset + 500),
-		});
+		const response = rsvpReconciliationResponse_(
+			apiPost_(config, "/api/integrations/sheets/rsvp-reconciliation", {
+				ids: ids.slice(offset, offset + 500),
+			}),
+		);
 		response.records.forEach(record => (byId[record.id] = record));
 		response.missingIds.forEach(id => (byId[id] = null));
 	}
@@ -107,6 +129,12 @@ function refreshRsvpStatus() {
 	SpreadsheetApp.getUi().alert(`${ids.length} participant(s) reconciled.`);
 }
 
+/**
+ * @param {SheetRow[]} rows
+ * @param {Record<string, RsvpRecord | null>} byId
+ * @param {Date} now
+ * @returns {SheetRow[]}
+ */
 function applyRsvpReconciliation_(rows, byId, now) {
 	const idColumn = TRACK_OPERATION_HEADERS.indexOf("Participant ID");
 	const statusColumn = TRACK_OPERATION_HEADERS.indexOf("RSVP Status");
@@ -119,6 +147,7 @@ function applyRsvpReconciliation_(rows, byId, now) {
 			throw new Error(`Track API did not return a reconciliation result for ${id}.`);
 		}
 		const record = byId[id];
+		if (record === undefined) throw new Error(`Track API returned an invalid reconciliation result for ${id}.`);
 		row[statusColumn] = record === null ? "MISSING" : record.confirmed ? "CONFIRMED" : "PENDING";
 		row[cancellationColumn] = record && record.cancellationLink ? record.cancellationLink : "";
 		row[syncColumn] = now;
@@ -130,13 +159,19 @@ function issueAccessForSelectedParticipant() {
 	const config = trackConfig_();
 	const sheet = SpreadsheetApp.getActiveSheet();
 	const selection = sheet.getActiveRange();
-	if (sheet.getName() !== TRACK_OPERATIONS_SHEET || selection.getRow() < 2 || selection.getNumRows() !== 1) {
+	if (
+		sheet.getName() !== TRACK_OPERATIONS_SHEET ||
+		!selection ||
+		selection.getRow() < 2 ||
+		selection.getNumRows() !== 1
+	) {
 		throw new Error("Select one participant row on the Track Operations sheet.");
 	}
 
 	const rowNumber = selection.getRow();
 	const row = sheet.getRange(rowNumber, 1, 1, TRACK_OPERATION_HEADERS.length).getValues()[0];
-	const response = apiPost_(config, "/api/integrations/sheets/claim", operationalRecordFromRow_(row));
+	if (!row) throw new Error("The selected participant row is empty.");
+	const response = claimResponse_(apiPost_(config, "/api/integrations/sheets/claim", operationalRecordFromRow_(row)));
 	sheet
 		.getRange(rowNumber, TRACK_OPERATION_HEADERS.indexOf("Access Expires") + 1)
 		.setValue(new Date(response.expiresAt));
@@ -150,6 +185,7 @@ function issueAccessForSelectedParticipant() {
 	SpreadsheetApp.getUi().showModalDialog(html, "Participant access");
 }
 
+/** @param {string} claimUrl */
 function claimDisplayUrl_(claimUrl) {
 	const value = String(claimUrl || "");
 	const displayUrl = value.replace("/claim#", "/claim/qr#");
@@ -159,6 +195,14 @@ function claimDisplayUrl_(claimUrl) {
 	return displayUrl;
 }
 
+/**
+ * @param {string[]} headers
+ * @param {string[]} row
+ * @param {string} participantId
+ * @param {string | Date} acceptanceExpiry
+ * @param {boolean} [walkIn]
+ * @returns {OperationalRecord}
+ */
 function applicationRowToOperationalRecord_(headers, row, participantId, acceptanceExpiry, walkIn = false) {
 	return {
 		id: participantId,
@@ -169,16 +213,29 @@ function applicationRowToOperationalRecord_(headers, row, participantId, accepta
 	};
 }
 
+/**
+ * @param {string[]} headers
+ * @param {string[]} row
+ * @returns {TShirtSize}
+ */
 function tShirtSize_(headers, row) {
 	const raw = requiredCell_(headers, row, [
 		"What unisex T-shirt size would you prefer?",
 		"Quelle taille de t-shirt unisexe préférez-vous?",
 	]).toUpperCase();
-	const match = raw.match(/(?:^|\b)(XXL|2XL|XL|XS|L|M|S)(?:\b|$)/);
-	if (!match) throw new Error(`Unsupported T-shirt size: ${raw}`);
-	return match[1] === "2XL" ? "XXL" : match[1];
+	const size = raw.match(/(?:^|\b)(XXL|2XL|XL|XS|L|M|S)(?:\b|$)/)?.[1];
+	if (size === "2XL") return "XXL";
+	if (size === "XXL" || size === "XL" || size === "L" || size === "M" || size === "S" || size === "XS") {
+		return size;
+	}
+	throw new Error(`Unsupported T-shirt size: ${raw}`);
 }
 
+/**
+ * @param {string[]} headers
+ * @param {string[]} row
+ * @returns {MealCategory}
+ */
 function mealCategory_(headers, row) {
 	const selections = headers.flatMap((header, index) => {
 		const value = String(row[index] || "").trim();
@@ -199,6 +256,11 @@ function mealCategory_(headers, row) {
 	return selections.length ? "OTHER" : "STANDARD";
 }
 
+/**
+ * @param {string[]} headers
+ * @param {string[]} row
+ * @param {string[]} names
+ */
 function requiredCell_(headers, row, names) {
 	for (const name of names) {
 		const index = headers.indexOf(name);
@@ -208,15 +270,56 @@ function requiredCell_(headers, row, names) {
 	throw new Error(`Missing required Sheet value: ${names.join(" / ")}`);
 }
 
+/**
+ * @param {SheetRow} row
+ * @returns {OperationalRecord}
+ */
 function operationalRecordFromRow_(row) {
+	/** @param {string} header */
 	const value = header => row[TRACK_OPERATION_HEADERS.indexOf(header)];
+	const id = String(value("Participant ID") || "").trim();
+	if (!id) throw new Error("The selected operations row has no participant ID.");
 	return {
-		id: String(value("Participant ID")),
-		tShirtSize: String(value("T-Shirt Size")),
-		mealCategory: String(value("Meal Category")),
+		id,
+		tShirtSize: operationalTShirtSize_(value("T-Shirt Size")),
+		mealCategory: operationalMealCategory_(value("Meal Category")),
 		acceptanceExpiry: isoDate_(value("Acceptance Expires")),
 		walkIn: booleanCell_(value("Walk-In")),
 	};
+}
+
+/**
+ * @param {SheetCell | undefined} value
+ * @returns {TShirtSize}
+ */
+function operationalTShirtSize_(value) {
+	const size = String(value || "")
+		.trim()
+		.toUpperCase();
+	if (size === "XXL" || size === "XL" || size === "L" || size === "M" || size === "S" || size === "XS") {
+		return size;
+	}
+	throw new Error(`The selected operations row has an invalid T-shirt size: ${size || "missing"}.`);
+}
+
+/**
+ * @param {SheetCell | undefined} value
+ * @returns {MealCategory}
+ */
+function operationalMealCategory_(value) {
+	const category = String(value || "")
+		.trim()
+		.toUpperCase();
+	if (
+		category === "STANDARD" ||
+		category === "VEGETARIAN" ||
+		category === "VEGAN" ||
+		category === "HALAL" ||
+		category === "OTHER"
+	) {
+		return category;
+	}
+	throw new Error(`The selected operations row has an invalid meal category: ${category || "missing"}.`);
 }
 
 function trackConfig_() {
@@ -232,6 +335,12 @@ function trackConfig_() {
 	return { baseUrl, apiKey, deadline: isoDate_(deadline) };
 }
 
+/**
+ * @param {TrackConfig} config
+ * @param {string} path
+ * @param {ApiPayload} payload
+ * @returns {string}
+ */
 function apiPost_(config, path, payload) {
 	const response = UrlFetchApp.fetch(`${config.baseUrl}${path}`, {
 		method: "post",
@@ -243,13 +352,83 @@ function apiPost_(config, path, payload) {
 	const status = response.getResponseCode();
 	const body = response.getContentText();
 	if (status < 200 || status >= 300) throw new Error(`Track API ${status}: ${body.slice(0, 500)}`);
-	return JSON.parse(body);
+	return body;
+}
+
+/**
+ * @param {string} body
+ * @returns {ProcessedResponse}
+ */
+function processedResponse_(body) {
+	const value = JSON.parse(body);
+	if (
+		value === null ||
+		Array.isArray(value) ||
+		typeof value !== "object" ||
+		typeof value.processed !== "number" ||
+		!Number.isInteger(value.processed) ||
+		value.processed < 0
+	) {
+		throw new Error("Track API returned an invalid processed response.");
+	}
+	return { processed: value.processed };
+}
+
+/**
+ * @param {string} body
+ * @returns {RsvpReconciliation}
+ */
+function rsvpReconciliationResponse_(body) {
+	const value = JSON.parse(body);
+	if (value === null || Array.isArray(value) || typeof value !== "object") {
+		throw new Error("Track API returned an invalid RSVP reconciliation response.");
+	}
+	const records = value.records;
+	const missingIds = value.missingIds;
+	if (!Array.isArray(records) || !Array.isArray(missingIds) || !missingIds.every(id => typeof id === "string")) {
+		throw new Error("Track API returned an invalid RSVP reconciliation response.");
+	}
+
+	const parsedRecords = records.map(record => {
+		if (record === null || Array.isArray(record) || typeof record !== "object") {
+			throw new Error("Track API returned an invalid RSVP reconciliation record.");
+		}
+		const { id, confirmed, cancellationLink } = record;
+		if (
+			typeof id !== "string" ||
+			typeof confirmed !== "boolean" ||
+			(cancellationLink !== undefined && typeof cancellationLink !== "string")
+		) {
+			throw new Error("Track API returned an invalid RSVP reconciliation record.");
+		}
+		return cancellationLink === undefined ? { id, confirmed } : { id, confirmed, cancellationLink };
+	});
+	return { records: parsedRecords, missingIds };
+}
+
+/**
+ * @param {string} body
+ * @returns {ClaimResponse}
+ */
+function claimResponse_(body) {
+	const value = JSON.parse(body);
+	if (
+		value === null ||
+		Array.isArray(value) ||
+		typeof value !== "object" ||
+		typeof value.claimUrl !== "string" ||
+		typeof value.expiresAt !== "string"
+	) {
+		throw new Error("Track API returned an invalid claim response.");
+	}
+	return { claimUrl: value.claimUrl, expiresAt: value.expiresAt };
 }
 
 function ensureOperationsSheet_() {
 	const spreadsheet = SpreadsheetApp.getActive();
 	const sheet = spreadsheet.getSheetByName(TRACK_OPERATIONS_SHEET) || spreadsheet.insertSheet(TRACK_OPERATIONS_SHEET);
 	const current = sheet.getRange(1, 1, 1, TRACK_OPERATION_HEADERS.length).getDisplayValues()[0];
+	if (!current) throw new Error(`The ${TRACK_OPERATIONS_SHEET} header row could not be read.`);
 	if (current.every(value => !value)) {
 		sheet.getRange(1, 1, 1, TRACK_OPERATION_HEADERS.length).setValues([TRACK_OPERATION_HEADERS]);
 		sheet.setFrozenRows(1);
@@ -265,33 +444,47 @@ function ensureOperationsSheet_() {
 	return sheet;
 }
 
+/**
+ * @param {GoogleAppsScript.Spreadsheet.Sheet} sheet
+ * @returns {Record<string, string>}
+ */
 function existingParticipantsBySubmission_(sheet) {
 	if (sheet.getLastRow() < 2) return {};
 	const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, TRACK_OPERATION_HEADERS.length).getDisplayValues();
 	const sourceColumn = TRACK_OPERATION_HEADERS.indexOf("Source Submission ID");
 	const idColumn = TRACK_OPERATION_HEADERS.indexOf("Participant ID");
-	return rows.reduce((result, row) => {
+	/** @type {Record<string, string>} */
+	const result = {};
+	for (const row of rows) {
 		if (row[sourceColumn] && row[idColumn]) result[row[sourceColumn]] = row[idColumn];
-		return result;
-	}, {});
+	}
+	return result;
 }
 
+/**
+ * @param {GoogleAppsScript.Spreadsheet.Sheet} sheet
+ * @param {AcceptedApplication[]} accepted
+ * @param {string} baseUrl
+ */
 function upsertOperations_(sheet, accepted, baseUrl) {
 	const rows =
 		sheet.getLastRow() < 2
 			? []
 			: sheet.getRange(2, 1, sheet.getLastRow() - 1, TRACK_OPERATION_HEADERS.length).getValues();
 	const sourceColumn = TRACK_OPERATION_HEADERS.indexOf("Source Submission ID");
-	const rowBySubmission = rows.reduce((result, row, index) => {
-		if (row[sourceColumn]) result[String(row[sourceColumn])] = index + 2;
-		return result;
-	}, {});
+	/** @type {Record<string, number>} */
+	const rowBySubmission = {};
+	rows.forEach((row, index) => {
+		if (row[sourceColumn]) rowBySubmission[String(row[sourceColumn])] = index + 2;
+	});
 
 	accepted.forEach(item => {
 		const previousRow = rowBySubmission[item.submissionId];
 		const previous = previousRow
 			? sheet.getRange(previousRow, 1, 1, TRACK_OPERATION_HEADERS.length).getValues()[0]
 			: [];
+		if (!previous) throw new Error("The existing operations row could not be read.");
+		/** @param {string} header */
 		const value = header => previous[TRACK_OPERATION_HEADERS.indexOf(header)] || "";
 		const next = [
 			item.submissionId,
@@ -316,19 +509,25 @@ function createParticipantId_() {
 	return `${Utilities.getUuid()}${Utilities.getUuid()}`.replace(/-/g, "");
 }
 
+/** @param {SheetCell | undefined} value */
 function isoDate_(value) {
+	if (value === undefined || typeof value === "boolean") throw new Error(`Invalid RSVP deadline: ${value}`);
 	const date = value instanceof Date ? value : new Date(value);
 	if (Number.isNaN(date.getTime())) throw new Error(`Invalid RSVP deadline: ${value}`);
 	return date.toISOString();
 }
 
+/** @param {SheetCell | undefined} value */
 function booleanCell_(value) {
 	return value === true || /^(?:true|yes|oui|walk-in)$/i.test(String(value || "").trim());
 }
 
+/** @param {string} value */
 function escapeHtml_(value) {
-	return String(value).replace(
-		/[&<>\"]/g,
-		character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '\"': "&quot;" })[character],
-	);
+	return String(value).replace(/[&<>"]/g, character => {
+		if (character === "&") return "&amp;";
+		if (character === "<") return "&lt;";
+		if (character === ">") return "&gt;";
+		return "&quot;";
+	});
 }

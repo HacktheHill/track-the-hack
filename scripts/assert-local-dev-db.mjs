@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 const expectedDatabase = "track-the-hack";
 const loopbackHosts = new Set(["localhost", "127.0.0.1", "::1"]);
 
+/** @param {string | undefined} databaseUrl */
 export const assertLocalDevDatabase = databaseUrl => {
 	if (!databaseUrl) throw new Error("Refusing dev setup: DATABASE_URL is not set.");
 

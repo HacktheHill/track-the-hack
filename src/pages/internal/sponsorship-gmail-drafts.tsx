@@ -407,18 +407,12 @@ const SponsorshipGmailDrafts: NextPage = () => {
 		event.preventDefault();
 
 		const formData = new FormData(event.currentTarget);
-
-		const data = Object.fromEntries(formData) as Record<string, string | number | undefined>;
-		data.emailHTML = htmlPreview;
-
-		// Remove empty values
-		Object.keys(data).forEach(key => {
-			if (data[key] == null || data[key] === "") {
-				delete data[key];
-			}
+		const parse = sponsorshipGmailDraftsSchema.safeParse({
+			organizerFullName: formData.get("organizerFullName"),
+			companyEmail: formData.get("companyEmail"),
+			subject: formData.get("subject"),
+			emailHTML: htmlPreview,
 		});
-
-		const parse = sponsorshipGmailDraftsSchema.safeParse(data);
 		if (!parse.success) {
 			setError(t("invalid-form"));
 		} else {
