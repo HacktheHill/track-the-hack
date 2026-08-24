@@ -1,5 +1,8 @@
+'use client';
+
 import type { GetStaticProps } from "next";
 import { useTranslation } from "next-i18next";
+import { useState } from "react";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Image from "next/image";
 import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
@@ -11,11 +14,78 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	};
 };
 
+const MapFloor = ({ floor }: { floor: number }) => {
+	const { t } = useTranslation("maps");
+	const [zoom, setZoom] = useState(1);
+	const [showZoomHint, setShowZoomHint] = useState(false);
+
+	return (
+		<TransformWrapper
+			initialScale={1}
+			minScale={1}
+			maxScale={3}
+			limitToBounds={false}
+			onTransformed={(_ref, state) => setZoom(state.scale)}
+		>
+			{({ setTransform }) => {
+				const updateZoom = (value: number) => {
+					setZoom(value);
+					setTransform(0, 0, value, 150);
+				};
+
+				return (
+					<div className="mx-auto block">
+						<div className="mb-3 flex items-center justify-center gap-3">
+							<span className="text-sm text-dark-color">Zoom</span>
+							<input
+								type="range"
+								min={1}
+								max={3}
+								step={0.1}
+								value={zoom}
+								onChange={e => updateZoom(Number(e.target.value))}
+								className="w-48"
+							/>
+							<button type="button" onClick={() => updateZoom(1)}>Reset</button>
+							<span className="text-sm text-dark-color">{zoom.toFixed(1)}x</span>
+						</div>
+
+						<div
+							className="relative"
+							onMouseEnter={() => setShowZoomHint(true)}
+							onMouseLeave={() => setShowZoomHint(false)}
+						>
+							{showZoomHint && (
+								<div className="pointer-events-none absolute left-1/2 top-2 z-10 -translate-x-1/2 rounded bg-black/70 px-2 py-1 text-xs text-white">
+									{t("zoom-hint")}
+								</div>
+							)}
+
+							<TransformComponent
+								wrapperStyle={{
+									display: "block",
+									marginLeft: "auto",
+									marginRight: "auto",
+								}}
+							>
+								<Image
+									width={800}
+									height={floor === 4 ? 356 : 400}
+									//Image Location
+									src={floor === 4 ? "/assets/maps/floor4-current.svg" : `/assets/maps/floor${floor}.svg`}
+									alt={t("floor", { floor })}
+								/>
+							</TransformComponent>
+						</div>
+					</div>
+				);
+			}}
+		</TransformWrapper>
+	);
+};
 const Maps = () => {
 	const { t } = useTranslation("maps");
 
-	const mapsLink = (floor: number) =>
-		floor === 4 ? "/assets/maps/floor4-current.svg" : `/assets/maps/floor${floor}.svg`;
 	const MAX_FLOORS = 6;
 
 	return (
@@ -24,27 +94,10 @@ const Maps = () => {
 				{[...Array(MAX_FLOORS).keys()].map(i => (
 					<div key={i}>
 						<h1 className="py-3 text-center text-xl text-dark-color">
-							{t("floor", {
-								floor: i,
-							})}
+							{t("floor", { floor: i })}
 						</h1>
 
-						<TransformWrapper>
-							<div className="mx-auto block">
-								<TransformComponent
-									wrapperStyle={{ display: "block", marginLeft: "auto", marginRight: "auto" }}
-								>
-									<Image
-										width={800}
-										height={i === 4 ? 356 : 400}
-										src={mapsLink(i)}
-										alt={t("floor", {
-											floor: i,
-										})}
-									/>
-								</TransformComponent>
-							</div>
-						</TransformWrapper>
+						<MapFloor floor={i} />
 					</div>
 				))}
 			</div>
