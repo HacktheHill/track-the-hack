@@ -17,18 +17,17 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
 const MapFloor = ({ floor }: { floor: number }) => {
 	const { t } = useTranslation("maps");
 	const [zoom, setZoom] = useState(1);
-
-
+	const [showZoomHint, setShowZoomHint] = useState(false);
 
 	return (
-
 		<TransformWrapper
 			initialScale={1}
 			minScale={1}
 			maxScale={3}
-			limitToBounds={false}>
+			limitToBounds={false}
+			onTransformed={(_ref, state) => setZoom(state.scale)}
+		>
 			{({ setTransform }) => {
-
 				const updateZoom = (value: number) => {
 					setZoom(value);
 					setTransform(0, 0, value, 150);
@@ -51,21 +50,33 @@ const MapFloor = ({ floor }: { floor: number }) => {
 							<span className="text-sm text-dark-color">{zoom.toFixed(1)}x</span>
 						</div>
 
-						<TransformComponent
-							wrapperStyle={{
-								display: "block",
-								marginLeft: "auto",
-								marginRight: "auto",
-							}}
+						<div
+							className="relative"
+							onMouseEnter={() => setShowZoomHint(true)}
+							onMouseLeave={() => setShowZoomHint(false)}
 						>
-							<Image
-								width={800}
-								height={400}
-								//Image Location
-								src={`/assets/maps/floor${floor}.svg`}
-								alt={t("floor", { floor })}
-							/>
-						</TransformComponent>
+							{showZoomHint && (
+								<div className="pointer-events-none absolute left-1/2 top-2 z-10 -translate-x-1/2 rounded bg-black/70 px-2 py-1 text-xs text-white">
+									{t("zoom-hint")}
+								</div>
+							)}
+
+							<TransformComponent
+								wrapperStyle={{
+									display: "block",
+									marginLeft: "auto",
+									marginRight: "auto",
+								}}
+							>
+								<Image
+									width={800}
+									height={400}
+									//Image Location
+									src={`/assets/maps/floor${floor}.svg`}
+									alt={t("floor", { floor })}
+								/>
+							</TransformComponent>
+						</div>
 					</div>
 				);
 			}}

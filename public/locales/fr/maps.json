@@ -1,4 +1,5 @@
 {
 	"floor": "Niveau {{floor}}",
-	"title": "Cartes"
+	"title": "Cartes",
+	"zoom-hint": "Faites défiler ou pincez pour zoomer"
 }
