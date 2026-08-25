@@ -1,0 +1,3 @@
+## 2024-05-15 - React Component Render Optimization
+**Learning:** Avoid expensive synchronous array operations (.filter, .sort, .reduce) and slow data formatting (e.g., `Date.toLocaleDateString`) directly in the render phase of React components, especially top-level pages receiving TRPC queries. This can severely degrade performance by blocking the main thread during renders.
+**Action:** Wrap derived data calculations in `useMemo` hooks. For implicit dependencies like `Date.now()`, which break auto-updating if memoized directly, replace them with a state variable that periodically updates via `setInterval`.
