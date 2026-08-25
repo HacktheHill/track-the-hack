@@ -5,10 +5,12 @@ import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 const eventInputSchema = z.object({
 	name: z.string().min(1),
+	nameFr: z.string().min(1),
 	room: z.string().min(1),
 	start: z.date(),
 	end: z.date(),
 	description: z.string(),
+	descriptionFr: z.string(),
 	hidden: z.boolean(),
 
 	image: z.string().nullable().optional(),
@@ -99,12 +101,12 @@ export const eventsRouter = createTRPCRouter({
 		return ctx.prisma.event.create({
 			data: {
 				name: input.name,
-				nameFr: input.name,
+				nameFr: input.nameFr,
 				room: input.room,
 				start: input.start,
 				end: input.end,
 				description: input.description,
-				descriptionFr: input.description,
+				descriptionFr: input.descriptionFr,
 				hidden: input.hidden,
 				image: input.image ?? null,
 				link: input.link ?? null,
@@ -164,12 +166,12 @@ export const eventsRouter = createTRPCRouter({
 				},
 				data: {
 					name: input.name,
-					nameFr: input.name,
+					nameFr: input.nameFr,
 					room: input.room,
 					start: input.start,
 					end: input.end,
 					description: input.description,
-					descriptionFr: input.description,
+					descriptionFr: input.descriptionFr,
 					hidden: input.hidden,
 					image: input.image ?? null,
 					link: input.link ?? null,
