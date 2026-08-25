@@ -37,9 +37,6 @@ export const logRouter = createTRPCRouter({
 				throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
 			}
 
-			if (!hasRoles(user, [RoleName.ADMIN, RoleName.ORGANIZER])) {
-				throw new TRPCError({ code: "FORBIDDEN", message: "You do not have permission to do this" });
-			}
 
 			const log = await ctx.prisma.log.create({
 				data: input,
