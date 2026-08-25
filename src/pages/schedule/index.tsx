@@ -90,7 +90,13 @@ const Schedule: NextPage = () => {
 	return (
 		<App className="flex h-0 flex-col items-center bg-default-gradient" integrated={true} title={t("title")}>
 			<Tabs tab={tab} setTab={tab => void router.push(`/schedule?tab=${tab}`)} />
-			<div className="w-full overflow-y-auto p-4 mobile:px-0">
+			<div
+				id="schedule-panel"
+				className="w-full overflow-y-auto p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-light-color mobile:px-0"
+				role="tabpanel"
+				aria-labelledby={`tab-${tab}`}
+				tabIndex={0}
+			>
 				<div className="mx-auto flex max-w-2xl flex-col gap-4">
 					{events.map((event, i) => (
 						<div key={i} className="flex gap-4">
@@ -145,7 +151,7 @@ type TabsProps = {
 const Tabs = ({ tab, setTab }: TabsProps) => {
 	return (
 		<div className="w-full border-b border-dark-color bg-light-quaternary-color px-4 pb-4 pt-2 shadow-navbar">
-			<div className="mx-auto grid max-w-2xl grid-cols-3 gap-3 sm:grid-cols-5">
+			<div className="mx-auto grid max-w-2xl grid-cols-3 gap-3 sm:grid-cols-5" role="tablist">
 				{Object.keys(EventType)
 					.sort(a => (a === EventType.ALL ? -1 : 0))
 					.map(type => (
@@ -179,19 +185,19 @@ const Tab = ({ type, active, onClick }: TabProps) => {
 	};
 
 	return (
-		<div
-			className={`flex cursor-pointer flex-row items-center justify-center gap-2 rounded-lg bg-dark-primary-color p-2 font-coolvetica text-light-color outline sm:p-4 ${
+		<button
+			type="button"
+			id={`tab-${type}`}
+			role="tab"
+			aria-selected={type === active}
+			aria-controls="schedule-panel"
+			className={`flex cursor-pointer flex-row items-center justify-center gap-2 rounded-lg bg-dark-primary-color p-2 font-coolvetica text-light-color outline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-light-color sm:p-4 ${
 				type === active ? "outline-4 outline-light-color" : "outline-0"
 			}`}
 			onClick={onClick}
-			onKeyDown={e => {
-				if (e.key === "Enter") {
-					onClick();
-				}
-			}}
 		>
 			<h1 className="text-center text-lg">{types[type]}</h1>
-		</div>
+		</button>
 	);
 };
 
