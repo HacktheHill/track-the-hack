@@ -28,7 +28,22 @@ const QRCode = ({ id, setError }: QRCodeProps) => {
 		enabled: true,
 	});
 
-	const effectiveId = encryptedIdQuery.data ?? id;
+	// Get cached QR string from localStorage if available when offline
+	const [cachedId, setCachedId] = useState<string>("");
+	useEffect(() => {
+		if (typeof window !== "undefined") {
+			const saved = localStorage.getItem("tth_qr_encrypted_id");
+			if (saved) setCachedId(saved);
+		}
+	}, []);
+
+	const effectiveId = encryptedIdQuery.data ?? id ?? cachedId;
+
+	useEffect(() => {
+		if (effectiveId && typeof window !== "undefined") {
+			localStorage.setItem("tth_qr_encrypted_id", effectiveId);
+		}
+	}, [effectiveId]);
 
 	useEffect(() => {
 		// cancelled ensures setState runs only when it is safe: can be a problem otherwise if moving to page mid-reload

@@ -25,6 +25,20 @@ export const trpc = createTRPCNext<AppRouter>({
 	config() {
 		return {
 			/**
+			 * Query client default options for offline support
+			 */
+			queryClientConfig: {
+				defaultOptions: {
+					queries: {
+						networkMode: "offlineFirst",
+					},
+					mutations: {
+						networkMode: "offlineFirst",
+					},
+				},
+			},
+
+			/**
 			 * Transformer used for data de-serialization from the server
 			 * @see https://trpc.io/docs/data-transformers
 			 **/
