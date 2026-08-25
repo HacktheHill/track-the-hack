@@ -14,7 +14,8 @@ import { rolesRedirect } from "../../server/lib/redirects";
 import { getAuthOptions } from "../api/auth/[...nextauth]";
 
 const Events: NextPage = () => {
-	const { t } = useTranslation("internal");
+	const { t, i18n } = useTranslation("internal");
+	const dateLocale = i18n.language === "fr" ? "fr-CA" : "en-CA";
 	const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 	const [isEditorOpen, setIsEditorOpen] = useState(false);
 
@@ -34,7 +35,7 @@ const Events: NextPage = () => {
 		<App className="overflow-y-auto bg-default-gradient" integrated={true} title={t("title")}>
 			<div className="mx-auto max-w-6xl p-8">
 				<div className="mb-6 flex items-center justify-between">
-					<h1 className="font-rubik text-4xl font-bold">Events</h1>
+					<h1 className="font-rubik text-4xl font-bold">{t("events.title")}</h1>
 
 					<button
 						className="rounded-xl bg-medium-primary-color px-6 py-2 text-light-color"
@@ -43,7 +44,7 @@ const Events: NextPage = () => {
 							setIsEditorOpen(true);
 						}}
 					>
-						New Event
+						+ {t("events.new")}
 					</button>
 				</div>
 
@@ -51,12 +52,12 @@ const Events: NextPage = () => {
 					<table className="w-full text-left">
 						<thead>
 							<tr className="border-b border-dark-primary-color">
-								<th className="p-4">Name</th>
-								<th className="p-4">Location</th>
-								<th className="p-4">Start</th>
-								<th className="p-4">End</th>
-								<th className="p-4">Visible</th>
-								<th className="p-4">Actions</th>
+								<th className="p-4">{t("events.table.name")}</th>
+								<th className="p-4">{t("events.table.location")}</th>
+								<th className="p-4">{t("events.table.start")}</th>
+								<th className="p-4">{t("events.table.end")}</th>
+								<th className="p-4">{t("events.table.visible")}</th>
+								<th className="p-4">{t("events.table.actions")}</th>
 							</tr>
 						</thead>
 
@@ -68,7 +69,7 @@ const Events: NextPage = () => {
 									<td className="p-4">{event.room}</td>
 
 									<td className="p-4">
-										{event.start.toLocaleString("en-CA", {
+										{event.start.toLocaleString(dateLocale, {
 											year: "numeric",
 											month: "numeric",
 											day: "numeric",
@@ -78,7 +79,7 @@ const Events: NextPage = () => {
 									</td>
 
 									<td className="p-4">
-										{event.end.toLocaleString("en-CA", {
+										{event.end.toLocaleString(dateLocale, {
 											year: "numeric",
 											month: "numeric",
 											day: "numeric",
@@ -87,7 +88,7 @@ const Events: NextPage = () => {
 										})}
 									</td>
 
-									<td className="p-4">{event.hidden ? "No" : "Yes"}</td>
+									<td className="p-4">{event.hidden ? t("events.no") : t("events.yes")}</td>
 
 									<td className="p-4">
 										<button
@@ -97,7 +98,7 @@ const Events: NextPage = () => {
 											}}
 											className="rounded border border-dark-primary-color px-4 py-2 transition-colors hover:bg-light-tertiary-color"
 										>
-											Edit
+											{t("events.edit")}
 										</button>
 									</td>
 								</tr>
@@ -110,8 +111,10 @@ const Events: NextPage = () => {
 		</App>
 	);
 };
-export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
+export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
+	const session = await getServerSession(req, res, getAuthOptions(req));
 	return {
+		redirect: await rolesRedirect(session, "/", [RoleName.ORGANIZER, RoleName.ADMIN]),
 		props: {
 			...(await serverSideTranslations(locale ?? "en", ["internal", "navbar", "common"])),
 		},

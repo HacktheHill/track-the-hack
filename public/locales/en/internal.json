@@ -3,5 +3,53 @@
 	"roles": "Roles",
 	"sponsorship-gmail-drafts": "Sponsorship Gmail Drafts",
 	"metrics": "Metrics",
-	"submit": "Submit"
+	"submit": "Submit",
+
+	"events": {
+		"title": "Events",
+		"new": "New Event",
+		"add-event": "New Event",
+		"edit": "Edit Event",
+
+		"name-en": "Event name (English)",
+		"name-fr": "Event name (French)",
+		"location": "Location",
+		"start": "Start",
+		"end": "End",
+
+		"description-en": "Description (English)",
+		"description-fr": "Description (French)",
+
+		"photo": "Event photo",
+		"remove-photo": "Remove photo",
+
+		"links": "Links",
+		"link-title": "Link title",
+		"link-url": "https://...",
+		"add-link": "Add Link",
+		"remove": "Remove",
+
+		"show": "Show event",
+		"cancel": "Cancel",
+		"save": "Save",
+
+		"name-en-required": "English event name is required.",
+		"name-fr-required": "French event name is required.",
+		"location-required": "Event location is required.",
+		"start-end-required": "Start and end times are required.",
+		"end-after-start": "End time must be after start time.",
+		"link-title-url-required": "Each link must have both a title and a URL.",
+
+		"table": {
+			"name": "Name",
+			"location": "Location",
+			"start": "Start",
+			"end": "End",
+			"visible": "Visible",
+			"actions": "Actions"
+		},
+
+		"yes": "Yes",
+		"no": "No"
+	}
 }

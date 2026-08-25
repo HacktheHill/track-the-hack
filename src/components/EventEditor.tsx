@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Event } from "@prisma/client";
 import { trpc } from "../server/api/api";
+import { useTranslation } from "next-i18next";
 
 type EventEditorProps = {
 	event: Event | null;
@@ -27,8 +28,10 @@ const formatDateTimeLocal = (date: Date) => {
 
 const EventEditor = ({ event, onClose }: EventEditorProps) => {
 	const [name, setName] = useState(event?.name ?? "");
+	const [nameFr, setNameFr] = useState(event?.nameFr ?? "");
 	const [room, setRoom] = useState(event?.room ?? "");
 	const [description, setDescription] = useState(event?.description ?? "");
+	const [descriptionFr, setDescriptionFr] = useState(event?.descriptionFr ?? "");
 	const [start, setStart] = useState(event?.start ? formatDateTimeLocal(event.start) : "");
 	const [end, setEnd] = useState(event?.end ? formatDateTimeLocal(event.end) : "");
 	const [visible, setVisible] = useState(event ? !event.hidden : false);
@@ -38,6 +41,7 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 	const [imagePreview, setImagePreview] = useState<string | null>(event?.image ?? null);
 	const [imageFile, setImageFile] = useState<File | null>(null);
 	const [error, setError] = useState<string | null>(null);
+	const { t, i18n } = useTranslation("internal");
 
 	const utils = trpc.useUtils();
 
@@ -93,22 +97,27 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 		setError(null);
 
 		if (!name.trim()) {
-			setError("Event name is required.");
+			setError(t("events.name-en-required"));
+			return;
+		}
+
+		if (!nameFr.trim()) {
+			setError(t("events.name-fr-required"));
 			return;
 		}
 
 		if (!room.trim()) {
-			setError("Event location is required.");
+			setError(t("events.location-required"));
 			return;
 		}
 
 		if (!start || !end) {
-			setError("Start and end times are required.");
+			setError(t("events.start-end-required"));
 			return;
 		}
 
 		if (new Date(end) <= new Date(start)) {
-			setError("End time must be after start time.");
+			setError(t("events.end-after-start"));
 			return;
 		}
 
@@ -117,7 +126,7 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 		);
 
 		if (invalidLink) {
-			setError("Each link must have both a title and a URL.");
+			setError(t("events.link-title-url-required"));
 			return;
 		}
 
@@ -125,10 +134,12 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 
 		const eventData = {
 			name: name.trim(),
+			nameFr: nameFr.trim(),
 			room: room.trim(),
 			start: new Date(start),
 			end: new Date(end),
 			description: description.trim(),
+			descriptionFr: descriptionFr.trim(),
 			hidden: !visible,
 
 			// Image upload is not connected yet
@@ -166,6 +177,7 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 		setLinks(links.filter((_, currentIndex) => currentIndex !== index));
 	};
 
+<<<<<<< HEAD
 	const modalRoot = document.getElementById("modal-root");
 
 	if (!modalRoot) {
@@ -177,24 +189,53 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 		<div className="flex max-h-[90vh] w-full max-w-2xl flex-col gap-4 overflow-y-auto rounded border border-dark-primary-color bg-light-quaternary-color p-8 text-center">
 
 			<h2 className="font-rubik text-2xl font-bold">{event ? "Edit Event" : "New Event"}</h2>
+=======
+	return (
+		<Modal
+			buttons={[
+				{
+					label: t("events.cancel"),
+					onClick: onClose,
+				},
+				{
+					label: t("events.save"),
+					onClick: handleSave,
+				},
+			]}
+		>
+			<h2 className="font-rubik text-2xl font-bold">{event ? t("events.edit") : t("events.new")}</h2>
+>>>>>>> bd4fcc6 (feat: add English and French localization for event editor)
 
 			{error && <p className="rounded border border-red-500 p-2 text-left text-red-600">{error}</p>}
 
 			<div className="flex flex-col gap-4 text-left">
-				<div className="flex flex-col gap-1">
-					<label htmlFor="event-name">Event name (En)</label>
+				<div className="flex gap-4">
+					<div className="flex flex-1 flex-col gap-1">
+						<label htmlFor="event-name">{t("events.name-en")}</label>
 
-					<input
-						id="event-name"
-						type="text"
-						value={name}
-						onChange={e => setName(e.target.value)}
-						className="rounded border border-dark-primary-color p-2"
-					/>
+						<input
+							id="event-name"
+							type="text"
+							value={name}
+							onChange={e => setName(e.target.value)}
+							className="rounded border border-dark-primary-color p-2"
+						/>
+					</div>
+
+					<div className="flex flex-1 flex-col gap-1">
+						<label htmlFor="event-name-fr">{t("events.name-fr")}</label>
+
+						<input
+							id="event-name-fr"
+							type="text"
+							value={nameFr}
+							onChange={e => setNameFr(e.target.value)}
+							className="rounded border border-dark-primary-color p-2"
+						/>
+					</div>
 				</div>
-
 				<div className="flex flex-col gap-1">
-					<label htmlFor="event-room">Location</label>
+					<label htmlFor="event-room">{t("events.location")}</label>
 
 					<input
 						id="event-room"
@@ -207,7 +248,7 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 
 				<div className="flex gap-4">
 					<div className="flex flex-1 flex-col gap-1">
-						<label htmlFor="event-start">Start</label>
+						<label htmlFor="event-start">{t("events.start")}</label>
 
 						<input
 							id="event-start"
@@ -219,7 +260,7 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 					</div>
 
 					<div className="flex flex-1 flex-col gap-1">
-						<label htmlFor="event-end">End</label>
+						<label htmlFor="event-end">{t("events.end")}</label>
 
 						<input
 							id="event-end"
@@ -231,20 +272,34 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 					</div>
 				</div>
 
-				<div className="flex flex-col gap-1">
-					<label htmlFor="event-description">Description</label>
+				<div className="flex gap-4">
+					<div className="flex flex-1 flex-col gap-1">
+						<label htmlFor="event-description">{t("events.description-en")}</label>
 
-					<textarea
-						id="event-description"
-						value={description}
-						onChange={e => setDescription(e.target.value)}
-						rows={4}
-						className="rounded border border-dark-primary-color p-2"
-					/>
+						<textarea
+							id="event-description"
+							value={description}
+							onChange={e => setDescription(e.target.value)}
+							rows={4}
+							className="rounded border border-dark-primary-color p-2"
+						/>
+					</div>
+
+					<div className="flex flex-1 flex-col gap-1">
+						<label htmlFor="event-description-fr">{t("events.description-fr")}</label>
+
+						<textarea
+							id="event-description-fr"
+							value={descriptionFr}
+							onChange={e => setDescriptionFr(e.target.value)}
+							rows={4}
+							className="rounded border border-dark-primary-color p-2"
+						/>
+					</div>
 				</div>
 
 				<div className="flex flex-col gap-2">
-					<label htmlFor="event-image">Event photo</label>
+					<label htmlFor="event-image">{t("events.photo")}</label>
 
 					{imagePreview && (
 						<div className="flex flex-col gap-2">
@@ -262,7 +317,7 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 								}}
 								className="self-start rounded border border-dark-primary-color px-3 py-1"
 							>
-								Remove photo
+								{t("events.remove-photo")}
 							</button>
 						</div>
 					)}
@@ -271,13 +326,13 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 				</div>
 
 				<div className="flex flex-col gap-2">
-					<label>Links</label>
+					<label>{t("events.links")}</label>
 
 					{links.map((link, index) => (
 						<div key={index} className="flex gap-2">
 							<input
 								type="text"
-								placeholder="Link title"
+								placeholder={t("events.link-title")}
 								value={link.title}
 								onChange={e => updateLink(index, "title", e.target.value)}
 								className="min-w-0 flex-1 rounded border border-dark-primary-color p-2"
@@ -285,7 +340,7 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 
 							<input
 								type="url"
-								placeholder="https://..."
+								placeholder={t("events.link-url")}
 								value={link.url}
 								onChange={e => updateLink(index, "url", e.target.value)}
 								className="min-w-0 flex-1 rounded border border-dark-primary-color p-2"
@@ -296,7 +351,7 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 								onClick={() => removeLink(index)}
 								className="rounded border border-dark-primary-color px-3"
 							>
-								Remove
+								{t("events.remove")}
 							</button>
 						</div>
 					))}
@@ -306,7 +361,7 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 						onClick={addLink}
 						className="self-start rounded border border-dark-primary-color px-4 py-2"
 					>
-						+ Add Link
+						+ {t("events.add-link")}
 					</button>
 				</div>
 
@@ -318,7 +373,7 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 						onChange={e => setVisible(e.target.checked)}
 					/>
 
-					<label htmlFor="event-visible">Show event</label>
+					<label htmlFor="event-visible">{t("events.show")}</label>
 				</div>
 			</div>
 					<div className="flex justify-center gap-4">
