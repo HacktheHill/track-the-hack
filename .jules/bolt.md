@@ -1,0 +1,3 @@
+## 2023-10-27 - Memoize expensive operations inside React components
+**Learning:** Found a common anti-pattern where expensive synchronous array operations (.filter, .sort, .reduce) and formatting (e.g., Date.toLocaleDateString) are executed directly in the render phase, which could slow down re-renders. Additionally, using implicit dependencies like `Date.now()` without periodic updates breaks auto-updating functionality when properly memoized.
+**Action:** Always wrap derived data calculations in `useMemo` hooks. For dependencies like `Date.now()`, replace them with a local state variable that periodically updates via `setInterval` so the memoized value recalculates correctly over time.
