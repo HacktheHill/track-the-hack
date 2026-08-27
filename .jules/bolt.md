@@ -1,0 +1,3 @@
+## 2024-08-27 - [Avoid Synchronous Array Operations & Date.now() in React Render Phase]
+**Learning:** Top-level pages receiving TRPC queries often execute expensive synchronous array operations (.filter, .sort, .reduce) and formatting (e.g., Date.toLocaleDateString) directly in the render phase. Additionally, using `Date.now()` implicitly in these calculations breaks memoization and auto-updating behaviors.
+**Action:** Wrap these derived data calculations in `useMemo` hooks. Replace implicit dependencies like `Date.now()` with explicit state (e.g., a `now` state) that periodically updates via `setInterval` to preserve auto-updating behaviors while enabling memoization.
