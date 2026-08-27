@@ -4,3 +4,6 @@
 ## 2024-05-18 - ARIA Labels and Loading Indicators
 **Learning:** Found several components, like the main Loading indicator and icon-only close buttons, missing ARIA labels or proper ARIA roles for screen readers. Added `role="status"` to loading indicator and proper translation strings for ARIA labels. I also made sure to hide purely decorative SVGs that have labels via `aria-hidden="true"`.
 **Action:** Always check interactive icon buttons and loading spinners for ARIA attributes. Use the existing translation (`next-i18next`) keys available for `aria-label` properties.
+## 2024-05-19 - Interactive non-semantic elements replacement
+**Learning:** Found an instance in `src/pages/schedule/index.tsx` where an interactive `div` with an `onClick` handler and `onKeyDown` was being used as a tab controller for the Schedule. This missed native focus management, keyboard accessibility (Space/Enter trigger), and proper semantic roles (`role="tab"`, `role="tablist"`, `role="tabpanel"`).
+**Action:** When seeing interactive UI patterns like Tabs that utilize `div` elements, refactor them to use native `button` elements to get focus and keyboard events for free. Combine this with the correct ARIA attributes like `role="tab"` and `aria-selected` to make them fully accessible. Additionally ensure we don't nest header elements (like `h1`) inside of `button` tags.
