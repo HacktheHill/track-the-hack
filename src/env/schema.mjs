@@ -35,7 +35,6 @@ export const serverSchema = z.object({
 	S3_AUTH_KEY: z.string(),
 	INTERNAL_API_SECRET: z.string().min(32),
 	DISCORD_BOT_URL: z.string().url(),
-	QR_SECRET_KEY: z.string(),
 	WALK_IN_SECRET_KEY: z.string(),
 });
 
@@ -69,7 +68,6 @@ export const serverEnv = {
 	// Keep accepting the old name while deployments migrate to the shared internal secret.
 	INTERNAL_API_SECRET: process.env.INTERNAL_API_SECRET ?? process.env.DISCORD_BOT_SECRET_KEY,
 	DISCORD_BOT_URL: process.env.DISCORD_BOT_URL,
-	QR_SECRET_KEY: process.env.QR_SECRET_KEY,
 	WALK_IN_SECRET_KEY: process.env.WALK_IN_SECRET_KEY,
 };
 

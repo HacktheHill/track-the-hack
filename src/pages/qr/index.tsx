@@ -15,9 +15,7 @@ import Filter from "../../components/Filter";
 import PhysicalScanner from "../../components/PhysicalScanner";
 import QRCode from "../../components/QRCode";
 import QRScanner from "../../components/QRScanner";
-import { env } from "../../env/server.mjs";
 import { trpc } from "../../server/api/api";
-import { encrypt } from "../../server/api/routers/qr";
 import { qrRedirect } from "../../server/lib/redirects";
 import { getAuthOptions } from "../api/auth/[...nextauth]";
 import Tabs from "../../components/Tabs";
@@ -29,7 +27,7 @@ type Presence = RouterOutput["presence"]["getFromHackerId"][0];
 
 const DEFAULT_ACTION = "get-hacker";
 
-const QR = ({ encryptedId }: { encryptedId: string }) => {
+const QR = ({ qrToken }: { qrToken: string | null }) => {
 	const { t, i18n } = useTranslation("qr");
 
 	const selectedAction = useRef<string>(DEFAULT_ACTION);
@@ -179,7 +177,7 @@ const QR = ({ encryptedId }: { encryptedId: string }) => {
 								);
 							})}
 						</select>
-						<QRScanner onScan={onScan} setError={setError} />
+						<QRScanner onScan={onScan} />
 						<PhysicalScanner onScan={onScan} />
 						{!error && (
 							<p className="z-10 max-w-xl text-center text-lg font-bold text-dark-color">
@@ -190,14 +188,14 @@ const QR = ({ encryptedId }: { encryptedId: string }) => {
 					<>
 						<Tabs names={["QR", "Scan"]}>
 							<>
-								<QRCode setError={setError} id={encryptedId} />
+								<QRCode setError={setError} id={qrToken} />
 								{!error && (
 									<p className="z-10 max-w-xl text-center text-lg font-bold text-dark-color">
 										{t("use-qr")}
 									</p>
 								)}
 							</>
-							<QRScanner onScan={onScan} setError={setError} />
+							<QRScanner onScan={onScan} />
 						</Tabs>
 					</>
 				</Filter>
@@ -300,16 +298,12 @@ const RepeatedVisitor = ({ hacker, presence, maxCheckIns, incrementFn }: Repeate
 };
 
 export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
-	const secretKey = env.QR_SECRET_KEY;
 	const session = await getServerSession(req, res, getAuthOptions(req));
-
-	const timestamp = Math.floor(Date.now() / 60000);
-	const encryptedId = session?.user?.hackerId ? encrypt(`${session.user.hackerId}:${timestamp}`, secretKey) : null;
 
 	return {
 		redirect: await qrRedirect(session, "/qr"),
 		props: {
-			encryptedId,
+			qrToken: session?.user?.hackerId ?? null,
 			...(await serverSideTranslations(locale ?? "en", ["qr", "navbar", "common"])),
 		},
 	};

@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import Error from "./Error";
 
 type QRCodeProps = {
-	id: string;
+	id: string | null;
 	setError: (message: string) => void;
 };
 
@@ -27,13 +27,6 @@ const QRCode = ({ id, setError }: QRCodeProps) => {
 			}
 		}
 		void generateQRCode();
-
-		// Refresh the QR code every minute
-		const intervalId = setInterval(() => {
-			window.location.reload();
-		}, 30 * 1000);
-
-		return () => clearInterval(intervalId);
 	}, [id, setError, t]);
 
 	if (!qrCode) {
