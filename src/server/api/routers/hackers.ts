@@ -2,6 +2,7 @@ import { RoleName, type Hacker } from "@prisma/client";
 import crypto from "crypto";
 import { z } from "zod";
 
+import { TRPCError } from "@trpc/server";
 import { env } from "../../../env/server.mjs";
 import { hackerSchema } from "../../../utils/common";
 import { hasRoles } from "../../../utils/helpers";
@@ -951,6 +952,24 @@ export const hackerRouter = createTRPCRouter({
 			}),
 		)
 		.query(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+			const user = await ctx.prisma.user.findUnique({
+				where: {
+					id: userId,
+				},
+				select: {
+					roles: {
+						select: {
+							name: true,
+						},
+					},
+				},
+			});
+
+			if (!user) {
+				throw new Error("User not found");
+			}
+
 			const hacker = await ctx.prisma.hacker.findUnique({
 				where: {
 					id: input.id,
@@ -959,6 +978,10 @@ export const hackerRouter = createTRPCRouter({
 
 			if (!hacker) {
 				throw new Error("Hacker not found");
+			}
+
+			if (!hasRoles(user, [RoleName.ORGANIZER, RoleName.MAYOR, RoleName.PREMIER]) && hacker.userId !== userId) {
+				throw new TRPCError({ code: "FORBIDDEN", message: "You do not have permission to download this resume" });
 			}
 
 			const filename = generateS3Filename(hacker.id, `${hacker.firstName}_${hacker.lastName}_Resume`, "pdf");
