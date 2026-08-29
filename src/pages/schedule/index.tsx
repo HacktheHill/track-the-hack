@@ -5,6 +5,7 @@ import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import { useEffect, useMemo, useState } from "react";
 import App from "../../components/App";
 import Error from "../../components/Error";
 import Loading from "../../components/Loading";
@@ -25,10 +26,61 @@ const Schedule: NextPage = () => {
 
 	const query = trpc.events.all.useQuery();
 
+	const [currentTime, setCurrentTime] = useState(Date.now());
+
+	useEffect(() => {
+		const intervalId = setInterval(() => setCurrentTime(Date.now()), 60000);
+		return () => clearInterval(intervalId);
+	}, []);
+
 	let dateLocale = "en-CA";
 	if (locale === "fr") {
 		dateLocale = "fr-CA";
 	}
+
+	const tab =
+		typeof router.query.tab === "string" && Object.keys(EventType).includes(router.query.tab)
+			? (router.query.tab as EventType)
+			: EventType.ALL;
+
+	const events = useMemo(() => {
+		return (query.data ?? [])
+			.filter(event => !event.hidden)
+			.filter(event => event.end.getTime() + 30 * 60 * 1000 > currentTime)
+			.filter(event => EventType[event.type] === tab || tab === EventType.ALL)
+			.sort((a, b) => {
+				if (a.start.getTime() === b.start.getTime()) {
+					return a.end.getTime() - b.end.getTime();
+				}
+				return a.start.getTime() - b.start.getTime();
+			})
+			.reduce((acc, event, i, array) => {
+				if (
+					array[i]?.start.toLocaleDateString(dateLocale) ===
+					array[i - 1]?.start.toLocaleDateString(dateLocale)
+				) {
+					acc[acc.length - 1]?.push(event);
+				} else {
+					acc.push([event]);
+				}
+				return acc;
+			}, [] as Event[][]);
+	}, [query.data, tab, dateLocale, currentTime]);
+
+	const eventColor = (eventType: string) => {
+		switch (eventType) {
+			case EventType.WORKSHOP:
+				return "bg-dark-primary-color text-light-color";
+			case EventType.CAREER_FAIR:
+				return "bg-light-primary-color text-light-color";
+			case EventType.FOOD:
+				return "bg-medium-primary-color text-light-color";
+			case EventType.SOCIAL:
+				return "bg-highlight-color text-light-color";
+			default:
+				return "bg-dark-color text-light-color";
+		}
+	};
 
 	if (query.isLoading || query.data == null) {
 		return (
@@ -48,45 +100,6 @@ const Schedule: NextPage = () => {
 		void router.push("/404");
 	}
 
-	const eventColor = (eventType: string) => {
-		switch (eventType) {
-			case EventType.WORKSHOP:
-				return "bg-dark-primary-color text-light-color";
-			case EventType.CAREER_FAIR:
-				return "bg-light-primary-color text-light-color";
-			case EventType.FOOD:
-				return "bg-medium-primary-color text-light-color";
-			case EventType.SOCIAL:
-				return "bg-highlight-color text-light-color";
-			default:
-				return "bg-dark-color text-light-color";
-		}
-	};
-
-	const tab =
-		typeof router.query.tab === "string" && Object.keys(EventType).includes(router.query.tab)
-			? (router.query.tab as EventType)
-			: EventType.ALL;
-
-	const events = query.data
-		.filter(event => !event.hidden)
-		.filter(event => event.end.getTime() + 30 * 60 * 1000 > Date.now())
-		.filter(event => EventType[event.type] === tab || tab === EventType.ALL)
-		.sort((a, b) => {
-			if (a.start.getTime() === b.start.getTime()) {
-				return a.end.getTime() - b.end.getTime();
-			}
-			return a.start.getTime() - b.start.getTime();
-		})
-		.reduce((acc, event, i, array) => {
-			if (array[i]?.start.toLocaleDateString(dateLocale) === array[i - 1]?.start.toLocaleDateString(dateLocale)) {
-				acc[acc.length - 1]?.push(event);
-			} else {
-				acc.push([event]);
-			}
-			return acc;
-		}, [] as Event[][]);
-
 	return (
 		<App className="flex h-0 flex-col items-center bg-default-gradient" integrated={true} title={t("title")}>
 			<Tabs tab={tab} setTab={tab => void router.push(`/schedule?tab=${tab}`)} />
@@ -101,30 +114,30 @@ const Schedule: NextPage = () => {
 								})}
 							</div>
 							<div className="flex w-full flex-col gap-4">
-								{event.map(event => {
+								{event.map(e => {
 									return (
 										<Link
-											key={event.id}
-											href={`/schedule/event?id=${event.id}`}
+											key={e.id}
+											href={`/schedule/event?id=${e.id}`}
 											className={`flex flex-col items-center justify-center gap-2 rounded-lg p-3 font-coolvetica ${eventColor(
-												event.type,
+												e.type,
 											)}`}
 										>
 											<h1 className="text-center text-xl">
-												{locale === "fr" ? event.nameFr : event.name}
+												{locale === "fr" ? e.nameFr : e.name}
 											</h1>
 											<p className="text-center leading-3">
-												{event.start.toLocaleTimeString(dateLocale, {
+												{e.start.toLocaleTimeString(dateLocale, {
 													hour: "numeric",
 													minute: "numeric",
 												})}
 												{" - "}
-												{event.end.toLocaleTimeString(dateLocale, {
+												{e.end.toLocaleTimeString(dateLocale, {
 													hour: "numeric",
 													minute: "numeric",
 												})}
 											</p>
-											<p>{event.room}</p>
+											<p>{e.room}</p>
 										</Link>
 									);
 								})}

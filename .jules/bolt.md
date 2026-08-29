@@ -1,0 +1,3 @@
+## 2024-05-18 - Missing memoization for expensive synchronous operations in components
+**Learning:** Components in `src/pages` (e.g., `src/pages/schedule/index.tsx`, `src/pages/qr/index.tsx`) perform synchronous and expensive `.filter`, `.sort`, and `.reduce` computations directly within the render loop. Also, calculating `Date.now()` directly in the memoization loop will break the periodic auto-updating. This causes performance issues via unnecessary re-renders.
+**Action:** Use `useMemo` hooks to memoize derived data from expensive computations, and manage time-based implicit dependencies like `Date.now()` using local state with `setInterval` to periodically force updates.

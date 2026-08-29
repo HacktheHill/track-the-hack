@@ -4,7 +4,7 @@ import type { inferRouterOutputs } from "@trpc/server";
 import type { GetServerSideProps } from "next";
 import { getServerSession } from "next-auth/next";
 import { useTranslation } from "next-i18next";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AppRouter } from "../../server/api/root";
 
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
@@ -45,16 +45,26 @@ const QR = ({ encryptedId }: { encryptedId: string }) => {
 
 	const utils = trpc.useUtils();
 
+	const [currentTime, setCurrentTime] = useState(Date.now());
+
 	useEffect(() => {
-		const validEvents =
+		const intervalId = setInterval(() => setCurrentTime(Date.now()), 60000);
+		return () => clearInterval(intervalId);
+	}, []);
+
+	const validEvents = useMemo(() => {
+		return (
 			events
-				?.filter(event => event.end.getTime() + 30 * 60 * 1000 > Date.now())
+				?.filter(event => event.end.getTime() + 30 * 60 * 1000 > currentTime)
 				.filter((event, index, self) => self.findIndex(e => e.name === event.name) === index)
 				.sort((a, b) => a.start.getTime() - b.start.getTime())
-				.map(event => event.name) ?? [];
+				.map(event => event.name) ?? []
+		);
+	}, [events, currentTime]);
 
+	useEffect(() => {
 		setMenuOptions([DEFAULT_ACTION, ...validEvents]);
-	}, [events]);
+	}, [validEvents]);
 
 	// Reload page to re-render a new QRScanner
 	useEffect(() => {
@@ -72,8 +82,7 @@ const QR = ({ encryptedId }: { encryptedId: string }) => {
 	const handleEvent = useCallback(
 		async (hacker: Hacker, presences: Presence[]) => {
 			const maxCheckIns = events?.find(event => event.name === selectedAction.current)?.maxCheckIns as
-				| number
-				| null;
+				number | null;
 
 			// If user does not have hacker role
 			if (hacker.acceptanceStatus !== AcceptanceStatus.ACCEPTED) {
