@@ -1,9 +1,8 @@
-import { PrismaClient, RoleName } from "@prisma/client";
+import { RoleName } from "@prisma/client";
 import type { Session } from "next-auth";
+import { prisma } from "../db";
 
 export async function qrRedirect(session: Session | null, callbackUrl: string) {
-	const prisma = new PrismaClient();
-
 	const user =
 		session &&
 		(await prisma.user.findUnique({
@@ -33,8 +32,6 @@ export async function qrRedirect(session: Session | null, callbackUrl: string) {
 
 // Allow organizers to view all, hackers to view only themselves
 export async function hackerRedirect(session: Session | null, callbackUrl: string, hackerId: string) {
-	const prisma = new PrismaClient();
-
 	const user =
 		session &&
 		(await prisma.user.findUnique({
@@ -78,8 +75,6 @@ export async function hackerRedirect(session: Session | null, callbackUrl: strin
 }
 
 export async function rolesRedirect(session: Session | null, callbackUrl: string, roles: RoleName[]) {
-	const prisma = new PrismaClient();
-
 	const user =
 		session &&
 		(await prisma.user.findUnique({
