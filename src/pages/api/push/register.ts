@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 
 import { registerEventPushSubscription, unregisterEventPushSubscription } from "../../../server/push";
 
-export default function handler(request: NextApiRequest, response: NextApiResponse) {
+export default async function handler(request: NextApiRequest, response: NextApiResponse) {
     if (request.method !== "POST") {
         response.status(405).json({ error: "Method not allowed" });
         return;
@@ -20,7 +20,7 @@ export default function handler(request: NextApiRequest, response: NextApiRespon
     }
 
     if (enabled === false) {
-        unregisterEventPushSubscription(eventId, typeof subscription.endpoint === "string" ? subscription.endpoint : undefined);
+        await unregisterEventPushSubscription(eventId, typeof subscription.endpoint === "string" ? subscription.endpoint : undefined);
         response.status(200).json({ success: true });
         return;
     }
@@ -32,7 +32,7 @@ export default function handler(request: NextApiRequest, response: NextApiRespon
         return;
     }
 
-    registerEventPushSubscription(eventId, {
+    await registerEventPushSubscription(eventId, {
         endpoint,
         keys: {
             p256dh: keys.p256dh,

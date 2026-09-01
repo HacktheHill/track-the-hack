@@ -17,7 +17,6 @@ type EventPushSubscription = {
     };
 };
 
-const subscriptions = new Map<string, EventPushSubscription[]>();
 const notifiedEventIds = new Set<string>();
 let reminderScheduler: NodeJS.Timeout | undefined;
 
@@ -77,37 +76,56 @@ export const startEventReminderScheduler = () => {
     return reminderScheduler;
 };
 
-export const registerEventPushSubscription = (eventId: string, subscription: PushSubscriptionPayload) => {
-    const current = subscriptions.get(eventId) ?? [];
-    const cleaned = current.filter(item => item.endpoint !== subscription.endpoint);
-    cleaned.push({
-        eventId,
-        endpoint: subscription.endpoint,
-        keys: subscription.keys,
+export const registerEventPushSubscription = async (
+    eventId: string,
+    subscription: PushSubscriptionPayload,
+    prismaClient?: PrismaClient,
+) => {
+    const client = prismaClient ?? (await getPrismaClient());
+    await client.pushSubscription.deleteMany({ where: { eventId, endpoint: subscription.endpoint } });
+    await client.pushSubscription.create({
+        data: {
+            eventId,
+            endpoint: subscription.endpoint,
+            p256dh: subscription.keys.p256dh,
+            auth: subscription.keys.auth,
+        },
     });
-    subscriptions.set(eventId, cleaned);
 };
 
-export const unregisterEventPushSubscription = (eventId: string, endpoint?: string) => {
+export const unregisterEventPushSubscription = async (eventId: string, endpoint?: string, prismaClient?: PrismaClient) => {
+    const client = prismaClient ?? (await getPrismaClient());
     if (!endpoint) {
-        subscriptions.delete(eventId);
+        await client.pushSubscription.deleteMany({ where: { eventId } });
         return;
     }
 
-    const current = subscriptions.get(eventId) ?? [];
-    const next = current.filter(item => item.endpoint !== endpoint);
-    if (next.length === 0) {
-        subscriptions.delete(eventId);
-        return;
-    }
-
-    subscriptions.set(eventId, next);
+    await client.pushSubscription.deleteMany({ where: { eventId, endpoint } });
 };
 
-export const getEventPushSubscriptions = (eventId: string) => subscriptions.get(eventId) ?? [];
+export const getEventPushSubscriptions = async (
+    eventId: string,
+    prismaClient?: PrismaClient,
+): Promise<EventPushSubscription[]> => {
+    const client = prismaClient ?? (await getPrismaClient());
+    const subscriptions = await client.pushSubscription.findMany({ where: { eventId } });
+    return subscriptions.map(subscription => ({
+        eventId: subscription.eventId,
+        endpoint: subscription.endpoint,
+        keys: {
+            p256dh: subscription.p256dh,
+            auth: subscription.auth,
+        },
+    }));
+};
 
-export const sendEventStartNotification = async (eventId: string, title: string, body: string) => {
-    const eventSubscriptions = getEventPushSubscriptions(eventId);
+export const sendEventStartNotification = async (
+    eventId: string,
+    title: string,
+    body: string,
+    prismaClient?: PrismaClient,
+) => {
+    const eventSubscriptions = await getEventPushSubscriptions(eventId, prismaClient);
     if (eventSubscriptions.length === 0) {
         return 0;
     }
@@ -151,6 +169,7 @@ export const sendDueEventNotifications = async (prismaClient?: PrismaClient) => 
             start: {
                 lte: now,
             },
+            notifiedAt: null,
         },
         select: {
             id: true,
@@ -159,20 +178,14 @@ export const sendDueEventNotifications = async (prismaClient?: PrismaClient) => 
         },
     });
 
-    const dueEventIds = getDueEventNotificationIds(dueEvents, now);
-    for (const eventId of dueEventIds) {
-        const event = dueEvents.find(candidate => candidate.id === eventId);
-        if (!event) {
-            continue;
-        }
-
+    for (const event of dueEvents) {
         const title = event.name;
         const body = "This event has started.";
-        await sendEventStartNotification(event.id, title, body);
-        notifiedEventIds.add(event.id);
+        await sendEventStartNotification(event.id, title, body, client);
+        await client.event.update({ where: { id: event.id }, data: { notifiedAt: now } });
     }
 
-    return dueEventIds.length;
+    return dueEvents.length;
 };
 
 if (typeof process !== "undefined" && process.versions?.node && process.env.NODE_ENV !== "test") {
