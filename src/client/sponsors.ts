@@ -3,8 +3,8 @@ interface SponsorData {
 	name: string;
 	tier: SponsorTier;
 	logo: string;
-	hiringLink: string;
-	websiteLink: string;
+	hiringLink?: string;
+	websiteLink?: string;
 	additionalLink?: string;
 }
 
@@ -83,6 +83,6 @@ const sponsorsData = [
 		tier: SponsorTier.BACKBENCHER,
 		logo: "https://2024.hackthehill.com/Logos/Fantuan.png",
 	},
-] as const as SponsorData[];
+] satisfies SponsorData[];
 
 export { sizeByTier, sponsorsData, type SponsorData, SponsorTier };

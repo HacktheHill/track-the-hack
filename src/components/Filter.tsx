@@ -3,7 +3,7 @@ import { Children } from "react";
 
 import type { RoleName } from "@prisma/client";
 import { useTranslation } from "next-i18next";
-import { roleHierarchy } from "../utils/common";
+import { roleHierarchy } from "@/utils/common";
 import Error from "./Error";
 import Loading from "./Loading";
 

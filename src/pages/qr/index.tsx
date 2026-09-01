@@ -1,317 +1,213 @@
-import { AcceptanceStatus, RoleName } from "@prisma/client";
-import { TRPCClientError } from "@trpc/client";
-import type { inferRouterOutputs } from "@trpc/server";
+import { RoleName, ScannerWorkflow } from "@prisma/client";
 import type { GetServerSideProps } from "next";
-import { getServerSession } from "next-auth/next";
+import { getServerSession } from "next-auth";
 import { useTranslation } from "next-i18next";
-import { useCallback, useEffect, useRef, useState } from "react";
-import type { AppRouter } from "../../server/api/root";
-
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
-import router from "next/router";
-import App from "../../components/App";
-import Error from "../../components/Error";
-import Filter from "../../components/Filter";
-import PhysicalScanner from "../../components/PhysicalScanner";
-import QRCode from "../../components/QRCode";
-import QRScanner from "../../components/QRScanner";
-import { env } from "../../env/server.mjs";
-import { trpc } from "../../server/api/api";
-import { encrypt } from "../../server/api/routers/qr";
-import { qrRedirect } from "../../server/lib/redirects";
-import { getAuthOptions } from "../api/auth/[...nextauth]";
-import Tabs from "../../components/Tabs";
-import { playErrorSound, playNeutralSound, playSuccessSound } from "../../client/sound";
+import { useCallback, useRef, useState } from "react";
+import App from "@/components/App";
+import ErrorDisplay from "@/components/Error";
+import PhysicalScanner from "@/components/PhysicalScanner";
+import QRScanner from "@/components/QRScanner";
+import type { RouterOutputs } from "@/server/api/api";
+import { trpc } from "@/server/api/api";
+import { rolesRedirect } from "@/server/lib/redirects";
+import { getAuthOptions } from "@/pages/api/auth/[...nextauth]";
 
-type RouterOutput = inferRouterOutputs<AppRouter>;
-type Hacker = RouterOutput["hackers"]["get"];
-type Presence = RouterOutput["presence"]["getFromHackerId"][0];
+type Hacker = RouterOutputs["hackers"]["get"];
+type WorkflowScan = RouterOutputs["presence"]["scan"];
+const VIEW_PARTICIPANT = "__view__";
 
-const DEFAULT_ACTION = "get-hacker";
-
-const QR = ({ encryptedId }: { encryptedId: string }) => {
+const QR = () => {
 	const { t, i18n } = useTranslation("qr");
-
-	const selectedAction = useRef<string>(DEFAULT_ACTION);
-	const prevHackerId = useRef<string>("");
-
+	const utils = trpc.useContext();
+	const events = trpc.events.scannable.useQuery().data ?? [];
+	const { mutateAsync: scanPresence } = trpc.presence.scan.useMutation();
+	const selectedAction = useRef(VIEW_PARTICIPANT);
+	const previousId = useRef("");
+	const scanSequence = useRef(0);
+	const [display, setDisplay] = useState<React.ReactNode>();
 	const [error, setError] = useState("");
-	const [menuOptions, setMenuOptions] = useState<string[]>([]);
-	const [display, setDisplay] = useState(<></>);
 
-	const { data: events } = trpc.events.all.useQuery();
-	const { mutateAsync: presenceUpsertMutateAsync } = trpc.presence.upsert.useMutation();
-	const { mutateAsync: presenceIncrementMutateAsync } = trpc.presence.increment.useMutation();
-
-	const utils = trpc.useUtils();
-
-	useEffect(() => {
-		const validEvents =
-			events
-				?.filter(event => event.end.getTime() + 30 * 60 * 1000 > Date.now())
-				.filter((event, index, self) => self.findIndex(e => e.name === event.name) === index)
-				.sort((a, b) => a.start.getTime() - b.start.getTime())
-				.map(event => event.name) ?? [];
-
-		setMenuOptions([DEFAULT_ACTION, ...validEvents]);
-	}, [events]);
-
-	// Reload page to re-render a new QRScanner
-	useEffect(() => {
-		const handleLanguageChange = () => {
-			window.location.reload();
-		};
-
-		i18n.on("languageChanged", handleLanguageChange);
-
-		return () => {
-			i18n.off("languageChanged", handleLanguageChange);
-		};
-	}, [i18n]);
-
-	const handleEvent = useCallback(
-		async (hacker: Hacker, presences: Presence[]) => {
-			const maxCheckIns = events?.find(event => event.name === selectedAction.current)?.maxCheckIns as
-				| number
-				| null;
-
-			// If user does not have hacker role
-			if (hacker.acceptanceStatus !== AcceptanceStatus.ACCEPTED) {
-				playErrorSound();
-				return setDisplay(<NotHackerError />);
-			}
-
-			// If hacker has already checked-in -> Show RepeatedVisitor component with increment button
-			for (const presence of presences) {
-				if (presence.label != selectedAction.current) continue;
-				playNeutralSound();
-				return setDisplay(
-					<RepeatedVisitor
-						hacker={hacker}
-						presence={presence}
-						maxCheckIns={maxCheckIns}
-						incrementFn={presenceIncrementMutateAsync}
-					/>,
-				);
-			}
+	const scan = useCallback(
+		async (rawId: string) => {
+			const hackerId = rawId.trim();
+			if (!hackerId || hackerId === previousId.current) return;
+			const sequence = ++scanSequence.current;
+			previousId.current = hackerId;
+			setError("");
 
 			try {
-				await presenceUpsertMutateAsync({ hackerId: hacker.id, value: 1, label: selectedAction.current });
-				playSuccessSound();
-				return setDisplay(
-					<FirstTimeVisitor
-						hacker={hacker}
-						event={selectedAction.current}
-						upsertFn={presenceUpsertMutateAsync}
-					/>,
-				);
-			} catch (error) {
-				playErrorSound();
-				if (error instanceof TRPCClientError) {
-					return setDisplay(<Error message={error.message} />);
-				}
-				return setDisplay(<UnknownError />);
-			}
-		},
-		[events, presenceIncrementMutateAsync, presenceUpsertMutateAsync],
-	);
-
-	const handleScanResult = useCallback(
-		async (hackerId: string) => {
-			if (hackerId === prevHackerId.current) return;
-
-			console.debug("hackerId changed", hackerId, "!=", prevHackerId.current);
-			prevHackerId.current = hackerId;
-
-			if (hackerId === "") return;
-
-			if (selectedAction.current === DEFAULT_ACTION) {
-				void router.push(`/hackers/hacker?id=${hackerId}`);
-			} else {
-				try {
+				if (selectedAction.current === VIEW_PARTICIPANT) {
 					const hacker = await utils.hackers.get.fetch({ id: hackerId });
-					const presences = await utils.presence.getFromHackerId.fetch({ id: hackerId });
-					await handleEvent(hacker, presences);
-				} catch (error) {
-					playErrorSound();
-					if (error instanceof TRPCClientError) {
-						setDisplay(<Error message={error.message} />);
-					}
-					setDisplay(<UnknownError />);
+					if (sequence !== scanSequence.current) return;
+					setDisplay(<ParticipantCard hacker={hacker} />);
+					return;
 				}
+
+				const result = await scanPresence({ eventId: selectedAction.current, hackerId });
+				if (sequence !== scanSequence.current) return;
+				setDisplay(<WorkflowCard result={result} />);
+			} catch {
+				if (sequence !== scanSequence.current) return;
+				previousId.current = "";
+				setDisplay(undefined);
+				setError(t("unknown-error"));
 			}
 		},
-		[handleEvent, utils],
+		[scanPresence, t, utils],
 	);
-
-	// Memoize function to prevent re-rendering QRScanner. QRScanner should never be re-rendered or it will break.
-	// React does not properly re-render video components.
-	const onScan = useCallback(
-		(result: string) => {
-			console.debug("Scan result:", result);
-			void handleScanResult(result);
-		},
-		[handleScanResult],
-	);
+	const handleScan = useCallback((result: string) => void scan(result), [scan]);
 
 	return (
 		<App
-			className="relative flex h-full flex-col items-center justify-center gap-16 bg-default-gradient"
+			className="relative flex h-full flex-col items-center justify-center gap-8 overflow-y-auto bg-default-gradient p-6"
 			title={t("title")}
 		>
-			<div className="flex flex-col items-center gap-6">
-				<Filter value={[RoleName.ORGANIZER]} method="some">
-					<>
-						<select
-							className="p-3 text-center text-lg font-bold text-dark-color"
-							onChange={e => {
-								selectedAction.current = e.target.value;
-								prevHackerId.current = "";
-								setDisplay(<></>);
-								setError("");
-							}}
-						>
-							{menuOptions.map(event => {
-								return (
-									<option key={event} value={event}>
-										{t(event)}
-									</option>
-								);
-							})}
-						</select>
-						<QRScanner onScan={onScan} setError={setError} />
-						<PhysicalScanner onScan={onScan} />
-						{!error && (
-							<p className="z-10 max-w-xl text-center text-lg font-bold text-dark-color">
-								{t("scan-qr")}
-							</p>
-						)}
-					</>
-					<>
-						<Tabs names={["QR", "Scan"]}>
-							<>
-								<QRCode setError={setError} id={encryptedId} />
-								{!error && (
-									<p className="z-10 max-w-xl text-center text-lg font-bold text-dark-color">
-										{t("use-qr")}
-									</p>
-								)}
-							</>
-							<QRScanner onScan={onScan} setError={setError} />
-						</Tabs>
-					</>
-				</Filter>
-				{display}
-				{error && <Error message={error} />}
+			<select
+				className="p-3 text-center text-lg font-bold text-dark-color"
+				onChange={event => {
+					scanSequence.current += 1;
+					selectedAction.current = event.target.value;
+					previousId.current = "";
+					setDisplay(undefined);
+					setError("");
+				}}
+			>
+				<option value={VIEW_PARTICIPANT}>{t("view-participant")}</option>
+				{events.map(event => (
+					<option key={event.id} value={event.id}>
+						{t(`workflow.${event.scannerWorkflow}`)} — {i18n.language === "fr" ? event.nameFr : event.name}
+					</option>
+				))}
+			</select>
+			<div className="grid w-full max-w-4xl gap-6 md:grid-cols-2">
+				<QRScanner onScan={handleScan} setError={setError} />
+				<PhysicalScanner onScan={handleScan} />
 			</div>
+			{display}
+			{error && <ErrorDisplay message={error} />}
 		</App>
 	);
 };
 
-const UnknownError = () => {
-	const { t } = useTranslation("qr");
-
-	return <Error message={t("unknown-error")} />;
-};
-
-const NotHackerError = () => {
-	const { t } = useTranslation("qr");
-
-	return <Error message={t("not-hacker")} />;
-};
-
-type FirstTimeVisitor = {
-	hacker: Hacker;
-	event: string;
-	upsertFn: (params: { hackerId: string; value: number; label: string }) => Promise<void>;
-};
-
-const FirstTimeVisitor = ({ hacker, event }: FirstTimeVisitor) => {
+// Full operational lookup is deliberately separate from workflow scans. The
+// latter never call this endpoint or receive this broader object.
+const ParticipantCard = ({ hacker }: { hacker: Hacker }) => {
 	const { t } = useTranslation("qr");
 
 	return (
-		<div className="flex flex-col items-center justify-center gap-4 rounded-lg bg-light-primary-color p-6 text-light-color">
-			{t("checked-in", {
-				firstName: hacker.firstName,
-				lastName: hacker.lastName,
-				event: event,
-			})}
+		<div className="rounded-lg bg-light-primary-color p-6 font-rubik text-light-color">
+			<p className="break-all font-bold">{hacker.id}</p>
+			<p>{t("confirmed", { value: hacker.confirmed ? t("yes") : t("no") })}</p>
+			<p>{t("t-shirt", { value: hacker.tShirtSize })}</p>
+			<p>{t("meal", { value: hacker.mealCategory })}</p>
+			{hacker.walkIn && <p>{t("walk-in")}</p>}
 		</div>
 	);
 };
 
-type RepeatedVisitor = {
-	hacker: Hacker;
-	presence: Presence;
-	maxCheckIns: number | null;
-	incrementFn: (params: { id: string; value: number }) => Promise<void>;
+const WorkflowCard = ({ result }: { result: WorkflowScan }) => {
+	const { t, i18n } = useTranslation("qr");
+	const eventName = i18n.language === "fr" ? result.nameFr : result.name;
+
+	return (
+		<div className="rounded-lg bg-light-primary-color p-6 font-rubik text-light-color">
+			<p className="break-all font-bold">{result.participant.id}</p>
+			{result.workflow === ScannerWorkflow.CHECK_IN && (
+				<>
+					<p>{t("confirmed", { value: result.participant.confirmed ? t("yes") : t("no") })}</p>
+					<p>{t("t-shirt", { value: result.participant.tShirtSize })}</p>
+				</>
+			)}
+			{result.workflow === ScannerWorkflow.MERCHANDISE && (
+				<p>{t("t-shirt", { value: result.participant.tShirtSize })}</p>
+			)}
+			{result.workflow === ScannerWorkflow.FOOD && (
+				<>
+					<p>{t("meal", { value: result.participant.mealCategory })}</p>
+					{result.participant.requiresFoodLead && (
+						<p className="mt-3 rounded bg-light-quaternary-color p-3 font-bold text-dark-color">
+							{t("contact-food-lead")}
+						</p>
+					)}
+				</>
+			)}
+			<PresenceCounter
+				key={`${result.eventId}:${result.participant.id}`}
+				eventId={result.eventId}
+				hackerId={result.participant.id}
+				eventName={eventName}
+				initialValue={result.value}
+				initialAtLimit={result.atLimit}
+			/>
+		</div>
+	);
 };
 
-const RepeatedVisitor = ({ hacker, presence, maxCheckIns, incrementFn }: RepeatedVisitor) => {
+const PresenceCounter = ({
+	eventId,
+	hackerId,
+	eventName,
+	initialValue,
+	initialAtLimit,
+}: {
+	eventId: string;
+	hackerId: string;
+	eventName: string;
+	initialValue: number;
+	initialAtLimit: boolean;
+}) => {
 	const { t } = useTranslation("qr");
+	const adjustPresence = trpc.presence.adjust.useMutation();
+	const [value, setValue] = useState(initialValue);
+	const [atLimit, setAtLimit] = useState(initialAtLimit);
+	const [error, setError] = useState("");
 
-	const [counter, setCounter] = useState(0);
-
-	useEffect(() => {
-		setCounter(presence.value);
-	}, [presence]);
-
-	const handleIncrement = async (value: number) => {
-		setCounter(counter + value);
+	const change = async (amount: -1 | 1) => {
+		setError("");
 		try {
-			await incrementFn({ id: presence.id, value });
-		} catch (error) {
-			if (error instanceof TRPCClientError) {
-				return <Error message={error.message} />;
-			}
-			return <UnknownError />;
+			const next = await adjustPresence.mutateAsync({ eventId, hackerId, amount });
+			setValue(next.value);
+			setAtLimit(next.atLimit);
+		} catch {
+			setError(t("adjust-error"));
 		}
 	};
 
 	return (
-		<div className="flex flex-col items-center justify-center gap-4 rounded-lg bg-light-primary-color p-6 text-light-color">
-			<div>{t("already-checked-in", { firstName: hacker.firstName, lastName: hacker.lastName, counter })}</div>
-			{!maxCheckIns || maxCheckIns > presence.value ? (
-				<div className="flex w-full justify-center gap-16">
-					<button
-						className="z-10 w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
-						onClick={() => void handleIncrement(-1)}
-					>
-						—
-					</button>
-					<button
-						className="z-10 w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
-						onClick={() => void handleIncrement(1)}
-					>
-						+
-					</button>
-				</div>
-			) : (
-				<Error
-					message={t("max-check-ins-reached", {
-						maxCheckIns,
-						firstName: hacker.firstName,
-						lastName: hacker.lastName,
-					})}
-				/>
-			)}
-		</div>
+		<>
+			<p className="mt-3 font-bold">
+				{eventName}: {value}
+			</p>
+			{atLimit && <p className="mt-2">{t("maximum-reached")}</p>}
+			<div className="mt-4 flex justify-center gap-8">
+				<button
+					type="button"
+					disabled={value <= 0 || adjustPresence.isLoading}
+					className="rounded bg-light-quaternary-color px-5 py-2 text-dark-color disabled:opacity-50"
+					onClick={() => void change(-1)}
+				>
+					−
+				</button>
+				<button
+					type="button"
+					disabled={atLimit || adjustPresence.isLoading}
+					className="rounded bg-light-quaternary-color px-5 py-2 text-dark-color disabled:opacity-50"
+					onClick={() => void change(1)}
+				>
+					+
+				</button>
+			</div>
+			{error && <ErrorDisplay message={error} />}
+		</>
 	);
 };
 
 export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
-	const secretKey = env.QR_SECRET_KEY;
-	const session = await getServerSession(req, res, getAuthOptions(req));
-
-	const timestamp = Math.floor(Date.now() / 60000);
-	const encryptedId = session?.user?.hackerId ? encrypt(`${session.user.hackerId}:${timestamp}`, secretKey) : null;
-
+	const session = await getServerSession(req, res, getAuthOptions());
 	return {
-		redirect: await qrRedirect(session, "/qr"),
-		props: {
-			encryptedId,
-			...(await serverSideTranslations(locale ?? "en", ["qr", "navbar", "common"])),
-		},
+		redirect: await rolesRedirect(session, "/qr", [RoleName.ORGANIZER, RoleName.ADMIN]),
+		props: await serverSideTranslations(locale ?? "en", ["qr", "navbar", "common"]),
 	};
 };
 

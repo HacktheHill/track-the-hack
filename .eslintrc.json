@@ -2,9 +2,41 @@
 	"overrides": [
 		{
 			"extends": ["plugin:@typescript-eslint/recommended-requiring-type-checking"],
-			"files": ["*.ts", "*.tsx"],
+			"files": ["*.js", "*.mjs", "*.cjs", "*.ts", "*.tsx", "*.mts", "*.cts"],
 			"parserOptions": {
 				"project": "tsconfig.json"
+			},
+			"rules": {
+				"@typescript-eslint/consistent-type-assertions": ["error", { "assertionStyle": "never" }]
+			}
+		},
+		{
+			"extends": ["eslint:recommended"],
+			"files": ["*.gs"],
+			"globals": {
+				"HtmlService": "readonly",
+				"PropertiesService": "readonly",
+				"SpreadsheetApp": "readonly",
+				"UrlFetchApp": "readonly",
+				"Utilities": "readonly"
+			},
+			"parserOptions": {
+				"extraFileExtensions": [".gs"],
+				"project": null
+			},
+			"rules": {
+				"@typescript-eslint/no-unused-vars": [
+					"warn",
+					{
+						"varsIgnorePattern": "^(onOpen|setupTrackOperations|acceptSelectedApplications|acceptSelectedWalkInApplications|refreshRsvpStatus|issueAccessForSelectedParticipant)$"
+					}
+				],
+				"no-unused-vars": [
+					"error",
+					{
+						"varsIgnorePattern": "^(onOpen|setupTrackOperations|acceptSelectedApplications|acceptSelectedWalkInApplications|refreshRsvpStatus|issueAccessForSelectedParticipant)$"
+					}
+				]
 			}
 		}
 	],
@@ -15,6 +47,17 @@
 	"plugins": ["@typescript-eslint"],
 	"extends": ["next/core-web-vitals", "plugin:@typescript-eslint/recommended"],
 	"rules": {
-		"@typescript-eslint/consistent-type-imports": "warn"
+		"@typescript-eslint/consistent-type-imports": "warn",
+		"no-restricted-imports": [
+			"error",
+			{
+				"patterns": [
+					{
+						"group": ["../**"],
+						"message": "Use the @/ or @root/ alias instead of a parent-directory import."
+					}
+				]
+			}
+		]
 	}
 }

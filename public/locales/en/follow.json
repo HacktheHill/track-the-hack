@@ -1,8 +1,0 @@
-{
-	"confirm": "Follow Hack the Hill with {{email}}?",
-	"follow": "Yes",
-	"followed": "Followed with {{email}}",
-	"missing": "Missing email address",
-	"success": "You are now following Hack the Hill with {{email}}",
-	"home": "Return home"
-}
