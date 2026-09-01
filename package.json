@@ -17,7 +17,7 @@
 		"postinstall": "prisma generate",
 		"lint": "next lint",
 		"start": "next start",
-		"test": "node --experimental-strip-types --test",
+		"test": "tsx --test",
 		"format": "prettier --write ."
 	},
 	"dependencies": {

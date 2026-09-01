@@ -11,9 +11,10 @@ import { useEffect, useState } from "react";
 import App from "../../components/App";
 import Error from "../../components/Error";
 import Loading from "../../components/Loading";
+import { env } from "../../env/client.mjs";
 import { trpc } from "../../server/api/api";
 
-const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
+const VAPID_PUBLIC_KEY = env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
 
 const urlBase64ToUint8Array = (value: string) => {
 	const padded = value.padEnd(Math.ceil(value.length / 4) * 4, "=");
@@ -160,7 +161,15 @@ const EventView = ({ event, types }: EventViewProps) => {
 					for (const registration of registrations) {
 						const existingSubscription = await registration.pushManager.getSubscription();
 						if (existingSubscription) {
-							await existingSubscription.unsubscribe();
+							await fetch("/api/push/register", {
+								method: "POST",
+								headers: { "Content-Type": "application/json" },
+								body: JSON.stringify({
+									eventId: event.id,
+									enabled: false,
+									subscription: existingSubscription.toJSON(),
+								}),
+							});
 						}
 					}
 				}
