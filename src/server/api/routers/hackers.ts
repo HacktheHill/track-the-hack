@@ -9,6 +9,7 @@ import { hasRoles } from "../../../utils/helpers";
 import { log } from "../../lib/log";
 import { generatePresignedGetUrl, generatePresignedPutUrl, generateS3Filename } from "../../lib/s3";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+import { TRPCError } from "@trpc/server";
 import { sendApplyEmail } from "../../lib/email";
 
 const FILTER_OPTION_THRESHOLD = 3;
@@ -857,7 +858,7 @@ export const hackerRouter = createTRPCRouter({
 			});
 
 			if (!user) {
-				throw new Error("User not found");
+				throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
 			}
 
 			const hacker = await ctx.prisma.hacker.findUnique({
@@ -951,6 +952,25 @@ export const hackerRouter = createTRPCRouter({
 			}),
 		)
 		.query(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+			const user = await ctx.prisma.user.findUnique({
+				where: {
+					id: userId,
+				},
+				select: {
+					roles: {
+						select: {
+							name: true,
+						},
+					},
+					Hacker: true,
+				},
+			});
+
+			if (!user) {
+				throw new Error("User not found");
+			}
+
 			const hacker = await ctx.prisma.hacker.findUnique({
 				where: {
 					id: input.id,
@@ -958,7 +978,12 @@ export const hackerRouter = createTRPCRouter({
 			});
 
 			if (!hacker) {
-				throw new Error("Hacker not found");
+				throw new TRPCError({ code: "NOT_FOUND", message: "Hacker not found" });
+			}
+
+			// Security enhancement: Prevent IDOR by ensuring the user is either an organizer or downloading their own resume
+			if (!hasRoles(user, [RoleName.ORGANIZER]) && user.Hacker?.id !== hacker.id) {
+				throw new TRPCError({ code: "FORBIDDEN", message: "You do not have permission to do this" });
 			}
 
 			const filename = generateS3Filename(hacker.id, `${hacker.firstName}_${hacker.lastName}_Resume`, "pdf");
