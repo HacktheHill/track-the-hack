@@ -1,0 +1,3 @@
+## 2024-05-15 - [Sequential Database Queries in tRPC Routers]
+**Learning:** The metrics tRPC router was executing 13 independent database queries sequentially using `await` for each. This resulted in an "N+1 style" waterfall of queries where total execution time was the sum of all individual query times. Furthermore, some `count` queries were redundant. Prisma's connection pooling can handle concurrent operations like this efficiently.
+**Action:** Always wrap independent `ctx.prisma` queries in tRPC routers within a `Promise.all` block to execute them concurrently and reduce the overall response time of the endpoint. Reuse previously calculated variables to save redundant database queries.
