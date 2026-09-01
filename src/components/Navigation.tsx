@@ -173,7 +173,12 @@ const Navbar = ({ integrated }: NavbarProps) => {
 			{sessionData ? (
 				<button
 					className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors sm:visible"
-					onClick={() => void signOut()}
+					onClick={() => {
+						if (typeof window !== "undefined" && sessionData.user?.id) {
+							localStorage.removeItem(`tth_qr_encrypted_id_${sessionData.user.id}`);
+						}
+						void signOut();
+					}}
 				>
 					{t("sign-out")}
 				</button>

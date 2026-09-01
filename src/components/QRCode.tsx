@@ -1,3 +1,4 @@
+import { useSession } from "next-auth/react";
 import { useTranslation } from "next-i18next";
 import Image from "next/image";
 import qrcode from "qrcode";
@@ -12,14 +13,36 @@ type QRCodeProps = {
 
 const QRCode = ({ id, setError }: QRCodeProps) => {
 	const { t } = useTranslation("qr");
+	const { data: sessionData } = useSession();
+	const userId = sessionData?.user?.id;
 
 	const [qrCode, setQRCode] = useState<string | null>(null);
+	const [cachedId, setCachedId] = useState<string>("");
+
+	const storageKey = userId ? `tth_qr_encrypted_id_${userId}` : null;
+
+	useEffect(() => {
+		if (typeof window !== "undefined" && storageKey) {
+			const saved = localStorage.getItem(storageKey);
+			if (saved) setCachedId(saved);
+		}
+	}, [storageKey]);
+
+	// Prefer cachedId if network is offline or if id from props is empty
+	const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
+	const effectiveId = isOffline ? cachedId || id : id || cachedId;
+
+	useEffect(() => {
+		if (effectiveId && typeof window !== "undefined" && storageKey) {
+			localStorage.setItem(storageKey, effectiveId);
+		}
+	}, [effectiveId, storageKey]);
 
 	useEffect(() => {
 		async function generateQRCode() {
-			if (!id) return;
+			if (!effectiveId) return;
 			try {
-				const qr = await qrcode.toDataURL(id);
+				const qr = await qrcode.toDataURL(effectiveId);
 				setQRCode(qr);
 			} catch (error) {
 				setError(t("qr-failed"));
@@ -28,13 +51,15 @@ const QRCode = ({ id, setError }: QRCodeProps) => {
 		}
 		void generateQRCode();
 
-		// Refresh the QR code every minute
+		// Refresh the QR code every minute when online
 		const intervalId = setInterval(() => {
-			window.location.reload();
+			if (typeof navigator !== "undefined" && navigator.onLine) {
+				window.location.reload();
+			}
 		}, 30 * 1000);
 
 		return () => clearInterval(intervalId);
-	}, [id, setError, t]);
+	}, [effectiveId, setError, t]);
 
 	if (!qrCode) {
 		return <Error message={t("qr-failed")} />;

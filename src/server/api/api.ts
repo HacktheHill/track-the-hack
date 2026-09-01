@@ -31,6 +31,20 @@ export const trpc = createTRPCNext<AppRouter>({
 			transformer: superjson,
 
 			/**
+			 * Query client default options for offline support
+			 */
+			queryClientConfig: {
+				defaultOptions: {
+					queries: {
+						networkMode: "offlineFirst",
+					},
+					mutations: {
+						networkMode: "offlineFirst",
+					},
+				},
+			},
+
+			/**
 			 * Links used to determine request flow from client to server
 			 * @see https://trpc.io/docs/links
 			 * */
