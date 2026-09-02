@@ -4,3 +4,6 @@
 ## 2024-05-18 - ARIA Labels and Loading Indicators
 **Learning:** Found several components, like the main Loading indicator and icon-only close buttons, missing ARIA labels or proper ARIA roles for screen readers. Added `role="status"` to loading indicator and proper translation strings for ARIA labels. I also made sure to hide purely decorative SVGs that have labels via `aria-hidden="true"`.
 **Action:** Always check interactive icon buttons and loading spinners for ARIA attributes. Use the existing translation (`next-i18next`) keys available for `aria-label` properties.
+## 2026-09-02 - ARIA Labels on Select Elements
+**Learning:** Found `<select>` dropdowns (like the Language selector in the Navigation bar) that lack a visible `<label>`, making their purpose unclear to screen readers.
+**Action:** Always ensure that interactive form elements like `<select>` that lack a visible `<label>` include an explicit `aria-label` attribute (using `next-i18next` translations) so their purpose is accurately conveyed to assistive technologies.
