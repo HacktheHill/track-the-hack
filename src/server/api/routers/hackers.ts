@@ -6,6 +6,7 @@ import { env } from "../../../env/server.mjs";
 import { hackerSchema } from "../../../utils/common";
 import { hasRoles } from "../../../utils/helpers";
 // import { sendApplyEmail } from "../../lib/email";
+import { TRPCError } from "@trpc/server";
 import { log } from "../../lib/log";
 import { generatePresignedGetUrl, generatePresignedPutUrl, generateS3Filename } from "../../lib/s3";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
@@ -471,6 +472,33 @@ export const hackerRouter = createTRPCRouter({
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+			const user = await ctx.prisma.user.findUnique({
+				where: {
+					id: userId,
+				},
+				select: {
+					roles: {
+						select: {
+							name: true,
+						},
+					},
+					Hacker: {
+						select: {
+							id: true,
+						},
+					},
+				},
+			});
+
+			if (!user) {
+				throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+			}
+
+			if (!hasRoles(user, [RoleName.ADMIN, RoleName.ORGANIZER]) && user.Hacker?.id !== input.id) {
+				throw new TRPCError({ code: "FORBIDDEN", message: "You do not have permission to do this" });
+			}
+
 			const hacker = await ctx.prisma.hacker.findUnique({
 				where: {
 					id: input.id,
@@ -478,7 +506,7 @@ export const hackerRouter = createTRPCRouter({
 			});
 
 			if (!hacker) {
-				throw new Error("Hacker not found");
+				throw new TRPCError({ code: "NOT_FOUND", message: "Hacker not found" });
 			}
 
 			await ctx.prisma.hacker.update({
