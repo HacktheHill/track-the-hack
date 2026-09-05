@@ -10,6 +10,7 @@ import { log } from "../../lib/log";
 import { generatePresignedGetUrl, generatePresignedPutUrl, generateS3Filename } from "../../lib/s3";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { sendApplyEmail } from "../../lib/email";
+import { TRPCError } from "@trpc/server";
 
 const FILTER_OPTION_THRESHOLD = 3;
 
@@ -471,6 +472,16 @@ export const hackerRouter = createTRPCRouter({
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+			const user = await ctx.prisma.user.findUnique({
+				where: { id: userId },
+				select: { roles: { select: { name: true } } },
+			});
+
+			if (!user) {
+				throw new TRPCError({ code: "UNAUTHORIZED", message: "User not found" });
+			}
+
 			const hacker = await ctx.prisma.hacker.findUnique({
 				where: {
 					id: input.id,
@@ -478,7 +489,14 @@ export const hackerRouter = createTRPCRouter({
 			});
 
 			if (!hacker) {
-				throw new Error("Hacker not found");
+				throw new TRPCError({ code: "NOT_FOUND", message: "Hacker not found" });
+			}
+
+			if (hacker.userId !== userId && !hasRoles(user, [RoleName.ORGANIZER])) {
+				throw new TRPCError({
+					code: "FORBIDDEN",
+					message: "You do not have permission to confirm this hacker",
+				});
 			}
 
 			await ctx.prisma.hacker.update({
@@ -951,6 +969,16 @@ export const hackerRouter = createTRPCRouter({
 			}),
 		)
 		.query(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+			const user = await ctx.prisma.user.findUnique({
+				where: { id: userId },
+				select: { roles: { select: { name: true } } },
+			});
+
+			if (!user) {
+				throw new TRPCError({ code: "UNAUTHORIZED", message: "User not found" });
+			}
+
 			const hacker = await ctx.prisma.hacker.findUnique({
 				where: {
 					id: input.id,
@@ -958,7 +986,14 @@ export const hackerRouter = createTRPCRouter({
 			});
 
 			if (!hacker) {
-				throw new Error("Hacker not found");
+				throw new TRPCError({ code: "NOT_FOUND", message: "Hacker not found" });
+			}
+
+			if (hacker.userId !== userId && !hasRoles(user, [RoleName.ORGANIZER])) {
+				throw new TRPCError({
+					code: "FORBIDDEN",
+					message: "You do not have permission to download this resume",
+				});
 			}
 
 			const filename = generateS3Filename(hacker.id, `${hacker.firstName}_${hacker.lastName}_Resume`, "pdf");
