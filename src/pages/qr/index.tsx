@@ -170,6 +170,7 @@ const QR = ({ encryptedId }: { encryptedId: string }) => {
 								setDisplay(<></>);
 								setError("");
 							}}
+							aria-label={t("select-event")}
 						>
 							{menuOptions.map(event => {
 								return (

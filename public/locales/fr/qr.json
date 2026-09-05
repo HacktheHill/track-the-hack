@@ -7,5 +7,6 @@
 	"get-hacker": "Obtenir le hacker",
 	"not-hacker": "Cet utilisateur n'a pas encore été accepté pour participer au Hackathon.",
 	"already-checked-in": "{{firstName}} {{lastName}} s'est déjà enregistré {{counter}} fois!",
-	"max-check-ins-reached": "Vous avez atteint le maximum de {{maxCheckIns}} enregistrements pour {{firstName}} {{lastName}}!"
+	"max-check-ins-reached": "Vous avez atteint le maximum de {{maxCheckIns}} enregistrements pour {{firstName}} {{lastName}}!",
+	"select-event": "Choisir l'événement"
 }

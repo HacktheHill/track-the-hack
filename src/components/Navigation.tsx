@@ -162,6 +162,7 @@ const Navbar = ({ integrated }: NavbarProps) => {
 				className="hover:bg-light-quaternary ml-auto whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors sm:visible"
 				onChange={handleLanguageChange}
 				value={locale ?? "en"}
+				aria-label={t("select-language")}
 			>
 				{Object.keys(Locale).map(locale => (
 					<option key={locale} value={locale.toLocaleLowerCase()}>
