@@ -1,0 +1,3 @@
+## 2024-09-06 - [Avoid Expensive Array Calculations in Render Phase]
+**Learning:** React components sometimes process long lists synchronously (e.g. `filter`, `sort`, `reduce`) right inside the render phase. When auto-updating is needed (like filtering out events in the past), developers might use `Date.now()` inline, preventing memoization.
+**Action:** Extract these expensive calculations into a `useMemo` hook before any early returns. To maintain auto-updating, use a `useState` for the current time that is periodically updated via `setInterval` in a `useEffect`. This cleanly decouples the time dependency and allows proper memoization of the array operations.
