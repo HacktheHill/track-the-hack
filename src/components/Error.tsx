@@ -15,13 +15,13 @@ const Error = ({ message }: ErrorProps) => {
 					message,
 				})}
 			</code>
-			<Link href="mailto:info@ctn-rtc.org" target="_blank" rel="noreferrer" aria-label={t("contact-us")}>
-				<button
-					type="button"
-					className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
-				>
-					{t("contact-us")}
-				</button>
+			<Link
+				href="mailto:info@ctn-rtc.org"
+				target="_blank"
+				rel="noreferrer"
+				className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-dark-primary-color focus-visible:ring-offset-2 short:text-base"
+			>
+				{t("contact-us")}
 			</Link>
 		</div>
 	);
