@@ -1,8 +1,8 @@
-import { createTRPCRouter, publicProcedure } from "../trpc";
+import { createTRPCRouter, publicProcedure, protectedProcedure } from "../trpc";
 import { z } from "zod";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { TRPCError } from "@trpc/server";
+import { RoleName } from "@prisma/client";
+import { hasRoles } from "../../../utils/helpers";
 
 export const teamsRouter = createTRPCRouter({
 	// Check if a team exists
@@ -12,8 +12,8 @@ export const teamsRouter = createTRPCRouter({
 				name: z.string().min(1, "Team name is required"),
 			}),
 		)
-		.query(async ({ input }) => {
-			const team = await prisma.team.findUnique({
+		.query(async ({ ctx, input }) => {
+			const team = await ctx.prisma.team.findUnique({
 				where: {
 					name: input.name,
 				},
@@ -39,15 +39,43 @@ export const teamsRouter = createTRPCRouter({
 		}),
 
 	// Create a new team
-	create: publicProcedure
+	create: protectedProcedure
 		.input(
 			z.object({
 				teamName: z.string().min(3).max(50),
 				hackerId: z.string(),
 			}),
 		)
-		.mutation(async ({ input }) => {
-			const existingTeam = await prisma.team.findUnique({
+		.mutation(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+			const user = await ctx.prisma.user.findUnique({
+				where: {
+					id: userId,
+				},
+				select: {
+					roles: {
+						select: {
+							name: true,
+						},
+					},
+					Hacker: true,
+				},
+			});
+
+			if (!user) {
+				throw new TRPCError({ code: "UNAUTHORIZED", message: "User not found" });
+			}
+
+			const isAuthorized = hasRoles(user, [RoleName.ADMIN, RoleName.ORGANIZER]) || (user.Hacker && user.Hacker.id === input.hackerId);
+
+			if (!isAuthorized) {
+				throw new TRPCError({
+					code: "FORBIDDEN",
+					message: "You are not authorized to create a team for this hacker.",
+				});
+			}
+
+			const existingTeam = await ctx.prisma.team.findUnique({
 				where: {
 					name: input.teamName,
 				},
@@ -57,7 +85,7 @@ export const teamsRouter = createTRPCRouter({
 				throw new Error("Team already exists");
 			}
 
-			const newTeam = await prisma.team.create({
+			const newTeam = await ctx.prisma.team.create({
 				data: {
 					name: input.teamName,
 					hackers: {
@@ -76,7 +104,7 @@ export const teamsRouter = createTRPCRouter({
 				},
 			});
 
-			await prisma.team.deleteMany({
+			await ctx.prisma.team.deleteMany({
 				where: {
 					hackers: {
 						none: {},
