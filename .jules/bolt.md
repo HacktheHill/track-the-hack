@@ -1,0 +1,3 @@
+## 2023-10-27 - Remove Redundant Session Queries
+**Learning:** Found an anti-pattern in trpc endpoints where `ctx.prisma.user.findUnique` was frequently called just to retrieve user roles or the `hackerId` relation for authorization purposes, despite this data already being available (via next-auth configuration) in `ctx.session.user`.
+**Action:** Always check if required authorization claims (like roles or common relations) are already populated in `ctx.session` before performing a database query in a `protectedProcedure`. Extended `hasRoles` to support checking the simple string array in the session object.
