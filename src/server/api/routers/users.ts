@@ -26,7 +26,7 @@ export const userRouter = createTRPCRouter({
 			});
 
 			if (existingUser) {
-				return existingUser;
+				throw new TRPCError({ code: "CONFLICT", message: "User already exists" });
 			}
 
 			const passwordHash = input.password ? await argon2.hash(input.password) : undefined;
