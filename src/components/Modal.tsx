@@ -26,13 +26,17 @@ const Modal = ({ children, buttons }: ModalProps) => {
 	return modalRoot
 		? createPortal(
 				<div className="fixed inset-0 z-50 flex items-center justify-center bg-light-tertiary-color bg-opacity-90">
-					<div className="flex w-full max-w-lg flex-col gap-4 rounded border border-dark-primary-color bg-light-quaternary-color p-8 text-center">
+					<div
+						className="flex w-full max-w-lg flex-col gap-4 rounded border border-dark-primary-color bg-light-quaternary-color p-8 text-center"
+						role="dialog"
+						aria-modal="true"
+					>
 						{children}
 						<div className="flex justify-center gap-4">
 							{buttons.map((button, index) => (
 								<button
 									key={index}
-									className={`whitespace-nowrap rounded-lg border border-dark-primary-color px-4 py-2 text-dark-primary-color transition-colors hover:bg-light-tertiary-color ${
+									className={`whitespace-nowrap rounded-lg border border-dark-primary-color px-4 py-2 text-dark-primary-color transition-colors hover:bg-light-tertiary-color focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-dark-primary-color ${
 										button.className || ""
 									}`}
 									onClick={button.onClick}

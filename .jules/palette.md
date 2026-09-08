@@ -4,3 +4,7 @@
 ## 2024-05-18 - ARIA Labels and Loading Indicators
 **Learning:** Found several components, like the main Loading indicator and icon-only close buttons, missing ARIA labels or proper ARIA roles for screen readers. Added `role="status"` to loading indicator and proper translation strings for ARIA labels. I also made sure to hide purely decorative SVGs that have labels via `aria-hidden="true"`.
 **Action:** Always check interactive icon buttons and loading spinners for ARIA attributes. Use the existing translation (`next-i18next`) keys available for `aria-label` properties.
+
+## 2026-09-08 - Added ARIA roles and focus states to Modal
+**Learning:** The generic Modal component was lacking accessibility features for screen readers and keyboard users. Without `role="dialog"` and `aria-modal="true"`, assistive technologies wouldn't announce it as a dialog properly. The buttons inside the modal were missing clear focus rings for keyboard navigation.
+**Action:** When creating or modifying a custom modal/dialog component, always apply `role="dialog"` and `aria-modal="true"` to the container element. Furthermore, ensure all interactive elements like buttons have visible focus states using utility classes (e.g. `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color`).
