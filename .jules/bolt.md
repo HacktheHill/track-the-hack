@@ -1,0 +1,3 @@
+## 2024-03-24 - Memoizing Expensive Computations Before Early Returns
+**Learning:** Avoid running expensive synchronous array operations (.filter, .sort, .reduce) directly in the render phase. Memoize them, and be careful with implicit dependencies like `Date.now()` which hinder memoization. Move these implicit dependencies to state and update them via intervals to maintain auto-updating behaviors. Finally, strictly follow React's Rules of Hooks by keeping these hooks before any early returns (e.g., `if (query.isLoading) return ...`).
+**Action:** Always extract expensive map/filter/sort logic into `useMemo` hooks in React components, and hoist dependencies (including the hooks themselves) to the top-level of the component prior to any early returns.
