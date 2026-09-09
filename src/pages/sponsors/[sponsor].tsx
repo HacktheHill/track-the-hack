@@ -49,24 +49,33 @@ const SponsorPage = ({ id, name, tier, logo, hiringLink, websiteLink, additional
 				<p className="text-lg">{t(`descriptions.${id}`)}</p>
 				<div className="flex items-center justify-center gap-4">
 					{hiringLink && (
-						<Link href={hiringLink} target="_blank" rel="noopener noreferrer">
-							<button className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors">
-								{t("hiring")}
-							</button>
+						<Link
+							href={hiringLink}
+							target="_blank"
+							rel="noopener noreferrer"
+							className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors"
+						>
+							{t("hiring")}
 						</Link>
 					)}
 					{websiteLink && (
-						<Link href={websiteLink} target="_blank" rel="noopener noreferrer">
-							<button className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors">
-								{t("website")}
-							</button>
+						<Link
+							href={websiteLink}
+							target="_blank"
+							rel="noopener noreferrer"
+							className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors"
+						>
+							{t("website")}
 						</Link>
 					)}
 					{additionalLink && (
-						<Link href={additionalLink} target="_blank" rel="noopener noreferrer">
-							<button className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors">
-								{t("additional")}
-							</button>
+						<Link
+							href={additionalLink}
+							target="_blank"
+							rel="noopener noreferrer"
+							className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors"
+						>
+							{t("additional")}
 						</Link>
 					)}
 				</div>

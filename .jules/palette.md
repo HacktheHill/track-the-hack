@@ -4,3 +4,6 @@
 ## 2024-05-18 - ARIA Labels and Loading Indicators
 **Learning:** Found several components, like the main Loading indicator and icon-only close buttons, missing ARIA labels or proper ARIA roles for screen readers. Added `role="status"` to loading indicator and proper translation strings for ARIA labels. I also made sure to hide purely decorative SVGs that have labels via `aria-hidden="true"`.
 **Action:** Always check interactive icon buttons and loading spinners for ARIA attributes. Use the existing translation (`next-i18next`) keys available for `aria-label` properties.
+## 2024-05-20 - Invalid Nested Interactive Elements (Buttons inside Links)
+**Learning:** Found multiple instances where `<button>` tags were nested inside Next.js `<Link>` tags to create button-like links (e.g. in Error pages or external sponsor links). This is an invalid HTML pattern that creates accessibility and semantic issues because interactive elements cannot be nested inside each other.
+**Action:** When building button-like links, do not nest a `<button>` inside an `<a>` or `<Link>`. Instead, apply the necessary styling (like Tailwind CSS classes `rounded-lg px-4 py-2 border` etc.) directly to the `<Link>` element to achieve the visual appearance of a button while maintaining valid, accessible HTML.
