@@ -19,10 +19,18 @@ export const userRouter = createTRPCRouter({
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
+			const selectFields = {
+				id: true,
+				email: true,
+				name: true,
+				image: true,
+			};
+
 			const existingUser = await ctx.prisma.user.findFirst({
 				where: {
 					email: input.email,
 				},
+				select: selectFields,
 			});
 
 			if (existingUser) {
@@ -36,6 +44,7 @@ export const userRouter = createTRPCRouter({
 					email: input.email,
 					passwordHash,
 				},
+				select: selectFields,
 			});
 
 			await log(ctx, {
