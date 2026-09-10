@@ -159,6 +159,7 @@ const Navbar = ({ integrated }: NavbarProps) => {
 			</div>
 
 			<select
+				aria-label={t("language-select")}
 				className="hover:bg-light-quaternary ml-auto whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors sm:visible"
 				onChange={handleLanguageChange}
 				value={locale ?? "en"}
