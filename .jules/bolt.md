@@ -1,0 +1,3 @@
+## 2026-09-10 - Memoize Expensive Derived State with Implicit Time Dependencies
+**Learning:** Avoid executing expensive synchronous array operations (.filter, .sort, .reduce) directly in the React render phase, particularly when they involve date formatting (`toLocaleDateString`) and implicit time dependencies (`Date.now()`).
+**Action:** Wrap derived data in `useMemo` hooks placed before early returns. If the calculation depends on `Date.now()`, replace it with a state variable that periodically updates (e.g., via `setInterval`) so the `useMemo` dependency array is explicit and correctly triggers recalculations.
