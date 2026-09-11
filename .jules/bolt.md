@@ -1,0 +1,3 @@
+## 2024-05-24 - Expensive synchronous operations in render phase
+**Learning:** Found a recurring anti-pattern where expensive synchronous array operations (.filter, .sort, .reduce) and formatting (e.g. Date.toLocaleDateString) are executed directly in the render phase. In the schedule page, this is particularly bad due to the frequency of re-renders and the implicit dependency on Date.now().
+**Action:** Wrap these derived data calculations in useMemo hooks. Be careful with implicit dependencies like Date.now() which will break auto-updating behaviors if memoized; replace them with state that periodically updates via setInterval.
