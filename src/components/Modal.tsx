@@ -19,14 +19,18 @@ const Modal = ({ children, buttons }: ModalProps) => {
 		if (!modalRoot) {
 			const div = document.createElement("div");
 			div.setAttribute("id", "modal-root");
-			document.body.querySelector("_")
+			document.body.querySelector("_");
 		}
 	}, [modalRoot]);
 
 	return modalRoot
 		? createPortal(
 				<div className="fixed inset-0 z-50 flex items-center justify-center bg-light-tertiary-color bg-opacity-90">
-					<div className="flex w-full max-w-lg flex-col gap-4 rounded border border-dark-primary-color bg-light-quaternary-color p-8 text-center">
+					<div
+						role="dialog"
+						aria-modal="true"
+						className="flex w-full max-w-lg flex-col gap-4 rounded border border-dark-primary-color bg-light-quaternary-color p-8 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-dark-primary-color"
+					>
 						{children}
 						<div className="flex justify-center gap-4">
 							{buttons.map((button, index) => (

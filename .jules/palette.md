@@ -4,3 +4,6 @@
 ## 2024-05-18 - ARIA Labels and Loading Indicators
 **Learning:** Found several components, like the main Loading indicator and icon-only close buttons, missing ARIA labels or proper ARIA roles for screen readers. Added `role="status"` to loading indicator and proper translation strings for ARIA labels. I also made sure to hide purely decorative SVGs that have labels via `aria-hidden="true"`.
 **Action:** Always check interactive icon buttons and loading spinners for ARIA attributes. Use the existing translation (`next-i18next`) keys available for `aria-label` properties.
+## 2024-05-20 - Added ARIA roles to Modal component
+**Learning:** Similar to the Tabs component, the custom Modal component was missing crucial semantic HTML elements. It lacked a `role="dialog"` and `aria-modal="true"`, meaning screen readers would not correctly identify the content as an interactive modal dialog overlay. It was also missing a visual focus indicator for keyboard users navigating to the modal content.
+**Action:** Always ensure that custom interactive components functioning as dialogs or overlays are appropriately augmented with `role="dialog"`, `aria-modal="true"`, and standard Tailwind focus ring classes (`focus-visible:ring-2 focus-visible:outline-none`) to support screen readers and robust keyboard accessibility.
