@@ -23,6 +23,9 @@ export const userRouter = createTRPCRouter({
 				where: {
 					email: input.email,
 				},
+				select: {
+					id: true, // Only fetch id to reduce database load for existence check
+				},
 			});
 
 			if (existingUser) {
@@ -35,6 +38,18 @@ export const userRouter = createTRPCRouter({
 				data: {
 					email: input.email,
 					passwordHash,
+				},
+				// SECURITY: Explicitly restrict returned fields to prevent leaking sensitive data like passwordHash
+				select: {
+					id: true,
+					name: true,
+					email: true,
+					image: true,
+					roles: {
+						select: {
+							name: true,
+						},
+					},
 				},
 			});
 
