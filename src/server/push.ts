@@ -93,13 +93,16 @@ export const registerEventPushSubscription = async (
     });
 };
 
-export const unregisterEventPushSubscription = async (eventId: string, endpoint?: string, prismaClient?: PrismaClient) => {
-    const client = prismaClient ?? (await getPrismaClient());
+export const unregisterEventPushSubscription = async (
+    eventId: string,
+    endpoint: string,
+    prismaClient?: PrismaClient,
+) => {
     if (!endpoint) {
-        await client.pushSubscription.deleteMany({ where: { eventId } });
         return;
     }
 
+    const client = prismaClient ?? (await getPrismaClient());
     await client.pushSubscription.deleteMany({ where: { eventId, endpoint } });
 };
 
