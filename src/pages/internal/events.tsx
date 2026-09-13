@@ -114,6 +114,7 @@ const Events: NextPage = () => {
 export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
 	const session = await getServerSession(req, res, getAuthOptions(req));
 	return {
+		redirect: await rolesRedirect(session, "/", [RoleName.ORGANIZER, RoleName.ADMIN]),
 		props: {
 			...(await serverSideTranslations(locale ?? "en", ["internal", "navbar", "common"])),
 		},
