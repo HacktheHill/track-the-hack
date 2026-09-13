@@ -4,3 +4,6 @@
 ## 2024-05-18 - ARIA Labels and Loading Indicators
 **Learning:** Found several components, like the main Loading indicator and icon-only close buttons, missing ARIA labels or proper ARIA roles for screen readers. Added `role="status"` to loading indicator and proper translation strings for ARIA labels. I also made sure to hide purely decorative SVGs that have labels via `aria-hidden="true"`.
 **Action:** Always check interactive icon buttons and loading spinners for ARIA attributes. Use the existing translation (`next-i18next`) keys available for `aria-label` properties.
+## 2024-05-18 - Language Selector aria-label
+**Learning:** The language select dropdown in the `Navigation.tsx` component had no associated visible label or `aria-label`, making it difficult for screen reader users to identify its purpose. Since standard HTML `<select>` elements lack implicit self-labeling text (like standard buttons), they strictly require an explicit label using `id`/`<label for="...">` or `aria-label`.
+**Action:** Always ensure that interactive form elements (e.g., `<select>`, `<input>`) that lack a visible `<label>` include an explicit `aria-label` attribute, leveraging `next-i18next` translations where appropriate.
