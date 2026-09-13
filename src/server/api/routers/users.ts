@@ -23,6 +23,12 @@ export const userRouter = createTRPCRouter({
 				where: {
 					email: input.email,
 				},
+				// 🛡️ SECURITY: Explicitly select fields to prevent leaking sensitive data like passwordHash to the client
+				select: {
+					id: true,
+					name: true,
+					email: true,
+				},
 			});
 
 			if (existingUser) {
@@ -35,6 +41,12 @@ export const userRouter = createTRPCRouter({
 				data: {
 					email: input.email,
 					passwordHash,
+				},
+				// 🛡️ SECURITY: Explicitly select fields to prevent leaking sensitive data like passwordHash to the client
+				select: {
+					id: true,
+					name: true,
+					email: true,
 				},
 			});
 
