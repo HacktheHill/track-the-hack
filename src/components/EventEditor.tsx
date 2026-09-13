@@ -66,7 +66,7 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 	});
 
 	const addLink = () => {
-		setLinks([...links, { title: "", url: "" }]);
+		if (links.length === 0) setLinks([{ title: "", url: "" }]);
 	};
 
 	const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -355,14 +355,15 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 							</button>
 						</div>
 					))}
-
-					<button
-						type="button"
-						onClick={addLink}
-						className="self-start rounded border border-dark-primary-color px-4 py-2"
-					>
-						+ {t("events.add-link")}
-					</button>
+					{links.length === 0 && (
+						<button
+							type="button"
+							onClick={addLink}
+							className="self-start rounded border border-dark-primary-color px-4 py-2"
+						>
+							+ {t("events.add-link")}
+						</button>
+					)}
 				</div>
 
 				<div className="flex items-center gap-2">
