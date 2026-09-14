@@ -32,6 +32,26 @@ const urlBase64ToUint8Array = (value: string) => {
 
 const EVENT_NOTIFICATION_STORAGE_KEY = "track-the-hack:event-notification-requests";
 
+const isPushAvailable = () => {
+	if (typeof window === "undefined") {
+		return false;
+	}
+
+	if (!("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) {
+		return false;
+	}
+
+	if (!VAPID_PUBLIC_KEY || VAPID_PUBLIC_KEY.trim() === "") {
+		return false;
+	}
+
+	if (Notification.permission === "denied") {
+		return false;
+	}
+
+	return true;
+};
+
 const getRequestedEventNotifications = () => {
 	if (typeof window === "undefined") {
 		return [] as string[];
@@ -55,7 +75,7 @@ const getRequestedEventNotifications = () => {
 };
 
 const isEventNotificationRequested = (eventId: string) => {
-	if (typeof window === "undefined" || !("Notification" in window)) {
+	if (!isPushAvailable()) {
 		return false;
 	}
 
@@ -144,14 +164,17 @@ const EventView = ({ event, types }: EventViewProps) => {
 	const { t } = useTranslation("event");
 	const router = useRouter();
 	const { locale } = router;
-	const [notifyRequested, setNotifyRequested] = useState(() => isEventNotificationRequested(event.id));
+	const [pushAvailable, setPushAvailable] = useState(false);
+	const [notifyRequested, setNotifyRequested] = useState(false);
 
 	useEffect(() => {
-		setNotifyRequested(isEventNotificationRequested(event.id));
+		const available = isPushAvailable();
+		setPushAvailable(available);
+		setNotifyRequested(available && isEventNotificationRequested(event.id));
 	}, [event.id]);
 
 	const handleNotifyToggle = async () => {
-		if (typeof window === "undefined") {
+		if (typeof window === "undefined" || !isPushAvailable()) {
 			return;
 		}
 
@@ -190,16 +213,15 @@ const EventView = ({ event, types }: EventViewProps) => {
 		const permissionGranted = await requestEventNotificationPermission();
 		if (!permissionGranted) {
 			setNotifyRequested(false);
+			if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "denied") {
+				setPushAvailable(false);
+			}
 			return;
 		}
 
 		if (!("serviceWorker" in navigator) || !("PushManager" in window) || !VAPID_PUBLIC_KEY) {
-			const requestedEvents = getRequestedEventNotifications();
-			const nextRequestedEvents = requestedEvents.includes(event.id)
-				? requestedEvents
-				: [...requestedEvents, event.id];
-			setRequestedEventNotifications(nextRequestedEvents);
-			setNotifyRequested(true);
+			setNotifyRequested(false);
+			setPushAvailable(false);
 			return;
 		}
 
@@ -309,13 +331,16 @@ const EventView = ({ event, types }: EventViewProps) => {
 				<button
 					type="button"
 					onClick={() => void handleNotifyToggle()}
+					disabled={!pushAvailable}
 					aria-pressed={notifyRequested}
-					className={`mt-4 w-fit rounded-lg border px-4 py-2 font-coolvetica text-base transition-colors ${notifyRequested
-						? "border-dark-color bg-dark-color text-light-color"
-						: "border-dark-color bg-light-primary-color text-dark-color hover:bg-dark-secondary-color"
+					className={`mt-4 w-fit rounded-lg border px-4 py-2 font-coolvetica text-base transition-colors ${!pushAvailable
+							? "cursor-not-allowed border-dark-secondary-color bg-light-tertiary-color text-dark-secondary-color opacity-60"
+							: notifyRequested
+								? "border-dark-color bg-dark-color text-light-color"
+								: "border-dark-color bg-light-primary-color text-dark-color hover:bg-dark-secondary-color"
 						}`}
 				>
-					{notifyRequested ? t("notify-me-active") : t("notify-me")}
+					{!pushAvailable ? t("notify-me-unavailable") : notifyRequested ? t("notify-me-active") : t("notify-me")}
 				</button>
 			</div>
 
