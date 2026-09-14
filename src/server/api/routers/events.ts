@@ -120,7 +120,7 @@ export const eventsRouter = createTRPCRouter({
 			throw new Error("User not found");
 		}
 
-		if (!hasRoles(user, [RoleName.ORGANIZER])) {
+		if (!hasRoles(user, [RoleName.ORGANIZER, RoleName.ADMIN])) {
 			throw new Error("You do not have permission to create events");
 		}
 
@@ -172,7 +172,7 @@ export const eventsRouter = createTRPCRouter({
 				throw new Error("User not found");
 			}
 
-			if (!hasRoles(user, [RoleName.ORGANIZER])) {
+			if (!hasRoles(user, [RoleName.ORGANIZER, RoleName.ADMIN])) {
 				throw new Error("You do not have permission to update events");
 			}
 
