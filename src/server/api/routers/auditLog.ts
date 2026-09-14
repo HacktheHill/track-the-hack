@@ -1,5 +1,8 @@
+import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
+
+const prisma = new PrismaClient();
 
 export const logRouter = createTRPCRouter({
 	new: protectedProcedure
@@ -15,8 +18,8 @@ export const logRouter = createTRPCRouter({
 				sourceType: z.string(),
 			}),
 		)
-		.mutation(async ({ ctx, input }) => {
-			const log = await ctx.prisma.log.create({
+		.mutation(async ({ input }) => {
+			const log = await prisma.log.create({
 				data: input,
 			});
 
@@ -27,8 +30,8 @@ export const logRouter = createTRPCRouter({
 			return log;
 		}),
 
-	all: protectedProcedure.query(async ({ ctx }) => {
-		const logs = await ctx.prisma.log.findMany({
+	all: protectedProcedure.query(async () => {
+		const logs = await prisma.log.findMany({
 			orderBy: [
 				{
 					timestamp: "desc",

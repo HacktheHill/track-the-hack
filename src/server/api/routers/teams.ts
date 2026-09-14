@@ -1,5 +1,8 @@
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import { z } from "zod";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 export const teamsRouter = createTRPCRouter({
 	// Check if a team exists
@@ -9,8 +12,8 @@ export const teamsRouter = createTRPCRouter({
 				name: z.string().min(1, "Team name is required"),
 			}),
 		)
-		.query(async ({ ctx, input }) => {
-			const team = await ctx.prisma.team.findUnique({
+		.query(async ({ input }) => {
+			const team = await prisma.team.findUnique({
 				where: {
 					name: input.name,
 				},
@@ -43,8 +46,8 @@ export const teamsRouter = createTRPCRouter({
 				hackerId: z.string(),
 			}),
 		)
-		.mutation(async ({ ctx, input }) => {
-			const existingTeam = await ctx.prisma.team.findUnique({
+		.mutation(async ({ input }) => {
+			const existingTeam = await prisma.team.findUnique({
 				where: {
 					name: input.teamName,
 				},
@@ -54,7 +57,7 @@ export const teamsRouter = createTRPCRouter({
 				throw new Error("Team already exists");
 			}
 
-			const newTeam = await ctx.prisma.team.create({
+			const newTeam = await prisma.team.create({
 				data: {
 					name: input.teamName,
 					hackers: {
@@ -73,7 +76,7 @@ export const teamsRouter = createTRPCRouter({
 				},
 			});
 
-			await ctx.prisma.team.deleteMany({
+			await prisma.team.deleteMany({
 				where: {
 					hackers: {
 						none: {},
