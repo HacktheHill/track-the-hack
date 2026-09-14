@@ -3,6 +3,7 @@
 	"close-event": "Close Event",
 	"notify-me": "Notify me when this event starts",
 	"notify-me-active": "You will be notified when this event starts",
+	"notify-me-unavailable": "Notifications unavailable",
 	"type": {
 		"ALL": "All",
 		"WORKSHOP": "Workshop",

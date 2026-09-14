@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
-import { registerEventPushSubscription, unregisterEventPushSubscription } from "../../../server/push";
+import { isAllowedPushEndpoint, registerEventPushSubscription, unregisterEventPushSubscription } from "../../../server/push";
 
 export default async function handler(request: NextApiRequest, response: NextApiResponse) {
     if (request.method !== "POST") {
@@ -38,18 +38,23 @@ export default async function handler(request: NextApiRequest, response: NextApi
     const p256dh = typeof keys.p256dh === "string" ? keys.p256dh : "";
     const auth = typeof keys.auth === "string" ? keys.auth : "";
 
-    if (!endpoint || !p256dh || !auth) {
+    if (!endpoint || !p256dh || !auth || !isAllowedPushEndpoint(endpoint)) {
         response.status(400).json({ error: "Invalid push subscription" });
         return;
     }
 
-    await registerEventPushSubscription(eventId, {
-        endpoint,
-        keys: {
-            p256dh,
-            auth,
-        },
-    });
+    try {
+        await registerEventPushSubscription(eventId, {
+            endpoint,
+            keys: {
+                p256dh,
+                auth,
+            },
+        });
+    } catch {
+        response.status(400).json({ error: "Invalid push subscription" });
+        return;
+    }
 
     response.status(200).json({ success: true });
 }
