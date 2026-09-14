@@ -1,5 +1,23 @@
+import { RoleName } from "@prisma/client";
+import { hasRoles } from "../../../utils/helpers";
 import { z } from "zod";
-import { createTRPCRouter, publicProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+
+const eventInputSchema = z.object({
+	name: z.string().min(1),
+	nameFr: z.string().min(1),
+	room: z.string().min(1),
+	start: z.date(),
+	end: z.date(),
+	description: z.string(),
+	descriptionFr: z.string(),
+	hidden: z.boolean(),
+
+	image: z.string().nullable().optional(),
+	link: z.string().nullable().optional(),
+	linkText: z.string().nullable().optional(),
+	linkTextFr: z.string().nullable().optional(),
+});
 
 export const eventsRouter = createTRPCRouter({
 	// Get event
@@ -50,4 +68,118 @@ export const eventsRouter = createTRPCRouter({
 
 		return events;
 	}),
+
+	// Create event
+	create: protectedProcedure.input(eventInputSchema).mutation(async ({ ctx, input }) => {
+		const userId = ctx.session.user.id;
+
+		const user = await ctx.prisma.user.findUnique({
+			where: {
+				id: userId,
+			},
+			select: {
+				name: true,
+				roles: {
+					select: {
+						name: true,
+					},
+				},
+			},
+		});
+
+		if (!user) {
+			throw new Error("User not found");
+		}
+
+		if (!hasRoles(user, [RoleName.ORGANIZER, RoleName.ADMIN])) {
+			throw new Error("You do not have permission to create events");
+		}
+
+		if (input.end <= input.start) {
+			throw new Error("Event end time must be after start time");
+		}
+
+		return ctx.prisma.event.create({
+			data: {
+				name: input.name,
+				nameFr: input.nameFr,
+				room: input.room,
+				start: input.start,
+				end: input.end,
+				description: input.description,
+				descriptionFr: input.descriptionFr,
+				hidden: input.hidden,
+				image: input.image ?? null,
+				link: input.link ?? null,
+				linkText: input.linkText ?? null,
+				linkTextFr: input.linkTextFr ?? null,
+			},
+		});
+	}),
+	// Update event
+	update: protectedProcedure
+		.input(
+			eventInputSchema.extend({
+				id: z.string(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+
+			const user = await ctx.prisma.user.findUnique({
+				where: {
+					id: userId,
+				},
+				select: {
+					name: true,
+					roles: {
+						select: {
+							name: true,
+						},
+					},
+				},
+			});
+
+			if (!user) {
+				throw new Error("User not found");
+			}
+
+			if (!hasRoles(user, [RoleName.ORGANIZER, RoleName.ADMIN])) {
+				throw new Error("You do not have permission to update events");
+			}
+
+			const existingEvent = await ctx.prisma.event.findUnique({
+				where: {
+					id: input.id,
+				},
+			});
+
+			if (!existingEvent) {
+				throw new Error("Event not found");
+			}
+
+			if (input.end <= input.start) {
+				throw new Error("Event end time must be after start time");
+			}
+
+			return ctx.prisma.event.update({
+				where: {
+					id: input.id,
+				},
+				data: {
+					name: input.name,
+					nameFr: input.nameFr,
+					room: input.room,
+					start: input.start,
+					end: input.end,
+					description: input.description,
+					descriptionFr: input.descriptionFr,
+					hidden: input.hidden,
+					image: input.image ?? null,
+					link: input.link ?? null,
+					linkText: input.linkText ?? null,
+					linkTextFr: input.linkTextFr ?? null,
+				},
+			});
+		}),
 });
