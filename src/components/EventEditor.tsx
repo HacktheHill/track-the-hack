@@ -11,6 +11,7 @@ type EventEditorProps = {
 
 type EventLink = {
 	title: string;
+	titleFr: string;
 	url: string;
 };
 
@@ -36,12 +37,12 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 	const [end, setEnd] = useState(event?.end ? formatDateTimeLocal(event.end) : "");
 	const [visible, setVisible] = useState(event ? !event.hidden : false);
 	const [links, setLinks] = useState<EventLink[]>(
-		event?.link ? [{ title: event.linkText ?? "", url: event.link }] : [],
+		event?.link ? [{ title: event.linkText ?? "", titleFr: event.linkTextFr ?? "", url: event.link }] : [],
 	);
 	const [imagePreview, setImagePreview] = useState<string | null>(event?.image ?? null);
 	const [imageFile, setImageFile] = useState<File | null>(null);
 	const [error, setError] = useState<string | null>(null);
-	const { t, i18n } = useTranslation("internal");
+	const { t } = useTranslation("internal");
 
 	const utils = trpc.useUtils();
 
@@ -66,7 +67,7 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 	});
 
 	const addLink = () => {
-		if (links.length === 0) setLinks([{ title: "", url: "" }]);
+		if (links.length === 0) setLinks([{ title: "", titleFr: "", url: "" }]);
 	};
 
 	const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -122,7 +123,9 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 		}
 
 		const invalidLink = links.some(
-			link => (link.title.trim() && !link.url.trim()) || (!link.title.trim() && link.url.trim()),
+			link =>
+				(link.url.trim() && (!link.title.trim() || !link.titleFr.trim())) ||
+				(!link.url.trim() && (link.title.trim() || link.titleFr.trim())),
 		);
 
 		if (invalidLink) {
@@ -148,6 +151,7 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 			// Database currently only supports one link
 			link: firstLink?.url || null,
 			linkText: firstLink?.title || null,
+			linkTextFr: firstLink?.titleFr || null,
 		};
 
 		if (event) {
@@ -321,6 +325,14 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 								placeholder={t("events.link-title")}
 								value={link.title}
 								onChange={e => updateLink(index, "title", e.target.value)}
+								className="min-w-0 flex-1 rounded border border-dark-primary-color p-2"
+							/>
+
+							<input
+								type="text"
+								placeholder={t("events.link-title-fr")}
+								value={link.titleFr}
+								onChange={e => updateLink(index, "titleFr", e.target.value)}
 								className="min-w-0 flex-1 rounded border border-dark-primary-color p-2"
 							/>
 

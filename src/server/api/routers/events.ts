@@ -16,6 +16,7 @@ const eventInputSchema = z.object({
 	image: z.string().nullable().optional(),
 	link: z.string().nullable().optional(),
 	linkText: z.string().nullable().optional(),
+	linkTextFr: z.string().nullable().optional(),
 });
 
 export const eventsRouter = createTRPCRouter({
@@ -111,6 +112,7 @@ export const eventsRouter = createTRPCRouter({
 				image: input.image ?? null,
 				link: input.link ?? null,
 				linkText: input.linkText ?? null,
+				linkTextFr: input.linkTextFr ?? null,
 			},
 		});
 	}),
@@ -176,6 +178,7 @@ export const eventsRouter = createTRPCRouter({
 					image: input.image ?? null,
 					link: input.link ?? null,
 					linkText: input.linkText ?? null,
+					linkTextFr: input.linkTextFr ?? null,
 				},
 			});
 		}),

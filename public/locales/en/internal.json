@@ -25,7 +25,8 @@
 		"remove-photo": "Remove photo",
 
 		"links": "Links",
-		"link-title": "Link title",
+		"link-title": "Link title (English)",
+		"link-title-fr": "Link title (French)",
 		"link-url": "https://...",
 		"add-link": "Add Link",
 		"remove": "Remove",
