@@ -7,5 +7,11 @@
 		"CAREER_FAIR": "Career Fair",
 		"FOOD": "Food",
 		"SOCIAL": "Social"
-	}
+	},
+	"mark-interested": "Mark as interested",
+	"interested": "Interested ✓",
+	"saving-interest": "Saving…",
+	"retry-interest": "Retry",
+	"interest-error": "Could not load or save your interest. Please try again.",
+	"interest-organizer-visibility": "Organizers can see your event interests when they scan your QR code."
 }

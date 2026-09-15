@@ -134,6 +134,7 @@ model Hacker {
   User      User?      @relation(fields: [userId], references: [id])
   userId    String?    @unique
   presences Presence[]
+  eventInterests EventInterest[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -180,6 +181,19 @@ model Event {
   maxCheckIns   Int?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @default(now()) @updatedAt
+  interests     EventInterest[]
+}
+
+model EventInterest {
+  id        String   @id @default(cuid())
+  hackerId  String
+  eventId   String
+  createdAt DateTime @default(now())
+  Hacker    Hacker   @relation(fields: [hackerId], references: [id], onDelete: Cascade)
+  Event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([hackerId, eventId])
+  @@index([eventId])
 }
 
 model Log {

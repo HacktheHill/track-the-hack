@@ -6,5 +6,11 @@
 		"CAREER_FAIR": "Salon de l'emploi",
 		"FOOD": "Nourriture",
 		"SOCIAL": "Social"
-	}
+	},
+	"mark-interested": "Ça m’intéresse",
+	"interested": "Ça m’intéresse ✓",
+	"saving-interest": "Enregistrement…",
+	"retry-interest": "Réessayer",
+	"interest-error": "Impossible de charger ou d’enregistrer votre intérêt. Veuillez réessayer.",
+	"interest-organizer-visibility": "Les organisateurs peuvent voir les événements qui vous intéressent lorsqu’ils scannent votre code QR."
 }
