@@ -15,6 +15,7 @@
 			"files": ["*.gs"],
 			"globals": {
 				"HtmlService": "readonly",
+				"LockService": "readonly",
 				"PropertiesService": "readonly",
 				"SpreadsheetApp": "readonly",
 				"UrlFetchApp": "readonly",
