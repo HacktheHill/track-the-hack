@@ -79,7 +79,7 @@ const Confirm: NextPage = () => {
 		if (!query.data || !teamName) return;
 
 		createTeam.mutate(
-			{ teamName: teamName, hackerId: query.data.id },
+			{ teamName },
 			{
 				onSuccess: () => {
 					setValidationMessage("");

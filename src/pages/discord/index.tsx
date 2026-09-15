@@ -18,6 +18,9 @@ const Discord: NextPage = () => {
 	const { data: sessionData } = useSession();
 	const router = useRouter();
 	const discordId = [router.query.id].flat()[0];
+	const timestamp = [router.query.timestamp].flat()[0];
+	const signature = [router.query.signature].flat()[0];
+	const hasVerificationProof = Boolean(discordId && timestamp && signature);
 
 	const mutation = trpc.users.verifyDiscord.useMutation();
 	const [isVerified, setIsVerified] = useState(false);
@@ -41,21 +44,20 @@ const Discord: NextPage = () => {
 			return;
 		}
 
-		if (!discordId) {
+		if (!discordId || !timestamp || !signature) {
 			setValidationMessage(t("missing-discord-id"));
 			return;
 		}
 
-		mutation.mutate({ discordId });
-		setIsVerified(true);
+		mutation.mutate({ discordId, timestamp, signature });
 	};
 
 	return (
 		<FormPage
 			onSubmit={handleSubmit}
 			error={error}
-			invalid={!discordId ? t("invalid-discord-id") : null}
-			loading={discordId != null && mutation.isLoading && !mutation.isError}
+			invalid={!hasVerificationProof ? t("invalid-discord-id") : null}
+			loading={hasVerificationProof && mutation.isLoading && !mutation.isError}
 			title={t("title")}
 		>
 			<h3 className="font-rubik text-[clamp(1rem,1vmin,5rem)] font-medium text-dark-color">{t("title")}</h3>

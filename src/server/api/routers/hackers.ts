@@ -10,6 +10,7 @@ import { log } from "../../lib/log";
 import { generatePresignedGetUrl, generatePresignedPutUrl, generateS3Filename } from "../../lib/s3";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { sendApplyEmail } from "../../lib/email";
+import { assignHackerToTeam, removeHackerFromTeam } from "../../team-operations";
 
 const FILTER_OPTION_THRESHOLD = 3;
 
@@ -471,6 +472,11 @@ export const hackerRouter = createTRPCRouter({
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
+			const actor = await ctx.prisma.user.findUnique({
+				where: { id: ctx.session.user.id },
+				select: { Hacker: { select: { id: true } } },
+			});
+			if (actor?.Hacker?.id !== input.id) throw new Error("You can only confirm your own attendance");
 			const hacker = await ctx.prisma.hacker.findUnique({
 				where: {
 					id: input.id,
@@ -481,34 +487,17 @@ export const hackerRouter = createTRPCRouter({
 				throw new Error("Hacker not found");
 			}
 
+			if (input.confirm && input.teamName) {
+				await assignHackerToTeam({ prisma: ctx.prisma }, input.id, input.teamName);
+			} else if (!input.confirm) {
+				await removeHackerFromTeam({ prisma: ctx.prisma }, input.id);
+			}
 			await ctx.prisma.hacker.update({
 				where: {
 					id: input.id,
 				},
 				data: {
 					confirmed: input.confirm,
-					...(input.confirm &&
-						input.teamName && {
-							Team: {
-								connectOrCreate: {
-									where: { name: input.teamName },
-									create: { name: input.teamName },
-								},
-							},
-						}),
-					...(input.confirm === false && {
-						Team: {
-							disconnect: true,
-						},
-					}),
-				},
-			});
-
-			await ctx.prisma.team.deleteMany({
-				where: {
-					hackers: {
-						none: {},
-					},
 				},
 			});
 
