@@ -1,6 +1,6 @@
 /** @OnlyCurrentDoc */
 
-/** @typedef {"XS" | "S" | "M" | "L" | "XL" | "XXL"} TShirtSize */
+/** @typedef {"XS" | "S" | "M" | "L" | "XL" | "XXL" | "NONE"} TShirtSize */
 /** @typedef {"STANDARD" | "VEGETARIAN" | "VEGAN" | "HALAL" | "OTHER"} MealCategory */
 /** @typedef {string | number | boolean | Date} SheetCell */
 /** @typedef {SheetCell[]} SheetRow */
@@ -47,8 +47,28 @@ function onOpen() {
 }
 
 function setupTrackOperations() {
-	const sheet = ensureOperationsSheet_();
+	const sheet = withOperationsLock_(() => ensureOperationsSheet_());
 	SpreadsheetApp.getActive().setActiveSheet(sheet);
+}
+
+/**
+ * @template T
+ * @param {() => T} operation
+ * @returns {T}
+ */
+function withOperationsLock_(operation) {
+	const lock = LockService.getDocumentLock();
+	if (!lock) throw new Error("Run Track operations from the bound Google Sheet.");
+	if (!lock.tryLock(30000)) throw new Error("Another Track operation is running. Try again shortly.");
+	try {
+		return operation();
+	} finally {
+		try {
+			SpreadsheetApp.flush();
+		} finally {
+			lock.releaseLock();
+		}
+	}
 }
 
 function acceptSelectedApplications() {
@@ -77,30 +97,49 @@ function acceptSelectedApplications_(walkIn) {
 	const headers = source.getRange(1, 1, 1, columnCount).getDisplayValues()[0];
 	if (!headers) throw new Error("The Tally response sheet has no header row.");
 	const rows = source.getRange(firstRow, 1, rowCount, columnCount).getDisplayValues();
-	const operations = ensureOperationsSheet_();
-	const existing = existingParticipantsBySubmission_(operations);
+	const processed = withOperationsLock_(() => {
+		const operations = ensureOperationsSheet_();
+		const existing = existingParticipantsBySubmission_(operations);
+		/** @type {Set<string>} */
+		const selected = new Set();
+		/** @type {AcceptedApplication[]} */
+		const accepted = rows.map((row, offset) => {
+			const submissionId = requiredCell_(headers, row, ["Submission ID"]);
+			if (selected.has(submissionId)) throw new Error(`Duplicate Submission ID in selection: ${submissionId}`);
+			selected.add(submissionId);
+			const participantId = existing.get(submissionId) || createParticipantId_();
+			return {
+				sourceRow: firstRow + offset,
+				submissionId,
+				record: applicationRowToOperationalRecord_(headers, row, participantId, config.deadline, walkIn),
+			};
+		});
 
-	/** @type {AcceptedApplication[]} */
-	const accepted = rows.map((row, offset) => {
-		const submissionId = requiredCell_(headers, row, ["Submission ID"]);
-		const participantId = existing[submissionId] || createParticipantId_();
-		return {
-			sourceRow: firstRow + offset,
-			submissionId,
-			record: applicationRowToOperationalRecord_(headers, row, participantId, config.deadline, walkIn),
-		};
+		// Commit the Sheet-owned IDs before any server write. A failed request
+		// can then be retried with the same IDs, including after partial success.
+		upsertOperations_(operations, accepted, config.baseUrl);
+		SpreadsheetApp.flush();
+		const result = processedResponse_(
+			apiPost_(config, "/api/integrations/sheets/hackers", {
+				hackers: accepted.map(item => item.record),
+			}),
+		);
+		if (result.processed !== accepted.length) {
+			throw new Error("Track API did not confirm the full batch. Retry the same selection.");
+		}
+		upsertOperations_(operations, accepted, config.baseUrl, new Date());
+		return result.processed;
 	});
-
-	processedResponse_(
-		apiPost_(config, "/api/integrations/sheets/hackers", {
-			hackers: accepted.map(item => item.record),
-		}),
-	);
-	upsertOperations_(operations, accepted, config.baseUrl);
-	SpreadsheetApp.getUi().alert(`${accepted.length} participant(s) provisioned.`);
+	// Dialogs suspend execution and do not preserve locks.
+	SpreadsheetApp.getUi().alert(`${processed} participant(s) provisioned.`);
 }
 
 function refreshRsvpStatus() {
+	const count = withOperationsLock_(refreshRsvpStatus_);
+	SpreadsheetApp.getUi().alert(`${count} participant(s) reconciled.`);
+}
+
+function refreshRsvpStatus_() {
 	const config = trackConfig_();
 	const sheet = ensureOperationsSheet_();
 	const lastRow = sheet.getLastRow();
@@ -126,7 +165,7 @@ function refreshRsvpStatus() {
 	const now = new Date();
 	applyRsvpReconciliation_(rows, byId, now);
 	sheet.getRange(2, 1, rows.length, TRACK_OPERATION_HEADERS.length).setValues(rows);
-	SpreadsheetApp.getUi().alert(`${ids.length} participant(s) reconciled.`);
+	return ids.length;
 }
 
 /**
@@ -169,12 +208,17 @@ function issueAccessForSelectedParticipant() {
 	}
 
 	const rowNumber = selection.getRow();
-	const row = sheet.getRange(rowNumber, 1, 1, TRACK_OPERATION_HEADERS.length).getValues()[0];
-	if (!row) throw new Error("The selected participant row is empty.");
-	const response = claimResponse_(apiPost_(config, "/api/integrations/sheets/claim", operationalRecordFromRow_(row)));
-	sheet
-		.getRange(rowNumber, TRACK_OPERATION_HEADERS.indexOf("Access Expires") + 1)
-		.setValue(new Date(response.expiresAt));
+	const response = withOperationsLock_(() => {
+		const row = sheet.getRange(rowNumber, 1, 1, TRACK_OPERATION_HEADERS.length).getValues()[0];
+		if (!row) throw new Error("The selected participant row is empty.");
+		const claim = claimResponse_(
+			apiPost_(config, "/api/integrations/sheets/claim", operationalRecordFromRow_(row)),
+		);
+		sheet
+			.getRange(rowNumber, TRACK_OPERATION_HEADERS.indexOf("Access Expires") + 1)
+			.setValue(new Date(claim.expiresAt));
+		return claim;
+	});
 
 	const displayUrl = claimDisplayUrl_(response.claimUrl);
 	const html = HtmlService.createHtmlOutput(
@@ -223,6 +267,7 @@ function tShirtSize_(headers, row) {
 		"What unisex T-shirt size would you prefer?",
 		"Quelle taille de t-shirt unisexe préférez-vous?",
 	]).toUpperCase();
+	if (raw === "I DO NOT WANT A T-SHIRT" || raw === "JE NE SOUHAITE PAS RECEVOIR DE T-SHIRT") return "NONE";
 	const size = raw.match(/(?:^|\b)(XXL|2XL|XL|XS|L|M|S)(?:\b|$)/)?.[1];
 	if (size === "2XL") return "XXL";
 	if (size === "XXL" || size === "XL" || size === "L" || size === "M" || size === "S" || size === "XS") {
@@ -296,6 +341,7 @@ function operationalTShirtSize_(value) {
 	const size = String(value || "")
 		.trim()
 		.toUpperCase();
+	if (size === "NONE") return "NONE";
 	if (size === "XXL" || size === "XL" || size === "L" || size === "M" || size === "S" || size === "XS") {
 		return size;
 	}
@@ -446,17 +492,24 @@ function ensureOperationsSheet_() {
 
 /**
  * @param {GoogleAppsScript.Spreadsheet.Sheet} sheet
- * @returns {Record<string, string>}
+ * @returns {Map<string, string>}
  */
 function existingParticipantsBySubmission_(sheet) {
-	if (sheet.getLastRow() < 2) return {};
+	if (sheet.getLastRow() < 2) return new Map();
 	const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, TRACK_OPERATION_HEADERS.length).getDisplayValues();
 	const sourceColumn = TRACK_OPERATION_HEADERS.indexOf("Source Submission ID");
 	const idColumn = TRACK_OPERATION_HEADERS.indexOf("Participant ID");
-	/** @type {Record<string, string>} */
-	const result = {};
+	/** @type {Map<string, string>} */
+	const result = new Map();
 	for (const row of rows) {
-		if (row[sourceColumn] && row[idColumn]) result[row[sourceColumn]] = row[idColumn];
+		const submissionId = row[sourceColumn];
+		const participantId = row[idColumn];
+		if (!submissionId || !participantId) continue;
+		const previousId = result.get(submissionId);
+		if (previousId && previousId !== participantId) {
+			throw new Error(`Conflicting participant IDs for Submission ID: ${submissionId}`);
+		}
+		result.set(submissionId, participantId);
 	}
 	return result;
 }
@@ -465,27 +518,30 @@ function existingParticipantsBySubmission_(sheet) {
  * @param {GoogleAppsScript.Spreadsheet.Sheet} sheet
  * @param {AcceptedApplication[]} accepted
  * @param {string} baseUrl
+ * @param {Date | null} [syncedAt]
  */
-function upsertOperations_(sheet, accepted, baseUrl) {
+function upsertOperations_(sheet, accepted, baseUrl, syncedAt = null) {
 	const rows =
 		sheet.getLastRow() < 2
 			? []
 			: sheet.getRange(2, 1, sheet.getLastRow() - 1, TRACK_OPERATION_HEADERS.length).getValues();
 	const sourceColumn = TRACK_OPERATION_HEADERS.indexOf("Source Submission ID");
-	/** @type {Record<string, number>} */
-	const rowBySubmission = {};
+	/** @type {Map<string, number>} */
+	const rowBySubmission = new Map();
 	rows.forEach((row, index) => {
-		if (row[sourceColumn]) rowBySubmission[String(row[sourceColumn])] = index + 2;
+		if (row[sourceColumn]) rowBySubmission.set(String(row[sourceColumn]), index + 2);
 	});
 
 	accepted.forEach(item => {
-		const previousRow = rowBySubmission[item.submissionId];
+		const previousRow = rowBySubmission.get(item.submissionId);
 		const previous = previousRow
 			? sheet.getRange(previousRow, 1, 1, TRACK_OPERATION_HEADERS.length).getValues()[0]
 			: [];
 		if (!previous) throw new Error("The existing operations row could not be read.");
 		/** @param {string} header */
 		const value = header => previous[TRACK_OPERATION_HEADERS.indexOf(header)] || "";
+		const previousStatus = value("RSVP Status");
+		const status = syncedAt && (!previousStatus || previousStatus === "MISSING") ? "PENDING" : previousStatus;
 		const next = [
 			item.submissionId,
 			item.sourceRow,
@@ -494,14 +550,15 @@ function upsertOperations_(sheet, accepted, baseUrl) {
 			item.record.mealCategory,
 			new Date(item.record.acceptanceExpiry),
 			`${baseUrl}/rsvp/${encodeURIComponent(item.record.id)}`,
-			value("RSVP Status") || "PENDING",
+			status,
 			value("Cancellation Link"),
 			value("Access Expires"),
-			new Date(),
+			syncedAt || value("Last Sync"),
 			item.record.walkIn,
 		];
 		const targetRow = previousRow || sheet.getLastRow() + 1;
 		sheet.getRange(targetRow, 1, 1, TRACK_OPERATION_HEADERS.length).setValues([next]);
+		rowBySubmission.set(item.submissionId, targetRow);
 	});
 }
 

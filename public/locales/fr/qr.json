@@ -1,5 +1,6 @@
 {
 	"title": "Lecteur QR opérationnel",
+	"select-action": "Sélectionner une action du lecteur",
 	"view-participant": "Afficher le dossier opérationnel du participant",
 	"unknown-error": "Le participant ou l’action de l’événement n’a pas pu être chargé.",
 	"adjust-error": "Le nombre de présences n’a pas pu être mis à jour.",

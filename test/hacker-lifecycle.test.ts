@@ -155,6 +155,17 @@ void test("provisioning is idempotent by exact id and preserves confirmation", a
 	assert.equal(repository.hackers.get(participantId)?.confirmed, true);
 });
 
+void test("provisioning accepts a T-shirt opt-out alongside a size and preserves it on access issuance", async () => {
+	const repository = new MemoryRepository();
+	const optOutId = "participant_no_tshirt_0123456789";
+	const optOut = provisionInput({ id: optOutId, tShirtSize: "NONE" });
+	assert.deepEqual(await provisionHackers(repository, { hackers: [provisionInput(), optOut] }), { processed: 2 });
+	assert.equal(repository.hackers.get(participantId)?.tShirtSize, "M");
+	assert.equal(repository.hackers.get(optOutId)?.tShirtSize, "NONE");
+	await issueParticipantAccess(repository, optOut, "https://track.example", "test-claim-secret");
+	assert.equal(repository.hackers.get(optOutId)?.tShirtSize, "NONE");
+});
+
 void test("RSVP and cancellation GET requests cannot change state", async () => {
 	let confirmations = 0;
 	const rsvp = createRsvpApiHandler(() => {

@@ -1,4 +1,4 @@
-import { RoleName, ScannerWorkflow } from "@prisma/client";
+import { RoleName, ScannerWorkflow, TShirtSize } from "@prisma/client";
 import type { GetServerSideProps } from "next";
 import { getServerSession } from "next-auth";
 import { useTranslation } from "next-i18next";
@@ -64,6 +64,7 @@ const QR = () => {
 			title={t("title")}
 		>
 			<select
+				aria-label={t("select-action")}
 				className="p-3 text-center text-lg font-bold text-dark-color"
 				onChange={event => {
 					scanSequence.current += 1;
@@ -99,11 +100,16 @@ const ParticipantCard = ({ hacker }: { hacker: Hacker }) => {
 		<div className="rounded-lg bg-light-primary-color p-6 font-rubik text-light-color">
 			<p className="break-all font-bold">{hacker.id}</p>
 			<p>{t("confirmed", { value: hacker.confirmed ? t("yes") : t("no") })}</p>
-			<p>{t("t-shirt", { value: hacker.tShirtSize })}</p>
+			<TShirtInfo size={hacker.tShirtSize} />
 			<p>{t("meal", { value: hacker.mealCategory })}</p>
 			{hacker.walkIn && <p>{t("walk-in")}</p>}
 		</div>
 	);
+};
+
+const TShirtInfo = ({ size }: { size: TShirtSize }) => {
+	const { t } = useTranslation("qr");
+	return <p>{size === TShirtSize.NONE ? t("common:no-t-shirt") : t("t-shirt", { value: size })}</p>;
 };
 
 const WorkflowCard = ({ result }: { result: WorkflowScan }) => {
@@ -116,12 +122,10 @@ const WorkflowCard = ({ result }: { result: WorkflowScan }) => {
 			{result.workflow === ScannerWorkflow.CHECK_IN && (
 				<>
 					<p>{t("confirmed", { value: result.participant.confirmed ? t("yes") : t("no") })}</p>
-					<p>{t("t-shirt", { value: result.participant.tShirtSize })}</p>
+					<TShirtInfo size={result.participant.tShirtSize} />
 				</>
 			)}
-			{result.workflow === ScannerWorkflow.MERCHANDISE && (
-				<p>{t("t-shirt", { value: result.participant.tShirtSize })}</p>
-			)}
+			{result.workflow === ScannerWorkflow.MERCHANDISE && <TShirtInfo size={result.participant.tShirtSize} />}
 			{result.workflow === ScannerWorkflow.FOOD && (
 				<>
 					<p>{t("meal", { value: result.participant.mealCategory })}</p>

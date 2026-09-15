@@ -1,3 +1,4 @@
+import { TShirtSize } from "@prisma/client";
 import type { GetServerSideProps, InferGetServerSidePropsType } from "next";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
@@ -14,7 +15,7 @@ import { storeOfflineParticipantPass } from "@/utils/participant-pass";
 type ProfileData = {
 	id: string;
 	confirmed: boolean;
-	tShirtSize: string;
+	tShirtSize: TShirtSize;
 	mealCategory: string;
 	presences: { id: string; label: string; value: number }[];
 };
@@ -85,7 +86,10 @@ const Profile = ({ profile }: InferGetServerSidePropsType<typeof getServerSidePr
 				<h2 className="font-coolvetica text-2xl text-dark-color">{t("details")}</h2>
 				<dl className="mt-4 grid gap-2 font-rubik text-dark-color">
 					<Row label={t("confirmed")} value={profile.confirmed ? t("yes") : t("no")} />
-					<Row label={t("t-shirt")} value={profile.tShirtSize} />
+					<Row
+						label={t("t-shirt")}
+						value={profile.tShirtSize === TShirtSize.NONE ? t("common:no-t-shirt") : profile.tShirtSize}
+					/>
 					<Row label={t("meal")} value={profile.mealCategory} />
 				</dl>
 			</section>
