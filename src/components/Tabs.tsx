@@ -20,7 +20,7 @@ const Tabs = (props: { names: string[]; children: React.ReactNode }) => {
 
 	return (
 		<div className="flex flex-col items-center gap-6">
-			<div className="flex gap-4" role="tablist">
+			<div className="flex flex-wrap gap-2" role="tablist">
 				{names.map((name, index) => {
 					const tabId = `${baseId}-tab-${index}`;
 					const panelId = `${baseId}-panel-${index}`;
@@ -33,9 +33,20 @@ const Tabs = (props: { names: string[]; children: React.ReactNode }) => {
 							role="tab"
 							aria-selected={isActive}
 							aria-controls={panelId}
-							className={`flex cursor-pointer flex-row items-center justify-center gap-2 rounded-lg ${
-								isActive ? "bg-dark-primary-color" : ""
-							} p-4 font-coolvetica text-light-color focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white`}
+							className="ui-button"
+							type="button"
+							tabIndex={isActive ? 0 : -1}
+							onKeyDown={event => {
+								let next = index;
+								if (event.key === "ArrowRight") next = (index + 1) % names.length;
+								else if (event.key === "ArrowLeft") next = (index - 1 + names.length) % names.length;
+								else if (event.key === "Home") next = 0;
+								else if (event.key === "End") next = names.length - 1;
+								else return;
+								event.preventDefault();
+								setActiveTab(next);
+								document.getElementById(`${baseId}-tab-${next}`)?.focus();
+							}}
 							onClick={() => setActiveTab(index)}
 						>
 							{name}
@@ -48,7 +59,7 @@ const Tabs = (props: { names: string[]; children: React.ReactNode }) => {
 				role="tabpanel"
 				aria-labelledby={`${baseId}-tab-${activeTab}`}
 				tabIndex={0}
-				className="w-full focus-visible:outline-none"
+				className="w-full"
 			>
 				{tabContent[activeTab]}
 			</div>

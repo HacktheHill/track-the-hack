@@ -36,6 +36,8 @@ const Typeahead = ({ field, className, formData }: TypeaheadProps) => {
 				name={field.name}
 				list={`${field.name}-list`}
 				className={className}
+				aria-invalid={className.includes("ui-field-error") || undefined}
+				aria-describedby={className.includes("ui-field-error") ? `${field.name}-error` : undefined}
 				required={field.required}
 				defaultValue={formData.get(field.name)?.toString() ?? ""}
 			/>

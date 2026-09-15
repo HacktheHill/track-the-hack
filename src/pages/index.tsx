@@ -50,7 +50,7 @@ const Home: NextPage = () => {
 			</h1>
 			{!sessionData && (
 				<button
-					className="z-10 w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color mobile:px-8 mobile:py-4 mobile:text-4xl"
+					className="ui-button ui-button-large z-10 w-fit"
 					onClick={() => void router.push("/auth/sign-up")}
 				>
 					{t("get-started")}

@@ -20,7 +20,7 @@ const Error = ({ message }: ErrorProps) => {
 				target="_blank"
 				rel="noreferrer"
 				aria-label={t("contact-us")}
-				className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
+				className="ui-button"
 			>
 				{t("contact-us")}
 			</Link>

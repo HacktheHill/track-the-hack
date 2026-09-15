@@ -45,21 +45,23 @@ const Roles: NextPage = () => {
 	return (
 		<App className="overflow-y-auto bg-default-gradient" integrated={true} title={t("roles")}>
 			<Filter value={RoleName.ADMIN} method="above">
-				<div className="flex h-full flex-col items-center">
-					<h1 className="p-8 font-rubik text-4xl font-bold">{t("roles")}</h1>
+				<div className="ui-form-layout flex flex-col items-center gap-6">
+					<h1 className="ui-page-title text-center">{t("roles")}</h1>
 					<form className="flex w-full max-w-lg flex-col gap-4" onSubmit={handleSubmit}>
 						<input
 							type="search"
-							placeholder="Search"
-							className="w-full rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 placeholder:text-dark-primary-color hover:bg-light-primary-color/50"
+							placeholder={t("search")}
+							aria-label={t("search")}
+							className="ui-field w-full"
 							onChange={e => setQuery(e.target.value)}
 						/>
-						<div className="flex h-[30vh] flex-col gap-4 overflow-auto rounded-lg border border-dark-primary-color bg-light-tertiary-color p-4">
+						<div className="flex h-[30vh] flex-col gap-4 overflow-auto rounded-lg border border-dark-primary-color bg-light-secondary-color p-4">
 							{users.data?.map(user => {
 								const roles = user.roles.map(role => role.name);
 								return (
-									<div key={user.id} className="flex gap-4">
+									<div key={user.id} className="flex min-w-0 items-center gap-4">
 										<input
+											className="ui-checkbox"
 											type="checkbox"
 											id={user.id}
 											name={user.id}
@@ -67,7 +69,10 @@ const Roles: NextPage = () => {
 											onChange={() => handleSelectUser(user.id, roles)}
 											disabled={!!roles.find(r => r === RoleName.ADMIN)}
 										/>
-										<label htmlFor={user.id} className="flex items-center gap-4">
+										<label
+											htmlFor={user.id}
+											className="flex min-w-0 flex-wrap items-center gap-2 break-all"
+										>
 											{user.image && (
 												// eslint-disable-next-line @next/next/no-img-element
 												<img
@@ -84,8 +89,9 @@ const Roles: NextPage = () => {
 						</div>
 						<div className="flex flex-col gap-4">
 							{Object.values(RoleName).map(role => (
-								<div key={role} className="flex gap-4">
+								<div key={role} className="flex min-w-0 items-center gap-4">
 									<input
+										className="ui-checkbox"
 										type="checkbox"
 										id={role}
 										name={role}
@@ -97,10 +103,7 @@ const Roles: NextPage = () => {
 								</div>
 							))}
 						</div>
-						<button
-							type="submit"
-							className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
-						>
+						<button type="submit" className="ui-button ui-button-primary">
 							{t("submit")}
 						</button>
 					</form>

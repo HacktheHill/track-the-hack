@@ -217,11 +217,7 @@ const Confirm: NextPage = () => {
 								{query.data?.acceptanceExpiry && (
 									<p className="text-sm">{t("you-can-change-your-response", { deadline })}</p>
 								)}
-								<button
-									type="button"
-									onClick={handleEdit}
-									className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
-								>
+								<button type="button" onClick={handleEdit} className="ui-button">
 									{t("undo-edit-response")}
 								</button>
 							</>
@@ -232,7 +228,7 @@ const Confirm: NextPage = () => {
 				) : query.data?.acceptanceStatus !== AcceptanceStatus.ACCEPTED ? (
 					<ErrorComponent message={t("not-accepted")} />
 				) : (
-					<div className="flex max-w-[25rem] flex-col items-center gap-6">
+					<div className="flex w-full max-w-[25rem] flex-col items-center gap-6">
 						<div className="flex flex-col gap-2">
 							<h3 className="font-rubik font-medium text-dark-color">
 								{t("congratulations-for-acceptance", {
@@ -252,7 +248,7 @@ const Confirm: NextPage = () => {
 									name="team-name"
 									value={teamName}
 									onChange={handleTeamNameChange}
-									className="w-full rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+									className="ui-field w-full"
 								/>
 								{team ? (
 									<p className="text-sm">
@@ -265,7 +261,7 @@ const Confirm: NextPage = () => {
 										type="button"
 										disabled={teamName.length < 3}
 										onClick={handleCreateTeam}
-										className="rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-light-quaternary-color short:text-base"
+										className="ui-button"
 									>
 										{t("create-team")}
 									</button>
@@ -281,7 +277,7 @@ const Confirm: NextPage = () => {
 											name={item.id}
 											checked={checkboxes[item.id as keyof typeof checkboxes]}
 											onChange={() => handleCheckboxChange(item.id as keyof typeof checkboxes)}
-											className="h-4 w-4 appearance-none bg-transparent text-black after:block after:h-full after:w-full after:rounded-lg after:border after:border-dark-primary-color after:p-0.5 after:leading-[calc(100%*1/2)] after:checked:content-check"
+											className="ui-checkbox"
 										/>
 										<label htmlFor={item.id} className="flex-1">
 											<Trans
@@ -317,7 +313,7 @@ const Confirm: NextPage = () => {
 										<button
 											type="button"
 											onClick={handleClearSignature}
-											className="absolute bottom-2 right-2 rounded-lg border border-dark-primary-color bg-light-quaternary-color px-2 py-1 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
+											className="ui-button absolute bottom-2 right-2"
 										>
 											{t("clear")}
 										</button>
@@ -328,10 +324,7 @@ const Confirm: NextPage = () => {
 								</div>
 							</div>
 
-							<button
-								type="submit"
-								className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
-							>
+							<button type="submit" className="ui-button ui-button-primary">
 								{t("ill-be-there")}
 							</button>
 							{query.data?.acceptanceExpiry && (

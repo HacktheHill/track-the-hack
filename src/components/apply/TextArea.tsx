@@ -22,6 +22,8 @@ const TextArea = ({ field, className, formData }: TextAreaProps) => {
 				id={field.name}
 				name={field.name}
 				className={className}
+				aria-invalid={className.includes("ui-field-error") || undefined}
+				aria-describedby={className.includes("ui-field-error") ? `${field.name}-error` : undefined}
 				required={field.required}
 				value={value}
 				onChange={e => {
@@ -32,7 +34,7 @@ const TextArea = ({ field, className, formData }: TextAreaProps) => {
 				}}
 			/>
 			{field.charLimit && (
-				<p className="absolute bottom-2 right-2 text-right text-light-color">
+				<p className="mt-1 text-right text-sm text-dark-primary-color">
 					{charCount}/{field.charLimit}
 				</p>
 			)}

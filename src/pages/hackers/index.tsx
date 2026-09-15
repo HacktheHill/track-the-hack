@@ -3,9 +3,8 @@ import { RoleName } from "@prisma/client";
 import type { NextPage } from "next";
 import { useTranslation } from "next-i18next";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { trpc } from "../../server/api/api";
-import { debounce } from "../../utils/helpers";
 
 import type { GetServerSideProps } from "next";
 import { getServerSession } from "next-auth/next";
@@ -45,7 +44,6 @@ const Hackers: NextPage = () => {
 		presences: [],
 	});
 	const [sidebarVisible, setSidebarVisible] = useState(false);
-	const [columns, setColumns] = useState(4);
 
 	useEffect(() => {
 		const handler = setTimeout(() => {
@@ -82,10 +80,6 @@ const Hackers: NextPage = () => {
 
 	const toggleFilter = () => setSidebarVisible(!sidebarVisible);
 
-	const updateColumns = useCallback(() => {
-		setColumns(Math.floor(window.innerWidth / 300));
-	}, []);
-
 	const handleScroll = () => {
 		if (isFetching || !hasNextPage || !scrollRef.current) return;
 
@@ -95,45 +89,24 @@ const Hackers: NextPage = () => {
 		}
 	};
 
-	useEffect(() => {
-		updateColumns();
-		const debouncedResizeHandler = debounce(updateColumns, 500);
-
-		window.addEventListener("resize", debouncedResizeHandler);
-		return () => {
-			window.removeEventListener("resize", debouncedResizeHandler);
-		};
-	}, [updateColumns]);
-
 	return (
-		<App
-			className="flex flex-col overflow-y-auto bg-default-gradient"
-			integrated={true}
-			title={t("title")}
-			onScroll={handleScroll}
-		>
+		<App className="flex flex-col overflow-y-auto bg-default-gradient" integrated={true} title={t("title")}>
 			<div className="border-b border-dark-color bg-light-quaternary-color px-4 pb-4 pt-2 shadow-navbar sm:px-10">
 				<div className="flex">
-					<button
-						className="border-dark m-1 mr-3 rounded-xl bg-medium-primary-color px-6 text-sm text-light-color"
-						onClick={toggleFilter}
-					>
+					<button className="ui-button ui-button-primary m-1 mr-3" onClick={toggleFilter}>
 						{t("filterSection.filtersButton")}
 					</button>
 					<Search search={inputSearch} setSearch={setInputSearch} />
 				</div>
 			</div>
-			<div className="flex flex-row" ref={scrollRef}>
+			<div className="flex min-h-0 flex-col overflow-y-auto sm:flex-row" ref={scrollRef} onScroll={handleScroll}>
 				<FilterOptions
 					filters={filters}
 					setFilters={setFilters}
 					filterOptions={filterBy}
 					sidebarVisible={sidebarVisible}
 				/>
-				<div
-					className="mx-auto grid h-fit flex-col gap-4 overflow-x-hidden px-4 py-4 sm:px-10"
-					style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
-				>
+				<div className="ui-attendee-grid grid h-fit min-w-0 flex-1 gap-4 px-4 py-4 sm:px-10">
 					{hackers?.map(hacker => (
 						<Card
 							key={hacker.id}
@@ -168,11 +141,11 @@ const Card = ({ firstName, lastName, currentSchoolOrganization, major, id }: Car
 	return (
 		<Link
 			href={`/hackers/hacker?id=${id}`}
-			className="hover:bg-medium relative block w-full rounded-lg bg-medium-primary-color p-6 text-light-color shadow"
+			className="relative block w-full rounded-lg bg-dark-primary-color p-6 text-light-color"
 		>
 			<Filter value={[RoleName.ACCEPTANCE]} method="some" silent>
 				<button
-					className="absolute right-2 top-1 text-[8pt]"
+					className="ui-button mb-3"
 					onClick={e => {
 						e.preventDefault();
 						e.stopPropagation();
@@ -200,7 +173,7 @@ const Search = ({ search, setSearch }: SearchProps) => {
 	const { t } = useTranslation("hackers");
 
 	return (
-		<div className="relative mx-auto flex max-w-xl flex-col">
+		<div className="relative mx-auto flex w-full max-w-xl flex-col">
 			<div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-dark-color">
 				<svg
 					aria-hidden="true"
@@ -222,7 +195,7 @@ const Search = ({ search, setSearch }: SearchProps) => {
 				type="search"
 				id="search"
 				name="search"
-				className="block w-full rounded-lg bg-light-tertiary-color p-4 pl-12 text-sm placeholder:text-dark-color"
+				className="ui-field w-full pl-12"
 				placeholder={t("searchPlaceholder")}
 				onChange={event => setSearch(event.target.value)}
 				value={search}
@@ -279,7 +252,7 @@ const FilterOptions = ({ filters, setFilters, filterOptions, sidebarVisible }: F
 		return (
 			<li className="block">
 				<button
-					className="text-dark flex w-full items-center justify-between py-2 text-left font-bold"
+					className="ui-button w-full justify-between whitespace-normal text-left"
 					onClick={() => toggleCollapse(filterSection)}
 					aria-expanded={!isCollapsed}
 					aria-controls={collapsibleId}
@@ -291,6 +264,7 @@ const FilterOptions = ({ filters, setFilters, filterOptions, sidebarVisible }: F
 				{/* Collapsible content with Tailwind CSS transition */}
 				<div
 					id={collapsibleId}
+					hidden={isCollapsed}
 					className={`overflow-hidden transition-[max-height] duration-500 ease-in-out ${
 						isCollapsed ? "max-h-0" : "max-h-[1000px]"
 					}`}
@@ -302,17 +276,13 @@ const FilterOptions = ({ filters, setFilters, filterOptions, sidebarVisible }: F
 								<input
 									id={`${filterSection}-${option}`}
 									type="checkbox"
-									className="hidden"
+									className="peer sr-only"
 									checked={filters[filterSection]?.[0] === option}
 									onChange={() => handleCheckBox(option, filterSection)}
 								/>
 								<label
 									htmlFor={`${filterSection}-${option}`}
-									className={`w-full cursor-pointer rounded-lg border-2 border-dark-color px-4 py-2 text-center ${
-										filters[filterSection]?.[0] === option
-											? "bg-medium-primary-color text-light-color"
-											: "bg-light-tertiary-color text-dark-color"
-									} transition-colors duration-200 hover:bg-medium-primary-color hover:text-light-color`}
+									className="ui-choice w-full whitespace-normal peer-focus-visible:outline peer-focus-visible:outline-2"
 								>
 									{`${option.charAt(0).toUpperCase()}${option.slice(1)}`}
 								</label>
@@ -328,7 +298,7 @@ const FilterOptions = ({ filters, setFilters, filterOptions, sidebarVisible }: F
 		<>
 			{sidebarVisible && (
 				<div className="border-dark text-dark flex flex-col">
-					<div className="m-4 w-60 rounded-lg border-dark-color bg-light-quaternary-color p-4 text-center">
+					<div className="m-4 w-auto rounded-lg border-dark-color bg-light-quaternary-color p-4 text-center sm:w-60">
 						<ul className="flex flex-col gap-4">
 							{renderFilterSection(filterOptions.educationLevels, "educationLevels")}
 							{renderFilterSection(

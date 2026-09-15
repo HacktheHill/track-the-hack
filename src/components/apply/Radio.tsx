@@ -19,7 +19,7 @@ const Radio = ({ field, className, formData }: RadioProps) => {
 	const [otherValue, setOtherValue] = useState<string>(initialOtherValue);
 
 	return (
-		<div className="flex gap-4">
+		<div className="flex flex-wrap gap-4" role="group" aria-labelledby={`${field.name}-label`}>
 			{Object.entries(field.options).map(([k, v]: [string, string]) => (
 				<div key={k} className="flex items-center gap-2">
 					<input
@@ -27,7 +27,7 @@ const Radio = ({ field, className, formData }: RadioProps) => {
 						name={field.name}
 						type="radio"
 						value={k}
-						className="peer hidden"
+						className="peer sr-only"
 						required={field.required}
 						checked={k === value}
 						onChange={e => {
@@ -35,10 +35,7 @@ const Radio = ({ field, className, formData }: RadioProps) => {
 							setShowOther(e.target.value === "other");
 						}}
 					/>
-					<label
-						htmlFor={`${field.name}-${k}`}
-						className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color peer-checked:bg-light-primary-color/50 short:text-base"
-					>
+					<label htmlFor={`${field.name}-${k}`} className="ui-choice">
 						{t(v)}
 					</label>
 				</div>

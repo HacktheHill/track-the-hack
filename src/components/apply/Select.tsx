@@ -23,6 +23,8 @@ const Select = ({ field, className, formData }: SelectProps) => {
 				id={field.name}
 				name={field.name}
 				className={className}
+				aria-invalid={className.includes("ui-field-error") || undefined}
+				aria-describedby={className.includes("ui-field-error") ? `${field.name}-error` : undefined}
 				required={field.required}
 				value={value}
 				onChange={e => {
@@ -44,6 +46,8 @@ const Select = ({ field, className, formData }: SelectProps) => {
 					name={`${field.name}-other`}
 					type="text"
 					className={className}
+					aria-invalid={className.includes("ui-field-error") || undefined}
+					aria-describedby={className.includes("ui-field-error") ? `${field.name}-error` : undefined}
 					value={otherValue}
 					onChange={e => setOtherValue(e.target.value)}
 				/>

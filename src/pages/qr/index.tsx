@@ -72,8 +72,7 @@ const QR = ({ encryptedId }: { encryptedId: string }) => {
 	const handleEvent = useCallback(
 		async (hacker: Hacker, presences: Presence[]) => {
 			const maxCheckIns = events?.find(event => event.name === selectedAction.current)?.maxCheckIns as
-				| number
-				| null;
+				number | null;
 
 			// If user does not have hacker role
 			if (hacker.acceptanceStatus !== AcceptanceStatus.ACCEPTED) {
@@ -156,14 +155,15 @@ const QR = ({ encryptedId }: { encryptedId: string }) => {
 
 	return (
 		<App
-			className="relative flex h-full flex-col items-center justify-center gap-16 bg-default-gradient"
+			className="relative flex h-full flex-col items-center gap-8 overflow-y-auto bg-default-gradient px-4 py-8"
 			title={t("title")}
 		>
-			<div className="flex flex-col items-center gap-6">
+			<div className="my-auto flex w-full max-w-xl flex-col items-center gap-6">
 				<Filter value={[RoleName.ORGANIZER]} method="some">
 					<>
 						<select
-							className="p-3 text-center text-lg font-bold text-dark-color"
+							className="ui-field w-full text-center"
+							aria-label={t("scan-qr")}
 							onChange={e => {
 								selectedAction.current = e.target.value;
 								prevHackerId.current = "";
@@ -273,16 +273,10 @@ const RepeatedVisitor = ({ hacker, presence, maxCheckIns, incrementFn }: Repeate
 			<div>{t("already-checked-in", { firstName: hacker.firstName, lastName: hacker.lastName, counter })}</div>
 			{!maxCheckIns || maxCheckIns > presence.value ? (
 				<div className="flex w-full justify-center gap-16">
-					<button
-						className="z-10 w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
-						onClick={() => void handleIncrement(-1)}
-					>
+					<button className="ui-button z-10 w-fit" onClick={() => void handleIncrement(-1)}>
 						—
 					</button>
-					<button
-						className="z-10 w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
-						onClick={() => void handleIncrement(1)}
-					>
+					<button className="ui-button z-10 w-fit" onClick={() => void handleIncrement(1)}>
 						+
 					</button>
 				</div>

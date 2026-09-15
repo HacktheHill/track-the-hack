@@ -22,7 +22,7 @@ const Sponsors = () => {
 			className="flex flex-col items-center justify-around gap-8 overflow-y-auto bg-default-gradient p-8"
 			title={t("title")}
 		>
-			<h1 className="text-center text-4xl font-bold">{t("title")}</h1>
+			<h1 className="ui-page-title text-center">{t("title")}</h1>
 			<p className="text-center text-xl">{t("description")}</p>
 			{Object.values(SponsorTier).map(tier => {
 				const sponsors = sponsorsByTier(tier);

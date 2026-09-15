@@ -32,6 +32,8 @@ const MultiSelect = ({ field, className, formData }: MultiSelectProps) => {
 				name={`${field.name}[]`}
 				multiple
 				className={className}
+				aria-invalid={className.includes("ui-field-error") || undefined}
+				aria-describedby={className.includes("ui-field-error") ? `${field.name}-error` : undefined}
 				required={field.required}
 				value={values}
 				onChange={e => {
@@ -52,6 +54,8 @@ const MultiSelect = ({ field, className, formData }: MultiSelectProps) => {
 					name={`${field.name}[]-other`}
 					type="text"
 					className={className}
+					aria-invalid={className.includes("ui-field-error") || undefined}
+					aria-describedby={className.includes("ui-field-error") ? `${field.name}-error` : undefined}
 					value={otherValue}
 					onChange={e => setOtherValue(e.target.value)}
 				/>

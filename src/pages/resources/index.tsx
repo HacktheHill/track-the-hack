@@ -42,7 +42,7 @@ const components = {
 		</h1>
 	),
 	h2: ({ children, node, ...props }: ComponentProps) => (
-		<h2 className="mt-8 text-2xl text-center font-bold" {...props}>
+		<h2 className="mt-8 text-center text-2xl font-bold" {...props}>
 			{React.Children.map(children, child => {
 				if (typeof child === "string") {
 					return child;
@@ -238,7 +238,7 @@ const components = {
 				type={type}
 				checked={checked}
 				disabled={disabled}
-				className="rounded-lg border-2 border-gray-300 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-600"
+				className={type === "checkbox" ? "ui-checkbox" : "ui-field"}
 				{...rest}
 			/>
 		);

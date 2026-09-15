@@ -26,8 +26,8 @@ const Fields = ({ fields, page, formData, errors }: FieldsProps) => {
 		return (
 			<div
 				key={field.name}
-				className={`flex items-center gap-2 ${
-					field.type === "checkbox" ? "flex-row-reverse" : "flex-col sm:flex-row"
+				className={`flex gap-2 ${
+					field.type === "checkbox" ? "flex-row-reverse items-center" : "flex-col items-stretch"
 				}`}
 			>
 				<FieldLabel page={page} field={field} />
@@ -61,7 +61,7 @@ const FieldLabel = ({ page, field }: FieldLabelProps) => {
 	const { t } = useTranslation("apply");
 	const hasLinks = "links" in field && field.links?.length > 0;
 	return (
-		<label htmlFor={field.name} className="flex-[50%] font-rubik text-dark-color">
+		<label id={`${field.name}-label`} htmlFor={field.name} className="flex-[50%] font-rubik text-dark-color">
 			<Trans
 				i18nKey={`${page}.${field.name}.label`}
 				t={t}
@@ -79,7 +79,7 @@ const FieldLabel = ({ page, field }: FieldLabelProps) => {
 						: []
 				}
 			/>
-			{field.required && <span className="text-red-500">&nbsp;*</span>}
+			{field.required && <span className="text-dark-primary-color">&nbsp;*</span>}
 		</label>
 	);
 };
@@ -90,7 +90,15 @@ type FieldErrorProps = Readonly<{
 }>;
 
 function FieldError({ errors, field }: FieldErrorProps) {
-	return <>{errors[field.name] && <p className="text-red-500">{errors[field.name]?.join(". ")}</p>}</>;
+	return (
+		<>
+			{errors[field.name] && (
+				<p id={`${field.name}-error`} role="alert" className="ui-field-error-message">
+					{errors[field.name]?.join(". ")}
+				</p>
+			)}
+		</>
+	);
 }
 
 export default Fields;

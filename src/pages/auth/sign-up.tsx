@@ -116,19 +116,17 @@ const SignUp = ({ providers }: InferGetServerSidePropsType<typeof getServerSideP
 	return (
 		<>
 			<Head title={t("sign-up")} />
-			<main className="flex h-screen flex-col items-center justify-center gap-4 bg-default-gradient bg-no-repeat p-4 text-center supports-[height:100cqh]:h-[100cqh] supports-[height:100svh]:h-[100svh]">
+			<main className="ui-auth-page bg-default-gradient bg-no-repeat">
 				<div className="flex flex-col items-center">
 					<Image
-						src="https://hackthehill.com/Logos/hackthehill-logo.svg"
+						src="/assets/hackthehill-logo.svg"
 						alt={t("common:hack-the-hill-logo-alt")}
 						width={128}
 						height={128}
-						className="h-auto w-auto"
+						className="h-auto w-24"
 						priority
 					/>
-					<h1 className="font-coolvetica text-[clamp(1rem,3.5vmin,5rem)] font-normal text-dark-color">
-						{t("sign-up")}
-					</h1>
+					<h1 className="ui-page-title">{t("sign-up")}</h1>
 				</div>
 				<div className="flex w-full max-w-md flex-col gap-4">
 					{noUser && (
@@ -141,47 +139,55 @@ const SignUp = ({ providers }: InferGetServerSidePropsType<typeof getServerSideP
 					{Object.values(providers).map(provider => (
 						<form
 							key={provider.id}
-							className="flex flex-wrap gap-4 mobile:flex-nowrap"
+							className="ui-auth-form"
 							onSubmit={e => void handleSubmit(e, provider.id)}
 						>
 							{provider.id === "email" && (
-								<input
-									type="email"
-									name="email"
-									placeholder={t("email-address")}
-									required
-									className="w-full rounded-lg border border-dark-primary-color bg-light-primary-color px-4 py-2 font-rubik text-lg text-light-color shadow-md transition-all duration-500 placeholder:text-light-quaternary-color hover:bg-light-primary-color/75 hover:shadow-lg"
-								/>
-							)}
-							{provider.id === "credentials" && (
 								<>
+									<label htmlFor={`${provider.id}-email`}>{t("email-address")}</label>
 									<input
+										id={`${provider.id}-email`}
+										autoComplete="email"
 										type="email"
 										name="email"
 										placeholder={t("email-address")}
 										required
-										className="w-full rounded-lg border border-dark-primary-color bg-light-primary-color px-4 py-2 font-rubik text-lg text-light-color shadow-md transition-all duration-500 placeholder:text-light-quaternary-color hover:bg-light-primary-color/75 hover:shadow-lg"
+										className="ui-field w-full"
 									/>
+								</>
+							)}
+							{provider.id === "credentials" && (
+								<>
+									<label htmlFor={`${provider.id}-email`}>{t("email-address")}</label>
 									<input
+										id={`${provider.id}-email`}
+										autoComplete="email"
+										type="email"
+										name="email"
+										placeholder={t("email-address")}
+										required
+										className="ui-field w-full"
+									/>
+									<label htmlFor={`${provider.id}-password`}>{t("password")}</label>
+									<input
+										id={`${provider.id}-password`}
+										autoComplete="new-password"
 										type="password"
 										name="password"
 										placeholder={t("password")}
 										required
-										className="w-full rounded-lg border border-dark-primary-color bg-light-primary-color px-4 py-2 font-rubik text-lg text-light-color shadow-md transition-all duration-500 placeholder:text-light-quaternary-color hover:bg-light-primary-color/75 hover:shadow-lg"
+										className="ui-field w-full"
 									/>
 								</>
 							)}
-							<button
-								type="submit"
-								className="flex w-full justify-center gap-4 whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-lg text-dark-primary-color transition-all duration-500 hover:bg-light-tertiary-color hover:shadow-lg"
-							>
+							<button type="submit" className="ui-button ui-button-primary w-full">
 								{provider.id !== "email" && provider.id !== "credentials" && (
 									<>
 										{/* eslint-disable-next-line @next/next/no-img-element */}
 										<img
 											src={`https://authjs.dev/img/providers/${provider.id}.svg`}
 											alt={provider.name}
-											className="h-8 w-auto brightness-0"
+											className="h-6 w-6 brightness-0 invert"
 										/>
 									</>
 								)}

@@ -13,9 +13,11 @@ const Input = ({ field, className, formData }: InputProps) => {
 			name={field.name}
 			type={field.type}
 			className={className}
+			aria-invalid={className.includes("ui-field-error") || undefined}
+			aria-describedby={className.includes("ui-field-error") ? `${field.name}-error` : undefined}
 			required={field.required}
 			accept={field.type === "file" ? "application/pdf" : undefined}
-			defaultValue={field.type === "file" ? undefined : formData.get(field.name)?.toString() ?? ""}
+			defaultValue={field.type === "file" ? undefined : (formData.get(field.name)?.toString() ?? "")}
 		/>
 	);
 };
