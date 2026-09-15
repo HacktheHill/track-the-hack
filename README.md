@@ -43,6 +43,10 @@ The production Google Sheets adapter is versioned in
 [`integrations/google-sheets`](./integrations/google-sheets). Its three required
 deployment properties and live menu workflow are documented there.
 
+Discord verification uses the active participant session and signed personal
+links from the separate bot. Setup, bot-owned identity storage, and the local
+two-service test are in [`docs/DISCORD_VERIFICATION.md`](./docs/DISCORD_VERIFICATION.md).
+
 ## Self-host the database
 
 `npm run dev:setup` is the supported local path. For manual control, run
