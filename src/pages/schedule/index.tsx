@@ -53,7 +53,7 @@ const Schedule: NextPage = () => {
 			case EventType.WORKSHOP:
 				return "bg-dark-primary-color text-light-color";
 			case EventType.CAREER_FAIR:
-				return "bg-light-primary-color text-light-color";
+				return "bg-light-secondary-color text-dark-primary-color";
 			case EventType.FOOD:
 				return "bg-medium-primary-color text-light-color";
 			case EventType.SOCIAL:
@@ -145,7 +145,7 @@ type TabsProps = {
 const Tabs = ({ tab, setTab }: TabsProps) => {
 	return (
 		<div className="w-full border-b border-dark-color bg-light-quaternary-color px-4 pb-4 pt-2 shadow-navbar">
-			<div className="mx-auto grid max-w-2xl grid-cols-3 gap-3 sm:grid-cols-5">
+			<div className="mx-auto grid max-w-2xl grid-cols-2 gap-3 sm:grid-cols-5 xs:grid-cols-3">
 				{Object.keys(EventType)
 					.sort(a => (a === EventType.ALL ? -1 : 0))
 					.map(type => (
@@ -179,19 +179,9 @@ const Tab = ({ type, active, onClick }: TabProps) => {
 	};
 
 	return (
-		<div
-			className={`flex cursor-pointer flex-row items-center justify-center gap-2 rounded-lg bg-dark-primary-color p-2 font-coolvetica text-light-color outline sm:p-4 ${
-				type === active ? "outline-4 outline-light-color" : "outline-0"
-			}`}
-			onClick={onClick}
-			onKeyDown={e => {
-				if (e.key === "Enter") {
-					onClick();
-				}
-			}}
-		>
-			<h1 className="text-center text-lg">{types[type]}</h1>
-		</div>
+		<button type="button" className="ui-button" aria-pressed={type === active} onClick={onClick}>
+			{types[type]}
+		</button>
 	);
 };
 

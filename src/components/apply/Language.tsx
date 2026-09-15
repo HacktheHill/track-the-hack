@@ -11,7 +11,7 @@ const Language = ({ field }: LanguageProps) => {
 	const { t } = useTranslation("apply");
 
 	return (
-		<div className="flex justify-evenly gap-4">
+		<div className="flex flex-wrap justify-center gap-4">
 			{Object.entries(field.options).map(([key, value]) => {
 				const locale = key.toLowerCase();
 				const isSelected = router.locale === locale;
@@ -24,19 +24,14 @@ const Language = ({ field }: LanguageProps) => {
 							name={field.name}
 							value={key}
 							checked={isSelected}
-							className="peer hidden"
+							className="peer sr-only"
 							onChange={() => {
 								void router.push(router.pathname, router.pathname, {
 									locale,
 								});
 							}}
 						/>
-						<label
-							htmlFor={`${field.name}-${key}`}
-							className={`cursor-pointer whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-4xl text-dark-primary-color transition-colors hover:bg-light-tertiary-color ${
-								isSelected ? "peer-checked:bg-light-primary-color/50" : ""
-							}`}
-						>
+						<label htmlFor={`${field.name}-${key}`} className="ui-choice ui-button-large">
 							{t(value)}
 						</label>
 					</div>

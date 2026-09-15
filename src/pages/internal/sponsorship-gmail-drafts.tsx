@@ -532,11 +532,11 @@ const SponsorshipGmailDrafts: NextPage = () => {
 	}, [templateID, organizerFullName, companyName, companyRepName, customTemplate, customizeTemplate]);
 
 	return (
-		<App className="overflow-y-auto bg-default-gradient p-8 sm:p-12" title={t("title")}>
+		<App className="overflow-y-auto bg-default-gradient px-4 py-8" title={t("title")}>
 			<Filter value={RoleName.ORGANIZER} method="above">
-				<form onSubmit={handleSubmit} className="m-auto flex w-fit flex-col items-center gap-4">
-					<h1 className="font-rubik text-4xl font-bold">{t("title")}</h1>
-					<div className="flex w-full flex-col items-center gap-2 sm:flex-row">
+				<form onSubmit={handleSubmit} className="m-auto flex w-full max-w-3xl flex-col items-stretch gap-6">
+					<h1 className="ui-page-title text-center">{t("title")}</h1>
+					<div className="flex w-full flex-col gap-2">
 						<label htmlFor="organizer-full-name" className="flex-[50%] font-rubik">
 							{t("organizer-full-name")}
 							<span className="text-red-500"> *</span>
@@ -545,13 +545,13 @@ const SponsorshipGmailDrafts: NextPage = () => {
 							id="organizer-full-name"
 							name="organizerFullName"
 							type="text"
-							className="w-full rounded-[100px] border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+							className="ui-field w-full"
 							onChange={event => setOrganizerFullName(event.target.value)}
 							value={organizerFullName}
 							required
 						/>
 					</div>
-					<div className="flex w-full flex-col items-center gap-2 sm:flex-row">
+					<div className="flex w-full flex-col gap-2">
 						<label htmlFor="template" className="flex-[50%] font-rubik">
 							{t("select-template")}
 							<span className="text-red-500"> *</span>
@@ -559,7 +559,7 @@ const SponsorshipGmailDrafts: NextPage = () => {
 						<select
 							id="template"
 							name="template"
-							className="w-full rounded-[100px] border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+							className="ui-field w-full"
 							onChange={event => {
 								setTemplateID(event.target.value);
 								setCustomizeTemplate(event.target.value === "custom");
@@ -583,7 +583,7 @@ const SponsorshipGmailDrafts: NextPage = () => {
 					</div>
 					{!customizeTemplate && (
 						<>
-							<div className="flex w-full flex-col items-center gap-2 sm:flex-row">
+							<div className="flex w-full flex-col gap-2">
 								<label htmlFor="company-name" className="flex-[50%] font-rubik">
 									{t("company-name")}
 									<span className="text-red-500"> *</span>
@@ -592,13 +592,13 @@ const SponsorshipGmailDrafts: NextPage = () => {
 									id="company-name"
 									name="companyName"
 									type="text"
-									className="w-full rounded-[100px] border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+									className="ui-field w-full"
 									onChange={event => setCompanyName(event.target.value)}
 									value={companyName}
 									required
 								/>
 							</div>
-							<div className="flex w-full flex-col items-center gap-2 sm:flex-row">
+							<div className="flex w-full flex-col gap-2">
 								<label htmlFor="company-rep-name" className="flex-[50%] font-rubik">
 									{t("company-rep-name")}
 									<span className="text-red-500"> *</span>
@@ -607,7 +607,7 @@ const SponsorshipGmailDrafts: NextPage = () => {
 									id="company-rep-name"
 									name="companyRepName"
 									type="text"
-									className="w-full rounded-[100px] border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+									className="ui-field w-full"
 									onChange={event => setCompanyRepName(event.target.value)}
 									value={companyRepName}
 									required
@@ -615,8 +615,8 @@ const SponsorshipGmailDrafts: NextPage = () => {
 							</div>
 						</>
 					)}
-					<div className="flex w-full flex-col items-center gap-2 sm:flex-row">
-						<label htmlFor="company-name" className="flex-[50%] font-rubik">
+					<div className="flex w-full flex-col gap-2">
+						<label htmlFor="company-email" className="flex-[50%] font-rubik">
 							{t("company-email")}
 							<span className="text-red-500"> *</span>
 						</label>
@@ -624,13 +624,13 @@ const SponsorshipGmailDrafts: NextPage = () => {
 							id="company-email"
 							name="companyEmail"
 							type="email"
-							className="w-full rounded-[100px] border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+							className="ui-field w-full"
 							onChange={event => setCompanyEmail(event.target.value)}
 							value={companyEmail}
 							required
 						/>
 					</div>
-					<div className="flex w-full flex-col items-center gap-2 sm:flex-row">
+					<div className="flex w-full flex-col gap-2">
 						<label htmlFor="subject" className="flex-[50%] font-rubik">
 							{t("subject")}
 							<span className="text-red-500"> *</span>
@@ -638,14 +638,14 @@ const SponsorshipGmailDrafts: NextPage = () => {
 						<input
 							id="subject"
 							name="subject"
-							className="w-full rounded-[100px] border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+							className="ui-field w-full"
 							onChange={event => setSubject(event.target.value)}
 							value={subject}
 							required
 						/>
 					</div>
 					{customizeTemplate && (
-						<div className="flex w-full flex-col items-center gap-2 sm:flex-row">
+						<div className="flex w-full flex-col gap-2">
 							<div className="flex flex-col gap-1">
 								<label htmlFor="custom-template" className="flex-[50%] font-rubik">
 									{t("custom-template")}
@@ -655,7 +655,7 @@ const SponsorshipGmailDrafts: NextPage = () => {
 							<textarea
 								id="custom-template"
 								name="customTemplate"
-								className="h-[200px] w-full rounded-md border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+								className="ui-field h-[200px] w-full"
 								onChange={event => setCustomTemplate(event.target.value)}
 								value={customTemplate}
 							/>
@@ -669,7 +669,7 @@ const SponsorshipGmailDrafts: NextPage = () => {
 					<div className="relative h-[500px] w-full rounded-md bg-light-color shadow-md" ref={emailPreview}>
 						<button
 							type="button"
-							className="bg-ligh-color hover:bg-medium absolute bottom-4 right-4 rounded-[100px] border-none px-4 py-2 font-rubik text-light-color shadow-md transition-all duration-1000 disabled:hover:bg-light-color"
+							className="ui-button absolute bottom-4 right-4"
 							onClick={() => void copyToClipBoard()}
 							disabled={copied}
 						>
@@ -677,11 +677,7 @@ const SponsorshipGmailDrafts: NextPage = () => {
 						</button>
 						<iframe srcDoc={htmlPreview} className="h-full w-full" title="Email Preview" />
 					</div>
-					<button
-						type="submit"
-						className="cursor-pointer whitespace-nowrap rounded-xl border-none bg-medium-primary-color px-8 py-2 font-rubik text-light-color shadow-md transition-all duration-500 hover:bg-light-primary-color"
-						disabled={drafted}
-					>
+					<button type="submit" className="ui-button ui-button-primary" disabled={drafted}>
 						{drafted ? t("created-draft-email") : t("create-draft-email")}
 					</button>
 				</form>

@@ -36,17 +36,18 @@ const Metrics = () => {
 	];
 
 	useEffect(() => {
-		const isSmallScreen = window.innerWidth < 768;
-		const pieRadius = isSmallScreen ? 90 : 160;
-		setPieRadius(pieRadius);
+		const updateRadius = () => setPieRadius(window.innerWidth < 768 ? 90 : 160);
+		updateRadius();
+		window.addEventListener("resize", updateRadius);
+		return () => window.removeEventListener("resize", updateRadius);
 	}, []);
 
 	return (
 		<App className="overflow-y-auto bg-default-gradient" integrated={true} title={t("title")}>
-			<div className="flex flex-col items-center justify-center overflow-hidden overflow-y-auto bg-default-gradient p-10">
-				<h1 className="p-10 font-rubik text-4xl font-bold">{t("title")}</h1>
+			<div className="flex flex-col items-center justify-center overflow-hidden overflow-y-auto bg-default-gradient px-4 py-8">
+				<h1 className="ui-page-title py-4 text-center">{t("title")}</h1>
 
-				<div className="flex w-full max-w-6xl flex-col items-center gap-6 rounded-lg bg-light-tertiary-color p-6 shadow-lg">
+				<div className="ui-panel flex w-full max-w-6xl flex-col items-center gap-6 p-4 sm:p-6">
 					<h3 className="font-coolvetica text-xl">{t("overview")}</h3>
 
 					<div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2">

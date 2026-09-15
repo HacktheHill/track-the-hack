@@ -89,11 +89,11 @@ const TeamCreation = ({ hacker }: { hacker: HackerData }) => {
 					value={teamName}
 					placeholder={t("enter-team")}
 					onChange={searchTeamHandler}
-					className="w-full rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+					className="ui-field w-full"
 				/>
 				{teamExists ? (
 					<button
-						className="flex items-center justify-center gap-2 rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
+						className="ui-button"
 						onClick={e => {
 							e.preventDefault();
 							void joinTeamHandler();
@@ -103,7 +103,7 @@ const TeamCreation = ({ hacker }: { hacker: HackerData }) => {
 					</button>
 				) : (
 					<button
-						className="flex items-center justify-center gap-2 rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
+						className="ui-button"
 						onClick={e => {
 							e.preventDefault();
 							void createTeamHandler();

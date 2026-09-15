@@ -157,8 +157,8 @@ const HackerPage: NextPage<{
 
 	useEffect(() => {
 		if (
-			[RoleName.ORGANIZER, RoleName.MAYOR, RoleName.PREMIER].some(
-				role => sessionData?.user?.roles.includes(role),
+			[RoleName.ORGANIZER, RoleName.MAYOR, RoleName.PREMIER].some(role =>
+				sessionData?.user?.roles.includes(role),
 			) ||
 			sessionData?.user?.hackerId == id
 		) {
@@ -237,30 +237,24 @@ const HackerPage: NextPage<{
 			<div className="mx-auto flex max-w-2xl flex-col gap-4">
 				<div className="flex justify-between">
 					{prevHackerQuery.data && (
-						<a
-							href={`/hackers/hacker?id=${prevHackerQuery.data.id}`}
-							className="flex items-center justify-center gap-2 rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
-						>
+						<a href={`/hackers/hacker?id=${prevHackerQuery.data.id}`} className="ui-button">
 							{t("previous")}
 						</a>
 					)}
 					{nextHackerQuery.data && (
-						<a
-							href={`/hackers/hacker?id=${nextHackerQuery.data.id}`}
-							className="flex items-center justify-center gap-2 rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
-						>
+						<a href={`/hackers/hacker?id=${nextHackerQuery.data.id}`} className="ui-button">
 							{t("next")}
 						</a>
 					)}
 				</div>
 
-				<h1 className="text-center font-coolvetica text-4xl font-normal text-dark-color">
+				<h1 className="ui-page-title text-center">
 					{hackerQuery.data.firstName} {hackerQuery.data.lastName}{" "}
 					{hackerQuery.data.pronouns && <>({hackerQuery.data.pronouns})</>}
 				</h1>
 
-				{[RoleName.ORGANIZER, RoleName.MAYOR, RoleName.PREMIER].some(
-					role => sessionData?.user?.roles.includes(role),
+				{[RoleName.ORGANIZER, RoleName.MAYOR, RoleName.PREMIER].some(role =>
+					sessionData?.user?.roles.includes(role),
 				) || sessionData?.user?.hackerId == id ? (
 					<div className="organizerView">
 						<div
@@ -279,7 +273,7 @@ const HackerPage: NextPage<{
 									</p>
 									<p>{presence.value}</p>
 									<button
-										className="w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-1 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
+										className="ui-button w-fit"
 										onClick={() => {
 											void handlePresenceIncrement(presence.id, -1);
 											presence.value -= 1;
@@ -288,7 +282,7 @@ const HackerPage: NextPage<{
 										—
 									</button>
 									<button
-										className="w-fit whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-1 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
+										className="ui-button w-fit"
 										onClick={() => {
 											void handlePresenceIncrement(presence.id, 1);
 											presence.value += 1;
@@ -301,15 +295,15 @@ const HackerPage: NextPage<{
 						</div>
 						<form onSubmit={e => void handleSubmit(e)} className="flex flex-col gap-4">
 							<div className="mt-4 grid gap-4">
-								<div className="flex justify-between gap-2">
+								<div className="flex flex-col gap-2 sm:flex-row sm:justify-between">
 									<strong className="text-left font-bold">Login email:</strong>
-									<span className="w-1/2 rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50">
+									<span className="ui-field w-full sm:w-1/2">
 										{(hackerQuery.data as unknown as HackerViewData).User?.email}
 									</span>
 								</div>
-								<div className="flex justify-between gap-2">
+								<div className="flex flex-col gap-2 sm:flex-row sm:justify-between">
 									<strong className="text-left font-bold">Login Provider:</strong>
-									<span className="w-1/2 rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50">
+									<span className="ui-field w-full sm:w-1/2">
 										{(hackerQuery.data as unknown as HackerViewData).User?.accounts[0]?.provider}
 									</span>
 								</div>
@@ -325,8 +319,7 @@ const HackerPage: NextPage<{
 												id: field.name,
 												name: field.name,
 												type: field.type,
-												className:
-													"w-1/2 rounded border-none bg-light-primary-color/75 px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50",
+												className: "ui-field w-full sm:w-1/2",
 												value: inputValues[field.name] ?? "",
 												onChange: (
 													e: React.ChangeEvent<
@@ -336,12 +329,15 @@ const HackerPage: NextPage<{
 											};
 
 											return (
-												<div key={index} className="flex justify-between gap-2">
-													<strong className="text-left font-bold">
+												<div
+													key={index}
+													className="flex flex-col gap-2 sm:flex-row sm:justify-between"
+												>
+													<label htmlFor={field.name} className="text-left font-medium">
 														{"options" in field && field.options
 															? t(`${categoryName}.${field.name}.label`)
 															: t(`${categoryName}.${field.name}`)}
-													</strong>
+													</label>
 													{"editable" in field && field.editable ? (
 														field.type === "select" ? (
 															<select {...fieldAttributes}>
@@ -357,7 +353,7 @@ const HackerPage: NextPage<{
 															<input {...fieldAttributes} />
 														)
 													) : (
-														<p>
+														<p id={field.name}>
 															{field.type === "select" && field.value
 																? t(`${categoryName}.${field.name}.${field.value}`)
 																: field.value}
@@ -377,7 +373,7 @@ const HackerPage: NextPage<{
 								{!acceptance && (
 									<input
 										name="resume"
-										className="m-auto w-fit rounded-md border border-dark-primary-color p-2"
+										className="ui-field m-auto w-fit"
 										type="file"
 										accept="application/pdf"
 										onChange={e => {
@@ -400,7 +396,7 @@ const HackerPage: NextPage<{
 													href={value}
 													target="_blank"
 													rel="noreferrer"
-													className="flex items-center justify-center gap-2 rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
+													className="ui-button"
 												>
 													{t(`links.${key}`)}
 												</a>
@@ -417,19 +413,13 @@ const HackerPage: NextPage<{
 
 							{edit && (
 								<div className="sticky bottom-0 mx-2 flex justify-center  font-coolvetica">
-									<div className="flex max-w-md rounded-md bg-dark-primary-color px-2 py-2 text-light-color transition delay-150 ease-in-out">
+									<div className="flex max-w-full flex-wrap justify-center gap-2 rounded-lg bg-dark-primary-color p-2 text-light-color">
 										<p className="px-5 py-2 text-center">{t("unsavedChanges")}</p>
 										{loading && <Loading />}
-										<button
-											className="px-4 py-2 text-light-quaternary-color"
-											onClick={resetInputFields}
-										>
+										<button className="ui-button" type="button" onClick={resetInputFields}>
 											{t("reset")}
 										</button>
-										<button
-											className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 text-dark-color transition-all duration-500 hover:bg-light-tertiary-color"
-											type="submit"
-										>
+										<button className="ui-button ui-button-primary" type="submit">
 											{t("save")}
 										</button>
 									</div>
@@ -455,7 +445,7 @@ const HackerPage: NextPage<{
 												href={value}
 												target="_blank"
 												rel="noreferrer"
-												className="flex items-center justify-center gap-2 rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
+												className="ui-button"
 											>
 												{t(`links.${key}`)}
 											</a>

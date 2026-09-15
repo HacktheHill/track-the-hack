@@ -19,22 +19,21 @@ const Modal = ({ children, buttons }: ModalProps) => {
 		if (!modalRoot) {
 			const div = document.createElement("div");
 			div.setAttribute("id", "modal-root");
-			document.body.querySelector("_")
+			document.body.querySelector("_");
 		}
 	}, [modalRoot]);
 
 	return modalRoot
 		? createPortal(
-				<div className="fixed inset-0 z-50 flex items-center justify-center bg-light-tertiary-color bg-opacity-90">
-					<div className="flex w-full max-w-lg flex-col gap-4 rounded border border-dark-primary-color bg-light-quaternary-color p-8 text-center">
+				<div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-light-tertiary-color bg-opacity-90 p-4">
+					<div className="ui-panel flex max-h-full w-full max-w-lg flex-col gap-4 overflow-y-auto p-6 text-center">
 						{children}
-						<div className="flex justify-center gap-4">
+						<div className="flex flex-wrap justify-center gap-3">
 							{buttons.map((button, index) => (
 								<button
 									key={index}
-									className={`whitespace-nowrap rounded-lg border border-dark-primary-color px-4 py-2 text-dark-primary-color transition-colors hover:bg-light-tertiary-color ${
-										button.className || ""
-									}`}
+									type="button"
+									className={`ui-button ${button.className || ""}`}
 									onClick={button.onClick}
 								>
 									{button.label}
