@@ -17,6 +17,8 @@
 /.next/
 /.next-dev-e2e/
 /.next-pwa-e2e/
+/.next-discord-e2e/
+/artifacts/discord-verification/
 /out/
 next-env.d.ts
 

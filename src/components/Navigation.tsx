@@ -151,7 +151,11 @@ const Navbar = ({ integrated }: NavbarProps) => {
 				<button
 					className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors sm:visible"
 					onClick={() =>
-						void router.push({ pathname: "/auth/sign-in", query: { callbackUrl: router.asPath } })
+						// Keep private fragment capabilities out of the server-bound login query.
+						void router.push({
+							pathname: "/auth/sign-in",
+							query: { callbackUrl: router.asPath.split("#")[0] },
+						})
 					}
 				>
 					{t("sign-in")}
