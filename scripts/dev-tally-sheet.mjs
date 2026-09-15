@@ -31,7 +31,7 @@ const tallySheetFixtureSchema = z
 const operationalRecordSchema = z
 	.object({
 		id: z.string().min(1),
-		tShirtSize: z.enum(["XS", "S", "M", "L", "XL", "XXL"]),
+		tShirtSize: z.enum(["XS", "S", "M", "L", "XL", "XXL", "NONE"]),
 		mealCategory: z.enum(["STANDARD", "VEGETARIAN", "VEGAN", "HALAL", "OTHER"]),
 		acceptanceExpiry: z.string().datetime(),
 		walkIn: z.boolean(),

@@ -1,4 +1,4 @@
-import { RoleName } from "@prisma/client";
+import { RoleName, TShirtSize } from "@prisma/client";
 import type { GetServerSideProps } from "next";
 import { getServerSession } from "next-auth";
 import { useTranslation } from "next-i18next";
@@ -45,7 +45,11 @@ const Metrics = () => {
 						/>
 						<OperationalChart
 							title={t("tShirtSize")}
-							data={data.tShirtSizeData}
+							data={data.tShirtSizeData.map(entry => ({
+								...entry,
+								tShirtSize:
+									entry.tShirtSize === TShirtSize.NONE ? t("common:no-t-shirt") : entry.tShirtSize,
+							}))}
 							x="tShirtSize"
 							y="_count.tShirtSize"
 						/>

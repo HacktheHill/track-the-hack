@@ -12,6 +12,8 @@ Do not add legacy-data cleanup, compatibility, backfill, or destructive cutover 
 
 The Sheet creates `Hacker.id`; Track the Hack never creates or substitutes it. Generate at least 128 random bits and encode them as 22–128 URL-safe characters (`A-Z`, `a-z`, `0-9`, `_`, `-`). The ID must not be sequential, derived from identity, or equal to Tally's application ID.
 
+Persist and flush the submission-to-participant mapping in the Sheet before provisioning. Reuse that ID after an error or lost response. The bound adapter serializes operations with a document lock so overlapping acceptance runs cannot assign different IDs to the same submission.
+
 The external RSVP CSV is `email,id` with optional `name`. Email and name are template inputs for the external bulk-email workflow and must not be sent to Track the Hack. An invitation URL is `${NEXTAUTH_URL}/rsvp/<id>`.
 
 ## Authentication
@@ -37,6 +39,8 @@ Sheet endpoints require `Authorization: Bearer <SHEETS_INTEGRATION_API_KEY>`. Ke
 ```
 
 All properties are required except `walkIn`. The accepted enums are the Prisma `TShirtSize` values and exactly `STANDARD`, `VEGETARIAN`, `VEGAN`, `HALAL`, `OTHER`. Unknown properties—including email, name, Tally IDs, application fields, `confirmed`, and `teamId`—are rejected. Repeating a request updates the exact `id` without creating a duplicate and does not overwrite RSVP state. Discord owns teams; Track the Hack accepts no team data.
+
+`tShirtSize: "NONE"` records an explicit choice not to receive a T-shirt. It is distinct from a missing or invalid size. The Sheet adapter maps both “I do not want a T-shirt” and “Je ne souhaite pas recevoir de t-shirt” to this value. Scanner and participant pages display the choice in the selected language. Merchandise Presence still records the event's general merchandise pickup, which may include items other than T-shirts.
 
 ## RSVP and cancellation
 

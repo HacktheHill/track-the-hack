@@ -1,13 +1,18 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import test from "node:test";
 import { runInNewContext } from "node:vm";
 import { z } from "zod";
+import { provisioningBatchSchema } from "@/server/services/hacker-lifecycle";
+import {
+	applicationRow,
+	appsScriptSource as source,
+	createSheetHarness,
+} from "@root/test/helpers/google-sheets-harness";
 
 const operationalRecordSchema = z
 	.object({
 		id: z.string(),
-		tShirtSize: z.enum(["XS", "S", "M", "L", "XL", "XXL"]),
+		tShirtSize: z.enum(["XS", "S", "M", "L", "XL", "XXL", "NONE"]),
 		mealCategory: z.enum(["STANDARD", "VEGETARIAN", "VEGAN", "HALAL", "OTHER"]),
 		acceptanceExpiry: z.string().datetime(),
 		walkIn: z.boolean(),
@@ -68,7 +73,6 @@ const sheetAdapterSchema = z.object({
 	claimResponse_: z.function().args(z.string()).returns(claimResponseSchema),
 });
 
-const source = readFileSync(new URL("../integrations/google-sheets/Code.gs", import.meta.url), "utf8");
 const sheetFetchOptionsSchema = z
 	.object({
 		method: z.literal("post"),
@@ -157,6 +161,60 @@ void test("the real Sheet adapter maps the live French headers and detailed rest
 		acceptanceExpiry: "2026-09-01T07:59:59.000Z",
 		walkIn: true,
 	});
+});
+
+for (const [language, header, answer] of [
+	["English", "What unisex T-shirt size would you prefer?", "I do not want a T-shirt"],
+	["French", "Quelle taille de t-shirt unisexe préférez-vous?", "Je ne souhaite pas recevoir de t-shirt"],
+] as const) {
+	void test(`${language} T-shirt opt-outs survive batch acceptance and access-issuance row parsing`, () => {
+		const applications = ["regular", "opt-out"].map(submissionId =>
+			applicationRow({
+				"Submission ID": submissionId,
+				[header]: submissionId === "regular" ? "M" : answer,
+				"Email address": "sheet-only@example.test",
+				"Adresse courriel": "sheet-only@example.test",
+			}),
+		);
+		const batches: Array<z.infer<typeof provisioningBatchSchema>> = [];
+		const sheet = createSheetHarness({
+			applications,
+			fetch: ({ url, options }) => {
+				assert.equal(url, "https://track.example/api/integrations/sheets/hackers");
+				assert.doesNotMatch(options.payload, /sheet-only@example\.test/);
+				const batch = provisioningBatchSchema.parse(JSON.parse(options.payload));
+				batches.push(batch);
+				return { status: 200, body: JSON.stringify({ processed: batch.hackers.length }) };
+			},
+		});
+		sheet.run();
+		assert.equal(batches.length, 1);
+		assert.deepEqual(
+			batches[0]?.hackers.map(record => record.tShirtSize),
+			["M", "NONE"],
+		);
+		assert.deepEqual(sheet.alerts, ["2 participant(s) provisioned."]);
+		const operations = sheet.savedRows();
+		assert.equal(operations.length, 3);
+		const savedOptOut = operations[2];
+		assert.ok(savedOptOut);
+		assert.equal(savedOptOut[0], "opt-out");
+		assert.equal(adapter.operationalRecordFromRow_(savedOptOut).tShirtSize, "NONE");
+	});
+}
+
+void test("unrecognized T-shirt answers are still rejected", () => {
+	assert.throws(
+		() =>
+			adapter.applicationRowToOperationalRecord_(
+				["What unisex T-shirt size would you prefer?"],
+				["Undecided"],
+				"participant_012345678901234567890123",
+				"2026-09-30T03:59:59.000Z",
+				false,
+			),
+		/Unsupported T-shirt size/,
+	);
 });
 
 void test("the Sheet adapter generates opaque IDs and authenticates its API request", () => {

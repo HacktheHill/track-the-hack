@@ -1,8 +1,8 @@
-import { PrismaClient, type RoleName } from "@prisma/client";
+import type { RoleName } from "@prisma/client";
 import type { Session } from "next-auth";
+import { prisma } from "@/server/db";
 
 export async function rolesRedirect(session: Session | null, callbackUrl: string, roles: RoleName[]) {
-	const prisma = new PrismaClient();
 	const user =
 		session?.user &&
 		(await prisma.user.findUnique({
