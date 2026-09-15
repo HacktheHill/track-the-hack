@@ -6,7 +6,7 @@ Set these Apps Script **Project Settings → Script properties** before using th
 
 - `TRACK_BASE_URL`: the deployed HTTPS Track the Hack origin
 - `SHEETS_INTEGRATION_API_KEY`: the same secret configured on that deployment
-- `RSVP_DEADLINE`: an absolute ISO-8601 timestamp, for example `2026-09-01T03:59:59.000Z`
+- `RSVP_DEADLINE`: the event's actual RSVP deadline as an absolute ISO-8601 timestamp
 
 The menu accepts selected application rows, has a separate explicit action for
 walk-ins, refreshes RSVP state, and issues a five-minute participant-access QR.
@@ -15,11 +15,25 @@ T-shirt size, coarse meal category, expiry, and the selected walk-in flag to
 Track the Hack. Names, emails, Tally IDs, waivers, and detailed restrictions
 remain in Google Sheets.
 
+## Updating the live Sheet's script
+
+1. Apply the `20260915000000_add_no_tshirt_option` database migration and deploy the matching Track version first. Use `Code.gs` from that same repository revision so the Sheet and API agree on the supported fields and responses.
+2. In **Hack the Hill III Hacker Application Form**, open **Extensions → Apps Script** and confirm the project is **Track the Hack Integration**. Keep a private backup of its existing `Code.gs`. Preserve the `Responses` and `Track Operations` tabs, including all saved submission-to-participant ID mappings.
+3. Replace the contents of the existing **Code.gs** with this directory's [`Code.gs`](./Code.gs). Update the existing file in the bound project; adding a second copy would duplicate its functions and constants.
+4. Open **Project Settings → Script properties** and check the three properties listed above against the target deployment. Add any missing properties; if the section is empty, all three are required. Keep valid existing values, and use the event's actual RSVP deadline.
+5. **Save project to Drive**, then reload the Sheet. Confirm the **Track the Hack** menu includes **Accept selected walk-in application(s)**. The script's `onOpen` only builds the menu; this check does not accept applicants, call Track, or send email.
+
+This is a [bound script](https://developers.google.com/apps-script/guides/bound) used through the Sheet's menu. Saving it and reopening the Sheet updates that workflow; no web-app deployment or new installable trigger is required.
+
+When ready to resume operations, **Track the Hack → Set up operations tab** upgrades the older 11-column header by appending **Walk-In** in column L, preserving the existing rows and participant IDs. This action writes only to the Sheet. If the headers do not match, inspect the mismatch instead of deleting or recreating the operations tab.
+
+Accepting applications, refreshing RSVP status, and issuing access are separate manual actions that call Track. Do not run them as an installation check. This script contains no email-sending functions.
+
 ## T-shirt opt-outs
 
 The English “I do not want a T-shirt” and French “Je ne souhaite pas recevoir de t-shirt” answers are stored as `NONE`. These applicants can be accepted in the same batch as applicants who selected a size, and their saved operations rows can issue access normally.
 
-For the live Sheet to support this choice, its bound Apps Script must also use this version of `Code.gs`. Apply the `20260915000000_add_no_tshirt_option` database migration and deploy the matching Track version before updating the bound script to send `NONE`. A repository change alone does not update the script installed in the Sheet.
+For the live Sheet to support this choice, follow [Updating the live Sheet's script](#updating-the-live-sheets-script). A repository change alone does not update the script installed in the Sheet.
 
 ## Retrying acceptance
 
