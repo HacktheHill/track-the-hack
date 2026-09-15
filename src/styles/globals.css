@@ -1,3 +1,5 @@
+@import "./tokens.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -49,8 +51,310 @@
 
 body {
 	margin: 0;
-	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans",
+	font-family:
+		-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans",
 		"Droid Sans", "Helvetica Neue", sans-serif;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
+}
+
+/* Hallmark · UI consistency · existing warm brand palette and page structure.
+ * Pre-emit review: hierarchy, execution, specificity, restraint and accessibility.
+ */
+html,
+body {
+	overflow-x: clip;
+}
+
+body {
+	font-family: var(--font-body);
+}
+
+@layer base {
+	h1,
+	h2,
+	h3 {
+		min-width: 0;
+		overflow-wrap: anywhere;
+		font-style: normal;
+	}
+
+	a:focus-visible,
+	button:focus-visible,
+	input:focus-visible,
+	select:focus-visible,
+	textarea:focus-visible,
+	[tabindex]:focus-visible {
+		outline: 3px solid var(--color-border);
+		outline-offset: 3px;
+	}
+}
+
+@layer components {
+	.ui-attendee-grid {
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+	}
+	.ui-button,
+	.ui-choice {
+		display: inline-flex;
+		min-height: var(--control-height);
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-control);
+		background: var(--color-surface);
+		padding: var(--space-control-y) var(--space-control-x);
+		color: var(--color-ink);
+		font-family: var(--font-body);
+		font-size: 1rem;
+		font-weight: 500;
+		line-height: 1.375rem;
+		text-align: center;
+		text-decoration: none;
+		white-space: nowrap;
+		cursor: pointer;
+	}
+
+	.ui-button-primary,
+	.ui-button[aria-pressed="true"],
+	.ui-button[aria-selected="true"],
+	.peer:checked + .ui-choice {
+		background: var(--color-accent);
+		color: var(--color-on-accent);
+	}
+
+	.ui-button:active:not(:disabled) {
+		background: var(--color-surface-hover);
+		color: var(--color-ink);
+	}
+
+	.ui-button:disabled,
+	.ui-button[aria-disabled="true"],
+	.ui-field:disabled,
+	.ui-checkbox:disabled,
+	.peer:disabled + .ui-choice {
+		cursor: not-allowed;
+		opacity: 0.55;
+	}
+
+	.ui-button[aria-busy="true"] {
+		cursor: progress;
+	}
+	.ui-button-icon {
+		width: var(--control-height);
+		padding: 0.625rem;
+		flex-shrink: 0;
+	}
+	.ui-button-large {
+		min-height: 3.25rem;
+		padding-inline: 1.5rem;
+		font-size: 1.125rem;
+	}
+
+	.ui-field {
+		min-width: 0;
+		min-height: var(--control-height);
+		max-width: 100%;
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-control);
+		background: var(--color-surface);
+		padding: var(--space-control-y) var(--space-control-x);
+		color: var(--color-ink);
+		font-family: var(--font-body);
+		font-size: 1rem;
+		line-height: 1.375rem;
+	}
+
+	.ui-field::placeholder {
+		color: var(--color-muted);
+		opacity: 1;
+	}
+	.ui-field[aria-invalid="true"],
+	.ui-field-error {
+		border-color: var(--color-error);
+		box-shadow: 0 0 0 1px var(--color-error);
+	}
+	.ui-field[data-state="success"] {
+		border-color: var(--color-success);
+	}
+	textarea.ui-field {
+		min-height: 7rem;
+		resize: vertical;
+	}
+	select.ui-field {
+		padding-right: 0.5rem;
+	}
+	.ui-field[type="file"] {
+		padding: 0.375rem;
+	}
+	.ui-field::file-selector-button {
+		border: 0;
+		border-radius: 0.25rem;
+		background: var(--color-accent);
+		padding: 0.375rem 0.75rem;
+		margin-right: 0.75rem;
+		color: var(--color-on-accent);
+		font: inherit;
+		cursor: pointer;
+	}
+
+	.ui-checkbox {
+		width: 1.25rem;
+		height: 1.25rem;
+		flex-shrink: 0;
+		accent-color: var(--color-accent);
+		cursor: pointer;
+	}
+	.peer:focus-visible + .ui-choice {
+		outline: 3px solid var(--color-border);
+		outline-offset: 3px;
+	}
+	.ui-field-error-message {
+		color: var(--color-error);
+		font-size: 0.875rem;
+	}
+	.ui-page-title {
+		font-family: var(--font-display);
+		font-size: clamp(1.75rem, 4vw, 2.25rem);
+		font-weight: 400;
+		line-height: 1.2;
+		color: var(--color-ink);
+	}
+	.ui-panel {
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-panel);
+		background: var(--color-surface-hover);
+	}
+	.ui-form-layout {
+		width: 100%;
+		max-width: 42rem;
+		margin-inline: auto;
+		padding: 2rem 1rem;
+	}
+	.ui-auth-page {
+		display: flex;
+		min-height: 100svh;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 1.5rem;
+		padding: 2rem 1rem;
+		text-align: center;
+	}
+	.ui-auth-form {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+	.ui-auth-form label {
+		text-align: left;
+		font-size: 0.875rem;
+		font-weight: 500;
+		color: var(--color-ink);
+	}
+	.ui-navbar {
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.75rem;
+		flex-shrink: 0;
+	}
+	.ui-navbar .ui-button {
+		padding-inline: 0.625rem;
+		font-size: 0.875rem;
+	}
+	.ui-navbar .ui-field {
+		width: 4.25rem;
+		flex-shrink: 0;
+		padding-inline: 0.5rem;
+		font-size: 0.875rem;
+	}
+	.ui-nav-links {
+		display: none;
+		align-items: center;
+		gap: 0.25rem;
+	}
+	.ui-nav-link {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		min-height: 2.75rem;
+		padding: 0.5rem 0.75rem;
+		border-radius: var(--radius-control);
+		color: var(--color-ink);
+		font-weight: 500;
+	}
+	.ui-nav-link[aria-current="page"] {
+		background: var(--color-accent);
+		color: var(--color-on-accent);
+	}
+	.ui-bottom-nav {
+		display: flex;
+		flex-shrink: 0;
+		justify-content: space-around;
+		gap: 0;
+		overflow-x: auto;
+		padding: 0.5rem;
+		padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+	}
+	.ui-bottom-nav .ui-nav-link {
+		min-width: 2.75rem;
+		padding: 0.5rem;
+	}
+	.ui-bottom-nav .ui-nav-link[aria-current="page"] {
+		background: var(--color-surface);
+		box-shadow: inset 0 -3px var(--color-accent);
+	}
+	.ui-bottom-nav img {
+		width: 1.5rem;
+		height: 1.5rem;
+	}
+
+	@media (min-width: 1280px) {
+		.ui-nav-links {
+			display: flex;
+		}
+		.ui-bottom-nav {
+			display: none;
+		}
+	}
+	@media (max-width: 359px) {
+		.ui-navbar:has(> button + button) {
+			flex-wrap: wrap;
+		}
+		.ui-navbar:has(> button + button) > div:first-child {
+			flex-basis: calc(100% - 5rem);
+		}
+		.ui-navbar:has(> button + button) > button {
+			flex: 1;
+		}
+	}
+	@media (hover: hover) {
+		.ui-button:hover:where(:not(:disabled):not([aria-disabled="true"])),
+		.ui-choice:hover,
+		.ui-field:hover:not(:disabled) {
+			background: var(--color-surface-hover);
+			color: var(--color-ink);
+		}
+		.ui-button-primary:hover:not(:disabled),
+		.ui-button[aria-pressed="true"]:hover,
+		.ui-button[aria-selected="true"]:hover,
+		.peer:checked + .ui-choice:hover {
+			background: var(--color-accent-hover);
+			color: var(--color-on-accent);
+		}
+		.ui-nav-link:hover:not([aria-current="page"]) {
+			background: var(--color-surface);
+		}
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		scroll-behavior: auto !important;
+		animation-duration: 0.01ms !important;
+		transition-duration: 0.01ms !important;
+	}
 }

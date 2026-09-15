@@ -6,6 +6,34 @@ import { log } from "../../lib/log";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const presenceRouter = createTRPCRouter({
+	getScanInfo: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
+		const user = await ctx.prisma.user.findUnique({
+			where: { id: ctx.session.user.id },
+			select: { roles: { select: { name: true } } },
+		});
+		if (!user || !hasRoles(user, [RoleName.ORGANIZER])) {
+			throw new Error("You do not have permission to do this");
+		}
+		const hacker = await ctx.prisma.hacker.findUnique({
+			where: { id: input.id },
+			select: {
+				id: true,
+				firstName: true,
+				lastName: true,
+				acceptanceStatus: true,
+				tShirtSize: true,
+				dietaryRestrictions: true,
+				presences: true,
+				eventInterests: {
+					select: { Event: { select: { id: true, name: true, nameFr: true, start: true } } },
+					orderBy: { Event: { start: "asc" } },
+				},
+			},
+		});
+		if (!hacker) throw new Error("Hacker not found");
+		return hacker;
+	}),
+
 	getFromHackerId: protectedProcedure
 		.input(
 			z.object({

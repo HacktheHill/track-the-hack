@@ -7,5 +7,22 @@
 	"get-hacker": "Get hacker",
 	"not-hacker": "This hacker has not yet been accepted to attend the Hackathon.",
 	"already-checked-in": "{{firstName}} {{lastName}} has already checked in {{counter}} times!",
-	"max-check-ins-reached": "You have reached the maximum of {{maxCheckIns}} check-ins for {{firstName}} {{lastName}}!"
+	"max-check-ins-reached": "You have reached the maximum of {{maxCheckIns}} check-ins for {{firstName}} {{lastName}}!",
+	"scan-result": "Scan result",
+	"scan-purpose": "Scan purpose",
+	"recording-scan": "Recording scan…",
+	"t-shirt-size": "T-shirt size",
+	"dietary-restrictions": "Dietary restrictions",
+	"not-provided": "Not provided",
+	"meal-not-redeemed": "Meal not redeemed",
+	"meal-already-redeemed": "Meal already redeemed",
+	"meal-redeemed-now": "Meal redeemed with this scan",
+	"meal-redemption-count_one": "{{count}} redemption recorded",
+	"meal-redemption-count_other": "{{count}} redemptions recorded",
+	"decrease-count": "Decrease count",
+	"increase-count": "Increase count",
+	"count-update-failed": "Could not update the count. Please try again.",
+	"unknown-error": "Something went wrong. Please try again.",
+	"events-of-interest": "Events of interest",
+	"no-event-interests": "No events marked as interested."
 }

@@ -1,10 +1,12 @@
 import { useState, type FormEvent } from "react";
+import { useTranslation } from "next-i18next";
 
 type PhysicalScannerProps = {
 	onScan: (data: string) => void;
 };
 
 const PhysicalScanner = (props: PhysicalScannerProps) => {
+	const { t } = useTranslation("qr");
 	const [scannedCode, setScannedCode] = useState("");
 
 	const onSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -18,12 +20,13 @@ const PhysicalScanner = (props: PhysicalScannerProps) => {
 	};
 
 	return (
-		<form onSubmit={onSubmit}>
+		<form className="w-full" onSubmit={onSubmit}>
 			<input
 				name="scannerInput"
+				aria-label={t("scan-qr")}
 				type="text"
 				autoFocus
-				className="w-full rounded-[100px] border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+				className="ui-field w-full"
 				onChange={onChange}
 				value={scannedCode}
 			/>
