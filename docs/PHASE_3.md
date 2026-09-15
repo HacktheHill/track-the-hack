@@ -11,8 +11,8 @@ This is the final implementation phase, not a collection of separate cleanup pha
 - Read `docs/PROPOSED_FLOW.md`, `docs/PHASE_1_INTEGRATIONS.md`, and `docs/PHASE_2.md` before changing code.
 - Phase 1 owns the minimal Hacker model, organizer authentication, provisioning, RSVP/cancellation, and legacy participant-path removal.
 - Phase 2 owns Sheet-issued access, claim capabilities, participant sessions, walk-ins, participant profile/QR, and scanner workflows.
-- Work only in this repository. Document contracts required from Sheets, bulk-email tooling, and email-list-manager, but do not modify those external repositories or services.
-- Discord account linking and bot behaviour are outside this repository and Phase 3; they are not missing deliverables.
+- Document contracts required from Sheets, bulk-email tooling, and email-list-manager, but do not modify those external repositories or services. Discord verification also requires the separate bot changes described below.
+- The approved Discord verification integration spans this repository and the separate bot; see [Discord verification](./DISCORD_VERIFICATION.md). The bot owns identity mapping and role assignment.
 - Applications remain at `https://apply.hackthehill.com`; no application or `/apply` work belongs here.
 - Assume fresh event data. Do not add legacy participant-data migration machinery.
 - Preserve unrelated working-tree changes. Do not commit, push, or open a PR unless the task owner explicitly requests it.
@@ -22,7 +22,7 @@ This is the final implementation phase, not a collection of separate cleanup pha
 Option C is selected. Discord is the sole team system and owns team names, membership, self-service, and any team association used for judging.
 
 - Remove `Team`, `Hacker.teamId`, team APIs, team UI, team metrics, and Track-owned judging dependencies from this repository.
-- Track the Hack must not accept a Discord team ID or membership snapshot and exposes no Discord or team API.
+- Track the Hack must not accept a Discord team ID or membership snapshot and exposes no team API. The participant-authenticated Discord verification endpoint accepts signed opaque proofs only.
 - Keep pre-event team formation in Discord. Do not add a separate pre-event participant-authentication system.
 - Do not add Track-owned team CRUD, synchronization, or matchmaking without a new explicit source-of-truth decision.
 
@@ -57,12 +57,12 @@ Option C is selected. Discord is the sole team system and owns team names, membe
 
 ## External-system context
 
-- Discord teams and account linking remain external. Track the Hack has no Discord bot contract and receives no Discord identity or team data.
+- Discord teams and identity mappings remain bot-owned. Track verifies opaque signed links using its day-of participant session and sends only that proof and the authenticated Hacker ID to the bot; it receives no Discord identity or team data.
 - The Google Sheet and Apps Script continue to own identity lookup, participant provisioning/access issuance, and walk-in review.
 - The bulk-email tooling continues to own RSVP invitation and confirmation delivery from the documented CSV/export contracts.
 - `email-list-manager` continues to own subscription and unsubscribe state.
 
-These are handoff requirements for other repositories; this phase changes only Track the Hack.
+Sheet and email work remain external handoff requirements. The approved Discord verification change also requires the matching bot implementation.
 
 ## Verification
 

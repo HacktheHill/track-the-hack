@@ -19,6 +19,7 @@
 		"preview": "npm run build && next start --hostname 127.0.0.1",
 		"test": "node --import tsx --test test/**/*.test.ts",
 		"test:e2e:dev": "npm run dev:setup && NEXT_DIST_DIR=.next-dev-e2e node --env-file=.env --import tsx scripts/test-dev-e2e.mts",
+		"test:e2e:discord": "npm run dev:setup && node --env-file=.env --import tsx scripts/test-discord-e2e.mts",
 		"test:e2e:pwa": "npm run dev:setup && NEXT_DIST_DIR=.next-pwa-e2e node scripts/run-pwa-e2e.mjs",
 		"typecheck": "tsc --noEmit && node scripts/check-google-apps-script.mjs",
 		"verify:dev": "npm test && npm run typecheck && npm run lint && npm run test:e2e:dev && npm run test:e2e:pwa",

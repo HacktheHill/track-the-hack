@@ -29,7 +29,7 @@ The Sheet is authoritative for acceptance and participant provisioning. Track th
 
 ### Other Systems
 
-The existing bulk email CLI and React Email templates handle RSVP invitations and confirmations from filtered CSV files. Discord owns team formation and any account linking outside Track the Hack; there is no Track-to-bot mapping contract. email-list-manager owns mailing-list subscription and unsubscribe handling.
+The existing bulk email CLI and React Email templates handle RSVP invitations and confirmations from filtered CSV files. Discord owns team formation and identity mappings. Track verifies signed opaque bot links using the day-of participant session; see [Discord verification](./DISCORD_VERIFICATION.md). email-list-manager owns mailing-list subscription and unsubscribe handling.
 
 ## Target Hacker Model
 
@@ -115,7 +115,7 @@ Remove participant User linkage and the HACKER role. Remove the ACCEPTANCE role 
 
 ## Team Formation
 
-Option C is selected: teams exist only in Discord. Discord owns team names, membership, self-service, and any team association used for judging. Track the Hack does not store a Team, team ID, or membership snapshot and exposes no Discord or team API.
+Option C is selected: teams exist only in Discord. Discord owns team names, membership, self-service, and any team association used for judging. Track the Hack does not store a Team, team ID, or membership snapshot and exposes no team API. Its Discord verification endpoint accepts only a signed opaque link and authenticates the participant session; the bot owns the identity mapping.
 
 This keeps one writable source and supports pre-event formation without adding a separate pre-event Track the Hack authentication system. Judging continues through the external Devpost workflow.
 

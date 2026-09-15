@@ -1,0 +1,11 @@
+{
+	"title": "Vérifiez votre compte Discord",
+	"explanation": "Activez d’abord votre accès de participant le jour de l’événement dans ce navigateur, puis utilisez votre lien personnel du bot Discord de Hack the Hill. Les liens expirent après cinq minutes. Gardez votre lien privé.",
+	"verify": "Vérifier le compte Discord",
+	"verifying": "Vérification…",
+	"verified": "Votre compte Discord est vérifié. Vous pouvez retourner sur Discord.",
+	"session-required": "Ouvrez votre lien d’accès du jour de l’événement et activez votre laissez-passer dans ce navigateur, puis revenez ici. Une connexion d’organisateur ne donne pas accès en tant que participant.",
+	"invalid": "Ce lien de vérification est absent, invalide ou expiré. Générez un nouveau lien personnel dans Discord.",
+	"conflict": "Ce participant ou ce compte Discord est déjà associé à un autre compte. Demandez de l’aide à un organisateur.",
+	"unavailable": "La vérification est temporairement indisponible. Réessayez. Si votre lien expire, générez-en un nouveau dans Discord."
+}
