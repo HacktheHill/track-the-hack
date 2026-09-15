@@ -14,7 +14,8 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
 const Maps = () => {
 	const { t } = useTranslation("maps");
 
-	const mapsLink = (floor: number) => `/assets/maps/floor${floor}.svg`;
+	const mapsLink = (floor: number) =>
+		floor === 4 ? "/assets/maps/floor4-current.svg" : `/assets/maps/floor${floor}.svg`;
 	const MAX_FLOORS = 6;
 
 	return (
@@ -35,7 +36,7 @@ const Maps = () => {
 								>
 									<Image
 										width={800}
-										height={400}
+										height={i === 4 ? 356 : 400}
 										src={mapsLink(i)}
 										alt={t("floor", {
 											floor: i,
