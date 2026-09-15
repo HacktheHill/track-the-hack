@@ -190,8 +190,9 @@ export const reconcileRsvps = async (
 	};
 };
 
-// The claim QR is shown on the organizer's screen where anyone nearby can
-// photograph it. A narrow window plus single use keeps that photo worthless.
+// A copied claim QR can be redeemed on another device until it expires or is
+// consumed. A short lifetime limits this window; single use prevents reuse.
+// Successful activation creates the participant session on the redeeming device.
 export const CLAIM_TOKEN_TTL_MS = 5 * 60 * 1000;
 
 export const issueParticipantAccess = async (

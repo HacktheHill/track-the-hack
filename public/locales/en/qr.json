@@ -1,5 +1,6 @@
 {
 	"title": "Operational QR scanner",
+	"select-action": "Select a scanner action",
 	"view-participant": "View operational participant record",
 	"unknown-error": "The participant or event action could not be loaded.",
 	"adjust-error": "The attendance count could not be updated.",

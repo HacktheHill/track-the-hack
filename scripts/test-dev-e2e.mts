@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { spawn, type ChildProcess } from "node:child_process";
+import { execFileSync, spawn, type ChildProcess } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { once } from "node:events";
 import { constants as fsConstants } from "node:fs";
@@ -14,6 +14,8 @@ import { chromium, type Browser, type BrowserContext } from "playwright-core";
 import superjson from "superjson";
 import { z } from "zod";
 import type { AppRouter } from "@/server/api/root";
+import { provisioningBatchSchema } from "@/server/services/hacker-lifecycle";
+import { applicationRow, createSheetHarness } from "@root/test/helpers/google-sheets-harness";
 import { deliverLocalParticipantEmail } from "./dev-email.mjs";
 import {
 	acceptedSheetRowsToOperationalRecords,
@@ -257,6 +259,25 @@ const runOrganizerScannerBrowserE2E = async () => {
 		});
 		assert.equal(presence?.value, 1, "Browser scanner submission must complete the scanner mutation");
 
+		for (const choice of noTShirtChoices) {
+			await page.setViewportSize(
+				choice.locale === "fr" ? { width: 390, height: 844 } : { width: 1280, height: 800 },
+			);
+			await page.goto(`${baseUrl}${choice.locale === "fr" ? "/fr" : ""}/qr`, { waitUntil: "domcontentloaded" });
+			await page
+				.getByRole("combobox", {
+					name: choice.locale === "fr" ? "Sélectionner une action du lecteur" : "Select a scanner action",
+				})
+				.selectOption("dev-event-merchandise");
+			await scannerInput.fill(choice.id);
+			await scannerInput.press("Enter");
+			await page.getByText(choice.label, { exact: true }).waitFor({ timeout: 20_000 });
+			const merchandise = await prisma.presence.findUnique({
+				where: { hackerId_eventId: { hackerId: choice.id, eventId: "dev-event-merchandise" } },
+			});
+			assert.equal(merchandise?.value, 1, "T-shirt opt-outs must remain eligible for other merchandise");
+		}
+
 		const organizerCookies = new CookieJar();
 		for (const cookie of await context.cookies(baseUrl)) organizerCookies.cookies.set(cookie.name, cookie.value);
 		return organizerCookies;
@@ -282,13 +303,100 @@ const waitForReady = async () => {
 const sheetsIntegrationApiKey = process.env.SHEETS_INTEGRATION_API_KEY;
 if (!sheetsIntegrationApiKey) throw new Error("SHEETS_INTEGRATION_API_KEY is required for the development E2E test.");
 const integrationHeaders = { Authorization: `Bearer ${sheetsIntegrationApiKey}` };
+const acceptanceIds: string[] = [];
+const verifyAcceptanceRetries = async () => {
+	for (const fault of ["lost response", "partial commit"] as const) {
+		let fail = true;
+		const sheet = createSheetHarness({
+			apiKey: sheetsIntegrationApiKey,
+			applications: ["first", "second"].map(id =>
+				applicationRow({
+					"Submission ID": id,
+					"What unisex T-shirt size would you prefer?": "M",
+				}),
+			),
+			fetch: request => {
+				const { hackers } = provisioningBatchSchema.parse(JSON.parse(request.options.payload));
+				acceptanceIds.push(...hackers.map(hacker => hacker.id));
+				const selected = fail && fault === "partial commit" ? hackers.slice(0, 1) : hackers;
+				const body = {
+					hackers: selected.map(hacker => ({
+						...hacker,
+						acceptanceExpiry: hacker.acceptanceExpiry.toISOString(),
+					})),
+				};
+				// Apps Script fetch is synchronous. The disposable child calls the
+				// actual local HTTP server, with credentials passed only through stdin.
+				const response = z.object({ status: z.number(), body: z.string() }).parse(
+					JSON.parse(
+						execFileSync(
+							process.execPath,
+							[
+								"--input-type=module",
+								"-e",
+								`
+let input = "";
+for await (const chunk of process.stdin) input += chunk;
+const { url, headers, body } = JSON.parse(input);
+const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
+process.stdout.write(JSON.stringify({ status: response.status, body: await response.text() }));
+`,
+							],
+							{
+								input: JSON.stringify({
+									url: `${baseUrl}/api/integrations/sheets/hackers`,
+									headers: { ...request.options.headers, "Content-Type": "application/json" },
+									body,
+								}),
+								encoding: "utf8",
+								timeout: 30000,
+							},
+						),
+					),
+				);
+				assert.equal(response.status, 200);
+				if (fail) {
+					fail = false;
+					throw new Error(fault);
+				}
+				return response;
+			},
+		});
+		assert.throws(() => sheet.run());
+		sheet.run();
+		const attempts = sheet.requests.map(request =>
+			provisioningBatchSchema.parse(JSON.parse(request.options.payload)).hackers.map(hacker => hacker.id),
+		);
+		assert.deepEqual(attempts[0], attempts[1], "The real API retry must reuse every originally assigned ID");
+		const ids = attempts[0];
+		assert.ok(ids);
+		assert.equal(await prisma.hacker.count({ where: { id: { in: ids } } }), 2);
+		assert.equal(sheet.savedRows().length, 3);
+	}
+};
 const participantId = randomBytes(16).toString("base64url");
 const walkInId = randomBytes(16).toString("base64url");
+const noTShirtChoices = [
+	{
+		id: randomBytes(16).toString("base64url"),
+		locale: "en",
+		header: "What unisex T-shirt size would you prefer?",
+		answer: "I do not want a T-shirt",
+		label: "No T-shirt requested",
+	},
+	{
+		id: randomBytes(16).toString("base64url"),
+		locale: "fr",
+		header: "Quelle taille de t-shirt unisexe préférez-vous?",
+		answer: "Je ne souhaite pas recevoir de t-shirt",
+		label: "Aucun t-shirt demandé",
+	},
+] as const;
 const prisma = new PrismaClient();
 const mailboxDirectory = await mkdtemp(join(tmpdir(), "track-the-hack-mail-"));
 
 const cleanUp = async () => {
-	const ids = [participantId, walkInId];
+	const ids = [participantId, walkInId, ...noTShirtChoices.map(choice => choice.id), ...acceptanceIds];
 	const presences = await prisma.presence.findMany({ where: { hackerId: { in: ids } }, select: { id: true } });
 	await prisma.$transaction([
 		prisma.log.deleteMany({
@@ -309,6 +417,7 @@ const cleanUp = async () => {
 
 try {
 	await waitForReady();
+	await verifyAcceptanceRetries();
 
 	const rejectedProvision = await jsonRequest("/api/integrations/sheets/hackers", { hackers: [] });
 	assert.equal(rejectedProvision.status, 401, "Sheet endpoints must reject a missing bearer key");
@@ -318,13 +427,28 @@ try {
 		participantIdFor: row => (row.walkIn ? walkInId : participantId),
 	});
 	assert.equal(records.length, 2, "The reviewed Sheet fixture must contain two accepted participants");
+	const template = syncTallyFixtureToSheet(tallyFixture).find(row => row.decision === "ACCEPTED");
+	assert.ok(template);
+	const noTShirtRecords = noTShirtChoices.map(choice => {
+		const [record] = acceptedSheetRowsToOperationalRecords(
+			[{ ...template, sheetValues: { [choice.header]: choice.answer } }],
+			{ participantIdFor: () => choice.id },
+		);
+		assert.ok(record);
+		assert.equal(record.tShirtSize, "NONE");
+		return record;
+	});
 	const provision = await jsonRequest(
 		"/api/integrations/sheets/hackers",
-		{ hackers: records },
+		{ hackers: [...records, ...noTShirtRecords] },
 		{ headers: integrationHeaders },
 	);
 	assert.equal(provision.status, 200);
-	assert.deepEqual(processedResponseSchema.parse(await provision.json()), { processed: 2 });
+	assert.deepEqual(processedResponseSchema.parse(await provision.json()), { processed: 4 });
+	for (const choice of noTShirtChoices) {
+		const saved = await prisma.hacker.findUnique({ where: { id: choice.id }, select: { tShirtSize: true } });
+		assert.equal(saved?.tShirtSize, "NONE", "The database must preserve the explicit opt-out");
+	}
 
 	const invitationEmail = await deliverLocalParticipantEmail({
 		type: "invitation",
@@ -442,6 +566,27 @@ try {
 		"The real Sheet mapper and access-issuance path must preserve walk-in status",
 	);
 
+	for (const choice of noTShirtChoices) {
+		const record = noTShirtRecords.find(candidate => candidate.id === choice.id);
+		assert.ok(record);
+		const issued = await issueClaim(record);
+		assert.equal(issued.status, 200);
+		const token = new URL(claimResponseSchema.parse(await issued.json()).claimUrl).hash.slice(1);
+		const cookies = new CookieJar();
+		assert.equal((await jsonRequest("/api/claim", { token }, { jar: cookies })).status, 200);
+		const context = await (await getBrowser()).newContext();
+		try {
+			await context.addCookies([...cookies.cookies].map(([name, value]) => ({ name, value, url: baseUrl })));
+			const page = await context.newPage();
+			await page.goto(`${baseUrl}${choice.locale === "fr" ? "/fr" : ""}/profile`, {
+				waitUntil: "domcontentloaded",
+			});
+			await page.getByText(choice.label, { exact: true }).waitFor({ timeout: 20_000 });
+		} finally {
+			await context.close();
+		}
+	}
+
 	const providersResponse = await request("/api/auth/providers");
 	assert.equal(providersResponse.status, 200);
 	const providers = authProvidersSchema.parse(await providersResponse.json());
@@ -505,6 +650,7 @@ try {
 	assert.ok(metrics.provisioned >= 2);
 	assert.ok(metrics.walkIn >= 1);
 	assert.ok(metrics.checkedIn >= 2);
+	assert.ok((metrics.tShirtSizeData.find(entry => entry.tShirtSize === "NONE")?._count.tShirtSize ?? 0) >= 2);
 
 	const replacementContext = await (await getBrowser()).newContext();
 	try {

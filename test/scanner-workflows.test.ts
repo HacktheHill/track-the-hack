@@ -10,7 +10,11 @@ import {
 const eventId = "event-1";
 const hackerId = "wvY1HKlwYnFBO8t-YnQbwg";
 
-const scannerDatabase = (workflow: ScannerWorkflow, maxCheckIns: number | null = 3) => {
+const scannerDatabase = (
+	workflow: ScannerWorkflow,
+	maxCheckIns: number | null = 3,
+	tShirtSize: TShirtSize = TShirtSize.L,
+) => {
 	const event = {
 		id: eventId,
 		name: "Operational event",
@@ -21,7 +25,7 @@ const scannerDatabase = (workflow: ScannerWorkflow, maxCheckIns: number | null =
 	const hacker = {
 		id: hackerId,
 		confirmed: true,
-		tShirtSize: TShirtSize.L,
+		tShirtSize,
 		mealCategory: MealCategory.OTHER,
 	};
 	const presences = new Map<
@@ -87,6 +91,19 @@ void test("each scanner workflow returns only its allowed participant fields", a
 		const { repository } = scannerDatabase(workflow);
 		const result = await scanParticipantForEvent(repository, eventId, hackerId);
 		assert.deepEqual(Object.keys(result.participant).sort(), [...fields].sort());
+	}
+});
+
+void test("T-shirt opt-outs are returned by check-in and merchandise scans and do not exclude other merchandise", async () => {
+	for (const workflow of [ScannerWorkflow.CHECK_IN, ScannerWorkflow.MERCHANDISE]) {
+		const { repository } = scannerDatabase(workflow, 1, TShirtSize.NONE);
+		const result = await scanParticipantForEvent(repository, eventId, hackerId);
+		if (result.workflow !== ScannerWorkflow.CHECK_IN && result.workflow !== ScannerWorkflow.MERCHANDISE) {
+			assert.fail("Expected a workflow that includes the T-shirt preference");
+		}
+		assert.equal(result.participant.tShirtSize, TShirtSize.NONE);
+		assert.equal(result.value, 1);
+		assert.equal(result.atLimit, true);
 	}
 });
 
