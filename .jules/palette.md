@@ -7,3 +7,6 @@
 ## 2024-05-20 - Invalid Nested Interactive Elements (Buttons inside Links)
 **Learning:** Found multiple instances where `<button>` tags were nested inside Next.js `<Link>` tags to create button-like links (e.g. in Error pages or external sponsor links). This is an invalid HTML pattern that creates accessibility and semantic issues because interactive elements cannot be nested inside each other.
 **Action:** When building button-like links, do not nest a `<button>` inside an `<a>` or `<Link>`. Instead, apply the necessary styling (like Tailwind CSS classes `rounded-lg px-4 py-2 border` etc.) directly to the `<Link>` element to achieve the visual appearance of a button while maintaining valid, accessible HTML.
+## 2024-05-23 - Modal Accessibility Patterns
+**Learning:** The Modal component lacked proper dialog semantics for screen readers and keyboard focus styles for its action buttons, and had an incomplete mechanism for generating its root container. Custom overlay components often miss these critical semantic roles.
+**Action:** Always add `role="dialog"` and `aria-modal="true"` to Modal overlays. Ensure action buttons receive Tailwind focus rings (`focus-visible:ring-2 focus-visible:outline-none`) to support keyboard navigation. When manipulating the DOM in Next.js (e.g. creating portals), carefully check the appending logic.
