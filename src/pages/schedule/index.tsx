@@ -5,6 +5,7 @@ import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import { useState, useEffect, useMemo } from "react";
 import App from "../../components/App";
 import Error from "../../components/Error";
 import Loading from "../../components/Loading";
@@ -19,6 +20,14 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
 
 const Schedule: NextPage = () => {
 	const { t } = useTranslation("schedule");
+	const [now, setNow] = useState(Date.now());
+
+	useEffect(() => {
+		const interval = setInterval(() => {
+			setNow(Date.now());
+		}, 60000);
+		return () => clearInterval(interval);
+	}, []);
 
 	const router = useRouter();
 	const { locale } = router;
@@ -28,24 +37,6 @@ const Schedule: NextPage = () => {
 	let dateLocale = "en-CA";
 	if (locale === "fr") {
 		dateLocale = "fr-CA";
-	}
-
-	if (query.isLoading || query.data == null) {
-		return (
-			<App className="h-full bg-default-gradient px-16 py-12">
-				<Loading />
-			</App>
-		);
-	} else if (query.isError) {
-		return (
-			<App className="h-full bg-default-gradient px-16 py-12">
-				<Error message={query.error.message} />
-			</App>
-		);
-	}
-
-	if (query.data == null) {
-		void router.push("/404");
 	}
 
 	const eventColor = (eventType: string) => {
@@ -68,24 +59,48 @@ const Schedule: NextPage = () => {
 			? (router.query.tab as EventType)
 			: EventType.ALL;
 
-	const events = query.data
-		.filter(event => !event.hidden)
-		.filter(event => event.end.getTime() + 30 * 60 * 1000 > Date.now())
-		.filter(event => EventType[event.type] === tab || tab === EventType.ALL)
-		.sort((a, b) => {
-			if (a.start.getTime() === b.start.getTime()) {
-				return a.end.getTime() - b.end.getTime();
-			}
-			return a.start.getTime() - b.start.getTime();
-		})
-		.reduce((acc, event, i, array) => {
-			if (array[i]?.start.toLocaleDateString(dateLocale) === array[i - 1]?.start.toLocaleDateString(dateLocale)) {
-				acc[acc.length - 1]?.push(event);
-			} else {
-				acc.push([event]);
-			}
-			return acc;
-		}, [] as Event[][]);
+	const events = useMemo(() => {
+		if (!query.data) return [];
+		return query.data
+			.filter(event => !event.hidden)
+			.filter(event => event.end.getTime() + 30 * 60 * 1000 > now)
+			.filter(event => EventType[event.type] === tab || tab === EventType.ALL)
+			.sort((a, b) => {
+				if (a.start.getTime() === b.start.getTime()) {
+					return a.end.getTime() - b.end.getTime();
+				}
+				return a.start.getTime() - b.start.getTime();
+			})
+			.reduce((acc, event, i, array) => {
+				if (
+					array[i]?.start.toLocaleDateString(dateLocale) ===
+					array[i - 1]?.start.toLocaleDateString(dateLocale)
+				) {
+					acc[acc.length - 1]?.push(event);
+				} else {
+					acc.push([event]);
+				}
+				return acc;
+			}, [] as Event[][]);
+	}, [query.data, tab, dateLocale, now]);
+
+	if (query.isLoading || query.data == null) {
+		return (
+			<App className="h-full bg-default-gradient px-16 py-12">
+				<Loading />
+			</App>
+		);
+	} else if (query.isError) {
+		return (
+			<App className="h-full bg-default-gradient px-16 py-12">
+				<Error message={query.error.message} />
+			</App>
+		);
+	}
+
+	if (query.data == null) {
+		void router.push("/404");
+	}
 
 	return (
 		<App className="flex h-0 flex-col items-center bg-default-gradient" integrated={true} title={t("title")}>

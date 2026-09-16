@@ -1,0 +1,3 @@
+## 2024-05-18 - [Expensive computations in render loop]
+**Learning:** In `src/pages/schedule/index.tsx`, `events` array undergoes expensive operations (`.filter`, `.sort`, `.reduce`) and string manipulation (`.toLocaleDateString`, `.toLocaleTimeString`) directly within the render cycle. This is a common pattern in the codebase that needs to be memoized with `useMemo`. However, explicit dependencies like `Date.now()` break auto-updating behaviors if memoized, requiring it to be replaced with state that periodically updates via `setInterval`.
+**Action:** Use `useMemo` to cache derived data in Next.js components to avoid running filters and transformations on every re-render. If time is a dependency, use state updated via `setInterval`.
