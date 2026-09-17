@@ -52,18 +52,19 @@ export const matchesRole = (role: RoleName | null, roles: RoleName[]) => {
  */
 export const hasRoles = (
 	user: {
-		roles: {
-			name: RoleName;
-		}[];
+		roles: ({ name: RoleName } | RoleName)[];
 	} & Partial<User>,
 	roles: RoleName[],
 ) => {
-	if (!user) {
+	if (!user || !user.roles) {
 		return false;
 	}
 
 	// If the user has at least one of the given roles, return true
-	return user.roles.some(r => roles.includes(r.name));
+	return user.roles.some(r => {
+		const roleName = typeof r === "string" ? r : r.name;
+		return roles.includes(roleName);
+	});
 };
 
 /**

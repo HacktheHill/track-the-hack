@@ -58,25 +58,7 @@ export const userRouter = createTRPCRouter({
 			}),
 		)
 		.query(async ({ ctx, input }) => {
-			const userId = ctx.session.user.id;
-			const user = await ctx.prisma.user.findUnique({
-				where: {
-					id: userId,
-				},
-				select: {
-					roles: {
-						select: {
-							name: true,
-						},
-					},
-				},
-			});
-
-			if (!user) {
-				throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
-			}
-
-			if (!hasRoles(user, [RoleName.ADMIN, RoleName.ORGANIZER])) {
+			if (!hasRoles(ctx.session.user as Parameters<typeof hasRoles>[0], [RoleName.ADMIN, RoleName.ORGANIZER])) {
 				throw new TRPCError({ code: "FORBIDDEN", message: "You do not have permission to do this" });
 			}
 
@@ -119,26 +101,9 @@ export const userRouter = createTRPCRouter({
 		)
 		.mutation(async ({ ctx, input }) => {
 			const userId = ctx.session.user.id;
-			const user = await ctx.prisma.user.findUnique({
-				where: {
-					id: userId,
-				},
-				select: {
-					name: true,
-					roles: {
-						select: {
-							name: true,
-						},
-					},
-				},
-			});
 
-			if (!user) {
-				throw new Error("User not found");
-			}
-
-			if (!hasRoles(user, [RoleName.ADMIN])) {
-				throw new Error("You do not have permission to do this");
+			if (!hasRoles(ctx.session.user as Parameters<typeof hasRoles>[0], [RoleName.ADMIN])) {
+				throw new TRPCError({ code: "FORBIDDEN", message: "You do not have permission to do this" });
 			}
 
 			const userIds = [...new Set(input.userIds)];
@@ -154,16 +119,16 @@ export const userRouter = createTRPCRouter({
 			});
 
 			if (foundUsers.length !== userIds.length) {
-				throw new Error("User not found");
+				throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
 			}
 
 			const transaction = [];
 
-			for (const userId of userIds) {
+			for (const id of userIds) {
 				transaction.push(
 					ctx.prisma.user.update({
 						where: {
-							id: userId,
+							id,
 						},
 						data: {
 							roles: {
@@ -180,7 +145,7 @@ export const userRouter = createTRPCRouter({
 				sourceId: userId,
 				sourceType: "User",
 				action: "update",
-				author: user.name ?? "Unknown",
+				author: ctx.session.user.name ?? "Unknown",
 				route: "/internal/roles",
 				details: `Updated roles for users ${input.userIds.join(", ")} to ${input.roles.join(", ")}`,
 			});
@@ -197,27 +162,8 @@ export const userRouter = createTRPCRouter({
 		)
 		.mutation(async ({ ctx, input }) => {
 			const userId = ctx.session.user.id;
-			const user = await ctx.prisma.user.findUnique({
-				where: {
-					id: userId,
-				},
-				select: {
-					name: true,
-					roles: {
-						select: {
-							name: true,
-						},
-					},
-					Hacker: true,
-				},
-			});
-
-			if (!user) {
-				throw new Error("User not found");
-			}
-
-			if (!hasRoles(user, [RoleName.HACKER]) || !user.Hacker) {
-				throw new Error("You have not yet been accepted as a hacker");
+			if (!hasRoles(ctx.session.user as Parameters<typeof hasRoles>[0], [RoleName.HACKER]) || !ctx.session.user.hackerId) {
+				throw new TRPCError({ code: "FORBIDDEN", message: "You have not yet been accepted as a hacker" });
 			}
 
 			const body = JSON.stringify({ discordId: input.discordId });
@@ -236,14 +182,14 @@ export const userRouter = createTRPCRouter({
 			});
 
 			if (!response.ok) {
-				throw new Error("Failed to verify Discord ID");
+				throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to verify Discord ID" });
 			}
 
 			await log(ctx, {
 				sourceId: userId,
 				sourceType: "User",
 				action: "verifyDiscord",
-				author: user.name ?? "Unknown",
+				author: ctx.session.user.name ?? "Unknown",
 				route: "/discord",
 				details: `Discord ID ${input.discordId} verified as user ${userId} with bot`,
 			});
@@ -252,14 +198,7 @@ export const userRouter = createTRPCRouter({
 		}),
 
 	// Check if user is a hacker
-	isHacker: protectedProcedure.query(async ({ ctx }) => {
-		const userId = ctx.session.user.id;
-		const hacker = await ctx.prisma.hacker.findUnique({
-			where: {
-				userId,
-			},
-		});
-
-		return !!hacker;
+	isHacker: protectedProcedure.query(({ ctx }) => {
+		return !!ctx.session.user.hackerId;
 	}),
 });
