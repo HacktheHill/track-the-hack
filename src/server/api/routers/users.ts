@@ -23,6 +23,11 @@ export const userRouter = createTRPCRouter({
 				where: {
 					email: input.email,
 				},
+				select: {
+					id: true,
+					email: true,
+					name: true,
+				},
 			});
 
 			if (existingUser) {
@@ -35,6 +40,11 @@ export const userRouter = createTRPCRouter({
 				data: {
 					email: input.email,
 					passwordHash,
+				},
+				select: {
+					id: true,
+					email: true,
+					name: true,
 				},
 			});
 
