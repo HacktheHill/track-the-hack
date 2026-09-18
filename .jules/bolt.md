@@ -1,0 +1,3 @@
+## 2024-05-19 - Parallelizing TRPC Prisma Queries & Using Native Aggregations
+**Learning:** TRPC routers performing multiple independent database queries (e.g., counts, groupBys) sequentially cause unnecessary request latency. Additionally, using `findMany` + JS `reduce` to sum values transfers excessive data and is slower than native DB aggregations.
+**Action:** Group independent Prisma queries using `Promise.all()` to execute them concurrently, reuse already-fetched results instead of querying the database multiple times for the same value, and prefer native `aggregate({ _sum: ... })` over fetching entire datasets.
