@@ -1,11 +1,26 @@
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Event } from "@prisma/client";
-import { trpc } from "../server/api/api";
+import { trpc } from "@/server/api/api";
 import { useTranslation } from "next-i18next";
 
 type EventEditorProps = {
-	event: Event | null;
+	event: Pick<
+		Event,
+		| "id"
+		| "name"
+		| "nameFr"
+		| "room"
+		| "description"
+		| "descriptionFr"
+		| "start"
+		| "end"
+		| "hidden"
+		| "image"
+		| "link"
+		| "linkText"
+		| "linkTextFr"
+	> | null;
 	onClose: () => void;
 };
 
@@ -39,9 +54,8 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 	const [links, setLinks] = useState<EventLink[]>(
 		event?.link ? [{ title: event.linkText ?? "", titleFr: event.linkTextFr ?? "", url: event.link }] : [],
 	);
-	const [imagePreview, setImagePreview] = useState<string | null>(event?.image ?? null);
-	const [imageFile, setImageFile] = useState<File | null>(null);
 	const [error, setError] = useState<string | null>(null);
+	const saveInFlight = useRef(false);
 	const { t } = useTranslation("internal");
 
 	const utils = trpc.useUtils();
@@ -54,6 +68,9 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 		onError: error => {
 			setError(error.message);
 		},
+		onSettled: () => {
+			saveInFlight.current = false;
+		},
 	});
 
 	const updateEvent = trpc.events.update.useMutation({
@@ -64,37 +81,19 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 		onError: error => {
 			setError(error.message);
 		},
+		onSettled: () => {
+			saveInFlight.current = false;
+		},
 	});
+	const isSaving = createEvent.isLoading || updateEvent.isLoading;
 
 	const addLink = () => {
 		if (links.length === 0) setLinks([{ title: "", titleFr: "", url: "" }]);
 	};
 
-	const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const file = e.target.files?.[0];
-
-		if (!file) {
-			return;
-		}
-
-		setImageFile(file);
-	};
-
-	useEffect(() => {
-		if (!imageFile) {
-			return;
-		}
-
-		const objectUrl = URL.createObjectURL(imageFile);
-
-		setImagePreview(objectUrl);
-
-		return () => {
-			URL.revokeObjectURL(objectUrl);
-		};
-	}, [imageFile]);
-
 	const handleSave = () => {
+		if (saveInFlight.current || isSaving) return;
+
 		setError(null);
 
 		if (!name.trim()) {
@@ -145,7 +144,7 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 			descriptionFr: descriptionFr.trim(),
 			hidden: !visible,
 
-			// Image upload is not connected yet
+			// Keep the existing photo until image editing supports persistence.
 			image: event?.image ?? null,
 
 			// Database currently only supports one link
@@ -154,6 +153,7 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 			linkTextFr: firstLink?.titleFr || null,
 		};
 
+		saveInFlight.current = true;
 		if (event) {
 			updateEvent.mutate({
 				id: event.id,
@@ -286,30 +286,15 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 				</div>
 
 				<div className="flex flex-col gap-2">
-					<label htmlFor="event-image">{t("events.photo")}</label>
-
-					{imagePreview && (
-						<div className="flex flex-col gap-2">
-							<img
-								src={imagePreview}
-								alt="Event preview"
-								className="max-h-48 w-full rounded object-cover"
-							/>
-
-							<button
-								type="button"
-								onClick={() => {
-									setImagePreview(null);
-									setImageFile(null);
-								}}
-								className="self-start rounded border border-dark-primary-color px-3 py-1"
-							>
-								{t("events.remove-photo")}
-							</button>
-						</div>
+					<span>{t("events.photo")}</span>
+					{event?.image && (
+						<img
+							src={event.image}
+							alt={t("events.photo")}
+							className="max-h-48 w-full rounded object-cover"
+						/>
 					)}
-
-					<input id="event-image" type="file" accept="image/*" onChange={handleImageChange} />
+					<p className="text-sm">{t("events.photo-read-only")}</p>
 				</div>
 
 				<div className="flex flex-col gap-2">
@@ -376,7 +361,10 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 				<button
 					type="button"
 					className="whitespace-nowrap rounded-lg border border-dark-primary-color px-4 py-2 text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
-					onClick={onClose}
+					onClick={() => {
+						if (!saveInFlight.current) onClose();
+					}}
+					disabled={isSaving}
 				>
 					Cancel
 				</button>
@@ -385,6 +373,7 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 					type="button"
 					className="whitespace-nowrap rounded-lg border border-dark-primary-color px-4 py-2 text-dark-primary-color transition-colors hover:bg-light-tertiary-color"
 					onClick={handleSave}
+					disabled={isSaving}
 				>
 					Save
 				</button>

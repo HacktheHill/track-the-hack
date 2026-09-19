@@ -21,6 +21,7 @@
 		"description-fr": "Description (français)",
 
 		"photo": "Photo de l'événement",
+		"photo-read-only": "Les photos ne peuvent pas encore être modifiées dans cet éditeur. Les photos existantes seront conservées lors de l'enregistrement.",
 		"remove-photo": "Supprimer la photo",
 
 		"links": "Liens",
@@ -39,7 +40,7 @@
 		"location-required": "Le lieu de l'événement est requis.",
 		"start-end-required": "Les heures de début et de fin sont requises.",
 		"end-after-start": "L'heure de fin doit être après l'heure de début.",
-		"link-title-url-required": "Chaque lien doit avoir un titre et une URL.",
+		"link-title-url-required": "Le lien doit avoir un titre en anglais, un titre en français et une URL.",
 
 		"table": {
 			"name": "Nom",

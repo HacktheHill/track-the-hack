@@ -144,7 +144,7 @@ const EventView = ({ event, types }: EventViewProps) => {
 
 			<div className="flex flex-col font-rubik">
 				<p className="text-xl">
-					{(locale === "fr" ? descriptionFr : description).split("\\n").map((line, i, arr) => (
+					{(locale === "fr" ? descriptionFr : description).split(/\\n|\r?\n/).map((line, i, arr) => (
 						<span key={i}>
 							{line}
 							{arr.length - 1 !== i && <br />}

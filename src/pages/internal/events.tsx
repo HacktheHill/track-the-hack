@@ -1,17 +1,17 @@
 import type { GetServerSideProps, NextPage } from "next";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
-import App from "../../components/App";
-import Loading from "../../components/Loading";
-import Error from "../../components/Error";
-import { trpc } from "../../server/api/api";
+import App from "@/components/App";
+import Loading from "@/components/Loading";
+import Error from "@/components/Error";
+import { trpc } from "@/server/api/api";
 import { useState } from "react";
 import type { Event } from "@prisma/client";
-import EventEditor from "../../components/EventEditor";
+import EventEditor from "@/components/EventEditor";
 import { RoleName } from "@prisma/client";
 import { getServerSession } from "next-auth";
-import { rolesRedirect } from "../../server/lib/redirects";
-import { getAuthOptions } from "../api/auth/[...nextauth]";
+import { rolesRedirect } from "@/server/lib/redirects";
+import { getAuthOptions } from "@/pages/api/auth/[...nextauth]";
 
 const Events: NextPage = () => {
 	const { t, i18n } = useTranslation("internal");
