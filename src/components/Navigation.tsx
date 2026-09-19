@@ -128,8 +128,8 @@ const Navbar = ({ integrated }: NavbarProps) => {
 			</div>
 
 			<select
-				className="ui-field ml-auto"
-				aria-label={locale === "fr" ? "Langue" : "Language"}
+				aria-label={t("language")}
+				className="hover:bg-light-quaternary ml-auto whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors sm:visible"
 				onChange={handleLanguageChange}
 				value={locale ?? "en"}
 			>
