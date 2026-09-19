@@ -32,7 +32,7 @@ serviceWorker.addEventListener("push", /** @param {PushEvent} event */ event => 
 serviceWorker.addEventListener("notificationclick", /** @param {NotificationEvent} event */ event => {
     event.notification.close();
 
-    const targetUrl = event.notification.data?.url ?? "/";
+    const targetUrl = new URL(event.notification.data?.url ?? "/", serviceWorker.location.origin).href;
 
     event.waitUntil(
         serviceWorker.clients.matchAll({ type: "window", includeUncontrolled: true }).then(clients => {

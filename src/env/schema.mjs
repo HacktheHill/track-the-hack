@@ -33,7 +33,7 @@ export const serverSchema = z.object({
 	INTERNAL_API_SECRET: z.preprocess(value => value || undefined, z.string().min(32).optional()),
 	VAPID_PUBLIC_KEY: z.string().optional(),
 	VAPID_PRIVATE_KEY: z.string().optional(),
-	VAPID_EMAIL: z.string().email().optional(),
+	VAPID_EMAIL: z.preprocess(value => value || undefined, z.string().email().optional()),
 	SPONSORSHIP_GOOGLE_CLIENT_ID: z.string(),
 	SPONSORSHIP_GOOGLE_CLIENT_SECRET: z.string(),
 	SPONSORSHIP_GOOGLE_REFRESH_TOKEN: z.string(),

@@ -161,6 +161,8 @@ model Event {
   linkTextFr      String?
   maxCheckIns     Int?
   notifiedAt      DateTime?
+  notificationLeaseToken String?
+  notificationLeaseUntil DateTime?
   presences       Presence[]
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @default(now()) @updatedAt
@@ -175,6 +177,7 @@ model PushSubscription {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
+  @@unique([eventId, endpoint])
   @@index([eventId])
 }
 
