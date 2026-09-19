@@ -27,8 +27,8 @@ async function log(
 				details,
 			},
 		});
-	} catch (error) {
-		console.error("Error creating audit log entry:", error);
+	} catch {
+		console.error("Audit log entry failed");
 	}
 }
 

@@ -63,6 +63,7 @@ COPY --from=build --chown=app:app /app/.next ./.next
 COPY --from=build --chown=app:app /app/public ./public
 COPY --from=build --chown=app:app /app/next.config.js ./
 COPY --from=build --chown=app:app /app/next-i18next.config.js ./
+COPY --from=build --chown=app:app /app/pwa-runtime-caching.js ./
 COPY --from=build --chown=app:app /app/prisma ./prisma
 COPY --from=build --chown=app:app /app/src/env ./src/env
 USER app

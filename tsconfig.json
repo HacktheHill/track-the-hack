@@ -3,6 +3,7 @@
 		"target": "ES2022",
 		"lib": ["dom", "dom.iterable", "esnext"],
 		"allowJs": true,
+		"checkJs": true,
 		"skipLibCheck": true,
 		"strict": true,
 		"forceConsistentCasingInFileNames": true,
@@ -10,6 +11,12 @@
 		"esModuleInterop": true,
 		"module": "esnext",
 		"moduleResolution": "bundler",
+		"baseUrl": ".",
+		"paths": {
+			"@/*": ["src/*"],
+			"@root/*": ["*"]
+		},
+		"types": ["node"],
 		"resolveJsonModule": true,
 		"isolatedModules": true,
 		"jsx": "react-jsx",
@@ -17,5 +24,5 @@
 		"noUncheckedIndexedAccess": true
 	},
 	"include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.cjs", "**/*.mjs", "**/*.mts", "**/*.cts", "**/*.js"],
-	"exclude": ["node_modules"]
+	"exclude": ["node_modules", "public/sw.js", "public/sw.js.map", "public/workbox-*.js", "public/workbox-*.js.map"]
 }

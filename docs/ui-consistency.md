@@ -12,7 +12,7 @@ Shared controls live in `src/styles/globals.css`, with palette and geometry toke
 - Use `disabled`, `aria-busy`, `aria-pressed`, and `aria-selected` to communicate the relevant control state. For validation, connect `aria-invalid` and `aria-describedby` to the inline error. Focus outlines appear immediately.
 - Keep layout utilities at the call site. Avoid adding competing colors, padding, fonts, shadows, or corner radii to shared controls.
 
-## Verification
+## Original verification (before the participant-model migration)
 
 [Public before-and-after gallery](https://track-the-hack-ui-review.kai-song421505688.chatgpt.site) — 25 paired views with desktop and mobile screenshots, including the updated yellow user-list panels and walk-in button spacing. Include this link in the PR description for visual review.
 
@@ -30,4 +30,8 @@ npx eslint src/components src/pages
 npm run build
 ```
 
-The repository's `npm run lint` script uses `next lint`, which is no longer available in its installed Next.js version; invoke ESLint directly.
+The current repository provides `npm run lint` and `npm run typecheck`.
+
+## Integration with the current app
+
+The merge from `main` retains the organizer-only sign-in, participant passes, operational metrics, scanner workflow restrictions, and current validation/error handling. Legacy application, account-registration, and attendee-management pages removed by `main` stay removed. Shared control styling is applied to the replacement sign-in, scanner, and metrics screens. The gallery above documents the original design pass; it is not a verification of the replacement screens.

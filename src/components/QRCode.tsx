@@ -1,53 +1,47 @@
-import { useTranslation } from "next-i18next";
 import Image from "next/image";
 import qrcode from "qrcode";
 import { useEffect, useState } from "react";
 
-import Error from "./Error";
-
 type QRCodeProps = {
-	id: string;
-	setError: (message: string) => void;
+	value: string;
+	label: string;
 };
 
-const QRCode = ({ id, setError }: QRCodeProps) => {
-	const { t } = useTranslation("qr");
-
-	const [qrCode, setQRCode] = useState<string | null>(null);
+// The event QR carries the plain participant id and never expires, so there is
+// nothing here to refresh or re-fetch. It renders once and keeps working with
+// no connection, which is the point.
+const QRCode = ({ value, label }: QRCodeProps) => {
+	const [dataUrl, setDataUrl] = useState<string | null>(null);
+	const [failed, setFailed] = useState(false);
 
 	useEffect(() => {
-		async function generateQRCode() {
-			if (!id) return;
-			try {
-				const qr = await qrcode.toDataURL(id);
-				setQRCode(qr);
-			} catch (error) {
-				setError(t("qr-failed"));
-				console.error(error);
-			}
-		}
-		void generateQRCode();
+		let active = true;
+		qrcode
+			.toDataURL(value, { errorCorrectionLevel: "M", margin: 2, width: 320 })
+			.then(result => {
+				if (active) setDataUrl(result);
+			})
+			.catch(() => {
+				if (active) setFailed(true);
+			});
 
-		// Refresh the QR code every minute
-		const intervalId = setInterval(() => {
-			window.location.reload();
-		}, 30 * 1000);
+		return () => {
+			active = false;
+		};
+	}, [value]);
 
-		return () => clearInterval(intervalId);
-	}, [id, setError, t]);
-
-	if (!qrCode) {
-		return <Error message={t("qr-failed")} />;
-	}
+	if (failed) return null;
+	if (!dataUrl)
+		return <div className="aspect-square w-[280px] animate-pulse rounded-3xl bg-light-primary-color/40" />;
 
 	return (
 		<Image
 			priority
-			src={qrCode}
-			alt="QR Code"
-			className="aspect-square rounded-3xl object-cover"
-			width={300}
-			height={300}
+			src={dataUrl}
+			alt={label}
+			className="aspect-square rounded-3xl bg-white object-contain p-2"
+			width={280}
+			height={280}
 		/>
 	);
 };

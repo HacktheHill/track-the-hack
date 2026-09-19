@@ -1,11 +1,25 @@
 {
-	"title": "Code QR",
-	"use-qr": "Montrer ce code QR aux organisateurs",
-	"scan-qr": "Prêt à scanner un code QR",
-	"qr-failed": "Échec de la génération du code QR.",
-	"checked-in": "Enregistré {{firstName}} {{lastName}} pour {{event}}",
-	"get-hacker": "Obtenir le hacker",
-	"not-hacker": "Cet utilisateur n'a pas encore été accepté pour participer au Hackathon.",
-	"already-checked-in": "{{firstName}} {{lastName}} s'est déjà enregistré {{counter}} fois!",
-	"max-check-ins-reached": "Vous avez atteint le maximum de {{maxCheckIns}} enregistrements pour {{firstName}} {{lastName}}!"
+	"title": "Lecteur QR opérationnel",
+	"select-action": "Sélectionner une action du lecteur",
+	"view-participant": "Afficher le dossier opérationnel du participant",
+	"unknown-error": "Le participant ou l’action de l’événement n’a pas pu être chargé.",
+	"adjust-error": "Le nombre de présences n’a pas pu être mis à jour.",
+	"camera-error": "Impossible de démarrer la caméra.",
+	"manual-label": "Saisir ou coller un identifiant de participant",
+	"manual-help": "Utilisez cette option pour les tests locaux ou avec un lecteur USB lorsqu’aucune caméra n’est disponible.",
+	"manual-submit": "Exécuter l’action sélectionnée",
+	"confirmed": "Confirmé : {{value}}",
+	"yes": "Oui",
+	"no": "Non",
+	"t-shirt": "T-shirt : {{value}}",
+	"meal": "Repas : {{value}}",
+	"walk-in": "Inscrit sur place",
+	"contact-food-lead": "Communiquez avec la personne responsable des repas avant de servir ce participant.",
+	"maximum-reached": "Nombre maximal d’enregistrements atteint.",
+	"workflow": {
+		"CHECK_IN": "Enregistrement",
+		"MERCHANDISE": "Marchandise",
+		"FOOD": "Repas",
+		"ATTENDANCE": "Présence"
+	}
 }

@@ -1,11 +1,25 @@
 {
-	"title": "QR Code",
-	"use-qr": "Show this QR code to organizers",
-	"scan-qr": "Ready to scan a QR code",
-	"qr-failed": "Failed to generate QR code.",
-	"checked-in": "Checked in {{firstName}} {{lastName}} for {{event}}",
-	"get-hacker": "Get hacker",
-	"not-hacker": "This hacker has not yet been accepted to attend the Hackathon.",
-	"already-checked-in": "{{firstName}} {{lastName}} has already checked in {{counter}} times!",
-	"max-check-ins-reached": "You have reached the maximum of {{maxCheckIns}} check-ins for {{firstName}} {{lastName}}!"
+	"title": "Operational QR scanner",
+	"select-action": "Select a scanner action",
+	"view-participant": "View operational participant record",
+	"unknown-error": "The participant or event action could not be loaded.",
+	"adjust-error": "The attendance count could not be updated.",
+	"camera-error": "Unable to start the camera.",
+	"manual-label": "Type or paste a participant ID",
+	"manual-help": "Use this for local testing or with a USB scanner when a camera is unavailable.",
+	"manual-submit": "Run selected action",
+	"confirmed": "Confirmed: {{value}}",
+	"yes": "Yes",
+	"no": "No",
+	"t-shirt": "T-shirt: {{value}}",
+	"meal": "Meal: {{value}}",
+	"walk-in": "Walk-in",
+	"contact-food-lead": "Contact the food lead before serving this participant.",
+	"maximum-reached": "Maximum check-ins reached.",
+	"workflow": {
+		"CHECK_IN": "Check-in",
+		"MERCHANDISE": "Merchandise",
+		"FOOD": "Food",
+		"ATTENDANCE": "Attendance"
+	}
 }

@@ -5,11 +5,13 @@ import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import App from "../../components/App";
-import Error from "../../components/Error";
-import Loading from "../../components/Loading";
+import App from "@/components/App";
+import Error from "@/components/Error";
+import Loading from "@/components/Loading";
 
-import { trpc } from "../../server/api/api";
+import { trpc } from "@/server/api/api";
+
+const eventTypes = [EventType.ALL, EventType.WORKSHOP, EventType.SOCIAL, EventType.CAREER_FAIR, EventType.FOOD];
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
@@ -48,7 +50,7 @@ const Schedule: NextPage = () => {
 		void router.push("/404");
 	}
 
-	const eventColor = (eventType: string) => {
+	const eventColor = (eventType: EventType) => {
 		switch (eventType) {
 			case EventType.WORKSHOP:
 				return "bg-dark-primary-color text-light-color";
@@ -63,29 +65,26 @@ const Schedule: NextPage = () => {
 		}
 	};
 
-	const tab =
-		typeof router.query.tab === "string" && Object.keys(EventType).includes(router.query.tab)
-			? (router.query.tab as EventType)
-			: EventType.ALL;
+	const tab = eventTypes.find(type => type === router.query.tab) ?? EventType.ALL;
 
 	const events = query.data
 		.filter(event => !event.hidden)
 		.filter(event => event.end.getTime() + 30 * 60 * 1000 > Date.now())
-		.filter(event => EventType[event.type] === tab || tab === EventType.ALL)
+		.filter(event => event.type === tab || tab === EventType.ALL)
 		.sort((a, b) => {
 			if (a.start.getTime() === b.start.getTime()) {
 				return a.end.getTime() - b.end.getTime();
 			}
 			return a.start.getTime() - b.start.getTime();
 		})
-		.reduce((acc, event, i, array) => {
+		.reduce<Event[][]>((acc, event, i, array) => {
 			if (array[i]?.start.toLocaleDateString(dateLocale) === array[i - 1]?.start.toLocaleDateString(dateLocale)) {
 				acc[acc.length - 1]?.push(event);
 			} else {
 				acc.push([event]);
 			}
 			return acc;
-		}, [] as Event[][]);
+		}, []);
 
 	return (
 		<App className="flex h-0 flex-col items-center bg-default-gradient" integrated={true} title={t("title")}>
@@ -146,16 +145,9 @@ const Tabs = ({ tab, setTab }: TabsProps) => {
 	return (
 		<div className="w-full border-b border-dark-color bg-light-quaternary-color px-4 pb-4 pt-2 shadow-navbar">
 			<div className="mx-auto grid max-w-2xl grid-cols-2 gap-3 sm:grid-cols-5 xs:grid-cols-3">
-				{Object.keys(EventType)
-					.sort(a => (a === EventType.ALL ? -1 : 0))
-					.map(type => (
-						<Tab
-							key={type}
-							type={type as keyof typeof EventType}
-							active={tab}
-							onClick={() => setTab(type as keyof typeof EventType)}
-						/>
-					))}
+				{eventTypes.map(type => (
+					<Tab key={type} type={type} active={tab} onClick={() => setTab(type)} />
+				))}
 			</div>
 		</div>
 	);

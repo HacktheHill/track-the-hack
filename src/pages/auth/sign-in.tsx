@@ -1,147 +1,66 @@
 import type { GetServerSideProps, InferGetServerSidePropsType } from "next";
 import { getServerSession } from "next-auth";
-import { getProviders, signIn } from "next-auth/react";
+import { signIn } from "next-auth/react";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Image from "next/image";
 import { useRouter } from "next/router";
+import Error from "@/components/Error";
+import Head from "@/components/Head";
+import { getAuthOptions } from "@/pages/api/auth/[...nextauth]";
+import { DEVELOPMENT_AUTH_PROVIDER_ID, isDevelopmentOrganizerAuthEnabled } from "@/server/lib/organizer-auth";
 
-import Error from "../../components/Error";
-import Head from "../../components/Head";
-import { getAuthOptions } from "../api/auth/[...nextauth]";
-
-type Providers = Record<string, { id: string; name: string }>;
-
-export const getServerSideProps: GetServerSideProps<{ providers: Providers }> = async ({ req, res, locale }) => {
-	const session = await getServerSession(req, res, getAuthOptions(req));
-
-	// If the user is already logged in
-	if (session) {
-		const callbackUrl = req.url ? new URL(req.url, process.env.NEXTAUTH_URL).searchParams.get("callbackUrl") : null;
-		return {
-			redirect: {
-				permanent: false,
-				destination: callbackUrl ?? "/",
-			},
-		};
-	}
-
-	const providers = (await getProviders()) ?? ({} as Providers);
-
-	return {
-		props: {
-			providers,
-			...(await serverSideTranslations(locale ?? "en", ["common", "auth"])),
-		},
-	};
+export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
+	const session = await getServerSession(req, res, getAuthOptions());
+	return session
+		? { redirect: { permanent: false, destination: "/" } }
+		: {
+				props: {
+					...(await serverSideTranslations(locale ?? "en", ["common", "auth"])),
+					developmentAuthEnabled: isDevelopmentOrganizerAuthEnabled(
+						process.env,
+						req.headers.host,
+						req.socket.remoteAddress,
+					),
+				},
+			};
 };
 
-const SignIn = ({ providers }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
+const SignIn = ({ developmentAuthEnabled }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
 	const { t } = useTranslation("auth");
 	const router = useRouter();
 	const [callbackUrl] = [router.query.callbackUrl].flat();
 	const [error] = [router.query.error].flat();
 
-	if (!providers) {
-		return <Error message={t("no-auth-providers")} />;
-	}
-
 	return (
 		<>
 			<Head title={t("sign-in")} />
-			<main className="ui-auth-page bg-default-gradient bg-no-repeat">
-				<div className="flex flex-col items-center">
-					<Image
-						src="/assets/hackthehill-logo.svg"
-						alt={t("common:hack-the-hill-logo-alt")}
-						width={128}
-						height={128}
-						className="h-auto w-24"
-						priority
-					/>
-					<h1 className="ui-page-title">{t("sign-in")}</h1>
-				</div>
-				<div className="flex w-full max-w-md flex-col gap-4">
-					{Object.values(providers).map(provider => (
-						<form
-							key={provider.id}
-							className="ui-auth-form"
-							onSubmit={e => {
-								e.preventDefault();
-								const formData = new FormData(e.target as HTMLFormElement);
-								if (provider.id === "email") {
-									void signIn(provider.id, {
-										email: formData.get("email"),
-										redirectTo: callbackUrl,
-									});
-								} else if (provider.id === "credentials") {
-									void signIn(provider.id, {
-										email: formData.get("email") as string,
-										password: formData.get("password") as string,
-										redirectTo: callbackUrl,
-									});
-								} else {
-									void signIn(provider.id, { callbackUrl });
-								}
-							}}
-						>
-							{provider.id === "email" && (
-								<>
-									<label htmlFor={`${provider.id}-email`}>{t("email-address")}</label>
-									<input
-										id={`${provider.id}-email`}
-										autoComplete="email"
-										type="email"
-										name="email"
-										placeholder={t("email-address")}
-										required
-										className="ui-field w-full"
-									/>
-								</>
-							)}
-							{provider.id === "credentials" && (
-								<>
-									<label htmlFor={`${provider.id}-email`}>{t("email-address")}</label>
-									<input
-										id={`${provider.id}-email`}
-										autoComplete="email"
-										type="email"
-										name="email"
-										placeholder={t("email-address")}
-										required
-										className="ui-field w-full"
-									/>
-									<label htmlFor={`${provider.id}-password`}>{t("password")}</label>
-									<input
-										id={`${provider.id}-password`}
-										autoComplete="current-password"
-										type="password"
-										name="password"
-										placeholder={t("password")}
-										required
-										className="ui-field w-full"
-									/>
-								</>
-							)}
-							<button type="submit" className="ui-button ui-button-primary w-full">
-								{provider.id !== "email" && provider.id !== "credentials" && (
-									<>
-										{/* eslint-disable-next-line @next/next/no-img-element */}
-										<img
-											src={`https://authjs.dev/img/providers/${provider.id}.svg`}
-											alt={provider.name}
-											className="h-6 w-6 brightness-0 invert"
-										/>
-									</>
-								)}
-								{provider.id === "email" && t("email-sign-in")}
-								{provider.id === "credentials" && t("credentials-sign-in")}
-								{provider.id !== "email" && provider.id !== "credentials" && provider.name}
-							</button>
-						</form>
-					))}
-					{error && <Error message={t(`next-auth.${error}`)} />}
-				</div>
+			<main className="ui-auth-page bg-default-gradient">
+				<Image
+					src="/assets/hackthehill-logo.svg"
+					alt={t("common:hack-the-hill-logo-alt")}
+					width={128}
+					height={128}
+				/>
+				<h1 className="ui-page-title">{t("organizer-sign-in")}</h1>
+				<p className="font-rubik text-dark-color">{t("organizer-sign-in-help")}</p>
+				<button
+					type="button"
+					onClick={() => void signIn("google", { callbackUrl: callbackUrl ?? "/" })}
+					className="ui-button ui-button-primary"
+				>
+					{t("google-sign-in")}
+				</button>
+				{developmentAuthEnabled && (
+					<button
+						type="button"
+						onClick={() => void signIn(DEVELOPMENT_AUTH_PROVIDER_ID, { callbackUrl: callbackUrl ?? "/" })}
+						className="ui-button ui-button-primary"
+					>
+						Sign in as local organizer
+					</button>
+				)}
+				{error && <Error message={t(`next-auth.${error}`)} />}
 			</main>
 		</>
 	);
