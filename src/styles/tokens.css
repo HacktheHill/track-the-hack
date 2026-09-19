@@ -1,0 +1,20 @@
+/* Shared UI tokens, drawn from the existing Hack the Hill palette. */
+:root {
+	--color-ink: #650014;
+	--color-surface: #fff3b6;
+	--color-surface-hover: #f8cc8d;
+	--color-border: #84010b;
+	--color-accent: #84010b;
+	--color-accent-hover: #650014;
+	--color-on-accent: #ffffff;
+	--color-muted: #805044;
+	--color-error: #84010b;
+	--color-success: #245638;
+	--font-body: Rubik, sans-serif;
+	--font-display: Coolvetica, sans-serif;
+	--radius-control: 0.5rem;
+	--radius-panel: 0.75rem;
+	--control-height: 2.75rem;
+	--space-control-x: 1rem;
+	--space-control-y: 0.625rem;
+}
