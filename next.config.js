@@ -52,6 +52,7 @@ module.exports = withPWA({
 	i18n,
 	distDir: process.env.NEXT_DIST_DIR || ".next",
 	experimental: { useTypeScriptCli: false },
+	turbopack: {},
 	/**
 	 * @template {import("webpack").Configuration & {
 	 *   module: import("webpack").ModuleOptions & { rules: import("webpack").RuleSetRule[] }

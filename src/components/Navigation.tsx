@@ -15,16 +15,15 @@ type LinkItemProps = {
 	alt: string;
 };
 
-const LinkItem = ({ href, bottom, text, src, alt }: LinkItemProps) => (
-	<Link
-		href={href}
-		className={
-			bottom ? "" : "hover:text-light mx-4 flex items-center font-coolvetica text-2xl text-dark-primary-color"
-		}
-	>
-		{bottom ? <Image priority src={src} height={32} width={32} alt={alt} /> : text}
-	</Link>
-);
+const LinkItem = ({ href, bottom, text, src, alt }: LinkItemProps) => {
+	const { asPath } = useRouter();
+	const active = href === "/" ? asPath === "/" : asPath.split("?")[0]?.startsWith(href);
+	return (
+		<Link href={href} className="ui-nav-link" aria-current={active ? "page" : undefined} aria-label={text}>
+			{bottom ? <Image priority src={src} height={32} width={32} alt={alt} /> : text}
+		</Link>
+	);
+};
 
 type LinkProps = {
 	bottom: boolean;
@@ -106,29 +105,30 @@ const Navbar = ({ integrated }: NavbarProps) => {
 
 	return (
 		<nav
-			className={`sticky top-0 z-10 flex gap-4 whitespace-nowrap bg-light-quaternary-color p-4 ${
+			className={`ui-navbar sticky top-0 z-10 flex whitespace-nowrap bg-light-quaternary-color ${
 				integrated ? "" : "border-b border-dark-primary-color shadow-navbar"
 			}`}
 			aria-label={t("navigation")}
 		>
-			<div className="flex w-full justify-between font-coolvetica mobile:w-auto">
-				<Link href="/">
+			<div className="mr-auto flex shrink-0 xl:mr-0">
+				<Link href="/" className="flex min-h-11 items-center">
 					<Image
 						className="block"
 						priority
 						src="/assets/hackthehill-logo.svg"
-						height={64}
-						width={64}
+						height={44}
+						width={44}
 						alt={t("logo")}
 					/>
 				</Link>
 			</div>
 
-			<div className="hidden flex-row mobile:flex">
+			<div className="ui-nav-links">
 				<Links bottom={false} />
 			</div>
 
 			<select
+				aria-label={t("language")}
 				className="hover:bg-light-quaternary ml-auto whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors sm:visible"
 				onChange={handleLanguageChange}
 				value={locale ?? "en"}
@@ -141,15 +141,12 @@ const Navbar = ({ integrated }: NavbarProps) => {
 			</select>
 
 			{sessionData ? (
-				<button
-					className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors sm:visible"
-					onClick={() => void signOut()}
-				>
+				<button className="ui-button" onClick={() => void signOut()}>
 					{t("sign-out")}
 				</button>
 			) : (
 				<button
-					className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors sm:visible"
+					className="ui-button"
 					onClick={() =>
 						// Keep private fragment capabilities out of the server-bound login query.
 						void router.push({
@@ -175,7 +172,7 @@ const BottomMenu = () => {
 
 	return (
 		<nav
-			className="z-10 flex w-full items-center justify-evenly gap-4 whitespace-nowrap bg-light-quaternary-color p-4 mobile:hidden xs:gap-8"
+			className="ui-bottom-nav z-10 w-full items-center whitespace-nowrap bg-light-quaternary-color"
 			aria-label={t("bottom-navigation")}
 		>
 			<Links bottom />

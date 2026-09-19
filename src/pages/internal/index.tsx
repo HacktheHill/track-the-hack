@@ -16,20 +16,17 @@ const Internal: NextPage = () => {
 	return (
 		<App className="overflow-y-auto bg-default-gradient" integrated={true} title={t("title")}>
 			<Filter value={RoleName.ORGANIZER} method="above">
-				<div className="flex h-full flex-col items-center">
-					<h1 className="p-10 font-rubik text-4xl font-bold">{t("title")}</h1>
-					<div className="flex flex-col items-stretch gap-4 text-center">
+				<div className="ui-form-layout flex flex-col items-center gap-6">
+					<h1 className="ui-page-title text-center">{t("title")}</h1>
+					<div className="flex w-full max-w-md flex-col items-stretch gap-4 text-center">
 						<Filter value={RoleName.ADMIN} method="above" silent>
-							<Link
-								href="/internal/roles"
-								className="cursor-pointer whitespace-nowrap rounded-xl border-none bg-medium-primary-color px-8 py-2 font-rubik text-light-color shadow-md transition-all duration-500 hover:bg-light-primary-color"
-							>
+							<Link href="/internal/roles" className="ui-button ui-button-primary">
 								{t("roles")}
 							</Link>
 						</Filter>
 						<Link
 							href="/internal/sponsorship-gmail-drafts"
-							className="cursor-pointer whitespace-nowrap rounded-xl border-none bg-medium-primary-color px-8 py-2 font-rubik text-light-color shadow-md transition-all duration-500 hover:bg-light-primary-color"
+							className="ui-button ui-button-primary whitespace-normal"
 						>
 							{t("sponsorship-gmail-drafts")}
 						</Link>

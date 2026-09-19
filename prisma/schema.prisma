@@ -81,6 +81,7 @@ model Hacker {
   acceptanceExpiry DateTime
 
   presences              Presence[]
+  eventInterests         EventInterest[]
   cancellationCapability CancellationCapability?
   claimToken             ClaimToken?
   participantSession     ParticipantSession?
@@ -147,6 +148,7 @@ model Event {
   name            String
   nameFr          String
   type            EventType       @default(ALL)
+  interests       EventInterest[]
   scannerWorkflow ScannerWorkflow @default(ATTENDANCE)
   host            String?
   description     String          @db.Text
@@ -158,9 +160,25 @@ model Event {
   linkText        String?
   linkTextFr      String?
   maxCheckIns     Int?
+  notifiedAt      DateTime?
+  notificationLeaseToken String?
+  notificationLeaseUntil DateTime?
   presences       Presence[]
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @default(now()) @updatedAt
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  eventId   String
+  endpoint  String   @db.VarChar(512)
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@unique([eventId, endpoint])
+  @@index([eventId])
 }
 
 model Log {
@@ -231,4 +249,16 @@ enum MealCategory {
   VEGAN
   HALAL
   OTHER
+}
+
+model EventInterest {
+  id        String   @id @default(cuid())
+  hackerId  String
+  eventId   String
+  createdAt DateTime @default(now())
+  Hacker    Hacker   @relation(fields: [hackerId], references: [id], onDelete: Cascade)
+  Event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([hackerId, eventId])
+  @@index([eventId])
 }

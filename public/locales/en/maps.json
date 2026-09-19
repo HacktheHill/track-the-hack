@@ -1,4 +1,5 @@
 {
 	"floor": "Floor {{floor}}",
-	"title": "Maps"
+	"title": "Maps",
+	"zoom-hint": "Scroll or pinch to zoom"
 }

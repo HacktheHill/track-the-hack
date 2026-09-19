@@ -5,19 +5,14 @@ import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import { useEffect, useMemo, useState } from "react";
 import App from "@/components/App";
 import Error from "@/components/Error";
 import Loading from "@/components/Loading";
 
 import { trpc } from "@/server/api/api";
 
-const eventTypes = [
-	EventType.ALL,
-	EventType.WORKSHOP,
-	EventType.SOCIAL,
-	EventType.CAREER_FAIR,
-	EventType.FOOD,
-];
+const eventTypes = [EventType.ALL, EventType.WORKSHOP, EventType.SOCIAL, EventType.CAREER_FAIR, EventType.FOOD];
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
@@ -33,10 +28,38 @@ const Schedule: NextPage = () => {
 
 	const query = trpc.events.all.useQuery();
 
-	let dateLocale = "en-CA";
-	if (locale === "fr") {
-		dateLocale = "fr-CA";
-	}
+	const dateLocale = locale === "fr" ? "fr-CA" : "en-CA";
+	const tab = eventTypes.find(type => type === router.query.tab) ?? EventType.ALL;
+
+	// Re-evaluate the "still relevant" cutoff on a timer so finished events fall off without a reload.
+	const [now, setNow] = useState(() => Date.now());
+	useEffect(() => {
+		const interval = setInterval(() => setNow(Date.now()), 60_000);
+		return () => clearInterval(interval);
+	}, []);
+
+	const events = useMemo(
+		() =>
+			(query.data ?? [])
+				.filter(event => !event.hidden)
+				.filter(event => event.end.getTime() + 30 * 60 * 1000 > now)
+				.filter(event => event.type === tab || tab === EventType.ALL)
+				.sort((a, b) => {
+					if (a.start.getTime() === b.start.getTime()) {
+						return a.end.getTime() - b.end.getTime();
+					}
+					return a.start.getTime() - b.start.getTime();
+				})
+				.reduce<Event[][]>((acc, event, i, array) => {
+					if (array[i]?.start.toLocaleDateString(dateLocale) === array[i - 1]?.start.toLocaleDateString(dateLocale)) {
+						acc[acc.length - 1]?.push(event);
+					} else {
+						acc.push([event]);
+					}
+					return acc;
+				}, []),
+		[query.data, now, tab, dateLocale],
+	);
 
 	if (query.isLoading || query.data == null) {
 		return (
@@ -61,7 +84,7 @@ const Schedule: NextPage = () => {
 			case EventType.WORKSHOP:
 				return "bg-dark-primary-color text-light-color";
 			case EventType.CAREER_FAIR:
-				return "bg-light-primary-color text-light-color";
+				return "bg-light-secondary-color text-dark-primary-color";
 			case EventType.FOOD:
 				return "bg-medium-primary-color text-light-color";
 			case EventType.SOCIAL:
@@ -70,27 +93,6 @@ const Schedule: NextPage = () => {
 				return "bg-dark-color text-light-color";
 		}
 	};
-
-	const tab = eventTypes.find(type => type === router.query.tab) ?? EventType.ALL;
-
-	const events = query.data
-		.filter(event => !event.hidden)
-		.filter(event => event.end.getTime() + 30 * 60 * 1000 > Date.now())
-		.filter(event => event.type === tab || tab === EventType.ALL)
-		.sort((a, b) => {
-			if (a.start.getTime() === b.start.getTime()) {
-				return a.end.getTime() - b.end.getTime();
-			}
-			return a.start.getTime() - b.start.getTime();
-		})
-		.reduce<Event[][]>((acc, event, i, array) => {
-			if (array[i]?.start.toLocaleDateString(dateLocale) === array[i - 1]?.start.toLocaleDateString(dateLocale)) {
-				acc[acc.length - 1]?.push(event);
-			} else {
-				acc.push([event]);
-			}
-			return acc;
-		}, []);
 
 	return (
 		<App className="flex h-0 flex-col items-center bg-default-gradient" integrated={true} title={t("title")}>
@@ -150,16 +152,10 @@ type TabsProps = {
 const Tabs = ({ tab, setTab }: TabsProps) => {
 	return (
 		<div className="w-full border-b border-dark-color bg-light-quaternary-color px-4 pb-4 pt-2 shadow-navbar">
-			<div className="mx-auto grid max-w-2xl grid-cols-3 gap-3 sm:grid-cols-5">
-				{eventTypes
-					.map(type => (
-						<Tab
-							key={type}
-							type={type}
-							active={tab}
-							onClick={() => setTab(type)}
-						/>
-					))}
+			<div className="mx-auto grid max-w-2xl grid-cols-2 gap-3 sm:grid-cols-5 xs:grid-cols-3">
+				{eventTypes.map(type => (
+					<Tab key={type} type={type} active={tab} onClick={() => setTab(type)} />
+				))}
 			</div>
 		</div>
 	);
@@ -183,19 +179,9 @@ const Tab = ({ type, active, onClick }: TabProps) => {
 	};
 
 	return (
-		<div
-			className={`flex cursor-pointer flex-row items-center justify-center gap-2 rounded-lg bg-dark-primary-color p-2 font-coolvetica text-light-color outline sm:p-4 ${
-				type === active ? "outline-4 outline-light-color" : "outline-0"
-			}`}
-			onClick={onClick}
-			onKeyDown={e => {
-				if (e.key === "Enter") {
-					onClick();
-				}
-			}}
-		>
-			<h1 className="text-center text-lg">{types[type]}</h1>
-		</div>
+		<button type="button" className="ui-button" aria-pressed={type === active} onClick={onClick}>
+			{types[type]}
+		</button>
 	);
 };
 

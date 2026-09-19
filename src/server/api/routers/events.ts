@@ -1,8 +1,8 @@
 import { RoleName } from "@prisma/client";
-import { hasRoles } from "@/utils/helpers";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "@/server/api/trpc";
+import { hasRoles } from "@/utils/helpers";
+import { createTRPCRouter, protectedProcedure, publicProcedure, participantProcedure } from "@/server/api/trpc";
 
 const eventInputSchema = z.object({
 	name: z.string().min(1),
@@ -21,6 +21,33 @@ const eventInputSchema = z.object({
 });
 
 export const eventsRouter = createTRPCRouter({
+	getInterest: participantProcedure.input(z.object({ eventId: z.string().min(1) })).query(async ({ ctx, input }) => {
+		const interest = await ctx.prisma.eventInterest.findUnique({
+			where: { hackerId_eventId: { hackerId: ctx.participantSession.hackerId, eventId: input.eventId } },
+		});
+		return interest !== null;
+	}),
+	setInterest: participantProcedure
+		.input(z.object({ eventId: z.string().min(1), interested: z.boolean() }))
+		.mutation(async ({ ctx, input }) => {
+			const event = await ctx.prisma.event.findUnique({
+				where: { id: input.eventId },
+				select: { id: true, hidden: true },
+			});
+			if (!event || event.hidden) throw new TRPCError({ code: "NOT_FOUND" });
+			const selection = { hackerId: ctx.participantSession.hackerId, eventId: event.id };
+			if (input.interested) {
+				await ctx.prisma.eventInterest.upsert({
+					where: { hackerId_eventId: selection },
+					create: selection,
+					update: {},
+				});
+			} else {
+				await ctx.prisma.eventInterest.deleteMany({ where: selection });
+			}
+			return input.interested;
+		}),
+
 	// Get event
 	get: publicProcedure
 		.input(

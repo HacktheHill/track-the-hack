@@ -1,4 +1,4 @@
-import { RoleName, type PrismaClient } from "@prisma/client";
+import { RoleName, ScannerWorkflow, type PrismaClient } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -45,6 +45,21 @@ const scannerError = (error: unknown): never => {
 };
 
 export const presenceRouter = createTRPCRouter({
+	getEventInterests: protectedProcedure.input(scannerInput).query(async ({ ctx, input }) => {
+		await requireScannerOrganizer(ctx);
+		const event = await ctx.prisma.event.findUnique({
+			where: { id: input.eventId },
+			select: { scannerWorkflow: true },
+		});
+		if (!event || event.scannerWorkflow !== ScannerWorkflow.ATTENDANCE) throw new TRPCError({ code: "FORBIDDEN" });
+		const interests = await ctx.prisma.eventInterest.findMany({
+			where: { hackerId: input.hackerId, Event: { hidden: false } },
+			select: { Event: { select: { id: true, name: true, nameFr: true, start: true } } },
+			orderBy: { Event: { start: "asc" } },
+		});
+		return interests.map(interest => interest.Event);
+	}),
+
 	// A scan is keyed only by event and participant. The event owns the label,
 	// workflow, field allowlist, and maximum; none are accepted from the client.
 	scan: protectedProcedure.input(scannerInput).mutation(async ({ ctx, input }) => {

@@ -1,11 +1,22 @@
 {
 	"title": "Event",
 	"close-event": "Close Event",
+	"notify-me": "Notify me when this event starts",
+	"notify-me-active": "You will be notified when this event starts",
+	"notify-me-unavailable": "Notifications unavailable",
+	"notify-me-error": "Unable to update notifications. Please try again.",
+	"notify-me-cancel-unavailable": "Cancel reminder (notifications unavailable)",
 	"type": {
 		"ALL": "All",
 		"WORKSHOP": "Workshop",
 		"CAREER_FAIR": "Career Fair",
 		"FOOD": "Food",
 		"SOCIAL": "Social"
-	}
+	},
+	"mark-interested": "Mark as interested",
+	"interested": "Interested ✓",
+	"saving-interest": "Saving…",
+	"retry-interest": "Retry",
+	"interest-error": "Could not load or save your interest. Please try again.",
+	"interest-organizer-visibility": "Organizers can see your event interests when they scan your QR code."
 }

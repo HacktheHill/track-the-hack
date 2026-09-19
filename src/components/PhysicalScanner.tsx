@@ -31,15 +31,11 @@ const PhysicalScanner = (props: PhysicalScannerProps) => {
 				type="text"
 				autoFocus
 				required
-				className="w-full rounded-[100px] border-none bg-light-primary-color px-4 py-2 font-rubik text-dark-color shadow-md transition-all duration-500 hover:bg-light-primary-color/50"
+				className="ui-field w-full"
 				onChange={onChange}
 				value={scannedCode}
 			/>
-			<button
-				type="submit"
-				disabled={!scannedCode.trim()}
-				className="rounded-lg bg-light-primary-color px-4 py-2 font-coolvetica text-light-color disabled:opacity-50"
-			>
+			<button type="submit" disabled={!scannedCode.trim()} className="ui-button ui-button-primary">
 				{t("manual-submit")}
 			</button>
 		</form>
