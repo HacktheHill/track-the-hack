@@ -1,0 +1,20 @@
+{
+	"title": "Your event pass",
+	"offline-title": "Your offline event pass",
+	"qr-alt": "Your event QR code",
+	"qr-explanation": "Show this to an organizer for check-in, meals, merchandise and workshops. It works without a connection.",
+	"offline-explanation": "This QR is saved on this device and remains available without a connection.",
+	"no-offline-pass": "No event pass has been saved on this device. Open your participant profile online first.",
+	"details": "Your details",
+	"confirmed": "Attendance confirmed",
+	"t-shirt": "T-shirt size",
+	"meal": "Meal category",
+	"attendance": "Your attendance",
+	"no-attendance": "Nothing recorded yet.",
+	"view-profile": "View current details online",
+	"participant-sign-out": "Sign out of participant pass",
+	"signing-out": "Signing out…",
+	"sign-out-error": "Could not sign out. Check your connection and try again.",
+	"yes": "Yes",
+	"no": "No"
+}

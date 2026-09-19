@@ -1,5 +1,6 @@
-declare module "*.svg" {
-	// eslint-disable-next-line @typescript-eslint/consistent-type-imports
-	const content: import("next/image").StaticImageData;
+declare module "@root/public/assets/hero/*.svg" {
+	import type { StaticImageData } from "next/image";
+
+	const content: StaticImageData;
 	export default content;
 }

@@ -2,10 +2,17 @@ import { authenticate } from "@google-cloud/local-auth";
 import fs from "fs/promises";
 import type { OAuth2Client } from "google-auth-library";
 import path from "path";
+import { z } from "zod";
 
 const SCOPES = ["https://mail.google.com/"];
 const CREDENTIALS_PATH = path.join(process.cwd(), "google-credentials.json");
 const ENV_PATH = path.join(process.cwd(), ".env");
+const credentialsSchema = z.object({
+	web: z.object({
+		client_id: z.string().min(1),
+		client_secret: z.string().min(1),
+	}),
+});
 
 /**
  * Serializes credentials to a file compatible with GoogleAuth.fromJSON
@@ -15,7 +22,11 @@ const ENV_PATH = path.join(process.cwd(), ".env");
  */
 const saveCredentials = async (client: OAuth2Client): Promise<void> => {
 	const content = await fs.readFile(CREDENTIALS_PATH, "utf8");
-	const { web: key } = JSON.parse(content) as CredentialsJSON;
+	const { web: key } = credentialsSchema.parse(JSON.parse(content));
+	const refreshToken = client.credentials.refresh_token;
+	if (!refreshToken) {
+		throw new Error("Google did not return a refresh token");
+	}
 
 	// Read the existing ENV file and parse its content
 	const envContent = await fs.readFile(ENV_PATH, "utf8");
@@ -28,7 +39,7 @@ const saveCredentials = async (client: OAuth2Client): Promise<void> => {
 		} else if (line.startsWith("SPONSORSHIP_GOOGLE_CLIENT_SECRET")) {
 			return `SPONSORSHIP_GOOGLE_CLIENT_SECRET=${key.client_secret}`;
 		} else if (line.startsWith("SPONSORSHIP_GOOGLE_REFRESH_TOKEN")) {
-			return `SPONSORSHIP_GOOGLE_REFRESH_TOKEN=${client.credentials.refresh_token}`;
+			return `SPONSORSHIP_GOOGLE_REFRESH_TOKEN=${refreshToken}`;
 		}
 		return line;
 	});
@@ -51,15 +62,3 @@ const main = async () => {
 };
 
 void main();
-
-interface CredentialsJSON {
-	web: {
-		client_id: string;
-		project_id: string;
-		auth_uri: string;
-		token_uri: string;
-		auth_provider_x509_cert_url: string;
-		client_secret: string;
-		redirect_uris: string[];
-	};
-}

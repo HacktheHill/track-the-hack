@@ -1,0 +1,60 @@
+{
+	"tallySubmissions": [
+		{
+			"submissionId": "tally-dev-normal",
+			"email": "normal-participant@example.test",
+			"fullName": "Normal Test Participant",
+			"waiverSigned": true,
+			"dietaryDetails": "Restricted fixture detail",
+			"sheetValues": {
+				"What unisex T-shirt size would you prefer?": "M",
+				"Select all that apply.": "Soy allergy"
+			},
+			"walkIn": false
+		},
+		{
+			"submissionId": "tally-dev-walk-in",
+			"email": "walk-in-participant@example.test",
+			"fullName": "Walk-in Test Participant",
+			"waiverSigned": true,
+			"dietaryDetails": "Restricted fixture detail",
+			"sheetValues": {
+				"What unisex T-shirt size would you prefer?": "L",
+				"Select all that apply.": ""
+			},
+			"walkIn": true
+		},
+		{
+			"submissionId": "tally-dev-rejected",
+			"email": "rejected-participant@example.test",
+			"fullName": "Rejected Test Participant",
+			"waiverSigned": false,
+			"dietaryDetails": "Restricted fixture detail",
+			"sheetValues": {
+				"What unisex T-shirt size would you prefer?": "S",
+				"Select all that apply.": "Vegetarian"
+			},
+			"walkIn": false
+		}
+	],
+	"sheetReviews": [
+		{
+			"submissionId": "tally-dev-normal",
+			"decision": "ACCEPTED",
+			"participantId": "dev-participant-normal-01",
+			"acceptanceDays": 7
+		},
+		{
+			"submissionId": "tally-dev-walk-in",
+			"decision": "ACCEPTED",
+			"participantId": "dev-participant-walkin-01",
+			"acceptanceDays": 1
+		},
+		{
+			"submissionId": "tally-dev-rejected",
+			"decision": "REJECTED",
+			"participantId": null,
+			"acceptanceDays": 0
+		}
+	]
+}

@@ -1,19 +1,19 @@
-import { useSession } from "next-auth/react";
+import { useHasParticipantPass } from "@/utils/participant-pass";
 import { useTranslation } from "next-i18next";
 import { trpc } from "../server/api/api";
 
 export default function EventInterestButton({ eventId }: { eventId: string }) {
-	const { data: session } = useSession();
+	const hasPass = useHasParticipantPass();
 	const { t } = useTranslation("event");
 	const utils = trpc.useUtils();
-	const interest = trpc.events.getInterest.useQuery({ eventId }, { enabled: !!session?.user?.hackerId });
+	const interest = trpc.events.getInterest.useQuery({ eventId }, { enabled: hasPass });
 	const update = trpc.events.setInterest.useMutation({
 		onSuccess: (interested, input) => {
 			utils.events.getInterest.setData({ eventId: input.eventId }, interested);
 		},
 	});
 
-	if (!session?.user?.hackerId) return null;
+	if (!hasPass) return null;
 
 	return (
 		<div className="flex w-full min-w-0 max-w-xl flex-col items-center gap-3 text-center">

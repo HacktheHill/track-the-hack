@@ -3,17 +3,17 @@ import { useSession } from "next-auth/react";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import type { GetServerSideProps, NextPage } from "next/types";
-import { createRef, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
-import App from "../../components/App";
-import Error from "../../components/Error";
-import Filter from "../../components/Filter";
+import App from "@/components/App";
+import Error from "@/components/Error";
+import Filter from "@/components/Filter";
 
 import { getServerSession } from "next-auth";
-import { trpc } from "../../server/api/api";
-import { rolesRedirect } from "../../server/lib/redirects";
-import { sponsorshipGmailDraftsSchema } from "../../utils/common";
-import { getAuthOptions } from "../api/auth/[...nextauth]";
+import { trpc } from "@/server/api/api";
+import { rolesRedirect } from "@/server/lib/redirects";
+import { sponsorshipGmailDraftsSchema } from "@/utils/common";
+import { getAuthOptions } from "@/pages/api/auth/[...nextauth]";
 
 const html = String.raw;
 
@@ -96,14 +96,10 @@ const templates = [
 				Hack the Hill is an event that will gather up to
 				<strong>1000 passionate North American students</strong> who are ready to push the boundaries of
 				software and hardware solutions. We are shaping the future of technology through the joint effort of
-				notable student organizations from both <strong>the University of Ottawa</strong> and <<<<<<<
-				HEAD:src/pages/sponsorship/gmail-drafts.tsx <strong>Carleton University</strong>. In the
-				<strong>Fall of 2024</strong>, we will transform the campus into a hub for new ideas and flourishing
-				projects. This is where ideas come to life, where technology thrives, and where your company's brand can
-				truly shine. ======= <strong>Carleton University</strong>. In the <strong>Fall of 2024</strong>, we will
-				transform the campus into a hub for new ideas and flourishing projects. This is where ideas come to
-				life, where technology thrives, and where your company's brand can truly shine. >>>>>>> 0c9cd59 (chore:
-				update email template dates to fall 2024):src/pages/tools/sponsorship-gmail-drafts.tsx
+				notable student organizations from both <strong>the University of Ottawa</strong> and
+				<strong>Carleton University</strong>. In the <strong>Fall of 2024</strong>, we will transform the campus
+				into a hub for new ideas and flourishing projects. This is where ideas come to life, where technology
+				thrives, and where your company's brand can truly shine.
 			</p>
 			<p>
 				By becoming a sponsor of Hack the Hill, you will be supporting the growth and development of talented
@@ -247,18 +243,11 @@ const templates = [
 				throughout the year.
 			</p>
 			<p>
-				<<<<<<< HEAD:src/pages/sponsorship/gmail-drafts.tsx In the Fall of 2024, <strong>we/they</strong> will
-				be hosting about 1,000 participants from across North America who will receive the opportunity to
-				innovate software and hardware solutions. Events like these could not happen without the support of our
-				sponsors.<strong>we/they</strong> ======= In the Fall of 2024, <strong>we/they</strong> will be hosting
-				about 1,000 participants from across North America who will receive the opportunity to innovate software
-				and hardware solutions. Events like these could not happen without the support of our sponsors.<strong
-					>we/they</strong
-				>
-				>>>>>>> 0c9cd59 (chore: update email template dates to fall
-				2024):src/pages/tools/sponsorship-gmail-drafts.tsx encourage you to take a look at the sponsorship
-				package, which I have attached.
-				<strong>we/they</strong> are more than happy to answer any questions you may have!
+				In the Fall of 2024, <strong>we/they</strong> will be hosting about 1,000 participants from across North
+				America who will receive the opportunity to innovate software and hardware solutions. Events like these
+				could not happen without the support of our sponsors. <strong>We/they</strong> encourage you to take a
+				look at the sponsorship package, which I have attached. <strong>we/they</strong> are more than happy to
+				answer any questions you may have!
 			</p>
 			<p>Thank you for your time and consideration!</p> `,
 	},
@@ -276,34 +265,6 @@ const templates = [
 				locations of our different events. Given that our schedule is still very flexible, when would you like
 				to plan a scheduled workshop during these days? Would you like anything prepared in advance for the
 				opening or closing ceremonies?
-			</p>
-			<p>
-				Here is a Google Drive containing the
-				<a
-					href="https://drive.google.com/"
-					role="button"
-					target="_blank"
-					style="display:inline-flex;align-items:center;height:1rem;"
-				>
-					<img
-						src="https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png"
-						style="height: 100%;"
-					/>
-					<strong>resumes of attending hackers</strong></a
-				>, and here is another drive containing
-				<a
-					href="https://drive.google.com/"
-					role="button"
-					target="_blank"
-					style="display:inline-flex;align-items:center;height:1rem;"
-				>
-					<img
-						src="https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png"
-						style="height: 100%;"
-					/>
-					<strong>our organizer team’s resumes</strong></a
-				>
-				for Hack the Hill 2024.
 			</p>
 			<p>
 				Thank you so much for your continued support of Hack the Hill. We want to make this experience as
@@ -341,31 +302,6 @@ const templates = [
 				Furthermore, let us know how you would like to contribute to the opening and closing ceremonies. It can
 				be a speech or a presentation about your esteemed company from your employees. We want the participants
 				to establish a lasting connection with your brand and let them know of your presence in the field.
-			</p>
-			<p>
-				<strong>
-					To support your recruitment efforts, I have also provided two Google Drive links below.
-				</strong>
-				The first link contains resumes of all attending hackers, giving you access to a diverse pool of
-				talented individuals. The second link contains the resumes of our organizer team for Hack the Hill 2024,
-				providing you with insight into the skills and qualifications of the dedicated individuals behind the
-				event.
-				<br />
-				<a href="" role="button" target="_blank" style="display:inline-flex;align-items:center;height:1rem;">
-					<img
-						src="https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png"
-						style="height: 100%;"
-					/>
-					<strong>Resumes of attending hackers</strong>
-				</a>
-				<br />
-				<a href="" role="button" target="_blank" style="display:inline-flex;align-items:center;height:1rem;">
-					<img
-						src="https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png"
-						style="height: 100%;"
-					/>
-					<strong>Resumes of Hack the Hill 2024 organizer team</strong>
-				</a>
 			</p>
 			<p>
 				We genuinely appreciate your commitment to Hack the Hill and want to ensure that this experience is as
@@ -461,39 +397,28 @@ const SponsorshipGmailDrafts: NextPage = () => {
 	const [customizeTemplate, setCustomizeTemplate] = useState(false);
 	const [customTemplate, setCustomTemplate] = useState("");
 
-	const emailPreview = createRef<HTMLDivElement>();
-
 	const copyToClipBoard = async () => {
-		if (emailPreview.current) {
-			await navigator.clipboard.writeText(emailPreview.current.innerHTML);
-			setCopied(true);
-			setTimeout(() => setCopied(false), 1000);
-		}
+		await navigator.clipboard.writeText(htmlPreview);
+		setCopied(true);
+		setTimeout(() => setCopied(false), 1000);
 	};
 
-	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
 
 		const formData = new FormData(event.currentTarget);
-
-		const data = Object.fromEntries(formData) as Record<string, string | number | undefined>;
-		data.emailHTML = htmlPreview;
-		console.info(data);
-
-		// Remove empty values
-		Object.keys(data).forEach(key => {
-			if (data[key] == null || data[key] === "") {
-				delete data[key];
-			}
+		const parse = sponsorshipGmailDraftsSchema.safeParse({
+			organizerFullName: formData.get("organizerFullName"),
+			companyEmail: formData.get("companyEmail"),
+			subject: formData.get("subject"),
+			emailHTML: htmlPreview,
 		});
-
-		const parse = sponsorshipGmailDraftsSchema.safeParse(data);
 		if (!parse.success) {
 			setError(t("invalid-form"));
-			console.error(parse.error);
 		} else {
-			mutation.mutate(parse.data);
-			if (!mutation.error) {
+			setError("");
+			try {
+				await mutation.mutateAsync(parse.data);
 				setError("");
 				setDrafted(true);
 				setTimeout(() => {
@@ -513,8 +438,8 @@ const SponsorshipGmailDrafts: NextPage = () => {
 					setCustomizeTemplate(false);
 					setCustomTemplate("");
 				}, 1000);
-			} else {
-				setError(mutation.error.message);
+			} catch (error) {
+				setError(error instanceof globalThis.Error ? error.message : t("common:unknown-error"));
 			}
 		}
 	};
@@ -534,7 +459,10 @@ const SponsorshipGmailDrafts: NextPage = () => {
 	return (
 		<App className="overflow-y-auto bg-default-gradient p-8 sm:p-12" title={t("title")}>
 			<Filter value={RoleName.ORGANIZER} method="above">
-				<form onSubmit={handleSubmit} className="m-auto flex w-fit flex-col items-center gap-4">
+				<form
+					onSubmit={event => void handleSubmit(event)}
+					className="m-auto flex w-fit flex-col items-center gap-4"
+				>
 					<h1 className="font-rubik text-4xl font-bold">{t("title")}</h1>
 					<div className="flex w-full flex-col items-center gap-2 sm:flex-row">
 						<label htmlFor="organizer-full-name" className="flex-[50%] font-rubik">
@@ -666,7 +594,7 @@ const SponsorshipGmailDrafts: NextPage = () => {
 							<p className="text-center font-rubik text-red-500">{error}</p>
 						</div>
 					)}
-					<div className="relative h-[500px] w-full rounded-md bg-light-color shadow-md" ref={emailPreview}>
+					<div className="relative h-[500px] w-full rounded-md bg-light-color shadow-md">
 						<button
 							type="button"
 							className="bg-ligh-color hover:bg-medium absolute bottom-4 right-4 rounded-[100px] border-none px-4 py-2 font-rubik text-light-color shadow-md transition-all duration-1000 disabled:hover:bg-light-color"
@@ -680,7 +608,7 @@ const SponsorshipGmailDrafts: NextPage = () => {
 					<button
 						type="submit"
 						className="cursor-pointer whitespace-nowrap rounded-xl border-none bg-medium-primary-color px-8 py-2 font-rubik text-light-color shadow-md transition-all duration-500 hover:bg-light-primary-color"
-						disabled={drafted}
+						disabled={drafted || mutation.isLoading}
 					>
 						{drafted ? t("created-draft-email") : t("create-draft-email")}
 					</button>
@@ -692,7 +620,7 @@ const SponsorshipGmailDrafts: NextPage = () => {
 };
 
 export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
-	const session = await getServerSession(req, res, getAuthOptions(req));
+	const session = await getServerSession(req, res, getAuthOptions());
 	return {
 		redirect: await rolesRedirect(session, "/internal/sponsorship-gmail-drafts", [RoleName.ORGANIZER]),
 		props: {

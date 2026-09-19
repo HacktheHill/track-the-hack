@@ -19,11 +19,16 @@
 import { type CreateNextContextOptions } from "@trpc/server/adapters/next";
 import { type Session } from "next-auth";
 
-import { getServerAuthSession } from "../auth";
-import { prisma } from "../db";
+import { getServerAuthSession } from "@/server/auth";
+import { prisma } from "@/server/db";
+import { env } from "@/env/server.mjs";
+import { readParticipantSession } from "@/server/lib/participant-session";
+import { PrismaHackerLifecycleRepository } from "@/server/repositories/prisma-hacker-lifecycle";
 
 type CreateContextOptions = {
 	session: Session | null;
+	participantSession?: { hackerId: string } | null;
+	participantOriginAllowed?: boolean;
 };
 
 /**
@@ -37,7 +42,7 @@ type CreateContextOptions = {
  */
 const createInnerTRPCContext = (opts: CreateContextOptions) => {
 	return {
-		session: opts.session,
+		...opts,
 		prisma,
 	};
 };
@@ -52,8 +57,15 @@ export const createTRPCContext = async (opts: CreateNextContextOptions) => {
 
 	// Get the session from the server using the unstable_getServerSession wrapper function
 	const session = await getServerAuthSession({ req, res });
+	const repository = new PrismaHackerLifecycleRepository(prisma);
+	const participantSession = await readParticipantSession(req, env.PARTICIPANT_SESSION_SECRET, (verifier, now) =>
+		repository.findParticipantSession(verifier, now),
+	);
+	const participantOriginAllowed = !req.headers.origin || req.headers.origin === new URL(env.NEXTAUTH_URL).origin;
 
 	return createInnerTRPCContext({
+		participantSession,
+		participantOriginAllowed,
 		session,
 	});
 };
@@ -122,3 +134,10 @@ const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
  * @see https://trpc.io/docs/procedures
  */
 export const protectedProcedure = t.procedure.use(enforceUserIsAuthed);
+
+// Participant cookies authorize only participant operations, never organizer procedures.
+export const participantProcedure = t.procedure.use(({ ctx, next, type }) => {
+	if (!ctx.participantSession) throw new TRPCError({ code: "UNAUTHORIZED" });
+	if (type === "mutation" && !ctx.participantOriginAllowed) throw new TRPCError({ code: "FORBIDDEN" });
+	return next({ ctx: { ...ctx, participantSession: ctx.participantSession } });
+});

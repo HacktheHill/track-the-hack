@@ -1,242 +1,209 @@
-import { AcceptanceStatus, RoleName } from "@prisma/client";
-import { TRPCClientError } from "@trpc/client";
-import type { inferRouterOutputs } from "@trpc/server";
+import { RoleName, ScannerWorkflow, TShirtSize } from "@prisma/client";
 import type { GetServerSideProps } from "next";
-import { getServerSession } from "next-auth/next";
+import { getServerSession } from "next-auth";
 import { useTranslation } from "next-i18next";
-import { useCallback, useEffect, useRef, useState } from "react";
-import type { AppRouter } from "../../server/api/root";
-
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
-import router from "next/router";
-import App from "../../components/App";
-import Error from "../../components/Error";
-import Filter from "../../components/Filter";
-import PhysicalScanner from "../../components/PhysicalScanner";
-import QRCode from "../../components/QRCode";
-import QRScanner from "../../components/QRScanner";
-import ScanResult from "../../components/ScanResult";
-import { env } from "../../env/server.mjs";
-import { trpc } from "../../server/api/api";
-import { encrypt } from "../../server/api/routers/qr";
-import { qrRedirect } from "../../server/lib/redirects";
-import { getAuthOptions } from "../api/auth/[...nextauth]";
-import Tabs from "../../components/Tabs";
-import { playErrorSound, playNeutralSound, playSuccessSound } from "../../client/sound";
+import { useCallback, useRef, useState } from "react";
+import ScanResult from "@/components/ScanResult";
+import App from "@/components/App";
+import ErrorDisplay from "@/components/Error";
+import PhysicalScanner from "@/components/PhysicalScanner";
+import QRScanner from "@/components/QRScanner";
+import type { RouterOutputs } from "@/server/api/api";
+import { trpc } from "@/server/api/api";
+import { rolesRedirect } from "@/server/lib/redirects";
+import { getAuthOptions } from "@/pages/api/auth/[...nextauth]";
 
-type RouterOutput = inferRouterOutputs<AppRouter>;
-type Hacker = RouterOutput["presence"]["getScanInfo"];
-type ScanEvent = RouterOutput["events"]["all"][0];
+type Hacker = RouterOutputs["hackers"]["get"];
+type WorkflowScan = RouterOutputs["presence"]["scan"];
+const VIEW_PARTICIPANT = "__view__";
 
-const DEFAULT_ACTION = "get-hacker";
-
-const QR = ({ encryptedId }: { encryptedId: string }) => {
+const QR = () => {
 	const { t, i18n } = useTranslation("qr");
-
-	const selectedAction = useRef<string>(DEFAULT_ACTION);
-	const prevHackerId = useRef<string>("");
-	const scanPending = useRef(false);
-	const [isScanning, setIsScanning] = useState(false);
-
+	const utils = trpc.useContext();
+	const events = trpc.events.scannable.useQuery().data ?? [];
+	const { mutateAsync: scanPresence } = trpc.presence.scan.useMutation();
+	const selectedAction = useRef(VIEW_PARTICIPANT);
+	const previousId = useRef("");
+	const scanSequence = useRef(0);
+	const [display, setDisplay] = useState<React.ReactNode>();
 	const [error, setError] = useState("");
-	const [menuOptions, setMenuOptions] = useState<string[]>([]);
-	const [display, setDisplay] = useState(<></>);
 
-	const { data: events } = trpc.events.all.useQuery();
-	const { mutateAsync: presenceUpsertMutateAsync } = trpc.presence.upsert.useMutation();
-	const { mutateAsync: presenceIncrementMutateAsync } = trpc.presence.increment.useMutation();
-
-	const utils = trpc.useUtils();
-
-	useEffect(() => {
-		const validEvents =
-			events
-				?.filter(event => event.end.getTime() + 30 * 60 * 1000 > Date.now())
-				.filter((event, index, self) => self.findIndex(e => e.name === event.name) === index)
-				.sort((a, b) => a.start.getTime() - b.start.getTime())
-				.map(event => event.name) ?? [];
-
-		setMenuOptions([DEFAULT_ACTION, ...validEvents]);
-	}, [events]);
-
-	// Reload page to re-render a new QRScanner
-	useEffect(() => {
-		const handleLanguageChange = () => {
-			window.location.reload();
-		};
-
-		i18n.on("languageChanged", handleLanguageChange);
-
-		return () => {
-			i18n.off("languageChanged", handleLanguageChange);
-		};
-	}, [i18n]);
-
-	const handleEvent = useCallback(
-		async (hacker: Hacker, event: ScanEvent) => {
-			if (hacker.acceptanceStatus !== AcceptanceStatus.ACCEPTED) {
-				playErrorSound();
-				setDisplay(<NotHackerError />);
-				return;
-			}
-
-			// Presence labels are event names in the existing database.
-			const presence = hacker.presences.find(item => item.label === event.name);
-			if (presence) {
-				playNeutralSound();
-				setDisplay(
-					<ScanResult
-						key={`${hacker.id}:${event.id}:${presence.id}`}
-						hacker={hacker}
-						event={event}
-						initialCount={presence.value}
-						interestedEvents={hacker.eventInterests.map(interest => interest.Event)}
-						repeated
-						onIncrement={value => presenceIncrementMutateAsync({ id: presence.id, value })}
-					/>,
-				);
-				return;
-			}
-
-			await presenceUpsertMutateAsync({ hackerId: hacker.id, value: 1, label: event.name });
-			playSuccessSound();
-			setDisplay(
-				<ScanResult
-					key={`${hacker.id}:${event.id}`}
-					hacker={hacker}
-					event={event}
-					initialCount={1}
-					interestedEvents={hacker.eventInterests.map(interest => interest.Event)}
-					repeated={false}
-				/>,
-			);
-		},
-		[presenceIncrementMutateAsync, presenceUpsertMutateAsync],
-	);
-
-	const handleScanResult = useCallback(
-		async (hackerId: string) => {
-			if (!hackerId || hackerId === prevHackerId.current || scanPending.current) return;
-			const action = selectedAction.current;
-			if (action === DEFAULT_ACTION) {
-				prevHackerId.current = hackerId;
-				void router.push(`/hackers/hacker?id=${hackerId}`);
-				return;
-			}
-
-			const event = events?.find(item => item.name === action);
-			if (!event) return;
-			scanPending.current = true;
-			setIsScanning(true);
-			setDisplay(<></>);
+	const scan = useCallback(
+		async (rawId: string) => {
+			const hackerId = rawId.trim();
+			if (!hackerId || hackerId === previousId.current) return;
+			const sequence = ++scanSequence.current;
+			previousId.current = hackerId;
 			setError("");
+
 			try {
-				const hacker = await utils.presence.getScanInfo.fetch({ id: hackerId });
-				await handleEvent(hacker, event);
-				prevHackerId.current = hackerId;
-			} catch (error) {
-				playErrorSound();
-				setDisplay(error instanceof TRPCClientError ? <Error message={error.message} /> : <UnknownError />);
-			} finally {
-				scanPending.current = false;
-				setIsScanning(false);
+				if (selectedAction.current === VIEW_PARTICIPANT) {
+					const hacker = await utils.hackers.get.fetch({ id: hackerId });
+					if (sequence !== scanSequence.current) return;
+					setDisplay(<ParticipantCard hacker={hacker} />);
+					return;
+				}
+
+				const result = await scanPresence({ eventId: selectedAction.current, hackerId });
+				if (sequence !== scanSequence.current) return;
+				setDisplay(<WorkflowCard result={result} />);
+			} catch {
+				if (sequence !== scanSequence.current) return;
+				previousId.current = "";
+				setDisplay(undefined);
+				setError(t("unknown-error"));
 			}
 		},
-		[events, handleEvent, utils],
+		[scanPresence, t, utils],
 	);
-
-	// Memoize function to prevent re-rendering QRScanner. QRScanner should never be re-rendered or it will break.
-	// React does not properly re-render video components.
-	const onScan = useCallback(
-		(result: string) => {
-			console.debug("Scan result:", result);
-			void handleScanResult(result);
-		},
-		[handleScanResult],
-	);
+	const handleScan = useCallback((result: string) => void scan(result), [scan]);
 
 	return (
 		<App
-			className="relative flex h-full flex-col items-center gap-8 overflow-y-auto bg-default-gradient px-4 py-8"
+			className="relative flex h-full flex-col items-center justify-center gap-8 overflow-y-auto bg-default-gradient p-6"
 			title={t("title")}
 		>
-			<div className="my-auto flex w-full max-w-xl shrink-0 flex-col items-center gap-6">
-				<Filter value={[RoleName.ORGANIZER]} method="some">
-					<>
-						<select
-							disabled={isScanning}
-							aria-label={t("scan-purpose")}
-							className="ui-field w-full text-center"
-							onChange={e => {
-								selectedAction.current = e.target.value;
-								prevHackerId.current = "";
-								setDisplay(<></>);
-								setError("");
-							}}
-						>
-							{menuOptions.map(event => {
-								return (
-									<option key={event} value={event}>
-										{t(event)}
-									</option>
-								);
-							})}
-						</select>
-						<QRScanner onScan={onScan} setError={setError} />
-						<PhysicalScanner onScan={onScan} />
-						{!error && (
-							<p className="z-10 max-w-xl text-center text-lg font-bold text-dark-color">
-								{t("scan-qr")}
-							</p>
-						)}
-					</>
-					<>
-						<Tabs names={["QR", "Scan"]}>
-							<>
-								<QRCode setError={setError} id={encryptedId} />
-								{!error && (
-									<p className="z-10 max-w-xl text-center text-lg font-bold text-dark-color">
-										{t("use-qr")}
-									</p>
-								)}
-							</>
-							<QRScanner onScan={onScan} setError={setError} />
-						</Tabs>
-					</>
-				</Filter>
-				{isScanning && <p role="status">{t("recording-scan")}</p>}
-				{display}
-				{error && <Error message={error} />}
+			<select
+				aria-label={t("select-action")}
+				className="p-3 text-center text-lg font-bold text-dark-color"
+				onChange={event => {
+					scanSequence.current += 1;
+					selectedAction.current = event.target.value;
+					previousId.current = "";
+					setDisplay(undefined);
+					setError("");
+				}}
+			>
+				<option value={VIEW_PARTICIPANT}>{t("view-participant")}</option>
+				{events.map(event => (
+					<option key={event.id} value={event.id}>
+						{t(`workflow.${event.scannerWorkflow}`)} — {i18n.language === "fr" ? event.nameFr : event.name}
+					</option>
+				))}
+			</select>
+			<div className="grid w-full max-w-4xl gap-6 md:grid-cols-2">
+				<QRScanner onScan={handleScan} setError={setError} />
+				<PhysicalScanner onScan={handleScan} />
 			</div>
+			{display}
+			{error && <ErrorDisplay message={error} />}
 		</App>
 	);
 };
 
-const UnknownError = () => {
+// Full operational lookup is deliberately separate from workflow scans. The
+// latter never call this endpoint or receive this broader object.
+const ParticipantCard = ({ hacker }: { hacker: Hacker }) => {
 	const { t } = useTranslation("qr");
 
-	return <Error message={t("unknown-error")} />;
+	return (
+		<div className="rounded-lg bg-light-primary-color p-6 font-rubik text-light-color">
+			<p className="break-all font-bold">{hacker.id}</p>
+			<p>{t("confirmed", { value: hacker.confirmed ? t("yes") : t("no") })}</p>
+			<TShirtInfo size={hacker.tShirtSize} />
+			<p>{t("meal", { value: hacker.mealCategory })}</p>
+			{hacker.walkIn && <p>{t("walk-in")}</p>}
+		</div>
+	);
 };
 
-const NotHackerError = () => {
+const TShirtInfo = ({ size }: { size: TShirtSize }) => {
 	const { t } = useTranslation("qr");
+	return <p>{size === TShirtSize.NONE ? t("common:no-t-shirt") : t("t-shirt", { value: size })}</p>;
+};
 
-	return <Error message={t("not-hacker")} />;
+const WorkflowCard = ({ result }: { result: WorkflowScan }) => {
+	const { t, i18n } = useTranslation("qr");
+	const interests = trpc.presence.getEventInterests.useQuery(
+		{ eventId: result.eventId, hackerId: result.participant.id },
+		{ enabled: result.workflow === ScannerWorkflow.ATTENDANCE },
+	);
+	return (
+		<ScanResult result={result} interestedEvents={interests.data}>
+			{result.workflow === ScannerWorkflow.ATTENDANCE && interests.isError && (
+				<button type="button" className="ui-button" onClick={() => void interests.refetch()}>
+					{t("event:retry-interest")}
+				</button>
+			)}
+			<PresenceCounter
+				key={`${result.eventId}:${result.participant.id}`}
+				eventId={result.eventId}
+				hackerId={result.participant.id}
+				eventName={i18n.language === "fr" ? result.nameFr : result.name}
+				initialValue={result.value}
+				initialAtLimit={result.atLimit}
+			/>
+		</ScanResult>
+	);
+};
+
+const PresenceCounter = ({
+	eventId,
+	hackerId,
+	eventName,
+	initialValue,
+	initialAtLimit,
+}: {
+	eventId: string;
+	hackerId: string;
+	eventName: string;
+	initialValue: number;
+	initialAtLimit: boolean;
+}) => {
+	const { t } = useTranslation("qr");
+	const adjustPresence = trpc.presence.adjust.useMutation();
+	const [value, setValue] = useState(initialValue);
+	const [atLimit, setAtLimit] = useState(initialAtLimit);
+	const [error, setError] = useState("");
+
+	const change = async (amount: -1 | 1) => {
+		setError("");
+		try {
+			const next = await adjustPresence.mutateAsync({ eventId, hackerId, amount });
+			setValue(next.value);
+			setAtLimit(next.atLimit);
+		} catch {
+			setError(t("adjust-error"));
+		}
+	};
+
+	return (
+		<>
+			<p className="mt-3 font-bold">
+				{eventName}: {value}
+			</p>
+			{atLimit && <p className="mt-2">{t("maximum-reached")}</p>}
+			<div className="mt-4 flex justify-center gap-8">
+				<button
+					type="button"
+					aria-label={t("decrease-count")}
+					disabled={value <= 0 || adjustPresence.isLoading}
+					className="ui-button ui-button-icon"
+					onClick={() => void change(-1)}
+				>
+					−
+				</button>
+				<button
+					type="button"
+					aria-label={t("increase-count")}
+					disabled={atLimit || adjustPresence.isLoading}
+					className="ui-button ui-button-icon"
+					onClick={() => void change(1)}
+				>
+					+
+				</button>
+			</div>
+			{error && <ErrorDisplay message={error} />}
+		</>
+	);
 };
 
 export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
-	const secretKey = env.QR_SECRET_KEY;
-	const session = await getServerSession(req, res, getAuthOptions(req));
-
-	const timestamp = Math.floor(Date.now() / 60000);
-	const encryptedId = session?.user?.hackerId ? encrypt(`${session.user.hackerId}:${timestamp}`, secretKey) : null;
-
+	const session = await getServerSession(req, res, getAuthOptions());
 	return {
-		redirect: await qrRedirect(session, "/qr"),
-		props: {
-			encryptedId,
-			...(await serverSideTranslations(locale ?? "en", ["qr", "navbar", "common"])),
-		},
+		redirect: await rolesRedirect(session, "/qr", [RoleName.ORGANIZER, RoleName.ADMIN]),
+		props: await serverSideTranslations(locale ?? "en", ["qr", "navbar", "common", "event"]),
 	};
 };
 

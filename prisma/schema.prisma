@@ -49,26 +49,16 @@ model Session {
   @@index([userId])
 }
 
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
-}
-
 model User {
   id            String    @id @default(cuid())
   name          String?
   email         String?   @unique
-  passwordHash  String?
   image         String?
   emailVerified DateTime?
   roles         Role[]
   accounts      Account[]
   sessions      Session[]
-  Hacker        Hacker?
-  Log           Log[]
+  logs          Log[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @default(now()) @updatedAt
 }
@@ -82,65 +72,57 @@ model Role {
 }
 
 model Hacker {
-  id String @id @default(cuid())
+  // Supplied by the authoritative Sheet. It has no generated default on purpose.
+  id               String       @id
+  tShirtSize       TShirtSize
+  mealCategory     MealCategory
+  confirmed        Boolean      @default(false)
+  walkIn           Boolean      @default(false)
+  acceptanceExpiry DateTime
 
-  preferredLanguage                Locale
-  firstName                        String
-  lastName                         String
-  email                            String
-  phoneNumber                      String
-  country                          String
-  age                              Int
-  gender                           String?
-  pronouns                         String?
-  raceEthnicity                    String?
-  currentSchoolOrganization        String
-  educationLevel                   String
-  major                            String
-  linkedin                         String?
-  github                           String?
-  personalWebsite                  String?
-  hackathonBefore                  Boolean
-  hackathonDetails                 String     @db.Text
-  programmingLanguagesTechnologies String     @db.Text
-  projectDescription               String     @db.Text
-  participationReason              String     @db.Text
-  learningGoals                    String     @db.Text
-  emergencyContactName             String
-  emergencyContactRelation         String
-  emergencyContactPhoneNumber      String
-  tShirtSize                       TShirtSize
-  dietaryRestrictions              String
-  specialAccommodations            String?    @db.Text
-  additionalInfo                   String?    @db.Text
-  travelOrigin                     String?
-  referralSource                   String?
-  agreements                       Boolean
-  promotions                       Boolean
-  hasResume                        Boolean    @default(false)
-
-  acceptanceStatus AcceptanceStatus @default(PENDING)
-  acceptanceReason String           @default("none")
-  acceptanceExpiry DateTime?
-
-  unsubscribed     Boolean @default(false)
-  unsubscribeToken String? @unique @default(cuid())
-
-  confirmed Boolean @default(false)
-  walkIn    Boolean @default(false)
-
-  Team      Team?      @relation(fields: [teamId], references: [id])
-  teamId    String?
-  User      User?      @relation(fields: [userId], references: [id])
-  userId    String?    @unique
-  presences Presence[]
-  eventInterests EventInterest[]
+  presences              Presence[]
+  eventInterests         EventInterest[]
+  cancellationCapability CancellationCapability?
+  claimToken             ClaimToken?
+  participantSession     ParticipantSession?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
+}
 
-  @@index([userId])
-  @@index([teamId])
+// The raw cancellation token is never persisted. A token contains this random
+// capability id plus an HMAC generated from the server-only cancellation key.
+model CancellationCapability {
+  id        String   @id
+  hackerId  String   @unique
+  hacker    Hacker   @relation(fields: [hackerId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
+// The raw claim token is never persisted. A token contains this random claim id
+// plus an HMAC generated from the server-only claim key. One row per hacker, so
+// issuing access again replaces a token that has not been used yet.
+model ClaimToken {
+  id         String    @id
+  hackerId   String    @unique
+  hacker     Hacker    @relation(fields: [hackerId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @default(now()) @updatedAt
+}
+
+// The browser holds the random session capability. Only its keyed verifier is
+// stored here, so a database read cannot be turned into an active session.
+// hackerId is unique because replacement access permits exactly one device.
+model ParticipantSession {
+  verifier  String   @id
+  hackerId  String   @unique
+  hacker    Hacker   @relation(fields: [hackerId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model Presence {
@@ -149,51 +131,38 @@ model Presence {
   label     String
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
-  Hacker    Hacker?  @relation(fields: [hackerId], references: [id])
-  hackerId  String?
-
-  @@index([hackerId])
-}
-
-model Team {
-  id      String   @id @default(cuid())
-  name    String   @unique
-  hackers Hacker[]
-}
-
-model Event {
-  id            String    @id @default(cuid())
-  start         DateTime
-  end           DateTime
-  hidden        Boolean   @default(false)
-  name          String
-  nameFr        String
-  type          EventType @default(ALL)
-  host          String?
-  description   String    @db.Text
-  descriptionFr String    @db.Text
-  room          String
-  tiktok        String?
-  image         String?
-  link          String?
-  linkText      String?
-  linkTextFr    String?
-  maxCheckIns   Int?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @default(now()) @updatedAt
-  interests     EventInterest[]
-}
-
-model EventInterest {
-  id        String   @id @default(cuid())
-  hackerId  String
-  eventId   String
-  createdAt DateTime @default(now())
   Hacker    Hacker   @relation(fields: [hackerId], references: [id], onDelete: Cascade)
-  Event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  hackerId  String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId   String
 
   @@unique([hackerId, eventId])
   @@index([eventId])
+}
+
+model Event {
+  id              String          @id @default(cuid())
+  start           DateTime
+  end             DateTime
+  hidden          Boolean         @default(false)
+  name            String
+  nameFr          String
+  type            EventType       @default(ALL)
+  interests       EventInterest[]
+  scannerWorkflow ScannerWorkflow @default(ATTENDANCE)
+  host            String?
+  description     String          @db.Text
+  descriptionFr   String          @db.Text
+  room            String
+  tiktok          String?
+  image           String?
+  link            String?
+  linkText        String?
+  linkTextFr      String?
+  maxCheckIns     Int?
+  presences       Presence[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @default(now()) @updatedAt
 }
 
 model Log {
@@ -204,9 +173,9 @@ model Log {
   author     String   @default("")
   route      String
   action     String
-  details    String?
+  details    String?  @db.Text
   userId     String?
-  user       User[]
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([userId])
 }
@@ -226,16 +195,9 @@ model Hardware {
   @@index([name])
 }
 
-enum Locale {
-  EN
-  FR
-}
-
 enum RoleName {
   ADMIN
-  HACKER
   ORGANIZER
-  ACCEPTANCE
   MAYOR
   PREMIER
 }
@@ -248,6 +210,13 @@ enum EventType {
   FOOD
 }
 
+enum ScannerWorkflow {
+  CHECK_IN
+  MERCHANDISE
+  FOOD
+  ATTENDANCE
+}
+
 enum TShirtSize {
   XS
   S
@@ -255,11 +224,25 @@ enum TShirtSize {
   L
   XL
   XXL
+  NONE
 }
 
-enum AcceptanceStatus {
-  PENDING
-  ACCEPTED
-  WAITLISTED
-  REJECTED
+enum MealCategory {
+  STANDARD
+  VEGETARIAN
+  VEGAN
+  HALAL
+  OTHER
+}
+
+model EventInterest {
+  id        String   @id @default(cuid())
+  hackerId  String
+  eventId   String
+  createdAt DateTime @default(now())
+  Hacker    Hacker   @relation(fields: [hackerId], references: [id], onDelete: Cascade)
+  Event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([hackerId, eventId])
+  @@index([eventId])
 }

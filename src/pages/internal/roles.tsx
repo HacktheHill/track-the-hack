@@ -3,13 +3,13 @@ import type { GetServerSideProps, NextPage } from "next";
 import { getServerSession } from "next-auth";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
-import { rolesRedirect } from "../../server/lib/redirects";
-import { getAuthOptions } from "../api/auth/[...nextauth]";
+import { rolesRedirect } from "@/server/lib/redirects";
+import { getAuthOptions } from "@/pages/api/auth/[...nextauth]";
 
 import { useState } from "react";
-import App from "../../components/App";
-import Filter from "../../components/Filter";
-import { trpc } from "../../server/api/api";
+import App from "@/components/App";
+import Filter from "@/components/Filter";
+import { trpc } from "@/server/api/api";
 
 const Roles: NextPage = () => {
 	const { t } = useTranslation("internal");
@@ -36,10 +36,14 @@ const Roles: NextPage = () => {
 		});
 	};
 
-	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
-		mutation.mutate({ roles, userIds });
-		window.location.reload();
+		try {
+			await mutation.mutateAsync({ roles, userIds });
+			window.location.reload();
+		} catch {
+			// The mutation exposes its error below and the page remains usable.
+		}
 	};
 
 	return (
@@ -47,7 +51,7 @@ const Roles: NextPage = () => {
 			<Filter value={RoleName.ADMIN} method="above">
 				<div className="flex h-full flex-col items-center">
 					<h1 className="p-8 font-rubik text-4xl font-bold">{t("roles")}</h1>
-					<form className="flex w-full max-w-lg flex-col gap-4" onSubmit={handleSubmit}>
+					<form className="flex w-full max-w-lg flex-col gap-4" onSubmit={event => void handleSubmit(event)}>
 						<input
 							type="search"
 							placeholder="Search"
@@ -97,8 +101,14 @@ const Roles: NextPage = () => {
 								</div>
 							))}
 						</div>
+						{mutation.error && (
+							<p role="alert" className="font-rubik text-red-500">
+								{mutation.error.message}
+							</p>
+						)}
 						<button
 							type="submit"
+							disabled={mutation.isLoading}
 							className="whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-sm text-dark-primary-color transition-colors hover:bg-light-tertiary-color short:text-base"
 						>
 							{t("submit")}
@@ -111,7 +121,7 @@ const Roles: NextPage = () => {
 };
 
 export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
-	const session = await getServerSession(req, res, getAuthOptions(req));
+	const session = await getServerSession(req, res, getAuthOptions());
 	return {
 		redirect: await rolesRedirect(session, "/internal/roles", [RoleName.ADMIN]),
 		props: {

@@ -1,95 +1,71 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { EventType, TShirtSize } from "@prisma/client";
+import { MealCategory, ScannerWorkflow, TShirtSize } from "@prisma/client";
 import i18next from "i18next";
 import { I18nextProvider } from "react-i18next";
 import { renderToStaticMarkup } from "react-dom/server";
-import ScanResult, { isArrivalCheckIn } from "../src/components/ScanResult";
+import ScanResult from "../src/components/ScanResult";
 import english from "../public/locales/en/qr.json";
 import french from "../public/locales/fr/qr.json";
+import common from "../public/locales/en/common.json";
 
-const hacker = { firstName: "Alex", lastName: "Chen", tShirtSize: TShirtSize.M, dietaryRestrictions: "Peanut allergy" };
-const event = { name: "Lunch", nameFr: "Déjeuner", type: EventType.FOOD, maxCheckIns: 1 };
-
-async function render(overrides: Partial<Parameters<typeof ScanResult>[0]> = {}, language = "en") {
+type Props = Parameters<typeof ScanResult>[0];
+const base = { eventId: "event-1", name: "Lunch", nameFr: "Déjeuner", value: 1, atLimit: true };
+const participantId = "wvY1HKlwYnFBO8t-YnQbwg";
+const food: Props["result"] = {
+	...base,
+	workflow: ScannerWorkflow.FOOD,
+	participant: { id: participantId, mealCategory: MealCategory.OTHER, requiresFoodLead: true },
+};
+const interests = [
+	{
+		id: "workshop",
+		name: "Hardware Workshop",
+		nameFr: "Atelier de matériel",
+		start: new Date("2026-09-27T13:00:00Z"),
+	},
+];
+async function render(result: Props["result"], interestedEvents?: Props["interestedEvents"], language = "en") {
 	const i18n = i18next.createInstance();
-	await i18n.init({ lng: language, resources: { en: { qr: english }, fr: { qr: french } } });
+	await i18n.init({ lng: language, resources: { en: { qr: english, common }, fr: { qr: french } } });
 	return renderToStaticMarkup(
 		<I18nextProvider i18n={i18n}>
-			<ScanResult
-				hacker={hacker}
-				event={event}
-				initialCount={1}
-				repeated={false}
-				interestedEvents={[]}
-				{...overrides}
-			/>
+			<ScanResult result={result} interestedEvents={interestedEvents} />
 		</I18nextProvider>,
 	);
 }
-
-void test("arrival scans show name and shirt size for both first and repeat visits", async () => {
-	for (const repeated of [false, true]) {
-		const html = await render({ event: { ...event, name: "Check-In", type: EventType.ALL }, repeated });
-		assert.match(html, /Alex Chen/);
-		assert.match(html, /T-shirt size/);
-		assert.match(html, />M<\/dd>/);
-		assert.doesNotMatch(html, /Dietary restrictions/);
-	}
-	assert.ok(isArrivalCheckIn("Check In"));
-	assert.ok(isArrivalCheckIn("Arrival check-in"));
-	assert.ok(!isArrivalCheckIn("Opening Ceremony"));
-});
-
-void test("meal status distinguishes a new redemption, a prior redemption and a zero count", async () => {
-	assert.match(await render(), /Meal redeemed with this scan/);
-	assert.match(await render({ repeated: true }), /Meal already redeemed/);
-	const zero = await render({ repeated: true, initialCount: 0 });
-	assert.match(zero, /Meal not redeemed/);
-	assert.match(zero, /0 redemptions recorded/);
-	assert.match(zero, /Peanut allergy/);
-});
-
-void test("food classification uses the event type and missing dietary data stays explicit", async () => {
-	const html = await render({
-		event: { ...event, name: "Midnight snack" },
-		hacker: { ...hacker, dietaryRestrictions: "  " },
+void test("check-in and merchandise display operational shirt data including opt-outs", async () => {
+	const checkIn: Props["result"] = {
+		...base,
+		workflow: ScannerWorkflow.CHECK_IN,
+		participant: { id: participantId, confirmed: true, tShirtSize: TShirtSize.M },
+	};
+	const html = await render(checkIn, interests);
+	assert.match(html, /T-shirt: M/);
+	assert.match(html, /Confirmed: Yes/);
+	assert.doesNotMatch(html, /Hardware Workshop|Meal:/);
+	const optOut = await render({
+		...base,
+		workflow: ScannerWorkflow.MERCHANDISE,
+		participant: { id: participantId, tShirtSize: TShirtSize.NONE },
 	});
-	assert.match(html, /Dietary restrictions/);
-	assert.match(html, /Not provided/);
+	assert.match(optOut, new RegExp(common["no-t-shirt"]));
 });
-
-void test("at the limit, organizers can correct the count downward but cannot increase it", async () => {
-	const html = await render({ repeated: true, onIncrement: () => Promise.resolve() });
-	assert.match(html, /aria-label="Increase count" disabled=""/);
-	assert.doesNotMatch(html, /aria-label="Decrease count" disabled/);
+void test("food scans display meal category and food-lead escalation, without interests", async () => {
+	const html = await render(food, interests);
+	assert.match(html, /Meal: OTHER/);
+	assert.match(html, /Contact the food lead/);
+	assert.doesNotMatch(html, /Hardware Workshop|T-shirt:/);
+	assert.match(await render(food, [], "fr"), /Déjeuner/);
 });
-
-void test("meal details and the event name are localized in French", async () => {
-	const html = await render({}, "fr");
-	assert.match(html, /Déjeuner/);
-	assert.match(html, /Repas récupéré avec ce scan/);
-	assert.match(html, /Restrictions alimentaires/);
-});
-
-void test("social and workshop scans show all interests, including events other than the scanned event", async () => {
-	const interestedEvents = [
-		{
-			id: "workshop",
-			name: "Hardware Workshop",
-			nameFr: "Atelier de matériel",
-			start: new Date("2026-09-27T13:00:00Z"),
-		},
-		{ id: "games", name: "Game Night", nameFr: "Soirée jeux", start: new Date("2026-09-27T20:00:00Z") },
-	];
-	for (const type of [EventType.SOCIAL, EventType.WORKSHOP]) {
-		for (const repeated of [false, true]) {
-			const html = await render({ event: { ...event, name: "Activity", type }, interestedEvents, repeated });
-			assert.match(html, /Hardware Workshop/);
-			assert.match(html, /Game Night/);
-			assert.match(html, /\/schedule\/event\?id=workshop/);
-		}
-	}
-	assert.match(await render({ event: { ...event, type: EventType.SOCIAL } }), /No events marked as interested/);
-	assert.doesNotMatch(await render({ interestedEvents }), /Hardware Workshop/);
+void test("attendance scans display localized interests and distinguish loading from empty", async () => {
+	const attendance: Props["result"] = {
+		...base,
+		workflow: ScannerWorkflow.ATTENDANCE,
+		participant: { id: participantId },
+	};
+	assert.match(await render(attendance, interests), /Hardware Workshop/);
+	assert.match(await render(attendance, interests, "fr"), /Atelier de matériel/);
+	assert.match(await render(attendance, []), /No events marked as interested/);
+	assert.match(await render(attendance), /Loading event interests/);
 });

@@ -6,9 +6,9 @@ import { useEffect } from "react";
 
 import { appWithTranslation } from "next-i18next";
 
-import { trpc } from "../server/api/api";
+import { trpc } from "@/server/api/api";
 
-import "../styles/globals.css";
+import "@/styles/globals.css";
 
 const MyApp: AppType<{ session: Session | null }> = ({ Component, pageProps: { session, ...pageProps } }) => {
 	const router = useRouter();

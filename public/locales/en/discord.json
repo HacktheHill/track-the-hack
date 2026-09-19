@@ -1,11 +1,11 @@
 {
-	"title": "Discord Verification",
-	"please-sign-in": "Please sign in",
-	"sign-in": "Sign In",
-	"success-welcome": "Success! Welcome to the Hack the Hill II Discord server!",
-	"verify-details": "Verify that you are a hacker to gain access to the Hack the Hill II Discord server.",
-	"verify": "Verify",
-	"you-must-be-logged-in": "You must be logged in to verify your Discord account.",
-	"missing-discord-id": "Discord ID is missing. Please check the link and try again.",
-	"invalid-discord-id": "Invalid Discord ID provided."
+	"title": "Verify your Discord account",
+	"explanation": "Activate your day-of participant access on this browser first, then use your personal verification link from the Hack the Hill Discord bot. Links expire after five minutes. Keep your link private.",
+	"verify": "Verify Discord account",
+	"verifying": "Verifying…",
+	"verified": "Your Discord account is verified. You can return to Discord.",
+	"session-required": "Open your day-of access link and activate your pass in this browser, then return here. An organizer sign-in does not provide participant access.",
+	"invalid": "This verification link is missing, invalid, or expired. Generate a new personal link in Discord.",
+	"conflict": "This participant or Discord account is already linked to a different account. Ask an organizer for help.",
+	"unavailable": "Verification is temporarily unavailable. Try again. If your link expires, generate a new one in Discord."
 }
