@@ -12,7 +12,7 @@ for (const line of readFileSync(new URL("../.github/workflows/build.env", import
 	process.env[line.slice(0, separator)] = line.slice(separator + 1);
 }
 Object.assign(process.env, { NODE_ENV: "test" });
-const routers = Promise.all([import("../src/server/api/routers/events"), import("../src/server/api/routers/presence")]);
+const routers = Promise.all([import("@/server/api/routers/events"), import("@/server/api/routers/presence")]);
 const hackerId = "wvY1HKlwYnFBO8t-YnQbwg";
 const organizer: Session = { user: { id: "organizer-1", roles: [RoleName.ORGANIZER] }, expires: "2099-01-01" };
 const context = (
@@ -20,6 +20,8 @@ const context = (
 	participantSession: { hackerId: string } | null = { hackerId },
 	session: Session | null = null,
 ) => ({
+	// Partial database mocks expose only the operations exercised by each caller.
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 	prisma: prisma as PrismaClient,
 	session,
 	participantSession,

@@ -1,6 +1,6 @@
 import { useHasParticipantPass } from "@/utils/participant-pass";
 import { useTranslation } from "next-i18next";
-import { trpc } from "../server/api/api";
+import { trpc } from "@/server/api/api";
 
 export default function EventInterestButton({ eventId }: { eventId: string }) {
 	const hasPass = useHasParticipantPass();

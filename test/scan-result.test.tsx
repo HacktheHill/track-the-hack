@@ -4,10 +4,10 @@ import { MealCategory, ScannerWorkflow, TShirtSize } from "@prisma/client";
 import i18next from "i18next";
 import { I18nextProvider } from "react-i18next";
 import { renderToStaticMarkup } from "react-dom/server";
-import ScanResult from "../src/components/ScanResult";
-import english from "../public/locales/en/qr.json";
-import french from "../public/locales/fr/qr.json";
-import common from "../public/locales/en/common.json";
+import ScanResult from "@/components/ScanResult";
+import english from "@root/public/locales/en/qr.json";
+import french from "@root/public/locales/fr/qr.json";
+import common from "@root/public/locales/en/common.json";
 
 type Props = Parameters<typeof ScanResult>[0];
 const base = { eventId: "event-1", name: "Lunch", nameFr: "Déjeuner", value: 1, atLimit: true };
