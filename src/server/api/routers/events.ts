@@ -63,7 +63,15 @@ export const eventsRouter = createTRPCRouter({
 			});
 
 			if (!event) {
-				throw new Error("No event found");
+				throw new TRPCError({ code: "NOT_FOUND", message: "No event found" });
+			}
+
+			const isOrganizer = ctx.session?.user?.roles?.some(
+				(role) => role === RoleName.ORGANIZER || role === RoleName.ADMIN
+			);
+
+			if (event.hidden && !isOrganizer) {
+				throw new TRPCError({ code: "NOT_FOUND", message: "No event found" });
 			}
 
 			return event;
@@ -71,10 +79,16 @@ export const eventsRouter = createTRPCRouter({
 
 	// Get all events
 	all: publicProcedure.query(async ({ ctx }) => {
-		const events = await ctx.prisma.event.findMany();
+		const isOrganizer = ctx.session?.user?.roles?.some(
+			(role) => role === RoleName.ORGANIZER || role === RoleName.ADMIN
+		);
+
+		const events = await ctx.prisma.event.findMany({
+			where: isOrganizer ? undefined : { hidden: false },
+		});
 
 		if (!events) {
-			throw new Error("No events found");
+			throw new TRPCError({ code: "NOT_FOUND", message: "No events found" });
 		}
 
 		return events;
@@ -86,6 +100,10 @@ export const eventsRouter = createTRPCRouter({
 	// checked in. Filtering by start would hide an event the moment it begins,
 	// which is exactly when the scanner is used.
 	future: publicProcedure.query(async ({ ctx }) => {
+		const isOrganizer = ctx.session?.user?.roles?.some(
+			(role) => role === RoleName.ORGANIZER || role === RoleName.ADMIN
+		);
+
 		const gracePeriodMs = 30 * 60 * 1000;
 		const cutoff = new Date(Date.now() - gracePeriodMs);
 
@@ -94,6 +112,7 @@ export const eventsRouter = createTRPCRouter({
 				end: {
 					gt: cutoff,
 				},
+				...(isOrganizer ? {} : { hidden: false }),
 			},
 			orderBy: {
 				start: "asc",
