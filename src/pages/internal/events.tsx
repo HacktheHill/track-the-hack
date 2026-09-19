@@ -112,7 +112,7 @@ const Events: NextPage = () => {
 	);
 };
 export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
-	const session = await getServerSession(req, res, getAuthOptions(req));
+	const session = await getServerSession(req, res, getAuthOptions());
 	return {
 		redirect: await rolesRedirect(session, "/", [RoleName.ORGANIZER, RoleName.ADMIN]),
 		props: {
