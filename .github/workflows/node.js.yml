@@ -54,5 +54,7 @@ jobs:
             - run: npm ci --include=dev
             - run: npx prisma migrate deploy
             - run: npm test
+              env:
+                  NODE_ENV: test
             - run: npx tsc --noEmit
             - run: npm run build

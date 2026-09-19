@@ -4,5 +4,55 @@
 	"roles": "Rôles",
 	"sponsorship-gmail-drafts": "Brouillons Gmail de l'équipe de parrainage",
 	"metrics": "Métriques",
-	"submit": "Soumettre"
+	"submit": "Soumettre",
+
+	"events": {
+		"title": "Événements",
+		"new": "Nouvel événement",
+		"add-event": "Nouvel événement",
+		"edit": "Modifier l'événement",
+
+		"name-en": "Nom de l'événement (anglais)",
+		"name-fr": "Nom de l'événement (français)",
+		"location": "Lieu",
+		"start": "Début",
+		"end": "Fin",
+
+		"description-en": "Description (anglais)",
+		"description-fr": "Description (français)",
+
+		"photo": "Photo de l'événement",
+		"photo-read-only": "Les photos ne peuvent pas encore être modifiées dans cet éditeur. Les photos existantes seront conservées lors de l'enregistrement.",
+		"remove-photo": "Supprimer la photo",
+
+		"links": "Liens",
+		"link-title": "Titre du lien (anglais)",
+		"link-title-fr": "Titre du lien (français)",
+		"link-url": "https://...",
+		"add-link": "Ajouter un lien",
+		"remove": "Supprimer",
+
+		"show": "Afficher l'événement",
+		"cancel": "Annuler",
+		"save": "Enregistrer",
+
+		"name-en-required": "Le nom de l'événement en anglais est requis.",
+		"name-fr-required": "Le nom de l'événement en français est requis.",
+		"location-required": "Le lieu de l'événement est requis.",
+		"start-end-required": "Les heures de début et de fin sont requises.",
+		"end-after-start": "L'heure de fin doit être après l'heure de début.",
+		"link-title-url-required": "Le lien doit avoir un titre en anglais, un titre en français et une URL.",
+
+		"table": {
+			"name": "Nom",
+			"location": "Lieu",
+			"start": "Début",
+			"end": "Fin",
+			"visible": "Visible",
+			"actions": "Actions"
+		},
+
+		"yes": "Oui",
+		"no": "Non"
+	}
 }
