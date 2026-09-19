@@ -1,60 +1,71 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+import { z } from "zod";
 
-import { isAllowedPushEndpoint, registerEventPushSubscription, unregisterEventPushSubscription } from "../../../server/push";
+import {
+	getPushConfiguration,
+	PushRegistrationClosedError,
+	isAllowedPushEndpoint,
+	registerEventPushSubscription,
+	unregisterEventPushSubscription,
+} from "@/server/push";
+
+const requestSchema = z.discriminatedUnion("enabled", [
+	z.object({
+		eventId: z.string().min(1),
+		enabled: z.literal(false),
+		subscription: z.object({ endpoint: z.string().min(1) }),
+	}),
+	z.object({
+		eventId: z.string().min(1),
+		enabled: z.literal(true).default(true),
+		publicKey: z.string().optional(),
+		subscription: z.object({
+			endpoint: z.string().max(512).refine(isAllowedPushEndpoint),
+			keys: z.object({ p256dh: z.string().min(1), auth: z.string().min(1) }),
+		}),
+	}),
+]);
 
 export default async function handler(request: NextApiRequest, response: NextApiResponse) {
-    if (request.method !== "POST") {
-        response.status(405).json({ error: "Method not allowed" });
-        return;
-    }
-
-    const body = (request.body ?? {}) as Record<string, unknown>;
-    const eventId = typeof body.eventId === "string" ? body.eventId : "";
-    if (!eventId) {
-        response.status(400).json({ error: "Missing eventId" });
-        return;
-    }
-
-    const subscription = body.subscription as Record<string, unknown> | undefined;
-    if (!subscription || typeof subscription !== "object") {
-        response.status(400).json({ error: "Missing push subscription" });
-        return;
-    }
-
-    const endpoint = typeof subscription.endpoint === "string" ? subscription.endpoint : "";
-
-    if (body.enabled === false) {
-        if (!endpoint) {
-            response.status(400).json({ error: "Invalid push subscription" });
-            return;
-        }
-
-        await unregisterEventPushSubscription(eventId, endpoint);
-        response.status(200).json({ success: true });
-        return;
-    }
-
-    const keys = (subscription.keys ?? {}) as Record<string, unknown>;
-    const p256dh = typeof keys.p256dh === "string" ? keys.p256dh : "";
-    const auth = typeof keys.auth === "string" ? keys.auth : "";
-
-    if (!endpoint || !p256dh || !auth || !isAllowedPushEndpoint(endpoint)) {
-        response.status(400).json({ error: "Invalid push subscription" });
-        return;
-    }
-
-    try {
-        await registerEventPushSubscription(eventId, {
-            endpoint,
-            keys: {
-                p256dh,
-                auth,
-            },
-        });
-    } catch {
-        response.status(400).json({ error: "Invalid push subscription" });
-        return;
-    }
-
-    response.status(200).json({ success: true });
+	response.setHeader("Cache-Control", "no-store");
+	if (request.method === "GET") {
+		const configuration = getPushConfiguration();
+		response.status(200).json({ available: !!configuration, publicKey: configuration?.publicKey ?? null });
+		return;
+	}
+	if (request.method !== "POST") {
+		response.setHeader("Allow", "GET, POST");
+		response.status(405).json({ error: "Method not allowed" });
+		return;
+	}
+	const parsed = requestSchema.safeParse(request.body);
+	if (!parsed.success) {
+		response.status(400).json({ error: "Invalid push subscription" });
+		return;
+	}
+	const { eventId, subscription } = parsed.data;
+	if (!parsed.data.enabled) {
+		try {
+			await unregisterEventPushSubscription(eventId, subscription.endpoint);
+			response.status(200).json({ success: true });
+		} catch {
+			response.status(503).json({ error: "Unable to update notifications. Please try again." });
+		}
+		return;
+	}
+	const configuration = getPushConfiguration();
+	if (!configuration || parsed.data.publicKey !== configuration.publicKey) {
+		response.status(503).json({ error: "Push notifications unavailable" });
+		return;
+	}
+	try {
+		await registerEventPushSubscription(eventId, parsed.data.subscription);
+		response.status(200).json({ success: true });
+	} catch (error) {
+		if (error instanceof PushRegistrationClosedError) {
+			response.status(409).json({ error: error.message });
+		} else {
+			response.status(503).json({ error: "Unable to update notifications. Please try again." });
+		}
+	}
 }

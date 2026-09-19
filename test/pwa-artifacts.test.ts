@@ -14,11 +14,13 @@ void test("PWA E2E cleanup restores pre-existing artifacts and removes only gene
 		await writeFile(join(publicDirectory, "sw.js"), "user service worker");
 		await chmod(join(publicDirectory, "sw.js"), 0o640);
 		await writeFile(join(publicDirectory, "workbox-existing.js"), "user workbox");
+		await writeFile(join(publicDirectory, "worker-existing.js"), "user push worker");
 		await writeFile(join(publicDirectory, "manifest.json"), "user manifest");
 		const snapshot = await snapshotPwaArtifacts(publicDirectory);
 
 		await writeFile(join(publicDirectory, "sw.js"), "generated service worker");
 		await rm(join(publicDirectory, "workbox-existing.js"));
+		await rm(join(publicDirectory, "worker-existing.js"));
 		await writeFile(join(publicDirectory, "workbox-generated.js"), "generated workbox");
 		await writeFile(join(publicDirectory, "workbox-generated.js.map"), "generated source map");
 		await writeFile(join(publicDirectory, "workbox-concurrent.js"), "not created by this test build");
@@ -31,6 +33,7 @@ void test("PWA E2E cleanup restores pre-existing artifacts and removes only gene
 		assert.equal(await readFile(join(publicDirectory, "sw.js"), "utf8"), "user service worker");
 		assert.equal((await stat(join(publicDirectory, "sw.js"))).mode & 0o777, 0o640);
 		assert.equal(await readFile(join(publicDirectory, "workbox-existing.js"), "utf8"), "user workbox");
+		assert.equal(await readFile(join(publicDirectory, "worker-existing.js"), "utf8"), "user push worker");
 		assert.equal(await readFile(join(publicDirectory, "manifest.json"), "utf8"), "user manifest");
 		assert.equal(
 			await readFile(join(publicDirectory, "workbox-concurrent.js"), "utf8"),

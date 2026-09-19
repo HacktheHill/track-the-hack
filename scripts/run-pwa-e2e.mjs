@@ -3,7 +3,7 @@ import { chmod, mkdir, readFile, readdir, rm, stat, writeFile } from "node:fs/pr
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const pwaArtifact = /^(?:sw\.js(?:\.map)?|workbox-.*\.js(?:\.map)?)$/;
+const pwaArtifact = /^(?:sw\.js(?:\.map)?|(?:workbox|worker)-.*\.js(?:\.map)?)$/;
 
 /** @typedef {{contents: Buffer, mode: number}} PwaArtifact */
 /** @typedef {Map<string, PwaArtifact>} PwaArtifactSnapshot */

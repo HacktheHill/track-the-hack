@@ -70,9 +70,9 @@ const MapFloor = ({ floor }: { floor: number }) => {
 							>
 								<Image
 									width={800}
-									height={400}
+									height={floor === 4 ? 356 : 400}
 									//Image Location
-									src={`/assets/maps/floor${floor}.svg`}
+									src={floor === 4 ? "/assets/maps/floor4-current.svg" : `/assets/maps/floor${floor}.svg`}
 									alt={t("floor", { floor })}
 								/>
 							</TransformComponent>
@@ -88,9 +88,6 @@ const Maps = () => {
 
 	const MAX_FLOORS = 6;
 
-	const mapsLink = (floor: number) =>
-		floor === 4 ? "/assets/maps/floor4-current.svg" : `/assets/maps/floor${floor}.svg`;
-
 	return (
 		<App className="flex h-0 flex-col items-center bg-default-gradient" title={t("title")}>
 			<div className="w-full justify-center overflow-y-auto p-5">
@@ -100,7 +97,7 @@ const Maps = () => {
 							{t("floor", { floor: i })}
 						</h1>
 
-						<MapFloor floor={mapsLink(i)} />
+						<MapFloor floor={i} />
 					</div>
 				))}
 			</div>

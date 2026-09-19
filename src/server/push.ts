@@ -1,285 +1,248 @@
+import { createECDH, randomUUID } from "node:crypto";
 import type { PrismaClient } from "@prisma/client";
+import webPush from "web-push";
+import { z } from "zod";
 
 export type PushSubscriptionPayload = {
-    endpoint: string;
-    keys: {
-        p256dh: string;
-        auth: string;
-    };
-};
-
-type EventPushSubscription = {
-    eventId: string;
-    endpoint: string;
-    keys: {
-        p256dh: string;
-        auth: string;
-    };
+	endpoint: string;
+	keys: { p256dh: string; auth: string };
 };
 
 const ALLOWED_PUSH_DOMAINS = [
-    /(^|\.)push\.apple\.com$/i,
-    /(^|\.)push\.services\.mozilla\.com$/i,
-    /(^|\.)fcm\.googleapis\.com$/i,
-    /(^|\.)android\.googleapis\.com$/i,
-    /(^|\.)notify\.windows\.com$/i,
-    /(^|\.)wns\.windows\.com$/i,
+	/(^|\.)push\.apple\.com$/i,
+	/(^|\.)push\.services\.mozilla\.com$/i,
+	/(^|\.)fcm\.googleapis\.com$/i,
+	/(^|\.)android\.googleapis\.com$/i,
+	/(^|\.)notify\.windows\.com$/i,
+	/(^|\.)wns\.windows\.com$/i,
 ];
 
 export const isAllowedPushEndpoint = (endpoint: string): boolean => {
-    if (!endpoint || typeof endpoint !== "string") {
-        return false;
-    }
-
-    try {
-        const parsed = new URL(endpoint);
-        if (parsed.protocol !== "https:") {
-            return false;
-        }
-
-        if (parsed.username || parsed.password) {
-            return false;
-        }
-
-        if (parsed.port && parsed.port !== "443") {
-            return false;
-        }
-
-        const hostname = parsed.hostname.toLowerCase();
-        if (!hostname || hostname.includes("..")) {
-            return false;
-        }
-
-        return ALLOWED_PUSH_DOMAINS.some(pattern => pattern.test(hostname));
-    } catch {
-        return false;
-    }
+	try {
+		const url = new URL(endpoint);
+		return (
+			url.protocol === "https:" &&
+			!url.username &&
+			!url.password &&
+			(!url.port || url.port === "443") &&
+			!url.hostname.includes("..") &&
+			ALLOWED_PUSH_DOMAINS.some(pattern => pattern.test(url.hostname))
+		);
+	} catch {
+		return false;
+	}
 };
 
-const notifiedEventIds = new Set<string>();
-let reminderScheduler: NodeJS.Timeout | undefined;
-
-const getServerEnv = async () => {
-    try {
-        const { env } = await import("../env/server.mjs");
-        return env;
-    } catch {
-        return {
-            VAPID_PUBLIC_KEY: process.env.VAPID_PUBLIC_KEY,
-            VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY,
-            VAPID_EMAIL: process.env.VAPID_EMAIL,
-        };
-    }
-};
-
-const getPrismaClient = async () => {
-    const { prisma } = await import("./db");
-    return prisma;
-};
-
-const getWebPush = async () => {
-    const webPush = await import("web-push");
-    const env = await getServerEnv();
-
-    if (env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY) {
-        webPush.default.setVapidDetails(
-            `mailto:${env.VAPID_EMAIL ?? "hello@hackthehill.com"}`,
-            env.VAPID_PUBLIC_KEY,
-            env.VAPID_PRIVATE_KEY,
-        );
-    }
-
-    return webPush.default;
-};
-
-export const resetEventNotificationState = () => {
-    notifiedEventIds.clear();
-};
-
-export const getDueEventNotificationIds = (
-    events: Array<{ id: string; start: Date | string }>,
-    now: Date = new Date(),
-    alreadyNotified: Set<string> = notifiedEventIds,
+// The public key embedded in the browser must match the private signing key.
+// Invalid or incomplete optional configuration disables push without disabling the app.
+export const getPushConfiguration = (
+	configuration = {
+		publicKey: process.env.VAPID_PUBLIC_KEY,
+		privateKey: process.env.VAPID_PRIVATE_KEY,
+		clientPublicKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+		email: process.env.VAPID_EMAIL,
+	},
 ) => {
-    return events
-        .filter(event => {
-            const start = event.start instanceof Date ? event.start : new Date(event.start);
-            return start <= now && !alreadyNotified.has(event.id);
-        })
-        .map(event => event.id);
+	const { publicKey, privateKey, clientPublicKey } = configuration;
+	const email = configuration.email || "hello@hackthehill.com";
+	if (!publicKey || !privateKey || publicKey !== clientPublicKey || !z.string().email().safeParse(email).success) {
+		return null;
+	}
+	try {
+		const key = Buffer.from(privateKey, "base64url");
+		if (key.length !== 32 || key.toString("base64url") !== privateKey) return null;
+		const ecdh = createECDH("prime256v1");
+		ecdh.setPrivateKey(key);
+		if (ecdh.getPublicKey().toString("base64url") !== publicKey) return null;
+		return { publicKey, privateKey, subject: `mailto:${email}` };
+	} catch {
+		return null;
+	}
 };
 
+const getPrismaClient = async () => (await import("@/server/db")).prisma;
+
+let reminderScheduler: NodeJS.Timeout | undefined;
 export const startEventReminderScheduler = () => {
-    if (typeof window !== "undefined" || reminderScheduler) {
-        return reminderScheduler;
-    }
-
-    reminderScheduler = setInterval(() => {
-        void sendDueEventNotifications().catch(() => undefined);
-    }, 60_000);
-    reminderScheduler.unref?.();
-
-    void sendDueEventNotifications().catch(() => undefined);
-    return reminderScheduler;
+	if (reminderScheduler) return reminderScheduler;
+	let running = false;
+	const tick = async () => {
+		if (running || !getPushConfiguration()) return;
+		running = true;
+		try {
+			await sendDueEventNotifications();
+		} catch {
+			// Do not log endpoint capabilities, keys, or push-service response bodies.
+			console.error("Event reminder delivery failed; pending reminders will be retried.");
+		} finally {
+			running = false;
+		}
+	};
+	reminderScheduler = setInterval(() => void tick(), 60_000);
+	reminderScheduler.unref();
+	void tick();
+	return reminderScheduler;
 };
+
+export class PushRegistrationClosedError extends Error {}
 
 export const registerEventPushSubscription = async (
-    eventId: string,
-    subscription: PushSubscriptionPayload,
-    prismaClient?: PrismaClient,
+	eventId: string,
+	subscription: PushSubscriptionPayload,
+	prismaClient?: PrismaClient,
 ) => {
-    if (!eventId || !subscription || !isAllowedPushEndpoint(subscription.endpoint)) {
-        throw new Error("Invalid push subscription endpoint");
-    }
-
-    const client = prismaClient ?? (await getPrismaClient());
-    await client.pushSubscription.deleteMany({ where: { eventId, endpoint: subscription.endpoint } });
-    await client.pushSubscription.create({
-        data: {
-            eventId,
-            endpoint: subscription.endpoint,
-            p256dh: subscription.keys.p256dh,
-            auth: subscription.keys.auth,
-        },
-    });
+	if (!eventId || !isAllowedPushEndpoint(subscription.endpoint)) {
+		throw new Error("Invalid push subscription endpoint");
+	}
+	const client = prismaClient ?? (await getPrismaClient());
+	const data = { eventId, endpoint: subscription.endpoint, ...subscription.keys };
+	await client.$transaction(async transaction => {
+		// Serialize registration with the scheduler's atomic event claim. An
+		// accepted subscription must be visible before the event can complete.
+		const events = await transaction.$queryRaw<Array<{ id: string }>>`
+			SELECT id FROM Event WHERE id = ${eventId}
+			AND start > UTC_TIMESTAMP(3) AND notifiedAt IS NULL FOR UPDATE
+		`;
+		if (!events.length) throw new PushRegistrationClosedError("This event is no longer accepting reminders");
+		await transaction.pushSubscription.upsert({
+			where: { eventId_endpoint: { eventId, endpoint: subscription.endpoint } },
+			create: data,
+			update: subscription.keys,
+		});
+	});
 };
 
 export const unregisterEventPushSubscription = async (
-    eventId: string,
-    endpoint: string,
-    prismaClient?: PrismaClient,
+	eventId: string,
+	endpoint: string,
+	prismaClient?: PrismaClient,
 ) => {
-    if (!endpoint) {
-        return;
-    }
-
-    const client = prismaClient ?? (await getPrismaClient());
-    await client.pushSubscription.deleteMany({ where: { eventId, endpoint } });
+	if (!endpoint) return;
+	const client = prismaClient ?? (await getPrismaClient());
+	await client.pushSubscription.deleteMany({ where: { eventId, endpoint } });
 };
 
-export const getEventPushSubscriptions = async (
-    eventId: string,
-    prismaClient?: PrismaClient,
-): Promise<EventPushSubscription[]> => {
-    const client = prismaClient ?? (await getPrismaClient());
-    const subscriptions = await client.pushSubscription.findMany({ where: { eventId } });
-    return subscriptions.map(subscription => ({
-        eventId: subscription.eventId,
-        endpoint: subscription.endpoint,
-        keys: {
-            p256dh: subscription.p256dh,
-            auth: subscription.auth,
-        },
-    }));
+// A total request deadline (including DNS/connect/response) stays well below the
+// two-minute lease. web-push's own timeout only limits socket inactivity.
+const sendPushNotification = async (subscription: PushSubscriptionPayload, payload: string, signal: AbortSignal) => {
+	const configuration = getPushConfiguration();
+	if (!configuration) throw new Error("Push notifications unavailable");
+	const request = webPush.generateRequestDetails(subscription, payload, { vapidDetails: configuration });
+	const response = await fetch(request.endpoint, {
+		method: request.method,
+		headers: request.headers,
+		body: request.body ? new Uint8Array(request.body) : undefined,
+		signal,
+		redirect: "error",
+	});
+	await response.body?.cancel();
+	return response.status;
 };
 
-const getErrorStatusCode = (error: unknown): number | undefined => {
-    if (typeof error === "object" && error !== null) {
-        if ("statusCode" in error && typeof (error as { statusCode: unknown }).statusCode === "number") {
-            return (error as { statusCode: number }).statusCode;
-        }
-        if ("status" in error && typeof (error as { status: unknown }).status === "number") {
-            return (error as { status: number }).status;
-        }
-    }
-    return undefined;
+// All lease times come from MySQL, so instances with different clocks agree.
+// A fresh random token fences writes from a worker whose lease has expired.
+const renewLease = async (client: PrismaClient, eventId: string, token: string) => {
+	return (
+		(await client.$executeRaw`
+		UPDATE Event SET notificationLeaseUntil = DATE_ADD(UTC_TIMESTAMP(3), INTERVAL 2 MINUTE)
+		WHERE id = ${eventId} AND notificationLeaseToken = ${token}
+		AND notificationLeaseUntil > UTC_TIMESTAMP(3) AND notifiedAt IS NULL
+	`) === 1
+	);
 };
 
-export const sendEventStartNotification = async (
-    eventId: string,
-    title: string,
-    body: string,
-    prismaClient?: PrismaClient,
+export const sendDueEventNotifications = async (
+	prismaClient?: PrismaClient,
+	sendNotification = sendPushNotification,
 ) => {
-    const eventSubscriptions = await getEventPushSubscriptions(eventId, prismaClient);
-    if (eventSubscriptions.length === 0) {
-        return { delivered: 0, failed: 0, total: 0 };
-    }
-
-    const client = prismaClient ?? (await getPrismaClient());
-    const webPush = await getWebPush();
-
-    let delivered = 0;
-    let failed = 0;
-
-    await Promise.all(
-        eventSubscriptions.map(async subscription => {
-            if (!isAllowedPushEndpoint(subscription.endpoint)) {
-                await client.pushSubscription.deleteMany({
-                    where: { eventId, endpoint: subscription.endpoint },
-                });
-                return;
-            }
-
-            try {
-                await webPush.sendNotification(
-                    {
-                        endpoint: subscription.endpoint,
-                        keys: {
-                            p256dh: subscription.keys.p256dh,
-                            auth: subscription.keys.auth,
-                        },
-                    },
-                    JSON.stringify({
-                        title,
-                        body,
-                        tag: `event-${eventId}`,
-                        icon: "/icons/android-chrome-192x192.png",
-                    }),
-                );
-
-                delivered += 1;
-                await client.pushSubscription.deleteMany({
-                    where: { eventId, endpoint: subscription.endpoint },
-                });
-            } catch (error: unknown) {
-                const statusCode = getErrorStatusCode(error);
-                if (statusCode === 404 || statusCode === 410) {
-                    await client.pushSubscription.deleteMany({
-                        where: { eventId, endpoint: subscription.endpoint },
-                    });
-                } else {
-                    failed += 1;
-                }
-            }
-        }),
-    );
-
-    return { delivered, failed, total: eventSubscriptions.length };
+	// Never mark reminders complete while sending is unavailable.
+	if (!getPushConfiguration()) return 0;
+	const client = prismaClient ?? (await getPrismaClient());
+	const dueEvents = await client.event.findMany({
+		where: { start: { lte: new Date() }, notifiedAt: null },
+		select: { id: true, name: true },
+	});
+	let notified = 0;
+	for (const event of dueEvents) {
+		const token = randomUUID();
+		const claimed = await client.$executeRaw`
+			UPDATE Event SET notificationLeaseToken = ${token},
+				notificationLeaseUntil = DATE_ADD(UTC_TIMESTAMP(3), INTERVAL 2 MINUTE)
+			WHERE id = ${event.id} AND notifiedAt IS NULL AND start <= UTC_TIMESTAMP(3)
+			AND (notificationLeaseUntil IS NULL OR notificationLeaseUntil <= UTC_TIMESTAMP(3))
+		`;
+		if (claimed !== 1) continue;
+		try {
+			// Fast providers can drain many batches; a slow event yields after 30s.
+			const deadline = AbortSignal.timeout(30_000);
+			const failedIds: string[] = [];
+			while (!deadline.aborted) {
+				const subscriptions = await client.pushSubscription.findMany({
+					where: { eventId: event.id, id: { notIn: failedIds } },
+					orderBy: [{ updatedAt: "asc" }, { id: "asc" }],
+					take: 10,
+				});
+				if (!subscriptions.length || !(await renewLease(client, event.id, token)) || deadline.aborted) break;
+				// Wait for all writes before releasing ownership, including on DB failure.
+				const results = await Promise.allSettled(
+					subscriptions.map(async subscription => {
+						let status = 503;
+						try {
+							status = isAllowedPushEndpoint(subscription.endpoint)
+								? await sendNotification(
+										{
+											endpoint: subscription.endpoint,
+											keys: { p256dh: subscription.p256dh, auth: subscription.auth },
+										},
+										JSON.stringify({
+											title: event.name,
+											body: "This event has started.",
+											tag: `event-${event.id}`,
+											icon: "/icons/android-chrome-192x192.png",
+											data: { url: `/schedule/event?id=${encodeURIComponent(event.id)}` },
+										}),
+										deadline,
+									)
+								: 410;
+						} catch {
+							// Network failures remain pending for retry.
+						}
+						if ((status >= 200 && status < 300) || status === 404 || status === 410) {
+							await client.$executeRaw`
+							DELETE subscription FROM PushSubscription AS subscription
+							INNER JOIN Event AS event ON event.id = subscription.eventId
+							WHERE subscription.id = ${subscription.id} AND event.notificationLeaseToken = ${token}
+							AND event.notificationLeaseUntil > UTC_TIMESTAMP(3)
+						`;
+						} else {
+							failedIds.push(subscription.id);
+							// Rotate failures behind other pending attendees on the next tick.
+							await client.$executeRaw`
+							UPDATE PushSubscription AS subscription
+							INNER JOIN Event AS event ON event.id = subscription.eventId
+							SET subscription.updatedAt = UTC_TIMESTAMP(3)
+							WHERE subscription.id = ${subscription.id} AND event.notificationLeaseToken = ${token}
+							AND event.notificationLeaseUntil > UTC_TIMESTAMP(3)
+						`;
+						}
+					}),
+				);
+				if (results.some(result => result.status === "rejected")) {
+					throw new Error("Failed to persist event notification results");
+				}
+			}
+			notified += await client.$executeRaw`
+				UPDATE Event SET notifiedAt = UTC_TIMESTAMP(3)
+				WHERE id = ${event.id} AND notificationLeaseToken = ${token}
+				AND notificationLeaseUntil > UTC_TIMESTAMP(3) AND notifiedAt IS NULL
+				AND NOT EXISTS (SELECT 1 FROM PushSubscription WHERE eventId = ${event.id})
+			`;
+		} finally {
+			await client.event.updateMany({
+				where: { id: event.id, notificationLeaseToken: token },
+				data: { notificationLeaseToken: null, notificationLeaseUntil: null },
+			});
+		}
+	}
+	return notified;
 };
-
-export const sendDueEventNotifications = async (prismaClient?: PrismaClient) => {
-    const client = prismaClient ?? (await getPrismaClient());
-    const now = new Date();
-    const dueEvents = await client.event.findMany({
-        where: {
-            start: {
-                lte: now,
-            },
-            notifiedAt: null,
-        },
-        select: {
-            id: true,
-            name: true,
-            start: true,
-        },
-    });
-
-    let fullyNotifiedCount = 0;
-    for (const event of dueEvents) {
-        const title = event.name;
-        const body = "This event has started.";
-        const result = await sendEventStartNotification(event.id, title, body, client);
-        if (result.failed === 0) {
-            await client.event.update({ where: { id: event.id }, data: { notifiedAt: now } });
-            notifiedEventIds.add(event.id);
-            fullyNotifiedCount += 1;
-        }
-    }
-
-    return fullyNotifiedCount;
-};
-
-if (typeof process !== "undefined" && process.versions?.node && process.env.NODE_ENV !== "test") {
-    void startEventReminderScheduler();
-}

@@ -6,7 +6,7 @@ import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import EventInterestButton from "@/components/EventInterestButton";
 import App from "@/components/App";
@@ -14,6 +14,11 @@ import Error from "@/components/Error";
 import Loading from "@/components/Loading";
 import { env } from "@/env/client.mjs";
 import { trpc } from "@/server/api/api";
+import {
+	isEventNotificationRequested,
+	isPushServerAvailable,
+	updateEventNotification,
+} from "@/utils/event-notifications";
 
 const VAPID_PUBLIC_KEY = env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
 
@@ -29,8 +34,6 @@ const urlBase64ToUint8Array = (value: string) => {
 
 	return bytes;
 };
-
-const EVENT_NOTIFICATION_STORAGE_KEY = "track-the-hack:event-notification-requests";
 
 const isPushAvailable = () => {
 	if (typeof window === "undefined") {
@@ -49,55 +52,6 @@ const isPushAvailable = () => {
 		return false;
 	}
 
-	return true;
-};
-
-const getRequestedEventNotifications = () => {
-	if (typeof window === "undefined") {
-		return [] as string[];
-	}
-
-	const raw = window.localStorage.getItem(EVENT_NOTIFICATION_STORAGE_KEY);
-	if (!raw) {
-		return [] as string[];
-	}
-
-	try {
-		const parsed = JSON.parse(raw) as unknown;
-		if (!Array.isArray(parsed)) {
-			return [] as string[];
-		}
-
-		return parsed.filter((value): value is string => typeof value === "string");
-	} catch {
-		return [] as string[];
-	}
-};
-
-const isEventNotificationRequested = (eventId: string) => {
-	if (!isPushAvailable()) {
-		return false;
-	}
-
-	return Notification.permission === "granted" && getRequestedEventNotifications().includes(eventId);
-};
-
-const setRequestedEventNotifications = (requestedEvents: string[]) => {
-	if (typeof window === "undefined") {
-		return;
-	}
-
-	window.localStorage.setItem(EVENT_NOTIFICATION_STORAGE_KEY, JSON.stringify(requestedEvents));
-};
-
-const clearEventNotificationRequest = (eventId: string) => {
-	const requestedEvents = getRequestedEventNotifications();
-	const wasRequested = requestedEvents.includes(eventId);
-	if (!wasRequested) {
-		return false;
-	}
-
-	setRequestedEventNotifications(requestedEvents.filter(requestedEventId => requestedEventId !== eventId));
 	return true;
 };
 
@@ -149,7 +103,7 @@ const EventPage: NextPage = () => {
 			) : query.data === null || query.isLoading ? (
 				<Loading />
 			) : (
-				<EventView event={query.data} types={types} />
+				<EventView key={query.data.id} event={query.data} types={types} />
 			)}
 		</App>
 	);
@@ -167,95 +121,63 @@ const EventView = ({ event, types }: EventViewProps) => {
 	const [pushAvailable, setPushAvailable] = useState(false);
 	const [notifyRequested, setNotifyRequested] = useState(false);
 
+	const [notifyPending, setNotifyPending] = useState(false);
+	const [notifyError, setNotifyError] = useState(false);
+	const pending = useRef(false);
+
 	useEffect(() => {
-		const available = isPushAvailable();
-		setPushAvailable(available);
-		setNotifyRequested(available && isEventNotificationRequested(event.id));
-	}, [event.id]);
+		let cancelled = false;
+		setPushAvailable(false);
+		setNotifyRequested(false);
+		if (isPushAvailable()) {
+			void isEventNotificationRequested(event.id).then(requested => {
+				if (!cancelled) setNotifyRequested(requested);
+			});
+		}
+		setNotifyError(false);
+		if (isPushAvailable() && event.start > new Date()) {
+			void isPushServerAvailable(VAPID_PUBLIC_KEY).then(available => {
+				if (!cancelled) setPushAvailable(available);
+			});
+		}
+		return () => {
+			cancelled = true;
+		};
+	}, [event.id, event.start]);
 
 	const handleNotifyToggle = async () => {
-		if (typeof window === "undefined" || !isPushAvailable()) {
-			return;
-		}
-
-		if (notifyRequested) {
-			try {
-				if ("serviceWorker" in navigator && "PushManager" in window) {
-					const registrations = await navigator.serviceWorker.getRegistrations();
-					for (const registration of registrations) {
-						const existingSubscription = await registration.pushManager.getSubscription();
-						if (existingSubscription) {
-							await fetch("/api/push/register", {
-								method: "POST",
-								headers: { "Content-Type": "application/json" },
-								body: JSON.stringify({
-									eventId: event.id,
-									enabled: false,
-									subscription: existingSubscription.toJSON(),
-								}),
-							});
-						}
-					}
-				}
-			} catch {
-				// Ignore cleanup failures and still clear the UI state.
-			}
-
-			const wasRemoved = clearEventNotificationRequest(event.id);
-			if (!wasRemoved) {
-				const requestedEvents = getRequestedEventNotifications();
-				setRequestedEventNotifications(requestedEvents.filter(requestedEventId => requestedEventId !== event.id));
-			}
-			setNotifyRequested(false);
-			return;
-		}
-
-		const permissionGranted = await requestEventNotificationPermission();
-		if (!permissionGranted) {
-			setNotifyRequested(false);
-			if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "denied") {
-				setPushAvailable(false);
-			}
-			return;
-		}
-
-		if (!("serviceWorker" in navigator) || !("PushManager" in window) || !VAPID_PUBLIC_KEY) {
-			setNotifyRequested(false);
-			setPushAvailable(false);
-			return;
-		}
-
+		if (pending.current || !isPushAvailable() || (!pushAvailable && !notifyRequested)) return;
+		pending.current = true;
+		setNotifyPending(true);
+		setNotifyError(false);
 		try {
-			const registration = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
-			const subscription = await registration.pushManager.subscribe({
-				userVisibleOnly: true,
-				applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-			});
-
-			const response = await fetch("/api/push/register", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					eventId: event.id,
-					enabled: true,
-					subscription: subscription.toJSON(),
-				}),
-			});
-
-			if (!response.ok) {
-				throw new globalThis.Error("Failed to register push subscription");
+			if (notifyRequested) {
+				const registration = await navigator.serviceWorker.getRegistration("/");
+				const subscription = await registration?.pushManager.getSubscription();
+				if (!subscription) throw new globalThis.Error("Push subscription not found");
+				await updateEventNotification(event.id, false, subscription.toJSON(), VAPID_PUBLIC_KEY);
+				setNotifyRequested(false);
+			} else {
+				const permissionGranted = await requestEventNotificationPermission();
+				if (!permissionGranted) {
+					if (Notification.permission === "denied") setPushAvailable(false);
+					return;
+				}
+				await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+				const registration = await navigator.serviceWorker.ready;
+				const subscription = await registration.pushManager.subscribe({
+					userVisibleOnly: true,
+					applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+				});
+				await updateEventNotification(event.id, true, subscription.toJSON(), VAPID_PUBLIC_KEY);
+				setNotifyRequested(true);
 			}
 		} catch {
-			setNotifyRequested(false);
-			return;
+			setNotifyError(true);
+		} finally {
+			pending.current = false;
+			setNotifyPending(false);
 		}
-
-		const requestedEvents = getRequestedEventNotifications();
-		const nextRequestedEvents = requestedEvents.includes(event.id)
-			? requestedEvents
-			: [...requestedEvents, event.id];
-		setRequestedEventNotifications(nextRequestedEvents);
-		setNotifyRequested(true);
 	};
 
 	const {
@@ -331,17 +253,30 @@ const EventView = ({ event, types }: EventViewProps) => {
 				<button
 					type="button"
 					onClick={() => void handleNotifyToggle()}
-					disabled={!pushAvailable}
+					disabled={notifyPending || (!pushAvailable && !notifyRequested)}
+					aria-busy={notifyPending}
 					aria-pressed={notifyRequested}
-					className={`mt-4 w-fit rounded-lg border px-4 py-2 font-coolvetica text-base transition-colors ${!pushAvailable
+					className={`mt-4 w-fit rounded-lg border px-4 py-2 font-coolvetica text-base transition-colors ${
+						!pushAvailable && !notifyRequested
 							? "cursor-not-allowed border-dark-secondary-color bg-light-tertiary-color text-dark-secondary-color opacity-60"
 							: notifyRequested
 								? "border-dark-color bg-dark-color text-light-color"
 								: "border-dark-color bg-light-primary-color text-dark-color hover:bg-dark-secondary-color"
-						}`}
+					}`}
 				>
-					{!pushAvailable ? t("notify-me-unavailable") : notifyRequested ? t("notify-me-active") : t("notify-me")}
+					{!pushAvailable
+						? notifyRequested
+							? t("notify-me-cancel-unavailable")
+							: t("notify-me-unavailable")
+						: notifyRequested
+							? t("notify-me-active")
+							: t("notify-me")}
 				</button>
+				{notifyError && (
+					<p role="alert" className="mt-2 text-sm">
+						{t("notify-me-error")}
+					</p>
+				)}
 			</div>
 
 			{image && (

@@ -4,6 +4,8 @@
 	"notify-me": "M'avertir lorsque cet événement commence",
 	"notify-me-active": "Vous serez averti lorsque cet événement commencera",
 	"notify-me-unavailable": "Notifications non disponibles",
+	"notify-me-error": "Impossible de modifier les notifications. Veuillez réessayer.",
+	"notify-me-cancel-unavailable": "Annuler le rappel (notifications indisponibles)",
 	"type": {
 		"ALL": "Tout",
 		"WORKSHOP": "Atelier",
