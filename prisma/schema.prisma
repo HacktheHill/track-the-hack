@@ -81,6 +81,7 @@ model Hacker {
   acceptanceExpiry DateTime
 
   presences              Presence[]
+  eventInterests         EventInterest[]
   cancellationCapability CancellationCapability?
   claimToken             ClaimToken?
   participantSession     ParticipantSession?
@@ -147,6 +148,7 @@ model Event {
   name            String
   nameFr          String
   type            EventType       @default(ALL)
+  interests       EventInterest[]
   scannerWorkflow ScannerWorkflow @default(ATTENDANCE)
   host            String?
   description     String          @db.Text
@@ -231,4 +233,16 @@ enum MealCategory {
   VEGAN
   HALAL
   OTHER
+}
+
+model EventInterest {
+  id        String   @id @default(cuid())
+  hackerId  String
+  eventId   String
+  createdAt DateTime @default(now())
+  Hacker    Hacker   @relation(fields: [hackerId], references: [id], onDelete: Cascade)
+  Event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([hackerId, eventId])
+  @@index([eventId])
 }

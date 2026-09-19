@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useCallback, useRef, useState } from "react";
+import ScanResult from "@/components/ScanResult";
 import App from "@/components/App";
 import ErrorDisplay from "@/components/Error";
 import PhysicalScanner from "@/components/PhysicalScanner";
@@ -114,37 +115,26 @@ const TShirtInfo = ({ size }: { size: TShirtSize }) => {
 
 const WorkflowCard = ({ result }: { result: WorkflowScan }) => {
 	const { t, i18n } = useTranslation("qr");
-	const eventName = i18n.language === "fr" ? result.nameFr : result.name;
-
+	const interests = trpc.presence.getEventInterests.useQuery(
+		{ eventId: result.eventId, hackerId: result.participant.id },
+		{ enabled: result.workflow === ScannerWorkflow.ATTENDANCE },
+	);
 	return (
-		<div className="rounded-lg bg-light-primary-color p-6 font-rubik text-light-color">
-			<p className="break-all font-bold">{result.participant.id}</p>
-			{result.workflow === ScannerWorkflow.CHECK_IN && (
-				<>
-					<p>{t("confirmed", { value: result.participant.confirmed ? t("yes") : t("no") })}</p>
-					<TShirtInfo size={result.participant.tShirtSize} />
-				</>
-			)}
-			{result.workflow === ScannerWorkflow.MERCHANDISE && <TShirtInfo size={result.participant.tShirtSize} />}
-			{result.workflow === ScannerWorkflow.FOOD && (
-				<>
-					<p>{t("meal", { value: result.participant.mealCategory })}</p>
-					{result.participant.requiresFoodLead && (
-						<p className="mt-3 rounded bg-light-quaternary-color p-3 font-bold text-dark-color">
-							{t("contact-food-lead")}
-						</p>
-					)}
-				</>
+		<ScanResult result={result} interestedEvents={interests.data}>
+			{result.workflow === ScannerWorkflow.ATTENDANCE && interests.isError && (
+				<button type="button" className="ui-button" onClick={() => void interests.refetch()}>
+					{t("event:retry-interest")}
+				</button>
 			)}
 			<PresenceCounter
 				key={`${result.eventId}:${result.participant.id}`}
 				eventId={result.eventId}
 				hackerId={result.participant.id}
-				eventName={eventName}
+				eventName={i18n.language === "fr" ? result.nameFr : result.name}
 				initialValue={result.value}
 				initialAtLimit={result.atLimit}
 			/>
-		</div>
+		</ScanResult>
 	);
 };
 
@@ -187,6 +177,7 @@ const PresenceCounter = ({
 			<div className="mt-4 flex justify-center gap-8">
 				<button
 					type="button"
+					aria-label={t("decrease-count")}
 					disabled={value <= 0 || adjustPresence.isLoading}
 					className="ui-button ui-button-icon"
 					onClick={() => void change(-1)}
@@ -195,6 +186,7 @@ const PresenceCounter = ({
 				</button>
 				<button
 					type="button"
+					aria-label={t("increase-count")}
 					disabled={atLimit || adjustPresence.isLoading}
 					className="ui-button ui-button-icon"
 					onClick={() => void change(1)}
@@ -211,7 +203,7 @@ export const getServerSideProps: GetServerSideProps = async ({ req, res, locale 
 	const session = await getServerSession(req, res, getAuthOptions());
 	return {
 		redirect: await rolesRedirect(session, "/qr", [RoleName.ORGANIZER, RoleName.ADMIN]),
-		props: await serverSideTranslations(locale ?? "en", ["qr", "navbar", "common"]),
+		props: await serverSideTranslations(locale ?? "en", ["qr", "navbar", "common", "event"]),
 	};
 };
 

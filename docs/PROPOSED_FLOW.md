@@ -161,3 +161,7 @@ New functionality required by this proposal:
 5. Update participant profile, event QR, and metrics; remove team storage because Discord is the source of truth.
 
 This design targets a clean, empty database. Legacy database records and participant files are outside the Phase 1 implementation: this repository does not migrate, archive, retain, or delete them. Their handling belongs to the relevant data owner and infrastructure operator under a separately approved retention process.
+
+## Participant-selected event interests
+
+Participants may explicitly save event interests using their day-of participant session. Track stores only the participant/event association and creation time. Organizer attendance views may display these selected visible events; check-in, food, and merchandise workflows do not receive interests. See [Scanner details and event interests](./scan-result.md).
