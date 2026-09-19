@@ -181,7 +181,6 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 		setLinks(links.filter((_, currentIndex) => currentIndex !== index));
 	};
 
-<<<<<<< HEAD
 	const modalRoot = document.getElementById("modal-root");
 
 	if (!modalRoot) {
@@ -193,22 +192,6 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 		<div className="flex max-h-[90vh] w-full max-w-2xl flex-col gap-4 overflow-y-auto rounded border border-dark-primary-color bg-light-quaternary-color p-8 text-center">
 
 			<h2 className="font-rubik text-2xl font-bold">{event ? "Edit Event" : "New Event"}</h2>
-=======
-	return (
-		<Modal
-			buttons={[
-				{
-					label: t("events.cancel"),
-					onClick: onClose,
-				},
-				{
-					label: t("events.save"),
-					onClick: handleSave,
-				},
-			]}
-		>
-			<h2 className="font-rubik text-2xl font-bold">{event ? t("events.edit") : t("events.new")}</h2>
->>>>>>> bd4fcc6 (feat: add English and French localization for event editor)
 
 			{error && <p className="rounded border border-red-500 p-2 text-left text-red-600">{error}</p>}
 
