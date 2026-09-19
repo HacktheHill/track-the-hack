@@ -35,19 +35,19 @@ const SignIn = ({ developmentAuthEnabled }: InferGetServerSidePropsType<typeof g
 	return (
 		<>
 			<Head title={t("sign-in")} />
-			<main className="flex h-screen flex-col items-center justify-center gap-6 bg-default-gradient p-4 text-center">
+			<main className="ui-auth-page bg-default-gradient">
 				<Image
 					src="/assets/hackthehill-logo.svg"
 					alt={t("common:hack-the-hill-logo-alt")}
 					width={128}
 					height={128}
 				/>
-				<h1 className="font-coolvetica text-4xl text-dark-color">{t("organizer-sign-in")}</h1>
+				<h1 className="ui-page-title">{t("organizer-sign-in")}</h1>
 				<p className="font-rubik text-dark-color">{t("organizer-sign-in-help")}</p>
 				<button
 					type="button"
 					onClick={() => void signIn("google", { callbackUrl: callbackUrl ?? "/" })}
-					className="rounded-lg border border-dark-primary-color bg-light-quaternary-color px-6 py-3 font-coolvetica text-lg text-dark-primary-color"
+					className="ui-button ui-button-primary"
 				>
 					{t("google-sign-in")}
 				</button>
@@ -55,7 +55,7 @@ const SignIn = ({ developmentAuthEnabled }: InferGetServerSidePropsType<typeof g
 					<button
 						type="button"
 						onClick={() => void signIn(DEVELOPMENT_AUTH_PROVIDER_ID, { callbackUrl: callbackUrl ?? "/" })}
-						className="rounded-lg border border-dark-primary-color bg-light-quaternary-color px-6 py-3 font-coolvetica text-lg text-dark-primary-color"
+						className="ui-button ui-button-primary"
 					>
 						Sign in as local organizer
 					</button>

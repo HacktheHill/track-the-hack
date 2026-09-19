@@ -221,12 +221,7 @@ const components = {
 	},
 	input: ({ node, ...props }) => {
 		void node;
-		return (
-			<input
-				className="rounded-lg border-2 border-gray-300 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-600"
-				{...props}
-			/>
-		);
+		return <input className={props.type === "checkbox" ? "ui-checkbox" : "ui-field"} {...props} />;
 	},
 } satisfies Components;
 

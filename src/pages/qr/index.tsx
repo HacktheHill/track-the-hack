@@ -61,12 +61,12 @@ const QR = () => {
 
 	return (
 		<App
-			className="relative flex h-full flex-col items-center justify-center gap-8 overflow-y-auto bg-default-gradient p-6"
+			className="relative flex h-full flex-col items-center justify-center gap-8 overflow-y-auto bg-default-gradient px-4 py-8"
 			title={t("title")}
 		>
 			<select
 				aria-label={t("select-action")}
-				className="p-3 text-center text-lg font-bold text-dark-color"
+				className="ui-field w-full max-w-4xl text-center"
 				onChange={event => {
 					scanSequence.current += 1;
 					selectedAction.current = event.target.value;

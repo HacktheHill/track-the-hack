@@ -47,34 +47,19 @@ const SponsorPage = ({ id, name, tier, logo, hiringLink, websiteLink, additional
 				<Image src={logo} alt={name} className="h-48" height={200} width={200} />
 				<h2 className="text-2xl font-semibold">{t("tier", { tier: t(`tiers.${tier}`) })}</h2>
 				<p className="text-lg">{t(`descriptions.${id}`)}</p>
-				<div className="flex items-center justify-center gap-4">
+				<div className="flex flex-wrap items-center justify-center gap-4">
 					{hiringLink && (
-						<Link
-							href={hiringLink}
-							target="_blank"
-							rel="noopener noreferrer"
-							className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors"
-						>
+						<Link href={hiringLink} target="_blank" rel="noopener noreferrer" className="ui-button">
 							{t("hiring")}
 						</Link>
 					)}
 					{websiteLink && (
-						<Link
-							href={websiteLink}
-							target="_blank"
-							rel="noopener noreferrer"
-							className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors"
-						>
+						<Link href={websiteLink} target="_blank" rel="noopener noreferrer" className="ui-button">
 							{t("website")}
 						</Link>
 					)}
 					{additionalLink && (
-						<Link
-							href={additionalLink}
-							target="_blank"
-							rel="noopener noreferrer"
-							className="hover:bg-light-quaternary whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors"
-						>
+						<Link href={additionalLink} target="_blank" rel="noopener noreferrer" className="ui-button">
 							{t("additional")}
 						</Link>
 					)}

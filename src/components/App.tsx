@@ -14,7 +14,7 @@ const App = ({ children, title, noIndex, integrated, ...rest }: AppProps) => {
 			<Head title={title} noIndex={noIndex} />
 			<div className="flex h-screen flex-col overflow-hidden supports-[height:100cqh]:h-[100cqh] supports-[height:100svh]:h-[100svh]">
 				<Navbar integrated={integrated} />
-				<main {...rest} className={`flex-auto ${rest.className ?? ""}`}>
+				<main {...rest} className={`min-h-0 min-w-0 flex-auto ${rest.className ?? ""}`}>
 					{children}
 				</main>
 				<BottomMenu />
