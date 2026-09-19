@@ -21,5 +21,11 @@
 		"MERCHANDISE": "Marchandise",
 		"FOOD": "Repas",
 		"ATTENDANCE": "Présence"
-	}
+	},
+	"scan-result": "Résultat du scan",
+	"decrease-count": "Diminuer le nombre",
+	"increase-count": "Augmenter le nombre",
+	"events-of-interest": "Événements d’intérêt",
+	"no-event-interests": "Aucun événement marqué comme intéressant.",
+	"loading-interests": "Chargement des événements d’intérêt…"
 }

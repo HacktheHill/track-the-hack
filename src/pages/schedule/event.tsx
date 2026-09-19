@@ -7,6 +7,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 
+import EventInterestButton from "@/components/EventInterestButton";
 import App from "@/components/App";
 import Error from "@/components/Error";
 import Loading from "@/components/Loading";
@@ -137,6 +138,8 @@ const EventView = ({ event, types }: EventViewProps) => {
 					<Image src={image} width={350} height={325} alt={name} />
 				</div>
 			)}
+
+			<EventInterestButton eventId={event.id} />
 
 			{link && (
 				<Link href={link} target="_blank" rel="noreferrer" className="ui-button">

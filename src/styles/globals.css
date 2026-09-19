@@ -330,7 +330,7 @@ body {
 		}
 	}
 	@media (hover: hover) {
-		.ui-button:hover:not(:disabled):not([aria-disabled="true"]),
+		.ui-button:hover:where(:not(:disabled):not([aria-disabled="true"])),
 		.ui-choice:hover,
 		.ui-field:hover:not(:disabled) {
 			background: var(--color-surface-hover);
