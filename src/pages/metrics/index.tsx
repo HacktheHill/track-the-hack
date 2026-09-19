@@ -25,10 +25,10 @@ const Metrics = () => {
 	return (
 		<App className="overflow-y-auto bg-default-gradient" integrated title={t("title")}>
 			<div className="mx-auto flex max-w-6xl flex-col gap-8 p-8">
-				<h1 className="font-rubik text-4xl font-bold">{t("title")}</h1>
+				<h1 className="ui-page-title">{t("title")}</h1>
 				<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 					{totals?.map(([key, value]) => (
-						<div key={key} className="rounded-lg bg-light-tertiary-color p-5 shadow">
+						<div key={key} className="ui-panel p-5">
 							<p className="font-rubik text-lg">{t(key)}</p>
 							<p className="font-coolvetica text-3xl">{value}</p>
 						</div>
@@ -61,7 +61,7 @@ const Metrics = () => {
 };
 
 const OperationalChart = ({ title, data, x, y }: { title: string; data: object[]; x: string; y: string }) => (
-	<section className="rounded-lg bg-light-tertiary-color p-4 shadow">
+	<section className="ui-panel p-4">
 		<h2 className="font-coolvetica text-xl">{title}</h2>
 		<ResponsiveContainer width="100%" height={280}>
 			<BarChart data={data}>
