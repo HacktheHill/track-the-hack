@@ -31,6 +31,9 @@ export const serverSchema = z.object({
 	PARTICIPANT_SESSION_SECRET: z.string().min(32),
 	DISCORD_BOT_URL: z.preprocess(value => value || undefined, z.string().url().optional()),
 	INTERNAL_API_SECRET: z.preprocess(value => value || undefined, z.string().min(32).optional()),
+	VAPID_PUBLIC_KEY: z.string().optional(),
+	VAPID_PRIVATE_KEY: z.string().optional(),
+	VAPID_EMAIL: z.preprocess(value => value || undefined, z.string().email().optional()),
 	SPONSORSHIP_GOOGLE_CLIENT_ID: z.string(),
 	SPONSORSHIP_GOOGLE_CLIENT_SECRET: z.string(),
 	SPONSORSHIP_GOOGLE_REFRESH_TOKEN: z.string(),
@@ -56,6 +59,9 @@ export const serverEnv = {
 	PARTICIPANT_SESSION_SECRET: process.env.PARTICIPANT_SESSION_SECRET,
 	DISCORD_BOT_URL: process.env.DISCORD_BOT_URL,
 	INTERNAL_API_SECRET: process.env.INTERNAL_API_SECRET,
+	VAPID_PUBLIC_KEY: process.env.VAPID_PUBLIC_KEY,
+	VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY,
+	VAPID_EMAIL: process.env.VAPID_EMAIL,
 	SPONSORSHIP_GOOGLE_CLIENT_ID: process.env.SPONSORSHIP_GOOGLE_CLIENT_ID,
 	SPONSORSHIP_GOOGLE_CLIENT_SECRET: process.env.SPONSORSHIP_GOOGLE_CLIENT_SECRET,
 	SPONSORSHIP_GOOGLE_REFRESH_TOKEN: process.env.SPONSORSHIP_GOOGLE_REFRESH_TOKEN,
@@ -66,7 +72,9 @@ export const serverEnv = {
  * This way you can ensure the app isn't built with invalid env vars.
  * To expose them to the client, prefix them with `NEXT_PUBLIC_`.
  */
-export const clientSchema = z.object({});
+export const clientSchema = z.object({
+	NEXT_PUBLIC_VAPID_PUBLIC_KEY: z.string().optional(),
+});
 
 /**
  * You can't destruct `process.env` as a regular object, so you have to do
@@ -74,4 +82,6 @@ export const clientSchema = z.object({});
  * and only used environment variables are included in the build.
  * @type {{ [k in keyof z.infer<typeof clientSchema>]: z.infer<typeof clientSchema>[k] | undefined }}
  */
-export const clientEnv = {};
+export const clientEnv = {
+	NEXT_PUBLIC_VAPID_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+};

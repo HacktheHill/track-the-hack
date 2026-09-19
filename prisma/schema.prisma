@@ -160,9 +160,25 @@ model Event {
   linkText        String?
   linkTextFr      String?
   maxCheckIns     Int?
+  notifiedAt      DateTime?
+  notificationLeaseToken String?
+  notificationLeaseUntil DateTime?
   presences       Presence[]
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @default(now()) @updatedAt
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  eventId   String
+  endpoint  String   @db.VarChar(512)
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@unique([eventId, endpoint])
+  @@index([eventId])
 }
 
 model Log {

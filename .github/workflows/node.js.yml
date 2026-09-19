@@ -18,9 +18,21 @@ jobs:
     test:
         runs-on: ubuntu-latest
         timeout-minutes: 20
+        services:
+            mysql:
+                image: mysql@sha256:66aec17cd21a956029b83f083b813073859e8355dc1a00e55df6ba02f0e32345
+                env:
+                    MYSQL_ROOT_PASSWORD: test
+                    MYSQL_DATABASE: push_test
+                ports:
+                    - 3306:3306
+                options: >-
+                    --health-cmd="mysqladmin ping -h localhost -ptest --silent"
+                    --health-interval=5s --health-timeout=5s --health-retries=20
         env:
             SKIP_ENV_VALIDATION: "1"
-            DATABASE_URL: mysql://build:build@127.0.0.1:3306/build
+            DATABASE_URL: mysql://root:test@127.0.0.1:3306/push_test
+            PUSH_TEST_DATABASE_URL: mysql://root:test@127.0.0.1:3306/push_test
             NODE_ENV: production
             NEXTAUTH_SECRET: build-only-secret
             NEXTAUTH_URL: https://build.invalid
@@ -40,6 +52,7 @@ jobs:
                   node-version: 24.x
                   cache: npm
             - run: npm ci --include=dev
+            - run: npx prisma migrate deploy
             - run: npm test
             - run: npx tsc --noEmit
             - run: npm run build
