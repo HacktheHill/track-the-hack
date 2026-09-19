@@ -6,12 +6,70 @@ import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import { useEffect, useRef, useState } from "react";
 
 import EventInterestButton from "@/components/EventInterestButton";
 import App from "@/components/App";
 import Error from "@/components/Error";
 import Loading from "@/components/Loading";
+import { env } from "@/env/client.mjs";
 import { trpc } from "@/server/api/api";
+import {
+	isEventNotificationRequested,
+	isPushServerAvailable,
+	updateEventNotification,
+} from "@/utils/event-notifications";
+
+const VAPID_PUBLIC_KEY = env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
+
+const urlBase64ToUint8Array = (value: string) => {
+	const padded = value.padEnd(Math.ceil(value.length / 4) * 4, "=");
+	const normalized = padded.replace(/-/g, "+").replace(/_/g, "/");
+	const binary = atob(normalized);
+	const bytes = new Uint8Array(binary.length);
+
+	for (let index = 0; index < binary.length; index += 1) {
+		bytes[index] = binary.charCodeAt(index);
+	}
+
+	return bytes;
+};
+
+const isPushAvailable = () => {
+	if (typeof window === "undefined") {
+		return false;
+	}
+
+	if (!("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) {
+		return false;
+	}
+
+	if (!VAPID_PUBLIC_KEY || VAPID_PUBLIC_KEY.trim() === "") {
+		return false;
+	}
+
+	if (Notification.permission === "denied") {
+		return false;
+	}
+
+	return true;
+};
+
+const requestEventNotificationPermission = async () => {
+	if (typeof window === "undefined" || !("Notification" in window)) {
+		return false;
+	}
+
+	if (Notification.permission === "granted") {
+		return true;
+	}
+
+	if (Notification.permission === "denied") {
+		return false;
+	}
+
+	return (await Notification.requestPermission()) === "granted";
+};
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
@@ -45,7 +103,7 @@ const EventPage: NextPage = () => {
 			) : query.data === null || query.isLoading ? (
 				<Loading />
 			) : (
-				<EventView event={query.data} types={types} />
+				<EventView key={query.data.id} event={query.data} types={types} />
 			)}
 		</App>
 	);
@@ -60,6 +118,67 @@ const EventView = ({ event, types }: EventViewProps) => {
 	const { t } = useTranslation("event");
 	const router = useRouter();
 	const { locale } = router;
+	const [pushAvailable, setPushAvailable] = useState(false);
+	const [notifyRequested, setNotifyRequested] = useState(false);
+
+	const [notifyPending, setNotifyPending] = useState(false);
+	const [notifyError, setNotifyError] = useState(false);
+	const pending = useRef(false);
+
+	useEffect(() => {
+		let cancelled = false;
+		setPushAvailable(false);
+		setNotifyRequested(false);
+		if (isPushAvailable()) {
+			void isEventNotificationRequested(event.id).then(requested => {
+				if (!cancelled) setNotifyRequested(requested);
+			});
+		}
+		setNotifyError(false);
+		if (isPushAvailable() && event.start > new Date()) {
+			void isPushServerAvailable(VAPID_PUBLIC_KEY).then(available => {
+				if (!cancelled) setPushAvailable(available);
+			});
+		}
+		return () => {
+			cancelled = true;
+		};
+	}, [event.id, event.start]);
+
+	const handleNotifyToggle = async () => {
+		if (pending.current || !isPushAvailable() || (!pushAvailable && !notifyRequested)) return;
+		pending.current = true;
+		setNotifyPending(true);
+		setNotifyError(false);
+		try {
+			if (notifyRequested) {
+				const registration = await navigator.serviceWorker.getRegistration("/");
+				const subscription = await registration?.pushManager.getSubscription();
+				if (!subscription) throw new globalThis.Error("Push subscription not found");
+				await updateEventNotification(event.id, false, subscription.toJSON(), VAPID_PUBLIC_KEY);
+				setNotifyRequested(false);
+			} else {
+				const permissionGranted = await requestEventNotificationPermission();
+				if (!permissionGranted) {
+					if (Notification.permission === "denied") setPushAvailable(false);
+					return;
+				}
+				await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+				const registration = await navigator.serviceWorker.ready;
+				const subscription = await registration.pushManager.subscribe({
+					userVisibleOnly: true,
+					applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+				});
+				await updateEventNotification(event.id, true, subscription.toJSON(), VAPID_PUBLIC_KEY);
+				setNotifyRequested(true);
+			}
+		} catch {
+			setNotifyError(true);
+		} finally {
+			pending.current = false;
+			setNotifyPending(false);
+		}
+	};
 
 	const {
 		name,
@@ -131,6 +250,33 @@ const EventView = ({ event, types }: EventViewProps) => {
 				<h3 className="text-md">{room}</h3>
 				{type !== "ALL" && <h3 className="text-md">{types[type]}</h3>}
 				<h3 className="text-sm">{host}</h3>
+				<button
+					type="button"
+					onClick={() => void handleNotifyToggle()}
+					disabled={notifyPending || (!pushAvailable && !notifyRequested)}
+					aria-busy={notifyPending}
+					aria-pressed={notifyRequested}
+					className={`mt-4 w-fit rounded-lg border px-4 py-2 font-coolvetica text-base transition-colors ${
+						!pushAvailable && !notifyRequested
+							? "cursor-not-allowed border-dark-secondary-color bg-light-tertiary-color text-dark-secondary-color opacity-60"
+							: notifyRequested
+								? "border-dark-color bg-dark-color text-light-color"
+								: "border-dark-color bg-light-primary-color text-dark-color hover:bg-dark-secondary-color"
+					}`}
+				>
+					{!pushAvailable
+						? notifyRequested
+							? t("notify-me-cancel-unavailable")
+							: t("notify-me-unavailable")
+						: notifyRequested
+							? t("notify-me-active")
+							: t("notify-me")}
+				</button>
+				{notifyError && (
+					<p role="alert" className="mt-2 text-sm">
+						{t("notify-me-error")}
+					</p>
+				)}
 			</div>
 
 			{image && (
