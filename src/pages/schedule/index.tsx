@@ -51,7 +51,10 @@ const Schedule: NextPage = () => {
 					return a.start.getTime() - b.start.getTime();
 				})
 				.reduce<Event[][]>((acc, event, i, array) => {
-					if (array[i]?.start.toLocaleDateString(dateLocale) === array[i - 1]?.start.toLocaleDateString(dateLocale)) {
+					if (
+						array[i]?.start.toLocaleDateString(dateLocale) ===
+						array[i - 1]?.start.toLocaleDateString(dateLocale)
+					) {
 						acc[acc.length - 1]?.push(event);
 					} else {
 						acc.push([event]);
@@ -97,7 +100,7 @@ const Schedule: NextPage = () => {
 	return (
 		<App className="flex h-0 flex-col items-center bg-default-gradient" integrated={true} title={t("title")}>
 			<Tabs tab={tab} setTab={tab => void router.push(`/schedule?tab=${tab}`)} />
-			<div className="w-full overflow-y-auto p-4 mobile:px-0">
+			<div id="schedule-tabpanel" role="tabpanel" className="w-full overflow-y-auto p-4 mobile:px-0">
 				<div className="mx-auto flex max-w-2xl flex-col gap-4">
 					{events.map((event, i) => (
 						<div key={i} className="flex gap-4">
@@ -150,9 +153,15 @@ type TabsProps = {
 };
 
 const Tabs = ({ tab, setTab }: TabsProps) => {
+	const { t } = useTranslation("schedule");
+
 	return (
 		<div className="w-full border-b border-dark-color bg-light-quaternary-color px-4 pb-4 pt-2 shadow-navbar">
-			<div className="mx-auto grid max-w-2xl grid-cols-2 gap-3 sm:grid-cols-5 xs:grid-cols-3">
+			<div
+				role="tablist"
+				aria-label={t("title")}
+				className="mx-auto grid max-w-2xl grid-cols-2 gap-3 sm:grid-cols-5 xs:grid-cols-3"
+			>
 				{eventTypes.map(type => (
 					<Tab key={type} type={type} active={tab} onClick={() => setTab(type)} />
 				))}
@@ -179,7 +188,14 @@ const Tab = ({ type, active, onClick }: TabProps) => {
 	};
 
 	return (
-		<button type="button" className="ui-button" aria-pressed={type === active} onClick={onClick}>
+		<button
+			type="button"
+			role="tab"
+			aria-controls="schedule-tabpanel"
+			className="ui-button"
+			aria-selected={type === active}
+			onClick={onClick}
+		>
 			{types[type]}
 		</button>
 	);

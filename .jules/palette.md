@@ -7,3 +7,6 @@
 ## 2024-05-20 - Invalid Nested Interactive Elements (Buttons inside Links)
 **Learning:** Found multiple instances where `<button>` tags were nested inside Next.js `<Link>` tags to create button-like links (e.g. in Error pages or external sponsor links). This is an invalid HTML pattern that creates accessibility and semantic issues because interactive elements cannot be nested inside each other.
 **Action:** When building button-like links, do not nest a `<button>` inside an `<a>` or `<Link>`. Instead, apply the necessary styling (like Tailwind CSS classes `rounded-lg px-4 py-2 border` etc.) directly to the `<Link>` element to achieve the visual appearance of a button while maintaining valid, accessible HTML.
+## 2024-05-25 - ARIA Roles for Tabs Component
+**Learning:** Found that some tab components were using `aria-pressed` instead of `aria-selected`. The design system's CSS already supports both states (`.ui-button[aria-pressed="true"]` and `.ui-button[aria-selected="true"]`).
+**Action:** Always ensure you use `role="tab"` and `aria-selected` rather than `aria-pressed` for tabs. Ensure the tablist (`role="tablist"`) and tabpanel (`role="tabpanel"`) are connected using `aria-controls`.
