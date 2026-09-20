@@ -203,6 +203,7 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 						<input
 							id="event-name"
 							type="text"
+							required
 							value={name}
 							onChange={e => setName(e.target.value)}
 							className="rounded border border-dark-primary-color p-2"
@@ -215,6 +216,7 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 						<input
 							id="event-name-fr"
 							type="text"
+							required
 							value={nameFr}
 							onChange={e => setNameFr(e.target.value)}
 							className="rounded border border-dark-primary-color p-2"
@@ -227,6 +229,7 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 					<input
 						id="event-room"
 						type="text"
+						required
 						value={room}
 						onChange={e => setRoom(e.target.value)}
 						className="rounded border border-dark-primary-color p-2"
