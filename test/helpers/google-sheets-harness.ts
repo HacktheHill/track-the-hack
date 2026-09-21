@@ -21,7 +21,11 @@ export type SheetRequest = {
 	options: {
 		method: "post";
 		contentType: "application/json";
-		headers: { Authorization: string };
+		headers: {
+			Authorization: string;
+			"CF-Access-Client-Id": string;
+			"CF-Access-Client-Secret": string;
+		};
 		payload: string;
 		muteHttpExceptions: true;
 	};
@@ -38,7 +42,13 @@ const fetchOptionsSchema = z
 	.object({
 		method: z.literal("post"),
 		contentType: z.literal("application/json"),
-		headers: z.object({ Authorization: z.string() }).strict(),
+		headers: z
+			.object({
+				Authorization: z.string(),
+				"CF-Access-Client-Id": z.string(),
+				"CF-Access-Client-Secret": z.string(),
+			})
+			.strict(),
 		payload: z.string(),
 		muteHttpExceptions: z.literal(true),
 	})
@@ -65,6 +75,8 @@ export const createSheetHarness = (options: {
 		TRACK_BASE_URL: options.baseUrl ?? "https://track.example",
 		SHEETS_INTEGRATION_API_KEY: options.apiKey ?? "test-integration-key",
 		RSVP_DEADLINE: "2030-09-30T03:59:59.000Z",
+		CF_ACCESS_CLIENT_ID: "test-access-client-id",
+		CF_ACCESS_CLIENT_SECRET: "test-access-client-secret",
 	};
 
 	const run = (action: MenuAction = "acceptSelectedApplications") => {

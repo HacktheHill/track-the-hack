@@ -7,6 +7,8 @@ Set these Apps Script **Project Settings → Script properties** before using th
 - `TRACK_BASE_URL`: the deployed HTTPS Track the Hack origin
 - `SHEETS_INTEGRATION_API_KEY`: the same secret configured on that deployment
 - `RSVP_DEADLINE`: the event's actual RSVP deadline as an absolute ISO-8601 timestamp
+- `CF_ACCESS_CLIENT_ID`: the Cloudflare Access service token client ID
+- `CF_ACCESS_CLIENT_SECRET`: the matching service token secret
 
 The menu accepts selected application rows, has a separate explicit action for
 walk-ins, refreshes RSVP state, and issues a five-minute participant-access QR.
@@ -20,7 +22,7 @@ remain in Google Sheets.
 1. Apply the `20260915000000_add_no_tshirt_option` database migration and deploy the matching Track version first. Use `Code.gs` from that same repository revision so the Sheet and API agree on the supported fields and responses.
 2. In **Hack the Hill III Hacker Application Form**, open **Extensions → Apps Script** and confirm the project is **Track the Hack Integration**. Keep a private backup of its existing `Code.gs`. Preserve the `Responses` and `Track Operations` tabs, including all saved submission-to-participant ID mappings.
 3. Replace the contents of the existing **Code.gs** with this directory's [`Code.gs`](./Code.gs). Update the existing file in the bound project; adding a second copy would duplicate its functions and constants.
-4. Open **Project Settings → Script properties** and check the three properties listed above against the target deployment. Add any missing properties; if the section is empty, all three are required. Keep valid existing values, and use the event's actual RSVP deadline.
+4. Open **Project Settings → Script properties** and check the five properties listed above against the target deployment. Add any missing properties; if the section is empty, all five are required. Keep valid existing values, and use the event's actual RSVP deadline.
 5. **Save project to Drive**, then reload the Sheet. Confirm the **Track the Hack** menu includes **Accept selected walk-in application(s)**. The script's `onOpen` only builds the menu; this check does not accept applicants, call Track, or send email.
 
 This is a [bound script](https://developers.google.com/apps-script/guides/bound) used through the Sheet's menu. Saving it and reopening the Sheet updates that workflow; no web-app deployment or new installable trigger is required.

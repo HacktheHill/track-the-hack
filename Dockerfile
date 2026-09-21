@@ -27,6 +27,9 @@ RUN apt-get update \
 COPY package*.json ./
 COPY .npmrc ./
 COPY prisma ./prisma
+COPY tsconfig.json ./
+COPY scripts/provision-organizer.mts ./scripts/
+COPY src/server/lib/organizer-auth.ts ./src/server/lib/
 RUN npm ci --include=dev && npm cache clean --force
 USER app
 STOPSIGNAL SIGTERM
@@ -42,8 +45,10 @@ COPY .npmrc ./
 COPY prisma ./prisma
 RUN npm ci
 COPY . .
+ARG NEXT_PUBLIC_VAPID_PUBLIC_KEY
 ENV NODE_ENV=production
 ENV SKIP_ENV_VALIDATION=1
+ENV NEXT_PUBLIC_VAPID_PUBLIC_KEY=${NEXT_PUBLIC_VAPID_PUBLIC_KEY}
 RUN --mount=type=secret,id=env \
 	set -a && . /run/secrets/env && set +a && npm run build
 RUN npm prune --omit=dev && npm cache clean --force
