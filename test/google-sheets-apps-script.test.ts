@@ -23,6 +23,8 @@ const trackConfigSchema = z.object({
 	baseUrl: z.string().url(),
 	apiKey: z.string().min(1),
 	deadline: z.string().datetime(),
+	accessClientId: z.string().min(1),
+	accessClientSecret: z.string().min(1),
 });
 const rsvpRecordSchema = z.object({
 	id: z.string(),
@@ -77,7 +79,13 @@ const sheetFetchOptionsSchema = z
 	.object({
 		method: z.literal("post"),
 		contentType: z.literal("application/json"),
-		headers: z.object({ Authorization: z.string().startsWith("Bearer ") }).strict(),
+		headers: z
+			.object({
+				Authorization: z.string().startsWith("Bearer "),
+				"CF-Access-Client-Id": z.string().min(1),
+				"CF-Access-Client-Secret": z.string().min(1),
+			})
+			.strict(),
 		payload: z.string(),
 		muteHttpExceptions: z.literal(true),
 	})
@@ -230,6 +238,8 @@ void test("the Sheet adapter generates opaque IDs and authenticates its API requ
 					baseUrl: "https://track.example",
 					apiKey: "sheet-secret",
 					deadline: "2026-09-01T03:59:59.000Z",
+					accessClientId: "access-client-id",
+					accessClientSecret: "access-client-secret",
 				},
 				"/api/integrations/sheets/hackers",
 				{
@@ -252,7 +262,11 @@ void test("the Sheet adapter generates opaque IDs and authenticates its API requ
 		options: {
 			method: "post",
 			contentType: "application/json",
-			headers: { Authorization: "Bearer sheet-secret" },
+			headers: {
+				Authorization: "Bearer sheet-secret",
+				"CF-Access-Client-Id": "access-client-id",
+				"CF-Access-Client-Secret": "access-client-secret",
+			},
 			payload: JSON.stringify({
 				hackers: [
 					{
@@ -274,6 +288,8 @@ void test("the Sheet adapter requires HTTPS configuration and validates claim li
 		TRACK_BASE_URL: "http://track.example",
 		SHEETS_INTEGRATION_API_KEY: "sheet-secret",
 		RSVP_DEADLINE: "2026-09-01T03:59:59.000Z",
+		CF_ACCESS_CLIENT_ID: "access-client-id",
+		CF_ACCESS_CLIENT_SECRET: "access-client-secret",
 	});
 	assert.throws(() => adapter.trackConfig_(), /HTTPS TRACK_BASE_URL/);
 
@@ -282,6 +298,8 @@ void test("the Sheet adapter requires HTTPS configuration and validates claim li
 		baseUrl: "https://track.example",
 		apiKey: "sheet-secret",
 		deadline: "2026-09-01T03:59:59.000Z",
+		accessClientId: "access-client-id",
+		accessClientSecret: "access-client-secret",
 	});
 	assert.equal(
 		adapter.claimDisplayUrl_("https://track.example/claim#secret-token"),
