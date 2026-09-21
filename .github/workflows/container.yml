@@ -27,6 +27,8 @@ jobs:
           target: runtime
           push: false
           tags: track-the-hack:test
+          build-args: |
+            NEXT_PUBLIC_VAPID_PUBLIC_KEY=BD_-0L9JzY0zO2YAsdn-xgCR-gdmlLGBHggZ_uHj21v_VPVbwpH9-kUxndGFZT87vRg6Z-qMbfNZHjwp_PxoPWo
           secret-files: env=.github/workflows/build.env
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -46,7 +48,7 @@ jobs:
           cache-from: type=gha
 
   deploy:
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     needs: validate-images
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -66,12 +68,18 @@ jobs:
         env:
           ACR_LOGIN_SERVER: ${{ vars.AZURE_ACR_LOGIN_SERVER }}
         run: az acr login --name "${ACR_LOGIN_SERVER%%.*}"
+      - name: Validate production build configuration
+        env:
+          NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${{ vars.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}
+        run: test -n "$NEXT_PUBLIC_VAPID_PUBLIC_KEY"
       - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           target: runtime
           push: true
           tags: ${{ vars.AZURE_ACR_LOGIN_SERVER }}/track-the-hack:${{ github.sha }}
+          build-args: |
+            NEXT_PUBLIC_VAPID_PUBLIC_KEY=${{ vars.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}
           secret-files: env=.github/workflows/build.env
           cache-from: type=gha
       - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
@@ -131,6 +139,10 @@ jobs:
             sleep 5
           done
           test "$status" = Succeeded
+          retry_az az containerapp job update \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --name track-the-hack-organizer \
+            --image "$migration_image"
           retry_az az containerapp update \
             --resource-group "$AZURE_RESOURCE_GROUP" \
             --name track-the-hack \
