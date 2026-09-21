@@ -5,7 +5,7 @@
 /** @typedef {string | number | boolean | Date} SheetCell */
 /** @typedef {SheetCell[]} SheetRow */
 /** @typedef {{id: string, tShirtSize: TShirtSize, mealCategory: MealCategory, acceptanceExpiry: string, walkIn: boolean}} OperationalRecord */
-/** @typedef {{baseUrl: string, apiKey: string, deadline: string}} TrackConfig */
+/** @typedef {{baseUrl: string, apiKey: string, deadline: string, accessClientId: string, accessClientSecret: string}} TrackConfig */
 /** @typedef {{id: string, confirmed: boolean, cancellationLink?: string}} RsvpRecord */
 /** @typedef {{records: RsvpRecord[], missingIds: string[]}} RsvpReconciliation */
 /** @typedef {{claimUrl: string, expiresAt: string}} ClaimResponse */
@@ -18,6 +18,8 @@ const TRACK_PROPERTIES = {
 	baseUrl: "TRACK_BASE_URL",
 	apiKey: "SHEETS_INTEGRATION_API_KEY",
 	deadline: "RSVP_DEADLINE",
+	accessClientId: "CF_ACCESS_CLIENT_ID",
+	accessClientSecret: "CF_ACCESS_CLIENT_SECRET",
 };
 
 const TRACK_OPERATION_HEADERS = [
@@ -373,12 +375,14 @@ function trackConfig_() {
 	const baseUrl = String(properties.getProperty(TRACK_PROPERTIES.baseUrl) || "").replace(/\/$/, "");
 	const apiKey = String(properties.getProperty(TRACK_PROPERTIES.apiKey) || "");
 	const deadline = String(properties.getProperty(TRACK_PROPERTIES.deadline) || "");
-	if (!/^https:\/\//.test(baseUrl) || !apiKey || !deadline) {
+	const accessClientId = String(properties.getProperty(TRACK_PROPERTIES.accessClientId) || "");
+	const accessClientSecret = String(properties.getProperty(TRACK_PROPERTIES.accessClientSecret) || "");
+	if (!/^https:\/\//.test(baseUrl) || !apiKey || !deadline || !accessClientId || !accessClientSecret) {
 		throw new Error(
-			"Set an HTTPS TRACK_BASE_URL, SHEETS_INTEGRATION_API_KEY, and RSVP_DEADLINE in Apps Script project properties.",
+			"Set an HTTPS TRACK_BASE_URL, SHEETS_INTEGRATION_API_KEY, RSVP_DEADLINE, CF_ACCESS_CLIENT_ID, and CF_ACCESS_CLIENT_SECRET in Apps Script project properties.",
 		);
 	}
-	return { baseUrl, apiKey, deadline: isoDate_(deadline) };
+	return { baseUrl, apiKey, deadline: isoDate_(deadline), accessClientId, accessClientSecret };
 }
 
 /**
@@ -391,7 +395,11 @@ function apiPost_(config, path, payload) {
 	const response = UrlFetchApp.fetch(`${config.baseUrl}${path}`, {
 		method: "post",
 		contentType: "application/json",
-		headers: { Authorization: `Bearer ${config.apiKey}` },
+		headers: {
+			Authorization: `Bearer ${config.apiKey}`,
+			"CF-Access-Client-Id": config.accessClientId,
+			"CF-Access-Client-Secret": config.accessClientSecret,
+		},
 		payload: JSON.stringify(payload),
 		muteHttpExceptions: true,
 	});
