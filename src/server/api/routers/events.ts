@@ -56,14 +56,19 @@ export const eventsRouter = createTRPCRouter({
 			}),
 		)
 		.query(async ({ ctx, input }) => {
-			const event = await ctx.prisma.event.findUnique({
+			const isOrganizer =
+				ctx.session?.user &&
+				ctx.session.user.roles.some(role => role === RoleName.ORGANIZER || role === RoleName.ADMIN);
+
+			const event = await ctx.prisma.event.findFirst({
 				where: {
 					id: input.id,
+					hidden: isOrganizer ? undefined : false,
 				},
 			});
 
 			if (!event) {
-				throw new Error("No event found");
+				throw new TRPCError({ code: "NOT_FOUND", message: "No event found" });
 			}
 
 			return event;
@@ -71,10 +76,16 @@ export const eventsRouter = createTRPCRouter({
 
 	// Get all events
 	all: publicProcedure.query(async ({ ctx }) => {
-		const events = await ctx.prisma.event.findMany();
+		const isOrganizer =
+			ctx.session?.user &&
+			ctx.session.user.roles.some(role => role === RoleName.ORGANIZER || role === RoleName.ADMIN);
+
+		const events = await ctx.prisma.event.findMany({
+			where: isOrganizer ? undefined : { hidden: false },
+		});
 
 		if (!events) {
-			throw new Error("No events found");
+			throw new TRPCError({ code: "NOT_FOUND", message: "No events found" });
 		}
 
 		return events;
@@ -86,6 +97,9 @@ export const eventsRouter = createTRPCRouter({
 	// checked in. Filtering by start would hide an event the moment it begins,
 	// which is exactly when the scanner is used.
 	future: publicProcedure.query(async ({ ctx }) => {
+		const isOrganizer =
+			ctx.session?.user &&
+			ctx.session.user.roles.some(role => role === RoleName.ORGANIZER || role === RoleName.ADMIN);
 		const gracePeriodMs = 30 * 60 * 1000;
 		const cutoff = new Date(Date.now() - gracePeriodMs);
 
@@ -94,6 +108,7 @@ export const eventsRouter = createTRPCRouter({
 				end: {
 					gt: cutoff,
 				},
+				hidden: isOrganizer ? undefined : false,
 			},
 			orderBy: {
 				start: "asc",
@@ -145,15 +160,15 @@ export const eventsRouter = createTRPCRouter({
 		});
 
 		if (!user) {
-			throw new Error("User not found");
+			throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
 		}
 
 		if (!hasRoles(user, [RoleName.ORGANIZER, RoleName.ADMIN])) {
-			throw new Error("You do not have permission to create events");
+			throw new TRPCError({ code: "FORBIDDEN", message: "You do not have permission to create events" });
 		}
 
 		if (input.end <= input.start) {
-			throw new Error("Event end time must be after start time");
+			throw new TRPCError({ code: "BAD_REQUEST", message: "Event end time must be after start time" });
 		}
 
 		return ctx.prisma.event.create({
@@ -198,11 +213,11 @@ export const eventsRouter = createTRPCRouter({
 			});
 
 			if (!user) {
-				throw new Error("User not found");
+				throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
 			}
 
 			if (!hasRoles(user, [RoleName.ORGANIZER, RoleName.ADMIN])) {
-				throw new Error("You do not have permission to update events");
+				throw new TRPCError({ code: "FORBIDDEN", message: "You do not have permission to update events" });
 			}
 
 			const existingEvent = await ctx.prisma.event.findUnique({
@@ -212,11 +227,11 @@ export const eventsRouter = createTRPCRouter({
 			});
 
 			if (!existingEvent) {
-				throw new Error("Event not found");
+				throw new TRPCError({ code: "NOT_FOUND", message: "Event not found" });
 			}
 
 			if (input.end <= input.start) {
-				throw new Error("Event end time must be after start time");
+				throw new TRPCError({ code: "BAD_REQUEST", message: "Event end time must be after start time" });
 			}
 
 			return ctx.prisma.event.update({
