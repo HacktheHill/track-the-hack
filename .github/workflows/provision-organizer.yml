@@ -2,11 +2,6 @@ name: Provision Track organizer
 
 on:
   workflow_dispatch:
-    inputs:
-      email:
-        description: Verified ctn-rtc.org organizer email
-        required: true
-        type: string
 
 permissions:
   contents: read
@@ -33,14 +28,9 @@ jobs:
         shell: bash
         env:
           AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
-          ORGANIZER_EMAIL: ${{ inputs.email }}
+          ORGANIZER_EMAIL: admin@ctn-rtc.org
         run: |
           set -euo pipefail
-          if [[ ! "$ORGANIZER_EMAIL" =~ ^[^@[:space:]]+@ctn-rtc\.org$ ]]; then
-            echo "Organizer email must use the ctn-rtc.org domain." >&2
-            exit 1
-          fi
-
           az extension remove -n containerapp 2>/dev/null || true
           image="$(az containerapp job show \
             --resource-group "$AZURE_RESOURCE_GROUP" \
