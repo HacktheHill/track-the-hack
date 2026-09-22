@@ -1,4 +1,3 @@
-import type { Event } from "@prisma/client";
 import { EventType } from "@prisma/client";
 import type { GetStaticProps, NextPage } from "next";
 import { useTranslation } from "next-i18next";
@@ -11,6 +10,9 @@ import Error from "@/components/Error";
 import Loading from "@/components/Loading";
 
 import { trpc } from "@/server/api/api";
+import type { RouterOutputs } from "@/server/api/api";
+
+type PublicEvent = RouterOutputs["events"]["all"][number];
 
 const eventTypes = [EventType.ALL, EventType.WORKSHOP, EventType.SOCIAL, EventType.CAREER_FAIR, EventType.FOOD];
 
@@ -41,7 +43,6 @@ const Schedule: NextPage = () => {
 	const events = useMemo(
 		() =>
 			(query.data ?? [])
-				.filter(event => !event.hidden)
 				.filter(event => event.end.getTime() + 30 * 60 * 1000 > now)
 				.filter(event => event.type === tab || tab === EventType.ALL)
 				.sort((a, b) => {
@@ -50,8 +51,11 @@ const Schedule: NextPage = () => {
 					}
 					return a.start.getTime() - b.start.getTime();
 				})
-				.reduce<Event[][]>((acc, event, i, array) => {
-					if (array[i]?.start.toLocaleDateString(dateLocale) === array[i - 1]?.start.toLocaleDateString(dateLocale)) {
+				.reduce<PublicEvent[][]>((acc, event, i, array) => {
+					if (
+						array[i]?.start.toLocaleDateString(dateLocale) ===
+						array[i - 1]?.start.toLocaleDateString(dateLocale)
+					) {
 						acc[acc.length - 1]?.push(event);
 					} else {
 						acc.push([event]);
@@ -61,13 +65,7 @@ const Schedule: NextPage = () => {
 		[query.data, now, tab, dateLocale],
 	);
 
-	if (query.isLoading || query.data == null) {
-		return (
-			<App className="h-full bg-default-gradient px-16 py-12">
-				<Loading />
-			</App>
-		);
-	} else if (query.isError) {
+	if (query.isError) {
 		return (
 			<App className="h-full bg-default-gradient px-16 py-12">
 				<Error message={query.error.message} />
@@ -75,8 +73,12 @@ const Schedule: NextPage = () => {
 		);
 	}
 
-	if (query.data == null) {
-		void router.push("/404");
+	if (query.isLoading || query.data == null) {
+		return (
+			<App className="h-full bg-default-gradient px-16 py-12">
+				<Loading />
+			</App>
+		);
 	}
 
 	const eventColor = (eventType: EventType) => {

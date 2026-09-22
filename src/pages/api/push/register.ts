@@ -3,28 +3,42 @@ import { z } from "zod";
 
 import {
 	getPushConfiguration,
+	hasValidPushKeys,
 	PushRegistrationClosedError,
+	PushSubscriptionLimitError,
 	isAllowedPushEndpoint,
 	registerEventPushSubscription,
 	unregisterEventPushSubscription,
 } from "@/server/push";
 
 const requestSchema = z.discriminatedUnion("enabled", [
-	z.object({
-		eventId: z.string().min(1),
-		enabled: z.literal(false),
-		subscription: z.object({ endpoint: z.string().min(1) }),
-	}),
-	z.object({
-		eventId: z.string().min(1),
-		enabled: z.literal(true).default(true),
-		publicKey: z.string().optional(),
-		subscription: z.object({
-			endpoint: z.string().max(512).refine(isAllowedPushEndpoint),
-			keys: z.object({ p256dh: z.string().min(1), auth: z.string().min(1) }),
-		}),
-	}),
+	z
+		.object({
+			eventId: z.string().min(1).max(191),
+			enabled: z.literal(false),
+			subscription: z.object({ endpoint: z.string().min(1).max(512).refine(isAllowedPushEndpoint) }).strict(),
+		})
+		.strict(),
+	z
+		.object({
+			eventId: z.string().min(1).max(191),
+			enabled: z.literal(true),
+			locale: z.enum(["en", "fr"]),
+			publicKey: z.string().min(1),
+			subscription: z
+				.object({
+					endpoint: z.string().min(1).max(512).refine(isAllowedPushEndpoint),
+					keys: z
+						.object({ p256dh: z.string().max(87), auth: z.string().max(22) })
+						.strict()
+						.refine(hasValidPushKeys),
+				})
+				.strict(),
+		})
+		.strict(),
 ]);
+
+export const config = { api: { bodyParser: { sizeLimit: "4kb" } } };
 
 export default async function handler(request: NextApiRequest, response: NextApiResponse) {
 	response.setHeader("Cache-Control", "no-store");
@@ -59,10 +73,10 @@ export default async function handler(request: NextApiRequest, response: NextApi
 		return;
 	}
 	try {
-		await registerEventPushSubscription(eventId, parsed.data.subscription);
+		await registerEventPushSubscription(eventId, parsed.data.subscription, parsed.data.locale);
 		response.status(200).json({ success: true });
 	} catch (error) {
-		if (error instanceof PushRegistrationClosedError) {
+		if (error instanceof PushRegistrationClosedError || error instanceof PushSubscriptionLimitError) {
 			response.status(409).json({ error: error.message });
 		} else {
 			response.status(503).json({ error: "Unable to update notifications. Please try again." });

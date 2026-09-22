@@ -6,39 +6,53 @@ import Loading from "@/components/Loading";
 import Error from "@/components/Error";
 import { trpc } from "@/server/api/api";
 import { useState } from "react";
-import type { Event } from "@prisma/client";
 import EventEditor from "@/components/EventEditor";
 import { RoleName } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { rolesRedirect } from "@/server/lib/redirects";
 import { getAuthOptions } from "@/pages/api/auth/[...nextauth]";
+import type { RouterOutputs } from "@/server/api/api";
+
+type ManagedEvent = RouterOutputs["events"]["manage"][number];
 
 const Events: NextPage = () => {
 	const { t, i18n } = useTranslation("internal");
 	const dateLocale = i18n.language === "fr" ? "fr-CA" : "en-CA";
-	const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+	const [selectedEvent, setSelectedEvent] = useState<ManagedEvent | null>(null);
 	const [isEditorOpen, setIsEditorOpen] = useState(false);
 
-	const query = trpc.events.all.useQuery();
+	const query = trpc.events.manage.useQuery();
+	const closeEditor = () => {
+		setIsEditorOpen(false);
+		setSelectedEvent(null);
+	};
 
 	if (query.isLoading) {
-		return <Loading />;
+		return (
+			<App className="overflow-y-auto bg-default-gradient" integrated={true} title={t("title")}>
+				<Loading />
+			</App>
+		);
 	}
 
 	if (query.isError) {
-		return <Error message={query.error.message} />;
+		return (
+			<App className="overflow-y-auto bg-default-gradient" integrated={true} title={t("title")}>
+				<Error message={query.error.message} />
+			</App>
+		);
 	}
 
 	const sortedEvents = [...query.data].sort((a, b) => a.start.getTime() - b.start.getTime());
 
 	return (
 		<App className="overflow-y-auto bg-default-gradient" integrated={true} title={t("title")}>
-			<div className="mx-auto max-w-6xl p-8">
-				<div className="mb-6 flex items-center justify-between">
-					<h1 className="font-rubik text-4xl font-bold">{t("events.title")}</h1>
+			<div className="mx-auto max-w-6xl p-4 sm:p-8">
+				<div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+					<h1 className="ui-page-title">{t("events.title")}</h1>
 
 					<button
-						className="rounded-xl bg-medium-primary-color px-6 py-2 text-light-color"
+						className="ui-button ui-button-primary"
 						onClick={() => {
 							setSelectedEvent(null);
 							setIsEditorOpen(true);
@@ -96,7 +110,7 @@ const Events: NextPage = () => {
 												setSelectedEvent(event);
 												setIsEditorOpen(true);
 											}}
-											className="rounded border border-dark-primary-color px-4 py-2 transition-colors hover:bg-light-tertiary-color"
+											className="ui-button"
 										>
 											{t("events.edit")}
 										</button>
@@ -106,7 +120,7 @@ const Events: NextPage = () => {
 						</tbody>
 					</table>
 				</div>
-				{isEditorOpen && <EventEditor event={selectedEvent} onClose={() => setIsEditorOpen(false)} />}
+				{isEditorOpen && <EventEditor event={selectedEvent} onClose={closeEditor} />}
 			</div>
 		</App>
 	);
@@ -114,7 +128,7 @@ const Events: NextPage = () => {
 export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
 	const session = await getServerSession(req, res, getAuthOptions());
 	return {
-		redirect: await rolesRedirect(session, "/", [RoleName.ORGANIZER, RoleName.ADMIN]),
+		redirect: await rolesRedirect(session, "/internal/events", [RoleName.ORGANIZER, RoleName.ADMIN]),
 		props: {
 			...(await serverSideTranslations(locale ?? "en", ["internal", "navbar", "common"])),
 		},

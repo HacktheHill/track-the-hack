@@ -2,7 +2,6 @@
 	"search": "Search",
 	"title": "Internal",
 	"roles": "Roles",
-	"sponsorship-gmail-drafts": "Sponsorship Gmail Drafts",
 	"metrics": "Metrics",
 	"submit": "Submit",
 
@@ -20,6 +19,23 @@
 
 		"description-en": "Description (English)",
 		"description-fr": "Description (French)",
+		"type": "Event type",
+		"type-values": {
+			"ALL": "All attendees",
+			"WORKSHOP": "Workshop",
+			"SOCIAL": "Social",
+			"CAREER_FAIR": "Career fair",
+			"FOOD": "Food"
+		},
+		"host": "Host (optional)",
+		"scanner-workflow": "Scanner workflow",
+		"scanner-workflow-values": {
+			"ATTENDANCE": "Event attendance",
+			"CHECK_IN": "Hackathon check-in",
+			"MERCHANDISE": "Merchandise pickup",
+			"FOOD": "Meal pickup"
+		},
+		"max-check-ins": "Maximum scans per attendee (optional)",
 
 		"photo": "Event photo",
 		"photo-read-only": "Photos cannot be changed in this editor yet. Existing photos will be kept when you save.",
@@ -39,9 +55,12 @@
 		"name-en-required": "English event name is required.",
 		"name-fr-required": "French event name is required.",
 		"location-required": "Event location is required.",
+		"description-required": "English and French descriptions are required.",
 		"start-end-required": "Start and end times are required.",
 		"end-after-start": "End time must be after start time.",
+		"max-check-ins-invalid": "Maximum scans must be a non-negative whole number.",
 		"link-title-url-required": "The link must have English and French titles and a URL.",
+		"link-https-required": "The link must be a valid HTTPS URL.",
 
 		"table": {
 			"name": "Name",

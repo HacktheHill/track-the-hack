@@ -1,4 +1,4 @@
-import { createECDH, randomUUID } from "node:crypto";
+import { createECDH, ECDH, randomUUID } from "node:crypto";
 import type { PrismaClient } from "@prisma/client";
 import webPush from "web-push";
 import { z } from "zod";
@@ -7,6 +7,12 @@ export type PushSubscriptionPayload = {
 	endpoint: string;
 	keys: { p256dh: string; auth: string };
 };
+
+export type PushLocale = "en" | "fr";
+
+const MAX_EVENT_SUBSCRIPTIONS = 5_000;
+const P256DH_ENCODED_LENGTH = 87;
+const AUTH_ENCODED_LENGTH = 22;
 
 const ALLOWED_PUSH_DOMAINS = [
 	/(^|\.)push\.apple\.com$/i,
@@ -18,6 +24,7 @@ const ALLOWED_PUSH_DOMAINS = [
 ];
 
 export const isAllowedPushEndpoint = (endpoint: string): boolean => {
+	if (endpoint.length > 512) return false;
 	try {
 		const url = new URL(endpoint);
 		return (
@@ -32,6 +39,27 @@ export const isAllowedPushEndpoint = (endpoint: string): boolean => {
 		return false;
 	}
 };
+
+const decodeCanonicalBase64Url = (value: string, encodedLength: number) => {
+	if (value.length !== encodedLength || !/^[A-Za-z0-9_-]+$/.test(value)) return null;
+	const decoded = Buffer.from(value, "base64url");
+	return decoded.toString("base64url") === value ? decoded : null;
+};
+
+export const hasValidPushKeys = ({ p256dh, auth }: PushSubscriptionPayload["keys"]): boolean => {
+	const publicKey = decodeCanonicalBase64Url(p256dh, P256DH_ENCODED_LENGTH);
+	const authSecret = decodeCanonicalBase64Url(auth, AUTH_ENCODED_LENGTH);
+	if (publicKey?.length !== 65 || publicKey[0] !== 0x04 || authSecret?.length !== 16) return false;
+	try {
+		ECDH.convertKey(publicKey, "prime256v1");
+		return true;
+	} catch {
+		return false;
+	}
+};
+
+export const isValidPushSubscription = (subscription: PushSubscriptionPayload): boolean =>
+	isAllowedPushEndpoint(subscription.endpoint) && hasValidPushKeys(subscription.keys);
 
 // The public key embedded in the browser must match the private signing key.
 // Invalid or incomplete optional configuration disables push without disabling the app.
@@ -85,29 +113,41 @@ export const startEventReminderScheduler = () => {
 };
 
 export class PushRegistrationClosedError extends Error {}
+export class PushSubscriptionLimitError extends Error {}
 
 export const registerEventPushSubscription = async (
 	eventId: string,
 	subscription: PushSubscriptionPayload,
+	locale: PushLocale,
 	prismaClient?: PrismaClient,
 ) => {
-	if (!eventId || !isAllowedPushEndpoint(subscription.endpoint)) {
-		throw new Error("Invalid push subscription endpoint");
+	if (!eventId || eventId.length > 191 || !isValidPushSubscription(subscription) || !["en", "fr"].includes(locale)) {
+		throw new Error("Invalid push subscription");
 	}
 	const client = prismaClient ?? (await getPrismaClient());
-	const data = { eventId, endpoint: subscription.endpoint, ...subscription.keys };
+	const data = { eventId, endpoint: subscription.endpoint, ...subscription.keys, locale };
 	await client.$transaction(async transaction => {
 		// Serialize registration with the scheduler's atomic event claim. An
 		// accepted subscription must be visible before the event can complete.
 		const events = await transaction.$queryRaw<Array<{ id: string }>>`
 			SELECT id FROM Event WHERE id = ${eventId}
-			AND start > UTC_TIMESTAMP(3) AND notifiedAt IS NULL FOR UPDATE
+			AND hidden = 0 AND start > UTC_TIMESTAMP(3) AND notifiedAt IS NULL FOR UPDATE
 		`;
 		if (!events.length) throw new PushRegistrationClosedError("This event is no longer accepting reminders");
+		const existing = await transaction.pushSubscription.findUnique({
+			where: { eventId_endpoint: { eventId, endpoint: subscription.endpoint } },
+			select: { id: true },
+		});
+		if (
+			!existing &&
+			(await transaction.pushSubscription.count({ where: { eventId } })) >= MAX_EVENT_SUBSCRIPTIONS
+		) {
+			throw new PushSubscriptionLimitError("This event has reached its reminder limit");
+		}
 		await transaction.pushSubscription.upsert({
 			where: { eventId_endpoint: { eventId, endpoint: subscription.endpoint } },
 			create: data,
-			update: subscription.keys,
+			update: { ...subscription.keys, locale },
 		});
 	});
 };
@@ -159,8 +199,8 @@ export const sendDueEventNotifications = async (
 	if (!getPushConfiguration()) return 0;
 	const client = prismaClient ?? (await getPrismaClient());
 	const dueEvents = await client.event.findMany({
-		where: { start: { lte: new Date() }, notifiedAt: null },
-		select: { id: true, name: true },
+		where: { hidden: false, start: { lte: new Date() }, notifiedAt: null },
+		select: { id: true, name: true, nameFr: true },
 	});
 	let notified = 0;
 	for (const event of dueEvents) {
@@ -168,7 +208,7 @@ export const sendDueEventNotifications = async (
 		const claimed = await client.$executeRaw`
 			UPDATE Event SET notificationLeaseToken = ${token},
 				notificationLeaseUntil = DATE_ADD(UTC_TIMESTAMP(3), INTERVAL 2 MINUTE)
-			WHERE id = ${event.id} AND notifiedAt IS NULL AND start <= UTC_TIMESTAMP(3)
+			WHERE id = ${event.id} AND hidden = 0 AND notifiedAt IS NULL AND start <= UTC_TIMESTAMP(3)
 			AND (notificationLeaseUntil IS NULL OR notificationLeaseUntil <= UTC_TIMESTAMP(3))
 		`;
 		if (claimed !== 1) continue;
@@ -188,18 +228,24 @@ export const sendDueEventNotifications = async (
 					subscriptions.map(async subscription => {
 						let status = 503;
 						try {
-							status = isAllowedPushEndpoint(subscription.endpoint)
+							const storedSubscription = {
+								endpoint: subscription.endpoint,
+								keys: { p256dh: subscription.p256dh, auth: subscription.auth },
+							};
+							status = isValidPushSubscription(storedSubscription)
 								? await sendNotification(
-										{
-											endpoint: subscription.endpoint,
-											keys: { p256dh: subscription.p256dh, auth: subscription.auth },
-										},
+										storedSubscription,
 										JSON.stringify({
-											title: event.name,
-											body: "This event has started.",
+											title: subscription.locale === "fr" ? event.nameFr : event.name,
+											body:
+												subscription.locale === "fr"
+													? "Cet événement a commencé."
+													: "This event has started.",
 											tag: `event-${event.id}`,
 											icon: "/icons/android-chrome-192x192.png",
-											data: { url: `/schedule/event?id=${encodeURIComponent(event.id)}` },
+											data: {
+												url: `${subscription.locale === "fr" ? "/fr" : ""}/schedule/event?id=${encodeURIComponent(event.id)}`,
+											},
 										}),
 										deadline,
 									)

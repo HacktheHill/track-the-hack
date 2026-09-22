@@ -58,7 +58,6 @@ model User {
   roles         Role[]
   accounts      Account[]
   sessions      Session[]
-  logs          Log[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @default(now()) @updatedAt
 }
@@ -141,31 +140,30 @@ model Presence {
 }
 
 model Event {
-  id              String          @id @default(cuid())
-  start           DateTime
-  end             DateTime
-  hidden          Boolean         @default(false)
-  name            String
-  nameFr          String
-  type            EventType       @default(ALL)
-  interests       EventInterest[]
-  scannerWorkflow ScannerWorkflow @default(ATTENDANCE)
-  host            String?
-  description     String          @db.Text
-  descriptionFr   String          @db.Text
-  room            String
-  tiktok          String?
-  image           String?
-  link            String?
-  linkText        String?
-  linkTextFr      String?
-  maxCheckIns     Int?
-  notifiedAt      DateTime?
+  id                     String          @id @default(cuid())
+  start                  DateTime
+  end                    DateTime
+  hidden                 Boolean         @default(false)
+  name                   String
+  nameFr                 String
+  type                   EventType       @default(ALL)
+  interests              EventInterest[]
+  scannerWorkflow        ScannerWorkflow @default(ATTENDANCE)
+  host                   String?
+  description            String          @db.Text
+  descriptionFr          String          @db.Text
+  room                   String
+  image                  String?
+  link                   String?
+  linkText               String?
+  linkTextFr             String?
+  maxCheckIns            Int?
+  notifiedAt             DateTime?
   notificationLeaseToken String?
   notificationLeaseUntil DateTime?
-  presences       Presence[]
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @default(now()) @updatedAt
+  presences              Presence[]
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @default(now()) @updatedAt
 }
 
 model PushSubscription {
@@ -174,6 +172,7 @@ model PushSubscription {
   endpoint  String   @db.VarChar(512)
   p256dh    String
   auth      String
+  locale    String   @default("en") @db.VarChar(2)
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
@@ -191,7 +190,6 @@ model Log {
   action     String
   details    String?  @db.Text
   userId     String?
-  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([userId])
 }

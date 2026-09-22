@@ -1,5 +1,5 @@
 import type { TestContext } from "node:test";
-import { EventType, type Event } from "@prisma/client";
+import { EventType, ScannerWorkflow } from "@prisma/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TRPCClientError } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
@@ -14,6 +14,8 @@ import superjson from "superjson";
 import type { AppRouter } from "@/server/api/root";
 import EventPage from "@/pages/schedule/event";
 import type EventEditor from "@/components/EventEditor";
+import internalEn from "@root/public/locales/en/internal.json";
+import internalFr from "@root/public/locales/fr/internal.json";
 
 export const PublicEvent = ({ router }: { router: NextRouter }) => (
 	<RouterContext.Provider value={router}>
@@ -23,7 +25,7 @@ export const PublicEvent = ({ router }: { router: NextRouter }) => (
 	</RouterContext.Provider>
 );
 
-type EventFixture = NonNullable<ComponentProps<typeof EventEditor>["event"]> & Pick<Event, "type" | "host" | "tiktok">;
+type EventFixture = NonNullable<ComponentProps<typeof EventEditor>["event"]>;
 
 export const event: EventFixture = {
 	id: "event-1",
@@ -36,8 +38,9 @@ export const event: EventFixture = {
 	descriptionFr: "Bienvenue\nà l'événement",
 	hidden: false,
 	type: EventType.ALL,
+	scannerWorkflow: ScannerWorkflow.ATTENDANCE,
+	maxCheckIns: null,
 	host: null,
-	tiktok: null,
 	image: null,
 	link: null,
 	linkText: null,
@@ -47,10 +50,10 @@ export const event: EventFixture = {
 type Request = { path: string; input: unknown; succeed: () => void; fail: () => void };
 const api = createTRPCReact<AppRouter>();
 
-export const setup = async (t: TestContext) => {
+export const setup = async (t: TestContext, language = "en") => {
 	const requests: Request[] = [];
 	const queryClient = new QueryClient({
-		defaultOptions: { queries: { retry: false, cacheTime: 0 }, mutations: { retry: false, cacheTime: 0 } },
+		defaultOptions: { queries: { retry: false, cacheTime: Infinity }, mutations: { retry: false, cacheTime: 0 } },
 		logger: { log: () => undefined, warn: () => undefined, error: () => undefined },
 	});
 	const client = api.createClient({
@@ -72,7 +75,14 @@ export const setup = async (t: TestContext) => {
 		],
 	});
 	const i18n = createInstance();
-	await i18n.init({ lng: "en", resources: {}, fallbackLng: "en", interpolation: { escapeValue: false } });
+	await i18n.init({
+		lng: language,
+		ns: ["internal"],
+		defaultNS: "internal",
+		resources: { en: { internal: internalEn }, fr: { internal: internalFr } },
+		fallbackLng: "en",
+		interpolation: { escapeValue: false },
+	});
 	t.after(() => queryClient.clear());
 	const wrap = (children: ReactNode) => (
 		<I18nextProvider i18n={i18n}>

@@ -1,50 +1,119 @@
-import { RoleName } from "@prisma/client";
+import { EventType, Prisma, RoleName, ScannerWorkflow } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { hasRoles } from "@/utils/helpers";
 import { createTRPCRouter, protectedProcedure, publicProcedure, participantProcedure } from "@/server/api/trpc";
 
-const eventInputSchema = z.object({
-	name: z.string().min(1),
-	nameFr: z.string().min(1),
-	room: z.string().min(1),
+const varchar = z.string().trim().min(1).max(191);
+const httpsUrl = varchar.url().refine(value => new URL(value).protocol === "https:", "URL must use HTTPS");
+const text = z
+	.string()
+	.trim()
+	.min(1)
+	.max(65_535)
+	.refine(value => Buffer.byteLength(value, "utf8") <= 65_535, "Text must not exceed 65,535 UTF-8 bytes");
+const eventInputShape = {
+	name: varchar,
+	nameFr: varchar,
+	room: varchar,
 	start: z.date(),
 	end: z.date(),
-	description: z.string(),
-	descriptionFr: z.string(),
+	description: text,
+	descriptionFr: text,
 	hidden: z.boolean(),
+	type: z.nativeEnum(EventType),
+	scannerWorkflow: z.nativeEnum(ScannerWorkflow),
+	maxCheckIns: z.number().int().min(0).max(2_147_483_647).nullable(),
+	host: varchar.nullable(),
+	link: httpsUrl.nullable(),
+	linkText: varchar.nullable(),
+	linkTextFr: varchar.nullable(),
+};
 
-	image: z.string().nullable().optional(),
-	link: z.string().nullable().optional(),
-	linkText: z.string().nullable().optional(),
-	linkTextFr: z.string().nullable().optional(),
-});
+const validateEventInput = (input: z.infer<z.ZodObject<typeof eventInputShape>>, ctx: z.RefinementCtx) => {
+	if (input.end <= input.start) {
+		ctx.addIssue({
+			code: z.ZodIssueCode.custom,
+			path: ["end"],
+			message: "Event end time must be after start time",
+		});
+	}
+
+	const linkValues = [input.link, input.linkText, input.linkTextFr];
+	if (linkValues.some(value => value === null) && linkValues.some(value => value !== null)) {
+		ctx.addIssue({
+			code: z.ZodIssueCode.custom,
+			path: ["link"],
+			message: "Link URL and both localized labels must be provided together",
+		});
+	}
+};
+
+const eventInputSchema = z.object(eventInputShape).strict().superRefine(validateEventInput);
+const eventUpdateInputSchema = z
+	.object({ ...eventInputShape, id: varchar })
+	.strict()
+	.superRefine(validateEventInput);
+
+const publicEventSelect = {
+	id: true,
+	name: true,
+	nameFr: true,
+	room: true,
+	start: true,
+	end: true,
+	description: true,
+	descriptionFr: true,
+	type: true,
+	host: true,
+	image: true,
+	link: true,
+	linkText: true,
+	linkTextFr: true,
+} as const;
+
+const managedEventSelect = {
+	...publicEventSelect,
+	hidden: true,
+	scannerWorkflow: true,
+	maxCheckIns: true,
+} as const;
 
 export const eventsRouter = createTRPCRouter({
 	getInterest: participantProcedure.input(z.object({ eventId: z.string().min(1) })).query(async ({ ctx, input }) => {
-		const interest = await ctx.prisma.eventInterest.findUnique({
-			where: { hackerId_eventId: { hackerId: ctx.participantSession.hackerId, eventId: input.eventId } },
+		const interest = await ctx.prisma.eventInterest.findFirst({
+			where: {
+				hackerId: ctx.participantSession.hackerId,
+				eventId: input.eventId,
+				Event: { hidden: false },
+			},
+			select: { id: true },
 		});
 		return interest !== null;
 	}),
 	setInterest: participantProcedure
 		.input(z.object({ eventId: z.string().min(1), interested: z.boolean() }))
 		.mutation(async ({ ctx, input }) => {
-			const event = await ctx.prisma.event.findUnique({
-				where: { id: input.eventId },
-				select: { id: true, hidden: true },
-			});
-			if (!event || event.hidden) throw new TRPCError({ code: "NOT_FOUND" });
-			const selection = { hackerId: ctx.participantSession.hackerId, eventId: event.id };
-			if (input.interested) {
-				await ctx.prisma.eventInterest.upsert({
-					where: { hackerId_eventId: selection },
-					create: selection,
-					update: {},
-				});
-			} else {
-				await ctx.prisma.eventInterest.deleteMany({ where: selection });
-			}
+			await ctx.prisma.$transaction(
+				async transaction => {
+					const event = await transaction.event.findUnique({
+						where: { id: input.eventId },
+						select: { id: true, hidden: true },
+					});
+					if (!event || event.hidden) throw new TRPCError({ code: "NOT_FOUND" });
+					const selection = { hackerId: ctx.participantSession.hackerId, eventId: event.id };
+					if (input.interested) {
+						await transaction.eventInterest.upsert({
+							where: { hackerId_eventId: selection },
+							create: selection,
+							update: {},
+						});
+					} else {
+						await transaction.eventInterest.deleteMany({ where: selection });
+					}
+				},
+				{ isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+			);
 			return input.interested;
 		}),
 
@@ -52,18 +121,17 @@ export const eventsRouter = createTRPCRouter({
 	get: publicProcedure
 		.input(
 			z.object({
-				id: z.string(),
+				id: varchar,
 			}),
 		)
 		.query(async ({ ctx, input }) => {
-			const event = await ctx.prisma.event.findUnique({
-				where: {
-					id: input.id,
-				},
+			const event = await ctx.prisma.event.findFirst({
+				where: { id: input.id, hidden: false },
+				select: publicEventSelect,
 			});
 
 			if (!event) {
-				throw new Error("No event found");
+				throw new TRPCError({ code: "NOT_FOUND", message: "Event not found" });
 			}
 
 			return event;
@@ -71,34 +139,19 @@ export const eventsRouter = createTRPCRouter({
 
 	// Get all events
 	all: publicProcedure.query(async ({ ctx }) => {
-		const events = await ctx.prisma.event.findMany();
-
-		if (!events) {
-			throw new Error("No events found");
-		}
-
-		return events;
+		return ctx.prisma.event.findMany({ where: { hidden: false }, select: publicEventSelect });
 	}),
 
-	// Get all future events
-	// Events an organizer can still scan for. An event stays selectable while it
-	// is running and for 30 minutes after it ends, so late arrivals can still be
-	// checked in. Filtering by start would hide an event the moment it begins,
-	// which is exactly when the scanner is used.
-	future: publicProcedure.query(async ({ ctx }) => {
-		const gracePeriodMs = 30 * 60 * 1000;
-		const cutoff = new Date(Date.now() - gracePeriodMs);
-
-		return ctx.prisma.event.findMany({
-			where: {
-				end: {
-					gt: cutoff,
-				},
-			},
-			orderBy: {
-				start: "asc",
-			},
+	manage: protectedProcedure.query(async ({ ctx }) => {
+		const organizer = await ctx.prisma.user.findUnique({
+			where: { id: ctx.session.user.id },
+			select: { roles: { select: { name: true } } },
 		});
+		if (!organizer || !hasRoles(organizer, [RoleName.ORGANIZER, RoleName.ADMIN])) {
+			throw new TRPCError({ code: "FORBIDDEN" });
+		}
+
+		return ctx.prisma.event.findMany({ select: managedEventSelect, orderBy: { start: "asc" } });
 	}),
 
 	// The scanner gets only its server-owned action contract. Schedule content
@@ -145,15 +198,11 @@ export const eventsRouter = createTRPCRouter({
 		});
 
 		if (!user) {
-			throw new Error("User not found");
+			throw new TRPCError({ code: "UNAUTHORIZED", message: "User not found" });
 		}
 
 		if (!hasRoles(user, [RoleName.ORGANIZER, RoleName.ADMIN])) {
-			throw new Error("You do not have permission to create events");
-		}
-
-		if (input.end <= input.start) {
-			throw new Error("Event end time must be after start time");
+			throw new TRPCError({ code: "FORBIDDEN", message: "You do not have permission to create events" });
 		}
 
 		return ctx.prisma.event.create({
@@ -166,63 +215,57 @@ export const eventsRouter = createTRPCRouter({
 				description: input.description,
 				descriptionFr: input.descriptionFr,
 				hidden: input.hidden,
-				image: input.image ?? null,
-				link: input.link ?? null,
-				linkText: input.linkText ?? null,
-				linkTextFr: input.linkTextFr ?? null,
+				type: input.type,
+				scannerWorkflow: input.scannerWorkflow,
+				maxCheckIns: input.maxCheckIns,
+				host: input.host,
+				image: null,
+				link: input.link,
+				linkText: input.linkText,
+				linkTextFr: input.linkTextFr,
 			},
 		});
 	}),
 	// Update event
-	update: protectedProcedure
-		.input(
-			eventInputSchema.extend({
-				id: z.string(),
-			}),
-		)
-		.mutation(async ({ ctx, input }) => {
-			const userId = ctx.session.user.id;
+	update: protectedProcedure.input(eventUpdateInputSchema).mutation(async ({ ctx, input }) => {
+		const userId = ctx.session.user.id;
 
-			const user = await ctx.prisma.user.findUnique({
-				where: {
-					id: userId,
-				},
-				select: {
-					name: true,
-					roles: {
-						select: {
-							name: true,
-						},
+		const user = await ctx.prisma.user.findUnique({
+			where: {
+				id: userId,
+			},
+			select: {
+				name: true,
+				roles: {
+					select: {
+						name: true,
 					},
 				},
-			});
+			},
+		});
 
-			if (!user) {
-				throw new Error("User not found");
-			}
+		if (!user) {
+			throw new TRPCError({ code: "UNAUTHORIZED", message: "User not found" });
+		}
 
-			if (!hasRoles(user, [RoleName.ORGANIZER, RoleName.ADMIN])) {
-				throw new Error("You do not have permission to update events");
-			}
+		if (!hasRoles(user, [RoleName.ORGANIZER, RoleName.ADMIN])) {
+			throw new TRPCError({ code: "FORBIDDEN", message: "You do not have permission to update events" });
+		}
 
-			const existingEvent = await ctx.prisma.event.findUnique({
-				where: {
-					id: input.id,
-				},
-			});
+		return ctx.prisma.$transaction(async transaction => {
+			const [existingEvent] = await transaction.$queryRaw<
+				Array<{ id: string; start: Date; hidden: boolean; now: Date }>
+			>`
+				SELECT id, start, hidden, UTC_TIMESTAMP(3) AS now FROM Event WHERE id = ${input.id} FOR UPDATE
+			`;
+			if (!existingEvent) throw new TRPCError({ code: "NOT_FOUND", message: "Event not found" });
 
-			if (!existingEvent) {
-				throw new Error("Event not found");
-			}
-
-			if (input.end <= input.start) {
-				throw new Error("Event end time must be after start time");
-			}
-
-			return ctx.prisma.event.update({
-				where: {
-					id: input.id,
-				},
+			const reopenReminder =
+				!input.hidden &&
+				input.start > existingEvent.now &&
+				(existingEvent.hidden || existingEvent.start.getTime() !== input.start.getTime());
+			return transaction.event.update({
+				where: { id: input.id },
 				data: {
 					name: input.name,
 					nameFr: input.nameFr,
@@ -232,11 +275,20 @@ export const eventsRouter = createTRPCRouter({
 					description: input.description,
 					descriptionFr: input.descriptionFr,
 					hidden: input.hidden,
-					image: input.image ?? null,
-					link: input.link ?? null,
-					linkText: input.linkText ?? null,
-					linkTextFr: input.linkTextFr ?? null,
+					type: input.type,
+					scannerWorkflow: input.scannerWorkflow,
+					maxCheckIns: input.maxCheckIns,
+					host: input.host,
+					link: input.link,
+					linkText: input.linkText,
+					linkTextFr: input.linkTextFr,
+					...(input.hidden
+						? { notifiedAt: existingEvent.now, notificationLeaseToken: null, notificationLeaseUntil: null }
+						: reopenReminder
+							? { notifiedAt: null, notificationLeaseToken: null, notificationLeaseUntil: null }
+							: {}),
 				},
 			});
-		}),
+		});
+	}),
 });
