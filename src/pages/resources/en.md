@@ -1,67 +1,65 @@
-# Hack the Hill II Resources
+# Hack the Hill III Resources
 
-Welcome to Hack the Hill II! Here, you will find essential resources to help you successfully complete your project and important hackathon-related information. Happy hacking!
-
-[Hacker Booklet](https://drive.google.com/file/d/1dp9ut4b8qc4IxhBLQ-orBUkegqJrdmmD/view)
+Welcome to Hack the Hill III! Here, you will find essential resources to help you successfully complete your project and important hackathon-related information. Happy hacking!
 
 ---
 
-### 📱 Social Media
+### Social Media
 
 Stay connected with us on these platforms to receive updates, ask questions, and share your experience!
 
 - **Discord**: [Join Discord](https://discord.gg/Hkn8PCk8uR)
-- **Devpost**: [Hack the Hill II Devpost](https://hackthehill-ii.devpost.com/)
+- **Devpost**: [Hack the Hill III Devpost](https://hack-the-hill-iii.devpost.com/)
 - **Instagram**: [Follow on Instagram](https://www.instagram.com/hackthehill/)
 - **X (Twitter)**: [Follow on X](https://x.com/hackthehill_)
 - **LinkedIn**: [Connect on LinkedIn](https://linkedin.com/company/hackthehill)
 - **TikTok**: [Watch on TikTok](https://tiktok.com/hackthehill)
 
-### 📣 Contact Information
+### Incident reporting and emergency contacts
 
-Need assistance? Get in touch with us via email or our help desk at the venue:
+**Emergency:** On campus, call uOttawa Protection Services at **613-562-5411**. Off campus, call **9-1-1**. Contact emergency services first. Once it is safe to do so, notify the organizing team.
 
-- **Email**: [info@ctn-rtc.org](mailto:info@ctn-rtc.org)
-- **Help Desk Location**: CRX C223
-- **For Emergencies**: uOttawa Protection Services: (613) 562-5411, or dial 911 if off-campus.
-- **Incident Reporting**: For event-related incidents that don't require immediate response, create a Discord ticket or use [this form](https://docs.google.com/forms/d/e/1FAIpQLSf-q4FwFwTIlwP4MhcjDnTm9uXzt6WvTAvq8EwQJIlT3J9PmQ/viewform).
+For misconduct, harassment, rule violations, cheating, or other concerns:
 
-### 📋 Key Documents & Policies
+- **Daniel Thorp:** 613-809-9840
+- **Agam Singh:** 289-885-4412
+- **Email:** [president@ctn-rtc.org](mailto:president@ctn-rtc.org)
 
-Here are the important documents and policies that you should review during the hackathon:
+Do not post sensitive incident details publicly.
 
-- **Hackathon Rules**: [View Hack the Hill II Rules](https://docs.google.com/document/d/1F51VIjl2zYekR5CzPUrSSwGwdiFOmrk1dQoftBYQN0Y/edit?usp=sharing)
-- **Code of Conduct**: [Read the Code of Conduct](https://docs.google.com/document/d/1thE_Ia595Cz9YaD8gTbyZ3gnZiBSgkLgl0wwGSANczc/edit?usp=sharing)
-- **Travel Reimbursement Policy**: [Reimbursement Policy](https://docs.google.com/document/d/1MejSNJ-8YAfW_ENU6bRZVji4k_gsXD1pDRkhX1Bkx5A/edit?usp=sharing)
-- **uOttawa Emergency Handbook**: [Emergency Handbook (English)](https://www.uottawa.ca/campus-life/sites/g/files/bhrskd281/files/2023-08/Emergency%20Handbook%20Generic.pdf)
+You may report directly to MLH if you are uncomfortable contacting an event organizer. Reports go to MLH's incident response team, and you may remain anonymous.
+
+- **MLH Canada:** +1 343-453-4532 · [incidents@mlh.io](mailto:incidents@mlh.io)
+
+[MLH Code of Conduct](https://github.com/MLH/mlh-policies/blob/main/code-of-conduct.md) · [uOttawa emergency information](https://www.uottawa.ca/en/emergency) · [Participant & Event Policy](https://docs.google.com/document/d/1mEmObs9W3Q_YJWZ26kinqstjbGlp90BIG_QOxKLwW5Q/edit)
 
 ---
 
-### 🙋‍♂️ Getting Help with Tech Issues 🙋‍♀️
+### Getting Help with Tech Issues
 
 Stuck on a tech issue? You can:
 
 - **Online**: Create a ticket in the [`#get-help`](https://discord.gg/ryFTjgx4xR) channel on Discord.
-- **In-Person**: Visit the help desk at CRX C223 or locate a mentor.
+- **In-Person**: Locate an organizer or mentor.
 
-### 🌐 GitHub Guide
+### GitHub Guide
 
 We recommend using [GitHub](http://github.com/) for version control and project collaboration:
 
 - **Quickstart Guide**: [GitHub Hello World](https://docs.github.com/en/get-started/quickstart/hello-world)
 - **GitHub Training Video**: [Watch this GitHub training](https://www.youtube.com/watch?v=noZnOSpcjYY&ab_channel=GitHubTraining%26Guides)
 
-### 📋 Judging Criteria
+### Judging Criteria
 
-Projects will be judged based on general criteria and specific challenge criteria. Submit your project on Devpost before **11 AM, Sunday, September 29th**.
+To be eligible for judging, create and submit a draft project on Devpost by **12:00 AM (midnight), Sunday, September 27**. You may continue editing that submission until the final deadline at **10:00 AM**.
 
-[Hackathon Judging Criteria](https://docs.google.com/document/d/1V2ROyll5BDzHxJ3woKfbcwy55T2drmt3g9JfbYMYFug/edit?usp=sharing)
-
-### ⏰ Project Submission
+### Project Submission
 
 Submit your project on **Devpost** to be considered for judging.
 
-- **Submission Deadline**: 11 AM, Sunday, September 29th.
+- **Mandatory Draft Deadline**: 12:00 AM (midnight), Sunday, September 27. A project must be on Devpost by this time to be eligible for judging.
+- **Submission Deadline**: 10 AM, Sunday, September 27.
+- **Edits**: You may edit your submitted draft until the final submission deadline.
 - **How to Submit**: [Devpost Submission Guide](https://help.devpost.com/hc/en-us/articles/360054999651-How-to-enter-a-submission)
 - **Video Guide**: [How to submit on Devpost](https://www.youtube.com/watch?v=vCa7QFFthfU)
 

@@ -1,5 +1,7 @@
 {
 	"floor": "Floor {{floor}}",
+	"reset": "Reset",
 	"title": "Maps",
+	"zoom": "Zoom",
 	"zoom-hint": "Scroll or pinch to zoom"
 }

@@ -3,6 +3,7 @@ interface SponsorData {
 	name: string;
 	tier: SponsorTier;
 	logo: string;
+	displayWidth: number;
 	hiringLink?: string;
 	websiteLink?: string;
 	additionalLink?: string;
@@ -26,62 +27,40 @@ const sizeByTier = {
 
 const sponsorsData = [
 	{
-		id: "ross",
-		name: "Ross Video",
-		tier: SponsorTier.PREMIER,
-		logo: "https://2024.hackthehill.com/Logos/Ross.svg",
-		hiringLink: "https://www.rossvideo.com/company/careers/",
-		websiteLink: "https://www.rossvideo.com/",
-		additionalLink:
-			"https://docs.google.com/spreadsheets/d/1QLVS6oEnce8fQmch0NeMT_ggp651Sph1/edit?gid=554881897#gid=554881897",
+		id: "cgi",
+		name: "CGI",
+		tier: SponsorTier.MAYOR,
+		logo:
+			"https://raw.githubusercontent.com/HacktheHill/hackathon-website/8fff547518da8af294d54c4fda287d44f5eda080/src/assets/Logos/CGI.svg",
+		displayWidth: 500,
+		websiteLink: "https://www.cgi.com/",
 	},
 	{
 		id: "ciena",
 		name: "Ciena",
-		tier: SponsorTier.PREMIER,
-		logo: "https://2024.hackthehill.com/Logos/Ciena.svg",
+		tier: SponsorTier.BACKBENCHER,
+		logo:
+			"https://raw.githubusercontent.com/HacktheHill/hackathon-website/8fff547518da8af294d54c4fda287d44f5eda080/src/assets/Logos/Ciena.svg",
+		displayWidth: 500,
 		hiringLink: "https://www.ciena.com/careers/",
-		websiteLink: "https://www.ciena.com/",
+		websiteLink: "https://www.ciena.ca/",
 	},
 	{
-		id: "lonehaven",
-		name: "Lonehaven",
-		tier: SponsorTier.MAYOR,
-		logo: "https://2024.hackthehill.com/Logos/Lonehaven.svg",
+		id: "elevenlabs",
+		name: "ElevenLabs",
+		tier: SponsorTier.IN_KIND,
+		logo:
+			"https://raw.githubusercontent.com/HacktheHill/hackathon-website/8fff547518da8af294d54c4fda287d44f5eda080/src/assets/Logos/ElevenLabs.svg",
+		displayWidth: 220,
+		websiteLink: "https://elevenlabs.io/",
 	},
 	{
-		id: "cse",
-		name: "CSE",
-		tier: SponsorTier.COUNCILLOR,
-		logo: "https://2024.hackthehill.com/Logos/CSE.svg",
-		hiringLink: "https://www.cse-cst.gc.ca/en/careers",
-		websiteLink: "https://www.cse-cst.gc.ca/en",
-	},
-	{
-		id: "red-bull",
-		name: "Red Bull",
-		tier: SponsorTier.COUNCILLOR,
-		logo: "https://2024.hackthehill.com/Logos/Redbull.svg",
-		hiringLink: "https://jobs.redbull.com/ca-en",
-		websiteLink: "https://www.redbull.com/ca-en",
-	},
-	{
-		id: "p&g",
-		name: "Procter & Gamble",
-		tier: SponsorTier.BACKBENCHER,
-		logo: "https://2024.hackthehill.com/Logos/P&G.svg",
-	},
-	{
-		id: "liquid-iv",
-		name: "Liquid IV",
-		tier: SponsorTier.BACKBENCHER,
-		logo: "https://2024.hackthehill.com/Logos/LiquidIV.png",
-	},
-	{
-		id: "fantuan",
-		name: "Fantuan",
-		tier: SponsorTier.BACKBENCHER,
-		logo: "https://2024.hackthehill.com/Logos/Fantuan.png",
+		id: "backboard",
+		name: "Backboard",
+		tier: SponsorTier.IN_KIND,
+		logo: "/assets/sponsors/backboard.svg",
+		displayWidth: 220,
+		websiteLink: "https://backboard.io/",
 	},
 ] satisfies SponsorData[];
 

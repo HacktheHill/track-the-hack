@@ -1,5 +1,7 @@
 {
 	"floor": "Niveau {{floor}}",
+	"reset": "Réinitialiser",
 	"title": "Cartes",
+	"zoom": "Zoom",
 	"zoom-hint": "Faites défiler ou pincez pour zoomer"
 }

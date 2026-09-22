@@ -44,7 +44,7 @@ const SponsorPage = ({ id, name, tier, logo, hiringLink, websiteLink, additional
 	return (
 		<App className="flex flex-col justify-center overflow-y-auto bg-default-gradient p-8" title={t("title")}>
 			<div className="m-auto flex max-w-md flex-col items-center gap-8">
-				<Image src={logo} alt={name} className="h-48" height={200} width={200} />
+				<Image src={logo} alt={name} className="h-48 max-w-full object-contain" height={200} width={200} />
 				<h2 className="text-2xl font-semibold">{t("tier", { tier: t(`tiers.${tier}`) })}</h2>
 				<p className="text-lg">{t(`descriptions.${id}`)}</p>
 				<div className="flex flex-wrap items-center justify-center gap-4">

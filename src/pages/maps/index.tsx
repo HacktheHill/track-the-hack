@@ -36,7 +36,7 @@ const MapFloor = ({ floor }: { floor: number }) => {
 				return (
 					<div className="mx-auto block">
 						<div className="mb-3 flex items-center justify-center gap-3">
-							<span className="text-sm text-dark-color">Zoom</span>
+							<span className="text-sm text-dark-color">{t("zoom")}</span>
 							<input
 								type="range"
 								min={1}
@@ -46,7 +46,9 @@ const MapFloor = ({ floor }: { floor: number }) => {
 								onChange={e => updateZoom(Number(e.target.value))}
 								className="w-48"
 							/>
-							<button type="button" onClick={() => updateZoom(1)}>Reset</button>
+							<button type="button" onClick={() => updateZoom(1)}>
+								{t("reset")}
+							</button>
 							<span className="text-sm text-dark-color">{zoom.toFixed(1)}x</span>
 						</div>
 
