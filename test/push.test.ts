@@ -257,11 +257,20 @@ void test("failed disable preserves both event requests and confirmed disable re
 		updateEventNotification(
 			"event-1",
 			false,
-			{ endpoint: "https://fcm.googleapis.com/token" },
+			{
+				endpoint: "https://fcm.googleapis.com/token",
+				expirationTime: null,
+				keys: validKeys,
+			},
 			vapid.publicKey,
 			"en",
 		),
 	);
+	assert.deepEqual(JSON.parse(String(fetchMock.mock.calls[0]?.arguments[1]?.body)), {
+		eventId: "event-1",
+		enabled: false,
+		subscription: { endpoint: "https://fcm.googleapis.com/token" },
+	});
 	assert.deepEqual(getRequestedEventNotifications(), ["event-1", "event-2"]);
 	fetchMock.mock.mockImplementation(() => Promise.reject(new Error("offline")));
 	await assert.rejects(updateEventNotification("event-1", false, {}, vapid.publicKey, "en"));
@@ -280,12 +289,24 @@ void test("failed disable preserves both event requests and confirmed disable re
 void test("failed enable never promises a reminder; browser readiness requires matching server public key", async t => {
 	browserStorage(t);
 	const fetchMock = t.mock.method(globalThis, "fetch", () => Promise.resolve(Response.json({ success: false })));
-	await assert.rejects(updateEventNotification("new-event", true, {}, vapid.publicKey, "fr"));
+	await assert.rejects(
+		updateEventNotification(
+			"new-event",
+			true,
+			{
+				endpoint: "https://fcm.googleapis.com/token",
+				expirationTime: null,
+				keys: validKeys,
+			},
+			vapid.publicKey,
+			"fr",
+		),
+	);
 	const sentBody: unknown = JSON.parse(String(fetchMock.mock.calls[0]?.arguments[1]?.body));
 	assert.deepEqual(sentBody, {
 		eventId: "new-event",
 		enabled: true,
-		subscription: {},
+		subscription: { endpoint: "https://fcm.googleapis.com/token", keys: validKeys },
 		publicKey: vapid.publicKey,
 		locale: "fr",
 	});

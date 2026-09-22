@@ -3,6 +3,7 @@
 	"close-event": "Close Event",
 	"notify-me": "Notify me when this event starts",
 	"notify-me-active": "You will be notified when this event starts",
+	"notify-me-remove": "Turn off event reminder",
 	"notify-me-unavailable": "Notifications unavailable",
 	"notify-me-error": "Unable to update notifications. Please try again.",
 	"notify-me-cancel-unavailable": "Cancel reminder (notifications unavailable)",

@@ -53,11 +53,16 @@ export const updateEventNotification = async (
 	publicKey: string,
 	locale: "en" | "fr",
 ) => {
+	const requestSubscription = enabled
+		? { endpoint: subscription.endpoint, keys: subscription.keys }
+		: { endpoint: subscription.endpoint };
 	const response = await fetch("/api/push/register", {
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify(
-			enabled ? { eventId, enabled, subscription, publicKey, locale } : { eventId, enabled, subscription },
+			enabled
+				? { eventId, enabled, subscription: requestSubscription, publicKey, locale }
+				: { eventId, enabled, subscription: requestSubscription },
 		),
 	});
 	const result: unknown = await response.json();
