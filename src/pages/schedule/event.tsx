@@ -220,55 +220,7 @@ const EventView = ({ event, types }: EventViewProps) => {
 
 	return (
 		<>
-			<button
-				className="ui-button ui-button-icon absolute right-4 top-4"
-				onClick={() => void router.push("/schedule")}
-				aria-label={t("close-event")}
-			>
-				<svg
-					width="24"
-					height="24"
-					viewBox="0 0 24 24"
-					fill="none"
-					xmlns="http://www.w3.org/2000/svg"
-					aria-hidden="true"
-				>
-					<title>{t("close-event")}</title>
-					<path
-						d="M24 0L0 24"
-						stroke="currentColor"
-						strokeWidth="2"
-						strokeLinecap="round"
-						strokeLinejoin="round"
-					></path>
-					<path
-						d="M0 0L24 24"
-						stroke="currentColor"
-						strokeWidth="2"
-						strokeLinecap="round"
-						strokeLinejoin="round"
-					></path>
-				</svg>
-			</button>
-
-			<div className="flex flex-col font-rubik text-dark-color">
-				<h1 className="ui-page-title">{locale === "fr" ? nameFr : name}</h1>
-				<p className="text-lg">
-					{start.toLocaleDateString(dateLocale, {
-						weekday: "long",
-						hour: "numeric",
-						minute: "numeric",
-					})}
-					{" - "}
-					{end.toLocaleDateString(dateLocale, {
-						weekday: "long",
-						hour: "numeric",
-						minute: "numeric",
-					})}
-				</p>
-				<h3 className="text-md">{room}</h3>
-				{type !== "ALL" && <h3 className="text-md">{types[type]}</h3>}
-				<h3 className="text-sm">{host}</h3>
+			<div className="absolute right-4 top-4 flex gap-2">
 				<button
 					type="button"
 					onClick={() => void handleNotifyToggle()}
@@ -277,13 +229,7 @@ const EventView = ({ event, types }: EventViewProps) => {
 					aria-pressed={notifyRequested}
 					aria-label={notifyLabel}
 					title={notifyLabel}
-					className={`relative mt-4 inline-flex h-11 w-11 items-center justify-center rounded-full border shadow-sm transition-all focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-3 ${
-						!pushAvailable && !notifyRequested
-							? "cursor-not-allowed border-dark-secondary-color bg-light-tertiary-color text-dark-secondary-color opacity-50"
-							: notifyRequested
-								? "border-dark-color bg-dark-color text-light-color hover:-translate-y-0.5"
-								: "border-dark-secondary-color bg-light-primary-color text-dark-color hover:-translate-y-0.5 hover:border-dark-color hover:bg-light-secondary-color"
-					}`}
+					className="ui-button ui-button-icon relative !bg-[var(--color-surface)] !text-[var(--color-ink)]"
 				>
 					<svg
 						width="22"
@@ -303,7 +249,7 @@ const EventView = ({ event, types }: EventViewProps) => {
 						/>
 					</svg>
 					{notifyRequested && (
-						<span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full border-2 border-light-primary-color bg-dark-secondary-color text-light-color">
+						<span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full border-2 border-[var(--color-surface)] bg-dark-primary-color text-light-color">
 							<svg width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true">
 								<path
 									d="M1.25 4.1 3.1 5.8 6.75 2.2"
@@ -316,6 +262,56 @@ const EventView = ({ event, types }: EventViewProps) => {
 						</span>
 					)}
 				</button>
+				<button
+					className="ui-button ui-button-icon"
+					onClick={() => void router.push("/schedule")}
+					aria-label={t("close-event")}
+				>
+					<svg
+						width="24"
+						height="24"
+						viewBox="0 0 24 24"
+						fill="none"
+						xmlns="http://www.w3.org/2000/svg"
+						aria-hidden="true"
+					>
+						<title>{t("close-event")}</title>
+						<path
+							d="M24 0L0 24"
+							stroke="currentColor"
+							strokeWidth="2"
+							strokeLinecap="round"
+							strokeLinejoin="round"
+						></path>
+						<path
+							d="M0 0L24 24"
+							stroke="currentColor"
+							strokeWidth="2"
+							strokeLinecap="round"
+							strokeLinejoin="round"
+						></path>
+					</svg>
+				</button>
+			</div>
+
+			<div className="flex flex-col font-rubik text-dark-color">
+				<h1 className="ui-page-title">{locale === "fr" ? nameFr : name}</h1>
+				<p className="text-lg">
+					{start.toLocaleDateString(dateLocale, {
+						weekday: "long",
+						hour: "numeric",
+						minute: "numeric",
+					})}
+					{" - "}
+					{end.toLocaleDateString(dateLocale, {
+						weekday: "long",
+						hour: "numeric",
+						minute: "numeric",
+					})}
+				</p>
+				<h3 className="text-md">{room}</h3>
+				{type !== "ALL" && <h3 className="text-md">{types[type]}</h3>}
+				<h3 className="text-sm">{host}</h3>
 				<span className="sr-only" aria-live="polite">
 					{notifyRequested ? t("notify-me-active") : ""}
 				</span>
