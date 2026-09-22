@@ -51,6 +51,7 @@
 		"show": "Afficher l'événement",
 		"cancel": "Annuler",
 		"save": "Enregistrer",
+		"save-failed": "L'événement n'a pas pu être enregistré. Veuillez réessayer.",
 
 		"name-en-required": "Le nom de l'événement en anglais est requis.",
 		"name-fr-required": "Le nom de l'événement en français est requis.",

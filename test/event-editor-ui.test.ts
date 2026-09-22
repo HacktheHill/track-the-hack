@@ -106,11 +106,19 @@ for (const mode of ["create", "update"]) {
 		await flush(() => requests[0]?.fail());
 		assert.equal(button(renderer, "Save").props.disabled, false);
 		assert.equal(button(renderer, "Cancel").props.disabled, false);
-		assert.ok(renderer.root.findAllByType("p").some(node => node.children.includes("Save failed")));
+		assert.ok(
+			renderer.root
+				.findAllByType("p")
+				.some(node => node.children.includes("The event could not be saved. Please try again.")),
+		);
 		await flush(submitHandler(renderer));
 		assert.equal(requests.length, 2);
 		assert.equal(button(renderer, "Save").props.disabled, true);
-		assert.ok(!renderer.root.findAllByType("p").some(node => node.children.includes("Save failed")));
+		assert.ok(
+			!renderer.root
+				.findAllByType("p")
+				.some(node => node.children.includes("The event could not be saved. Please try again.")),
+		);
 		const saved = requests[1]?.input;
 		assert.ok(
 			saved &&

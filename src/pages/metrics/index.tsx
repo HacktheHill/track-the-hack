@@ -30,7 +30,7 @@ const Metrics = () => {
 			<div className="mx-auto flex max-w-6xl flex-col gap-8 p-8">
 				<h1 className="ui-page-title">{t("title")}</h1>
 				{query.isLoading && <Loading />}
-				{query.isError && <Error message={query.error.message} />}
+				{query.isError && <Error message={t("common:temporarily-unavailable")} />}
 				<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 					{totals?.map(([key, value]) => (
 						<div key={key} className="ui-panel p-5">

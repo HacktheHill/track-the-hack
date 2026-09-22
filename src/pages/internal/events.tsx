@@ -38,7 +38,7 @@ const Events: NextPage = () => {
 	if (query.isError) {
 		return (
 			<App className="overflow-y-auto bg-default-gradient" integrated={true} title={t("title")}>
-				<Error message={query.error.message} />
+				<Error message={t("common:temporarily-unavailable")} />
 			</App>
 		);
 	}
