@@ -19,7 +19,7 @@ const Sponsors = () => {
 
 	return (
 		<App
-			className="flex flex-col items-center justify-around gap-8 overflow-y-auto bg-default-gradient p-8"
+			className="flex flex-col items-center justify-around gap-8 overflow-x-hidden overflow-y-auto bg-default-gradient p-8"
 			title={t("title")}
 		>
 			<h1 className="ui-page-title text-center">{t("title")}</h1>
@@ -41,8 +41,9 @@ const Sponsors = () => {
 									<Image
 										src={sponsor.logo}
 										alt={sponsor.name}
-										width={sizeByTier[sponsor.tier]}
+										width={sponsor.displayWidth}
 										height={sizeByTier[sponsor.tier]}
+										className="h-auto max-w-full"
 									/>
 								</Link>
 							) : (
@@ -50,9 +51,13 @@ const Sponsors = () => {
 									key={sponsor.id}
 									src={sponsor.logo}
 									alt={sponsor.name}
-									width={sizeByTier[sponsor.tier]}
+									width={sponsor.displayWidth}
 									height={sizeByTier[sponsor.tier]}
-									className="drop-shadow-xl"
+									className={
+										sponsor.tier === SponsorTier.IN_KIND
+											? "h-auto w-[calc(50%-0.5rem)] max-w-[220px] drop-shadow-xl"
+											: "h-auto max-w-full drop-shadow-xl"
+									}
 								/>
 							),
 						)}
