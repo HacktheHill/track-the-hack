@@ -1,7 +1,7 @@
 # Development verification
 
 This workflow exercises the Track the Hack-owned lifecycle without requiring a
-real Tally form, Google Sheet, email recipient, Google OAuth client, Gmail token,
+real Tally form, Google Sheet, email recipient, Google OAuth client,
 or physical camera.
 
 ## One-time setup

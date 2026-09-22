@@ -38,7 +38,7 @@ Option C is selected. Discord is the sole team system and owns team names, membe
 - Keep only aggregate operational metrics derived from the minimal Hacker model, Presence, and events. Demographic reporting stays in Tally or restricted Sheet views.
 - Do not infer, reconstruct, or import demographics, school, identity, detailed dietary/accessibility information, application answers, or waiver/guardian data for reporting.
 - Sponsor reporting defaults to aggregate data. Do not add individual participant export or sharing without a separately documented explicit opt-in, specific purpose, and field-minimized disclosure. If no such approved feature exists, individual-level sharing remains unsupported.
-- Preserve aggregate sponsorship tooling that does not use participant identity or application data.
+- Preserve aggregate sponsor reporting that does not use participant identity or application data. The legacy Gmail-draft generator is retired.
 
 ## Audit logging and privacy boundary
 
@@ -52,7 +52,7 @@ Option C is selected. Discord is the sole team system and owns team names, membe
 - Remove obsolete participant providers, roles, routes, APIs, components, dependencies, environment variables, translations, assets, seed data, tests, and documentation left behind by the old identity/application system or superseded Phase 1–2 implementations.
 - Remove dead participant-User linkage, application/review, resume/signature upload, emergency-contact, unsubscribe, demographic dashboard, public-profile, directory/search, raw Discord-ID, and obsolete team code.
 - Do not add or manage an `/apply` redirect; application routing is already handled externally at `https://apply.hackthehill.com`.
-- Preserve events and schedules, maps and resources, hardware inventory, organizer role administration, aggregate sponsorship tooling, organizer authentication, and valid Presence behaviour.
+- Preserve events and schedules, maps and resources, hardware inventory, organizer role administration, aggregate sponsor reporting, organizer authentication, and valid Presence behaviour.
 - Keep the final implementation consistent with the exact minimal Hacker field list and data-ownership boundary in `docs/PROPOSED_FLOW.md`.
 
 ## External-system context
