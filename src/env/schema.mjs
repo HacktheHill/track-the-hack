@@ -34,9 +34,6 @@ export const serverSchema = z.object({
 	VAPID_PUBLIC_KEY: z.string().optional(),
 	VAPID_PRIVATE_KEY: z.string().optional(),
 	VAPID_EMAIL: z.preprocess(value => value || undefined, z.string().email().optional()),
-	SPONSORSHIP_GOOGLE_CLIENT_ID: z.string(),
-	SPONSORSHIP_GOOGLE_CLIENT_SECRET: z.string(),
-	SPONSORSHIP_GOOGLE_REFRESH_TOKEN: z.string(),
 });
 
 /**
@@ -62,9 +59,6 @@ export const serverEnv = {
 	VAPID_PUBLIC_KEY: process.env.VAPID_PUBLIC_KEY,
 	VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY,
 	VAPID_EMAIL: process.env.VAPID_EMAIL,
-	SPONSORSHIP_GOOGLE_CLIENT_ID: process.env.SPONSORSHIP_GOOGLE_CLIENT_ID,
-	SPONSORSHIP_GOOGLE_CLIENT_SECRET: process.env.SPONSORSHIP_GOOGLE_CLIENT_SECRET,
-	SPONSORSHIP_GOOGLE_REFRESH_TOKEN: process.env.SPONSORSHIP_GOOGLE_REFRESH_TOKEN,
 };
 
 /**
