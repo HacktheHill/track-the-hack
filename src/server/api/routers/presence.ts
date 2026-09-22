@@ -21,7 +21,7 @@ const scannerInput = z.object({
 const requireScannerOrganizer = async (ctx: { session: { user: { id: string } }; prisma: PrismaClient }) => {
 	const organizer = await ctx.prisma.user.findUnique({
 		where: { id: ctx.session.user.id },
-		select: { name: true, roles: { select: { name: true } } },
+		select: { id: true, name: true, roles: { select: { name: true } } },
 	});
 	if (!organizer || !hasRoles(organizer, [RoleName.ORGANIZER, RoleName.ADMIN])) {
 		throw new TRPCError({ code: "FORBIDDEN" });
@@ -75,6 +75,7 @@ export const presenceRouter = createTRPCRouter({
 				sourceId: presenceId,
 				sourceType: "Presence",
 				author: organizer.name ?? "Unknown",
+				userId: organizer.id,
 				route: "presence.scan",
 				details: `Scanned participant ${input.hackerId} for event ${input.eventId} (${result.workflow})`,
 			});
@@ -100,6 +101,7 @@ export const presenceRouter = createTRPCRouter({
 					sourceId: presenceId,
 					sourceType: "Presence",
 					author: organizer.name ?? "Unknown",
+					userId: organizer.id,
 					route: "presence.adjust",
 					details: `Adjusted participant ${input.hackerId} for event ${input.eventId} by ${input.amount}`,
 				});

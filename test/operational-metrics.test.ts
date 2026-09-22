@@ -1,7 +1,29 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { MealCategory, TShirtSize } from "@prisma/client";
-import { getOperationalMetrics, type OperationalMetricsRepository } from "@/server/services/operational-metrics";
+import { MealCategory, ScannerWorkflow, TShirtSize, type PrismaClient } from "@prisma/client";
+import {
+	createPrismaOperationalMetricsRepository,
+	getOperationalMetrics,
+	type OperationalMetricsRepository,
+} from "@/server/services/operational-metrics";
+
+void test("checked-in count uses distinct participant IDs across check-in events", async t => {
+	const groupBy = t.mock.fn(() => Promise.resolve([{ hackerId: "participant-1" }, { hackerId: "participant-2" }]));
+	// Partial database mock exposes only the operation exercised by this repository method.
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+	const prisma = {
+		presence: { groupBy },
+	} as unknown as Pick<PrismaClient, "event" | "hacker" | "presence">;
+
+	const repository = createPrismaOperationalMetricsRepository(prisma);
+	assert.equal(await repository.countCheckedIn(), 2);
+	assert.deepEqual(groupBy.mock.calls[0]?.arguments, [
+		{
+			by: ["hackerId"],
+			where: { event: { scannerWorkflow: ScannerWorkflow.CHECK_IN }, value: { gt: 0 } },
+		},
+	]);
+});
 
 void test("operational metrics expose only aggregate database-derived values", async () => {
 	const hackerGroupings: string[][] = [];

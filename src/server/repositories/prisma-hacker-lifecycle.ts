@@ -70,8 +70,15 @@ export class PrismaHackerLifecycleRepository implements HackerLifecycleRepositor
 		private readonly runLockingTransaction: HackerLifecycleTransactionRunner = createTransactionRunner(prisma),
 	) {}
 
-	async upsertProvisioned(record: ProvisioningRecord) {
-		await this.upsertProvisionedInTransaction(this.prisma, record);
+	async upsertProvisionedBatch(records: ProvisioningRecord[]) {
+		await this.prisma.$transaction(
+			async transaction => {
+				for (const record of records) {
+					await this.upsertProvisionedInTransaction(transaction, record);
+				}
+			},
+			{ timeout: 30_000 },
+		);
 	}
 
 	private async upsertProvisionedInTransaction(

@@ -57,10 +57,20 @@ class MemoryRepository implements HackerLifecycleRepository {
 	readonly capabilities = new Map<string, string>();
 	readonly claims = new Map<string, { hackerId: string; expiresAt: Date; consumedAt: Date | null }>();
 	readonly sessions = new Map<string, { verifier: string; hackerId: string; expiresAt: Date }>();
+	provisioningBatchCalls = 0;
 
-	upsertProvisioned(record: ProvisioningRecord) {
-		const existing = this.hackers.get(record.id);
-		this.hackers.set(record.id, { ...existing, ...record, confirmed: existing?.confirmed ?? false });
+	constructor(private readonly failProvisioningAt?: number) {}
+
+	upsertProvisionedBatch(records: ProvisioningRecord[]) {
+		this.provisioningBatchCalls++;
+		const nextHackers = new Map(this.hackers);
+		for (const [index, record] of records.entries()) {
+			if (index === this.failProvisioningAt) throw new Error("Provisioning failed");
+			const existing = nextHackers.get(record.id);
+			nextHackers.set(record.id, { ...existing, ...record, confirmed: existing?.confirmed ?? false });
+		}
+		this.hackers.clear();
+		for (const [id, hacker] of nextHackers) this.hackers.set(id, hacker);
 		return Promise.resolve();
 	}
 
@@ -153,6 +163,39 @@ void test("provisioning is idempotent by exact id and preserves confirmation", a
 	assert.equal(repository.hackers.size, 1);
 	assert.equal(repository.hackers.get(participantId)?.tShirtSize, "L");
 	assert.equal(repository.hackers.get(participantId)?.confirmed, true);
+});
+
+void test("provisioning validates first, calls one batch operation, and publishes no partial state on failure", async () => {
+	const existingId = "existing_participant_0123456789";
+	const firstId = "first_participant_012345678901";
+	const failingId = "failing_participant_0123456789";
+	const repository = new MemoryRepository(1);
+	repository.hackers.set(existingId, {
+		...provisionInput({ id: existingId, tShirtSize: "S" }),
+		acceptanceExpiry: new Date("2026-09-01T03:59:59.000Z"),
+		tShirtSize: "S",
+		mealCategory: "HALAL",
+		confirmed: true,
+	});
+
+	await assert.rejects(
+		provisionHackers(repository, {
+			hackers: [provisionInput({ id: firstId }), provisionInput({ id: failingId })],
+		}),
+		/Provisioning failed/,
+	);
+	assert.equal(repository.provisioningBatchCalls, 1);
+	assert.equal(repository.hackers.has(firstId), false);
+	assert.equal(repository.hackers.has(failingId), false);
+	assert.equal(repository.hackers.get(existingId)?.confirmed, true);
+	assert.equal(repository.hackers.get(existingId)?.tShirtSize, "S");
+
+	await assert.rejects(
+		provisionHackers(repository, {
+			hackers: [provisionInput({ id: firstId }), provisionInput({ id: "123" })],
+		}),
+	);
+	assert.equal(repository.provisioningBatchCalls, 1);
 });
 
 void test("provisioning accepts a T-shirt opt-out alongside a size and preserves it on access issuance", async () => {

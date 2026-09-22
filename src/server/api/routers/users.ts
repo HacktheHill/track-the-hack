@@ -1,4 +1,4 @@
-import { RoleName } from "@prisma/client";
+import { Prisma, RoleName } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { hasRoles } from "@/utils/helpers";
@@ -28,26 +28,49 @@ export const userRouter = createTRPCRouter({
 		.mutation(async ({ ctx, input }) => {
 			const admin = await getAdmin(ctx);
 			const userIds = [...new Set(input.userIds)];
-			const foundUsers = await ctx.prisma.user.findMany({
-				where: { id: { in: userIds } },
-				select: { id: true },
-			});
-			if (foundUsers.length !== userIds.length) {
-				throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
-			}
+			const roles = [...new Set(input.roles)];
 
 			await ctx.prisma.$transaction(
-				userIds.map(id =>
-					ctx.prisma.user.update({
-						where: { id },
-						data: { roles: { set: input.roles.map(name => ({ name })) } },
-					}),
-				),
+				async transaction => {
+					const foundUsers = await transaction.user.findMany({
+						where: { id: { in: userIds } },
+						select: { id: true },
+					});
+					if (foundUsers.length !== userIds.length) {
+						throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+					}
+
+					for (const name of roles) {
+						await transaction.role.upsert({
+							where: { name },
+							create: { name },
+							update: {},
+						});
+					}
+
+					if (!roles.includes(RoleName.ADMIN)) {
+						const remainingAdmins = await transaction.user.count({
+							where: { id: { notIn: userIds }, roles: { some: { name: RoleName.ADMIN } } },
+						});
+						if (remainingAdmins === 0) {
+							throw new TRPCError({ code: "BAD_REQUEST", message: "At least one admin is required" });
+						}
+					}
+
+					for (const id of userIds) {
+						await transaction.user.update({
+							where: { id },
+							data: { roles: { set: roles.map(name => ({ name })) } },
+						});
+					}
+				},
+				{ isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
 			);
 			await log(ctx, {
 				sourceId: admin.id,
 				sourceType: "User",
 				author: admin.name ?? admin.id,
+				userId: admin.id,
 				route: "/internal/roles",
 				action: "UpdateRoles",
 				details: `Updated organizer roles for user ids ${userIds.join(", ")}.`,
