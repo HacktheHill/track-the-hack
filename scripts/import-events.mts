@@ -56,12 +56,15 @@ const events = rows.map(row => {
 	const start = parseTorontoDate(row.start);
 	const end = parseTorontoDate(row.end);
 	if (end <= start) throw new Error(`${row.importKey}: end must be after start`);
+	if (Buffer.byteLength(row.description, "utf8") > 65_535 || Buffer.byteLength(row.descriptionFr, "utf8") > 65_535) {
+		throw new Error(`${row.importKey}: descriptions must fit in a MySQL TEXT column`);
+	}
 	const linkValues = [row.link, row.linkText, row.linkTextFr];
 	if (linkValues.some(Boolean) && !linkValues.every(Boolean)) {
 		throw new Error(`${row.importKey}: link and both localized labels must be provided together`);
 	}
 	const maxCheckIns = row.maxCheckIns === "" ? null : Number(row.maxCheckIns);
-	if (maxCheckIns !== null && (!Number.isSafeInteger(maxCheckIns) || maxCheckIns < 0)) {
+	if (maxCheckIns !== null && (!Number.isInteger(maxCheckIns) || maxCheckIns < 0 || maxCheckIns > 2_147_483_647)) {
 		throw new Error(`${row.importKey}: maxCheckIns must be a non-negative integer`);
 	}
 
@@ -96,13 +99,39 @@ if (!apply) {
 const prisma = new PrismaClient();
 try {
 	await prisma.$transaction(
-		events.map(event =>
-			prisma.event.upsert({
-				where: { importKey: event.importKey },
-				create: event,
-				update: event,
-			}),
-		),
+		async transaction => {
+			for (const event of events) {
+				const [existing] = await transaction.$queryRaw<
+					Array<{ id: string; start: Date; hidden: boolean; now: Date }>
+				>`
+					SELECT id, start, hidden, UTC_TIMESTAMP(3) AS now
+					FROM Event
+					WHERE importKey = ${event.importKey}
+					FOR UPDATE
+				`;
+				if (!existing) {
+					await transaction.event.create({ data: event });
+					continue;
+				}
+
+				const reopenReminder =
+					!event.hidden &&
+					event.start > existing.now &&
+					(existing.hidden || existing.start.getTime() !== event.start.getTime());
+				await transaction.event.update({
+					where: { id: existing.id },
+					data: {
+						...event,
+						...(event.hidden
+							? { notifiedAt: existing.now, notificationLeaseToken: null, notificationLeaseUntil: null }
+							: reopenReminder
+								? { notifiedAt: null, notificationLeaseToken: null, notificationLeaseUntil: null }
+								: {}),
+					},
+				});
+			}
+		},
+		{ maxWait: 10_000, timeout: 30_000 },
 	);
 } finally {
 	await prisma.$disconnect();
