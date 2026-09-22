@@ -42,19 +42,26 @@ jobs:
             CANCELLATION_TOKEN_SECRET: build-only-cancellation-secret-at-least-32-characters
             CLAIM_TOKEN_SECRET: build-only-claim-token-secret-at-least-32-characters
             PARTICIPANT_SESSION_SECRET: build-only-participant-session-secret-at-least-32-chars
-            SPONSORSHIP_GOOGLE_CLIENT_ID: build
-            SPONSORSHIP_GOOGLE_CLIENT_SECRET: build
-            SPONSORSHIP_GOOGLE_REFRESH_TOKEN: build
         steps:
             - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  fetch-depth: 0
             - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
               with:
                   node-version: 24.x
                   cache: npm
             - run: npm ci --include=dev
+            - run: npm run check:commits
+              env:
+                  COMMIT_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+                  COMMIT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+            - run: npx prisma validate
             - run: npx prisma migrate deploy
+            - run: npx prisma migrate diff --from-url "$DATABASE_URL" --to-schema-datamodel prisma/schema.prisma --exit-code
             - run: npm test
               env:
                   NODE_ENV: test
-            - run: npx tsc --noEmit
+            - run: npm run typecheck
+            - run: npm run lint
+            - run: git diff --check
             - run: npm run build
