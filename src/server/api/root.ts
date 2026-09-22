@@ -1,7 +1,6 @@
 import { eventsRouter } from "./routers/events";
 import { hackerRouter } from "./routers/hackers";
 import { presenceRouter } from "./routers/presence";
-import { sponsorshipGmailDraftsRouter } from "./routers/sponsorshipGmailDrafts";
 import { userRouter } from "./routers/users";
 import { metricsRouter } from "./routers/metrics";
 import { createTRPCRouter } from "./trpc";
@@ -16,7 +15,6 @@ export const appRouter = createTRPCRouter({
 	hackers: hackerRouter,
 	events: eventsRouter,
 	presence: presenceRouter,
-	sponsorshipGmailDrafts: sponsorshipGmailDraftsRouter,
 	metrics: metricsRouter,
 });
 
