@@ -8,6 +8,8 @@
 	"notify-me-cancel-unavailable": "Annuler le rappel (notifications indisponibles)",
 	"type": {
 		"ALL": "Tout",
+		"GENERAL": "Général",
+		"COMPETITION": "Compétition",
 		"WORKSHOP": "Atelier",
 		"CAREER_FAIR": "Salon de l'emploi",
 		"FOOD": "Nourriture",

@@ -29,6 +29,8 @@ COPY .npmrc ./
 COPY prisma ./prisma
 COPY tsconfig.json ./
 COPY scripts/provision-organizer.mts ./scripts/
+COPY scripts/import-events.mts ./scripts/
+COPY prisma/hack-the-hill-iii-events.csv ./prisma/
 COPY src/server/lib/organizer-auth.ts ./src/server/lib/
 RUN npm ci --include=dev && npm cache clean --force
 USER app
