@@ -210,6 +210,13 @@ const EventView = ({ event, types }: EventViewProps) => {
 	} = event;
 
 	const dateLocale = locale === "fr" ? "fr-CA" : "en-CA";
+	const notifyLabel = !pushAvailable
+		? notifyRequested
+			? t("notify-me-cancel-unavailable")
+			: t("notify-me-unavailable")
+		: notifyRequested
+			? t("notify-me-remove")
+			: t("notify-me");
 
 	return (
 		<>
@@ -268,22 +275,50 @@ const EventView = ({ event, types }: EventViewProps) => {
 					disabled={notifyPending || (!pushAvailable && !notifyRequested)}
 					aria-busy={notifyPending}
 					aria-pressed={notifyRequested}
-					className={`mt-4 w-fit rounded-lg border px-4 py-2 font-coolvetica text-base transition-colors ${
+					aria-label={notifyLabel}
+					title={notifyLabel}
+					className={`relative mt-4 inline-flex h-11 w-11 items-center justify-center rounded-full border shadow-sm transition-all focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-3 ${
 						!pushAvailable && !notifyRequested
-							? "cursor-not-allowed border-dark-secondary-color bg-light-tertiary-color text-dark-secondary-color opacity-60"
+							? "cursor-not-allowed border-dark-secondary-color bg-light-tertiary-color text-dark-secondary-color opacity-50"
 							: notifyRequested
-								? "border-dark-color bg-dark-color text-light-color"
-								: "border-dark-color bg-light-primary-color text-dark-color hover:bg-dark-secondary-color"
+								? "border-dark-color bg-dark-color text-light-color hover:-translate-y-0.5"
+								: "border-dark-secondary-color bg-light-primary-color text-dark-color hover:-translate-y-0.5 hover:border-dark-color hover:bg-light-secondary-color"
 					}`}
 				>
-					{!pushAvailable
-						? notifyRequested
-							? t("notify-me-cancel-unavailable")
-							: t("notify-me-unavailable")
-						: notifyRequested
-							? t("notify-me-active")
-							: t("notify-me")}
+					<svg
+						width="22"
+						height="22"
+						viewBox="0 0 24 24"
+						fill="none"
+						xmlns="http://www.w3.org/2000/svg"
+						aria-hidden="true"
+						className={notifyPending ? "animate-pulse" : ""}
+					>
+						<path
+							d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4"
+							stroke="currentColor"
+							strokeWidth="1.8"
+							strokeLinecap="round"
+							strokeLinejoin="round"
+						/>
+					</svg>
+					{notifyRequested && (
+						<span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full border-2 border-light-primary-color bg-dark-secondary-color text-light-color">
+							<svg width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true">
+								<path
+									d="M1.25 4.1 3.1 5.8 6.75 2.2"
+									stroke="currentColor"
+									strokeWidth="1.5"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+								/>
+							</svg>
+						</span>
+					)}
 				</button>
+				<span className="sr-only" aria-live="polite">
+					{notifyRequested ? t("notify-me-active") : ""}
+				</span>
 				{notifyError && (
 					<p role="alert" className="mt-2 text-sm">
 						{t("notify-me-error")}
