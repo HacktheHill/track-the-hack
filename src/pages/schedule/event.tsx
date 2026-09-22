@@ -85,6 +85,8 @@ const EventPage: NextPage = () => {
 
 	const types = {
 		[EventType.ALL]: t("type.ALL"),
+		[EventType.GENERAL]: t("type.GENERAL"),
+		[EventType.COMPETITION]: t("type.COMPETITION"),
 		[EventType.CAREER_FAIR]: t("type.CAREER_FAIR"),
 		[EventType.FOOD]: t("type.FOOD"),
 		[EventType.SOCIAL]: t("type.SOCIAL"),

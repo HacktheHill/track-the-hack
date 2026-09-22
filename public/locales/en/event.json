@@ -8,6 +8,8 @@
 	"notify-me-cancel-unavailable": "Cancel reminder (notifications unavailable)",
 	"type": {
 		"ALL": "All",
+		"GENERAL": "General",
+		"COMPETITION": "Competition",
 		"WORKSHOP": "Workshop",
 		"CAREER_FAIR": "Career Fair",
 		"FOOD": "Food",

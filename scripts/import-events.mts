@@ -1,0 +1,111 @@
+import { readFile } from "node:fs/promises";
+import { EventType, PrismaClient, ScannerWorkflow } from "@prisma/client";
+import csv from "csvtojson";
+import { z } from "zod";
+
+const rowSchema = z
+	.object({
+		importKey: z.string().trim().min(1).max(191),
+		seriesKey: z.string().trim().min(1).max(191),
+		start: z.string().trim().min(1),
+		end: z.string().trim().min(1),
+		hidden: z.enum(["TRUE", "FALSE"]),
+		name: z.string().trim().min(1).max(191),
+		nameFr: z.string().trim().min(1).max(191),
+		type: z.nativeEnum(EventType),
+		scannerWorkflow: z.nativeEnum(ScannerWorkflow),
+		host: z.string().trim().max(191),
+		description: z.string().trim().min(1).max(65_535),
+		descriptionFr: z.string().trim().min(1).max(65_535),
+		room: z.string().trim().min(1).max(191),
+		tiktok: z.literal(""),
+		image: z.string().trim().max(191),
+		link: z.string().trim().max(191),
+		linkText: z.string().trim().max(191),
+		linkTextFr: z.string().trim().max(191),
+		maxCheckIns: z.string().trim(),
+	})
+	.strict();
+
+const parseTorontoDate = (value: string) => {
+	const match = /^(\d{1,2})\/(\d{1,2})\/(\d{4}) (\d{1,2}):(\d{2}) (AM|PM)$/.exec(value);
+	if (!match) throw new Error(`Invalid Toronto date: ${value}`);
+	const [, month, day, year, rawHour, minute, period] = match;
+	if (!month || !day || !year || !rawHour || !minute || !period) throw new Error(`Invalid Toronto date: ${value}`);
+	let hour = Number(rawHour) % 12;
+	if (period === "PM") hour += 12;
+	const iso = `${year}-${month?.padStart(2, "0")}-${day?.padStart(2, "0")}T${String(hour).padStart(2, "0")}:${minute}:00-04:00`;
+	const date = new Date(iso);
+	if (Number.isNaN(date.getTime())) throw new Error(`Invalid Toronto date: ${value}`);
+	return date;
+};
+
+const nullable = (value: string) => value || null;
+const args = process.argv.slice(2);
+const inputPath = args.find(argument => !argument.startsWith("--")) ?? "prisma/hack-the-hill-iii-events.csv";
+const apply = args.includes("--apply");
+const source = await readFile(inputPath, "utf8");
+const parsedRows = await csv({ output: "json" }).fromString(source);
+const rows = z.array(rowSchema).parse(parsedRows);
+
+if (new Set(rows.map(row => row.importKey)).size !== rows.length) {
+	throw new Error("Every importKey must be unique");
+}
+
+const events = rows.map(row => {
+	const start = parseTorontoDate(row.start);
+	const end = parseTorontoDate(row.end);
+	if (end <= start) throw new Error(`${row.importKey}: end must be after start`);
+	const linkValues = [row.link, row.linkText, row.linkTextFr];
+	if (linkValues.some(Boolean) && !linkValues.every(Boolean)) {
+		throw new Error(`${row.importKey}: link and both localized labels must be provided together`);
+	}
+	const maxCheckIns = row.maxCheckIns === "" ? null : Number(row.maxCheckIns);
+	if (maxCheckIns !== null && (!Number.isSafeInteger(maxCheckIns) || maxCheckIns < 0)) {
+		throw new Error(`${row.importKey}: maxCheckIns must be a non-negative integer`);
+	}
+
+	return {
+		importKey: row.importKey,
+		seriesKey: row.seriesKey,
+		start,
+		end,
+		hidden: row.hidden === "TRUE",
+		name: row.name,
+		nameFr: row.nameFr,
+		type: row.type,
+		scannerWorkflow: row.scannerWorkflow,
+		host: nullable(row.host),
+		description: row.description,
+		descriptionFr: row.descriptionFr,
+		room: row.room,
+		image: nullable(row.image),
+		link: nullable(row.link),
+		linkText: nullable(row.linkText),
+		linkTextFr: nullable(row.linkTextFr),
+		maxCheckIns,
+	};
+});
+
+console.info(`Validated ${events.length} events from ${inputPath}.`);
+if (!apply) {
+	console.info("Dry run only. Pass --apply to upsert the schedule.");
+	process.exit(0);
+}
+
+const prisma = new PrismaClient();
+try {
+	await prisma.$transaction(
+		events.map(event =>
+			prisma.event.upsert({
+				where: { importKey: event.importKey },
+				create: event,
+				update: event,
+			}),
+		),
+	);
+} finally {
+	await prisma.$disconnect();
+}
+
+console.info(`Upserted ${events.length} events.`);

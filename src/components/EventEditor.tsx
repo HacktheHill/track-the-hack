@@ -46,7 +46,15 @@ const formatDateTimeLocal = (date: Date) => {
 	return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 
-const eventTypes = [EventType.ALL, EventType.WORKSHOP, EventType.SOCIAL, EventType.CAREER_FAIR, EventType.FOOD];
+const eventTypes = [
+	EventType.ALL,
+	EventType.GENERAL,
+	EventType.COMPETITION,
+	EventType.WORKSHOP,
+	EventType.SOCIAL,
+	EventType.CAREER_FAIR,
+	EventType.FOOD,
+];
 const scannerWorkflows = [
 	ScannerWorkflow.ATTENDANCE,
 	ScannerWorkflow.CHECK_IN,

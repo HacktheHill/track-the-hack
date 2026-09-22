@@ -141,6 +141,8 @@ model Presence {
 
 model Event {
   id                     String          @id @default(cuid())
+  importKey              String?         @unique
+  seriesKey              String?
   start                  DateTime
   end                    DateTime
   hidden                 Boolean         @default(false)
@@ -164,6 +166,8 @@ model Event {
   presences              Presence[]
   createdAt              DateTime        @default(now())
   updatedAt              DateTime        @default(now()) @updatedAt
+
+  @@index([seriesKey, start])
 }
 
 model PushSubscription {
@@ -218,6 +222,8 @@ enum RoleName {
 
 enum EventType {
   ALL
+  GENERAL
+  COMPETITION
   WORKSHOP
   SOCIAL
   CAREER_FAIR

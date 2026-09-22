@@ -47,6 +47,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 prisma/*.csv
+!prisma/hack-the-hill-iii-events.csv
 
 # generated pwa files
 sw.js

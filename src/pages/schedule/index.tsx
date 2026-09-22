@@ -14,7 +14,15 @@ import type { RouterOutputs } from "@/server/api/api";
 
 type PublicEvent = RouterOutputs["events"]["all"][number];
 
-const eventTypes = [EventType.ALL, EventType.WORKSHOP, EventType.SOCIAL, EventType.CAREER_FAIR, EventType.FOOD];
+const eventTypes = [
+	EventType.ALL,
+	EventType.GENERAL,
+	EventType.COMPETITION,
+	EventType.WORKSHOP,
+	EventType.SOCIAL,
+	EventType.CAREER_FAIR,
+	EventType.FOOD,
+];
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
@@ -85,6 +93,8 @@ const Schedule: NextPage = () => {
 		switch (eventType) {
 			case EventType.WORKSHOP:
 				return "bg-dark-primary-color text-light-color";
+			case EventType.COMPETITION:
+				return "bg-dark-color text-light-color";
 			case EventType.CAREER_FAIR:
 				return "bg-light-secondary-color text-dark-primary-color";
 			case EventType.FOOD:
@@ -154,7 +164,7 @@ type TabsProps = {
 const Tabs = ({ tab, setTab }: TabsProps) => {
 	return (
 		<div className="w-full border-b border-dark-color bg-light-quaternary-color px-4 pb-4 pt-2 shadow-navbar">
-			<div className="mx-auto grid max-w-2xl grid-cols-2 gap-3 sm:grid-cols-5 xs:grid-cols-3">
+			<div className="mx-auto grid max-w-3xl grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7 xs:grid-cols-3">
 				{eventTypes.map(type => (
 					<Tab key={type} type={type} active={tab} onClick={() => setTab(type)} />
 				))}
@@ -174,6 +184,8 @@ const Tab = ({ type, active, onClick }: TabProps) => {
 
 	const types = {
 		[EventType.ALL]: t("type.ALL"),
+		[EventType.GENERAL]: t("type.GENERAL"),
+		[EventType.COMPETITION]: t("type.COMPETITION"),
 		[EventType.CAREER_FAIR]: t("type.CAREER_FAIR"),
 		[EventType.FOOD]: t("type.FOOD"),
 		[EventType.SOCIAL]: t("type.SOCIAL"),

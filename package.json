@@ -25,6 +25,7 @@
 		"typecheck": "tsc --noEmit && node scripts/check-google-apps-script.mjs",
 		"verify:dev": "npm test && npm run typecheck && npm run lint && npm run test:e2e:dev && npm run test:e2e:pwa",
 		"organizer:provision": "node --env-file-if-exists=.env --import tsx scripts/provision-organizer.mts",
+		"schedule:import": "node --env-file-if-exists=.env --import tsx scripts/import-events.mts",
 		"postinstall": "prisma generate",
 		"lint": "eslint src prisma scripts test integrations/google-sheets/Code.gs next.config.js next-i18next.config.js tailwind.config.mjs --ext .gs,.js,.mjs,.ts,.tsx,.mts",
 		"start": "next start",
