@@ -126,6 +126,10 @@ If organizers need participant lookup inside Track the Hack, use an authenticate
 Keep aggregate operational metrics from Track the Hack. Demographic reporting comes from Tally or the Sheet. Sponsor reporting defaults to aggregate data; individual-level sharing requires a separate explicit opt-in, a documented purpose, and disclosure limited to the fields required for that purpose.
 Existing functionality not otherwise placed in scope, including events and schedules, maps and resources, hardware inventory, organizer role administration, and aggregate sponsorship tools, remains unchanged. Keep the audit-log framework, but participant actions should use opaque IDs and logs must not copy Tally/Sheet application or identity data.
 
+The legacy sponsorship Gmail-draft generator is retired. Sponsor reporting in
+this repository means aggregate operational reporting only; outbound sponsor
+email belongs outside Track the Hack.
+
 ## Changes From Current main
 
 Remove or replace the following existing Track the Hack functionality:

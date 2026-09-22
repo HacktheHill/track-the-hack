@@ -147,7 +147,9 @@ no longer holds a usable session.
    also `Secure` in production.
 10. **Exact ids stay exact.** Participant ids and their claim/session references
     use MySQL's binary collation, so changing letter case cannot select another
-    participant or capability.
+    participant or capability. Every migration that adds a participant-id or
+    participant-reference column must declare `utf8mb4_bin` explicitly; the
+    table default is case-insensitive.
 
 ## Getting back to the pass
 

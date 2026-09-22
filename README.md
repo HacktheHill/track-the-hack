@@ -56,9 +56,15 @@ two-service test are in [`docs/DISCORD_VERIFICATION.md`](./docs/DISCORD_VERIFICA
 ## Azure Container Apps deployment
 
 The `container.yml` workflow deploys only from `main` through the `Production`
-environment. Configure `AZURE_RESOURCE_GROUP` and `AZURE_ACR_LOGIN_SERVER` in
-that GitHub environment. The workflow runs the migration job first, waits for a
-successful execution, and only then promotes the web and Prisma Studio images.
+environment. Configure `AZURE_RESOURCE_GROUP` and `AZURE_ACR_LOGIN_SERVER` as
+environment variables, plus `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, and
+`AZURE_SUBSCRIPTION_ID` as environment secrets for OIDC login. The resource
+group, registry, web app, Prisma Studio app, and `track-the-hack-migrate` job
+must already exist. The workflow updates and runs the migration job first,
+waits for success, then promotes the web and Prisma Studio images and reapplies
+the health probes. Roll back by redeploying a previously built image only after
+confirming its code remains compatible with the migrated schema; migrations are
+not automatically reversed.
 Participant RSVP mail is owned by the external bulk-email deployment contract in
 [`docs/PHASE_1_INTEGRATIONS.md`](./docs/PHASE_1_INTEGRATIONS.md). Development
 exercises the same link contract through a credential-free loopback SMTP sink.
