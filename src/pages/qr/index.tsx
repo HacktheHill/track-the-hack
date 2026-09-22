@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useCallback, useRef, useState } from "react";
-import ScanResult from "@/components/ScanResult";
+import ScanResult, { MealInfo } from "@/components/ScanResult";
 import App from "@/components/App";
 import ErrorDisplay from "@/components/Error";
 import PhysicalScanner from "@/components/PhysicalScanner";
@@ -102,7 +102,7 @@ const ParticipantCard = ({ hacker }: { hacker: Hacker }) => {
 			<p className="break-all font-bold">{hacker.id}</p>
 			<p>{t("confirmed", { value: hacker.confirmed ? t("yes") : t("no") })}</p>
 			<TShirtInfo size={hacker.tShirtSize} />
-			<p>{t("meal", { value: hacker.mealCategory })}</p>
+			<MealInfo mealCategory={hacker.mealCategory} />
 			{hacker.walkIn && <p>{t("walk-in")}</p>}
 		</div>
 	);

@@ -13,6 +13,13 @@
 	"no": "Non",
 	"t-shirt": "T-shirt : {{value}}",
 	"meal": "Repas : {{value}}",
+	"meal-category": {
+		"STANDARD": "Standard",
+		"VEGETARIAN": "Végétarien",
+		"VEGAN": "Végétalien",
+		"HALAL": "Halal",
+		"OTHER": "Autre"
+	},
 	"walk-in": "Inscrit sur place",
 	"contact-food-lead": "Communiquez avec la personne responsable des repas avant de servir ce participant.",
 	"maximum-reached": "Nombre maximal d’enregistrements atteint.",

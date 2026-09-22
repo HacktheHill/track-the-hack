@@ -1,4 +1,4 @@
-import { TShirtSize } from "@prisma/client";
+import { TShirtSize, type MealCategory } from "@prisma/client";
 import type { GetServerSideProps, InferGetServerSidePropsType } from "next";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
@@ -12,11 +12,11 @@ import { readParticipantSession } from "@/server/lib/participant-session";
 import { PrismaHackerLifecycleRepository } from "@/server/repositories/prisma-hacker-lifecycle";
 import { storeOfflineParticipantPass } from "@/utils/participant-pass";
 
-type ProfileData = {
+export type ProfileData = {
 	id: string;
 	confirmed: boolean;
 	tShirtSize: TShirtSize;
-	mealCategory: string;
+	mealCategory: MealCategory;
 	presences: { id: string; label: string; value: number }[];
 };
 
@@ -40,7 +40,9 @@ export const getServerSideProps: GetServerSideProps<{ profile: ProfileData }> = 
 			confirmed: true,
 			tShirtSize: true,
 			mealCategory: true,
-			presences: { select: { id: true, label: true, value: true } },
+			presences: {
+				select: { id: true, value: true, event: { select: { name: true, nameFr: true } } },
+			},
 		},
 	});
 
@@ -49,6 +51,7 @@ export const getServerSideProps: GetServerSideProps<{ profile: ProfileData }> = 
 		return { redirect: { destination: "/", permanent: false } };
 	}
 
+	const french = locale?.startsWith("fr") ?? false;
 	return {
 		props: {
 			profile: {
@@ -56,7 +59,11 @@ export const getServerSideProps: GetServerSideProps<{ profile: ProfileData }> = 
 				confirmed: hacker.confirmed,
 				tShirtSize: hacker.tShirtSize,
 				mealCategory: hacker.mealCategory,
-				presences: hacker.presences,
+				presences: hacker.presences.map(presence => ({
+					id: presence.id,
+					value: presence.value,
+					label: french ? presence.event.nameFr : presence.event.name,
+				})),
 			},
 			...(await serverSideTranslations(locale ?? "en", ["profile", "navbar", "common"])),
 		},
@@ -90,7 +97,7 @@ const Profile = ({ profile }: InferGetServerSidePropsType<typeof getServerSidePr
 						label={t("t-shirt")}
 						value={profile.tShirtSize === TShirtSize.NONE ? t("common:no-t-shirt") : profile.tShirtSize}
 					/>
-					<Row label={t("meal")} value={profile.mealCategory} />
+					<Row label={t("meal")} value={t(`meal-category.${profile.mealCategory}`)} />
 				</dl>
 			</section>
 

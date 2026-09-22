@@ -13,6 +13,13 @@
 	"no": "No",
 	"t-shirt": "T-shirt: {{value}}",
 	"meal": "Meal: {{value}}",
+	"meal-category": {
+		"STANDARD": "Standard",
+		"VEGETARIAN": "Vegetarian",
+		"VEGAN": "Vegan",
+		"HALAL": "Halal",
+		"OTHER": "Other"
+	},
 	"walk-in": "Walk-in",
 	"contact-food-lead": "Contact the food lead before serving this participant.",
 	"maximum-reached": "Maximum check-ins reached.",
