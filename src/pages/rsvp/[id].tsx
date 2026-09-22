@@ -14,7 +14,7 @@ export const getServerSideProps: GetServerSideProps<{ participantId: string }> =
 const Rsvp = ({ participantId }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
 	const { t } = useTranslation("rsvp");
 	const [submitting, setSubmitting] = useState(false);
-	const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
+	const [result, setResult] = useState<{ ok: true } | { ok: false; message: string } | null>(null);
 
 	const confirm = async () => {
 		setSubmitting(true);
@@ -25,10 +25,14 @@ const Rsvp = ({ participantId }: InferGetServerSidePropsType<typeof getServerSid
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ confirm: true }),
 			});
-			setResult({
-				ok: response.ok,
-				message: response.status === 400 ? t("invalid-invitation") : t("temporarily-unavailable"),
-			});
+			setResult(
+				response.ok
+					? { ok: true }
+					: {
+							ok: false,
+							message: response.status === 400 ? t("invalid-invitation") : t("temporarily-unavailable"),
+						},
+			);
 		} catch {
 			setResult({ ok: false, message: t("temporarily-unavailable") });
 		} finally {
