@@ -53,10 +53,36 @@ void test("check-in and merchandise display operational shirt data including opt
 });
 void test("food scans display meal category and food-lead escalation, without interests", async () => {
 	const html = await render(food, interests);
-	assert.match(html, /Meal: OTHER/);
+	assert.match(html, /Meal: Other/);
 	assert.match(html, /Contact the food lead/);
 	assert.doesNotMatch(html, /Hardware Workshop|T-shirt:/);
-	assert.match(await render(food, [], "fr"), /Déjeuner/);
+	const frenchHtml = await render(food, [], "fr");
+	assert.match(frenchHtml, /Déjeuner/);
+	assert.match(frenchHtml, /Repas : Autre/);
+	assert.match(frenchHtml, /Communiquez avec la personne responsable des repas/);
+});
+void test("food scans localize every meal category in English and French", async () => {
+	const labels: Array<[MealCategory, string, string]> = [
+		[MealCategory.STANDARD, "Standard", "Standard"],
+		[MealCategory.VEGETARIAN, "Vegetarian", "Végétarien"],
+		[MealCategory.VEGAN, "Vegan", "Végétalien"],
+		[MealCategory.HALAL, "Halal", "Halal"],
+		[MealCategory.OTHER, "Other", "Autre"],
+	];
+
+	for (const [mealCategory, englishLabel, frenchLabel] of labels) {
+		const result: Props["result"] = {
+			...base,
+			workflow: ScannerWorkflow.FOOD,
+			participant: {
+				id: participantId,
+				mealCategory,
+				requiresFoodLead: mealCategory === MealCategory.OTHER,
+			},
+		};
+		assert.match(await render(result), new RegExp(`Meal: ${englishLabel}`));
+		assert.match(await render(result, undefined, "fr"), new RegExp(`Repas : ${frenchLabel}`));
+	}
 });
 void test("attendance scans display localized interests and distinguish loading from empty", async () => {
 	const attendance: Props["result"] = {

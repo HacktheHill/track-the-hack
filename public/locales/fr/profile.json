@@ -9,6 +9,13 @@
 	"confirmed": "Présence confirmée",
 	"t-shirt": "Taille de t-shirt",
 	"meal": "Catégorie de repas",
+	"meal-category": {
+		"STANDARD": "Standard",
+		"VEGETARIAN": "Végétarien",
+		"VEGAN": "Végétalien",
+		"HALAL": "Halal",
+		"OTHER": "Autre"
+	},
 	"attendance": "Votre participation",
 	"no-attendance": "Rien d’enregistré pour l’instant.",
 	"view-profile": "Voir les informations à jour en ligne",

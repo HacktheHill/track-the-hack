@@ -1,4 +1,4 @@
-import { ScannerWorkflow, TShirtSize, type Event } from "@prisma/client";
+import { ScannerWorkflow, TShirtSize, type Event, type MealCategory } from "@prisma/client";
 import { useTranslation } from "next-i18next";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -8,6 +8,11 @@ type ScanResultProps = {
 	result: RouterOutputs["presence"]["scan"];
 	interestedEvents?: Pick<Event, "id" | "name" | "nameFr" | "start">[];
 	children?: ReactNode;
+};
+
+export const MealInfo = ({ mealCategory }: { mealCategory: MealCategory }) => {
+	const { t } = useTranslation("qr");
+	return <p>{t("meal", { value: t(`meal-category.${mealCategory}`) })}</p>;
 };
 
 export default function ScanResult({ result, interestedEvents, children }: ScanResultProps) {
@@ -33,7 +38,7 @@ export default function ScanResult({ result, interestedEvents, children }: ScanR
 			)}
 			{result.workflow === ScannerWorkflow.FOOD && (
 				<>
-					<p>{t("meal", { value: result.participant.mealCategory })}</p>
+					<MealInfo mealCategory={result.participant.mealCategory} />
 					{result.participant.requiresFoodLead && (
 						<p className="rounded bg-light-quaternary-color p-3 font-bold text-dark-color">
 							{t("contact-food-lead")}
