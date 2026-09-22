@@ -51,11 +51,14 @@ export const updateEventNotification = async (
 	enabled: boolean,
 	subscription: PushSubscriptionJSON,
 	publicKey: string,
+	locale: "en" | "fr",
 ) => {
 	const response = await fetch("/api/push/register", {
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({ eventId, enabled, subscription, publicKey }),
+		body: JSON.stringify(
+			enabled ? { eventId, enabled, subscription, publicKey, locale } : { eventId, enabled, subscription },
+		),
 	});
 	const result: unknown = await response.json();
 	if (

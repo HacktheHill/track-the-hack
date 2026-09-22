@@ -7,10 +7,12 @@ import { PrismaClient } from "@prisma/client";
 import type { NextApiRequest, NextApiResponse } from "next";
 import webPush from "web-push";
 
-import handler from "@/pages/api/push/register";
+import handler, { config as pushApiConfig } from "@/pages/api/push/register";
 import {
 	getPushConfiguration,
+	hasValidPushKeys,
 	PushRegistrationClosedError,
+	PushSubscriptionLimitError,
 	isAllowedPushEndpoint,
 	registerEventPushSubscription,
 	sendDueEventNotifications,
@@ -24,6 +26,11 @@ import {
 } from "@/utils/event-notifications";
 
 const vapid = webPush.generateVAPIDKeys();
+const browserKey = createECDH("prime256v1");
+const validKeys = {
+	p256dh: browserKey.generateKeys().toString("base64url"),
+	auth: randomBytes(16).toString("base64url"),
+};
 const configured = {
 	publicKey: vapid.publicKey,
 	privateKey: vapid.privateKey,
@@ -55,6 +62,9 @@ void test("readiness requires a valid matching VAPID pair and matching browser k
 });
 
 void test("supported push endpoints reject private hosts, spoofed domains, userinfo and alternate ports", () => {
+	const endpointPrefix = "https://fcm.googleapis.com/";
+	assert.equal(isAllowedPushEndpoint(`${endpointPrefix}${"x".repeat(512 - endpointPrefix.length)}`), true);
+	assert.equal(isAllowedPushEndpoint(`${endpointPrefix}${"x".repeat(513 - endpointPrefix.length)}`), false);
 	for (const url of [
 		"https://fcm.googleapis.com/token",
 		"https://android.googleapis.com/token",
@@ -84,6 +94,18 @@ void test("supported push endpoints reject private hosts, spoofed domains, useri
 		assert.equal(isAllowedPushEndpoint(url), false, url);
 });
 
+void test("push keys must be canonical base64url and contain a valid uncompressed P-256 point", () => {
+	assert.equal(hasValidPushKeys(validKeys), true);
+	assert.equal(hasValidPushKeys({ ...validKeys, p256dh: `${validKeys.p256dh}=` }), false);
+	assert.equal(hasValidPushKeys({ ...validKeys, p256dh: `_${validKeys.p256dh.slice(1)}` }), false);
+	assert.equal(hasValidPushKeys({ ...validKeys, p256dh: randomBytes(64).toString("base64url") }), false);
+	const offCurveKey = Buffer.alloc(65);
+	offCurveKey[0] = 0x04;
+	assert.equal(hasValidPushKeys({ ...validKeys, p256dh: offCurveKey.toString("base64url") }), false);
+	assert.equal(hasValidPushKeys({ ...validKeys, auth: randomBytes(15).toString("base64url") }), false);
+	assert.equal(hasValidPushKeys({ ...validKeys, auth: `${validKeys.auth.slice(0, -1)}+` }), false);
+});
+
 const api = async (method: string, body?: unknown) => {
 	let status = 200;
 	let json: unknown;
@@ -111,8 +133,9 @@ void test("API status is noncacheable and registration rejects unavailable or mi
 	const request = {
 		eventId: "event",
 		enabled: true,
+		locale: "en",
 		publicKey: "stale-key",
-		subscription: { endpoint: "https://fcm.googleapis.com/token", keys: { p256dh: "key", auth: "key" } },
+		subscription: { endpoint: "https://fcm.googleapis.com/token", keys: validKeys },
 	};
 	assert.equal((await api("POST", request)).status, 503);
 	delete process.env.VAPID_PRIVATE_KEY;
@@ -126,6 +149,7 @@ void test("API status is noncacheable and registration rejects unavailable or mi
 });
 
 void test("API rejects SSRF and empty unsubscribe without accessing the database", async () => {
+	assert.equal(pushApiConfig.api.bodyParser.sizeLimit, "4kb");
 	assert.equal((await api("PUT")).status, 405);
 	assert.equal((await api("POST", { eventId: "event", enabled: false, subscription: {} })).status, 400);
 	assert.equal((await api("POST", { eventId: "event", enabled: false, subscription: { endpoint: "" } })).status, 400);
@@ -139,7 +163,69 @@ void test("API rejects SSRF and empty unsubscribe without accessing the database
 		).status,
 		400,
 	);
+	for (const body of [
+		{ eventId: "x".repeat(192), enabled: false, subscription: { endpoint: "https://fcm.googleapis.com/x" } },
+		{
+			eventId: "event",
+			enabled: true,
+			locale: "en",
+			publicKey: vapid.publicKey,
+			subscription: { endpoint: `https://fcm.googleapis.com/${"x".repeat(490)}`, keys: validKeys },
+		},
+		{
+			eventId: "event",
+			enabled: true,
+			locale: "en",
+			publicKey: vapid.publicKey,
+			subscription: {
+				endpoint: "https://fcm.googleapis.com/x",
+				keys: { ...validKeys, auth: `${validKeys.auth}a` },
+			},
+		},
+		{
+			eventId: "event",
+			enabled: false,
+			publicKey: vapid.publicKey,
+			subscription: { endpoint: "https://fcm.googleapis.com/x" },
+		},
+		{
+			eventId: "event",
+			enabled: true,
+			locale: "es",
+			publicKey: vapid.publicKey,
+			subscription: { endpoint: "https://fcm.googleapis.com/x", keys: validKeys },
+		},
+	])
+		assert.equal((await api("POST", body)).status, 400);
 	await unregisterEventPushSubscription("event", "");
+});
+
+void test("registration cap rejects only new endpoints and preserves stable conflict details", async () => {
+	const endpoint = "https://fcm.googleapis.com/existing";
+	let upserts = 0;
+	const transaction = {
+		$queryRaw: () => Promise.resolve([{ id: "event" }]),
+		pushSubscription: {
+			findUnique: ({ where }: { where: { eventId_endpoint: { endpoint: string } } }) =>
+				Promise.resolve(where.eventId_endpoint.endpoint === endpoint ? { id: "subscription" } : null),
+			count: () => Promise.resolve(5_000),
+			upsert: () => {
+				upserts++;
+				return Promise.resolve({});
+			},
+		},
+	};
+	const prisma = {
+		$transaction: (work: (client: typeof transaction) => Promise<void>) => work(transaction),
+	} as unknown as PrismaClient;
+	await registerEventPushSubscription("event", { endpoint, keys: validKeys }, "fr", prisma);
+	assert.equal(upserts, 1, "an existing endpoint can update at the cap");
+	await assert.rejects(
+		registerEventPushSubscription("event", { endpoint: `${endpoint}-new`, keys: validKeys }, "en", prisma),
+		{ name: "Error", message: "This event has reached its reminder limit" },
+	);
+	assert.equal(upserts, 1);
+	assert.ok(new PushSubscriptionLimitError() instanceof Error);
 });
 
 const browserStorage = (t: TestContext) => {
@@ -168,21 +254,41 @@ void test("failed disable preserves both event requests and confirmed disable re
 		Promise.resolve(Response.json({ error: "retry" }, { status: 503 })),
 	);
 	await assert.rejects(
-		updateEventNotification("event-1", false, { endpoint: "https://fcm.googleapis.com/token" }, vapid.publicKey),
+		updateEventNotification(
+			"event-1",
+			false,
+			{ endpoint: "https://fcm.googleapis.com/token" },
+			vapid.publicKey,
+			"en",
+		),
 	);
 	assert.deepEqual(getRequestedEventNotifications(), ["event-1", "event-2"]);
 	fetchMock.mock.mockImplementation(() => Promise.reject(new Error("offline")));
-	await assert.rejects(updateEventNotification("event-1", false, {}, vapid.publicKey));
+	await assert.rejects(updateEventNotification("event-1", false, {}, vapid.publicKey, "en"));
 	assert.deepEqual(getRequestedEventNotifications(), ["event-1", "event-2"]);
 	fetchMock.mock.mockImplementation(() => Promise.resolve(Response.json({ success: true })));
-	await updateEventNotification("event-1", false, { endpoint: "https://fcm.googleapis.com/token" }, vapid.publicKey);
+	await updateEventNotification(
+		"event-1",
+		false,
+		{ endpoint: "https://fcm.googleapis.com/token" },
+		vapid.publicKey,
+		"en",
+	);
 	assert.deepEqual(getRequestedEventNotifications(), ["event-2"]);
 });
 
 void test("failed enable never promises a reminder; browser readiness requires matching server public key", async t => {
 	browserStorage(t);
 	const fetchMock = t.mock.method(globalThis, "fetch", () => Promise.resolve(Response.json({ success: false })));
-	await assert.rejects(updateEventNotification("new-event", true, {}, vapid.publicKey));
+	await assert.rejects(updateEventNotification("new-event", true, {}, vapid.publicKey, "fr"));
+	const sentBody: unknown = JSON.parse(String(fetchMock.mock.calls[0]?.arguments[1]?.body));
+	assert.deepEqual(sentBody, {
+		eventId: "new-event",
+		enabled: true,
+		subscription: {},
+		publicKey: vapid.publicKey,
+		locale: "fr",
+	});
 	assert.deepEqual(getRequestedEventNotifications(), ["event-1", "event-2"]);
 	fetchMock.mock.mockImplementation(() => Promise.resolve(Response.json({ available: true, publicKey: "wrong" })));
 	assert.equal(await isPushServerAvailable(vapid.publicKey), false);
@@ -255,7 +361,8 @@ void test("MySQL reminder claims and recovery", { skip: !testDatabase }, async t
 		for (let i = 0; i < count; i++)
 			await registerEventPushSubscription(
 				id,
-				{ endpoint: `https://fcm.googleapis.com/${id}/${i}`, keys: { p256dh: "test", auth: "test" } },
+				{ endpoint: `https://fcm.googleapis.com/${id}/${i}`, keys: validKeys },
+				"en",
 				prisma,
 			);
 		await prisma.event.update({ where: { id }, data: { start: new Date(Date.now() - 60_000) } });
@@ -266,14 +373,64 @@ void test("MySQL reminder claims and recovery", { skip: !testDatabase }, async t
 		const id = await fixture(context);
 		const subscription = {
 			endpoint: `https://fcm.googleapis.com/${id}/concurrent`,
-			keys: { p256dh: "test", auth: "test" },
+			keys: validKeys,
 		};
-		await assert.rejects(registerEventPushSubscription(id, subscription, prisma), PushRegistrationClosedError);
+		await assert.rejects(
+			registerEventPushSubscription(id, subscription, "en", prisma),
+			PushRegistrationClosedError,
+		);
 		await prisma.event.update({ where: { id }, data: { start: new Date(Date.now() + 60_000) } });
-		await Promise.all(Array.from({ length: 5 }, () => registerEventPushSubscription(id, subscription, prisma)));
+		await Promise.all(
+			Array.from({ length: 5 }, () => registerEventPushSubscription(id, subscription, "en", prisma)),
+		);
 		assert.equal(
 			await prisma.pushSubscription.count({ where: { eventId: id, endpoint: subscription.endpoint } }),
 			1,
+		);
+	});
+
+	await t.test("the locked cap admits one final new endpoint and still permits updates", async context => {
+		const id = await fixture(context);
+		await prisma.event.update({ where: { id }, data: { start: new Date(Date.now() + 60_000) } });
+		await prisma.pushSubscription.createMany({
+			data: Array.from({ length: 4_998 }, (_, index) => ({
+				id: randomUUID(),
+				eventId: id,
+				endpoint: `https://fcm.googleapis.com/${id}/cap-${index}`,
+				...validKeys,
+				locale: "en",
+			})),
+		});
+		const attempts = await Promise.allSettled(
+			["first", "second"].map(suffix =>
+				registerEventPushSubscription(
+					id,
+					{ endpoint: `https://fcm.googleapis.com/${id}/${suffix}`, keys: validKeys },
+					"en",
+					prisma,
+				),
+			),
+		);
+		assert.equal(attempts.filter(result => result.status === "fulfilled").length, 1);
+		assert.ok(
+			attempts.some(
+				result => result.status === "rejected" && result.reason instanceof PushSubscriptionLimitError,
+			),
+		);
+		assert.equal(await prisma.pushSubscription.count({ where: { eventId: id } }), 5_000);
+		await registerEventPushSubscription(
+			id,
+			{ endpoint: `https://fcm.googleapis.com/${id}/0`, keys: validKeys },
+			"fr",
+			prisma,
+		);
+		assert.equal(
+			(
+				await prisma.pushSubscription.findUniqueOrThrow({
+					where: { eventId_endpoint: { eventId: id, endpoint: `https://fcm.googleapis.com/${id}/0` } },
+				})
+			).locale,
+			"fr",
 		);
 	});
 
@@ -317,6 +474,39 @@ void test("MySQL reminder claims and recovery", { skip: !testDatabase }, async t
 		);
 		assert.equal(sent.length, 3);
 		assert.equal(sent.filter(endpoint => endpoint.endsWith("/0")).length, 1);
+	});
+
+	await t.test("payloads use each subscription's locale and locale-specific URL", async context => {
+		const id = await fixture(context, 2);
+		await prisma.pushSubscription.updateMany({ where: { eventId: id }, data: { locale: "fr" } });
+		await prisma.pushSubscription.updateMany({
+			where: { eventId: id, endpoint: { endsWith: "/0" } },
+			data: { locale: "en" },
+		});
+		const payloads: Array<Record<string, unknown>> = [];
+		assert.equal(
+			await sendDueEventNotifications(prisma, (_subscription, payload) => {
+				payloads.push(JSON.parse(payload) as Record<string, unknown>);
+				return Promise.resolve(201);
+			}),
+			1,
+		);
+		assert.ok(
+			payloads.some(
+				payload =>
+					payload.title === "Test reminder" &&
+					payload.body === "This event has started." &&
+					(payload.data as { url: string }).url === `/schedule/event?id=${id}`,
+			),
+		);
+		assert.ok(
+			payloads.some(
+				payload =>
+					payload.title === "Test" &&
+					payload.body === "Cet événement a commencé." &&
+					(payload.data as { url: string }).url === `/fr/schedule/event?id=${id}`,
+			),
+		);
 	});
 
 	await t.test(
@@ -448,12 +638,16 @@ void test("MySQL reminder claims and recovery", { skip: !testDatabase }, async t
 	});
 
 	await t.test(
-		"404/410 and stored unsafe endpoints are pruned without sending to unsafe destinations",
+		"404/410, unsafe endpoints, and malformed stored keys are pruned without unsafe delivery",
 		async context => {
-			const id = await fixture(context, 3);
+			const id = await fixture(context, 4);
 			await prisma.pushSubscription.updateMany({
 				where: { eventId: id, endpoint: { endsWith: "/2" } },
 				data: { endpoint: "https://127.0.0.1/private" },
+			});
+			await prisma.pushSubscription.updateMany({
+				where: { eventId: id, endpoint: { endsWith: "/3" } },
+				data: { p256dh: "malformed", auth: "malformed" },
 			});
 			let sent = 0;
 			assert.equal(
@@ -475,14 +669,26 @@ void test("MySQL reminder claims and recovery", { skip: !testDatabase }, async t
 			const other = await fixture(context);
 			await prisma.event.update({ where: { id }, data: { start: new Date(Date.now() + 60_000) } });
 			const endpoint = `https://fcm.googleapis.com/${id}/Token`;
-			await registerEventPushSubscription(id, { endpoint, keys: { p256dh: "old", auth: "old" } }, prisma);
-			await registerEventPushSubscription(id, { endpoint, keys: { p256dh: "new", auth: "new" } }, prisma);
+			await registerEventPushSubscription(id, { endpoint, keys: validKeys }, "en", prisma);
+			const replacementKeys = {
+				p256dh: createECDH("prime256v1").generateKeys().toString("base64url"),
+				auth: randomBytes(16).toString("base64url"),
+			};
+			await registerEventPushSubscription(id, { endpoint, keys: replacementKeys }, "fr", prisma);
 			await registerEventPushSubscription(
 				id,
-				{ endpoint: endpoint.replace("Token", "token"), keys: { p256dh: "lowercase", auth: "lowercase" } },
+				{ endpoint: endpoint.replace("Token", "token"), keys: validKeys },
+				"en",
 				prisma,
 			);
 			assert.equal(await prisma.pushSubscription.count({ where: { eventId: id } }), 3);
+			assert.deepEqual(
+				await prisma.pushSubscription.findUniqueOrThrow({
+					where: { eventId_endpoint: { eventId: id, endpoint } },
+					select: { p256dh: true, auth: true, locale: true },
+				}),
+				{ ...replacementKeys, locale: "fr" },
+			);
 			await unregisterEventPushSubscription(id, endpoint, prisma);
 			assert.equal(await prisma.pushSubscription.count({ where: { eventId: id } }), 2);
 			assert.equal(await prisma.pushSubscription.count({ where: { eventId: other } }), 1);

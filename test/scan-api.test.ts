@@ -19,14 +19,21 @@ const context = (
 	prisma: object,
 	participantSession: { hackerId: string } | null = { hackerId },
 	session: Session | null = null,
-) => ({
-	// Partial database mocks expose only the operations exercised by each caller.
-	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-	prisma: prisma as PrismaClient,
-	session,
-	participantSession,
-	participantOriginAllowed: true,
-});
+) => {
+	if (!("$transaction" in prisma)) {
+		Object.assign(prisma, {
+			$transaction: (operation: (transaction: object) => unknown) => operation(prisma),
+		});
+	}
+	return {
+		// Partial database mocks expose only the operations exercised by each caller.
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		prisma: prisma as PrismaClient,
+		session,
+		participantSession,
+		participantOriginAllowed: true,
+	};
+};
 
 void test("interest writes use only the authenticated participant and persist/remove one selection", async () => {
 	const [{ eventsRouter }] = await routers;
@@ -40,8 +47,11 @@ void test("interest writes use only the authenticated participant and persist/re
 					assert.deepEqual(input, { where: { hackerId_eventId: selection }, create: selection, update: {} });
 					saved = true;
 				},
-				findUnique: (input: unknown) => {
-					assert.deepEqual(input, { where: { hackerId_eventId: selection } });
+				findFirst: (input: unknown) => {
+					assert.deepEqual(input, {
+						where: { ...selection, Event: { hidden: false } },
+						select: { id: true },
+					});
 					return saved ? { id: "interest-1" } : null;
 				},
 				deleteMany: (input: unknown) => {
@@ -84,6 +94,20 @@ void test("cross-origin writes and hidden/missing events cannot save interests",
 			{ code: "NOT_FOUND" },
 		);
 	}
+});
+
+void test("hidden event interests are not returned to participants", async t => {
+	const [{ eventsRouter }] = await routers;
+	const findFirst = t.mock.fn((input: unknown) => {
+		void input;
+		return Promise.resolve(null);
+	});
+	const caller = eventsRouter.createCaller(context({ eventInterest: { findFirst } }));
+	assert.equal(await caller.getInterest({ eventId: "event-1" }), false);
+	assert.deepEqual(findFirst.mock.calls[0]?.arguments[0], {
+		where: { hackerId, eventId: "event-1", Event: { hidden: false } },
+		select: { id: true },
+	});
 });
 
 void test("attendance interest lookup requires an organizer and filters hidden events", async () => {

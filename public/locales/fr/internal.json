@@ -2,7 +2,6 @@
 	"search": "Rechercher",
 	"title": "Interne",
 	"roles": "Rôles",
-	"sponsorship-gmail-drafts": "Brouillons Gmail de l'équipe de parrainage",
 	"metrics": "Métriques",
 	"submit": "Soumettre",
 
@@ -20,6 +19,23 @@
 
 		"description-en": "Description (anglais)",
 		"description-fr": "Description (français)",
+		"type": "Type d'événement",
+		"type-values": {
+			"ALL": "Tous les participants",
+			"WORKSHOP": "Atelier",
+			"SOCIAL": "Activité sociale",
+			"CAREER_FAIR": "Salon de l'emploi",
+			"FOOD": "Repas"
+		},
+		"host": "Hôte (facultatif)",
+		"scanner-workflow": "Fonction du lecteur",
+		"scanner-workflow-values": {
+			"ATTENDANCE": "Présence à l'événement",
+			"CHECK_IN": "Inscription au hackathon",
+			"MERCHANDISE": "Collecte de marchandise",
+			"FOOD": "Collecte de repas"
+		},
+		"max-check-ins": "Nombre maximal de lectures par participant (facultatif)",
 
 		"photo": "Photo de l'événement",
 		"photo-read-only": "Les photos ne peuvent pas encore être modifiées dans cet éditeur. Les photos existantes seront conservées lors de l'enregistrement.",
@@ -39,9 +55,12 @@
 		"name-en-required": "Le nom de l'événement en anglais est requis.",
 		"name-fr-required": "Le nom de l'événement en français est requis.",
 		"location-required": "Le lieu de l'événement est requis.",
+		"description-required": "Les descriptions en anglais et en français sont requises.",
 		"start-end-required": "Les heures de début et de fin sont requises.",
 		"end-after-start": "L'heure de fin doit être après l'heure de début.",
+		"max-check-ins-invalid": "Le nombre maximal de lectures doit être un nombre entier positif ou nul.",
 		"link-title-url-required": "Le lien doit avoir un titre en anglais, un titre en français et une URL.",
+		"link-https-required": "Le lien doit être une URL HTTPS valide.",
 
 		"table": {
 			"name": "Nom",
