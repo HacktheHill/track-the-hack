@@ -98,7 +98,7 @@ const EventPage: NextPage = () => {
 			integrated={true}
 		>
 			{query.isError ? (
-				<Error message={query.error.message} />
+				<Error message={t("common:temporarily-unavailable")} />
 			) : query.data === null || query.isLoading ? (
 				<Loading />
 			) : (

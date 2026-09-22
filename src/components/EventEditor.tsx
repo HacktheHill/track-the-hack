@@ -81,8 +81,8 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 			await Promise.all([utils.events.manage.invalidate(), utils.events.all.invalidate()]);
 			onClose();
 		},
-		onError: error => {
-			setError(error.message);
+		onError: () => {
+			setError(t("events.save-failed"));
 		},
 		onSettled: () => {
 			saveInFlight.current = false;
@@ -98,8 +98,8 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 			]);
 			onClose();
 		},
-		onError: error => {
-			setError(error.message);
+		onError: () => {
+			setError(t("events.save-failed"));
 		},
 		onSettled: () => {
 			saveInFlight.current = false;

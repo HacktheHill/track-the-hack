@@ -51,6 +51,7 @@
 		"show": "Show event",
 		"cancel": "Cancel",
 		"save": "Save",
+		"save-failed": "The event could not be saved. Please try again.",
 
 		"name-en-required": "English event name is required.",
 		"name-fr-required": "French event name is required.",

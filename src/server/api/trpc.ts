@@ -81,8 +81,13 @@ import superjson from "superjson";
 
 const t = initTRPC.context<typeof createTRPCContext>().create({
 	transformer: superjson,
-	errorFormatter({ shape }) {
-		return shape;
+	errorFormatter({ error, shape }) {
+		if (error.code !== "INTERNAL_SERVER_ERROR") return shape;
+		return {
+			...shape,
+			message: "Internal server error",
+			data: { ...shape.data, stack: undefined },
+		};
 	},
 });
 

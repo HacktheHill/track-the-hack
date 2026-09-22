@@ -68,7 +68,7 @@ const Schedule: NextPage = () => {
 	if (query.isError) {
 		return (
 			<App className="h-full bg-default-gradient px-16 py-12">
-				<Error message={query.error.message} />
+				<Error message={t("common:temporarily-unavailable")} />
 			</App>
 		);
 	}

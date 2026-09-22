@@ -6,5 +6,6 @@
 	"error-message": "Erreur : {{message}}",
 	"contact-us": "Contactez-nous pour de l'aide",
 	"unknown-error": "Erreur inconnue",
+	"temporarily-unavailable": "Cette page est temporairement indisponible. Veuillez réessayer.",
 	"unauthorized": "Vous n'êtes pas autorisé à voir ceci."
 }
