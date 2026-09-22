@@ -5,13 +5,16 @@ import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import App from "@/components/App";
+import Error from "@/components/Error";
+import Loading from "@/components/Loading";
 import { trpc } from "@/server/api/api";
 import { rolesRedirect } from "@/server/lib/redirects";
 import { getAuthOptions } from "@/pages/api/auth/[...nextauth]";
 
 const Metrics = () => {
 	const { t } = useTranslation("metrics");
-	const { data } = trpc.metrics.getMetrics.useQuery();
+	const query = trpc.metrics.getMetrics.useQuery();
+	const { data } = query;
 	const totals =
 		data &&
 		([
@@ -26,6 +29,8 @@ const Metrics = () => {
 		<App className="overflow-y-auto bg-default-gradient" integrated title={t("title")}>
 			<div className="mx-auto flex max-w-6xl flex-col gap-8 p-8">
 				<h1 className="ui-page-title">{t("title")}</h1>
+				{query.isLoading && <Loading />}
+				{query.isError && <Error message={query.error.message} />}
 				<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 					{totals?.map(([key, value]) => (
 						<div key={key} className="ui-panel p-5">

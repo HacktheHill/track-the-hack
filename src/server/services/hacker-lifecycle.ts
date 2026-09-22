@@ -56,7 +56,7 @@ export type ParticipantSessionRecord = NewParticipantSession & {
 };
 
 export interface HackerLifecycleRepository {
-	upsertProvisioned(record: ProvisioningRecord): Promise<void>;
+	upsertProvisionedBatch(records: ProvisioningRecord[]): Promise<void>;
 	confirmAndRotate(id: string, now: Date, cancellationCapabilityId: string): Promise<ConfirmationResult>;
 	cancelByCapability(capabilityId: string): Promise<string | null>;
 	reconcile(ids: string[]): Promise<ReconciliationRecord[]>;
@@ -81,10 +81,7 @@ export class ParticipantLifecycleError extends Error {
 
 export const provisionHackers = async (repository: HackerLifecycleRepository, input: unknown) => {
 	const { hackers } = provisioningBatchSchema.parse(input);
-
-	for (const hacker of hackers) {
-		await repository.upsertProvisioned(hacker);
-	}
+	await repository.upsertProvisionedBatch(hackers);
 
 	return { processed: hackers.length };
 };
