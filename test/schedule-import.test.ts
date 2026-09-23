@@ -8,15 +8,28 @@ import csv from "csvtojson";
 import { z } from "zod";
 
 const scheduleRowsSchema = z.array(
-	z.object({ importKey: z.string(), type: z.string(), scannerWorkflow: z.string() }).passthrough(),
+	z
+		.object({ importKey: z.string(), type: z.string(), scannerWorkflow: z.string(), roomFr: z.string().min(1) })
+		.passthrough(),
 );
 
 void test("the 2026 schedule assigns operational scanner workflows", async () => {
 	const source = await readFile(new URL("../prisma/hack-the-hill-iii-events.csv", import.meta.url), "utf8");
 	const rows = scheduleRowsSchema.parse(await csv({ output: "json" }).fromString(source));
 
-	assert.equal(rows.length, 44);
+	assert.equal(rows.length, 41);
 	assert.equal(new Set(rows.map(row => row.importKey)).size, rows.length);
+	assert.ok(rows.every(row => row.roomFr.length > 0));
+	for (const removedImportKey of [
+		"hacking-2026-fri-2130",
+		"judges-orientation-2026-sun-0930",
+		"project-submission-deadline-2026-sun-1000",
+	]) {
+		assert.equal(
+			rows.some(row => row.importKey === removedImportKey),
+			false,
+		);
+	}
 	assert.equal(rows.find(row => row.importKey === "merch-2026-fri-1700")?.scannerWorkflow, "MERCHANDISE");
 	assert.equal(rows.find(row => row.importKey === "check-in-2026-fri-1700")?.scannerWorkflow, "CHECK_IN");
 	assert.equal(rows.find(row => row.importKey === "late-check-in-2026-fri-2030")?.scannerWorkflow, "CHECK_IN");
@@ -42,17 +55,12 @@ void test("the schedule importer rejects invalid 12-hour clock values", async ()
 	}
 });
 
-void test("the schedule importer accepts an optional French room column", async () => {
+void test("the schedule importer accepts the authoritative French room column", async () => {
 	const directory = await mkdtemp(join(tmpdir(), "track-the-hack-schedule-"));
 	try {
 		const source = await readFile(new URL("../prisma/hack-the-hill-iii-events.csv", import.meta.url), "utf8");
-		const [header, ...rows] = source.trimEnd().split("\n");
-		if (!header) throw new Error("The schedule CSV is missing its header");
-		const localizedSource =
-			[`${header},roomFr`, ...rows.map((row, index) => (index === 0 ? `${row},Salle C120` : row))].join("\n") +
-			"\n";
 		const input = join(directory, "localized.csv");
-		await writeFile(input, localizedSource);
+		await writeFile(input, source);
 		const result = spawnSync(process.execPath, ["--import", "tsx", "scripts/import-events.mts", input], {
 			cwd: new URL("..", import.meta.url),
 			encoding: "utf8",
