@@ -33,7 +33,7 @@ const Sponsors = () => {
 						key={tier}
 						className={
 							tier === SponsorTier.BACKBENCHER
-								? "grid w-full grid-cols-2 items-center gap-4"
+								? "flex w-full flex-wrap items-center justify-center gap-4"
 								: "flex w-full flex-wrap items-center justify-evenly gap-4"
 						}
 					>
@@ -63,7 +63,9 @@ const Sponsors = () => {
 									className={
 										sponsor.tier === SponsorTier.IN_KIND
 											? "h-auto w-[calc(50%-0.5rem)] max-w-[220px] drop-shadow-xl"
-											: "h-auto max-w-full drop-shadow-xl"
+											: sponsor.tier === SponsorTier.BACKBENCHER
+												? "h-auto w-[calc(50%-0.5rem)] max-w-[500px] drop-shadow-xl"
+												: "h-auto max-w-full drop-shadow-xl"
 									}
 								/>
 							),
