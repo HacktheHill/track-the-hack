@@ -3,7 +3,7 @@ import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Image from "next/image";
 import Link from "next/link";
-import { sizeByTier, sponsorsData, SponsorTier } from "@/client/sponsors";
+import { sponsorsData, SponsorTier } from "@/client/sponsors";
 import App from "@/components/App";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
@@ -19,7 +19,7 @@ const Sponsors = () => {
 
 	return (
 		<App
-			className="flex flex-col items-center justify-around gap-8 overflow-x-hidden overflow-y-auto bg-default-gradient p-8"
+			className="flex flex-col items-center justify-around gap-8 overflow-y-auto overflow-x-hidden bg-default-gradient p-8"
 			title={t("title")}
 		>
 			<h1 className="ui-page-title text-center">{t("title")}</h1>
@@ -42,7 +42,7 @@ const Sponsors = () => {
 										src={sponsor.logo}
 										alt={sponsor.name}
 										width={sponsor.displayWidth}
-										height={sizeByTier[sponsor.tier]}
+										height={sponsor.displayHeight}
 										className="h-auto max-w-full"
 									/>
 								</Link>
@@ -52,7 +52,7 @@ const Sponsors = () => {
 									src={sponsor.logo}
 									alt={sponsor.name}
 									width={sponsor.displayWidth}
-									height={sizeByTier[sponsor.tier]}
+									height={sponsor.displayHeight}
 									className={
 										sponsor.tier === SponsorTier.IN_KIND
 											? "h-auto w-[calc(50%-0.5rem)] max-w-[220px] drop-shadow-xl"

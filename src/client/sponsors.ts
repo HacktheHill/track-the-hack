@@ -4,6 +4,7 @@ interface SponsorData {
 	tier: SponsorTier;
 	logo: string;
 	displayWidth: number;
+	displayHeight: number;
 	hiringLink?: string;
 	websiteLink?: string;
 	additionalLink?: string;
@@ -17,31 +18,23 @@ enum SponsorTier {
 	IN_KIND = "in-kind",
 }
 
-const sizeByTier = {
-	[SponsorTier.PREMIER]: 500,
-	[SponsorTier.MAYOR]: 250,
-	[SponsorTier.COUNCILLOR]: 100,
-	[SponsorTier.BACKBENCHER]: 75,
-	[SponsorTier.IN_KIND]: 50,
-} satisfies Record<SponsorTier, number>;
-
 const sponsorsData = [
 	{
 		id: "cgi",
 		name: "CGI",
 		tier: SponsorTier.MAYOR,
-		logo:
-			"https://raw.githubusercontent.com/HacktheHill/hackathon-website/8fff547518da8af294d54c4fda287d44f5eda080/src/assets/Logos/CGI.svg",
+		logo: "/assets/sponsors/cgi.svg",
 		displayWidth: 500,
+		displayHeight: 244,
 		websiteLink: "https://www.cgi.com/",
 	},
 	{
 		id: "ciena",
 		name: "Ciena",
 		tier: SponsorTier.BACKBENCHER,
-		logo:
-			"https://raw.githubusercontent.com/HacktheHill/hackathon-website/8fff547518da8af294d54c4fda287d44f5eda080/src/assets/Logos/Ciena.svg",
+		logo: "/assets/sponsors/ciena.svg",
 		displayWidth: 500,
+		displayHeight: 159,
 		hiringLink: "https://www.ciena.com/careers/",
 		websiteLink: "https://www.ciena.ca/",
 	},
@@ -49,9 +42,9 @@ const sponsorsData = [
 		id: "elevenlabs",
 		name: "ElevenLabs",
 		tier: SponsorTier.IN_KIND,
-		logo:
-			"https://raw.githubusercontent.com/HacktheHill/hackathon-website/8fff547518da8af294d54c4fda287d44f5eda080/src/assets/Logos/ElevenLabs.svg",
+		logo: "/assets/sponsors/elevenlabs.svg",
 		displayWidth: 220,
+		displayHeight: 29,
 		websiteLink: "https://elevenlabs.io/",
 	},
 	{
@@ -60,8 +53,9 @@ const sponsorsData = [
 		tier: SponsorTier.IN_KIND,
 		logo: "/assets/sponsors/backboard.svg",
 		displayWidth: 220,
+		displayHeight: 27,
 		websiteLink: "https://backboard.io/",
 	},
 ] satisfies SponsorData[];
 
-export { sizeByTier, sponsorsData, type SponsorData, SponsorTier };
+export { sponsorsData, type SponsorData, SponsorTier };
