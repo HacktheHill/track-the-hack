@@ -43,18 +43,18 @@ transaction spanning remote delivery and MySQL; avoiding that retry would risk
 losing reminders. The stable notification tag lets the service worker replace
 an existing notification for the same event.
 
-Moving an event to a future start time clears its completion marker and active
-lease under the event row lock. This reopens registration and fences stale
-worker database writes. A provider may already have accepted an in-flight push,
-which cannot be recalled. Subscriptions successfully delivered before the edit
-were deleted as normal, so those browsers must request a reminder again; pending
-subscriptions retained during a race remain eligible at the new start time.
+Moving an event to a future start time clears its completion marker under the
+event row lock but preserves an active lease. This lets the current worker record
+already-launched requests, then prevents it from renewing the lease or completing
+an event that is no longer due. A provider may already have accepted an in-flight
+push, which cannot be recalled. Successful subscriptions are deleted as normal;
+unsent and temporarily failed subscriptions remain eligible at the new start.
 Hiding an event closes registration and marks its reminder complete under the
-same row lock. Pending subscriptions are retained so a future unhide can reopen
-registration without leaving browser state out of sync. Hidden events are also
-excluded from worker claims as a safeguard. A worker may already hold a claimed
-subscription when the event is hidden; an in-flight provider request cannot be
-reliably recalled.
+same row lock while preserving an active lease. Pending subscriptions are
+retained so a future unhide can reopen registration without leaving browser
+state out of sync. Hidden events cannot renew or complete worker claims, but an
+in-flight provider request can record its result before the worker releases its
+lease.
 
 The `worker/index.js` push listener is bundled by next-pwa into a generated
 `worker-*.js` file imported by `public/sw.js`. Both are copied to the production
