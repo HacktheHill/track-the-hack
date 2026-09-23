@@ -59,3 +59,6 @@ workbox-*.js.map
 
 # Google APIs
 google-credentials.json
+
+# Local development overrides
+docker-compose.override.yml
