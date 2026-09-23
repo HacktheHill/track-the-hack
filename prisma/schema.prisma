@@ -159,6 +159,8 @@ model Event {
   link                   String?
   linkText               String?
   linkTextFr             String?
+  /// Retained temporarily so pre-2026 schedule images remain rollback-compatible.
+  tiktok                 String?
   maxCheckIns            Int?
   notifiedAt             DateTime?
   notificationLeaseToken String?

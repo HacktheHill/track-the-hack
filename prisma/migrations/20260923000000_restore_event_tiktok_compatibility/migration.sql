@@ -1,0 +1,1 @@
+ALTER TABLE `Event` ADD COLUMN `tiktok` VARCHAR(191) NULL;
