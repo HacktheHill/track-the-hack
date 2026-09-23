@@ -29,13 +29,20 @@ const Sponsors = () => {
 				if (sponsors.length === 0) return null;
 
 				return (
-					<div key={tier} className="flex w-full flex-wrap items-center justify-evenly gap-4">
+					<div
+						key={tier}
+						className={
+							tier === SponsorTier.BACKBENCHER
+								? "grid w-full grid-cols-2 items-center gap-4"
+								: "flex w-full flex-wrap items-center justify-evenly gap-4"
+						}
+					>
 						{/* wrap image in link only if tier is councillor or above */}
 						{sponsors.map(sponsor =>
 							![SponsorTier.BACKBENCHER, SponsorTier.IN_KIND].includes(sponsor.tier) ? (
 								<Link
 									key={sponsor.id}
-									className="flex flex-col items-center justify-center drop-shadow-xl transition-transform hover:scale-105"
+									className="flex min-w-0 flex-col items-center justify-center drop-shadow-xl transition-transform hover:scale-105"
 									href={`/sponsors/${sponsor.id}`}
 								>
 									<Image

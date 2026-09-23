@@ -59,10 +59,10 @@ const sponsorsData = [
 	{
 		id: "uosu",
 		name: "University of Ottawa Students' Union",
-		tier: SponsorTier.COUNCILLOR,
+		tier: SponsorTier.BACKBENCHER,
 		logo: "/assets/sponsors/UOSU.svg",
-		displayWidth: 220,
-		displayHeight: 69,
+		displayWidth: 500,
+		displayHeight: 157,
 		websiteLink: "https://www.seuo-uosu.com/",
 	},
 	{
@@ -71,7 +71,7 @@ const sponsorsData = [
 		tier: SponsorTier.IN_KIND,
 		logo: "/assets/sponsors/EEF.svg",
 		displayWidth: 220,
-		displayHeight: 85,
+		displayHeight: 68,
 	},
 	{
 		id: "mathematech",
