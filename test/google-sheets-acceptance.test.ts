@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { z } from "zod";
-import { applicationHeaders, applicationRow, createResponseHarness, responseHeaders, type SheetRequest } from "@root/test/helpers/google-sheets-harness";
+import { applicationHeaders, applicationRow, appsScriptSource, createResponseHarness, responseHeaders, type SheetRequest } from "@root/test/helpers/google-sheets-harness";
 
 const link = `https://track.example/rsvp/manage#${"a".repeat(43)}.${"b".repeat(43)}`;
 const stableId = "c".repeat(32);
@@ -25,6 +25,26 @@ const api = (request: SheetRequest) => {
 };
 const field = (rows: Array<Array<string | number | boolean | Date>>, row: number, header: string) =>
 	rows[row]?.[applicationHeaders.length + responseHeaders.indexOf(header)];
+
+void test("the visible RSVP menu command targets the complete Accepted audience", () => {
+	assert.match(
+		appsScriptSource,
+		/\.addItem\("Prepare accepted RSVP invitations", "prepareAcceptedRowsForRsvpFromMenu"\)/,
+	);
+	assert.match(
+		appsScriptSource,
+		/function prepareAcceptedRowsForRsvpFromMenu\(\) \{[\s\S]*prepareAcceptedRowsForRsvp\(\)/,
+	);
+	const sheet = createResponseHarness({ applications: [
+		applicant("accepted-en", "Accepted"), applicant("rejected", "Rejected"), applicant("accepted-fr", "Acceptée"),
+	], fetch: api });
+	assert.deepEqual(sheet.run("prepareAcceptedRowsForRsvpFromMenu"), { accepted: 2, processed: 2, batches: 1 });
+	assert.deepEqual(sheet.toasts(), [{
+		message: "Prepared 2 Accepted RSVP invitations in 1 batch.",
+		title: "RSVP preparation complete",
+		timeout: 10,
+	}]);
+});
 
 void test("review and preparation use Admission status, not the highlighted selection", () => {
 	const sheet = createResponseHarness({ applications: [

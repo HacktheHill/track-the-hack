@@ -66,6 +66,7 @@ function onOpen() {
 	SpreadsheetApp.getUi()
 		.createMenu("Track the Hack")
 		.addItem("Pass activation", "openPassSidebar")
+		.addItem("Prepare accepted RSVP invitations", "prepareAcceptedRowsForRsvpFromMenu")
 		.addToUi();
 }
 
@@ -171,6 +172,17 @@ function reviewAcceptedRowsForRsvp() {
 /** Explicit pre-campaign operation. Selection, filters, and hidden rows do not change eligibility. */
 function prepareAcceptedRowsForRsvp() {
 	return prepareRsvpRows_(null);
+}
+
+/** One-click menu action for the complete status-defined RSVP audience. */
+function prepareAcceptedRowsForRsvpFromMenu() {
+	const result = prepareAcceptedRowsForRsvp();
+	SpreadsheetApp.getActive().toast(
+		`Prepared ${result.processed} Accepted RSVP invitation${result.processed === 1 ? "" : "s"} in ${result.batches} batch${result.batches === 1 ? "" : "es"}.`,
+		"RSVP preparation complete",
+		10,
+	);
+	return result;
 }
 
 /** Test one approved submission without touching the rest of the accepted audience. */

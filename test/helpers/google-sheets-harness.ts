@@ -218,6 +218,7 @@ export const createResponseHarness = (options: {
 	let pending: SheetRows = [];
 	let locked = false;
 	const requests: SheetRequest[] = [];
+	const toasts: Array<{ message: string; title: string; timeout: number }> = [];
 	const getCell = (row: number, column: number) => pending[row - 1]?.[column - 1] ?? "";
 	const sheet = {
 		getName: () => "Responses",
@@ -239,7 +240,7 @@ export const createResponseHarness = (options: {
 			return { getValues: read, getDisplayValues: () => read().map(cells => cells.map(String)), setValues: write, setValue: (value: SheetCell) => write([[value]]) };
 		},
 	};
-	const run = (action: "reviewAcceptedRowsForRsvp" | "prepareAcceptedRowsForRsvp" | "prepareTestSubmissionForRsvp" | "reviewExistingDietaryCategories" | "reconcileExistingDietaryCategories" | "refreshResponseRsvpStatus" | "acceptSelectedApplications" | "acceptSelectedWalkInApplications" | "prepareSelectedRowsForRsvp") => {
+	const run = (action: "reviewAcceptedRowsForRsvp" | "prepareAcceptedRowsForRsvp" | "prepareAcceptedRowsForRsvpFromMenu" | "prepareTestSubmissionForRsvp" | "reviewExistingDietaryCategories" | "reconcileExistingDietaryCategories" | "refreshResponseRsvpStatus" | "acceptSelectedApplications" | "acceptSelectedWalkInApplications" | "prepareSelectedRowsForRsvp") => {
 		pending = structuredClone(saved);
 		const properties: Record<string, string | undefined> = {
 			TRACK_BASE_URL: "https://track.example",
@@ -254,7 +255,10 @@ export const createResponseHarness = (options: {
 			LockService: { getDocumentLock: () => ({ tryLock: () => { locked = true; return true; }, releaseLock: () => { locked = false; } }) },
 			SpreadsheetApp: {
 				getActiveSheet: () => sheet,
-				getActive: () => ({ getSheetByName: () => null }),
+				getActive: () => ({
+					getSheetByName: () => null,
+					toast: (message: string, title: string, timeout: number) => toasts.push({ message, title, timeout }),
+				}),
 				flush: () => { assert.equal(locked, true); saved = structuredClone(pending); },
 			},
 			UrlFetchApp: { fetch: (url: string, input: unknown) => {
@@ -267,5 +271,5 @@ export const createResponseHarness = (options: {
 		});
 		return structuredClone(result);
 	};
-	return { run, requests, rows: () => structuredClone(saved), locked: () => locked };
+	return { run, requests, rows: () => structuredClone(saved), locked: () => locked, toasts: () => structuredClone(toasts) };
 };
