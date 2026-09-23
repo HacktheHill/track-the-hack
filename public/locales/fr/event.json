@@ -16,10 +16,9 @@
 		"FOOD": "Nourriture",
 		"SOCIAL": "Social"
 	},
-	"mark-interested": "Ça m’intéresse",
-	"interested": "Ça m’intéresse ✓",
+	"mark-interested": "Ajouter à mon horaire",
+	"interested": "Retirer de mon horaire",
 	"saving-interest": "Enregistrement…",
 	"retry-interest": "Réessayer",
-	"interest-error": "Impossible de charger ou d’enregistrer votre intérêt. Veuillez réessayer.",
-	"interest-organizer-visibility": "Les organisateurs peuvent voir les événements qui vous intéressent lorsqu’ils scannent votre code QR."
+	"interest-error": "Impossible de modifier votre horaire. Veuillez réessayer."
 }
