@@ -168,3 +168,62 @@ void test("food, merchandise and check-in workflows cannot look up interests", a
 		);
 	}
 });
+
+void test("scanner API reports fresh, duplicate, applied, stale, and bounded no-op audit actions", async () => {
+	const [, { presenceRouter }] = await routers;
+	let presence: { id: string; value: number } | null = null;
+	const actions: string[] = [];
+	const event = {
+		id: "event-1",
+		name: "Check-in",
+		nameFr: "Enregistrement",
+		scannerWorkflow: ScannerWorkflow.CHECK_IN,
+		maxCheckIns: 2,
+	};
+	const prisma = {
+		user: {
+			findUnique: () => ({ id: "organizer-1", name: "Organizer", roles: [{ name: RoleName.ORGANIZER }] }),
+		},
+		event: { findUnique: () => event },
+		hacker: {
+			findUnique: () => ({ id: hackerId, confirmed: true, tShirtSize: "NONE" }),
+		},
+		$executeRaw: (query: TemplateStringsArray, ...values: unknown[]) => {
+			const statement = query.join("");
+			if (statement.includes("INSERT INTO")) {
+				presence ??= { id: String(values[0]), value: 1 };
+				return 1;
+			}
+			const expected = values[2];
+			if (!presence || presence.value !== expected) return 0;
+			if (statement.includes("- 1") && presence.value === 0) return 0;
+			const maximum = values[3];
+			if (typeof maximum === "number" && presence.value >= maximum) return 0;
+			presence.value += statement.includes("- 1") ? -1 : 1;
+			return 1;
+		},
+		presence: {
+			findUnique: () => presence,
+		},
+		log: {
+			create: ({ data }: { data: { action: string } }) => {
+				actions.push(data.action);
+				return {};
+			},
+		},
+	};
+	const caller = presenceRouter.createCaller(context(prisma, null, organizer));
+
+	const fresh = await caller.scan({ eventId: event.id, hackerId });
+	const duplicate = await caller.scan({ eventId: event.id, hackerId });
+	const applied = await caller.adjust({ eventId: event.id, hackerId, amount: 1, expectedValue: 1 });
+	const stale = await caller.adjust({ eventId: event.id, hackerId, amount: -1, expectedValue: 1 });
+	const bounded = await caller.adjust({ eventId: event.id, hackerId, amount: 1, expectedValue: 2 });
+
+	assert.equal(fresh.recordedNow, true);
+	assert.equal(duplicate.recordedNow, false);
+	assert.deepEqual(applied, { value: 2, atLimit: true, applied: true, stale: false });
+	assert.deepEqual(stale, { value: 2, atLimit: true, applied: false, stale: true });
+	assert.deepEqual(bounded, { value: 2, atLimit: true, applied: false, stale: false });
+	assert.deepEqual(actions, ["scan", "scan_duplicate", "adjust", "adjust_stale", "adjust_noop"]);
+});

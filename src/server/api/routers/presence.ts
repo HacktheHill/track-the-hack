@@ -71,13 +71,15 @@ export const presenceRouter = createTRPCRouter({
 				input.hackerId,
 			);
 			await log(ctx, {
-				action: "scan",
+				action: result.recordedNow ? "scan" : "scan_duplicate",
 				sourceId: presenceId,
 				sourceType: "Presence",
 				author: organizer.name ?? "Unknown",
 				userId: organizer.id,
 				route: "presence.scan",
-				details: `Scanned participant ${input.hackerId} for event ${input.eventId} (${result.workflow})`,
+				details: result.recordedNow
+					? `Recorded participant ${input.hackerId} for event ${input.eventId} (${result.workflow})`
+					: `Participant ${input.hackerId} was already recorded for event ${input.eventId} (${result.workflow})`,
 			});
 			return result;
 		} catch (error) {
@@ -86,7 +88,12 @@ export const presenceRouter = createTRPCRouter({
 	}),
 
 	adjust: protectedProcedure
-		.input(scannerInput.extend({ amount: z.union([z.literal(-1), z.literal(1)]) }))
+		.input(
+			scannerInput.extend({
+				amount: z.union([z.literal(-1), z.literal(1)]),
+				expectedValue: z.number().int().nonnegative(),
+			}),
+		)
 		.mutation(async ({ ctx, input }) => {
 			const organizer = await requireScannerOrganizer(ctx);
 			try {
@@ -95,15 +102,20 @@ export const presenceRouter = createTRPCRouter({
 					input.eventId,
 					input.hackerId,
 					input.amount,
+					input.expectedValue,
 				);
 				await log(ctx, {
-					action: "adjust",
+					action: result.applied ? "adjust" : result.stale ? "adjust_stale" : "adjust_noop",
 					sourceId: presenceId,
 					sourceType: "Presence",
 					author: organizer.name ?? "Unknown",
 					userId: organizer.id,
 					route: "presence.adjust",
-					details: `Adjusted participant ${input.hackerId} for event ${input.eventId} by ${input.amount}`,
+					details: result.applied
+						? `Adjusted participant ${input.hackerId} for event ${input.eventId} by ${input.amount}`
+						: result.stale
+							? `Rejected stale adjustment for participant ${input.hackerId} at event ${input.eventId}; expected ${input.expectedValue}, current ${result.value}`
+							: `Ignored out-of-bounds adjustment for participant ${input.hackerId} at event ${input.eventId}; current ${result.value}`,
 				});
 				return result;
 			} catch (error) {

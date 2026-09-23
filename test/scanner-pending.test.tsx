@@ -16,7 +16,11 @@ import type { AppRouter } from "@/server/api/root";
 const trpc = createTRPCReact<AppRouter>();
 import english from "@root/public/locales/en/qr.json";
 
-type Request = { input: unknown; succeed: (value: number, atLimit: boolean) => void; fail: () => void };
+type Request = {
+	input: unknown;
+	succeed: (value: number, atLimit: boolean, applied?: boolean, stale?: boolean) => void;
+	fail: () => void;
+};
 const flush = async (action: () => void) => {
 	await act(async () => {
 		action();
@@ -29,6 +33,12 @@ const click = (renderer: ReactTestRenderer, label: string): (() => void) => {
 		assert.equal(typeof handler, "function");
 		if (typeof handler === "function") handler();
 	};
+};
+const expectedValue = (request: Request | undefined) => {
+	assert.ok(request && typeof request.input === "object" && request.input !== null);
+	const value: unknown = Reflect.get(request.input, "expectedValue");
+	assert.equal(typeof value, "number");
+	return value;
 };
 
 void test("pending adjustment blocks rapid clicks and scans; errors retain count and release the gate", async t => {
@@ -47,8 +57,8 @@ void test("pending adjustment blocks rapid clicks and scans; errors retain count
 						assert.equal(op.path, "presence.adjust");
 						requests.push({
 							input: op.input,
-							succeed(value, atLimit) {
-								observer.next({ result: { data: { value, atLimit } } });
+							succeed(value, atLimit, applied = true, stale = false) {
+								observer.next({ result: { data: { value, atLimit, applied, stale } } });
 								observer.complete();
 							},
 							fail() {
@@ -106,7 +116,12 @@ void test("pending adjustment blocks rapid clicks and scans; errors retain count
 		assert.equal(operation?.begin(), false);
 	});
 	assert.equal(requests.length, 1);
-	assert.deepEqual(requests[0]?.input, { eventId: "lunch", hackerId: "participant", amount: 1 });
+	assert.deepEqual(requests[0]?.input, {
+		eventId: "lunch",
+		hackerId: "participant",
+		amount: 1,
+		expectedValue: 1,
+	});
 	assert.equal(operation, originalOperation, "camera callbacks can retain the stable gate");
 	assert.equal(renderer.root.findByType("select").props.disabled, true);
 	assert.equal(renderer.root.findByType("input").props.disabled, true);
@@ -135,7 +150,13 @@ void test("pending adjustment blocks rapid clicks and scans; errors retain count
 	assert.equal(renderer.root.findByProps({ "aria-label": english["increase-count"] }).props.disabled, true);
 	assert.equal(renderer.root.findAllByProps({ role: "alert" }).length, 0);
 	await flush(click(renderer, english["decrease-count"]));
-	await flush(() => requests[2]?.succeed(0, false));
+	assert.equal(expectedValue(requests[2]), 2);
+	await flush(() => requests[2]?.succeed(3, false, false, true));
+	assert.equal(count(), "3");
+	assert.ok(JSON.stringify(renderer.toJSON()).includes("Current count: 3"));
+	await flush(click(renderer, english["decrease-count"]));
+	assert.equal(expectedValue(requests[3]), 3);
+	await flush(() => requests[3]?.succeed(0, false));
 	assert.equal(count(), "0");
 	assert.ok(JSON.stringify(renderer.toJSON()).includes(english["zero-count"]));
 	assert.equal(renderer.root.findByProps({ "aria-label": english["decrease-count"] }).props.disabled, true);

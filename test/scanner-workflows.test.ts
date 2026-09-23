@@ -58,17 +58,18 @@ const scannerDatabase = (
 			}
 			return Promise.resolve();
 		},
-		adjustPresence: ({ eventId: adjustedEventId, hackerId: adjustedHackerId, amount, maximum }) => {
+		adjustPresence: ({ eventId: adjustedEventId, hackerId: adjustedHackerId, amount, expectedValue, maximum }) => {
 			const presence = presences.get(`${adjustedHackerId}:${adjustedEventId}`);
 			if (
 				!presence ||
+				presence.value !== expectedValue ||
 				(amount < 0 && presence.value <= 0) ||
 				(amount > 0 && maximum !== null && presence.value >= maximum)
 			) {
-				return Promise.resolve();
+				return Promise.resolve(false);
 			}
 			presence.value += amount;
-			return Promise.resolve();
+			return Promise.resolve(true);
 		},
 		findPresence: (searchedEventId, searchedHackerId) => {
 			const presence = presences.get(`${searchedHackerId}:${searchedEventId}`);
@@ -118,9 +119,13 @@ void test("food OTHER tells the scanner to contact the food lead", async () => {
 
 void test("repeated scans preserve the event-linked counter", async () => {
 	const { repository, value } = scannerDatabase(ScannerWorkflow.ATTENDANCE, 3);
-	assert.equal((await scanParticipantForEvent(repository, eventId, hackerId)).value, 1);
-	assert.equal((await adjustPresenceForEvent(repository, eventId, hackerId, 1)).value, 2);
-	assert.equal((await scanParticipantForEvent(repository, eventId, hackerId)).value, 2);
+	const first = await scanParticipantForEvent(repository, eventId, hackerId);
+	assert.equal(first.value, 1);
+	assert.equal(first.recordedNow, true);
+	assert.equal((await adjustPresenceForEvent(repository, eventId, hackerId, 1, 1)).value, 2);
+	const repeated = await scanParticipantForEvent(repository, eventId, hackerId);
+	assert.equal(repeated.value, 2);
+	assert.equal(repeated.recordedNow, false);
 	assert.equal(value(), 2);
 });
 
@@ -130,20 +135,43 @@ void test("concurrent first scans share one event-linked counter", async () => {
 		Array.from({ length: 8 }, () => scanParticipantForEvent(repository, eventId, hackerId)),
 	);
 	assert.ok(results.every(result => result.value === 1));
+	assert.equal(results.filter(result => result.recordedNow).length, 1);
 	assert.equal(value(), 1);
 });
 
 void test("concurrent scanner increments cannot cross the server-owned maximum", async () => {
 	const { repository, value } = scannerDatabase(ScannerWorkflow.CHECK_IN, 2);
 	await scanParticipantForEvent(repository, eventId, hackerId);
-	await Promise.all(Array.from({ length: 8 }, () => adjustPresenceForEvent(repository, eventId, hackerId, 1)));
+	const results = await Promise.all(
+		Array.from({ length: 8 }, () => adjustPresenceForEvent(repository, eventId, hackerId, 1, 1)),
+	);
 	assert.equal(value(), 2);
-	assert.equal((await adjustPresenceForEvent(repository, eventId, hackerId, 1)).atLimit, true);
+	assert.equal(results.filter(result => result.applied).length, 1);
+	assert.equal(results.filter(result => result.stale).length, 7);
+	const atLimit = await adjustPresenceForEvent(repository, eventId, hackerId, 1, 2);
+	assert.equal(atLimit.atLimit, true);
+	assert.equal(atLimit.applied, false);
+	assert.equal(atLimit.stale, false);
 });
 
 void test("an uncapped counter can be incremented again after reaching zero", async () => {
 	const { repository } = scannerDatabase(ScannerWorkflow.ATTENDANCE, null);
 	await scanParticipantForEvent(repository, eventId, hackerId);
-	assert.equal((await adjustPresenceForEvent(repository, eventId, hackerId, -1)).value, 0);
-	assert.equal((await adjustPresenceForEvent(repository, eventId, hackerId, 1)).value, 1);
+	assert.equal((await adjustPresenceForEvent(repository, eventId, hackerId, -1, 1)).value, 0);
+	assert.equal((await adjustPresenceForEvent(repository, eventId, hackerId, 1, 0)).value, 1);
+});
+
+void test("a stale decrement returns the authoritative value and can be retried deliberately", async () => {
+	const { repository } = scannerDatabase(ScannerWorkflow.ATTENDANCE, null);
+	await scanParticipantForEvent(repository, eventId, hackerId);
+	const first = await adjustPresenceForEvent(repository, eventId, hackerId, 1, 1);
+	const stale = await adjustPresenceForEvent(repository, eventId, hackerId, -1, 1);
+	assert.equal(first.value, 2);
+	assert.equal(stale.value, 2);
+	assert.equal(stale.applied, false);
+	assert.equal(stale.stale, true);
+	const retry = await adjustPresenceForEvent(repository, eventId, hackerId, -1, stale.value);
+	assert.equal(retry.value, 1);
+	assert.equal(retry.applied, true);
+	assert.equal(retry.stale, false);
 });
