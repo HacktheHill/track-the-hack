@@ -106,7 +106,7 @@ function migrateLegacyResponseColumnsForRsvp() {
 	});
 }
 
-/** Append the refresh timestamp to an already migrated ten-column Responses tab. */
+/** Append the refresh timestamp to an exact ten-column layout; no-op after migration. */
 function migrateResponseRsvpRefreshColumn() {
 	return withOperationsLock_(() => {
 		const sheet = SpreadsheetApp.getActiveSheet();
@@ -115,9 +115,13 @@ function migrateResponseRsvpRefreshColumn() {
 		const headers = sheet.getRange(1, 1, 1, lastColumn).getDisplayValues()[0];
 		if (!headers) throw new Error("The response sheet has no headers.");
 		const review = headers.indexOf("Review reasoning");
-		if (review < 0 || headers[review - 1] !== "Admission status" ||
-			lastColumn !== review + 1 + TRACK_RESPONSE_HEADERS.length - 1 ||
-			headers.slice(review + 1).join("\n") !== TRACK_RESPONSE_HEADERS.slice(0, -1).join("\n")) {
+		if (review < 0 || headers[review - 1] !== "Admission status") {
+			throw new Error("The admission columns are not in the expected position. No migration was done.");
+		}
+		const operationalHeaders = headers.slice(review + 1);
+		if (operationalHeaders.join("\n") === TRACK_RESPONSE_HEADERS.join("\n")) return sheet.getLastRow() - 1;
+		if (lastColumn !== review + 1 + TRACK_RESPONSE_HEADERS.length - 1 ||
+			operationalHeaders.join("\n") !== TRACK_RESPONSE_HEADERS.slice(0, -1).join("\n")) {
 			throw new Error("The ten response-row headers are not the exact final columns. No migration was done.");
 		}
 		if (sheet.getMaxColumns() < lastColumn + 1) sheet.insertColumnsAfter(sheet.getMaxColumns(), 1);
@@ -176,6 +180,7 @@ function prepareAcceptedRowsForRsvp() {
 
 /** One-click menu action for the complete status-defined RSVP audience. */
 function prepareAcceptedRowsForRsvpFromMenu() {
+	migrateResponseRsvpRefreshColumn();
 	const result = prepareAcceptedRowsForRsvp();
 	SpreadsheetApp.getActive().toast(
 		`Prepared ${result.processed} Accepted RSVP invitation${result.processed === 1 ? "" : "s"} in ${result.batches} batch${result.batches === 1 ? "" : "es"}.`,
