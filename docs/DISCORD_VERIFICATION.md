@@ -53,10 +53,14 @@ The bot creates `discord_verification_challenges` and
 `discord_participant_links` at startup by default. For managed migrations, run
 `npm run migrate:db` in the bot repo first, then set
 `VERIFICATION_RUN_MIGRATIONS=false`. Startup checks both tables exist.
-Expired challenge rows are removed when a new link is generated; participant
-bindings persist across bot restarts. These bindings belong to the current
-participant dataset; event resets/account corrections require a deliberate
-bot-side operation.
+Expired challenge rows are removed at bot startup, every 15 minutes, and when a
+new link is generated. Participant bindings persist across bot restarts. For an
+account correction, a trusted bot operator runs `verification:manage unlink`
+with exactly one Discord or participant ID; the transaction removes the binding
+and that Discord account's outstanding challenges. For an event reset, pause
+verification on both services and run `verification:manage reset
+--confirm-current-event-reset`. Reset does not remove Discord roles, which
+requires a separate organizer decision.
 
 Deploy the matching Track and bot changes together and configure the same
 secret. Old raw-ID links and the old `{ discordId }` endpoint contract are
