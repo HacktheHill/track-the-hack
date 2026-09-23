@@ -43,7 +43,7 @@ jobs:
             --image "$image" \
             --container-name track-the-hack-organizer \
             --command /app/node_modules/.bin/tsx \
-            --args scripts/provision-organizer.mts "$ORGANIZER_EMAIL" ORGANIZER \
+            --args scripts/provision-organizer.mts "$ORGANIZER_EMAIL" ORGANIZER ADMIN \
             --env-vars DATABASE_URL=secretref:database-url \
             --cpu 0.5 \
             --memory 1Gi \

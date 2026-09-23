@@ -16,13 +16,25 @@ if (!parsedRoles.success) {
 }
 const roles = parsedRoles.data;
 
-await prisma.$transaction([
-	...roles.map(name => prisma.role.upsert({ where: { name }, create: { name }, update: {} })),
-	prisma.user.upsert({
+try {
+	await prisma.$transaction([
+		...roles.map(name => prisma.role.upsert({ where: { name }, create: { name }, update: {} })),
+		prisma.user.upsert({
+			where: { email },
+			create: { email, roles: { connect: roles.map(name => ({ name })) } },
+			update: { roles: { set: roles.map(name => ({ name })) } },
+		}),
+	]);
+
+	const provisioned = await prisma.user.findUnique({
 		where: { email },
-		create: { email, roles: { connect: roles.map(name => ({ name })) } },
-		update: { roles: { set: roles.map(name => ({ name })) } },
-	}),
-]);
-await prisma.$disconnect();
+		select: { roles: { select: { name: true } } },
+	});
+	const assignedRoles = provisioned?.roles.map(role => role.name) ?? [];
+	if (assignedRoles.length !== roles.length || roles.some(role => !assignedRoles.includes(role))) {
+		throw new Error(`Provisioning verification failed for ${email}`);
+	}
+} finally {
+	await prisma.$disconnect();
+}
 console.info(`Provisioned organizer ${email} with roles ${roles.join(", ")}.`);
