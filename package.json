@@ -40,7 +40,6 @@
 		"@trpc/react-query": "^10.45.3",
 		"@trpc/server": "^10.45.3",
 		"@types/web-push": "^3.6.4",
-		"argon2": "^0.41.1",
 		"csvtojson": "^2.0.14",
 		"i18next": "^26.3.6",
 		"mimetext": "^3.0.28",
