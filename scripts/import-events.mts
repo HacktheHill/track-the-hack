@@ -2,6 +2,8 @@ import { readFile } from "node:fs/promises";
 import { EventType, PrismaClient, ScannerWorkflow } from "@prisma/client";
 import csv from "csvtojson";
 import { z } from "zod";
+import { eventImageUrl, httpsUrl } from "@/server/lib/event-validation";
+import { parseTorontoDateTimeLocal } from "@/utils/toronto-time";
 
 const rowSchema = z
 	.object({
@@ -18,9 +20,8 @@ const rowSchema = z
 		description: z.string().trim().min(1).max(65_535),
 		descriptionFr: z.string().trim().min(1).max(65_535),
 		room: z.string().trim().min(1).max(191),
-		tiktok: z.literal(""),
-		image: z.string().trim().max(191),
-		link: z.string().trim().max(191),
+		image: z.union([z.literal(""), eventImageUrl]),
+		link: z.union([z.literal(""), httpsUrl]),
 		linkText: z.string().trim().max(191),
 		linkTextFr: z.string().trim().max(191),
 		maxCheckIns: z.string().trim(),
@@ -28,16 +29,18 @@ const rowSchema = z
 	.strict();
 
 const parseTorontoDate = (value: string) => {
-	const match = /^(\d{1,2})\/(\d{1,2})\/(\d{4}) (\d{1,2}):(\d{2}) (AM|PM)$/.exec(value);
+	const match = /^(\d{1,2})\/(\d{1,2})\/(\d{4}) (1[0-2]|[1-9]):(\d{2}) (AM|PM)$/.exec(value);
 	if (!match) throw new Error(`Invalid Toronto date: ${value}`);
 	const [, month, day, year, rawHour, minute, period] = match;
 	if (!month || !day || !year || !rawHour || !minute || !period) throw new Error(`Invalid Toronto date: ${value}`);
 	let hour = Number(rawHour) % 12;
 	if (period === "PM") hour += 12;
-	const iso = `${year}-${month?.padStart(2, "0")}-${day?.padStart(2, "0")}T${String(hour).padStart(2, "0")}:${minute}:00-04:00`;
-	const date = new Date(iso);
-	if (Number.isNaN(date.getTime())) throw new Error(`Invalid Toronto date: ${value}`);
-	return date;
+	const local = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}T${String(hour).padStart(2, "0")}:${minute}`;
+	try {
+		return parseTorontoDateTimeLocal(local);
+	} catch {
+		throw new Error(`Invalid Toronto date: ${value}`);
+	}
 };
 
 const nullable = (value: string) => value || null;
@@ -122,11 +125,7 @@ try {
 					where: { id: existing.id },
 					data: {
 						...event,
-						...(event.hidden
-							? { notifiedAt: existing.now }
-							: reopenReminder
-								? { notifiedAt: null }
-								: {}),
+						...(event.hidden ? { notifiedAt: existing.now } : reopenReminder ? { notifiedAt: null } : {}),
 					},
 				});
 			}

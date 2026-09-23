@@ -2,6 +2,7 @@ import { useRef, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
 import { EventType, ScannerWorkflow, type Event } from "@prisma/client";
 import { trpc } from "@/server/api/api";
+import { formatTorontoDateTimeLocal, parseTorontoDateTimeLocal } from "@/utils/toronto-time";
 import { useTranslation } from "next-i18next";
 
 type EventEditorProps = {
@@ -34,18 +35,6 @@ type EventLink = {
 	url: string;
 };
 
-const formatDateTimeLocal = (date: Date) => {
-	const localDate = new Date(date);
-
-	const year = localDate.getFullYear();
-	const month = String(localDate.getMonth() + 1).padStart(2, "0");
-	const day = String(localDate.getDate()).padStart(2, "0");
-	const hours = String(localDate.getHours()).padStart(2, "0");
-	const minutes = String(localDate.getMinutes()).padStart(2, "0");
-
-	return `${year}-${month}-${day}T${hours}:${minutes}`;
-};
-
 const eventTypes = [
 	EventType.ALL,
 	EventType.GENERAL,
@@ -68,8 +57,8 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 	const [room, setRoom] = useState(event?.room ?? "");
 	const [description, setDescription] = useState(event?.description ?? "");
 	const [descriptionFr, setDescriptionFr] = useState(event?.descriptionFr ?? "");
-	const [start, setStart] = useState(event?.start ? formatDateTimeLocal(event.start) : "");
-	const [end, setEnd] = useState(event?.end ? formatDateTimeLocal(event.end) : "");
+	const [start, setStart] = useState(event?.start ? formatTorontoDateTimeLocal(event.start) : "");
+	const [end, setEnd] = useState(event?.end ? formatTorontoDateTimeLocal(event.end) : "");
 	const [visible, setVisible] = useState(event ? !event.hidden : false);
 	const [type, setType] = useState(event?.type ?? EventType.ALL);
 	const [scannerWorkflow, setScannerWorkflow] = useState(event?.scannerWorkflow ?? ScannerWorkflow.ATTENDANCE);
@@ -150,7 +139,17 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 			return;
 		}
 
-		if (new Date(end) <= new Date(start)) {
+		let startDate: Date;
+		let endDate: Date;
+		try {
+			startDate = parseTorontoDateTimeLocal(start);
+			endDate = parseTorontoDateTimeLocal(end);
+		} catch {
+			setError(t("events.time-invalid"));
+			return;
+		}
+
+		if (endDate <= startDate) {
 			setError(t("events.end-after-start"));
 			return;
 		}
@@ -187,8 +186,8 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 			name: name.trim(),
 			nameFr: nameFr.trim(),
 			room: room.trim(),
-			start: new Date(start),
-			end: new Date(end),
+			start: startDate,
+			end: endDate,
 			description: description.trim(),
 			descriptionFr: descriptionFr.trim(),
 			hidden: !visible,
@@ -342,6 +341,7 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 							/>
 						</div>
 					</div>
+					<p className="text-sm">{t("events.timezone")}</p>
 
 					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 						<div className="flex flex-1 flex-col gap-1">

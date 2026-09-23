@@ -1,11 +1,11 @@
 import { EventType, Prisma, RoleName, ScannerWorkflow } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { httpsUrl } from "@/server/lib/event-validation";
 import { hasRoles } from "@/utils/helpers";
 import { createTRPCRouter, protectedProcedure, publicProcedure, participantProcedure } from "@/server/api/trpc";
 
 const varchar = z.string().trim().min(1).max(191);
-const httpsUrl = varchar.url().refine(value => new URL(value).protocol === "https:", "URL must use HTTPS");
 const text = z
 	.string()
 	.trim()
@@ -282,11 +282,7 @@ export const eventsRouter = createTRPCRouter({
 					link: input.link,
 					linkText: input.linkText,
 					linkTextFr: input.linkTextFr,
-					...(input.hidden
-						? { notifiedAt: existingEvent.now }
-						: reopenReminder
-							? { notifiedAt: null }
-							: {}),
+					...(input.hidden ? { notifiedAt: existingEvent.now } : reopenReminder ? { notifiedAt: null } : {}),
 				},
 			});
 		});

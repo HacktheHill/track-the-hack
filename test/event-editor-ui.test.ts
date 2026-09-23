@@ -179,6 +179,11 @@ void test("editor renders translated scanner controls and responsive shared styl
 	assert.equal(renderer.root.findByProps({ id: "event-max-check-ins" }).props.className, "ui-field");
 	assert.equal(renderer.root.findByProps({ id: "event-host" }).props.className, "ui-field");
 	assert.ok(renderer.root.findAllByType("option").some(option => option.children.includes("Présence à l'événement")));
+	assert.ok(
+		renderer.root
+			.findAllByType("p")
+			.some(node => node.children.includes("Les heures utilisent l'heure de l'Est (America/Toronto).")),
+	);
 	const dialogClassName: unknown = renderer.root.findByProps({ role: "dialog" }).props.className;
 	if (typeof dialogClassName !== "string") assert.fail("Dialog must have responsive classes");
 	assert.ok(dialogClassName.includes("max-h-[calc(100vh-2rem)]"));

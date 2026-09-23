@@ -16,6 +16,7 @@
 		"location": "Lieu",
 		"start": "Début",
 		"end": "Fin",
+		"timezone": "Les heures utilisent l'heure de l'Est (America/Toronto).",
 
 		"description-en": "Description (anglais)",
 		"description-fr": "Description (français)",
@@ -58,6 +59,7 @@
 		"location-required": "Le lieu de l'événement est requis.",
 		"description-required": "Les descriptions en anglais et en français sont requises.",
 		"start-end-required": "Les heures de début et de fin sont requises.",
+		"time-invalid": "Saisissez une date et une heure valides dans l'heure de l'Est.",
 		"end-after-start": "L'heure de fin doit être après l'heure de début.",
 		"max-check-ins-invalid": "Le nombre maximal de lectures doit être un nombre entier positif ou nul.",
 		"link-title-url-required": "Le lien doit avoir un titre en anglais, un titre en français et une URL.",
