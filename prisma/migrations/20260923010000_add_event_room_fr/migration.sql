@@ -1,0 +1,2 @@
+ALTER TABLE `Event`
+    ADD COLUMN `roomFr` VARCHAR(191) NULL;

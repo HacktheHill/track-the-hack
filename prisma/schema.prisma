@@ -155,6 +155,7 @@ model Event {
   description            String          @db.Text
   descriptionFr          String          @db.Text
   room                   String
+  roomFr                 String?
   image                  String?
   link                   String?
   linkText               String?

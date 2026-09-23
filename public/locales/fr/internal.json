@@ -14,6 +14,8 @@
 		"name-en": "Nom de l'événement (anglais)",
 		"name-fr": "Nom de l'événement (français)",
 		"location": "Lieu",
+		"location-en": "Lieu (anglais)",
+		"location-fr": "Lieu (français, facultatif)",
 		"start": "Début",
 		"end": "Fin",
 		"timezone": "Les heures utilisent l'heure de l'Est (America/Toronto).",

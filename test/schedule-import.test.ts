@@ -41,3 +41,24 @@ void test("the schedule importer rejects invalid 12-hour clock values", async ()
 		await rm(directory, { recursive: true, force: true });
 	}
 });
+
+void test("the schedule importer accepts an optional French room column", async () => {
+	const directory = await mkdtemp(join(tmpdir(), "track-the-hack-schedule-"));
+	try {
+		const source = await readFile(new URL("../prisma/hack-the-hill-iii-events.csv", import.meta.url), "utf8");
+		const [header, ...rows] = source.trimEnd().split("\n");
+		if (!header) throw new Error("The schedule CSV is missing its header");
+		const localizedSource =
+			[`${header},roomFr`, ...rows.map((row, index) => (index === 0 ? `${row},Salle C120` : row))].join("\n") +
+			"\n";
+		const input = join(directory, "localized.csv");
+		await writeFile(input, localizedSource);
+		const result = spawnSync(process.execPath, ["--import", "tsx", "scripts/import-events.mts", input], {
+			cwd: new URL("..", import.meta.url),
+			encoding: "utf8",
+		});
+		assert.equal(result.status, 0, result.stderr);
+	} finally {
+		await rm(directory, { recursive: true, force: true });
+	}
+});

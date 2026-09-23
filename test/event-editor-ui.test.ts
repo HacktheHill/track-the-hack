@@ -76,6 +76,7 @@ for (const mode of ["create", "update"]) {
 				change(renderer, "event-name", event.name);
 				change(renderer, "event-name-fr", event.nameFr);
 				change(renderer, "event-room", event.room);
+				change(renderer, "event-room-fr", event.roomFr ?? "");
 				change(renderer, "event-start", "2026-09-25T10:00");
 				change(renderer, "event-end", "2026-09-25T11:00");
 				change(renderer, "event-description", event.description);
@@ -128,7 +129,8 @@ for (const mode of ["create", "update"]) {
 				"type" in saved &&
 				"scannerWorkflow" in saved &&
 				"maxCheckIns" in saved &&
-				"host" in saved,
+				"host" in saved &&
+				"roomFr" in saved,
 		);
 		assert.equal(saved.description, event.description);
 		assert.equal(saved.descriptionFr, event.descriptionFr);
@@ -136,6 +138,7 @@ for (const mode of ["create", "update"]) {
 		assert.equal(saved.scannerWorkflow, event.scannerWorkflow);
 		assert.equal(saved.maxCheckIns, event.maxCheckIns);
 		assert.equal(saved.host, event.host);
+		assert.equal(saved.roomFr, event.roomFr);
 		assert.ok(!("image" in saved));
 
 		await flush(() => requests[1]?.succeed());
@@ -178,6 +181,7 @@ void test("editor renders translated scanner controls and responsive shared styl
 	assert.equal(renderer.root.findByProps({ id: "event-scanner-workflow" }).props.className, "ui-field");
 	assert.equal(renderer.root.findByProps({ id: "event-max-check-ins" }).props.className, "ui-field");
 	assert.equal(renderer.root.findByProps({ id: "event-host" }).props.className, "ui-field");
+	assert.equal(renderer.root.findByProps({ id: "event-room-fr" }).props.className, "ui-field");
 	assert.ok(renderer.root.findAllByType("option").some(option => option.children.includes("Présence à l'événement")));
 	assert.ok(
 		renderer.root

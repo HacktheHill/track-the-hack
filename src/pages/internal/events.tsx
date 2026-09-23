@@ -12,6 +12,7 @@ import { getServerSession } from "next-auth";
 import { rolesRedirect } from "@/server/lib/redirects";
 import { getAuthOptions } from "@/pages/api/auth/[...nextauth]";
 import type { RouterOutputs } from "@/server/api/api";
+import { getEventRoom } from "@/utils/event-room";
 
 type ManagedEvent = RouterOutputs["events"]["manage"][number];
 
@@ -80,7 +81,7 @@ const Events: NextPage = () => {
 								<tr key={event.id} className="border-b border-dark-primary-color last:border-b-0">
 									<td className="p-4">{event.name}</td>
 
-									<td className="p-4">{event.room}</td>
+									<td className="p-4">{getEventRoom(event, i18n.language)}</td>
 
 									<td className="p-4">
 										{event.start.toLocaleString(dateLocale, {
