@@ -7,6 +7,7 @@ import { useCallback, useRef, useState } from "react";
 import PresenceCounter from "@/components/PresenceCounter";
 import { useScannerOperation, type ScannerOperation } from "@/components/useScannerOperation";
 import ScanResult, { MealInfo } from "@/components/ScanResult";
+import ScannerResultStatus from "@/components/ScannerResultStatus";
 import App from "@/components/App";
 import ErrorDisplay from "@/components/Error";
 import PhysicalScanner from "@/components/PhysicalScanner";
@@ -133,6 +134,7 @@ const WorkflowCard = ({ result, operation }: { result: WorkflowScan; operation: 
 	);
 	return (
 		<ScanResult result={result} interestedEvents={interests.data}>
+			<ScannerResultStatus recordedNow={result.recordedNow} />
 			{result.workflow === ScannerWorkflow.ATTENDANCE && interests.isError && (
 				<button type="button" className="ui-button" onClick={() => void interests.refetch()}>
 					{t("event:retry-interest")}

@@ -25,6 +25,11 @@ type PresenceState = {
 	atLimit: boolean;
 };
 
+type AdjustmentState = PresenceState & {
+	applied: boolean;
+	stale: boolean;
+};
+
 type CheckInParticipant = {
 	id: string;
 	confirmed: boolean;
@@ -52,7 +57,7 @@ type ScannerParticipant =
 	| { workflow: typeof ScannerWorkflow.FOOD; participant: FoodParticipant }
 	| { workflow: typeof ScannerWorkflow.ATTENDANCE; participant: AttendanceParticipant };
 
-export type ScannerResult = ScannerParticipant & ScannerEvent & PresenceState;
+export type ScannerResult = ScannerParticipant & ScannerEvent & PresenceState & { recordedNow: boolean };
 
 export type ScannerRepository = {
 	findEvent(id: string): Promise<ScannerEventRecord | null>;
@@ -68,7 +73,13 @@ export type ScannerRepository = {
 		label: string;
 		initialValue: number;
 	}): Promise<void>;
-	adjustPresence(input: { eventId: string; hackerId: string; amount: -1 | 1; maximum: number | null }): Promise<void>;
+	adjustPresence(input: {
+		eventId: string;
+		hackerId: string;
+		amount: -1 | 1;
+		expectedValue: number;
+		maximum: number | null;
+	}): Promise<boolean>;
 	findPresence(eventId: string, hackerId: string): Promise<{ id: string; value: number } | null>;
 };
 
@@ -135,13 +146,37 @@ export const createPrismaScannerRepository = (prisma: ScannerPrisma): ScannerRep
 				}
 			}
 		},
-		adjustPresence: async ({ eventId, hackerId, amount, maximum }) => {
-			const valueBoundary =
-				amount < 0 ? { value: { gt: 0 } } : maximum === null ? {} : { value: { lt: maximum } };
-			await prisma.presence.updateMany({
-				where: { hackerId, eventId, ...valueBoundary },
-				data: { value: { increment: amount } },
-			});
+		adjustPresence: async ({ eventId, hackerId, amount, expectedValue, maximum }) => {
+			if (amount < 0) {
+				const updated = await prisma.$executeRaw`
+					UPDATE \`Presence\`
+					SET \`value\` = \`value\` - 1
+					WHERE \`hackerId\` = ${hackerId}
+						AND \`eventId\` = ${eventId}
+						AND \`value\` = ${expectedValue}
+						AND \`value\` > 0
+				`;
+				return updated === 1;
+			}
+			if (maximum === null) {
+				const updated = await prisma.$executeRaw`
+					UPDATE \`Presence\`
+					SET \`value\` = \`value\` + 1
+					WHERE \`hackerId\` = ${hackerId}
+						AND \`eventId\` = ${eventId}
+						AND \`value\` = ${expectedValue}
+				`;
+				return updated === 1;
+			}
+			const updated = await prisma.$executeRaw`
+				UPDATE \`Presence\`
+				SET \`value\` = \`value\` + 1
+				WHERE \`hackerId\` = ${hackerId}
+					AND \`eventId\` = ${eventId}
+					AND \`value\` = ${expectedValue}
+					AND \`value\` < ${maximum}
+			`;
+			return updated === 1;
 		},
 		findPresence,
 	};
@@ -192,8 +227,9 @@ export const scanParticipantForEvent = async (
 
 	const maxCheckIns = normalizeMaximum(event.maxCheckIns);
 	const initialValue = maxCheckIns === null || maxCheckIns > 0 ? 1 : 0;
+	const candidatePresenceId = randomUUID();
 	await repository.ensurePresence({
-		id: randomUUID(),
+		id: candidatePresenceId,
 		eventId,
 		hackerId,
 		label: event.name,
@@ -208,6 +244,7 @@ export const scanParticipantForEvent = async (
 		nameFr: event.nameFr,
 		...presence,
 		atLimit: maxCheckIns !== null && presence.value >= maxCheckIns,
+		recordedNow: presence.id === candidatePresenceId,
 		...participant,
 	};
 };
@@ -217,12 +254,19 @@ export const adjustPresenceForEvent = async (
 	eventId: string,
 	hackerId: string,
 	amount: -1 | 1,
-): Promise<PresenceState> => {
+	expectedValue: number,
+): Promise<AdjustmentState> => {
 	const event = await repository.findEventMaximum(eventId);
 	if (!event) throw new ScannerWorkflowError("EVENT_NOT_FOUND");
 
 	const maxCheckIns = normalizeMaximum(event.maxCheckIns);
-	await repository.adjustPresence({ eventId, hackerId, amount, maximum: maxCheckIns });
+	const applied = await repository.adjustPresence({
+		eventId,
+		hackerId,
+		amount,
+		expectedValue,
+		maximum: maxCheckIns,
+	});
 
 	const presence = await repository.findPresence(eventId, hackerId);
 	if (!presence) throw new ScannerWorkflowError("PRESENCE_NOT_FOUND");
@@ -232,5 +276,7 @@ export const adjustPresenceForEvent = async (
 	return {
 		...presence,
 		atLimit: maxCheckIns !== null && presence.value >= maxCheckIns,
+		applied,
+		stale: !applied && presence.value !== expectedValue,
 	};
 };

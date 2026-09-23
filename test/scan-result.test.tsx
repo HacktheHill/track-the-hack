@@ -10,7 +10,14 @@ import french from "@root/public/locales/fr/qr.json";
 import common from "@root/public/locales/en/common.json";
 
 type Props = Parameters<typeof ScanResult>[0];
-const base = { eventId: "event-1", name: "Lunch", nameFr: "Déjeuner", value: 1, atLimit: true };
+const base = {
+	eventId: "event-1",
+	name: "Lunch",
+	nameFr: "Déjeuner",
+	value: 1,
+	atLimit: true,
+	recordedNow: true,
+};
 const participantId = "wvY1HKlwYnFBO8t-YnQbwg";
 const food: Props["result"] = {
 	...base,
