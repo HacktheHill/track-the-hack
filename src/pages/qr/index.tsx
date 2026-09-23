@@ -61,33 +61,37 @@ const QR = () => {
 
 	return (
 		<App
-			className="relative flex h-full flex-col items-center justify-start gap-8 overflow-y-auto bg-default-gradient px-4 py-8"
+			className="relative flex h-full flex-col items-center overflow-y-auto bg-default-gradient px-4 py-8"
 			title={t("title")}
 		>
-			<select
-				aria-label={t("select-action")}
-				className="ui-field w-full max-w-4xl text-center"
-				onChange={event => {
-					scanSequence.current += 1;
-					selectedAction.current = event.target.value;
-					previousId.current = "";
-					setDisplay(undefined);
-					setError("");
-				}}
-			>
-				<option value={VIEW_PARTICIPANT}>{t("view-participant")}</option>
-				{events.map(event => (
-					<option key={event.id} value={event.id}>
-						{t(`workflow.${event.scannerWorkflow}`)} — {i18n.language === "fr" ? event.nameFr : event.name}
-					</option>
-				))}
-			</select>
-			<div className="grid w-full max-w-4xl gap-6 md:grid-cols-2">
-				<QRScanner onScan={handleScan} setError={setError} />
-				<PhysicalScanner onScan={handleScan} />
+			{/* Auto margins centre the column without making overflow unreachable above the scroll origin. */}
+			<div className="my-auto flex w-full flex-col items-center gap-8">
+				<select
+					aria-label={t("select-action")}
+					className="ui-field w-full max-w-4xl text-center"
+					onChange={event => {
+						scanSequence.current += 1;
+						selectedAction.current = event.target.value;
+						previousId.current = "";
+						setDisplay(undefined);
+						setError("");
+					}}
+				>
+					<option value={VIEW_PARTICIPANT}>{t("view-participant")}</option>
+					{events.map(event => (
+						<option key={event.id} value={event.id}>
+							{t(`workflow.${event.scannerWorkflow}`)} —{" "}
+							{i18n.language === "fr" ? event.nameFr : event.name}
+						</option>
+					))}
+				</select>
+				<div className="grid w-full max-w-4xl gap-6 md:grid-cols-2">
+					<QRScanner onScan={handleScan} setError={setError} />
+					<PhysicalScanner onScan={handleScan} />
+				</div>
+				{display}
+				{error && <ErrorDisplay message={error} />}
 			</div>
-			{display}
-			{error && <ErrorDisplay message={error} />}
 		</App>
 	);
 };
