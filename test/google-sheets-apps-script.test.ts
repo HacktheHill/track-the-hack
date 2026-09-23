@@ -6,7 +6,7 @@ import { provisioningBatchSchema } from "@/server/services/hacker-lifecycle";
 import {
 	applicationRow,
 	appsScriptSource as source,
-	createSheetHarness,
+	createResponseHarness,
 } from "@root/test/helpers/google-sheets-harness";
 
 const operationalRecordSchema = z
@@ -171,43 +171,57 @@ void test("the real Sheet adapter maps the live French headers and detailed rest
 	});
 });
 
+void test("additional dietary needs take precedence over simple meal categories", () => {
+	const shirt = "What unisex T-shirt size would you prefer?";
+	const cases = [
+		{ headers: ["Select all that apply.", "Select all that apply. (Egg allergy)"], values: ["Vegetarian", "TRUE"], expected: "OTHER" },
+		{ headers: ["Select all that apply.", "Please specify your allergy or restriction."], values: ["Halal", "Tree-nut allergy"], expected: "OTHER" },
+		{ headers: ["Si vous avez des restrictions alimentaires ou des allergies, sélectionnez-les ci-dessous: (Régime végétalien)", "Si vous avez des restrictions alimentaires ou des allergies, sélectionnez-les ci-dessous: (Allergie au lait)"], values: ["TRUE", "TRUE"], expected: "OTHER" },
+		{ headers: ["Select all that apply.", "Select all that apply. (Vegetarian)"], values: ["Vegetarian", "TRUE"], expected: "VEGETARIAN" },
+		{ headers: ["Select all that apply."], values: ["Vegetarian, Halal"], expected: "OTHER" },
+		{ headers: ["Do you have any dietary restrictions or food allergies?"], values: ["No"], expected: "STANDARD" },
+	];
+	for (const { headers, values, expected } of cases) {
+		const record = adapter.applicationRowToOperationalRecord_([shirt, ...headers], ["M", ...values], "test-id", "2030-09-30T03:59:59.000Z", false);
+		assert.equal(record.mealCategory, expected, `${headers.join(" / ")} -> ${values.join(" / ")}`);
+	}
+});
+
 for (const [language, header, answer] of [
 	["English", "What unisex T-shirt size would you prefer?", "I do not want a T-shirt"],
 	["French", "Quelle taille de t-shirt unisexe préférez-vous?", "Je ne souhaite pas recevoir de t-shirt"],
 ] as const) {
-	void test(`${language} T-shirt opt-outs survive batch acceptance and access-issuance row parsing`, () => {
+	void test(`${language} T-shirt opt-outs survive Accepted-row preparation`, () => {
 		const applications = ["regular", "opt-out"].map(submissionId =>
 			applicationRow({
 				"Submission ID": submissionId,
+				"Admission status": "Accepted",
 				[header]: submissionId === "regular" ? "M" : answer,
 				"Email address": "sheet-only@example.test",
 				"Adresse courriel": "sheet-only@example.test",
 			}),
 		);
 		const batches: Array<z.infer<typeof provisioningBatchSchema>> = [];
-		const sheet = createSheetHarness({
+		const sheet = createResponseHarness({
 			applications,
 			fetch: ({ url, options }) => {
-				assert.equal(url, "https://track.example/api/integrations/sheets/hackers");
-				assert.doesNotMatch(options.payload, /sheet-only@example\.test/);
-				const batch = provisioningBatchSchema.parse(JSON.parse(options.payload));
-				batches.push(batch);
-				return { status: 200, body: JSON.stringify({ processed: batch.hackers.length }) };
+				if (url.endsWith("/hackers")) {
+					assert.doesNotMatch(options.payload, /sheet-only@example\.test/);
+					const batch = provisioningBatchSchema.parse(JSON.parse(options.payload));
+					batches.push(batch);
+					return { status: 200, body: JSON.stringify({ processed: batch.hackers.length }) };
+				}
+				const ids = z.object({ ids: z.array(z.string()) }).parse(JSON.parse(options.payload)).ids;
+				return { status: 200, body: JSON.stringify({ records: ids.map(id => ({ id, confirmed: false, status: "PENDING", rsvpLink: `https://track.example/rsvp/manage#${"a".repeat(43)}.${"b".repeat(43)}` })), missingIds: [] }) };
 			},
 		});
-		sheet.run();
+		sheet.run("prepareAcceptedRowsForRsvp");
 		assert.equal(batches.length, 1);
 		assert.deepEqual(
 			batches[0]?.hackers.map(record => record.tShirtSize),
 			["M", "NONE"],
 		);
-		assert.deepEqual(sheet.alerts, ["2 participant(s) provisioned."]);
-		const operations = sheet.savedRows();
-		assert.equal(operations.length, 3);
-		const savedOptOut = operations[2];
-		assert.ok(savedOptOut);
-		assert.equal(savedOptOut[0], "opt-out");
-		assert.equal(adapter.operationalRecordFromRow_(savedOptOut).tShirtSize, "NONE");
+		assert.equal(sheet.rows()[2]?.[applicationRow({}).length + 1], "NONE");
 	});
 }
 
