@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import type { GetStaticProps } from "next";
 import { useTranslation } from "next-i18next";
@@ -36,8 +36,11 @@ const MapFloor = ({ floor }: { floor: number }) => {
 				return (
 					<div className="mx-auto block">
 						<div className="mb-3 flex items-center justify-center gap-3">
-							<span className="text-sm text-dark-color">{t("zoom")}</span>
+							<label htmlFor={`zoom-floor-${floor}`} className="text-sm text-dark-color">
+								{t("zoom")}
+							</label>
 							<input
+								id={`zoom-floor-${floor}`}
 								type="range"
 								min={1}
 								max={3}
@@ -46,10 +49,12 @@ const MapFloor = ({ floor }: { floor: number }) => {
 								onChange={e => updateZoom(Number(e.target.value))}
 								className="w-48"
 							/>
-							<button type="button" onClick={() => updateZoom(1)}>
+							<button type="button" className="ui-button" onClick={() => updateZoom(1)}>
 								{t("reset")}
 							</button>
-							<span className="text-sm text-dark-color">{zoom.toFixed(1)}x</span>
+							<span aria-live="polite" className="text-sm text-dark-color">
+								{zoom.toFixed(1)}x
+							</span>
 						</div>
 
 						<div
@@ -74,7 +79,11 @@ const MapFloor = ({ floor }: { floor: number }) => {
 									width={800}
 									height={floor === 4 ? 356 : 400}
 									//Image Location
-									src={floor === 4 ? "/assets/maps/floor4-current.svg" : `/assets/maps/floor${floor}.svg`}
+									src={
+										floor === 4
+											? "/assets/maps/floor4-current.svg"
+											: `/assets/maps/floor${floor}.svg`
+									}
 									alt={t("floor", { floor })}
 								/>
 							</TransformComponent>
@@ -95,9 +104,7 @@ const Maps = () => {
 			<div className="w-full justify-center overflow-y-auto p-5">
 				{[...Array(MAX_FLOORS).keys()].map(i => (
 					<div key={i}>
-						<h1 className="py-3 text-center text-xl text-dark-color">
-							{t("floor", { floor: i })}
-						</h1>
+						<h1 className="py-3 text-center text-xl text-dark-color">{t("floor", { floor: i })}</h1>
 
 						<MapFloor floor={i} />
 					</div>
