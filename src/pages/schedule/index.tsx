@@ -11,6 +11,7 @@ import Loading from "@/components/Loading";
 import ScheduleEventDialog from "@/components/ScheduleEventDialog";
 import { trpc, type RouterOutputs } from "@/server/api/api";
 import { useHasParticipantPass } from "@/utils/participant-pass";
+import { getEventRoom } from "@/utils/event-room";
 import { groupScheduleEvents } from "@/utils/schedule-layout";
 import { formatScheduleDate, formatScheduleTime, scheduleDayKey, scheduleDayKeys } from "@/utils/schedule-time";
 
@@ -367,7 +368,8 @@ const Schedule: NextPage = () => {
 																{scheduleDayKey(event.start) !== day.key &&
 																	`${formatScheduleDate(event.start, locale, { month: "short", day: "numeric" })} `}
 																{formatScheduleTime(event.start, locale)} –{" "}
-																{formatScheduleTime(event.end, locale)} · {event.room}
+																{formatScheduleTime(event.end, locale)} ·{" "}
+																{getEventRoom(event, router.locale)}
 															</span>
 														</button>
 													))}
@@ -427,7 +429,7 @@ const Schedule: NextPage = () => {
 																			</time>
 																		</p>
 																		<p className="mt-1 text-base leading-snug">
-																			{event.room}
+																			{getEventRoom(event, router.locale)}
 																		</p>
 																		{view === "mine" &&
 																			event.end.getTime() <= now && (

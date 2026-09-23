@@ -12,6 +12,7 @@ type EventEditorProps = {
 		| "name"
 		| "nameFr"
 		| "room"
+		| "roomFr"
 		| "description"
 		| "descriptionFr"
 		| "start"
@@ -55,6 +56,7 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 	const [name, setName] = useState(event?.name ?? "");
 	const [nameFr, setNameFr] = useState(event?.nameFr ?? "");
 	const [room, setRoom] = useState(event?.room ?? "");
+	const [roomFr, setRoomFr] = useState(event?.roomFr ?? "");
 	const [description, setDescription] = useState(event?.description ?? "");
 	const [descriptionFr, setDescriptionFr] = useState(event?.descriptionFr ?? "");
 	const [start, setStart] = useState(event?.start ? formatTorontoDateTimeLocal(event.start) : "");
@@ -186,6 +188,7 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 			name: name.trim(),
 			nameFr: nameFr.trim(),
 			room: room.trim(),
+			roomFr: roomFr.trim() || null,
 			start: startDate,
 			end: endDate,
 			description: description.trim(),
@@ -297,19 +300,35 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 							/>
 						</div>
 					</div>
-					<div className="flex flex-col gap-1">
-						<label htmlFor="event-room">{t("events.location")}</label>
+					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+						<div className="flex flex-col gap-1">
+							<label htmlFor="event-room">{t("events.location-en")}</label>
 
-						<input
-							id="event-room"
-							type="text"
-							maxLength={191}
-							required
-							value={room}
-							onChange={e => setRoom(e.target.value)}
-							className="ui-field"
-							{...errorAttributes}
-						/>
+							<input
+								id="event-room"
+								type="text"
+								maxLength={191}
+								required
+								value={room}
+								onChange={e => setRoom(e.target.value)}
+								className="ui-field"
+								{...errorAttributes}
+							/>
+						</div>
+
+						<div className="flex flex-col gap-1">
+							<label htmlFor="event-room-fr">{t("events.location-fr")}</label>
+
+							<input
+								id="event-room-fr"
+								type="text"
+								maxLength={191}
+								value={roomFr}
+								onChange={e => setRoomFr(e.target.value)}
+								className="ui-field"
+								{...errorAttributes}
+							/>
+						</div>
 					</div>
 
 					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

@@ -49,6 +49,14 @@ for (const locale of ["en", "fr"]) {
 					`<p class="text-xl">${lines.map((line, index) => `<span>${line}${index < lines.length - 1 ? "<br/>" : ""}</span>`).join("")}</p>`,
 				),
 			);
+			assert.ok(html.includes(`<p class="text-lg">${locale === "fr" ? "Amphithéâtre" : "Auditorium"}</p>`));
 		});
 	}
 }
+
+void test("public French event details fall back to the English room when roomFr is absent", async t => {
+	const { queryClient, wrap } = await setup(t);
+	queryClient.setQueryData(getQueryKey(trpc.events.get, { id: event.id }, "query"), { ...event, roomFr: null });
+	const html = renderToStaticMarkup(wrap(createElement(PublicEvent, { router: routerFor("fr") })));
+	assert.ok(html.includes('<p class="text-lg">Auditorium</p>'));
+});
