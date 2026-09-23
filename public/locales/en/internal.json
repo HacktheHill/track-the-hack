@@ -16,6 +16,7 @@
 		"location": "Location",
 		"start": "Start",
 		"end": "End",
+		"timezone": "Times use Eastern Time (America/Toronto).",
 
 		"description-en": "Description (English)",
 		"description-fr": "Description (French)",
@@ -58,6 +59,7 @@
 		"location-required": "Event location is required.",
 		"description-required": "English and French descriptions are required.",
 		"start-end-required": "Start and end times are required.",
+		"time-invalid": "Enter a valid date and time in Eastern Time.",
 		"end-after-start": "End time must be after start time.",
 		"max-check-ins-invalid": "Maximum scans must be a non-negative whole number.",
 		"link-title-url-required": "The link must have English and French titles and a URL.",
