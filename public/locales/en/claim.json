@@ -6,5 +6,7 @@
 	"qr-title": "Participant access QR",
 	"qr-explanation": "Have the participant scan this code on the device they will use at the event.",
 	"qr-alt": "Participant access QR code",
+	"qr-expires-in": "Expires in {{time}}",
+	"qr-expired": "This code has expired. Ask an organizer for a new one.",
 	"unavailable": "Access is temporarily unavailable. Please ask an organizer for a new code."
 }
