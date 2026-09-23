@@ -16,8 +16,14 @@ const migrate = (headers = legacyHeaders) => {
 	let maxColumns = cells[0]?.length ?? 0;
 	let writes = 0;
 	let locked = false;
+	const selectedRange = { a1Notation: "252:252" };
+	let restoredRange: unknown;
+	const columnWidths = new Map<number, number>();
 	const sheet = {
 		getName: () => "Responses",
+		getActiveRange: () => selectedRange,
+		setActiveRange: (range: unknown) => { restoredRange = range; },
+		setColumnWidth: (column: number, width: number) => { columnWidths.set(column, width); },
 		getLastColumn: () => cells[0]?.length ?? 0,
 		getLastRow: () => cells.length,
 		getMaxColumns: () => maxColumns,
@@ -46,7 +52,15 @@ const migrate = (headers = legacyHeaders) => {
 		});
 		return result;
 	};
-	return { execute, cells, writes: () => writes, locked: () => locked };
+	return {
+		execute,
+		cells,
+		writes: () => writes,
+		locked: () => locked,
+		selectedRange,
+		restoredRange: () => restoredRange,
+		columnWidths,
+	};
 };
 
 void test("explicit six-column migration preserves IDs and old links while adding RSVP fields", () => {
@@ -67,6 +81,15 @@ void test("explicit six-column migration preserves IDs and old links while addin
 	assert.equal(data?.[start + 7], "expiry");
 	assert.equal(data?.[start + 8], "sync");
 	assert.equal(data?.[start + 10], "");
+	assert.equal(sheet.restoredRange(), sheet.selectedRange);
+	assert.deepEqual(
+		[...sheet.columnWidths.entries()],
+		[
+			[start + 1, 260], [start + 2, 110], [start + 3, 130], [start + 4, 175],
+			[start + 5, 300], [start + 6, 120], [start + 7, 300], [start + 8, 175],
+			[start + 9, 175], [start + 10, 90], [start + 11, 175],
+		],
+	);
 });
 
 void test("migration refuses an unknown header layout before changing any data", () => {
@@ -86,6 +109,8 @@ void test("an already migrated ten-column response layout gains only the refresh
 	assert.equal(sheet.cells[0]?.[applicationHeaders.length + 10], "RSVP Refreshed At");
 	assert.equal(sheet.cells[1]?.[applicationHeaders.length], "stable-id");
 	assert.equal(sheet.writes(), 1);
+	assert.equal(sheet.restoredRange(), sheet.selectedRange);
+	assert.equal(sheet.columnWidths.get(applicationHeaders.length + 11), 175);
 });
 
 void test("the refresh-column migration is idempotent after the header exists", () => {

@@ -38,6 +38,10 @@ const TRACK_RESPONSE_HEADERS = [
 	"RSVP Refreshed At",
 ];
 
+// Keep operational columns readable without inheriting the unusually wide
+// legacy link-column width from the final Tally response column.
+const TRACK_RESPONSE_COLUMN_WIDTHS = [260, 110, 130, 175, 300, 120, 300, 175, 175, 90, 175];
+
 const LEGACY_RESPONSE_HEADERS = [
 	"Track Participant ID",
 	"Track RSVP Link",
@@ -94,6 +98,7 @@ function migrateLegacyResponseColumnsForRsvp() {
 			headers.slice(start).join("\n") !== LEGACY_RESPONSE_HEADERS.join("\n")) {
 			throw new Error("The six legacy Track headers are not the exact final columns. No migration was done.");
 		}
+		const selectedRange = sheet.getActiveRange();
 		const lastRow = sheet.getLastRow();
 		const legacy = sheet.getRange(1, start + 1, lastRow, LEGACY_RESPONSE_HEADERS.length).getValues();
 		const next = legacy.map((row, index) => index === 0 ? TRACK_RESPONSE_HEADERS : [
@@ -102,6 +107,8 @@ function migrateLegacyResponseColumnsForRsvp() {
 		const requiredColumns = start + TRACK_RESPONSE_HEADERS.length;
 		if (sheet.getMaxColumns() < requiredColumns) sheet.insertColumnsAfter(sheet.getMaxColumns(), requiredColumns - sheet.getMaxColumns());
 		sheet.getRange(1, start + 1, lastRow, TRACK_RESPONSE_HEADERS.length).setValues(next);
+		applyResponseColumnWidths_(sheet, start + 1);
+		if (selectedRange) sheet.setActiveRange(selectedRange);
 		return lastRow - 1;
 	});
 }
@@ -124,10 +131,18 @@ function migrateResponseRsvpRefreshColumn() {
 			operationalHeaders.join("\n") !== TRACK_RESPONSE_HEADERS.slice(0, -1).join("\n")) {
 			throw new Error("The ten response-row headers are not the exact final columns. No migration was done.");
 		}
+		const selectedRange = sheet.getActiveRange();
 		if (sheet.getMaxColumns() < lastColumn + 1) sheet.insertColumnsAfter(sheet.getMaxColumns(), 1);
 		sheet.getRange(1, lastColumn + 1).setValue("RSVP Refreshed At");
+		applyResponseColumnWidths_(sheet, review + 2);
+		if (selectedRange) sheet.setActiveRange(selectedRange);
 		return sheet.getLastRow() - 1;
 	});
+}
+
+/** @param {GoogleAppsScript.Spreadsheet.Sheet} sheet @param {number} firstColumn */
+function applyResponseColumnWidths_(sheet, firstColumn) {
+	TRACK_RESPONSE_COLUMN_WIDTHS.forEach((width, index) => sheet.setColumnWidth(firstColumn + index, width));
 }
 
 /**
