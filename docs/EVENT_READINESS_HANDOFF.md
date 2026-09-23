@@ -1,8 +1,8 @@
 # Track the Hack event-readiness handoff
 
-Last verified: 2026-09-23 19:16-19:20 EDT  
-Repository baseline: `d48c26591253ba0d5e033934e5114516dd72beff` (`origin/main`)  
-Production revision: `track-the-hack--0000057`  
+Last verified: 2026-09-23 19:16-19:46 EDT
+Repository baseline after the schedule-history rewrite: `39c46e7303d79ff6aa62c21cf5598471c69e17e4` (`origin/main`)
+Production revision: `track-the-hack--0000057`
 Production image: `trackthehackacr.azurecr.io/track-the-hack:d48c26591253ba0d5e033934e5114516dd72beff`
 
 ## Purpose
@@ -49,7 +49,9 @@ The production database already matches the authoritative downloaded CSV exactly
 - events with stable `importKey`: 41
 - canonical event-data SHA-256 for both the downloaded CSV and production: `77ddc0a3ef03e2bd0c24d2641a6d7af1b4c880cac773b7e326bc57c90e53cf95`
 
-The repository previously contained a stale 44-row copy of the schedule. It is being removed from the public repository and purged from reachable Git history. The importer now requires an explicit private input path, its tests use synthetic events, and the migration image no longer embeds the real schedule. This does not require a production data write because production is already correct.
+The repository previously contained a stale 44-row copy of the schedule. It has been removed from the working tree and from every ordinary remote branch and tag. The importer now requires an explicit private input path, its tests use synthetic events, and the migration image no longer embeds the real schedule. This does not require a production data write because production is already correct.
+
+GitHub's server-managed, read-only PR refs for PRs 327 through 340 still retain the old commits. GitHub does not permit clients to update `refs/pull/*`; complete server-side dereferencing, garbage collection, and cached-view removal therefore requires a GitHub Support request. Existing clones or forks can also retain old objects and must be cleaned by their owners. Until Support completes that request, describe the repository cleanup as complete for ordinary branches and tags, not as a total server-side erasure.
 
 ### Participant state
 
@@ -269,76 +271,6 @@ For each future code PR:
 8. Rebase before merging; do not create merge commits.
 9. Verify GitHub Actions and the resulting Azure revision/image after landing.
 10. Keep Cloudflare Access enabled until the separately reviewed public-launch step.
-
-## Chronological evidence
-
-- Earlier September 23 reports captured a reset database, later partial participant counts, and several dirty implementation prototypes. Their counts and deployment snapshots are no longer current.
-- At the start of this review, GitHub `main` was `83f0228` and production was on image `9e8166f`.
-- While the review was running, `main` advanced to `d48c265` and Azure deployed revision `track-the-hack--0000057` with that image.
-- Read-only Azure inspection then found 0 participants and 41 events.
-- Canonical comparison proved the 41 production events exactly matched the downloaded authoritative CSV.
-- Production was left unchanged because it already matched the private authoritative schedule. The public repository was changed to remove the real schedule, require an explicit private importer input, use synthetic schedule tests, and exclude `private-rsvp` from TypeScript.
-- The operator then ran the accepted-audience preparation menu command.
-- Two subsequent read-only database checks found a stable partial count of 100 participants, indicating the first batch completed and later processing did not.
-
----
-
-# Appendix: independent code review, 2026-09-23
-
-Appended by a separate review pass. Originally verified against the pre-purge
-event-readiness branch rather than `origin/main` at `d48c265`. Schedule-derived counts
-below were verified against the private authoritative CSV and the matching production
-database; the real CSV is no longer a repository input.
-
-This is **not** an additive backlog. Every item below states whether it is already
-covered by a section above. Items marked "already covered" need no new action and are
-listed only so a future reader can see they were re-checked and not missed.
-
-## Verification performed
-
-| Check                  | Result                                                                     |
-| ---------------------- | -------------------------------------------------------------------------- |
-| `npm test`             | 173 tests: 169 pass, 0 fail, 4 skipped (all four MySQL-only)               |
-| `npm run typecheck`    | pass                                                                       |
-| `npm run lint`         | 0 errors, 0 warnings                                                       |
-| `npx prisma validate`  | pass                                                                       |
-| `next build --webpack` | pass (run at `d48c265`; unchanged by this branch's three commits)          |
-| `npm audit --omit=dev` | 0 vulnerabilities                                                          |
-| Git history            | 711 commits on `origin/main`, 0 merge commits, 0 non-conventional subjects |
-
-Not run, for lack of a Docker daemon on the review machine: live migration
-application, the four MySQL-only tests, `test:e2e:dev`, `test:e2e:pwa`,
-`test:e2e:discord`, and browser verification.
-
-## This document's factual claims were re-checked and hold
-
-Confirmed against the private authoritative CSV and matching production data: 41 rows; 5 hidden; `CHECK_IN` 2,
-`MERCHANDISE` 1, `FOOD` 12, `ATTENDANCE` 26; 41 rows with a non-empty `roomFr`; 41
-unique non-empty `importKey` values; 41 non-empty `seriesKey` values. `Hacking`,
-`Judges Orientation`, and `Project Submission Deadline` are genuinely absent as event
-names — the word "hacking" appears only inside description text, which is a false
-positive worth noting for anyone re-checking with `grep`. The worktree inventory is
-accurate, including that the `/tmp/claude-1000/.../scratchpad/wt` entry is a read-only
-review worktree with no unique changes.
-
-No discrepancy was found in the existing contents of this document.
-
-## Corrections to earlier review reports
-
-Two claims in the superseded `docs/CODEBASE_REVIEW*.md` reports were wrong. They are
-corrected here so the error is not carried forward:
-
-1. **The RSVP reconciliation response did not rename `cancellationLink`.** It still
-   emits `cancellationLink` under exactly the documented condition
-   (`confirmed && capability`). It _adds_ `status` and `rsvpLink` alongside it. The
-   documented field is therefore still correct and backward compatible; the
-   documentation is incomplete, not wrong. See R1.
-2. **The no-op migrations have been applied to production.** An earlier report said
-   production was on revision 33 and had seen none of them, and recommended collapsing
-   them. This document records production on revision `track-the-hack--0000057` running
-   image `d48c265`, and the deploy workflow runs the migration job before promoting the
-   web image. Those migrations are applied and **must be retained**. See R4, whose
-   recommendation is reduced accordingly.
 
 ## New findings not covered by the sections above
 
