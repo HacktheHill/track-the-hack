@@ -56,6 +56,31 @@ const sponsorsData = [
 		displayHeight: 27,
 		websiteLink: "https://backboard.io/",
 	},
+	{
+		id: "uosu",
+		name: "University of Ottawa Students' Union",
+		tier: SponsorTier.COUNCILLOR,
+		logo: "/assets/sponsors/UOSU.svg",
+		displayWidth: 220,
+		displayHeight: 69,
+		websiteLink: "https://www.seuo-uosu.com/",
+	},
+	{
+		id: "eef",
+		name: "Engineering Endowment Fund",
+		tier: SponsorTier.IN_KIND,
+		logo: "/assets/sponsors/EEF.svg",
+		displayWidth: 220,
+		displayHeight: 85,
+	},
+	{
+		id: "mathematech",
+		name: "MathemaTech",
+		tier: SponsorTier.IN_KIND,
+		logo: "/assets/sponsors/MathemaTech.svg",
+		displayWidth: 220,
+		displayHeight: 41,
+	},
 ] satisfies SponsorData[];
 
 export { sponsorsData, type SponsorData, SponsorTier };
