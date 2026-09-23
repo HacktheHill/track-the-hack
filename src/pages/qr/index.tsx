@@ -61,7 +61,7 @@ const QR = () => {
 
 	return (
 		<App
-			className="relative flex h-full flex-col items-center justify-center gap-8 overflow-y-auto bg-default-gradient px-4 py-8"
+			className="relative flex h-full flex-col items-center justify-start gap-8 overflow-y-auto bg-default-gradient px-4 py-8"
 			title={t("title")}
 		>
 			<select
