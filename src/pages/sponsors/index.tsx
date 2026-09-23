@@ -37,39 +37,31 @@ const Sponsors = () => {
 								: "flex w-full flex-wrap items-center justify-evenly gap-4"
 						}
 					>
-						{/* wrap image in link only if tier is councillor or above */}
-						{sponsors.map(sponsor =>
-							![SponsorTier.BACKBENCHER, SponsorTier.IN_KIND].includes(sponsor.tier) ? (
-								<Link
-									key={sponsor.id}
-									className="flex min-w-0 flex-col items-center justify-center drop-shadow-xl transition-transform hover:scale-105"
-									href={`/sponsors/${sponsor.id}`}
-								>
-									<Image
-										src={sponsor.logo}
-										alt={sponsor.name}
-										width={sponsor.displayWidth}
-										height={sponsor.displayHeight}
-										className="h-auto max-w-full"
-									/>
-								</Link>
-							) : (
+						{sponsors.map(sponsor => (
+							<Link
+								key={sponsor.id}
+								className={`flex min-w-0 items-center justify-center drop-shadow-xl transition-transform hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-4 ${
+									sponsor.tier === SponsorTier.IN_KIND
+										? "w-[calc(50%-0.5rem)] max-w-[220px]"
+										: sponsor.tier === SponsorTier.BACKBENCHER
+											? "w-[calc(50%-0.5rem)] max-w-[500px]"
+											: "max-w-full"
+								}`}
+								href={`/sponsors/${sponsor.id}`}
+							>
 								<Image
-									key={sponsor.id}
 									src={sponsor.logo}
 									alt={sponsor.name}
 									width={sponsor.displayWidth}
 									height={sponsor.displayHeight}
 									className={
-										sponsor.tier === SponsorTier.IN_KIND
-											? "h-auto w-[calc(50%-0.5rem)] max-w-[220px] drop-shadow-xl"
-											: sponsor.tier === SponsorTier.BACKBENCHER
-												? "h-auto w-[calc(50%-0.5rem)] max-w-[500px] drop-shadow-xl"
-												: "h-auto max-w-full drop-shadow-xl"
+										sponsor.tier === SponsorTier.IN_KIND || sponsor.tier === SponsorTier.BACKBENCHER
+											? "h-auto w-full object-contain"
+											: "h-auto max-w-full object-contain"
 									}
 								/>
-							),
-						)}
+							</Link>
+						))}
 					</div>
 				);
 			})}

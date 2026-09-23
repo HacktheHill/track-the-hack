@@ -6,7 +6,7 @@ interface SponsorData {
 	displayWidth: number;
 	displayHeight: number;
 	hiringLink?: string;
-	websiteLink?: string;
+	websiteLink: string;
 	additionalLink?: string;
 }
 
@@ -72,6 +72,7 @@ const sponsorsData = [
 		logo: "/assets/sponsors/EEF.svg",
 		displayWidth: 220,
 		displayHeight: 68,
+		websiteLink: "https://www.uottawa.ca/faculty-engineering/student-hub/funding-student-initiatives",
 	},
 	{
 		id: "mathematech",
@@ -80,6 +81,7 @@ const sponsorsData = [
 		logo: "/assets/sponsors/MathemaTech.svg",
 		displayWidth: 220,
 		displayHeight: 41,
+		websiteLink: "https://www.mthm.tech/",
 	},
 ] satisfies SponsorData[];
 
