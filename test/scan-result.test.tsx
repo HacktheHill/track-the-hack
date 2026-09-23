@@ -92,6 +92,6 @@ void test("attendance scans display localized interests and distinguish loading 
 	};
 	assert.match(await render(attendance, interests), /Hardware Workshop/);
 	assert.match(await render(attendance, interests, "fr"), /Atelier de matériel/);
-	assert.match(await render(attendance, []), /No events marked as interested/);
-	assert.match(await render(attendance), /Loading event interests/);
+	assert.match(await render(attendance, []), /No saved events/);
+	assert.match(await render(attendance), /Loading saved events/);
 });

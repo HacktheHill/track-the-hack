@@ -80,6 +80,13 @@ const managedEventSelect = {
 } as const;
 
 export const eventsRouter = createTRPCRouter({
+	savedIds: participantProcedure.query(async ({ ctx }) => {
+		const interests = await ctx.prisma.eventInterest.findMany({
+			where: { hackerId: ctx.participantSession.hackerId, Event: { hidden: false } },
+			select: { eventId: true },
+		});
+		return interests.map(interest => interest.eventId);
+	}),
 	getInterest: participantProcedure.input(z.object({ eventId: z.string().min(1) })).query(async ({ ctx, input }) => {
 		const interest = await ctx.prisma.eventInterest.findFirst({
 			where: {

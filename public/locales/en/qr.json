@@ -32,7 +32,7 @@
 	"scan-result": "Scan result",
 	"decrease-count": "Decrease count",
 	"increase-count": "Increase count",
-	"events-of-interest": "Events of interest",
-	"no-event-interests": "No events marked as interested.",
-	"loading-interests": "Loading event interests…"
+	"events-of-interest": "Saved events",
+	"no-event-interests": "No saved events.",
+	"loading-interests": "Loading saved events…"
 }

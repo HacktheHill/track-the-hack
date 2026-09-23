@@ -32,7 +32,7 @@
 	"scan-result": "Résultat du scan",
 	"decrease-count": "Diminuer le nombre",
 	"increase-count": "Augmenter le nombre",
-	"events-of-interest": "Événements d’intérêt",
-	"no-event-interests": "Aucun événement marqué comme intéressant.",
-	"loading-interests": "Chargement des événements d’intérêt…"
+	"events-of-interest": "Événements enregistrés",
+	"no-event-interests": "Aucun événement enregistré.",
+	"loading-interests": "Chargement des événements enregistrés…"
 }
