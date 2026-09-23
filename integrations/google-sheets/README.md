@@ -1,46 +1,60 @@
 # Google Sheets integration
 
-[`Code.gs`](./Code.gs) is the source for the bound Apps Script attached to the restricted Tally response Sheet.
+[`Code.gs`](./Code.gs) and [`Sidebar.html`](./Sidebar.html) are the source for the bound Apps Script attached to the restricted Tally response Sheet.
 
-Set these Apps Script **Project Settings → Script properties** before using the `Track the Hack` menu:
+The organizer workflow runs entirely from the `Responses` tab:
+
+1. Open **Track the Hack → Open check-in sidebar** once.
+2. Select any cell in one applicant row whose **Admission status** is **Accepted**.
+3. Click **Provision & show QR**.
+4. The button opens the claim QR directly in a dedicated display tab or window. Later clicks reuse the same display tab, including after the sidebar is reopened.
+
+The single button creates or updates the Track participant, issues a five-minute single-use claim, refreshes that participant's RSVP state, and writes the result beside the form response. The display page counts down and hides the QR at expiry. Issuing a new QR revokes any previous claim and active participant session for that participant.
+
+## Response columns
+
+The sidebar appends these Track-owned columns after the existing response and admissions columns without moving or overwriting them:
+
+- `Track Participant ID`
+- `Track RSVP Link`
+- `Track RSVP Status`
+- `Track Cancellation Link`
+- `Track Access Expires`
+- `Track Last Sync`
+
+Every read and write resolves columns by their header text, so the workflow does not depend on fixed column letters. The participant ID is saved and flushed before the API request; a timeout can therefore be retried without creating a second participant.
+
+The legacy `Track Operations` tab is no longer read or written. The integration does not delete it, so historical data remains available until an organizer deliberately archives or removes it.
+
+## Configuration
+
+Set these Apps Script **Project Settings → Script properties**:
 
 - `TRACK_BASE_URL`: the deployed HTTPS Track the Hack origin
-- `SHEETS_INTEGRATION_API_KEY`: the same secret configured on that deployment
+- `SHEETS_INTEGRATION_API_KEY`: the matching integration bearer secret
 - `RSVP_DEADLINE`: the event's actual RSVP deadline as an absolute ISO-8601 timestamp
-- `CF_ACCESS_CLIENT_ID`: the Cloudflare Access service token client ID
-- `CF_ACCESS_CLIENT_SECRET`: the matching service token secret
+- `CF_ACCESS_CLIENT_ID`: the Cloudflare Access service-token client ID
+- `CF_ACCESS_CLIENT_SECRET`: the matching Cloudflare Access service-token secret
 
-The menu accepts selected application rows, has a separate explicit action for
-walk-ins, refreshes RSVP state, and issues a five-minute participant-access QR.
-It creates a separate `Track Operations` tab and sends only participant ID,
-T-shirt size, coarse meal category, expiry, and the selected walk-in flag to
-Track the Hack. Names, emails, Tally IDs, waivers, and detailed restrictions
-remain in Google Sheets.
+The Sheet sends only the participant ID, T-shirt size, coarse meal category, RSVP expiry, and `walkIn: false` to Track the Hack. Names, email addresses, Tally IDs, waivers, detailed restrictions, admission reasoning, and other application answers remain in Google Sheets.
 
-## Updating the live Sheet's script
+## Updating the live bound script
 
-1. Apply the `20260915000000_add_no_tshirt_option` database migration and deploy the matching Track version first. Use `Code.gs` from that same repository revision so the Sheet and API agree on the supported fields and responses.
-2. In **Hack the Hill III Hacker Application Form**, open **Extensions → Apps Script** and confirm the project is **Track the Hack Integration**. Keep a private backup of its existing `Code.gs`. Preserve the `Responses` and `Track Operations` tabs, including all saved submission-to-participant ID mappings.
-3. Replace the contents of the existing **Code.gs** with this directory's [`Code.gs`](./Code.gs). Update the existing file in the bound project; adding a second copy would duplicate its functions and constants.
-4. Open **Project Settings → Script properties** and check the five properties listed above against the target deployment. Add any missing properties; if the section is empty, all five are required. Keep valid existing values, and use the event's actual RSVP deadline.
-5. **Save project to Drive**, then reload the Sheet. Confirm the **Track the Hack** menu includes **Accept selected walk-in application(s)**. The script's `onOpen` only builds the menu; this check does not accept applicants, call Track, or send email.
+1. Deploy the matching Track revision first so the Sheet and API agree on request and response formats.
+2. In **Hack the Hill III Hacker Application Form**, open **Extensions → Apps Script** and confirm the project is **Track the Hack Integration**.
+3. Keep a private backup of the existing bound project.
+4. Replace the existing `Code.gs` with this directory's [`Code.gs`](./Code.gs).
+5. Add or replace an HTML file named exactly `Sidebar` with [`Sidebar.html`](./Sidebar.html). Do not paste the HTML into `Code.gs`.
+6. Verify all five script properties above without exposing their values.
+7. Save the project to Drive and reload the Sheet. Confirm the **Track the Hack** menu contains only **Open check-in sidebar**.
 
-This is a [bound script](https://developers.google.com/apps-script/guides/bound) used through the Sheet's menu. Saving it and reopening the Sheet updates that workflow; no web-app deployment or new installable trigger is required.
+Opening the sidebar adds the six headers if they are missing, but it does not provision a participant or call Track. Provisioning occurs only when the organizer presses the sidebar button on an accepted row.
 
-When ready to resume operations, **Track the Hack → Set up operations tab** upgrades the older 11-column header by appending **Walk-In** in column L, preserving the existing rows and participant IDs. This action writes only to the Sheet. If the headers do not match, inspect the mismatch instead of deleting or recreating the operations tab.
+## Failure and retry behaviour
 
-Accepting applications, refreshing RSVP status, and issuing access are separate manual actions that call Track. Do not run them as an installation check. This script contains no email-sending functions.
-
-## T-shirt opt-outs
-
-The English “I do not want a T-shirt” and French “Je ne souhaite pas recevoir de t-shirt” answers are stored as `NONE`. These applicants can be accepted in the same batch as applicants who selected a size, and their saved operations rows can issue access normally.
-
-For the live Sheet to support this choice, follow [Updating the live Sheet's script](#updating-the-live-sheets-script). A repository change alone does not update the script installed in the Sheet.
-
-## Retrying acceptance
-
-Acceptance saves and flushes each submission's participant ID to `Track Operations` before sending the provisioning request. If a request times out, only part of the batch reaches Track, or saving the result fails, rerun the same selection. The saved IDs are reused; do not delete the operations rows or replace their IDs to retry.
-
-New rows keep `RSVP Status` and `Last Sync` blank until the API confirms the full batch. Existing confirmation, cancellation links, access expiry, and previous sync information are preserved if a retry fails. A successful retry changes a previously missing record's RSVP status to `PENDING`; confirmed participants remain confirmed.
-
-All menu operations that write to the operations tab share a [document lock](<https://developers.google.com/apps-script/reference/lock/lock-service#getDocumentLock()>). If another operation runs for more than 30 seconds, the waiting operation asks you to retry. Success dialogs appear after the lock is released. Duplicate submissions in a selection or conflicting saved IDs are rejected before provisioning.
+- A non-accepted, blank, header, multi-row, or non-`Responses` selection is rejected before any API request.
+- The participant ID and RSVP link are committed before claim issuance. Retrying reuses that ID.
+- If claim issuance fails, no QR is shown.
+- If the claim succeeds but RSVP reconciliation fails, the QR is still shown and the sidebar reports that RSVP status could not be refreshed.
+- If the browser blocks the display window, the sidebar presents a manual **Open the QR display** fallback link.
+- All Sheet mutations use a document lock so simultaneous organizers cannot create competing IDs for the same row.
