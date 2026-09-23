@@ -1,9 +1,9 @@
 # Track the Hack event-readiness handoff
 
-Last verified: 2026-09-23 19:16-19:46 EDT
-Repository baseline after the schedule-history rewrite: `39c46e7303d79ff6aa62c21cf5598471c69e17e4` (`origin/main`)
-Production revision: `track-the-hack--0000057`
-Production image: `trackthehackacr.azurecr.io/track-the-hack:d48c26591253ba0d5e033934e5114516dd72beff`
+Last verified: 2026-09-23 19:53 EDT
+Repository baseline after the schedule-history rewrite and rebase merge: `85af7abb4adda34541b172ded3a766e4b3a01a41` (`origin/main`)
+Production revision: `track-the-hack--0000058`
+Production image: `trackthehackacr.azurecr.io/track-the-hack:85af7abb4adda34541b172ded3a766e4b3a01a41`
 
 ## Purpose
 
@@ -30,7 +30,9 @@ Do not treat the older reports as additive backlogs. Several of their items are 
 
 ### Azure platform
 
-- The Container App is Running and healthy on revision `track-the-hack--0000057`.
+- The Container App is Running and healthy on revision `track-the-hack--0000058`.
+- Revision `track-the-hack--0000058` is Provisioned and Healthy and receives 100% of production traffic.
+- GitHub Actions run `35935204267` completed image validation, the idempotent migration job, and deployment successfully for `85af7abb4adda34541b172ded3a766e4b3a01a41`.
 - The production MySQL Flexible Server is Ready, has public network access disabled, and has 35 days of backup retention.
 - Earliest restore time observed during this review: `2026-08-19T22:59:49.337300+00:00`.
 - Cloudflare Access remains the intended testing gate.
