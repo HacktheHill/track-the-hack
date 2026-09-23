@@ -12,6 +12,7 @@ import {
 	isPushServerAvailable,
 	updateEventNotification,
 } from "@/utils/event-notifications";
+import { getEventRoom } from "@/utils/event-room";
 import EventInterestButton from "./EventInterestButton";
 import Error from "./Error";
 import Loading from "./Loading";
@@ -202,7 +203,7 @@ export default function ScheduleEventDetails({ id, onClose }: Props) {
 							)}
 							{formatScheduleTime(event.end, locale)}
 						</p>
-						<p className="text-lg">{event.room}</p>
+						<p className="text-lg">{getEventRoom(event, router.locale)}</p>
 						{event.type !== EventType.ALL && <p>{t(`type.${event.type}`)}</p>}
 						{event.host && <p className="text-sm">{event.host}</p>}
 						<span className="sr-only" aria-live="polite">

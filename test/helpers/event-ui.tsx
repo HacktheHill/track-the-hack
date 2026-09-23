@@ -32,6 +32,7 @@ export const event: EventFixture = {
 	name: "Opening ceremony",
 	nameFr: "Cérémonie d'ouverture",
 	room: "Auditorium",
+	roomFr: "Amphithéâtre",
 	start: new Date("2026-09-25T14:00:00Z"),
 	end: new Date("2026-09-25T15:00:00Z"),
 	description: "Welcome\nto the event",
