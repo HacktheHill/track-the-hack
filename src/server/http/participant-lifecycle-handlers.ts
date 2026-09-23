@@ -12,9 +12,7 @@ const rejectNonPost = (method: string | undefined, setAllow: (value: string) => 
 	return true;
 };
 
-const rsvpBodySchema = z.object({ confirm: z.literal(true) });
 const cancellationBodySchema = z.object({ token: z.string().min(1).max(256) });
-type QueryValue = NextApiRequest["query"][string];
 export type LifecycleApiRequest = Pick<NextApiRequest, "headers" | "method" | "query"> & { body: unknown };
 type HeaderValue = number | string | readonly string[];
 
@@ -35,33 +33,6 @@ type LifecycleApiHandler<Body extends LifecycleApiResponseBody> = (
 	req: LifecycleApiRequest,
 	res: LifecycleApiResponse<Body>,
 ) => Promise<void>;
-
-export const createRsvpApiHandler =
-	(confirm: (id: QueryValue) => Promise<void>): LifecycleApiHandler<LifecycleMessageResponse> =>
-	async (req, res) => {
-		res.setHeader("Cache-Control", "no-store");
-		if (rejectNonPost(req.method, value => res.setHeader("Allow", value))) {
-			return res.status(405).json({ ok: false, message: "Use the confirmation form to respond." });
-		}
-
-		try {
-			if (!rsvpBodySchema.safeParse(req.body).success) {
-				return res.status(400).json({ ok: false, message: "Explicit confirmation is required." });
-			}
-			await confirm(req.query.id);
-			return res.status(200).json({ ok: true, message: "Your attendance is confirmed." });
-		} catch (error) {
-			if (error instanceof ParticipantLifecycleError || error instanceof ZodError) {
-				return res.status(400).json({
-					ok: false,
-					message: "This invitation is invalid or has expired.",
-				});
-			}
-
-			console.error("RSVP confirmation failed");
-			return res.status(500).json({ ok: false, message: "Confirmation is temporarily unavailable." });
-		}
-	};
 
 export const createCancellationApiHandler =
 	(cancel: (token: string) => Promise<void>): LifecycleApiHandler<LifecycleMessageResponse> =>

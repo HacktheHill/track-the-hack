@@ -21,6 +21,8 @@ const reconciliationResponseSchema = z
 				.object({
 					id: z.string().min(1),
 					confirmed: z.boolean(),
+					status: z.enum(["PENDING", "CONFIRMED", "DECLINED"]),
+					rsvpLink: httpUrlSchema,
 					cancellationLink: httpUrlSchema.optional(),
 				})
 				.strict(),
@@ -68,9 +70,16 @@ try {
 	switch (command) {
 		case "rsvp": {
 			await post("/api/integrations/sheets/hackers", { hackers: [participants.normal] }, processedResponseSchema);
+			const result = await post(
+				"/api/integrations/sheets/rsvp-reconciliation",
+				{ ids: [participants.normal.id] },
+				reconciliationResponseSchema,
+			);
+			const link = result.records[0]?.rsvpLink;
+			if (!link) throw new Error("Tracker did not return a management link.");
 			const email = await deliverLocalParticipantEmail({
 				type: "invitation",
-				link: new URL(`/rsvp/${participants.normal.id}`, baseUrl).href,
+				link,
 			});
 			console.info(`Invitation email delivered through local SMTP: ${email.file}`);
 			const invitationLink = email.links[0];
@@ -85,22 +94,7 @@ try {
 				reconciliationResponseSchema,
 			);
 			const participant = result.records[0];
-			console.info(`RSVP status: ${participant?.confirmed ? "confirmed" : "not confirmed"}`);
-			if (participant?.cancellationLink) {
-				const email = await deliverLocalParticipantEmail({
-					type: "confirmation",
-					link: participant.cancellationLink,
-				});
-				console.info(`Confirmation email delivered through local SMTP: ${email.file}`);
-				const cancellationLink = email.links[0];
-				if (!cancellationLink)
-					throw new Error("The captured confirmation email did not contain its cancellation link.");
-				console.info(`Cancellation link: ${cancellationLink}`);
-			} else {
-				console.info(
-					"Confirm the RSVP in the browser, then rerun this command to receive its cancellation email.",
-				);
-			}
+			console.info(`RSVP status: ${participant?.status ?? "missing"}`);
 			break;
 		}
 		case "claim":

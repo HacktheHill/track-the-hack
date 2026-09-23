@@ -62,3 +62,6 @@ google-credentials.json
 
 # Local development overrides
 docker-compose.override.yml
+
+# RSVP campaign exports contain private management links and contact details.
+private-rsvp/

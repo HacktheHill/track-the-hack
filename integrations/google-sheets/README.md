@@ -1,60 +1,23 @@
 # Google Sheets integration
 
-[`Code.gs`](./Code.gs) and [`Sidebar.html`](./Sidebar.html) are the source for the bound Apps Script attached to the restricted Tally response Sheet.
+[`Code.gs`](./Code.gs) and [`Sidebar.html`](./Sidebar.html) belong in the bound Apps Script project for the restricted Tally response Sheet. The visible **Track the Hack → Pass activation** menu opens a sidebar with one action: **Show pass activation QR**.
 
-The organizer workflow runs entirely from the `Responses` tab:
+Select any cell in one response row whose **Admission status** is **Accepted**, then press the button. It saves or reuses a stable participant ID and opens a one-time, five-minute QR that the participant scans to activate their pass. The claim API also creates or updates the minimal participant record if needed. The day-of button does **not** send an RSVP invitation, confirm an RSVP, or change the Sheet's RSVP status. Repeated clicks reuse the display window, which the organizer can move and maximize on another screen. Browsers may block popup creation or automatic fullscreen; in that case the sidebar shows an **Open QR** link. A failed request can be retried with the same ID.
 
-1. Open **Track the Hack → Open check-in sidebar** once.
-2. Select any cell in one applicant row whose **Admission status** is **Accepted**.
-3. Click **Provision & show QR**.
-4. The button opens the claim QR directly in a dedicated display tab or window. Later clicks reuse the same display tab, including after the sidebar is reopened.
+Only the participant ID, T-shirt size, coarse meal category, acceptance expiry, and walk-in flag go to Tracker. Names, email addresses, Tally IDs, waivers, and detailed dietary answers remain in the Sheet. The response-row columns hold RSVP data from the separate pre-event process, as well as the day-of QR expiry and last sync time. This workflow does not require a new **Track Operations** tab.
 
-The single button creates or updates the Track participant, issues a five-minute single-use claim, refreshes that participant's RSVP state, and writes the result beside the form response. The display page counts down and hides the QR at expiry. Issuing a new QR revokes any previous claim and active participant session for that participant.
+## Provisioning before RSVP invitations
 
-## Response columns
+Provisioning means assigning a stable opaque participant ID in the Sheet and creating or updating the minimal Tracker record for that ID. Tracker creates a separate, stable, signed RSVP-management link; the participant ID alone can no longer change an RSVP. `prepareSelectedRowsForRsvp()` is available for a reviewed RSVP/email preparation process but is intentionally absent from the sidebar. It provisions up to 500 selected Accepted response rows with retry-safe IDs, obtains each private link by reconciliation, and writes it to the matching response row. A failed or incomplete response must be retried before exporting invitation recipients. An automatic trigger on every status edit is not installed, because intermediate edits or bulk Tally syncs could provision the wrong rows.
 
-The sidebar appends these Track-owned columns after the existing response and admissions columns without moving or overwriting them:
+The older acceptance, RSVP refresh, and issue-access functions remain in `Code.gs` only for compatibility with existing **Track Operations** rows and tests. They are not shown in the menu. Existing operational IDs are read when a response row is first issued a pass, avoiding a second identity for the same submission. Do not delete the old tab until every prior participant ID has been reconciled into the response rows.
 
-- `Track Participant ID`
-- `Track RSVP Link`
-- `Track RSVP Status`
-- `Track Cancellation Link`
-- `Track Access Expires`
-- `Track Last Sync`
+## Script properties and live update
 
-Every read and write resolves columns by their header text, so the workflow does not depend on fixed column letters. The participant ID is saved and flushed before the API request; a timeout can therefore be retried without creating a second participant.
+Set `TRACK_BASE_URL` to the deployed HTTPS Tracker origin, `SHEETS_INTEGRATION_API_KEY` to the matching API secret, and `RSVP_DEADLINE` to the absolute ISO-8601 deadline. If Cloudflare Access protects the API, set **both** `CF_ACCESS_CLIENT_ID` and `CF_ACCESS_CLIENT_SECRET` to the service token already authorized for Tracker. Do not print or paste secret values into logs or issue reports.
 
-The legacy `Track Operations` tab is no longer read or written. The integration does not delete it, so historical data remains available until an organizer deliberately archives or removes it.
+To update the live bound script, first back up its existing source and response rows and inspect the existing response headers and **Track Operations** IDs. Replace `Code.gs`, add `Sidebar.html` under that exact filename, save, and reload the Sheet. If the six old Track-owned headers are still the exact final columns, the separate, operator-invoked `migrateLegacyResponseColumnsForRsvp()` preserves their data and expands them to the new layout; it never runs from the menu. Review the [runbook](../../docs/RSVP_EMAIL_RUNBOOK.md) before invoking it. Opening the sidebar makes no Tracker request; pressing **Show pass activation QR** does. This local repository change does not update the installed script. Test one known test submission first, and verify that its saved ID is unchanged on retry.
 
-## Configuration
+## RSVP status
 
-Set these Apps Script **Project Settings → Script properties**:
-
-- `TRACK_BASE_URL`: the deployed HTTPS Track the Hack origin
-- `SHEETS_INTEGRATION_API_KEY`: the matching integration bearer secret
-- `RSVP_DEADLINE`: the event's actual RSVP deadline as an absolute ISO-8601 timestamp
-- `CF_ACCESS_CLIENT_ID`: the Cloudflare Access service-token client ID
-- `CF_ACCESS_CLIENT_SECRET`: the matching Cloudflare Access service-token secret
-
-The Sheet sends only the participant ID, T-shirt size, coarse meal category, RSVP expiry, and `walkIn: false` to Track the Hack. Names, email addresses, Tally IDs, waivers, detailed restrictions, admission reasoning, and other application answers remain in Google Sheets.
-
-## Updating the live bound script
-
-1. Deploy the matching Track revision first so the Sheet and API agree on request and response formats.
-2. In **Hack the Hill III Hacker Application Form**, open **Extensions → Apps Script** and confirm the project is **Track the Hack Integration**.
-3. Keep a private backup of the existing bound project.
-4. Replace the existing `Code.gs` with this directory's [`Code.gs`](./Code.gs).
-5. Add or replace an HTML file named exactly `Sidebar` with [`Sidebar.html`](./Sidebar.html). Do not paste the HTML into `Code.gs`.
-6. Verify all five script properties above without exposing their values.
-7. Save the project to Drive and reload the Sheet. Confirm the **Track the Hack** menu contains only **Open check-in sidebar**.
-
-Opening the sidebar adds the six headers if they are missing, but it does not provision a participant or call Track. Provisioning occurs only when the organizer presses the sidebar button on an accepted row.
-
-## Failure and retry behaviour
-
-- A non-accepted, blank, header, multi-row, or non-`Responses` selection is rejected before any API request.
-- The participant ID and RSVP link are committed before claim issuance. Retrying reuses that ID.
-- If claim issuance fails, no QR is shown.
-- If the claim succeeds but RSVP reconciliation fails, the QR is still shown and the sidebar reports that RSVP status could not be refreshed.
-- If the browser blocks the display window, the sidebar presents a manual **Open the QR display** fallback link.
-- All Sheet mutations use a document lock so simultaneous organizers cannot create competing IDs for the same row.
+The response-row schema includes an **RSVP Status** column: `PENDING` (no answer), `CONFIRMED` (attending), or `DECLINED` (not attending). A successful preparation reconciles the state and signed link; the participant's choices occur in Tracker. `refreshResponseRsvpStatus()` refreshes those fields in response rows and remains outside the sidebar. The **Cancellation Link** column and older operations-tab refresh remain only for compatibility with previously issued links. Do not treat either Sheet status as live until its refresh has run. See [`docs/RSVP_EMAIL_RUNBOOK.md`](../../docs/RSVP_EMAIL_RUNBOOK.md) before exporting or sending.

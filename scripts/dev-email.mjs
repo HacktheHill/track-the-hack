@@ -5,20 +5,15 @@ import { createMimeMessage } from "mimetext";
 import nodemailer from "nodemailer";
 import { SMTPServer } from "smtp-server";
 
-/** @typedef {"invitation" | "confirmation"} ParticipantEmailType */
+/** @typedef {"invitation"} ParticipantEmailType */
 /** @typedef {{raw: Buffer, from: string, to: string[]}} CapturedMessage */
 
 /** @type {Record<ParticipantEmailType, {subject: string, text: (link: string) => string, html: (link: string) => string}>} */
 const templates = {
 	invitation: {
-		subject: "Track the Hack RSVP invitation",
-		text: link => `Your RSVP is ready. Review and confirm it here:\n\n${link}`,
-		html: link => `<p>Your RSVP is ready.</p><p><a href="${link}">Review and confirm your RSVP</a></p>`,
-	},
-	confirmation: {
-		subject: "Track the Hack RSVP confirmed",
-		text: link => `Your RSVP is confirmed. If your plans change, cancel it here:\n\n${link}`,
-		html: link => `<p>Your RSVP is confirmed.</p><p><a href="${link}">Cancel your RSVP</a></p>`,
+		subject: "RSVP for Hack the Hill III",
+		text: link => `Let us know if you can attend. Use the same link later to change your answer:\n\n${link}`,
+		html: link => `<p>Let us know if you can attend.</p><p><a href="${link}">Manage your RSVP</a></p><p>Use the same link later to change your answer.</p>`,
 	},
 };
 
