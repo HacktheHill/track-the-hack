@@ -14,7 +14,7 @@ import { chromium, type Browser, type BrowserContext } from "playwright-core";
 import superjson from "superjson";
 import { z } from "zod";
 import type { AppRouter } from "@/server/api/root";
-import { provisioningRecordSchema } from "@/server/services/hacker-lifecycle";
+import { provisioningBatchSchema } from "@/server/services/hacker-lifecycle";
 import { applicationRow, createSheetHarness } from "@root/test/helpers/google-sheets-harness";
 import { deliverLocalParticipantEmail } from "./dev-email.mjs";
 import {
@@ -36,6 +36,8 @@ const reconciliationResponseSchema = z
 				.object({
 					id: z.string().min(1),
 					confirmed: z.boolean(),
+					status: z.enum(["PENDING", "CONFIRMED", "DECLINED"]),
+					rsvpLink: z.string().url(),
 					cancellationLink: z.string().url().optional(),
 				})
 				.strict(),
@@ -305,80 +307,74 @@ if (!sheetsIntegrationApiKey) throw new Error("SHEETS_INTEGRATION_API_KEY is req
 const integrationHeaders = { Authorization: `Bearer ${sheetsIntegrationApiKey}` };
 const acceptanceIds: string[] = [];
 const verifyAcceptanceRetries = async () => {
-	let loseFirstClaimResponse = true;
-	const sheet = createSheetHarness({
-		apiKey: sheetsIntegrationApiKey,
-		applications: [
-			applicationRow({
-				"Submission ID": "retry",
-				"Admission status": "Accepted",
-				"What unisex T-shirt size would you prefer?": "M",
-			}),
-		],
-		fetch: request => {
-			const body: unknown = JSON.parse(request.options.payload);
-			if (request.url.endsWith("/claim")) {
-				const record = provisioningRecordSchema.parse(body);
-				acceptanceIds.push(record.id);
-			}
-			// Apps Script fetch is synchronous. The disposable child calls the
-			// actual local HTTP server, with credentials passed only through stdin.
-			const response = z.object({ status: z.number(), body: z.string() }).parse(
-				JSON.parse(
-					execFileSync(
-						process.execPath,
-						[
-							"--input-type=module",
-							"-e",
-							`
+	for (const fault of ["lost response", "partial commit"] as const) {
+		let fail = true;
+		const sheet = createSheetHarness({
+			apiKey: sheetsIntegrationApiKey,
+			applications: ["first", "second"].map(id =>
+				applicationRow({
+					"Submission ID": id,
+					"What unisex T-shirt size would you prefer?": "M",
+				}),
+			),
+			fetch: request => {
+				const { hackers } = provisioningBatchSchema.parse(JSON.parse(request.options.payload));
+				acceptanceIds.push(...hackers.map(hacker => hacker.id));
+				const selected = fail && fault === "partial commit" ? hackers.slice(0, 1) : hackers;
+				const body = {
+					hackers: selected.map(hacker => ({
+						...hacker,
+						acceptanceExpiry: hacker.acceptanceExpiry.toISOString(),
+					})),
+				};
+				// Apps Script fetch is synchronous. The disposable child calls the
+				// actual local HTTP server, with credentials passed only through stdin.
+				const response = z.object({ status: z.number(), body: z.string() }).parse(
+					JSON.parse(
+						execFileSync(
+							process.execPath,
+							[
+								"--input-type=module",
+								"-e",
+								`
 let input = "";
 for await (const chunk of process.stdin) input += chunk;
 const { url, headers, body } = JSON.parse(input);
 const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
 process.stdout.write(JSON.stringify({ status: response.status, body: await response.text() }));
 `,
-						],
-						{
-							input: JSON.stringify({
-								url: request.url.replace("https://track.example", baseUrl),
-								headers: { ...request.options.headers, "Content-Type": "application/json" },
-								body,
-							}),
-							encoding: "utf8",
-							timeout: 30000,
-						},
+							],
+							{
+								input: JSON.stringify({
+									url: `${baseUrl}/api/integrations/sheets/hackers`,
+									headers: { ...request.options.headers, "Content-Type": "application/json" },
+									body,
+								}),
+								encoding: "utf8",
+								timeout: 30000,
+							},
+						),
 					),
-				),
-			);
-			assert.equal(response.status, 200);
-			if (request.url.endsWith("/claim") && loseFirstClaimResponse) {
-				loseFirstClaimResponse = false;
-				throw new Error("lost response");
-			}
-			if (request.url.endsWith("/claim")) {
-				const claim = z
-					.object({ claimUrl: z.string(), expiresAt: z.string() })
-					.parse(JSON.parse(response.body));
-				return {
-					...response,
-					body: JSON.stringify({
-						...claim,
-						claimUrl: claim.claimUrl.replace(baseUrl, "https://track.example"),
-					}),
-				};
-			}
-			return response;
-		},
-	});
-	assert.throws(() => sheet.run(), /lost response/);
-	sheet.run();
-	const attempts = sheet.requests
-		.filter(request => request.url.endsWith("/claim"))
-		.map(request => provisioningRecordSchema.parse(JSON.parse(request.options.payload)).id);
-	assert.equal(attempts.length, 2);
-	assert.equal(attempts[0], attempts[1], "The real API retry must reuse the originally assigned ID");
-	assert.equal(await prisma.hacker.count({ where: { id: attempts[0] } }), 1);
-	assert.equal(sheet.savedRows().length, 2);
+				);
+				assert.equal(response.status, 200);
+				if (fail) {
+					fail = false;
+					throw new Error(fault);
+				}
+				return response;
+			},
+		});
+		assert.throws(() => sheet.run());
+		sheet.run();
+		const attempts = sheet.requests.map(request =>
+			provisioningBatchSchema.parse(JSON.parse(request.options.payload)).hackers.map(hacker => hacker.id),
+		);
+		assert.deepEqual(attempts[0], attempts[1], "The real API retry must reuse every originally assigned ID");
+		const ids = attempts[0];
+		assert.ok(ids);
+		assert.equal(await prisma.hacker.count({ where: { id: { in: ids } } }), 2);
+		assert.equal(sheet.savedRows().length, 3);
+	}
 };
 const participantId = randomBytes(16).toString("base64url");
 const walkInId = randomBytes(16).toString("base64url");
@@ -456,25 +452,51 @@ try {
 		assert.equal(saved?.tShirtSize, "NONE", "The database must preserve the explicit opt-out");
 	}
 
+	const prepared = await jsonRequest(
+		"/api/integrations/sheets/rsvp-reconciliation",
+		{ ids: [participantId] },
+		{ headers: integrationHeaders },
+	);
+	assert.equal(prepared.status, 200);
+	const invitationUrl = reconciliationResponseSchema.parse(await prepared.json()).records[0]?.rsvpLink;
+	assert.ok(invitationUrl);
 	const invitationEmail = await deliverLocalParticipantEmail({
 		type: "invitation",
-		link: `${baseUrl}/rsvp/${participantId}`,
+		link: invitationUrl,
 		mailboxDirectory,
 	});
 	assert.equal(invitationEmail.type, "invitation");
-	assert.equal(invitationEmail.subject, "Track the Hack RSVP invitation");
+	assert.equal(invitationEmail.subject, "RSVP for Hack the Hill III");
 	assert.equal(invitationEmail.from, "no-reply@track.local");
 	assert.deepEqual(invitationEmail.to, ["participant@example.test"]);
-	assert.deepEqual(invitationEmail.links, [`${baseUrl}/rsvp/${participantId}`]);
+	assert.deepEqual(invitationEmail.links, [invitationUrl]);
 	const invitationLink = invitationEmail.links[0];
 	assert.ok(invitationLink);
 	participantContext = await (await getBrowser()).newContext();
 	const participantPage = await participantContext.newPage();
 	await participantPage.goto(invitationLink, { waitUntil: "domcontentloaded" });
-	await participantPage.getByRole("button", { name: "Confirm attendance" }).click();
+	await participantPage.getByRole("status").getByText("You haven't responded yet.").waitFor({ timeout: 20_000 });
+	const unopenedChoice = await jsonRequest(
+		"/api/integrations/sheets/rsvp-reconciliation",
+		{ ids: [participantId] },
+		{ headers: integrationHeaders },
+	);
+	assert.equal(reconciliationResponseSchema.parse(await unopenedChoice.json()).records[0]?.status, "PENDING");
+	await participantPage.getByRole("button", { name: "I can't attend" }).click();
 	await participantPage
 		.getByRole("status")
-		.getByText("Your attendance is confirmed.", { exact: false })
+		.getByText("You've said you can't attend Hack the Hill III.", { exact: true })
+		.waitFor({ timeout: 20_000 });
+	const firstDecline = await jsonRequest(
+		"/api/integrations/sheets/rsvp-reconciliation",
+		{ ids: [participantId] },
+		{ headers: integrationHeaders },
+	);
+	assert.equal(reconciliationResponseSchema.parse(await firstDecline.json()).records[0]?.status, "DECLINED");
+	await participantPage.getByRole("button", { name: "I'll attend" }).click();
+	await participantPage
+		.getByRole("status")
+		.getByText("You're attending Hack the Hill III.", { exact: true })
 		.waitFor({ timeout: 20_000 });
 
 	const reconciliation = await jsonRequest(
@@ -487,28 +509,19 @@ try {
 	const confirmedRecord = reconciled.records.find(record => record.id === participantId);
 	assert.ok(confirmedRecord, "Reconciliation must include the invited participant");
 	assert.equal(confirmedRecord.confirmed, true);
-	assert.ok(confirmedRecord.cancellationLink, "Reconciliation must produce the confirmation-email link");
-
-	const confirmationEmail = await deliverLocalParticipantEmail({
-		type: "confirmation",
-		link: confirmedRecord.cancellationLink,
-		mailboxDirectory,
-	});
-	assert.equal(confirmationEmail.type, "confirmation");
-	assert.equal(confirmationEmail.subject, "Track the Hack RSVP confirmed");
-	assert.deepEqual(confirmationEmail.links, [confirmedRecord.cancellationLink]);
-	const confirmationLink = confirmationEmail.links[0];
-	assert.ok(confirmationLink);
-	const cancellationUrl = new URL(confirmationLink);
-	await participantPage.goto(cancellationUrl.toString(), { waitUntil: "domcontentloaded" });
-	await participantPage.getByRole("button", { name: "Cancel attendance" }).click();
+	assert.equal(confirmedRecord.status, "CONFIRMED");
+	assert.equal(confirmedRecord.rsvpLink, invitationUrl);
+	await participantPage.getByRole("button", { name: "I can't attend" }).click();
 	await participantPage
 		.getByRole("status")
-		.getByText("Your attendance has been cancelled.", { exact: true })
+		.getByText("You've said you can't attend Hack the Hill III.", { exact: true })
 		.waitFor({ timeout: 20_000 });
-	assert.equal(new URL(participantPage.url()).hash, "", "Cancellation success must remove the capability fragment");
-	const reconfirmation = await jsonRequest(`/api/rsvp/${participantId}`, { confirm: true });
-	assert.equal(reconfirmation.status, 200);
+	await participantPage.goto(invitationLink, { waitUntil: "domcontentloaded" });
+	await participantPage.getByRole("status").getByText("You've said you can't attend Hack the Hill III.", { exact: true }).waitFor({ timeout: 20_000 });
+	await participantPage.getByRole("button", { name: "I'll attend" }).click();
+	await participantPage.getByRole("status").getByText("You're attending Hack the Hill III.", { exact: true }).waitFor({ timeout: 20_000 });
+	const oldIdOnlyResponse = await jsonRequest(`/api/rsvp/${participantId}`, { confirm: true });
+	assert.equal(oldIdOnlyResponse.status, 410);
 
 	const [normalRecord, walkInRecord] = records;
 	assert.ok(normalRecord && walkInRecord, "The reviewed Sheet fixture must provide normal and walk-in records");

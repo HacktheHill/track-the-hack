@@ -38,13 +38,16 @@ export const reconciliationRequestSchema = z
 
 export type ProvisioningRecord = z.infer<typeof provisioningRecordSchema>;
 
-export type ConfirmationResult = "confirmed" | "missing" | "expired";
-
 export type ReconciliationRecord = {
 	id: string;
 	confirmed: boolean;
+	rsvpRespondedAt?: Date | null;
 	cancellationCapabilityId: string | null;
 };
+
+export type RsvpStatus = "PENDING" | "CONFIRMED" | "DECLINED";
+export const rsvpStatus = (confirmed: boolean, respondedAt?: Date | null): RsvpStatus =>
+	confirmed ? "CONFIRMED" : respondedAt ? "DECLINED" : "PENDING";
 
 export type NewParticipantSession = {
 	verifier: string;
@@ -57,7 +60,6 @@ export type ParticipantSessionRecord = NewParticipantSession & {
 
 export interface HackerLifecycleRepository {
 	upsertProvisionedBatch(records: ProvisioningRecord[]): Promise<void>;
-	confirmAndRotate(id: string, now: Date, cancellationCapabilityId: string): Promise<ConfirmationResult>;
 	cancelByCapability(capabilityId: string): Promise<string | null>;
 	reconcile(ids: string[]): Promise<ReconciliationRecord[]>;
 	// Provisioning, claim replacement and active-session revocation are one operation.
@@ -84,22 +86,6 @@ export const provisionHackers = async (repository: HackerLifecycleRepository, in
 	await repository.upsertProvisionedBatch(hackers);
 
 	return { processed: hackers.length };
-};
-
-export const confirmRsvp = async (
-	repository: HackerLifecycleRepository,
-	idInput: unknown,
-	now = new Date(),
-	createCapabilityId = () => randomBytes(32).toString("base64url"),
-) => {
-	const id = participantIdSchema.parse(idInput);
-	const result = await repository.confirmAndRotate(id, now, createCapabilityId());
-
-	if (result !== "confirmed") {
-		throw new ParticipantLifecycleError("INVALID_OR_EXPIRED_INVITATION");
-	}
-
-	return { confirmed: true as const };
 };
 
 const signOpaqueId = (opaqueId: string, secret: string) =>
@@ -153,7 +139,7 @@ export const cancelRsvp = async (repository: HackerLifecycleRepository, tokenInp
 };
 
 export const reconcileRsvps = async (
-	repository: HackerLifecycleRepository,
+	repository: Pick<HackerLifecycleRepository, "reconcile">,
 	input: unknown,
 	baseUrl: string,
 	cancellationSecret: string,
@@ -172,6 +158,15 @@ export const reconcileRsvps = async (
 				{
 					id: record.id,
 					confirmed: record.confirmed,
+					status: rsvpStatus(record.confirmed, record.rsvpRespondedAt),
+					...(record.cancellationCapabilityId
+						? {
+								rsvpLink: `${baseUrl.replace(/\/$/, "")}/rsvp/manage#${createCancellationToken(
+									record.cancellationCapabilityId,
+									cancellationSecret,
+								)}`,
+							}
+						: {}),
 					...(record.confirmed && record.cancellationCapabilityId
 						? {
 								cancellationLink: `${baseUrl.replace(/\/$/, "")}/cancel#${createCancellationToken(

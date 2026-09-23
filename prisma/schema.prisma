@@ -76,6 +76,7 @@ model Hacker {
   tShirtSize       TShirtSize
   mealCategory     MealCategory
   confirmed        Boolean      @default(false)
+  rsvpRespondedAt  DateTime?
   walkIn           Boolean      @default(false)
   acceptanceExpiry DateTime
 
