@@ -143,16 +143,18 @@ const Schedule: NextPage = () => {
 			);
 			(continuation ?? card)?.scrollIntoView({ block: "center" });
 		} else {
-			listRef.current?.querySelector<HTMLElement>("[data-current-marker]")?.scrollIntoView({ block: "center" });
+			const marker = listRef.current?.querySelector<HTMLElement>("[data-current-marker]");
+			(marker ?? (next ? document.getElementById(`schedule-${next.id}`) : null))?.scrollIntoView({
+				block: "center",
+			});
 		}
 	};
 	const canSave = hasPass && !saved.isError && saved.data != null;
 	const sessionExpired = saved.error?.data?.code === "UNAUTHORIZED";
-	const currentMarker = (isNextDay: boolean) => (
+	const currentMarker = () => (
 		<div data-current-marker className="flex items-center gap-3 py-1 font-coolvetica text-sm text-dark-color">
 			<span className="shrink-0 rounded-full bg-light-secondary-color px-3 py-1">
-				{t(isNextDay ? "next" : "time-marker-now")} ·{" "}
-				{formatScheduleTime(isNextDay && next ? next.start : new Date(now), locale)}
+				{t("time-marker-now")} · {formatScheduleTime(new Date(now), locale)}
 			</span>
 			<span className="h-px flex-1 bg-dark-color/50" aria-hidden="true" />
 		</div>
@@ -194,7 +196,11 @@ const Schedule: NextPage = () => {
 							))}
 						</div>
 					)}
-					<div className="flex gap-2 overflow-x-auto pb-1" role="group" aria-label={t("categories")}>
+					<div
+						className="schedule-scroll-row flex gap-2 overflow-x-auto pb-1"
+						role="group"
+						aria-label={t("categories")}
+					>
 						{eventTypes.map(type => (
 							<button
 								key={type}
@@ -235,7 +241,10 @@ const Schedule: NextPage = () => {
 					{(view === "all" || canSave) && (
 						<>
 							{days.length > 0 && (
-								<nav className="flex gap-2 overflow-x-auto pb-1" aria-label={t("jump-to-day")}>
+								<nav
+									className="schedule-scroll-row flex gap-2 overflow-x-auto pb-1"
+									aria-label={t("jump-to-day")}
+								>
 									{(active.length > 0 || next) && (
 										<button
 											type="button"
@@ -301,7 +310,7 @@ const Schedule: NextPage = () => {
 								);
 								const groups = groupScheduleEvents(currentEvents);
 								const markerIndex =
-									next && scheduleDayKey(next.start) === day.key
+									day.key === todayKey && next && scheduleDayKey(next.start) === day.key
 										? groups.findIndex(group => group.events.some(event => event.id === next.id))
 										: -1;
 								return (
@@ -368,7 +377,7 @@ const Schedule: NextPage = () => {
 										<div className="flex flex-col gap-3">
 											{groups.map((group, index) => (
 												<Fragment key={group.events[0]?.id}>
-													{index === markerIndex && currentMarker(day.key !== todayKey)}
+													{index === markerIndex && currentMarker()}
 													<div
 														className={`${group.overlapsPrevious ? "relative -mt-5" : ""} ${group.events.length > 1 ? "rounded-xl bg-white/20 p-2" : ""}`}
 													>
@@ -475,7 +484,7 @@ const Schedule: NextPage = () => {
 											{day.key === todayKey &&
 												!next &&
 												active.some(event => scheduleDayKey(event.start) === day.key) &&
-												currentMarker(false)}
+												currentMarker()}
 										</div>
 									</section>
 								);

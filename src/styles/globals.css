@@ -349,6 +349,14 @@ body {
 	}
 }
 
+.schedule-scroll-row {
+	scrollbar-width: none;
+}
+
+.schedule-scroll-row::-webkit-scrollbar {
+	display: none;
+}
+
 .schedule-dialog {
 	width: min(100% - 2rem, 42rem);
 	max-height: calc(100svh - 2rem);
