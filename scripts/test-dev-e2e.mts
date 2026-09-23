@@ -14,7 +14,7 @@ import { chromium, type Browser, type BrowserContext } from "playwright-core";
 import superjson from "superjson";
 import { z } from "zod";
 import type { AppRouter } from "@/server/api/root";
-import { provisioningBatchSchema } from "@/server/services/hacker-lifecycle";
+import { provisioningRecordSchema } from "@/server/services/hacker-lifecycle";
 import { applicationRow, createSheetHarness } from "@root/test/helpers/google-sheets-harness";
 import { deliverLocalParticipantEmail } from "./dev-email.mjs";
 import {
@@ -305,74 +305,80 @@ if (!sheetsIntegrationApiKey) throw new Error("SHEETS_INTEGRATION_API_KEY is req
 const integrationHeaders = { Authorization: `Bearer ${sheetsIntegrationApiKey}` };
 const acceptanceIds: string[] = [];
 const verifyAcceptanceRetries = async () => {
-	for (const fault of ["lost response", "partial commit"] as const) {
-		let fail = true;
-		const sheet = createSheetHarness({
-			apiKey: sheetsIntegrationApiKey,
-			applications: ["first", "second"].map(id =>
-				applicationRow({
-					"Submission ID": id,
-					"What unisex T-shirt size would you prefer?": "M",
-				}),
-			),
-			fetch: request => {
-				const { hackers } = provisioningBatchSchema.parse(JSON.parse(request.options.payload));
-				acceptanceIds.push(...hackers.map(hacker => hacker.id));
-				const selected = fail && fault === "partial commit" ? hackers.slice(0, 1) : hackers;
-				const body = {
-					hackers: selected.map(hacker => ({
-						...hacker,
-						acceptanceExpiry: hacker.acceptanceExpiry.toISOString(),
-					})),
-				};
-				// Apps Script fetch is synchronous. The disposable child calls the
-				// actual local HTTP server, with credentials passed only through stdin.
-				const response = z.object({ status: z.number(), body: z.string() }).parse(
-					JSON.parse(
-						execFileSync(
-							process.execPath,
-							[
-								"--input-type=module",
-								"-e",
-								`
+	let loseFirstClaimResponse = true;
+	const sheet = createSheetHarness({
+		apiKey: sheetsIntegrationApiKey,
+		applications: [
+			applicationRow({
+				"Submission ID": "retry",
+				"Admission status": "Accepted",
+				"What unisex T-shirt size would you prefer?": "M",
+			}),
+		],
+		fetch: request => {
+			const body: unknown = JSON.parse(request.options.payload);
+			if (request.url.endsWith("/claim")) {
+				const record = provisioningRecordSchema.parse(body);
+				acceptanceIds.push(record.id);
+			}
+			// Apps Script fetch is synchronous. The disposable child calls the
+			// actual local HTTP server, with credentials passed only through stdin.
+			const response = z.object({ status: z.number(), body: z.string() }).parse(
+				JSON.parse(
+					execFileSync(
+						process.execPath,
+						[
+							"--input-type=module",
+							"-e",
+							`
 let input = "";
 for await (const chunk of process.stdin) input += chunk;
 const { url, headers, body } = JSON.parse(input);
 const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
 process.stdout.write(JSON.stringify({ status: response.status, body: await response.text() }));
 `,
-							],
-							{
-								input: JSON.stringify({
-									url: `${baseUrl}/api/integrations/sheets/hackers`,
-									headers: { ...request.options.headers, "Content-Type": "application/json" },
-									body,
-								}),
-								encoding: "utf8",
-								timeout: 30000,
-							},
-						),
+						],
+						{
+							input: JSON.stringify({
+								url: request.url.replace("https://track.example", baseUrl),
+								headers: { ...request.options.headers, "Content-Type": "application/json" },
+								body,
+							}),
+							encoding: "utf8",
+							timeout: 30000,
+						},
 					),
-				);
-				assert.equal(response.status, 200);
-				if (fail) {
-					fail = false;
-					throw new Error(fault);
-				}
-				return response;
-			},
-		});
-		assert.throws(() => sheet.run());
-		sheet.run();
-		const attempts = sheet.requests.map(request =>
-			provisioningBatchSchema.parse(JSON.parse(request.options.payload)).hackers.map(hacker => hacker.id),
-		);
-		assert.deepEqual(attempts[0], attempts[1], "The real API retry must reuse every originally assigned ID");
-		const ids = attempts[0];
-		assert.ok(ids);
-		assert.equal(await prisma.hacker.count({ where: { id: { in: ids } } }), 2);
-		assert.equal(sheet.savedRows().length, 3);
-	}
+				),
+			);
+			assert.equal(response.status, 200);
+			if (request.url.endsWith("/claim") && loseFirstClaimResponse) {
+				loseFirstClaimResponse = false;
+				throw new Error("lost response");
+			}
+			if (request.url.endsWith("/claim")) {
+				const claim = z
+					.object({ claimUrl: z.string(), expiresAt: z.string() })
+					.parse(JSON.parse(response.body));
+				return {
+					...response,
+					body: JSON.stringify({
+						...claim,
+						claimUrl: claim.claimUrl.replace(baseUrl, "https://track.example"),
+					}),
+				};
+			}
+			return response;
+		},
+	});
+	assert.throws(() => sheet.run(), /lost response/);
+	sheet.run();
+	const attempts = sheet.requests
+		.filter(request => request.url.endsWith("/claim"))
+		.map(request => provisioningRecordSchema.parse(JSON.parse(request.options.payload)).id);
+	assert.equal(attempts.length, 2);
+	assert.equal(attempts[0], attempts[1], "The real API retry must reuse the originally assigned ID");
+	assert.equal(await prisma.hacker.count({ where: { id: attempts[0] } }), 1);
+	assert.equal(sheet.savedRows().length, 2);
 };
 const participantId = randomBytes(16).toString("base64url");
 const walkInId = randomBytes(16).toString("base64url");

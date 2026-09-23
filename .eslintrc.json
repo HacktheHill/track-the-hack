@@ -29,13 +29,13 @@
 				"@typescript-eslint/no-unused-vars": [
 					"warn",
 					{
-						"varsIgnorePattern": "^(onOpen|setupTrackOperations|acceptSelectedApplications|acceptSelectedWalkInApplications|refreshRsvpStatus|issueAccessForSelectedParticipant)$"
+						"varsIgnorePattern": "^(onOpen|showCheckInSidebar|provisionSelectedParticipantAndIssueAccess)$"
 					}
 				],
 				"no-unused-vars": [
 					"error",
 					{
-						"varsIgnorePattern": "^(onOpen|setupTrackOperations|acceptSelectedApplications|acceptSelectedWalkInApplications|refreshRsvpStatus|issueAccessForSelectedParticipant)$"
+						"varsIgnorePattern": "^(onOpen|showCheckInSidebar|provisionSelectedParticipantAndIssueAccess)$"
 					}
 				]
 			}
