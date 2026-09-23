@@ -23,16 +23,19 @@ const PresenceCounter = ({
 	const [value, setValue] = useState(initialValue);
 	const [atLimit, setAtLimit] = useState(initialAtLimit);
 	const [error, setError] = useState("");
+	const [notice, setNotice] = useState("");
 	const [saving, setSaving] = useState(false);
 
 	const change = async (amount: -1 | 1) => {
 		if ((amount === -1 && value <= 0) || (amount === 1 && atLimit) || !operation.begin()) return;
 		setSaving(true);
 		setError("");
+		setNotice("");
 		try {
-			const next = await adjustPresence.mutateAsync({ eventId, hackerId, amount });
+			const next = await adjustPresence.mutateAsync({ eventId, hackerId, amount, expectedValue: value });
 			setValue(next.value);
 			setAtLimit(next.atLimit);
+			if (next.stale) setNotice(t("adjust-stale", { value: next.value }));
 		} catch {
 			setError(t("adjust-error"));
 		} finally {
@@ -48,6 +51,7 @@ const PresenceCounter = ({
 			</p>
 			{value === 0 && <p>{t("zero-count")}</p>}
 			{saving && <p role="status">{t("saving")}</p>}
+			{notice && <p role="status">{notice}</p>}
 			{atLimit && <p className="mt-2">{t("maximum-reached")}</p>}
 			<div className="mt-4 flex justify-center gap-8">
 				<button
