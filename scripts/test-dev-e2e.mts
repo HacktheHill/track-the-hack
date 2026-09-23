@@ -15,7 +15,7 @@ import superjson from "superjson";
 import { z } from "zod";
 import type { AppRouter } from "@/server/api/root";
 import { provisioningBatchSchema } from "@/server/services/hacker-lifecycle";
-import { applicationRow, createSheetHarness } from "@root/test/helpers/google-sheets-harness";
+import { applicationRow, createResponseHarness } from "@root/test/helpers/google-sheets-harness";
 import { deliverLocalParticipantEmail } from "./dev-email.mjs";
 import {
 	acceptedSheetRowsToOperationalRecords,
@@ -309,15 +309,49 @@ const acceptanceIds: string[] = [];
 const verifyAcceptanceRetries = async () => {
 	for (const fault of ["lost response", "partial commit"] as const) {
 		let fail = true;
-		const sheet = createSheetHarness({
+		const sheet = createResponseHarness({
 			apiKey: sheetsIntegrationApiKey,
+			baseUrl,
 			applications: ["first", "second"].map(id =>
 				applicationRow({
 					"Submission ID": id,
+					"Admission status": "Accepted",
 					"What unisex T-shirt size would you prefer?": "M",
 				}),
 			),
 			fetch: request => {
+				const isProvisioningRequest = request.url.endsWith("/api/integrations/sheets/hackers");
+				if (!isProvisioningRequest) {
+					const response = z.object({ status: z.number(), body: z.string() }).parse(
+						JSON.parse(
+							execFileSync(
+								process.execPath,
+								[
+									"--input-type=module",
+									"-e",
+									`
+let input = "";
+for await (const chunk of process.stdin) input += chunk;
+const { url, headers, body } = JSON.parse(input);
+const response = await fetch(url, { method: "POST", headers, body });
+process.stdout.write(JSON.stringify({ status: response.status, body: await response.text() }));
+`,
+								],
+								{
+									input: JSON.stringify({
+										url: request.url,
+										headers: { ...request.options.headers, "Content-Type": "application/json" },
+										body: request.options.payload,
+									}),
+									encoding: "utf8",
+									timeout: 30000,
+								},
+							),
+						),
+					);
+					assert.equal(response.status, 200);
+					return response;
+				}
 				const { hackers } = provisioningBatchSchema.parse(JSON.parse(request.options.payload));
 				acceptanceIds.push(...hackers.map(hacker => hacker.id));
 				const selected = fail && fault === "partial commit" ? hackers.slice(0, 1) : hackers;
@@ -364,16 +398,18 @@ process.stdout.write(JSON.stringify({ status: response.status, body: await respo
 				return response;
 			},
 		});
-		assert.throws(() => sheet.run());
-		sheet.run();
-		const attempts = sheet.requests.map(request =>
+		assert.throws(() => sheet.run("prepareAcceptedRowsForRsvp"));
+		sheet.run("prepareAcceptedRowsForRsvp");
+		const attempts = sheet.requests
+			.filter(request => request.url.endsWith("/api/integrations/sheets/hackers"))
+			.map(request =>
 			provisioningBatchSchema.parse(JSON.parse(request.options.payload)).hackers.map(hacker => hacker.id),
-		);
+			);
 		assert.deepEqual(attempts[0], attempts[1], "The real API retry must reuse every originally assigned ID");
 		const ids = attempts[0];
 		assert.ok(ids);
 		assert.equal(await prisma.hacker.count({ where: { id: { in: ids } } }), 2);
-		assert.equal(sheet.savedRows().length, 3);
+		assert.equal(sheet.rows().length, 3);
 	}
 };
 const participantId = randomBytes(16).toString("base64url");

@@ -18,7 +18,6 @@ const operationalRecordSchema = z
 		walkIn: z.boolean(),
 	})
 	.strict();
-const sheetCellSchema = z.union([z.string(), z.number(), z.boolean(), z.date()]);
 const trackConfigSchema = z.object({
 	baseUrl: z.string().url(),
 	apiKey: z.string().min(1),
@@ -52,11 +51,6 @@ const sheetAdapterSchema = z.object({
 	createParticipantId_: z.function().args().returns(z.string()),
 	trackConfig_: z.function().args().returns(trackConfigSchema),
 	claimDisplayUrl_: z.function().args(z.string()).returns(z.string().url()),
-	operationalRecordFromRow_: z.function().args(z.array(sheetCellSchema)).returns(operationalRecordSchema),
-	applyRsvpReconciliation_: z
-		.function()
-		.args(z.array(z.array(sheetCellSchema)), z.record(rsvpRecordSchema.nullable()), z.date())
-		.returns(z.array(z.array(sheetCellSchema))),
 	apiPost_: z
 		.function()
 		.args(
@@ -104,8 +98,6 @@ const adapter = sheetAdapterSchema.parse(
 	claimResponse_,
 	trackConfig_,
 	claimDisplayUrl_,
-	operationalRecordFromRow_,
-	applyRsvpReconciliation_,
 })`,
 		{
 			Utilities: {
@@ -339,90 +331,5 @@ void test("the Sheet adapter rejects malformed API response bodies at its bounda
 	assert.throws(
 		() => adapter.claimResponse_('{"claimUrl":"https://track.example/claim#token"}'),
 		/invalid claim response/,
-	);
-});
-
-void test("the operations row preserves walk-in status when access is issued", () => {
-	const operationRow = [
-		"tally-submission",
-		2,
-		"participant_walk_in",
-		"L",
-		"STANDARD",
-		"2026-09-01T03:59:59.000Z",
-		"https://track.example/rsvp/participant_walk_in",
-		"PENDING",
-		"",
-		"",
-		"2026-08-23T12:00:00.000Z",
-		true,
-	];
-
-	assert.deepEqual(adapter.operationalRecordFromRow_(operationRow), {
-		id: "participant_walk_in",
-		tShirtSize: "L",
-		mealCategory: "STANDARD",
-		acceptanceExpiry: "2026-09-01T03:59:59.000Z",
-		walkIn: true,
-	});
-});
-
-void test("the operations tab safely adds the walk-in column to the previous schema", () => {
-	const previousHeaders = [
-		"Source Submission ID",
-		"Source Row",
-		"Participant ID",
-		"T-Shirt Size",
-		"Meal Category",
-		"Acceptance Expires",
-		"RSVP Link",
-		"RSVP Status",
-		"Cancellation Link",
-		"Access Expires",
-		"Last Sync",
-	];
-	let addedHeader = "";
-	const sheet = {
-		getRange: (...coordinates: number[]) =>
-			coordinates.length === 4
-				? { getDisplayValues: () => [[...previousHeaders, ""]] }
-				: { setValue: (value: string) => (addedHeader = value) },
-	};
-
-	runInNewContext(`${source}\nensureOperationsSheet_()`, {
-		SpreadsheetApp: {
-			getActive: () => ({ getSheetByName: () => sheet }),
-		},
-	});
-	assert.equal(addedHeader, "Walk-In");
-});
-
-void test("reconciliation skips blank operation rows and rejects incomplete API results", () => {
-	const blank = Array.from({ length: 12 }, () => "");
-	const participant = Array.from({ length: 12 }, () => "");
-	participant[2] = "participant_1";
-	const now = new Date("2026-08-23T12:00:00.000Z");
-
-	assert.deepEqual(
-		adapter.applyRsvpReconciliation_(
-			[blank, participant],
-			{
-				participant_1: {
-					id: "participant_1",
-					confirmed: true,
-					cancellationLink: "https://track.example/cancel/token",
-				},
-			},
-			now,
-		),
-		[
-			Array.from({ length: 12 }, () => ""),
-			["", "", "participant_1", "", "", "", "", "CONFIRMED", "https://track.example/cancel/token", "", now, ""],
-		],
-	);
-
-	assert.throws(
-		() => adapter.applyRsvpReconciliation_([participant], {}, now),
-		/did not return a reconciliation result/,
 	);
 });

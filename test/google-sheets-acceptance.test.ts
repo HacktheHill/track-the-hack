@@ -33,6 +33,10 @@ void test("the visible RSVP menu command targets the complete Accepted audience"
 	);
 	assert.match(
 		appsScriptSource,
+		/\.addItem\("Refresh RSVP responses", "refreshResponseRsvpStatusFromMenu"\)/,
+	);
+	assert.match(
+		appsScriptSource,
 		/function prepareAcceptedRowsForRsvpFromMenu\(\) \{[\s\S]*prepareAcceptedRowsForRsvp\(\)/,
 	);
 	const sheet = createResponseHarness({ applications: [
@@ -106,14 +110,6 @@ void test("server failure leaves stable IDs and existing RSVP links for retry", 
 	for (const post of posts) assert.equal(batchSchema.parse(JSON.parse(post.options.payload)).hackers[0]?.id, stableId);
 });
 
-void test("legacy selection-based entrypoints cannot provision rejected rows", () => {
-	const sheet = createResponseHarness({ applications: [applicant("one", "Rejected")], fetch: api });
-	for (const action of ["acceptSelectedApplications", "acceptSelectedWalkInApplications", "prepareSelectedRowsForRsvp"] as const) {
-		assert.throws(() => sheet.run(action), /disabled|Use reviewAcceptedRowsForRsvp/);
-	}
-	assert.equal(sheet.requests.length, 0);
-});
-
 void test("RSVP Refreshed At advances only after complete reconciliation", () => {
 	let fail = true;
 	const sheet = createResponseHarness({ applications: [applicant("one", "Accepted")], operational: [[stableId, "M", "STANDARD", "2030-09-30T03:59:59.000Z", link, "PENDING"]], fetch: request => {
@@ -123,8 +119,44 @@ void test("RSVP Refreshed At advances only after complete reconciliation", () =>
 	assert.throws(() => sheet.run("refreshResponseRsvpStatus"), /Tracker API 503/);
 	assert.equal(field(sheet.rows(), 1, "RSVP Refreshed At"), "");
 	fail = false;
-	assert.equal(sheet.run("refreshResponseRsvpStatus"), 1);
+	assert.deepEqual(sheet.run("refreshResponseRsvpStatus"), { refreshed: 1, pending: 1, confirmed: 0, declined: 0 });
 	assert.ok(field(sheet.rows(), 1, "RSVP Refreshed At") instanceof Date);
+});
+
+void test("the visible refresh command reports all three RSVP states", () => {
+	const ids = ["a", "b", "c"].map(character => character.repeat(32));
+	const statuses = ["PENDING", "CONFIRMED", "DECLINED"] as const;
+	const sheet = createResponseHarness({
+		applications: statuses.map((_, index) => applicant(`submission-${index}`, "Accepted")),
+		operational: ids.map(id => [id, "M", "STANDARD", "2030-09-30T03:59:59.000Z", link, "PENDING"]),
+		fetch: request => {
+			const requested = idsSchema.parse(JSON.parse(request.options.payload)).ids;
+			return {
+				status: 200,
+				body: JSON.stringify({
+					records: requested.map((id, index) => ({ id, confirmed: statuses[index] === "CONFIRMED", status: statuses[index], rsvpLink: link })),
+					missingIds: [],
+				}),
+			};
+		},
+	});
+	assert.deepEqual(sheet.run("refreshResponseRsvpStatusFromMenu"), { refreshed: 3, pending: 1, confirmed: 1, declined: 1 });
+	assert.deepEqual(sheet.toasts(), [{
+		message: "Refreshed 3 RSVP responses: 1 confirmed, 1 declined, 1 pending.",
+		title: "RSVP responses refreshed",
+		timeout: 10,
+	}]);
+});
+
+void test("refresh refuses missing Tracker participants before changing Sheet RSVP fields", () => {
+	const sheet = createResponseHarness({
+		applications: [applicant("one", "Accepted")],
+		operational: [[stableId, "M", "STANDARD", "2030-09-30T03:59:59.000Z", link, "PENDING", "", "", "old-sync", false, "old-refresh"]],
+		fetch: () => ({ status: 200, body: JSON.stringify({ records: [], missingIds: [stableId] }) }),
+	});
+	assert.throws(() => sheet.run("refreshResponseRsvpStatus"), /could not find 1 provisioned participant.*No RSVP fields were changed/);
+	assert.equal(field(sheet.rows(), 1, "Last Sync"), "old-sync");
+	assert.equal(field(sheet.rows(), 1, "RSVP Refreshed At"), "old-refresh");
 });
 
 void test("existing dietary repair changes only the meal category and generic sync timestamp", () => {

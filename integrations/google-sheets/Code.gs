@@ -10,10 +10,11 @@
 /** @typedef {{records: RsvpRecord[], missingIds: string[]}} RsvpReconciliation */
 /** @typedef {{claimUrl: string, expiresAt: string}} ClaimResponse */
 /** @typedef {{processed: number}} ProcessedResponse */
+/** @typedef {{refreshed: number, pending: number, confirmed: number, declined: number}} RsvpRefreshSummary */
 /** @typedef {{rowNumber: number, record: OperationalRecord}} PreparedRsvpRow */
 /** @typedef {OperationalRecord | {hackers: OperationalRecord[]} | {ids: string[]} | {participants: {id: string, mealCategory: MealCategory}[]}} ApiPayload */
 
-const TRACK_OPERATIONS_SHEET = "Track Operations";
+const TRACK_RESPONSES_SHEET = "Responses";
 const TRACK_PROPERTIES = {
 	baseUrl: "TRACK_BASE_URL",
 	apiKey: "SHEETS_INTEGRATION_API_KEY",
@@ -42,102 +43,17 @@ const TRACK_RESPONSE_HEADERS = [
 // legacy link-column width from the final Tally response column.
 const TRACK_RESPONSE_COLUMN_WIDTHS = [260, 110, 130, 175, 300, 120, 300, 175, 175, 90, 175];
 
-const LEGACY_RESPONSE_HEADERS = [
-	"Track Participant ID",
-	"Track RSVP Link",
-	"Track RSVP Status",
-	"Track Cancellation Link",
-	"Track Access Expires",
-	"Track Last Sync",
-];
-
-const TRACK_OPERATION_HEADERS = [
-	"Source Submission ID",
-	"Source Row",
-	"Participant ID",
-	"T-Shirt Size",
-	"Meal Category",
-	"Acceptance Expires",
-	"RSVP Link",
-	"RSVP Status",
-	"Cancellation Link",
-	"Access Expires",
-	"Last Sync",
-	"Walk-In",
-];
-
 function onOpen() {
 	SpreadsheetApp.getUi()
 		.createMenu("Track the Hack")
 		.addItem("Pass activation", "openPassSidebar")
 		.addItem("Prepare accepted RSVP invitations", "prepareAcceptedRowsForRsvpFromMenu")
+		.addItem("Refresh RSVP responses", "refreshResponseRsvpStatusFromMenu")
 		.addToUi();
 }
 
 function openPassSidebar() {
 	SpreadsheetApp.getUi().showSidebar(HtmlService.createHtmlOutputFromFile("Sidebar").setTitle("Track the Hack"));
-}
-
-/**
- * One-time, operator-invoked migration for the six Track-owned columns in the
- * existing production Responses tab. Never run automatically from the menu.
- * Review and back up the live headers and rows before invoking this function.
- * @returns {number} Number of participant rows retained.
- */
-function migrateLegacyResponseColumnsForRsvp() {
-	return withOperationsLock_(() => {
-		const sheet = SpreadsheetApp.getActiveSheet();
-		if (sheet.getName() === TRACK_OPERATIONS_SHEET) throw new Error("Open the Tally responses sheet first.");
-		const lastColumn = sheet.getLastColumn();
-		const headers = sheet.getRange(1, 1, 1, lastColumn).getDisplayValues()[0];
-		if (!headers) throw new Error("The response sheet has no headers.");
-		const review = headers.indexOf("Review reasoning");
-		if (review < 0 || headers[review - 1] !== "Admission status") throw new Error("The admission columns are not in the expected position.");
-		const start = review + 1;
-		if (lastColumn !== start + LEGACY_RESPONSE_HEADERS.length ||
-			headers.slice(start).join("\n") !== LEGACY_RESPONSE_HEADERS.join("\n")) {
-			throw new Error("The six legacy Track headers are not the exact final columns. No migration was done.");
-		}
-		const selectedRange = sheet.getActiveRange();
-		const lastRow = sheet.getLastRow();
-		const legacy = sheet.getRange(1, start + 1, lastRow, LEGACY_RESPONSE_HEADERS.length).getValues();
-		const next = legacy.map((row, index) => index === 0 ? TRACK_RESPONSE_HEADERS : [
-			row[0], "", "", "", row[1], row[2], row[3], row[4], row[5], "", "",
-		]);
-		const requiredColumns = start + TRACK_RESPONSE_HEADERS.length;
-		if (sheet.getMaxColumns() < requiredColumns) sheet.insertColumnsAfter(sheet.getMaxColumns(), requiredColumns - sheet.getMaxColumns());
-		sheet.getRange(1, start + 1, lastRow, TRACK_RESPONSE_HEADERS.length).setValues(next);
-		applyResponseColumnWidths_(sheet, start + 1);
-		if (selectedRange) sheet.setActiveRange(selectedRange);
-		return lastRow - 1;
-	});
-}
-
-/** Append the refresh timestamp to an exact ten-column layout; no-op after migration. */
-function migrateResponseRsvpRefreshColumn() {
-	return withOperationsLock_(() => {
-		const sheet = SpreadsheetApp.getActiveSheet();
-		if (sheet.getName() === TRACK_OPERATIONS_SHEET) throw new Error("Open the Tally responses sheet first.");
-		const lastColumn = sheet.getLastColumn();
-		const headers = sheet.getRange(1, 1, 1, lastColumn).getDisplayValues()[0];
-		if (!headers) throw new Error("The response sheet has no headers.");
-		const review = headers.indexOf("Review reasoning");
-		if (review < 0 || headers[review - 1] !== "Admission status") {
-			throw new Error("The admission columns are not in the expected position. No migration was done.");
-		}
-		const operationalHeaders = headers.slice(review + 1);
-		if (operationalHeaders.join("\n") === TRACK_RESPONSE_HEADERS.join("\n")) return sheet.getLastRow() - 1;
-		if (lastColumn !== review + 1 + TRACK_RESPONSE_HEADERS.length - 1 ||
-			operationalHeaders.join("\n") !== TRACK_RESPONSE_HEADERS.slice(0, -1).join("\n")) {
-			throw new Error("The ten response-row headers are not the exact final columns. No migration was done.");
-		}
-		const selectedRange = sheet.getActiveRange();
-		if (sheet.getMaxColumns() < lastColumn + 1) sheet.insertColumnsAfter(sheet.getMaxColumns(), 1);
-		sheet.getRange(1, lastColumn + 1).setValue("RSVP Refreshed At");
-		applyResponseColumnWidths_(sheet, review + 2);
-		if (selectedRange) sheet.setActiveRange(selectedRange);
-		return sheet.getLastRow() - 1;
-	});
 }
 
 /** @param {GoogleAppsScript.Spreadsheet.Sheet} sheet @param {number} firstColumn */
@@ -153,7 +69,7 @@ function applyResponseColumnWidths_(sheet, firstColumn) {
  */
 function issuePassForSelectedRow() {
 	const config = trackConfig_();
-	return withOperationsLock_(() => {
+	return withDocumentLock_(() => {
 		const selected = selectedResponseRows_(1);
 		const source = selected.sheet;
 		const rowNumber = selected.firstRow;
@@ -161,8 +77,8 @@ function issuePassForSelectedRow() {
 		const row = source.getRange(rowNumber, 1, 1, source.getLastColumn()).getDisplayValues()[0];
 		if (!row) throw new Error("The selected response row is empty.");
 		assertAccepted_(layout.headers, row);
-		const submissionId = requiredCell_(layout.headers, row, ["Submission ID"]);
-		const participantId = responseParticipantId_(source, layout, rowNumber, row, submissionId);
+		requiredCell_(layout.headers, row, ["Submission ID"]);
+		const participantId = responseParticipantId_(source, layout, rowNumber, row);
 		const record = applicationRowToOperationalRecord_(
 			layout.headers,
 			row,
@@ -181,7 +97,7 @@ function issuePassForSelectedRow() {
 /** Review the entire accepted audience without reserving IDs or calling Tracker. */
 function reviewAcceptedRowsForRsvp() {
 	const config = trackConfig_();
-	return withOperationsLock_(() => {
+	return withDocumentLock_(() => {
 		const source = SpreadsheetApp.getActiveSheet();
 		const layout = ensureResponseColumns_(source);
 		return { accepted: acceptedRsvpRows_(source, layout, config.deadline, null).length };
@@ -195,7 +111,6 @@ function prepareAcceptedRowsForRsvp() {
 
 /** One-click menu action for the complete status-defined RSVP audience. */
 function prepareAcceptedRowsForRsvpFromMenu() {
-	migrateResponseRsvpRefreshColumn();
 	const result = prepareAcceptedRowsForRsvp();
 	SpreadsheetApp.getActive().toast(
 		`Prepared ${result.processed} Accepted RSVP invitation${result.processed === 1 ? "" : "s"} in ${result.batches} batch${result.batches === 1 ? "" : "es"}.`,
@@ -212,15 +127,10 @@ function prepareTestSubmissionForRsvp() {
 	return prepareRsvpRows_(submissionId);
 }
 
-/** The older selection-based entrypoint must not silently run against a filtered rectangle. */
-function prepareSelectedRowsForRsvp() {
-	throw new Error("Use reviewAcceptedRowsForRsvp() and prepareAcceptedRowsForRsvp(), or the designated single-submission test action.");
-}
-
 /** @param {string | null} targetSubmissionId */
 function prepareRsvpRows_(targetSubmissionId) {
 	const config = trackConfig_();
-	return withOperationsLock_(() => {
+	return withDocumentLock_(() => {
 		const source = SpreadsheetApp.getActiveSheet();
 		const layout = ensureResponseColumns_(source);
 		const accepted = acceptedRsvpRows_(source, layout, config.deadline, targetSubmissionId);
@@ -279,8 +189,6 @@ function acceptedRsvpRows_(source, layout, deadline, targetSubmissionId) {
 	const statusColumn = layout.headers.indexOf("Admission status");
 	const submissionColumn = layout.headers.indexOf("Submission ID");
 	if (submissionColumn < 0) throw new Error("The response sheet has no Submission ID column.");
-	const legacy = SpreadsheetApp.getActive().getSheetByName(TRACK_OPERATIONS_SHEET);
-	const legacyIds = legacy ? existingParticipantsBySubmission_(legacy) : new Map();
 	const submissions = new Set();
 	const participants = new Set();
 	/** @type {string[]} */
@@ -297,7 +205,7 @@ function acceptedRsvpRows_(source, layout, deadline, targetSubmissionId) {
 			if (!/^[A-Za-z0-9_-]{1,128}$/.test(submissionId)) throw new Error("invalid Submission ID");
 			if (submissions.has(submissionId)) throw new Error("duplicate Submission ID");
 			submissions.add(submissionId);
-			const participantId = responseParticipantId_(source, layout, rowNumber, row, submissionId, false, legacyIds);
+			const participantId = responseParticipantId_(source, layout, rowNumber, row, false);
 			if (!/^[A-Za-z0-9_-]{22,128}$/.test(participantId) || /^\d+$/.test(participantId)) throw new Error("invalid Participant ID");
 			if (participants.has(participantId)) throw new Error("duplicate Participant ID");
 			participants.add(participantId);
@@ -314,7 +222,7 @@ function acceptedRsvpRows_(source, layout, deadline, targetSubmissionId) {
 
 /** Review existing accepted participants whose mapped meal category differs from the response row. */
 function reviewExistingDietaryCategories() {
-	return withOperationsLock_(() => {
+	return withDocumentLock_(() => {
 		const source = SpreadsheetApp.getActiveSheet();
 		const layout = ensureResponseColumns_(source);
 		return { changed: existingDietaryRows_(source, layout).length };
@@ -324,7 +232,7 @@ function reviewExistingDietaryCategories() {
 /** Update only Meal Category for already provisioned participants; no RSVP or claim writes. */
 function reconcileExistingDietaryCategories() {
 	const config = trackConfig_();
-	return withOperationsLock_(() => {
+	return withDocumentLock_(() => {
 		const source = SpreadsheetApp.getActiveSheet();
 		const layout = ensureResponseColumns_(source);
 		const changed = existingDietaryRows_(source, layout);
@@ -384,48 +292,73 @@ function existingDietaryRows_(source, layout) {
 	return changed;
 }
 
-/** Refresh the RSVP columns in the Tally response rows. Call from a reviewed operations process. */
+/** Refresh every provisioned response row without changing RSVP state in Tracker. */
 function refreshResponseRsvpStatus() {
 	const config = trackConfig_();
-	return withOperationsLock_(() => {
+	return withDocumentLock_(() => {
 		const source = SpreadsheetApp.getActiveSheet();
-		if (source.getName() === TRACK_OPERATIONS_SHEET) throw new Error("Open the Tally responses sheet first.");
 		const layout = ensureResponseColumns_(source);
 		const lastRow = source.getLastRow();
-		if (lastRow < 2) return 0;
+		/** @type {RsvpRefreshSummary} */
+		const summary = { refreshed: 0, pending: 0, confirmed: 0, declined: 0 };
+		if (lastRow < 2) return summary;
 		const values = source.getRange(2, layout.start + 1, lastRow - 1, TRACK_RESPONSE_HEADERS.length).getValues();
 		const ids = values.map(row => String(row[0] || "").trim()).filter(Boolean);
-		if (!ids.length) return 0;
-		/** @type {Record<string, RsvpRecord | null>} */
+		if (!ids.length) return summary;
+		if (new Set(ids).size !== ids.length) throw new Error("Resolve duplicate Participant IDs before refreshing RSVP responses.");
+		/** @type {Record<string, RsvpRecord>} */
 		const byId = {};
 		for (let offset = 0; offset < ids.length; offset += 500) {
 			const result = rsvpReconciliationResponse_(
 				apiPost_(config, "/api/integrations/sheets/rsvp-reconciliation", { ids: ids.slice(offset, offset + 500) }),
 			);
+			if (result.missingIds.length) {
+				throw new Error(`Tracker could not find ${result.missingIds.length} provisioned participant${result.missingIds.length === 1 ? "" : "s"}. No RSVP fields were changed.`);
+			}
 			result.records.forEach(record => (byId[record.id] = record));
-			result.missingIds.forEach(id => (byId[id] = null));
 		}
-		const now = new Date();
-		values.forEach(row => {
+		const reconciled = values.map(row => {
 			const id = String(row[0] || "").trim();
-			if (!id) return;
-			if (!Object.prototype.hasOwnProperty.call(byId, id)) throw new Error(`Tracker returned no RSVP status for ${id}.`);
+			if (!id) return null;
 			const record = byId[id];
-			row[5] = record === null ? "MISSING" : record?.status || (record?.confirmed ? "CONFIRMED" : "PENDING");
-			if (record?.rsvpLink) { assertRsvpManagementLink_(record.rsvpLink, config.baseUrl); row[4] = record.rsvpLink; }
-			row[6] = record?.cancellationLink || "";
-			row[8] = now;
-			row[10] = now;
+			if (!record) throw new Error("Tracker returned an incomplete RSVP response. No RSVP fields were changed.");
+			const status = record.status || (record.confirmed ? "CONFIRMED" : "PENDING");
+			if (record.rsvpLink) assertRsvpManagementLink_(record.rsvpLink, config.baseUrl);
+			return { row, record, status };
+		});
+		const now = new Date();
+		reconciled.forEach(result => {
+			if (!result) return;
+			result.row[5] = result.status;
+			if (result.record.rsvpLink) result.row[4] = result.record.rsvpLink;
+			result.row[6] = result.record.cancellationLink || "";
+			result.row[8] = now;
+			result.row[10] = now;
+			summary.refreshed += 1;
+			if (result.status === "CONFIRMED") summary.confirmed += 1;
+			else if (result.status === "DECLINED") summary.declined += 1;
+			else summary.pending += 1;
 		});
 		source.getRange(2, layout.start + 1, values.length, TRACK_RESPONSE_HEADERS.length).setValues(values);
-		return ids.length;
+		return summary;
 	});
+}
+
+/** Visible menu wrapper with an operator-readable summary. */
+function refreshResponseRsvpStatusFromMenu() {
+	const result = refreshResponseRsvpStatus();
+	SpreadsheetApp.getActive().toast(
+		`Refreshed ${result.refreshed} RSVP response${result.refreshed === 1 ? "" : "s"}: ${result.confirmed} confirmed, ${result.declined} declined, ${result.pending} pending.`,
+		"RSVP responses refreshed",
+		10,
+	);
+	return result;
 }
 
 /** @param {number} maxRows */
 function selectedResponseRows_(maxRows) {
 	const sheet = SpreadsheetApp.getActiveSheet();
-	if (sheet.getName() === TRACK_OPERATIONS_SHEET) throw new Error("Select a row on the Tally responses sheet.");
+	if (sheet.getName() !== TRACK_RESPONSES_SHEET) throw new Error(`Open the ${TRACK_RESPONSES_SHEET} sheet first.`);
 	const selection = sheet.getActiveRange();
 	if (!selection) throw new Error("Select a participant row first.");
 	const firstRow = selection.getRow();
@@ -436,6 +369,7 @@ function selectedResponseRows_(maxRows) {
 
 /** @param {GoogleAppsScript.Spreadsheet.Sheet} sheet @param {boolean} [initializeBlank] */
 function ensureResponseColumns_(sheet, initializeBlank = false) {
+	if (sheet.getName() !== TRACK_RESPONSES_SHEET) throw new Error(`Open the ${TRACK_RESPONSES_SHEET} sheet first.`);
 	const lastColumn = sheet.getLastColumn();
 	const headers = sheet.getRange(1, 1, 1, lastColumn).getDisplayValues()[0];
 	if (!headers) throw new Error("The Tally response sheet has no headers.");
@@ -448,6 +382,7 @@ function ensureResponseColumns_(sheet, initializeBlank = false) {
 	if (!current) throw new Error("The response-row headers could not be read.");
 	if (current.every(value => !value) && initializeBlank) {
 		sheet.getRange(1, start + 1, 1, TRACK_RESPONSE_HEADERS.length).setValues([TRACK_RESPONSE_HEADERS]);
+		applyResponseColumnWidths_(sheet, start + 1);
 	} else if (current.join("\n") !== TRACK_RESPONSE_HEADERS.join("\n")) {
 		throw new Error("Columns after Review reasoning do not match Tracker's response-row fields. No values were changed.");
 	}
@@ -465,14 +400,11 @@ function isAccepted_(value) {
 	return /^(accepted|accepté|acceptée)$/i.test(String(value || "").trim());
 }
 
-/** @param {GoogleAppsScript.Spreadsheet.Sheet} sheet @param {{start: number}} layout @param {number} rowNumber @param {string[]} row @param {string} submissionId @param {boolean} [persist] @param {Map<string, string>} [legacyIds] */
-function responseParticipantId_(sheet, layout, rowNumber, row, submissionId, persist = true, legacyIds) {
+/** @param {GoogleAppsScript.Spreadsheet.Sheet} sheet @param {{start: number}} layout @param {number} rowNumber @param {string[]} row @param {boolean} [persist] */
+function responseParticipantId_(sheet, layout, rowNumber, row, persist = true) {
 	const idColumn = layout.start + TRACK_RESPONSE_HEADERS.indexOf("Participant ID") + 1;
 	const current = String(row[idColumn - 1] || "").trim();
-	const legacy = legacyIds ? null : SpreadsheetApp.getActive().getSheetByName(TRACK_OPERATIONS_SHEET);
-	const oldId = (legacyIds || (legacy ? existingParticipantsBySubmission_(legacy) : new Map())).get(submissionId);
-	if (current && oldId && current !== oldId) throw new Error(`Conflicting participant IDs for Submission ID: ${submissionId}`);
-	const id = current || oldId || createParticipantId_();
+	const id = current || createParticipantId_();
 	if (!current && persist) sheet.getRange(rowNumber, idColumn).setValue(id);
 	return id;
 }
@@ -491,17 +423,12 @@ function writeResponseRecord_(sheet, layout, rowNumber, record) {
 	sheet.getRange(rowNumber, layout.start + 1, 1, TRACK_RESPONSE_HEADERS.length).setValues([existing]);
 }
 
-function setupTrackOperations() {
-	const sheet = withOperationsLock_(() => ensureOperationsSheet_());
-	SpreadsheetApp.getActive().setActiveSheet(sheet);
-}
-
 /**
  * @template T
  * @param {() => T} operation
  * @returns {T}
  */
-function withOperationsLock_(operation) {
+function withDocumentLock_(operation) {
 	const lock = LockService.getDocumentLock();
 	if (!lock) throw new Error("Run Tracker operations from the bound Google Sheet.");
 	if (!lock.tryLock(30000)) throw new Error("Another Tracker operation is running. Try again shortly.");
@@ -514,109 +441,6 @@ function withOperationsLock_(operation) {
 			lock.releaseLock();
 		}
 	}
-}
-
-function acceptSelectedApplications() {
-	throw new Error("This legacy selection-based acceptance action is disabled. Record Accepted in the Responses tab, then use prepareAcceptedRowsForRsvp().");
-}
-
-function acceptSelectedWalkInApplications() {
-	throw new Error("This legacy operations-tab action is disabled. Have a lead approve the walk-in, mark its response Accepted and Walk-In, then use the Responses-tab flow.");
-}
-
-function refreshRsvpStatus() {
-	const count = withOperationsLock_(refreshRsvpStatus_);
-	SpreadsheetApp.getUi().alert(`${count} participant(s) reconciled.`);
-}
-
-function refreshRsvpStatus_() {
-	const config = trackConfig_();
-	const sheet = ensureOperationsSheet_();
-	const lastRow = sheet.getLastRow();
-	if (lastRow < 2) throw new Error("There are no accepted participants to reconcile.");
-
-	const rows = sheet.getRange(2, 1, lastRow - 1, TRACK_OPERATION_HEADERS.length).getValues();
-	const idColumn = TRACK_OPERATION_HEADERS.indexOf("Participant ID");
-	const ids = rows.map(row => String(row[idColumn] || "")).filter(Boolean);
-	if (!ids.length) throw new Error("There are no participant IDs to reconcile.");
-	/** @type {Record<string, RsvpRecord | null>} */
-	const byId = {};
-
-	for (let offset = 0; offset < ids.length; offset += 500) {
-		const response = rsvpReconciliationResponse_(
-			apiPost_(config, "/api/integrations/sheets/rsvp-reconciliation", {
-				ids: ids.slice(offset, offset + 500),
-			}),
-		);
-		response.records.forEach(record => (byId[record.id] = record));
-		response.missingIds.forEach(id => (byId[id] = null));
-	}
-
-	const now = new Date();
-	applyRsvpReconciliation_(rows, byId, now);
-	sheet.getRange(2, 1, rows.length, TRACK_OPERATION_HEADERS.length).setValues(rows);
-	return ids.length;
-}
-
-/**
- * @param {SheetRow[]} rows
- * @param {Record<string, RsvpRecord | null>} byId
- * @param {Date} now
- * @returns {SheetRow[]}
- */
-function applyRsvpReconciliation_(rows, byId, now) {
-	const idColumn = TRACK_OPERATION_HEADERS.indexOf("Participant ID");
-	const statusColumn = TRACK_OPERATION_HEADERS.indexOf("RSVP Status");
-	const cancellationColumn = TRACK_OPERATION_HEADERS.indexOf("Cancellation Link");
-	const syncColumn = TRACK_OPERATION_HEADERS.indexOf("Last Sync");
-	rows.forEach(row => {
-		const id = String(row[idColumn] || "").trim();
-		if (!id) return;
-		if (!Object.prototype.hasOwnProperty.call(byId, id)) {
-			throw new Error(`Tracker API did not return a reconciliation result for ${id}.`);
-		}
-		const record = byId[id];
-		if (record === undefined) throw new Error(`Tracker API returned an invalid reconciliation result for ${id}.`);
-		row[statusColumn] = record === null ? "MISSING" : record.confirmed ? "CONFIRMED" : "PENDING";
-		row[cancellationColumn] = record && record.cancellationLink ? record.cancellationLink : "";
-		row[syncColumn] = now;
-	});
-	return rows;
-}
-
-function issueAccessForSelectedParticipant() {
-	const config = trackConfig_();
-	const sheet = SpreadsheetApp.getActiveSheet();
-	const selection = sheet.getActiveRange();
-	if (
-		sheet.getName() !== TRACK_OPERATIONS_SHEET ||
-		!selection ||
-		selection.getRow() < 2 ||
-		selection.getNumRows() !== 1
-	) {
-		throw new Error("Select one participant row on the Track Operations sheet.");
-	}
-
-	const rowNumber = selection.getRow();
-	const response = withOperationsLock_(() => {
-		const row = sheet.getRange(rowNumber, 1, 1, TRACK_OPERATION_HEADERS.length).getValues()[0];
-		if (!row) throw new Error("The selected participant row is empty.");
-		const claim = claimResponse_(
-			apiPost_(config, "/api/integrations/sheets/claim", operationalRecordFromRow_(row)),
-		);
-		sheet
-			.getRange(rowNumber, TRACK_OPERATION_HEADERS.indexOf("Access Expires") + 1)
-			.setValue(new Date(claim.expiresAt));
-		return claim;
-	});
-
-	const displayUrl = claimDisplayUrl_(response.claimUrl);
-	const html = HtmlService.createHtmlOutput(
-		`<p>This access code expires in five minutes.</p><p><a href="${escapeHtml_(displayUrl)}" target="_blank">Open access QR</a></p>`,
-	)
-		.setWidth(360)
-		.setHeight(140);
-	SpreadsheetApp.getUi().showModalDialog(html, "Participant access");
 }
 
 /** @param {string} claimUrl */
@@ -722,59 +546,6 @@ function requiredCell_(headers, row, names) {
 		if (value) return value;
 	}
 	throw new Error(`Missing required Sheet value: ${names.join(" / ")}`);
-}
-
-/**
- * @param {SheetRow} row
- * @returns {OperationalRecord}
- */
-function operationalRecordFromRow_(row) {
-	/** @param {string} header */
-	const value = header => row[TRACK_OPERATION_HEADERS.indexOf(header)];
-	const id = String(value("Participant ID") || "").trim();
-	if (!id) throw new Error("The selected operations row has no participant ID.");
-	return {
-		id,
-		tShirtSize: operationalTShirtSize_(value("T-Shirt Size")),
-		mealCategory: operationalMealCategory_(value("Meal Category")),
-		acceptanceExpiry: isoDate_(value("Acceptance Expires")),
-		walkIn: booleanCell_(value("Walk-In")),
-	};
-}
-
-/**
- * @param {SheetCell | undefined} value
- * @returns {TShirtSize}
- */
-function operationalTShirtSize_(value) {
-	const size = String(value || "")
-		.trim()
-		.toUpperCase();
-	if (size === "NONE") return "NONE";
-	if (size === "XXL" || size === "XL" || size === "L" || size === "M" || size === "S" || size === "XS") {
-		return size;
-	}
-	throw new Error(`The selected operations row has an invalid T-shirt size: ${size || "missing"}.`);
-}
-
-/**
- * @param {SheetCell | undefined} value
- * @returns {MealCategory}
- */
-function operationalMealCategory_(value) {
-	const category = String(value || "")
-		.trim()
-		.toUpperCase();
-	if (
-		category === "STANDARD" ||
-		category === "VEGETARIAN" ||
-		category === "VEGAN" ||
-		category === "HALAL" ||
-		category === "OTHER"
-	) {
-		return category;
-	}
-	throw new Error(`The selected operations row has an invalid meal category: ${category || "missing"}.`);
 }
 
 function trackConfig_() {
@@ -904,50 +675,6 @@ function claimResponse_(body) {
 	return { claimUrl: value.claimUrl, expiresAt: value.expiresAt };
 }
 
-function ensureOperationsSheet_() {
-	const spreadsheet = SpreadsheetApp.getActive();
-	const sheet = spreadsheet.getSheetByName(TRACK_OPERATIONS_SHEET) || spreadsheet.insertSheet(TRACK_OPERATIONS_SHEET);
-	const current = sheet.getRange(1, 1, 1, TRACK_OPERATION_HEADERS.length).getDisplayValues()[0];
-	if (!current) throw new Error(`The ${TRACK_OPERATIONS_SHEET} header row could not be read.`);
-	if (current.every(value => !value)) {
-		sheet.getRange(1, 1, 1, TRACK_OPERATION_HEADERS.length).setValues([TRACK_OPERATION_HEADERS]);
-		sheet.setFrozenRows(1);
-	} else if (current.join("\n") !== TRACK_OPERATION_HEADERS.join("\n")) {
-		const previousHeaders = TRACK_OPERATION_HEADERS.slice(0, -1);
-		const hasPreviousHeaders =
-			current.slice(0, -1).join("\n") === previousHeaders.join("\n") && !current[current.length - 1];
-		if (!hasPreviousHeaders) {
-			throw new Error(`The ${TRACK_OPERATIONS_SHEET} header row does not match this integration.`);
-		}
-		sheet.getRange(1, TRACK_OPERATION_HEADERS.length).setValue("Walk-In");
-	}
-	return sheet;
-}
-
-/**
- * @param {GoogleAppsScript.Spreadsheet.Sheet} sheet
- * @returns {Map<string, string>}
- */
-function existingParticipantsBySubmission_(sheet) {
-	if (sheet.getLastRow() < 2) return new Map();
-	const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, TRACK_OPERATION_HEADERS.length).getDisplayValues();
-	const sourceColumn = TRACK_OPERATION_HEADERS.indexOf("Source Submission ID");
-	const idColumn = TRACK_OPERATION_HEADERS.indexOf("Participant ID");
-	/** @type {Map<string, string>} */
-	const result = new Map();
-	for (const row of rows) {
-		const submissionId = row[sourceColumn];
-		const participantId = row[idColumn];
-		if (!submissionId || !participantId) continue;
-		const previousId = result.get(submissionId);
-		if (previousId && previousId !== participantId) {
-			throw new Error(`Conflicting participant IDs for Submission ID: ${submissionId}`);
-		}
-		result.set(submissionId, participantId);
-	}
-	return result;
-}
-
 function createParticipantId_() {
 	return `${Utilities.getUuid()}${Utilities.getUuid()}`.replace(/-/g, "");
 }
@@ -963,14 +690,4 @@ function isoDate_(value) {
 /** @param {SheetCell | undefined} value */
 function booleanCell_(value) {
 	return value === true || /^(?:true|yes|oui|walk-in)$/i.test(String(value || "").trim());
-}
-
-/** @param {string} value */
-function escapeHtml_(value) {
-	return String(value).replace(/[&<>"]/g, character => {
-		if (character === "&") return "&amp;";
-		if (character === "<") return "&lt;";
-		if (character === ">") return "&gt;";
-		return "&quot;";
-	});
 }
