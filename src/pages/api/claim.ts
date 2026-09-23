@@ -55,7 +55,7 @@ export default async function claim(req: NextApiRequest, res: NextApiResponse) {
 		return res.status(200).json({ ok: true });
 	} catch (error) {
 		if (error instanceof ParticipantLifecycleError || error instanceof ZodError) {
-			// Spent, expired, forged and malformed all look the same from outside.
+			// Spent, replaced, forged and malformed all look the same from outside.
 			return res.status(400).json({ ok: false, message: "This access code is no longer valid." });
 		}
 

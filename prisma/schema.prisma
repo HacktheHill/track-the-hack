@@ -106,7 +106,6 @@ model ClaimToken {
   id         String    @id
   hackerId   String    @unique
   hacker     Hacker    @relation(fields: [hackerId], references: [id], onDelete: Cascade)
-  expiresAt  DateTime
   consumedAt DateTime?
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @default(now()) @updatedAt

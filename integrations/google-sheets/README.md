@@ -11,7 +11,7 @@ Set these Apps Script **Project Settings → Script properties** before using th
 - `CF_ACCESS_CLIENT_SECRET`: the matching service token secret
 
 The menu accepts selected application rows, has a separate explicit action for
-walk-ins, refreshes RSVP state, and issues a five-minute participant-access QR.
+walk-ins, refreshes RSVP state, and issues a single-use participant-access QR with no time limit.
 It creates a separate `Track Operations` tab and sends only participant ID,
 T-shirt size, coarse meal category, expiry, and the selected walk-in flag to
 Track the Hack. Names, emails, Tally IDs, waivers, and detailed restrictions
@@ -44,3 +44,11 @@ Acceptance saves and flushes each submission's participant ID to `Track Operatio
 New rows keep `RSVP Status` and `Last Sync` blank until the API confirms the full batch. Existing confirmation, cancellation links, access expiry, and previous sync information are preserved if a retry fails. A successful retry changes a previously missing record's RSVP status to `PENDING`; confirmed participants remain confirmed.
 
 All menu operations that write to the operations tab share a [document lock](<https://developers.google.com/apps-script/reference/lock/lock-service#getDocumentLock()>). If another operation runs for more than 30 seconds, the waiting operation asks you to retry. Success dialogs appear after the lock is released. Duplicate submissions in a selection or conflicting saved IDs are rejected before provisioning.
+
+## Access codes without an expiry
+
+Apply `20260922010000_remove_claim_expiry` and deploy the matching Track version
+with this script. Access codes remain valid until used or replaced; the claim
+endpoint now returns only `claimUrl`. The existing `Access Expires` column is
+retained to preserve the operations tab layout and is cleared when access is
+issued. Old values in that column no longer determine whether a code works.

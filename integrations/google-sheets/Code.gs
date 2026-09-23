@@ -8,7 +8,7 @@
 /** @typedef {{baseUrl: string, apiKey: string, deadline: string, accessClientId: string, accessClientSecret: string}} TrackConfig */
 /** @typedef {{id: string, confirmed: boolean, cancellationLink?: string}} RsvpRecord */
 /** @typedef {{records: RsvpRecord[], missingIds: string[]}} RsvpReconciliation */
-/** @typedef {{claimUrl: string, expiresAt: string}} ClaimResponse */
+/** @typedef {{claimUrl: string}} ClaimResponse */
 /** @typedef {{processed: number}} ProcessedResponse */
 /** @typedef {{sourceRow: number, submissionId: string, record: OperationalRecord}} AcceptedApplication */
 /** @typedef {OperationalRecord | {hackers: OperationalRecord[]} | {ids: string[]}} ApiPayload */
@@ -216,15 +216,14 @@ function issueAccessForSelectedParticipant() {
 		const claim = claimResponse_(
 			apiPost_(config, "/api/integrations/sheets/claim", operationalRecordFromRow_(row)),
 		);
-		sheet
-			.getRange(rowNumber, TRACK_OPERATION_HEADERS.indexOf("Access Expires") + 1)
-			.setValue(new Date(claim.expiresAt));
+		// Preserve the existing column layout, but clear obsolete expiry values.
+		sheet.getRange(rowNumber, TRACK_OPERATION_HEADERS.indexOf("Access Expires") + 1).setValue("");
 		return claim;
 	});
 
 	const displayUrl = claimDisplayUrl_(response.claimUrl);
 	const html = HtmlService.createHtmlOutput(
-		`<p>This access code expires in five minutes.</p><p><a href="${escapeHtml_(displayUrl)}" target="_blank">Open access QR</a></p>`,
+		`<p>This code can be used once and remains valid until used or replaced.</p><p><a href="${escapeHtml_(displayUrl)}" target="_blank">Open access QR</a></p>`,
 	)
 		.setWidth(360)
 		.setHeight(140);
@@ -466,16 +465,10 @@ function rsvpReconciliationResponse_(body) {
  */
 function claimResponse_(body) {
 	const value = JSON.parse(body);
-	if (
-		value === null ||
-		Array.isArray(value) ||
-		typeof value !== "object" ||
-		typeof value.claimUrl !== "string" ||
-		typeof value.expiresAt !== "string"
-	) {
+	if (value === null || Array.isArray(value) || typeof value !== "object" || typeof value.claimUrl !== "string") {
 		throw new Error("Track API returned an invalid claim response.");
 	}
-	return { claimUrl: value.claimUrl, expiresAt: value.expiresAt };
+	return { claimUrl: value.claimUrl };
 }
 
 function ensureOperationsSheet_() {

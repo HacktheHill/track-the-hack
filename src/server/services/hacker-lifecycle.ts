@@ -61,8 +61,8 @@ export interface HackerLifecycleRepository {
 	cancelByCapability(capabilityId: string): Promise<string | null>;
 	reconcile(ids: string[]): Promise<ReconciliationRecord[]>;
 	// Provisioning, claim replacement and active-session revocation are one operation.
-	replaceParticipantAccess(record: ProvisioningRecord, claimId: string, expiresAt: Date): Promise<void>;
-	// Returns the participant id, or null for a spent, expired, or unknown claim.
+	replaceParticipantAccess(record: ProvisioningRecord, claimId: string): Promise<void>;
+	// Returns the participant id, or null for a spent, replaced, or unknown claim.
 	// A successful redemption stores the replacement participant session atomically.
 	redeemClaimToken(claimId: string, now: Date, session: NewParticipantSession): Promise<string | null>;
 	findParticipantSession(verifier: string, now: Date): Promise<ParticipantSessionRecord | null>;
@@ -187,30 +187,24 @@ export const reconcileRsvps = async (
 	};
 };
 
-// A copied claim QR can be redeemed on another device until it expires or is
-// consumed. A short lifetime limits this window; single use prevents reuse.
+// A claim remains available until it is consumed or replaced by the organizer.
 // Successful activation creates the participant session on the redeeming device.
-export const CLAIM_TOKEN_TTL_MS = 5 * 60 * 1000;
-
 export const issueParticipantAccess = async (
 	repository: HackerLifecycleRepository,
 	recordInput: unknown,
 	baseUrl: string,
 	secret: string,
-	now = new Date(),
 	createClaimId = () => randomBytes(32).toString("base64url"),
 ) => {
 	const record = provisioningRecordSchema.parse(recordInput);
 	const claimId = createClaimId();
-	const expiresAt = new Date(now.getTime() + CLAIM_TOKEN_TTL_MS);
 
-	await repository.replaceParticipantAccess(record, claimId, expiresAt);
+	await repository.replaceParticipantAccess(record, claimId);
 
 	// Fragment, not query: it never reaches the server on the GET and stays out
 	// of access logs, same as the cancellation link.
 	return {
 		claimUrl: `${baseUrl.replace(/\/$/, "")}/claim#${createClaimToken(claimId, secret)}`,
-		expiresAt,
 		hackerId: record.id,
 	};
 };
@@ -228,7 +222,7 @@ export const consumeClaimToken = async (
 		throw new ParticipantLifecycleError("INVALID_CLAIM_TOKEN");
 	}
 
-	// Spent, expired and unknown all fail the same way on purpose: telling them
+	// Spent, replaced and unknown all fail the same way on purpose: telling them
 	// apart would confirm to an attacker that a token was real.
 	const hackerId = await repository.redeemClaimToken(claimId, now, session);
 	if (!hackerId) {

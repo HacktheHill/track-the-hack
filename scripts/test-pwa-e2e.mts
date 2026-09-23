@@ -20,7 +20,7 @@ const participantSchema = z
 	})
 	.strict();
 const processedResponseSchema = z.object({ processed: z.number().int().nonnegative() }).strict();
-const claimResponseSchema = z.object({ claimUrl: z.string().url(), expiresAt: z.string().datetime() }).strict();
+const claimResponseSchema = z.object({ claimUrl: z.string().url() }).strict();
 
 const wait = (milliseconds: number) => new Promise<void>(resolve => setTimeout(resolve, milliseconds));
 

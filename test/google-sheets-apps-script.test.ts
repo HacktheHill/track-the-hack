@@ -35,7 +35,7 @@ const reconciliationResponseSchema = z.object({
 	records: z.array(rsvpRecordSchema),
 	missingIds: z.array(z.string()),
 });
-const claimResponseSchema = z.object({ claimUrl: z.string().url(), expiresAt: z.string().datetime() });
+const claimResponseSchema = z.object({ claimUrl: z.string().url() });
 const sheetAdapterSchema = z.object({
 	applicationRowToOperationalRecord_: z
 		.function()
@@ -315,10 +315,7 @@ void test("the Sheet adapter rejects malformed API response bodies at its bounda
 		() => adapter.rsvpReconciliationResponse_('{"records":[{"id":1,"confirmed":true}],"missingIds":[]}'),
 		/invalid RSVP reconciliation record/,
 	);
-	assert.throws(
-		() => adapter.claimResponse_('{"claimUrl":"https://track.example/claim#token"}'),
-		/invalid claim response/,
-	);
+	assert.throws(() => adapter.claimResponse_('{"claimUrl":null}'), /invalid claim response/);
 });
 
 void test("the operations row preserves walk-in status when access is issued", () => {

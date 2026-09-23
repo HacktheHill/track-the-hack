@@ -84,7 +84,7 @@ Full participant access is issued in person after identity verification. RSVP an
 1. The participant presents government-issued ID. An organizer verifies it visually and finds the participant's accepted row in the Sheet; ID details are not recorded.
 2. The organizer selects the row and uses the Google Sheets `Track the Hack` menu to issue app access.
 3. The Apps Script backend calls a restricted Track the Hack endpoint with the participant ID, required operational fields from the selected row, and an API key kept in server-side Apps Script configuration rather than spreadsheet cells or client-side dialogs.
-4. Track the Hack creates or updates the minimal Hacker record and returns a random, short-lived, single-use claim URL.
+4. Track the Hack creates or updates the minimal Hacker record and returns a random, single-use claim URL that remains valid until used or replaced.
 5. The participant scans the QR code on the device they will use. Track the Hack atomically consumes the claim token and creates the participant session in an HTTP-only, Secure, SameSite cookie.
 
 The claim QR contains the one-time token, not the participant ID. Only one participant device is active at a time; issuing replacement access revokes the previous participant session.

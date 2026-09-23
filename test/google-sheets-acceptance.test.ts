@@ -209,7 +209,6 @@ void test("retrying an existing walk-in preserves confirmation and access data",
 
 void test("a missing reservation can be reconciled, retried, and issued access with the same ID", () => {
 	let fail = true;
-	const accessExpiry = "2030-09-15T00:05:00.000Z";
 	const sheet = createSheetHarness({
 		applications,
 		fetch: request => {
@@ -222,7 +221,7 @@ void test("a missing reservation can be reconciled, retried, and issued access w
 				assert.equal(record.id, sheet.savedRows()[1]?.[2]);
 				return {
 					status: 200,
-					body: JSON.stringify({ claimUrl: "https://track.example/claim#token", expiresAt: accessExpiry }),
+					body: JSON.stringify({ claimUrl: "https://track.example/claim#token" }),
 				};
 			}
 			if (fail) {
@@ -249,7 +248,7 @@ void test("a missing reservation can be reconciled, retried, and issued access w
 			.every(row => row[7] === "PENDING"),
 	);
 	sheet.run("issueAccessForSelectedParticipant");
-	assert.deepEqual(sheet.savedRows()[1]?.[9], new Date(accessExpiry));
+	assert.equal(sheet.savedRows()[1]?.[9], "");
 	assert.deepEqual(ids(sheet.savedRows()), originalIds);
 	assert.equal(sheet.uuidCalls(), 4);
 	assert.equal(sheet.isLocked(), false);

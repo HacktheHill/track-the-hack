@@ -55,7 +55,7 @@ const requestMock = (overrides: Partial<LifecycleRequest>): LifecycleRequest => 
 class MemoryRepository implements HackerLifecycleRepository {
 	readonly hackers = new Map<string, ProvisioningRecord & { confirmed: boolean }>();
 	readonly capabilities = new Map<string, string>();
-	readonly claims = new Map<string, { hackerId: string; expiresAt: Date; consumedAt: Date | null }>();
+	readonly claims = new Map<string, { hackerId: string; consumedAt: Date | null }>();
 	readonly sessions = new Map<string, { verifier: string; hackerId: string; expiresAt: Date }>();
 	provisioningBatchCalls = 0;
 
@@ -103,7 +103,7 @@ class MemoryRepository implements HackerLifecycleRepository {
 		);
 	}
 
-	replaceParticipantAccess(record: ProvisioningRecord, claimId: string, expiresAt: Date) {
+	replaceParticipantAccess(record: ProvisioningRecord, claimId: string) {
 		const existing = this.hackers.get(record.id);
 		this.hackers.set(record.id, { ...existing, ...record, confirmed: existing?.confirmed ?? false });
 		for (const [existingId, claim] of this.claims) {
@@ -112,13 +112,13 @@ class MemoryRepository implements HackerLifecycleRepository {
 		for (const [verifier, session] of this.sessions) {
 			if (session.hackerId === record.id) this.sessions.delete(verifier);
 		}
-		this.claims.set(claimId, { hackerId: record.id, expiresAt, consumedAt: null });
+		this.claims.set(claimId, { hackerId: record.id, consumedAt: null });
 		return Promise.resolve();
 	}
 
 	redeemClaimToken(claimId: string, now: Date, session: NewParticipantSession) {
 		const claim = this.claims.get(claimId);
-		if (!claim || claim.consumedAt || claim.expiresAt <= now) return Promise.resolve(null);
+		if (!claim || claim.consumedAt) return Promise.resolve(null);
 		claim.consumedAt = now;
 		for (const [verifier, existing] of this.sessions) {
 			if (existing.hackerId === claim.hackerId) this.sessions.delete(verifier);
@@ -338,12 +338,11 @@ void test("access issuance accepts one strict operational record and returns a f
 		provisionInput({ walkIn: true }),
 		"https://track.example/",
 		claimSecret,
-		new Date("2026-08-20T00:00:00Z"),
 		() => claimId,
 	);
 
 	assert.equal(issued.claimUrl, `https://track.example/claim#${createClaimToken(claimId, claimSecret)}`);
-	assert.equal(issued.expiresAt.toISOString(), "2026-08-20T00:05:00.000Z");
+	assert.equal("expiresAt" in issued, false);
 	assert.equal(repository.hackers.get(participantId)?.walkIn, true);
 
 	// The signature must never reach storage, otherwise a dump is a set of links.
@@ -365,29 +364,32 @@ void test("access issuance accepts one strict operational record and returns a f
 	);
 });
 
-void test("a claim atomically creates one session and rejects tampering, expiry, and reuse", async () => {
+void test("an unused claim remains usable after a day and rejects tampering and reuse", async () => {
 	const repository = new MemoryRepository();
-	const issuedAt = new Date("2026-08-20T00:00:00Z");
+	const redeemedAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 	const claimId = "f".repeat(43);
-	const session = { verifier: "s".repeat(43), expiresAt: new Date("2026-08-21T12:00:00Z") };
+	const session = { verifier: "s".repeat(43), expiresAt: new Date(redeemedAt.getTime() + 36 * 60 * 60 * 1000) };
 
 	const issued = await issueParticipantAccess(
 		repository,
 		provisionInput(),
 		"https://track.example",
 		claimSecret,
-		issuedAt,
 		() => claimId,
 	);
 	const token = issued.claimUrl.split("#")[1] ?? "";
 
-	await assert.rejects(consumeClaimToken(repository, token, claimSecret, session, new Date("2026-08-20T00:06:00Z")));
-	await assert.rejects(consumeClaimToken(repository, `${claimId}.${"A".repeat(43)}`, claimSecret, session, issuedAt));
-	await assert.rejects(consumeClaimToken(repository, token, "z".repeat(32), session, issuedAt));
+	await assert.rejects(
+		consumeClaimToken(repository, `${claimId}.${"A".repeat(43)}`, claimSecret, session, redeemedAt),
+	);
+	await assert.rejects(consumeClaimToken(repository, token, "z".repeat(32), session, redeemedAt));
 
-	assert.equal((await consumeClaimToken(repository, token, claimSecret, session, issuedAt)).hackerId, participantId);
+	assert.equal(
+		(await consumeClaimToken(repository, token, claimSecret, session, redeemedAt)).hackerId,
+		participantId,
+	);
 	assert.deepEqual(repository.sessions.get(session.verifier), { ...session, hackerId: participantId });
-	await assert.rejects(consumeClaimToken(repository, token, claimSecret, session, issuedAt));
+	await assert.rejects(consumeClaimToken(repository, token, claimSecret, session, redeemedAt));
 });
 
 void test("two devices racing the same claim produce exactly one participant session", async () => {
@@ -398,7 +400,6 @@ void test("two devices racing the same claim produce exactly one participant ses
 		provisionInput(),
 		"https://track.example",
 		claimSecret,
-		now,
 		() => "r".repeat(43),
 	);
 	const token = issued.claimUrl.split("#")[1] ?? "";
@@ -429,13 +430,8 @@ void test("replacement access preserves RSVP state and revokes the prior claim a
 	const now = new Date("2026-08-20T00:00:00Z");
 	const firstSession = { verifier: "u".repeat(43), expiresAt: new Date("2026-08-21T12:00:00Z") };
 
-	const first = await issueParticipantAccess(
-		repository,
-		provisionInput(),
-		"https://track.example",
-		claimSecret,
-		now,
-		() => "g".repeat(43),
+	const first = await issueParticipantAccess(repository, provisionInput(), "https://track.example", claimSecret, () =>
+		"g".repeat(43),
 	);
 	const firstToken = first.claimUrl.split("#")[1] ?? "";
 	await consumeClaimToken(repository, firstToken, claimSecret, firstSession, now);
@@ -443,12 +439,11 @@ void test("replacement access preserves RSVP state and revokes the prior claim a
 	assert.ok(hacker);
 	hacker.confirmed = true;
 
-	await issueParticipantAccess(
+	const second = await issueParticipantAccess(
 		repository,
 		provisionInput({ tShirtSize: "L" }),
 		"https://track.example",
 		claimSecret,
-		now,
 		() => "h".repeat(43),
 	);
 
@@ -458,6 +453,10 @@ void test("replacement access preserves RSVP state and revokes the prior claim a
 	assert.equal(await repository.findParticipantSession(firstSession.verifier, now), null);
 	assert.equal(repository.hackers.get(participantId)?.confirmed, true);
 	assert.equal(repository.hackers.get(participantId)?.tShirtSize, "L");
+
+	// Replacing an unused code must invalidate it too, even without an expiry.
+	await issueParticipantAccess(repository, provisionInput(), "https://track.example", claimSecret);
+	await assert.rejects(consumeClaimToken(repository, second.claimUrl.split("#")[1], claimSecret, firstSession, now));
 });
 
 void test("the participant cookie is opaque and requires an active server-side verifier", async () => {

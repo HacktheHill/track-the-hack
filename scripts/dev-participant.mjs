@@ -28,7 +28,7 @@ const reconciliationResponseSchema = z
 		missingIds: z.array(z.string()),
 	})
 	.strict();
-const claimResponseSchema = z.object({ claimUrl: httpUrlSchema, expiresAt: z.string().datetime() }).strict();
+const claimResponseSchema = z.object({ claimUrl: httpUrlSchema }).strict();
 
 const command = process.argv[2] ?? "rsvp";
 const baseUrl = new URL(process.env.NEXTAUTH_URL ?? "http://localhost:3000");

@@ -43,7 +43,7 @@ const reconciliationResponseSchema = z
 		missingIds: z.array(z.string()),
 	})
 	.strict();
-const claimResponseSchema = z.object({ claimUrl: z.string().url(), expiresAt: z.string().datetime() }).strict();
+const claimResponseSchema = z.object({ claimUrl: z.string().url() }).strict();
 const authProviderSchema = z
 	.object({
 		id: z.string(),

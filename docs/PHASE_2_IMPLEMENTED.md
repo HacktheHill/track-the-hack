@@ -28,8 +28,8 @@ change your environment rather than the schema.
 ## The two QR codes
 
 The **claim QR** shows on the organiser's screen and the participant scans it
-with their phone camera. It holds `https://<host>/claim#<claimId>.<HMAC>`, lasts
-five minutes, works once, and only exists to hand a session to one device. It
+with their phone camera. It holds `https://<host>/claim#<claimId>.<HMAC>`, has no
+time limit, works once, and only exists to hand a session to one device. It
 holds a URL because a camera app will only offer to open a QR that looks like a
 link.
 
@@ -52,7 +52,7 @@ issueParticipantAccess()       strict operational record + 32 random bytes
 replaceParticipantAccess()     provision, replace claim, revoke session atomically
     |
     v
-{ "claimUrl": "https://<host>/claim#<claimId>.<HMAC>", "expiresAt": "..." }
+{ "claimUrl": "https://<host>/claim#<claimId>.<HMAC>" }
     |
     | /claim/qr renders this as a QR, the participant scans it
     v
@@ -110,12 +110,12 @@ call the Apps Script must make. Its complete request body is:
 defaults it to `false` on a new one. Every other key is rejected. The endpoint
 creates or updates the Hacker without changing RSVP confirmation, revokes any
 active participant session, replaces any outstanding claim, and returns only
-`claimUrl` and `expiresAt`. Errors are `400` for any invalid or extra field,
+`claimUrl`. Errors are `400` for any invalid or extra field,
 `401` for a bad key, and `405` for anything but POST.
 
 `POST /api/claim`, no API key, `{ "token": "..." }`. The signed token is the
 credential. Returns `{ "ok": true }` and the cookies, or `{ "ok": false }` with
-one generic message. Spent, expired, forged and malformed all look identical
+one generic message. Spent, replaced, forged and malformed all look identical
 from outside, so the response cannot confirm a token was real.
 
 `POST /api/participant/sign-out` deletes the server-side session verifier and
@@ -126,8 +126,8 @@ no longer holds a usable session.
 
 1. **Only the opaque id is stored.** The database holds `claimId`, never the
    signature, so a dump is not a pile of working links.
-2. **Five minutes, one use.** That QR sits on a screen at a busy desk where
-   anyone in the queue can photograph it.
+2. **One use, no time limit.** An unused code remains valid until an organizer
+   issues replacement access. Participants can finish activation without a countdown.
 3. **Redeeming is a conditional update.** The checks live in the `WHERE` clause
    rather than a read then a write, so two phones cannot both get a session.
 4. **Fragment, not query string.** The token stays out of the GET request,
@@ -187,9 +187,10 @@ The focused files under `test/` run with `npm test`. Lifecycle tests use a
 `MemoryRepository`, and scanner tests use a narrow in-memory Prisma-shaped
 client, so neither needs a database.
 
-1. Issuance builds the URL correctly, expires in five minutes, and never stores
+1. Issuance builds the URL correctly, has no time limit, and never stores
    the signature
-2. A claim is single use, and rejects expiry, tampering, the wrong secret and reuse
+2. An unused claim remains usable after a delay and rejects tampering, the wrong
+   secret and reuse
 3. Concurrent redemption gives exactly one device a server-side session
 4. Re-issuing revokes both the unused claim and any live session while
    preserving RSVP confirmation
@@ -220,7 +221,7 @@ The bound Apps Script source is versioned in
 [`integrations/google-sheets/Code.gs`](../integrations/google-sheets/Code.gs).
 It maps the real bilingual Tally response headers, generates opaque participant
 IDs, provisions selected accepted rows, reconciles RSVP state, and opens the
-returned five-minute claim as a QR rendered by `/claim/qr`. Identity, contact,
+returned single-use claim as a QR rendered by `/claim/qr`. Identity, contact,
 waiver, Tally-ID, and detailed dietary data are never included in API payloads.
 
 The three deployment values that remain environment configuration are listed in

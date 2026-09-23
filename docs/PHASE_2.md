@@ -25,7 +25,7 @@ This is one coherent implementation phase. Keep its schema, API, authentication,
 - Add a restricted Sheet integration endpoint for issuing participant access. Use the existing `Authorization: Bearer <SHEETS_INTEGRATION_API_KEY>` boundary and constant-time authentication behaviour from Phase 1.
 - Accept only the operational fields required to create or update the minimal Hacker record: exact participant `id`, `tShirtSize`, `mealCategory`, `acceptanceExpiry`, and `walkIn`. Reject unknown properties and all identity, contact, application, waiver, guardian, accessibility, detailed dietary, Tally-ID, and demographic fields.
 - Reuse the Phase 1 validation and idempotent provisioning rules instead of creating a second interpretation of the Sheet contract.
-- Each explicit access issuance creates a fresh, cryptographically random, short-lived, single-use claim capability and returns a claim URL suitable for display as a QR code.
+- Each explicit access issuance creates a fresh, cryptographically random, single-use claim capability with no time limit and returns a claim URL suitable for display as a QR code.
 - The claim QR and URL contain the opaque claim capability, not `Hacker.id` or any participant identity.
 - Issuing replacement access atomically invalidates outstanding claim capabilities and revokes every previous participant session for that Hacker. Only one participant device may be active at a time.
 - Do not expose raw claim or session capabilities in application logs, audit details, error tracking, or analytics.
@@ -34,7 +34,7 @@ This is one coherent implementation phase. Keep its schema, API, authentication,
 
 - Add the necessary Prisma models and migration for claim capabilities and participant sessions. Raw bearer secrets must not be stored; persist only a safe hash, keyed digest, or equivalent verifier.
 - Claim consumption must be atomic. Concurrent or repeated attempts against the same claim must result in exactly one successful participant session.
-- Expired, revoked, malformed, and already-consumed claims must fail without revealing whether a Hacker record exists.
+- Revoked, malformed, and already-consumed claims must fail without revealing whether a Hacker record exists.
 - Prevent browser prefetching, link previews, or harmless page refreshes from accidentally consuming a claim. Claim issuance may use a read-only landing page followed by an explicit same-origin action when needed.
 - Create a participant session tied directly to `Hacker.id`, not to `User`, NextAuth `Session`, an organizer role, email, or another identity field.
 - Store the participant session in an opaque `HttpOnly`, `Secure`, `SameSite` cookie with an intentional path, expiry, and CSRF strategy. Make the lifetime appropriate for event access and document the chosen values in the repository.
@@ -83,7 +83,7 @@ This phase implements and documents the Track the Hack endpoint contract only. I
 
 ## Verification
 
-- Add focused tests for Sheet authentication, strict field rejection, minimal provisioning reuse, claim expiry, atomic single use, concurrent claims, replacement issuance, previous-session revocation, cookie attributes, sign-out, and organizer/participant authorization separation.
+- Add focused tests for Sheet authentication, strict field rejection, minimal provisioning reuse, delayed claim activation, atomic single use, concurrent claims, replacement issuance, previous-session revocation, cookie attributes, sign-out, and organizer/participant authorization separation.
 - Test that participant APIs cannot access another Hacker and that Hacker IDs cannot be used as login credentials.
 - Test each scanner workflow's field exposure, organizer authorization, Presence creation/increment behaviour, and maximum-check-in handling.
 - Verify the operational QR renders after loss of network connectivity without exposing participant-session secrets in client-readable storage.
@@ -92,4 +92,4 @@ This phase implements and documents the Track the Hack endpoint contract only. I
 
 ## Completion criteria
 
-Phase 2 is complete when an organizer can issue access for a normal participant or walk-in, exactly one device can claim the short-lived capability, the participant can use a private operational profile and offline event QR, organizer scanners can perform every documented Presence workflow, and none of those paths stores identity data or crosses the organizer, Sheet, RSVP, cancellation, or participant-session authorization boundaries.
+Phase 2 is complete when an organizer can issue access for a normal participant or walk-in, exactly one device can claim the single-use capability, the participant can use a private operational profile and offline event QR, organizer scanners can perform every documented Presence workflow, and none of those paths stores identity data or crosses the organizer, Sheet, RSVP, cancellation, or participant-session authorization boundaries.
