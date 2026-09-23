@@ -4,7 +4,7 @@ import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import App from "@/components/App";
 import Error from "@/components/Error";
 import Loading from "@/components/Loading";
@@ -50,7 +50,7 @@ const Schedule: NextPage = () => {
 	const router = useRouter();
 	const locale = router.locale === "fr" ? "fr-CA" : "en-CA";
 	const hasPass = useHasParticipantPass();
-	const view = router.query.view === "mine" ? "mine" : "all";
+	const view = hasPass && router.query.view === "mine" ? "mine" : "all";
 	const tab = eventTypes.find(type => type === router.query.tab) ?? EventType.ALL;
 	const eventId = typeof router.query.event === "string" ? router.query.event : null;
 	const query = trpc.events.all.useQuery();
@@ -66,6 +66,7 @@ const Schedule: NextPage = () => {
 		},
 	});
 	const [now, setNow] = useState(() => Date.now());
+	const todayKey = scheduleDayKey(new Date(now));
 	const listRef = useRef<HTMLDivElement>(null);
 	const openedFromList = useRef(false);
 	const openButton = useRef<HTMLElement | null>(null);
@@ -106,24 +107,22 @@ const Schedule: NextPage = () => {
 	const jumpTo = (key: string) => {
 		listRef.current?.querySelector<HTMLElement>(`[data-day="${key}"]`)?.scrollIntoView({ block: "start" });
 	};
-	const jumpToEvent = (event: ScheduleEvent, trigger: HTMLElement) => {
-		const card = document.getElementById(`schedule-${event.id}`);
-		if (card && !(event.start.getTime() < now && scheduleDayKey(event.start) !== scheduleDayKey(new Date(now)))) {
-			card.scrollIntoView({ block: "center" });
-		} else {
-			openEvent(event.id, trigger);
-		}
-	};
-
 	const visible = useMemo(() => {
 		const selected = new Set(saved.data ?? []);
 		return (query.data ?? [])
-			.filter(event => (view === "mine" ? selected.has(event.id) : event.end.getTime() + 30 * 60_000 > now))
+			.filter(event =>
+				view === "mine"
+					? selected.has(event.id)
+					: event.end.getTime() + 30 * 60_000 > now ||
+						scheduleDayKey(new Date(event.end.getTime() - 1)) === todayKey,
+			)
 			.sort((a, b) => a.start.getTime() - b.start.getTime() || a.end.getTime() - b.end.getTime());
-	}, [query.data, saved.data, view, now]);
+	}, [query.data, saved.data, view, now, todayKey]);
 	const displayed = visible.filter(event => tab === EventType.ALL || event.type === tab);
 	const days = useMemo(() => {
-		const keys = [...new Set(displayed.flatMap(event => scheduleDayKeys(event.start, event.end)))].sort();
+		const keys = [...new Set(displayed.flatMap(event => scheduleDayKeys(event.start, event.end)))]
+			.filter(key => view === "mine" || key >= todayKey)
+			.sort();
 		return keys.map(key => ({
 			key,
 			date: new Date(`${key}T12:00:00Z`),
@@ -132,13 +131,32 @@ const Schedule: NextPage = () => {
 				event => scheduleDayKey(event.start) < key && scheduleDayKeys(event.start, event.end).includes(key),
 			),
 		}));
-	}, [displayed]);
-	const active = visible.filter(event => event.start.getTime() <= now && event.end.getTime() > now);
-	const future = visible.filter(event => event.start.getTime() > now);
-	const nextStart = future[0]?.start.getTime();
-	const next = future.filter(event => event.start.getTime() === nextStart);
+	}, [displayed, view, todayKey]);
+	const active = displayed.filter(event => event.start.getTime() <= now && event.end.getTime() > now);
+	const next = displayed.find(event => event.start.getTime() > now);
+	const jumpToNow = () => {
+		const current = active.find(event => scheduleDayKey(event.start) === todayKey) ?? active[0];
+		if (current) {
+			const card = document.getElementById(`schedule-${current.id}`);
+			const continuation = [...(listRef.current?.querySelectorAll<HTMLElement>("[data-event-id]") ?? [])].find(
+				item => item.dataset.eventId === current.id,
+			);
+			(continuation ?? card)?.scrollIntoView({ block: "center" });
+		} else {
+			listRef.current?.querySelector<HTMLElement>("[data-current-marker]")?.scrollIntoView({ block: "center" });
+		}
+	};
 	const canSave = hasPass && !saved.isError && saved.data != null;
-	const needsPass = !hasPass || saved.error?.data?.code === "UNAUTHORIZED";
+	const sessionExpired = saved.error?.data?.code === "UNAUTHORIZED";
+	const currentMarker = (isNextDay: boolean) => (
+		<div data-current-marker className="flex items-center gap-3 py-1 font-coolvetica text-sm text-dark-color">
+			<span className="shrink-0 rounded-full bg-light-secondary-color px-3 py-1">
+				{t(isNextDay ? "next" : "time-marker-now")} ·{" "}
+				{formatScheduleTime(isNextDay && next ? next.start : new Date(now), locale)}
+			</span>
+			<span className="h-px flex-1 bg-dark-color/50" aria-hidden="true" />
+		</div>
+	);
 
 	if (query.isError) {
 		return (
@@ -159,21 +177,23 @@ const Schedule: NextPage = () => {
 		<App className="flex h-0 flex-col bg-default-gradient" integrated title={t("title")}>
 			<div className="shrink-0 border-b border-dark-color bg-light-quaternary-color px-4 py-2 shadow-navbar">
 				<div className="mx-auto flex max-w-2xl flex-col gap-2">
-					<div className="flex gap-2" role="group" aria-label={t("schedule-view")}>
-						{(["all", "mine"] as const).map(choice => (
-							<button
-								key={choice}
-								type="button"
-								className="ui-button flex-1 py-1"
-								aria-pressed={view === choice}
-								onClick={() =>
-									changeQuery({ view: choice === "mine" ? "mine" : undefined, tab: undefined })
-								}
-							>
-								{t(choice === "mine" ? "my-schedule" : "all-events")}
-							</button>
-						))}
-					</div>
+					{hasPass && (
+						<div className="flex gap-2" role="group" aria-label={t("schedule-view")}>
+							{(["all", "mine"] as const).map(choice => (
+								<button
+									key={choice}
+									type="button"
+									className="ui-button flex-1 py-1"
+									aria-pressed={view === choice}
+									onClick={() =>
+										changeQuery({ view: choice === "mine" ? "mine" : undefined, tab: undefined })
+									}
+								>
+									{t(choice === "mine" ? "my-schedule" : "all-events")}
+								</button>
+							))}
+						</div>
+					)}
 					<div className="flex gap-2 overflow-x-auto pb-1" role="group" aria-label={t("categories")}>
 						{eventTypes.map(type => (
 							<button
@@ -193,11 +213,15 @@ const Schedule: NextPage = () => {
 				<div className="mx-auto flex max-w-2xl flex-col gap-6">
 					{hasPass && saved.isError && (
 						<p role="alert" className="rounded-lg bg-light-secondary-color p-4 text-dark-color">
-							{t(needsPass ? "pass-required" : "saved-load-error")}{" "}
-							{needsPass ? (
-								<Link className="underline" href="/pass">
-									{t("open-pass")}
-								</Link>
+							{t(sessionExpired ? "pass-required" : "saved-load-error")}{" "}
+							{sessionExpired ? (
+								<button
+									type="button"
+									className="underline"
+									onClick={() => changeQuery({ view: undefined, tab: undefined })}
+								>
+									{t("explore-events")}
+								</button>
 							) : (
 								<button type="button" className="underline" onClick={() => void saved.refetch()}>
 									{t("retry-saved")}
@@ -206,70 +230,21 @@ const Schedule: NextPage = () => {
 						</p>
 					)}
 					{view === "mine" && !canSave && !saved.isError && (
-						<p className="rounded-lg bg-light-secondary-color p-4 text-dark-color">
-							{hasPass && saved.isLoading ? t("loading-saved") : t("pass-required")}{" "}
-							{!hasPass && (
-								<Link className="underline" href="/pass">
-									{t("open-pass")}
-								</Link>
-							)}
-						</p>
+						<p className="rounded-lg bg-light-secondary-color p-4 text-dark-color">{t("loading-saved")}</p>
 					)}
 					{(view === "all" || canSave) && (
 						<>
-							<div className={`grid gap-2 ${active.length && next.length ? "sm:grid-cols-2" : ""}`}>
-								{(
-									[
-										[t("now"), active, t("nothing-now")],
-										[t("next"), next, t("nothing-next")],
-									] as const
-								)
-									.filter((_, index) => index !== 0 || active.length > 0 || next.length === 0)
-									.map(([label, items, empty]) => (
-										<div
-											key={label}
-											className="min-w-0 rounded-lg bg-light-secondary-color/90 p-2 text-dark-color sm:p-3"
-										>
-											<h2 className="font-coolvetica text-lg">
-												{label}
-												{label === t("next") && next[0] && (
-													<span className="ml-2 font-rubik text-sm font-normal">
-														{formatScheduleDate(next[0].start, locale, {
-															weekday: "short",
-															day: "numeric",
-															month: "short",
-														})}{" "}
-														{formatScheduleTime(next[0].start, locale)}
-													</span>
-												)}
-											</h2>
-											{items.length ? (
-												<div className="flex flex-wrap gap-x-3 gap-y-1">
-													{items.slice(0, 3).map(event => (
-														<button
-															key={event.id}
-															type="button"
-															className="text-left text-sm underline underline-offset-2"
-															onClick={e => jumpToEvent(event, e.currentTarget)}
-														>
-															{router.locale === "fr" ? event.nameFr : event.name}
-															{event.room && ` · ${event.room}`}
-														</button>
-													))}
-													{items.length > 3 && (
-														<span className="text-sm">
-															{t("more-events", { count: items.length - 3 })}
-														</span>
-													)}
-												</div>
-											) : (
-												<p className="text-sm">{empty}</p>
-											)}
-										</div>
-									))}
-							</div>
 							{days.length > 0 && (
 								<nav className="flex gap-2 overflow-x-auto pb-1" aria-label={t("jump-to-day")}>
+									{(active.length > 0 || next) && (
+										<button
+											type="button"
+											className="ui-button shrink-0 bg-dark-primary-color px-3 py-1 text-sm text-light-color"
+											onClick={jumpToNow}
+										>
+											{t(active.length > 0 ? "jump-to-now" : "jump-to-next")}
+										</button>
+									)}
 									{days.map(day => (
 										<button
 											key={day.key}
@@ -314,132 +289,197 @@ const Schedule: NextPage = () => {
 									)}
 								</p>
 							)}
-							{days.map(day => (
-								<section key={day.key} data-day={day.key} className="min-w-0">
-									<h2 className="mb-3 font-coolvetica text-2xl text-dark-color">
-										{formatScheduleDate(day.date, locale, {
-											weekday: "long",
-											month: "short",
-											day: "numeric",
-										})}
-									</h2>
-									{day.ongoing.map(event => (
-										<button
-											key={event.id}
-											type="button"
-											className="mb-2 flex w-full flex-wrap items-center gap-x-2 rounded-lg border border-dark-color bg-light-secondary-color px-3 py-2 text-left text-sm"
-											onClick={e => openEvent(event.id, e.currentTarget)}
-										>
-											<strong>
-												{t(event.end.getTime() <= now ? "ended" : "ongoing")}:{" "}
-												{router.locale === "fr" ? event.nameFr : event.name}
-											</strong>
-											<span>
-												{event.end.getTime() > now && <>{t("ends")} </>}
-												{formatScheduleDate(event.end, locale, {
-													weekday: "short",
-													month: "short",
-													day: "numeric",
-												})}{" "}
-												{formatScheduleTime(event.end, locale)}
-											</span>
-										</button>
-									))}
-									<div className="flex flex-col gap-3">
-										{groupScheduleEvents(day.events).map(group => (
-											<div
-												key={group.events[0]?.id}
-												className={`${group.overlapsPrevious ? "relative -mt-5" : ""} ${group.events.length > 1 ? "rounded-xl bg-white/20 p-2" : ""}`}
-											>
-												{group.events.length > 1 && (
-													<p className="mb-2 px-1 font-coolvetica text-sm text-dark-color">
-														{t("at-the-same-time")}
-													</p>
-												)}
-												<div
-													className={`grid gap-2 ${group.events.length > 1 ? `sm:grid-cols-2 ${group.events.length > 2 ? "md:grid-cols-3" : ""}` : ""}`}
+							{days.map(day => {
+								const earlier: ScheduleEvent[] =
+									view === "all" && day.key === todayKey
+										? [...day.ongoing, ...day.events]
+												.filter(event => event.end.getTime() <= now)
+												.sort((a, b) => a.start.getTime() - b.start.getTime())
+										: [];
+								const currentEvents = day.events.filter(
+									event => view === "mine" || day.key !== todayKey || event.end.getTime() > now,
+								);
+								const groups = groupScheduleEvents(currentEvents);
+								const markerIndex =
+									next && scheduleDayKey(next.start) === day.key
+										? groups.findIndex(group => group.events.some(event => event.id === next.id))
+										: -1;
+								return (
+									<section key={day.key} data-day={day.key} className="min-w-0">
+										<h2 className="mb-3 font-coolvetica text-2xl text-dark-color">
+											{formatScheduleDate(day.date, locale, {
+												weekday: "long",
+												month: "short",
+												day: "numeric",
+											})}
+										</h2>
+										{day.ongoing
+											.filter(event => !earlier.some(item => item.id === event.id))
+											.map(event => (
+												<button
+													key={event.id}
+													data-event-id={event.id}
+													type="button"
+													className="mb-2 flex w-full flex-wrap items-center gap-x-2 rounded-lg border border-dark-color bg-light-secondary-color px-3 py-2 text-left text-sm"
+													onClick={e => openEvent(event.id, e.currentTarget)}
 												>
-													{group.events.map(event => (
-														<div
+													<strong>
+														{t(event.end.getTime() <= now ? "ended" : "ongoing")}:{" "}
+														{router.locale === "fr" ? event.nameFr : event.name}
+													</strong>
+													<span>
+														{event.end.getTime() > now && <>{t("ends")} </>}
+														{formatScheduleDate(event.end, locale, {
+															weekday: "short",
+															month: "short",
+															day: "numeric",
+														})}{" "}
+														{formatScheduleTime(event.end, locale)}
+													</span>
+												</button>
+											))}
+										{earlier.length > 0 && (
+											<details className="mb-3 rounded-lg bg-white/20 p-3">
+												<summary className="cursor-pointer font-coolvetica text-dark-color">
+													{t("earlier-today")} ({earlier.length})
+												</summary>
+												<div className="mt-3 flex flex-col gap-2">
+													{earlier.map(event => (
+														<button
 															key={event.id}
-															id={`schedule-${event.id}`}
-															className={`relative min-w-0 rounded-lg shadow-sm ${eventColor(event.type)}`}
+															type="button"
+															className="flex flex-wrap items-baseline justify-between gap-x-3 rounded-lg bg-light-secondary-color px-3 py-2 text-left text-dark-color"
+															onClick={e => openEvent(event.id, e.currentTarget)}
 														>
-															<Link
-																href={`/schedule/event?id=${encodeURIComponent(event.id)}`}
-																onClick={e => {
-																	if (
-																		e.button === 0 &&
-																		!e.metaKey &&
-																		!e.ctrlKey &&
-																		!e.shiftKey &&
-																		!e.altKey
-																	) {
-																		e.preventDefault();
-																		openEvent(event.id, e.currentTarget);
-																	}
-																}}
-																className="flex min-h-24 min-w-0 flex-col justify-center rounded-lg px-4 py-3 pr-14 font-coolvetica hover:underline"
-															>
-																<h3 className="text-xl leading-tight">
-																	{router.locale === "fr" ? event.nameFr : event.name}
-																</h3>
-																<p className="mt-1 text-base leading-snug">
-																	<time dateTime={event.start.toISOString()}>
-																		{formatScheduleTime(event.start, locale)}
-																	</time>
-																	{" – "}
-																	<time dateTime={event.end.toISOString()}>
-																		{formatScheduleTime(event.end, locale)}
-																		{scheduleDayKey(event.start) !==
-																			scheduleDayKey(event.end) &&
-																			` ${formatScheduleDate(event.end, locale, { month: "short", day: "numeric" })}`}
-																	</time>
-																</p>
-																<p className="mt-1 text-base leading-snug">
-																	{event.room}
-																</p>
-																{view === "mine" && event.end.getTime() <= now && (
-																	<span className="mt-1 text-sm">{t("ended")}</span>
-																)}
-															</Link>
-															{canSave && (
-																<button
-																	type="button"
-																	className="absolute right-2 top-2 flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-current bg-white/90 text-xl text-dark-color"
-																	aria-label={t(
-																		(saved.data ?? []).includes(event.id)
-																			? "remove-from-schedule"
-																			: "save-to-schedule",
-																		{
-																			name:
-																				router.locale === "fr"
-																					? event.nameFr
-																					: event.name,
-																		},
-																	)}
-																	aria-pressed={(saved.data ?? []).includes(event.id)}
-																	disabled={update.isLoading}
-																	onClick={() =>
-																		update.mutate({
-																			eventId: event.id,
-																			interested: !(saved.data ?? []).includes(
-																				event.id,
-																			),
-																		})
-																	}
-																>
-																	{(saved.data ?? []).includes(event.id) ? "★" : "☆"}
-																</button>
-															)}
-														</div>
+															<span className="font-coolvetica">
+																{router.locale === "fr" ? event.nameFr : event.name}
+															</span>
+															<span className="text-sm">
+																{scheduleDayKey(event.start) !== day.key &&
+																	`${formatScheduleDate(event.start, locale, { month: "short", day: "numeric" })} `}
+																{formatScheduleTime(event.start, locale)} –{" "}
+																{formatScheduleTime(event.end, locale)} · {event.room}
+															</span>
+														</button>
 													))}
 												</div>
-											</div>
-										))}
-									</div>
-								</section>
-							))}
+											</details>
+										)}
+										<div className="flex flex-col gap-3">
+											{groups.map((group, index) => (
+												<Fragment key={group.events[0]?.id}>
+													{index === markerIndex && currentMarker(day.key !== todayKey)}
+													<div
+														className={`${group.overlapsPrevious ? "relative -mt-5" : ""} ${group.events.length > 1 ? "rounded-xl bg-white/20 p-2" : ""}`}
+													>
+														<div
+															className={`grid gap-2 ${group.events.length > 1 ? `sm:grid-cols-2 ${group.events.length > 2 ? "md:grid-cols-3" : ""}` : ""}`}
+														>
+															{group.events.map(event => (
+																<div
+																	key={event.id}
+																	id={`schedule-${event.id}`}
+																	className={`relative min-w-0 rounded-lg shadow-sm ${eventColor(event.type)}`}
+																>
+																	<Link
+																		href={`/schedule/event?id=${encodeURIComponent(event.id)}`}
+																		onClick={e => {
+																			if (
+																				e.button === 0 &&
+																				!e.metaKey &&
+																				!e.ctrlKey &&
+																				!e.shiftKey &&
+																				!e.altKey
+																			) {
+																				e.preventDefault();
+																				openEvent(event.id, e.currentTarget);
+																			}
+																		}}
+																		className="flex min-h-24 min-w-0 flex-col justify-center rounded-lg px-4 py-3 pr-14 font-coolvetica hover:underline"
+																	>
+																		<h3 className="text-xl leading-tight">
+																			{router.locale === "fr"
+																				? event.nameFr
+																				: event.name}
+																		</h3>
+																		<p className="mt-1 text-base leading-snug">
+																			<time dateTime={event.start.toISOString()}>
+																				{formatScheduleTime(
+																					event.start,
+																					locale,
+																				)}
+																			</time>
+																			{" – "}
+																			<time dateTime={event.end.toISOString()}>
+																				{formatScheduleTime(event.end, locale)}
+																				{scheduleDayKey(event.start) !==
+																					scheduleDayKey(event.end) &&
+																					` ${formatScheduleDate(event.end, locale, { month: "short", day: "numeric" })}`}
+																			</time>
+																		</p>
+																		<p className="mt-1 text-base leading-snug">
+																			{event.room}
+																		</p>
+																		{view === "mine" &&
+																			event.end.getTime() <= now && (
+																				<span className="mt-1 text-sm">
+																					{t("ended")}
+																				</span>
+																			)}
+																		{event.start.getTime() <= now &&
+																			event.end.getTime() > now && (
+																				<span className="mt-1 text-sm">
+																					{t("in-progress")}
+																				</span>
+																			)}
+																	</Link>
+																	{canSave && (
+																		<button
+																			type="button"
+																			className="absolute right-2 top-2 flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-current bg-white/90 text-xl text-dark-color"
+																			aria-label={t(
+																				(saved.data ?? []).includes(event.id)
+																					? "remove-from-schedule"
+																					: "save-to-schedule",
+																				{
+																					name:
+																						router.locale === "fr"
+																							? event.nameFr
+																							: event.name,
+																				},
+																			)}
+																			aria-pressed={(saved.data ?? []).includes(
+																				event.id,
+																			)}
+																			disabled={update.isLoading}
+																			onClick={() =>
+																				update.mutate({
+																					eventId: event.id,
+																					interested: !(
+																						saved.data ?? []
+																					).includes(event.id),
+																				})
+																			}
+																		>
+																			{(saved.data ?? []).includes(event.id)
+																				? "★"
+																				: "☆"}
+																		</button>
+																	)}
+																</div>
+															))}
+														</div>
+													</div>
+												</Fragment>
+											))}
+											{day.key === todayKey &&
+												!next &&
+												active.some(event => scheduleDayKey(event.start) === day.key) &&
+												currentMarker(false)}
+										</div>
+									</section>
+								);
+							})}
 						</>
 					)}
 					{update.isError && <p role="alert">{eventText("interest-error")}</p>}
