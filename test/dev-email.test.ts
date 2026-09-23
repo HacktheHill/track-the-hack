@@ -7,18 +7,11 @@ import { deliverLocalParticipantEmail } from "@root/scripts/dev-email.mjs";
 
 void test("development RSVP emails cross loopback SMTP and land as parsed MIME", async () => {
 	const mailboxDirectory = await mkdtemp(join(tmpdir(), "track-the-hack-mail-"));
-	const messages = [
-		{
-			type: "invitation" as const,
-			link: "http://127.0.0.1:3000/rsvp/0123456789abcdefghijkl",
-			subject: "Track the Hack RSVP invitation",
-		},
-		{
-			type: "confirmation" as const,
-			link: "http://127.0.0.1:3000/cancel#0123456789abcdefghijklmnopqrstuvwxyz.ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890abc",
-			subject: "Track the Hack RSVP confirmed",
-		},
-	];
+	const messages = [{
+		type: "invitation" as const,
+		link: "http://127.0.0.1:3000/rsvp/manage#0123456789abcdefghijklmnopqrstuvwxyz.ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890abc",
+		subject: "RSVP for Hack the Hill III",
+	}];
 
 	try {
 		for (const expected of messages) {

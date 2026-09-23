@@ -4,7 +4,6 @@ import { PrismaClient, RoleName } from "@prisma/client";
 import {
 	createCancellationApiHandler,
 	createParticipantSignOutApiHandler,
-	createRsvpApiHandler,
 	type LifecycleApiResponse,
 	type LifecycleApiResponseBody,
 } from "@/server/http/participant-lifecycle-handlers";
@@ -25,7 +24,6 @@ import {
 } from "@/server/lib/participant-session";
 import {
 	cancelRsvp,
-	confirmRsvp,
 	consumeClaimToken,
 	createCancellationToken,
 	createClaimToken,
@@ -41,7 +39,7 @@ import {
 const participantId = "wvY1HKlwYnFBO8t-YnQbwg";
 const cancellationSecret = "a".repeat(32);
 const claimSecret = "b".repeat(32);
-type LifecycleHandler = ReturnType<typeof createRsvpApiHandler>;
+type LifecycleHandler = ReturnType<typeof createCancellationApiHandler>;
 type LifecycleRequest = Parameters<LifecycleHandler>[0];
 
 const requestMock = (overrides: Partial<LifecycleRequest>): LifecycleRequest => ({
@@ -57,30 +55,14 @@ class MemoryRepository implements HackerLifecycleRepository {
 	readonly capabilities = new Map<string, string>();
 	readonly claims = new Map<string, { hackerId: string; expiresAt: Date; consumedAt: Date | null }>();
 	readonly sessions = new Map<string, { verifier: string; hackerId: string; expiresAt: Date }>();
-	provisioningBatchCalls = 0;
-
-	constructor(private readonly failProvisioningAt?: number) {}
 
 	upsertProvisionedBatch(records: ProvisioningRecord[]) {
-		this.provisioningBatchCalls++;
-		const nextHackers = new Map(this.hackers);
-		for (const [index, record] of records.entries()) {
-			if (index === this.failProvisioningAt) throw new Error("Provisioning failed");
-			const existing = nextHackers.get(record.id);
-			nextHackers.set(record.id, { ...existing, ...record, confirmed: existing?.confirmed ?? false });
+		for (const record of records) {
+			const existing = this.hackers.get(record.id);
+			this.hackers.set(record.id, { ...existing, ...record, confirmed: existing?.confirmed ?? false });
+			if (!this.capabilities.has(record.id)) this.capabilities.set(record.id, "d".repeat(43));
 		}
-		this.hackers.clear();
-		for (const [id, hacker] of nextHackers) this.hackers.set(id, hacker);
 		return Promise.resolve();
-	}
-
-	confirmAndRotate(id: string, now: Date, capabilityId: string) {
-		const hacker = this.hackers.get(id);
-		if (!hacker) return Promise.resolve("missing" as const);
-		if (hacker.acceptanceExpiry <= now) return Promise.resolve("expired" as const);
-		hacker.confirmed = true;
-		this.capabilities.set(id, capabilityId);
-		return Promise.resolve("confirmed" as const);
 	}
 
 	cancelByCapability(capabilityId: string) {
@@ -165,37 +147,22 @@ void test("provisioning is idempotent by exact id and preserves confirmation", a
 	assert.equal(repository.hackers.get(participantId)?.confirmed, true);
 });
 
-void test("provisioning validates first, calls one batch operation, and publishes no partial state on failure", async () => {
-	const existingId = "existing_participant_0123456789";
-	const firstId = "first_participant_012345678901";
-	const failingId = "failing_participant_0123456789";
-	const repository = new MemoryRepository(1);
-	repository.hackers.set(existingId, {
-		...provisionInput({ id: existingId, tShirtSize: "S" }),
-		acceptanceExpiry: new Date("2026-09-01T03:59:59.000Z"),
-		tShirtSize: "S",
-		mealCategory: "HALAL",
-		confirmed: true,
-	});
-
+void test("provisioning validates the entire request before one batch write", async () => {
+	const repository = new MemoryRepository();
+	const original = repository.upsertProvisionedBatch.bind(repository);
+	let batchCalls = 0;
+	repository.upsertProvisionedBatch = async records => {
+		batchCalls += 1;
+		await original(records);
+	};
 	await assert.rejects(
-		provisionHackers(repository, {
-			hackers: [provisionInput({ id: firstId }), provisionInput({ id: failingId })],
-		}),
-		/Provisioning failed/,
+		provisionHackers(repository, { hackers: [provisionInput(), provisionInput({ id: "123" })] }),
 	);
-	assert.equal(repository.provisioningBatchCalls, 1);
-	assert.equal(repository.hackers.has(firstId), false);
-	assert.equal(repository.hackers.has(failingId), false);
-	assert.equal(repository.hackers.get(existingId)?.confirmed, true);
-	assert.equal(repository.hackers.get(existingId)?.tShirtSize, "S");
-
-	await assert.rejects(
-		provisionHackers(repository, {
-			hackers: [provisionInput({ id: firstId }), provisionInput({ id: "123" })],
-		}),
-	);
-	assert.equal(repository.provisioningBatchCalls, 1);
+	assert.equal(batchCalls, 0);
+	assert.equal(repository.hackers.size, 0);
+	await provisionHackers(repository, { hackers: [provisionInput(), provisionInput({ id: "second_participant_0123456789" })] });
+	assert.equal(batchCalls, 1);
+	assert.equal(repository.hackers.size, 2);
 });
 
 void test("provisioning accepts a T-shirt opt-out alongside a size and preserves it on access issuance", async () => {
@@ -209,24 +176,7 @@ void test("provisioning accepts a T-shirt opt-out alongside a size and preserves
 	assert.equal(repository.hackers.get(optOutId)?.tShirtSize, "NONE");
 });
 
-void test("RSVP and cancellation GET requests cannot change state", async () => {
-	let confirmations = 0;
-	const rsvp = createRsvpApiHandler(() => {
-		confirmations += 1;
-		return Promise.resolve();
-	});
-	const rsvpResponse = responseMock();
-	await rsvp(requestMock({ query: { id: participantId } }), rsvpResponse.response);
-	assert.equal(rsvpResponse.statusCode, 405);
-	assert.equal(confirmations, 0);
-	const postResponse = responseMock();
-	await rsvp(
-		requestMock({ method: "POST", query: { id: participantId }, body: { confirm: true } }),
-		postResponse.response,
-	);
-	assert.equal(postResponse.statusCode, 200);
-	assert.equal(confirmations, 1);
-
+void test("legacy cancellation GET requests cannot change state", async () => {
 	let cancellations = 0;
 	const cancel = createCancellationApiHandler(() => {
 		cancellations += 1;
@@ -238,44 +188,15 @@ void test("RSVP and cancellation GET requests cannot change state", async () => 
 	assert.equal(cancellations, 0);
 });
 
-void test("confirmation enforces expiry and rotates cancellation authorization", async () => {
+void test("legacy cancellation remains valid after the deadline", async () => {
 	const repository = new MemoryRepository();
 	await provisionHackers(repository, { hackers: [provisionInput()] });
-	await assert.rejects(confirmRsvp(repository, participantId, new Date("2026-09-02T00:00:00Z")));
-
-	await confirmRsvp(repository, participantId, new Date("2026-08-20T00:00:00Z"), () => "b".repeat(43));
-	const oldToken = createCancellationToken("b".repeat(43), cancellationSecret);
-	await confirmRsvp(repository, participantId, new Date("2026-08-20T00:00:00Z"), () => "c".repeat(43));
-	await assert.rejects(cancelRsvp(repository, oldToken, cancellationSecret));
 	const hacker = repository.hackers.get(participantId);
 	assert.ok(hacker);
+	hacker.confirmed = true;
 	hacker.acceptanceExpiry = new Date("2020-01-01T00:00:00Z");
-	await cancelRsvp(repository, createCancellationToken("c".repeat(43), cancellationSecret), cancellationSecret);
+	await cancelRsvp(repository, createCancellationToken("d".repeat(43), cancellationSecret), cancellationSecret);
 	assert.equal(repository.hackers.get(participantId)?.confirmed, false);
-});
-
-void test("confirmation locks the participant before checking the current expiry", async t => {
-	const now = new Date("2026-08-20T00:00:00Z");
-	const locks: string[] = [];
-	const prisma = new PrismaClient();
-	t.after(() => prisma.$disconnect());
-	const transaction: HackerLifecycleLockingTransaction = {
-		findLockedAcceptanceExpiry: () => {
-			locks.push("hacker");
-			return Promise.resolve(now);
-		},
-		findCancellationCapabilityOwner: () => Promise.reject(new Error("Cancellation must not be queried")),
-		lockHacker: () => Promise.reject(new Error("A second hacker lock must not be taken")),
-		findLockedCancellationCapabilityId: () => Promise.reject(new Error("Capability must not be queried")),
-		updateHackerConfirmation: () => Promise.reject(new Error("An expired participant must not be confirmed")),
-		rotateCancellationCapability: () =>
-			Promise.reject(new Error("An expired participant must not receive a cancellation capability")),
-	};
-	const runTransaction: HackerLifecycleTransactionRunner = operation => operation(transaction);
-	const repository = new PrismaHackerLifecycleRepository(prisma, runTransaction);
-
-	assert.equal(await repository.confirmAndRotate(participantId, now, "new-capability"), "expired");
-	assert.deepEqual(locks, ["hacker"]);
 });
 
 void test("cancellation rejects a capability replaced before its participant lock", async t => {
@@ -283,7 +204,6 @@ void test("cancellation rejects a capability replaced before its participant loc
 	const prisma = new PrismaClient();
 	t.after(() => prisma.$disconnect());
 	const transaction: HackerLifecycleLockingTransaction = {
-		findLockedAcceptanceExpiry: () => Promise.reject(new Error("Acceptance expiry must not be queried")),
 		findCancellationCapabilityOwner: () => Promise.resolve(participantId),
 		lockHacker: () => {
 			locks.push("hacker");
@@ -295,7 +215,6 @@ void test("cancellation rejects a capability replaced before its participant loc
 		},
 		updateHackerConfirmation: () =>
 			Promise.reject(new Error("A replaced capability must not cancel the participant")),
-		rotateCancellationCapability: () => Promise.reject(new Error("Capability must not be rotated")),
 	};
 	const runTransaction: HackerLifecycleTransactionRunner = operation => operation(transaction);
 	const repository = new PrismaHackerLifecycleRepository(prisma, runTransaction);
@@ -307,7 +226,9 @@ void test("cancellation rejects a capability replaced before its participant loc
 void test("reconciliation is exact and rerunnable", async () => {
 	const repository = new MemoryRepository();
 	await provisionHackers(repository, { hackers: [provisionInput()] });
-	await confirmRsvp(repository, participantId, new Date("2026-08-20T00:00:00Z"), () => "d".repeat(43));
+	const hacker = repository.hackers.get(participantId);
+	assert.ok(hacker);
+	hacker.confirmed = true;
 	const missingId = "z".repeat(22);
 	const first = await reconcileRsvps(
 		repository,

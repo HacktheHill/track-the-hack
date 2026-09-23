@@ -29,13 +29,13 @@
 				"@typescript-eslint/no-unused-vars": [
 					"warn",
 					{
-						"varsIgnorePattern": "^(onOpen|showCheckInSidebar|provisionSelectedParticipantAndIssueAccess)$"
+						"varsIgnorePattern": "^(onOpen|openPassSidebar|issuePassForSelectedRow|prepareSelectedRowsForRsvp|refreshResponseRsvpStatus|migrateLegacyResponseColumnsForRsvp|setupTrackOperations|acceptSelectedApplications|acceptSelectedWalkInApplications|refreshRsvpStatus|issueAccessForSelectedParticipant)$"
 					}
 				],
 				"no-unused-vars": [
 					"error",
 					{
-						"varsIgnorePattern": "^(onOpen|showCheckInSidebar|provisionSelectedParticipantAndIssueAccess)$"
+						"varsIgnorePattern": "^(onOpen|openPassSidebar|issuePassForSelectedRow|prepareSelectedRowsForRsvp|refreshResponseRsvpStatus|migrateLegacyResponseColumnsForRsvp|setupTrackOperations|acceptSelectedApplications|acceptSelectedWalkInApplications|refreshRsvpStatus|issueAccessForSelectedParticipant)$"
 					}
 				]
 			}

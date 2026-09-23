@@ -1,159 +1,55 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
 	<head>
-		<base target="_blank" />
-		<meta charset="utf-8" />
+		<base target="_top">
 		<style>
-			body {
-				box-sizing: border-box;
-				font:
-					14px/1.45 Arial,
-					sans-serif;
-				margin: 0;
-				padding: 18px;
-				color: #202124;
-			}
-			h1 {
-				font-size: 18px;
-				margin: 0 0 10px;
-			}
-			p {
-				margin: 0 0 14px;
-			}
-			button {
-				width: 100%;
-				border: 0;
-				border-radius: 4px;
-				background: #1967d2;
-				color: white;
-				cursor: pointer;
-				font-weight: 600;
-				padding: 11px 14px;
-			}
-			button:disabled {
-				cursor: wait;
-				opacity: 0.65;
-			}
-			.note {
-				color: #5f6368;
-				font-size: 12px;
-			}
-			#status {
-				border-radius: 4px;
-				margin-top: 14px;
-				padding: 10px;
-			}
-			#status:empty {
-				display: none;
-			}
-			.info {
-				background: #e8f0fe;
-				color: #174ea6;
-			}
-			.success {
-				background: #e6f4ea;
-				color: #137333;
-			}
-			.error {
-				background: #fce8e6;
-				color: #a50e0e;
-			}
-			a {
-				color: inherit;
-				font-weight: 600;
-			}
+			body { font: 14px Arial, sans-serif; margin: 18px; color: #202124; }
+			button { background: #1a73e8; border: 0; border-radius: 4px; color: white; cursor: pointer; padding: 11px 16px; }
+			button:disabled { cursor: wait; opacity: .6; }
+			#status { line-height: 1.5; margin-top: 16px; }
+			#error { color: #b3261e; }
 		</style>
 	</head>
 	<body>
-		<h1>Participant access</h1>
-		<p>Select any cell in one accepted applicant's row, then use the button below.</p>
-		<button id="issue" type="button">Provision &amp; show QR</button>
-		<div id="status" role="status" aria-live="polite"></div>
-		<p class="note">
-			A QR expires after five minutes. Issuing another QR signs this participant out of any device currently using
-			their pass.
-		</p>
-
+		<button id="issue" type="button">Show pass activation QR</button>
+		<p id="status" role="status"></p>
+		<p id="error" role="alert"></p>
 		<script>
-			const displayWindowName = "trackTheHackClaimQrDisplay";
-			let displayWindow = null;
-
-			function setStatus(message, kind) {
-				const status = document.getElementById("status");
-				status.className = kind;
-				status.textContent = message;
-			}
-
-			function prepareDisplayWindow() {
-				// Clear the previous participant's QR while a new one is issued.
-				// Keeping the live handle avoids refocusing a second screen.
-				try {
-					if (displayWindow && !displayWindow.closed) {
-						displayWindow.location.replace("about:blank");
-						return;
-					}
-				} catch (_error) {
-					// Reacquire the named window after browser isolation or a sidebar reload.
+			const button = document.getElementById("issue");
+			const status = document.getElementById("status");
+			const error = document.getElementById("error");
+			button.addEventListener("click", () => {
+				// Open synchronously from the click so the browser can reuse one named window.
+				// The organizer may move and maximize it on a second display.
+				const display = window.open("", "trackTheHackPass", "popup=yes,width=900,height=900");
+				if (display) {
+					try { display.document.body.textContent = "Preparing pass…"; } catch (_) { /* Existing Tracker window is cross-origin. */ }
+					display.focus();
 				}
-				// Opening in the click handler avoids popup blocking after the
-				// asynchronous Apps Script call returns.
-				try {
-					displayWindow = window.open("about:blank", displayWindowName);
-				} catch (_error) {
-					displayWindow = null;
-				}
-				if (displayWindow) {
-					try {
-						displayWindow.document.title = "Track the Hack QR";
-						displayWindow.document.body.textContent = "Preparing participant QR…";
-					} catch (_error) {
-						// A previously opened Track page may still be navigating to blank.
-					}
-				}
-			}
-
-			function finish(result) {
-				const button = document.getElementById("issue");
-				button.disabled = false;
-				try {
-					if (displayWindow && !displayWindow.closed) {
-						displayWindow.location.replace(result.displayUrl);
-						const suffix = result.warning ? ` ${result.warning}` : "";
-						setStatus(
-							`Row ${result.rowNumber}: QR ready. RSVP ${result.rsvpStatus || "status unavailable"}.${suffix}`,
-							"success",
-						);
-						return;
-					}
-				} catch (_error) {
-					// Browser isolation may sever the popup handle after navigation.
-				}
-
-				const status = document.getElementById("status");
-				status.className = "error";
-				status.textContent = "The browser blocked the QR window. ";
-				const link = document.createElement("a");
-				link.href = result.displayUrl;
-				link.target = "_blank";
-				link.rel = "noopener noreferrer";
-				link.textContent = "Open the QR display";
-				status.appendChild(link);
-			}
-
-			function fail(error) {
-				document.getElementById("issue").disabled = false;
-				setStatus(error && error.message ? error.message : "Unable to issue participant access.", "error");
-			}
-
-			document.getElementById("issue").addEventListener("click", () => {
-				const button = document.getElementById("issue");
 				button.disabled = true;
-				setStatus("Provisioning the selected participant…", "info");
-				prepareDisplayWindow();
+				status.textContent = "Preparing pass…";
+				error.textContent = "";
 				google.script.run
-					.withSuccessHandler(finish)
-					.withFailureHandler(fail)
-					.provisionSelectedParticipantAndIssueAccess();
+					.withSuccessHandler(result => {
+						button.disabled = false;
+						status.textContent = "QR ready for five minutes.";
+						if (display && !display.closed) display.location.replace(result.displayUrl);
+						else {
+							const link = document.createElement("a");
+							link.href = result.displayUrl;
+							link.target = "trackTheHackPass";
+							link.rel = "noopener";
+							link.textContent = "Open QR";
+							status.append(document.createElement("br"), link);
+						}
+					})
+					.withFailureHandler(failure => {
+						button.disabled = false;
+						status.textContent = "";
+						error.textContent = failure.message || "Could not show the QR.";
+						if (display && !display.closed) display.close();
+					})
+					.issuePassForSelectedRow();
 			});
 		</script>
 	</body>
