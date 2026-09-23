@@ -47,6 +47,18 @@ export class PrismaRsvpManagementRepository implements RsvpManagementRepository 
 					data: { confirmed: attending, rsvpRespondedAt: now },
 				});
 			}
+			await transaction.log.create({
+				data: {
+					sourceId: hacker.id,
+					sourceType: "Hacker",
+					author: "rsvp-management-capability",
+					route: "/api/rsvp/manage",
+					action: attending ? "ManageRsvpAttend" : "ManageRsvpDecline",
+					details: shouldWrite
+						? `Participant selected ${attending ? "attending" : "not attending"}.`
+						: `Participant repeated ${attending ? "attending" : "not attending"}.`,
+				},
+			});
 			return managedRsvpState(attending, shouldWrite ? now : hacker.rsvpRespondedAt, hacker.acceptanceExpiry, now);
 		});
 	}
