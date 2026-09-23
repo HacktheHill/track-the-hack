@@ -47,7 +47,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 prisma/*.csv
-!prisma/hack-the-hill-iii-events.csv
 
 # generated pwa files
 sw.js
@@ -65,3 +64,6 @@ docker-compose.override.yml
 
 # RSVP campaign exports contain private management links and contact details.
 private-rsvp/
+
+# Event schedules are private operational data, not public source fixtures.
+private-schedule/

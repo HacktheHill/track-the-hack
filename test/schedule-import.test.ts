@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -13,36 +13,31 @@ const scheduleRowsSchema = z.array(
 		.passthrough(),
 );
 
-void test("the 2026 schedule assigns operational scanner workflows", async () => {
-	const source = await readFile(new URL("../prisma/hack-the-hill-iii-events.csv", import.meta.url), "utf8");
-	const rows = scheduleRowsSchema.parse(await csv({ output: "json" }).fromString(source));
+const scheduleSource = `importKey,seriesKey,start,end,hidden,name,nameFr,type,scannerWorkflow,host,description,descriptionFr,room,roomFr,image,link,linkText,linkTextFr,maxCheckIns
+merch-test,merch-test,9/25/2030 5:00 PM,9/25/2030 7:00 PM,TRUE,Merch,Marchandise,GENERAL,MERCHANDISE,,Merchandise pickup.,Ramassage de marchandises.,Lobby,Hall d'entrée,,,,,1
+check-in-test,check-in-test,9/25/2030 5:00 PM,9/25/2030 7:00 PM,FALSE,Check-In,Enregistrement,GENERAL,CHECK_IN,,Participant check-in.,Enregistrement des participants.,Lobby,Hall d'entrée,,,,,1
+late-check-in-test,late-check-in-test,9/25/2030 8:30 PM,9/25/2030 10:00 PM,TRUE,Late Check-In,Enregistrement tardif,GENERAL,CHECK_IN,,Late participant check-in.,Enregistrement tardif des participants.,Lobby,Hall d'entrée,,,,,1
+food-test,food-test,9/25/2030 10:00 PM,9/26/2030 1:00 AM,FALSE,Snacks,Collations,FOOD,FOOD,,Test food service.,Service alimentaire d'essai.,Food room,Salle de restauration,,,,,2
+`;
 
-	assert.equal(rows.length, 41);
+void test("the private schedule contract assigns operational scanner workflows", async () => {
+	const rows = scheduleRowsSchema.parse(await csv({ output: "json" }).fromString(scheduleSource));
+
+	assert.equal(rows.length, 4);
 	assert.equal(new Set(rows.map(row => row.importKey)).size, rows.length);
 	assert.ok(rows.every(row => row.roomFr.length > 0));
-	for (const removedImportKey of [
-		"hacking-2026-fri-2130",
-		"judges-orientation-2026-sun-0930",
-		"project-submission-deadline-2026-sun-1000",
-	]) {
-		assert.equal(
-			rows.some(row => row.importKey === removedImportKey),
-			false,
-		);
-	}
-	assert.equal(rows.find(row => row.importKey === "merch-2026-fri-1700")?.scannerWorkflow, "MERCHANDISE");
-	assert.equal(rows.find(row => row.importKey === "check-in-2026-fri-1700")?.scannerWorkflow, "CHECK_IN");
-	assert.equal(rows.find(row => row.importKey === "late-check-in-2026-fri-2030")?.scannerWorkflow, "CHECK_IN");
+	assert.equal(rows.find(row => row.importKey === "merch-test")?.scannerWorkflow, "MERCHANDISE");
+	assert.equal(rows.find(row => row.importKey === "check-in-test")?.scannerWorkflow, "CHECK_IN");
+	assert.equal(rows.find(row => row.importKey === "late-check-in-test")?.scannerWorkflow, "CHECK_IN");
 	assert.ok(rows.filter(row => row.type === "FOOD").every(row => row.scannerWorkflow === "FOOD"));
 });
 
 void test("the schedule importer rejects invalid 12-hour clock values", async () => {
 	const directory = await mkdtemp(join(tmpdir(), "track-the-hack-schedule-"));
 	try {
-		const source = await readFile(new URL("../prisma/hack-the-hill-iii-events.csv", import.meta.url), "utf8");
 		for (const invalidHour of ["0:00 PM", "13:00 PM"]) {
 			const input = join(directory, `${invalidHour.slice(0, 2).replace(":", "")}.csv`);
-			await writeFile(input, source.replace("5:00 PM", invalidHour));
+			await writeFile(input, scheduleSource.replace("5:00 PM", invalidHour));
 			const result = spawnSync(process.execPath, ["--import", "tsx", "scripts/import-events.mts", input], {
 				cwd: new URL("..", import.meta.url),
 				encoding: "utf8",
@@ -58,9 +53,8 @@ void test("the schedule importer rejects invalid 12-hour clock values", async ()
 void test("the schedule importer accepts the authoritative French room column", async () => {
 	const directory = await mkdtemp(join(tmpdir(), "track-the-hack-schedule-"));
 	try {
-		const source = await readFile(new URL("../prisma/hack-the-hill-iii-events.csv", import.meta.url), "utf8");
 		const input = join(directory, "localized.csv");
-		await writeFile(input, source);
+		await writeFile(input, scheduleSource);
 		const result = spawnSync(process.execPath, ["--import", "tsx", "scripts/import-events.mts", input], {
 			cwd: new URL("..", import.meta.url),
 			encoding: "utf8",
@@ -69,4 +63,13 @@ void test("the schedule importer accepts the authoritative French room column", 
 	} finally {
 		await rm(directory, { recursive: true, force: true });
 	}
+});
+
+void test("the schedule importer requires an explicit private input path", () => {
+	const result = spawnSync(process.execPath, ["--import", "tsx", "scripts/import-events.mts"], {
+		cwd: new URL("..", import.meta.url),
+		encoding: "utf8",
+	});
+	assert.notEqual(result.status, 0);
+	assert.match(result.stderr, /Pass the path to a private schedule CSV/);
 });

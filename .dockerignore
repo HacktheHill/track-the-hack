@@ -6,3 +6,5 @@ node_modules
 npm-debug.log*
 logs
 google-credentials.json
+private-rsvp
+private-schedule
