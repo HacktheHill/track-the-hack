@@ -3,6 +3,7 @@ import { useState, type FormEvent } from "react";
 
 type PhysicalScannerProps = {
 	onScan: (data: string) => void;
+	disabled?: boolean;
 };
 
 const PhysicalScanner = (props: PhysicalScannerProps) => {
@@ -11,6 +12,7 @@ const PhysicalScanner = (props: PhysicalScannerProps) => {
 
 	const onSubmit = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
+		if (props.disabled) return;
 		props.onScan(scannedCode);
 		setScannedCode("");
 	};
@@ -27,6 +29,7 @@ const PhysicalScanner = (props: PhysicalScannerProps) => {
 			<p className="font-rubik text-sm text-dark-color">{t("manual-help")}</p>
 			<input
 				id="scanner-input"
+				disabled={props.disabled}
 				name="scannerInput"
 				type="text"
 				autoFocus
@@ -35,7 +38,11 @@ const PhysicalScanner = (props: PhysicalScannerProps) => {
 				onChange={onChange}
 				value={scannedCode}
 			/>
-			<button type="submit" disabled={!scannedCode.trim()} className="ui-button ui-button-primary">
+			<button
+				type="submit"
+				disabled={props.disabled || !scannedCode.trim()}
+				className="ui-button ui-button-primary"
+			>
 				{t("manual-submit")}
 			</button>
 		</form>
