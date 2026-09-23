@@ -154,12 +154,23 @@ export default function ScheduleEventDetails({ id, onClose }: Props) {
 				)}
 				<button
 					type="button"
-					className="ui-button ui-button-icon text-2xl"
+					className="ui-button ui-button-icon"
 					onClick={onClose ?? (() => void router.push("/schedule"))}
 					aria-label={t("close-event")}
 					autoFocus={Boolean(onClose)}
 				>
-					×
+					<svg
+						viewBox="0 0 24 24"
+						width="24"
+						height="24"
+						fill="none"
+						stroke="currentColor"
+						strokeWidth="2"
+						strokeLinecap="round"
+						aria-hidden="true"
+					>
+						<path d="M5 5 19 19M19 5 5 19" />
+					</svg>
 				</button>
 			</div>
 			{query.isError ? (
