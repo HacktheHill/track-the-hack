@@ -1,12 +1,14 @@
 export const SCHEDULE_TIME_ZONE = "America/Toronto";
 
+const scheduleDayKeyFormatter = new Intl.DateTimeFormat("en-CA", {
+	timeZone: SCHEDULE_TIME_ZONE,
+	year: "numeric",
+	month: "2-digit",
+	day: "2-digit",
+});
+
 export const scheduleDayKey = (date: Date) => {
-	const parts = new Intl.DateTimeFormat("en-CA", {
-		timeZone: SCHEDULE_TIME_ZONE,
-		year: "numeric",
-		month: "2-digit",
-		day: "2-digit",
-	}).formatToParts(date);
+	const parts = scheduleDayKeyFormatter.formatToParts(date);
 	const get = (part: string) => parts.find(item => item.type === part)?.value ?? "";
 	return `${get("year")}-${get("month")}-${get("day")}`;
 };
