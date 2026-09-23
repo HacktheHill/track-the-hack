@@ -32,11 +32,15 @@ const migrate = (headers = legacyHeaders) => {
 					writes++;
 					values.forEach((valuesRow, y) => valuesRow.forEach((value, x) => { (cells[row - 1 + y] ??= [])[column - 1 + x] = value; }));
 				},
+				setValue: (value: string | number | boolean | Date) => {
+					writes++;
+					(cells[row - 1] ??= [])[column - 1] = value;
+				},
 			};
 		},
 	};
-	const execute = (): unknown => {
-		const result: unknown = runInNewContext(`${appsScriptSource}\nmigrateLegacyResponseColumnsForRsvp()`, {
+	const execute = (action = "migrateLegacyResponseColumnsForRsvp"): unknown => {
+		const result: unknown = runInNewContext(`${appsScriptSource}\n${action}()`, {
 			SpreadsheetApp: { getActiveSheet: () => sheet, flush: () => undefined },
 			LockService: { getDocumentLock: () => ({ tryLock: () => { locked = true; return true; }, releaseLock: () => { locked = false; } }) },
 		});
@@ -55,12 +59,14 @@ void test("explicit six-column migration preserves IDs and old links while addin
 	const start = applicationHeaders.length;
 	assert.equal(headers?.[start], "Participant ID");
 	assert.equal(headers?.[start + 9], "Walk-In");
+	assert.equal(headers?.[start + 10], "RSVP Refreshed At");
 	assert.equal(data?.[start], "stable-id");
 	assert.equal(data?.[start + 4], "https://track.example/rsvp/stable-id");
 	assert.equal(data?.[start + 5], "CONFIRMED");
 	assert.equal(data?.[start + 6], "https://track.example/cancel#legacy");
 	assert.equal(data?.[start + 7], "expiry");
 	assert.equal(data?.[start + 8], "sync");
+	assert.equal(data?.[start + 10], "");
 });
 
 void test("migration refuses an unknown header layout before changing any data", () => {
@@ -68,4 +74,16 @@ void test("migration refuses an unknown header layout before changing any data",
 	assert.throws(sheet.execute, /exact final columns/);
 	assert.equal(sheet.writes(), 0);
 	assert.equal(sheet.locked(), false);
+});
+
+void test("an already migrated ten-column response layout gains only the refresh timestamp", () => {
+	const tenHeaders = [
+		"Participant ID", "T-Shirt Size", "Meal Category", "RSVP Deadline", "RSVP Link",
+		"RSVP Status", "Cancellation Link", "Pass Expires", "Last Sync", "Walk-In",
+	];
+	const sheet = migrate(tenHeaders);
+	assert.equal(sheet.execute("migrateResponseRsvpRefreshColumn"), 1);
+	assert.equal(sheet.cells[0]?.[applicationHeaders.length + 10], "RSVP Refreshed At");
+	assert.equal(sheet.cells[1]?.[applicationHeaders.length], "stable-id");
+	assert.equal(sheet.writes(), 1);
 });

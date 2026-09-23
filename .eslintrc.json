@@ -29,13 +29,13 @@
 				"@typescript-eslint/no-unused-vars": [
 					"warn",
 					{
-						"varsIgnorePattern": "^(onOpen|openPassSidebar|issuePassForSelectedRow|prepareSelectedRowsForRsvp|refreshResponseRsvpStatus|migrateLegacyResponseColumnsForRsvp|setupTrackOperations|acceptSelectedApplications|acceptSelectedWalkInApplications|refreshRsvpStatus|issueAccessForSelectedParticipant)$"
+						"varsIgnorePattern": "^(onOpen|openPassSidebar|issuePassForSelectedRow|prepareSelectedRowsForRsvp|prepareAcceptedRowsForRsvp|prepareTestSubmissionForRsvp|reviewAcceptedRowsForRsvp|reviewExistingDietaryCategories|reconcileExistingDietaryCategories|refreshResponseRsvpStatus|migrateLegacyResponseColumnsForRsvp|migrateResponseRsvpRefreshColumn|setupTrackOperations|acceptSelectedApplications|acceptSelectedWalkInApplications|refreshRsvpStatus|issueAccessForSelectedParticipant)$"
 					}
 				],
 				"no-unused-vars": [
 					"error",
 					{
-						"varsIgnorePattern": "^(onOpen|openPassSidebar|issuePassForSelectedRow|prepareSelectedRowsForRsvp|refreshResponseRsvpStatus|migrateLegacyResponseColumnsForRsvp|setupTrackOperations|acceptSelectedApplications|acceptSelectedWalkInApplications|refreshRsvpStatus|issueAccessForSelectedParticipant)$"
+						"varsIgnorePattern": "^(onOpen|openPassSidebar|issuePassForSelectedRow|prepareSelectedRowsForRsvp|prepareAcceptedRowsForRsvp|prepareTestSubmissionForRsvp|reviewAcceptedRowsForRsvp|reviewExistingDietaryCategories|reconcileExistingDietaryCategories|refreshResponseRsvpStatus|migrateLegacyResponseColumnsForRsvp|migrateResponseRsvpRefreshColumn|setupTrackOperations|acceptSelectedApplications|acceptSelectedWalkInApplications|refreshRsvpStatus|issueAccessForSelectedParticipant)$"
 					}
 				]
 			}

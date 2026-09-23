@@ -12,6 +12,7 @@
 	"cancelled": "Votre présence a été annulée.",
 	"invalid-cancellation-link": "Ce lien d’annulation est invalide.",
 	"temporarily-unavailable": "Cette action est temporairement indisponible. Veuillez réessayer.",
+	"retry": "Réessayer",
 	"manage-title": "Gérer ma réponse",
 	"manage-status-pending": "Vous n'avez pas encore répondu.",
 	"manage-status-confirmed": "Vous participerez à Hack the Hill III.",

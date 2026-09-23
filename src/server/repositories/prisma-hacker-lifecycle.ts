@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
-import type { PrismaClient } from "@prisma/client";
+import { MealCategory, type PrismaClient } from "@prisma/client";
+import type { DietaryUpdate } from "@/server/services/dietary-reconciliation";
 import type {
 	HackerLifecycleRepository,
 	NewParticipantSession,
@@ -54,6 +55,22 @@ export class PrismaHackerLifecycleRepository implements HackerLifecycleRepositor
 		private readonly prisma: PrismaClient,
 		private readonly runLockingTransaction: HackerLifecycleTransactionRunner = createTransactionRunner(prisma),
 	) {}
+
+	async updateExistingMealCategories(participants: DietaryUpdate[]) {
+		return this.prisma.$transaction(async transaction => {
+			const ids = participants.map(participant => participant.id);
+			const existing = await transaction.hacker.findMany({ where: { id: { in: ids } }, select: { id: true } });
+			const present = new Set(existing.map(participant => participant.id));
+			const missingIds = ids.filter(id => !present.has(id));
+			if (missingIds.length) return { missingIds };
+
+			for (const mealCategory of Object.values(MealCategory)) {
+				const matching = participants.filter(participant => participant.mealCategory === mealCategory).map(participant => participant.id);
+				if (matching.length) await transaction.hacker.updateMany({ where: { id: { in: matching } }, data: { mealCategory } });
+			}
+			return { missingIds: [] };
+		}, { timeout: 30_000 });
+	}
 
 	async upsertProvisionedBatch(records: ProvisioningRecord[]) {
 		await this.prisma.$transaction(
