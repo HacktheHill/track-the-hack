@@ -283,9 +283,9 @@ export const eventsRouter = createTRPCRouter({
 					linkText: input.linkText,
 					linkTextFr: input.linkTextFr,
 					...(input.hidden
-						? { notifiedAt: existingEvent.now, notificationLeaseToken: null, notificationLeaseUntil: null }
+						? { notifiedAt: existingEvent.now }
 						: reopenReminder
-							? { notifiedAt: null, notificationLeaseToken: null, notificationLeaseUntil: null }
+							? { notifiedAt: null }
 							: {}),
 				},
 			});

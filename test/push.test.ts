@@ -475,6 +475,44 @@ void test("MySQL reminder claims and recovery", { skip: !testDatabase }, async t
 		assert.ok((await prisma.event.findUniqueOrThrow({ where: { id } })).notifiedAt);
 	});
 
+	await t.test("rescheduling settles the active batch without sending pending subscribers twice", async context => {
+		const id = await fixture(context, 11);
+		const batchStarted = Promise.withResolvers<void>();
+		const release = Promise.withResolvers<void>();
+		const sent: string[] = [];
+		const first = sendDueEventNotifications(prisma, async subscription => {
+			sent.push(subscription.endpoint);
+			if (sent.length === 10) batchStarted.resolve();
+			await release.promise;
+			return 201;
+		});
+		await batchStarted.promise;
+		await prisma.event.update({
+			where: { id },
+			data: { start: new Date(Date.now() + 60_000), notifiedAt: null },
+		});
+		release.resolve();
+		assert.equal(await first, 0);
+		assert.equal(sent.length, 10);
+		assert.equal(await prisma.pushSubscription.count({ where: { eventId: id } }), 1);
+		const rescheduled = await prisma.event.findUniqueOrThrow({ where: { id } });
+		assert.equal(rescheduled.notifiedAt, null);
+		assert.equal(rescheduled.notificationLeaseToken, null);
+		assert.equal(rescheduled.notificationLeaseUntil, null);
+
+		await prisma.event.update({ where: { id }, data: { start: new Date(Date.now() - 60_000) } });
+		assert.equal(
+			await sendDueEventNotifications(prisma, subscription => {
+				sent.push(subscription.endpoint);
+				return Promise.resolve(201);
+			}),
+			1,
+		);
+		assert.equal(sent.length, 11);
+		assert.equal(new Set(sent).size, 11);
+		assert.ok((await prisma.event.findUniqueOrThrow({ where: { id } })).notifiedAt);
+	});
+
 	await t.test("temporary failure retries only pending subscribers", async context => {
 		const id = await fixture(context, 2);
 		const sent: string[] = [];

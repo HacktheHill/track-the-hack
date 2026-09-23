@@ -187,6 +187,7 @@ const renewLease = async (client: PrismaClient, eventId: string, token: string) 
 		UPDATE Event SET notificationLeaseUntil = DATE_ADD(UTC_TIMESTAMP(3), INTERVAL 2 MINUTE)
 		WHERE id = ${eventId} AND notificationLeaseToken = ${token}
 		AND notificationLeaseUntil > UTC_TIMESTAMP(3) AND notifiedAt IS NULL
+		AND hidden = 0 AND start <= UTC_TIMESTAMP(3)
 	`) === 1
 	);
 };
@@ -281,6 +282,7 @@ export const sendDueEventNotifications = async (
 				UPDATE Event SET notifiedAt = UTC_TIMESTAMP(3)
 				WHERE id = ${event.id} AND notificationLeaseToken = ${token}
 				AND notificationLeaseUntil > UTC_TIMESTAMP(3) AND notifiedAt IS NULL
+				AND hidden = 0 AND start <= UTC_TIMESTAMP(3)
 				AND NOT EXISTS (SELECT 1 FROM PushSubscription WHERE eventId = ${event.id})
 			`;
 		} finally {

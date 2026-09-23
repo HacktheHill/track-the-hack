@@ -123,9 +123,9 @@ try {
 					data: {
 						...event,
 						...(event.hidden
-							? { notifiedAt: existing.now, notificationLeaseToken: null, notificationLeaseUntil: null }
+							? { notifiedAt: existing.now }
 							: reopenReminder
-								? { notifiedAt: null, notificationLeaseToken: null, notificationLeaseUntil: null }
+								? { notifiedAt: null }
 								: {}),
 					},
 				});

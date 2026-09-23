@@ -146,7 +146,7 @@ void test("removing the event link preserves the existing photo", async t => {
 	assert.deepEqual(update.mock.calls[0]?.arguments, [{ where: { id: existingEvent.id }, data: input }]);
 });
 
-void test("moving an event to a new future start clears completion and fences the old lease atomically", async t => {
+void test("moving an event to a new future start reopens completion while preserving an active lease", async t => {
 	const { caller, update, transaction, queryRaw } = await setup(t, [RoleName.ADMIN]);
 	const start = new Date("2026-09-26T14:00:00Z");
 	await caller.update({ id: existingEvent.id, ...eventInput, start, end: new Date("2026-09-26T15:00:00Z") });
@@ -160,8 +160,6 @@ void test("moving an event to a new future start clears completion and fences th
 				start,
 				end: new Date("2026-09-26T15:00:00Z"),
 				notifiedAt: null,
-				notificationLeaseToken: null,
-				notificationLeaseUntil: null,
 			},
 		},
 	]);
@@ -178,8 +176,6 @@ void test("hiding an event closes reminders without discarding future browser re
 				...eventInput,
 				hidden: true,
 				notifiedAt: new Date("2026-09-21T00:00:00Z"),
-				notificationLeaseToken: null,
-				notificationLeaseUntil: null,
 			},
 		},
 	]);
@@ -195,8 +191,6 @@ void test("unhiding a future event reopens reminder registration", async t => {
 			data: {
 				...eventInput,
 				notifiedAt: null,
-				notificationLeaseToken: null,
-				notificationLeaseUntil: null,
 			},
 		},
 	]);
