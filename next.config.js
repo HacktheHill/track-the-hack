@@ -71,13 +71,6 @@ module.exports = withPWA({
 	},
 
 	images: {
-		remotePatterns: [
-			{ protocol: "https", hostname: "cdn1.hackthehill.com", pathname: "/**" },
-			{
-				protocol: "https",
-				hostname: "raw.githubusercontent.com",
-				pathname: "/HacktheHill/hackathon-website/**",
-			},
-		],
+		remotePatterns: [{ protocol: "https", hostname: "cdn1.hackthehill.com", pathname: "/**" }],
 	},
 });
