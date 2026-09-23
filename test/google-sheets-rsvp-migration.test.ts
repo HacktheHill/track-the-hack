@@ -87,3 +87,13 @@ void test("an already migrated ten-column response layout gains only the refresh
 	assert.equal(sheet.cells[1]?.[applicationHeaders.length], "stable-id");
 	assert.equal(sheet.writes(), 1);
 });
+
+void test("the refresh-column migration is idempotent after the header exists", () => {
+	const elevenHeaders = [
+		"Participant ID", "T-Shirt Size", "Meal Category", "RSVP Deadline", "RSVP Link",
+		"RSVP Status", "Cancellation Link", "Pass Expires", "Last Sync", "Walk-In", "RSVP Refreshed At",
+	];
+	const sheet = migrate(elevenHeaders);
+	assert.equal(sheet.execute("migrateResponseRsvpRefreshColumn"), 1);
+	assert.equal(sheet.writes(), 0);
+});
