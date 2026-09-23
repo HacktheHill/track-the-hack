@@ -1,274 +1,126 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import {
-	provisioningBatchSchema,
-	provisioningRecordSchema,
-	reconciliationRequestSchema,
-} from "@/server/services/hacker-lifecycle";
-import {
-	applicationRow,
-	createSheetHarness,
-	type SheetRequest,
-	type SheetRows,
-} from "@root/test/helpers/google-sheets-harness";
+import { z } from "zod";
+import { applicationHeaders, applicationRow, createResponseHarness, responseHeaders, type SheetRequest } from "@root/test/helpers/google-sheets-harness";
 
-const applications = ["first", "second"].map(id =>
-	applicationRow({
-		"Submission ID": id,
-		"What unisex T-shirt size would you prefer?": "M",
-	}),
-);
-const batch = (request: SheetRequest) => provisioningBatchSchema.parse(JSON.parse(request.options.payload)).hackers;
-const success = (request: SheetRequest) => ({
-	status: 200,
-	body: JSON.stringify({ processed: batch(request).length }),
+const link = `https://track.example/rsvp/manage#${"a".repeat(43)}.${"b".repeat(43)}`;
+const stableId = "c".repeat(32);
+const batchSchema = z.object({ hackers: z.array(z.object({ id: z.string() })) });
+const idsSchema = z.object({ ids: z.array(z.string()) });
+const applicant = (submissionId: string, status: string, extras: Record<string, string> = {}) => applicationRow({
+	"Submission ID": submissionId, "Admission status": status,
+	"What unisex T-shirt size would you prefer?": "M", ...extras,
 });
-const ids = (rows: SheetRows) => rows.slice(1).map(row => row[2]);
+const api = (request: SheetRequest) => {
+	if (request.url.endsWith("/hackers")) {
+		const hackers = batchSchema.parse(JSON.parse(request.options.payload)).hackers;
+		return { status: 200, body: JSON.stringify({ processed: hackers.length }) };
+	}
+	if (request.url.endsWith("/dietary-reconciliation")) {
+		const participants = z.object({ participants: z.array(z.object({ id: z.string(), mealCategory: z.string() })) }).parse(JSON.parse(request.options.payload)).participants;
+		return { status: 200, body: JSON.stringify({ processed: participants.length }) };
+	}
+	const ids = idsSchema.parse(JSON.parse(request.options.payload)).ids;
+	return { status: 200, body: JSON.stringify({ records: ids.map(id => ({ id, confirmed: false, status: "PENDING", rsvpLink: link })), missingIds: [] }) };
+};
+const field = (rows: Array<Array<string | number | boolean | Date>>, row: number, header: string) =>
+	rows[row]?.[applicationHeaders.length + responseHeaders.indexOf(header)];
 
-for (const fault of ["lost response", "partial server write", "short response", "malformed response"] as const) {
-	void test(`acceptance retries reuse committed IDs after a ${fault}`, () => {
-		const serverIds = new Set<string>();
-		let fail = true;
-		const sheet = createSheetHarness({
-			applications,
-			fetch: request => {
-				const records = batch(request);
-				assert.deepEqual(
-					ids(sheet.savedRows()),
-					records.map(record => record.id),
-					"IDs must be flushed before the request",
-				);
-				if (fail) {
-					fail = false;
-					assert.ok(
-						sheet
-							.savedRows()
-							.slice(1)
-							.every(row => !row[7] && !row[10]),
-						"Do not claim sync success before a response",
-					);
-					(fault === "partial server write" ? records.slice(0, 1) : records).forEach(record =>
-						serverIds.add(record.id),
-					);
-					if (fault === "short response") return { status: 200, body: '{"processed":1}' };
-					if (fault === "malformed response") return { status: 200, body: "invalid JSON" };
-					throw new Error(fault);
-				}
-				records.forEach(record => serverIds.add(record.id));
-				return success(request);
-			},
-		});
-		assert.throws(() => sheet.run());
-		assert.equal(sheet.isLocked(), false);
-		assert.equal(sheet.alerts.length, 0);
-		const originalIds = ids(sheet.savedRows());
-		sheet.run();
-		assert.deepEqual(ids(sheet.savedRows()), originalIds);
-		assert.equal(sheet.uuidCalls(), 4, "A retry must not generate replacement IDs");
-		assert.equal(serverIds.size, 2);
-		assert.ok(
-			sheet
-				.savedRows()
-				.slice(1)
-				.every(row => row[7] === "PENDING" && row[10] instanceof Date),
-		);
-	});
-}
-
-void test("a partially saved Sheet batch sends nothing and reuses its saved IDs on retry", () => {
-	let fail = true;
-	const sheet = createSheetHarness({
-		applications,
-		fetch: success,
-		beforeWrite: row => {
-			if (fail && row === 3) {
-				fail = false;
-				throw new Error("Sheet write failed");
-			}
-		},
-	});
-	assert.throws(() => sheet.run(), /Sheet write failed/);
+void test("review and preparation use Admission status, not the highlighted selection", () => {
+	const sheet = createResponseHarness({ applications: [
+		applicant("accepted-en", "Accepted"), applicant("rejected", "Rejected"),
+		applicant("accepted-fr", "Acceptée"), applicant("waitlisted", "Waitlisted"),
+	], fetch: api });
+	assert.deepEqual(sheet.run("reviewAcceptedRowsForRsvp"), { accepted: 2 });
 	assert.equal(sheet.requests.length, 0);
-	assert.equal(sheet.isLocked(), false);
-	const firstId = sheet.savedRows()[1]?.[2];
-	assert.ok(firstId);
-	sheet.run();
-	assert.equal(sheet.savedRows()[1]?.[2], firstId);
-	assert.equal(sheet.savedRows().length, 3);
+	assert.equal(field(sheet.rows(), 1, "Participant ID"), "");
+	assert.deepEqual(sheet.run("prepareAcceptedRowsForRsvp"), { accepted: 2, processed: 2, batches: 1 });
+	const posted = batchSchema.parse(JSON.parse(sheet.requests[0]?.options.payload ?? "{}"));
+	assert.equal(posted.hackers.length, 2);
+	assert.ok(field(sheet.rows(), 1, "Participant ID"));
+	assert.equal(field(sheet.rows(), 2, "Participant ID"), "");
+	assert.ok(field(sheet.rows(), 3, "Participant ID"));
+	assert.ok(field(sheet.rows(), 1, "RSVP Refreshed At") instanceof Date);
+	assert.equal(sheet.locked(), false);
 });
 
-void test("a failed flush prevents the API call and still releases the lock", () => {
-	const sheet = createSheetHarness({
-		applications,
-		fetch: success,
-		beforeFlush: () => {
-			throw new Error("Flush failed");
-		},
-	});
-	assert.throws(() => sheet.run(), /Flush failed/);
+void test("preflight rejects duplicate and invalid Accepted rows before any write", () => {
+	const sheet = createResponseHarness({ applications: [
+		applicant("same", "Accepted"), applicant("same", "Accepté"),
+		applicant("bad-shirt", "Accepted", { "What unisex T-shirt size would you prefer?": "?" }),
+		applicant("bad id", "Accepted"),
+	], fetch: api });
+	assert.throws(() => sheet.run("prepareAcceptedRowsForRsvp"), /row 3: duplicate Submission ID.*row 4: Unsupported T-shirt size.*row 5: invalid Submission ID/);
 	assert.equal(sheet.requests.length, 0);
-	assert.equal(sheet.isLocked(), false);
+	assert.equal(field(sheet.rows(), 1, "Participant ID"), "");
 });
 
-void test("a Sheet write failure after server success is safe to retry", () => {
-	let participantWrites = 0;
-	const serverIds = new Set<string>();
-	const sheet = createSheetHarness({
-		applications,
-		fetch: request => {
-			batch(request).forEach(record => serverIds.add(record.id));
-			return success(request);
-		},
-		beforeWrite: row => {
-			if (row === 2 && ++participantWrites === 2) throw new Error("Sync marker write failed");
-		},
-	});
-	assert.throws(() => sheet.run(), /Sync marker write failed/);
-	const originalIds = ids(sheet.savedRows());
-	sheet.run();
-	assert.deepEqual(ids(sheet.savedRows()), originalIds);
-	assert.equal(serverIds.size, 2);
+void test("the designated test action prepares only its Accepted submission", () => {
+	const sheet = createResponseHarness({ applications: [applicant("one", "Accepted"), applicant("two", "Accepted")], testSubmissionId: "two", fetch: api });
+	assert.deepEqual(sheet.run("prepareTestSubmissionForRsvp"), { accepted: 1, processed: 1, batches: 1 });
+	assert.equal(field(sheet.rows(), 1, "Participant ID"), "");
+	assert.ok(field(sheet.rows(), 2, "Participant ID"));
 });
 
-void test("an overlapping acceptance waits for the lock before reading participant mappings", () => {
-	let runPredecessor = true;
-	const sheet = createSheetHarness({
-		applications,
-		fetch: success,
-		beforeLock: () => {
-			if (runPredecessor) {
-				runPredecessor = false;
-				sheet.run();
-			}
-		},
-	});
-	sheet.run();
-	assert.equal(sheet.requests.length, 2);
-	assert.equal(sheet.uuidCalls(), 4);
-	assert.deepEqual(
-		sheet.requests.map(request => batch(request).map(record => record.id)),
-		[ids(sheet.savedRows()), ids(sheet.savedRows())],
-	);
+void test("501 Accepted rows use bounded API batches", () => {
+	const sheet = createResponseHarness({ applications: Array.from({ length: 501 }, (_, index) => applicant(`submission-${index}`, "Accepted")), fetch: api });
+	assert.deepEqual(sheet.run("prepareAcceptedRowsForRsvp"), { accepted: 501, processed: 501, batches: 6 });
+	const sizes = sheet.requests.filter(request => request.url.endsWith("/hackers")).map(request =>
+		batchSchema.parse(JSON.parse(request.options.payload)).hackers.length);
+	assert.deepEqual(sizes, [100, 100, 100, 100, 100, 1]);
 });
 
-void test("contending acceptance and other Sheet writers cannot enter an in-flight operation", () => {
-	let contend = true;
-	const sheet = createSheetHarness({
-		applications,
-		fetch: request => {
-			if (contend) {
-				contend = false;
-				for (const action of [
-					"acceptSelectedApplications",
-					"refreshRsvpStatus",
-					"setupTrackOperations",
-					"issueAccessForSelectedParticipant",
-				] as const) {
-					assert.throws(() => sheet.run(action), /Another Tracker operation is running/);
-				}
-			}
-			return success(request);
-		},
-	});
-	sheet.run();
-	sheet.run();
-	assert.equal(sheet.requests.length, 2);
-	assert.equal(sheet.uuidCalls(), 4);
-	assert.equal(sheet.savedRows().length, 3);
-});
-
-void test("retrying an existing walk-in preserves confirmation and access data", () => {
-	const first = createSheetHarness({ applications, fetch: success });
-	first.run("acceptSelectedWalkInApplications");
-	const saved = first.savedRows();
-	const participant = saved[1];
-	assert.ok(participant);
-	participant[7] = "CONFIRMED";
-	participant[8] = "https://track.example/cancel#existing";
-	participant[9] = new Date("2030-09-15T00:00:00Z");
+void test("server failure leaves stable IDs and existing RSVP links for retry", () => {
 	let fail = true;
-	const sheet = createSheetHarness({
-		applications,
-		initialRows: saved,
-		fetch: request => {
-			if (fail) {
-				fail = false;
-				throw new Error("Lost response");
-			}
-			assert.ok(batch(request).every(record => record.walkIn));
-			return success(request);
-		},
-	});
-	assert.throws(() => sheet.run("acceptSelectedWalkInApplications"));
-	assert.deepEqual(sheet.savedRows(), saved);
-	sheet.run("acceptSelectedWalkInApplications");
-	assert.deepEqual(sheet.savedRows()[1]?.slice(7, 10), participant.slice(7, 10));
-	assert.deepEqual(ids(sheet.savedRows()), ids(saved));
-	assert.equal(sheet.uuidCalls(), 0);
+	const sheet = createResponseHarness({ applications: [applicant("one", "Accepted")], operational: [[stableId, "", "", "", link]], fetch: request => {
+		if (fail && request.url.endsWith("/hackers")) return { status: 503, body: "temporarily unavailable" };
+		return api(request);
+	} });
+	assert.throws(() => sheet.run("prepareAcceptedRowsForRsvp"), /response rows 2-2 failed/);
+	assert.equal(field(sheet.rows(), 1, "Participant ID"), stableId);
+	assert.equal(field(sheet.rows(), 1, "RSVP Link"), link);
+	assert.equal(field(sheet.rows(), 1, "RSVP Refreshed At"), "");
+	fail = false;
+	assert.deepEqual(sheet.run("prepareAcceptedRowsForRsvp"), { accepted: 1, processed: 1, batches: 1 });
+	const posts = sheet.requests.filter(request => request.url.endsWith("/hackers"));
+	for (const post of posts) assert.equal(batchSchema.parse(JSON.parse(post.options.payload)).hackers[0]?.id, stableId);
 });
 
-void test("a missing reservation can be reconciled, retried, and issued access with the same ID", () => {
+void test("legacy selection-based entrypoints cannot provision rejected rows", () => {
+	const sheet = createResponseHarness({ applications: [applicant("one", "Rejected")], fetch: api });
+	for (const action of ["acceptSelectedApplications", "acceptSelectedWalkInApplications", "prepareSelectedRowsForRsvp"] as const) {
+		assert.throws(() => sheet.run(action), /disabled|Use reviewAcceptedRowsForRsvp/);
+	}
+	assert.equal(sheet.requests.length, 0);
+});
+
+void test("RSVP Refreshed At advances only after complete reconciliation", () => {
 	let fail = true;
-	const accessExpiry = "2030-09-15T00:05:00.000Z";
-	const sheet = createSheetHarness({
-		applications,
-		fetch: request => {
-			if (request.url.endsWith("/rsvp-reconciliation")) {
-				const { ids } = reconciliationRequestSchema.parse(JSON.parse(request.options.payload));
-				return { status: 200, body: JSON.stringify({ records: [], missingIds: ids }) };
-			}
-			if (request.url.endsWith("/claim")) {
-				const record = provisioningRecordSchema.parse(JSON.parse(request.options.payload));
-				assert.equal(record.id, sheet.savedRows()[1]?.[2]);
-				return {
-					status: 200,
-					body: JSON.stringify({ claimUrl: "https://track.example/claim#token", expiresAt: accessExpiry }),
-				};
-			}
-			if (fail) {
-				fail = false;
-				return { status: 500, body: "Provisioning failed" };
-			}
-			return success(request);
-		},
-	});
-	assert.throws(() => sheet.run(), /Tracker API 500/);
-	const originalIds = ids(sheet.savedRows());
-	sheet.run("refreshRsvpStatus");
-	assert.ok(
-		sheet
-			.savedRows()
-			.slice(1)
-			.every(row => row[7] === "MISSING"),
-	);
-	sheet.run();
-	assert.ok(
-		sheet
-			.savedRows()
-			.slice(1)
-			.every(row => row[7] === "PENDING"),
-	);
-	sheet.run("issueAccessForSelectedParticipant");
-	assert.deepEqual(sheet.savedRows()[1]?.[9], new Date(accessExpiry));
-	assert.deepEqual(ids(sheet.savedRows()), originalIds);
-	assert.equal(sheet.uuidCalls(), 4);
-	assert.equal(sheet.isLocked(), false);
+	const sheet = createResponseHarness({ applications: [applicant("one", "Accepted")], operational: [[stableId, "M", "STANDARD", "2030-09-30T03:59:59.000Z", link, "PENDING"]], fetch: request => {
+		if (fail) return { status: 503, body: "unavailable" };
+		return api(request);
+	} });
+	assert.throws(() => sheet.run("refreshResponseRsvpStatus"), /Tracker API 503/);
+	assert.equal(field(sheet.rows(), 1, "RSVP Refreshed At"), "");
+	fail = false;
+	assert.equal(sheet.run("refreshResponseRsvpStatus"), 1);
+	assert.ok(field(sheet.rows(), 1, "RSVP Refreshed At") instanceof Date);
 });
 
-void test("duplicate selected submissions and conflicting existing mappings fail before provisioning", () => {
-	const duplicate = createSheetHarness({
-		applications: [applications[0] ?? [], applications[0] ?? []],
-		fetch: success,
+void test("existing dietary repair changes only the meal category and generic sync timestamp", () => {
+	const id = "a".repeat(32);
+	const sheet = createResponseHarness({
+		applications: [applicant("one", "Accepted", { "Select all that apply. (Vegetarian)": "true", "Select all that apply. (Peanut allergy)": "true" })],
+		operational: [[id, "M", "VEGETARIAN", "2030-09-30T03:59:59.000Z", link, "CONFIRMED", "old-cancel-link", "", "", false, "old-refresh"]],
+		fetch: api,
 	});
-	assert.throws(() => duplicate.run(), /Duplicate Submission ID/);
-	assert.equal(duplicate.requests.length, 0);
-	const first = createSheetHarness({ applications, fetch: success });
-	first.run();
-	const saved = first.savedRows();
-	const participant = saved[1];
-	assert.ok(participant);
-	saved.push([...participant.slice(0, 2), "different_participant_0123456789", ...participant.slice(3)]);
-	const conflicting = createSheetHarness({ applications, initialRows: saved, fetch: success });
-	assert.throws(() => conflicting.run(), /Conflicting participant IDs/);
-	assert.equal(conflicting.requests.length, 0);
+	assert.deepEqual(sheet.run("reviewExistingDietaryCategories"), { changed: 1 });
+	assert.equal(sheet.requests.length, 0);
+	assert.deepEqual(sheet.run("reconcileExistingDietaryCategories"), { changed: 1, processed: 1 });
+	assert.equal(field(sheet.rows(), 1, "Meal Category"), "OTHER");
+	assert.equal(field(sheet.rows(), 1, "RSVP Status"), "CONFIRMED");
+	assert.equal(field(sheet.rows(), 1, "RSVP Link"), link);
+	assert.equal(field(sheet.rows(), 1, "RSVP Refreshed At"), "old-refresh");
+	assert.ok(field(sheet.rows(), 1, "Last Sync") instanceof Date);
+	assert.equal(sheet.requests.filter(request => request.url.endsWith("/hackers") || request.url.endsWith("/claim")).length, 0);
 });

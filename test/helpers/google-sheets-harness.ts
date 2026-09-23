@@ -198,3 +198,74 @@ export const createSheetHarness = (options: {
 		uuidCalls: () => uuidCalls,
 	};
 };
+
+export const responseHeaders = [
+	"Participant ID", "T-Shirt Size", "Meal Category", "RSVP Deadline", "RSVP Link",
+	"RSVP Status", "Cancellation Link", "Pass Expires", "Last Sync", "Walk-In", "RSVP Refreshed At",
+];
+
+export const createResponseHarness = (options: {
+	applications: string[][];
+	operational?: SheetRows;
+	fetch: (request: SheetRequest) => SheetResponse;
+	testSubmissionId?: string;
+	beforeWrite?: (row: number, column: number) => void;
+}) => {
+	let saved: SheetRows = [
+		[...applicationHeaders, ...responseHeaders],
+		...options.applications.map((row, index) => [...row, ...responseHeaders.map((_, field) => options.operational?.[index]?.[field] ?? "")]),
+	];
+	let pending: SheetRows = [];
+	let locked = false;
+	const requests: SheetRequest[] = [];
+	const getCell = (row: number, column: number) => pending[row - 1]?.[column - 1] ?? "";
+	const sheet = {
+		getName: () => "Responses",
+		getLastRow: () => pending.length,
+		getLastColumn: () => pending[0]?.length ?? 0,
+		getMaxColumns: () => pending[0]?.length ?? 0,
+		insertColumnsAfter: () => { throw new Error("Unexpected column insertion"); },
+		getActiveRange: () => { throw new Error("Bulk preparation must not use the highlighted selection"); },
+		getRange: (row: number, column: number, height = 1, width = 1) => {
+			const read = () => Array.from({ length: height }, (_, y) =>
+				Array.from({ length: width }, (_, x) => getCell(row + y, column + x)));
+			const write = (values: SheetRows) => {
+				assert.equal(locked, true);
+				options.beforeWrite?.(row, column);
+				values.forEach((cells, y) => cells.forEach((value, x) => {
+					(pending[row - 1 + y] ??= [])[column - 1 + x] = value;
+				}));
+			};
+			return { getValues: read, getDisplayValues: () => read().map(cells => cells.map(String)), setValues: write, setValue: (value: SheetCell) => write([[value]]) };
+		},
+	};
+	const run = (action: "reviewAcceptedRowsForRsvp" | "prepareAcceptedRowsForRsvp" | "prepareTestSubmissionForRsvp" | "reviewExistingDietaryCategories" | "reconcileExistingDietaryCategories" | "refreshResponseRsvpStatus" | "acceptSelectedApplications" | "acceptSelectedWalkInApplications" | "prepareSelectedRowsForRsvp") => {
+		pending = structuredClone(saved);
+		const properties: Record<string, string | undefined> = {
+			TRACK_BASE_URL: "https://track.example",
+			SHEETS_INTEGRATION_API_KEY: "test-key",
+			RSVP_DEADLINE: "2030-09-30T03:59:59.000Z",
+			TRACK_TEST_SUBMISSION_ID: options.testSubmissionId,
+		};
+		const result: unknown = runInNewContext(`${appsScriptSource}\n${action}()`, {
+			Date,
+			Utilities: { getUuid: () => randomUUID() },
+			PropertiesService: { getScriptProperties: () => ({ getProperty: (key: string) => properties[key] }) },
+			LockService: { getDocumentLock: () => ({ tryLock: () => { locked = true; return true; }, releaseLock: () => { locked = false; } }) },
+			SpreadsheetApp: {
+				getActiveSheet: () => sheet,
+				getActive: () => ({ getSheetByName: () => null }),
+				flush: () => { assert.equal(locked, true); saved = structuredClone(pending); },
+			},
+			UrlFetchApp: { fetch: (url: string, input: unknown) => {
+				assert.equal(locked, true);
+				const request = { url, options: fetchOptionsSchema.parse(input) };
+				requests.push(request);
+				const response = options.fetch(request);
+				return { getResponseCode: () => response.status, getContentText: () => response.body };
+			} },
+		});
+		return structuredClone(result);
+	};
+	return { run, requests, rows: () => structuredClone(saved), locked: () => locked };
+};

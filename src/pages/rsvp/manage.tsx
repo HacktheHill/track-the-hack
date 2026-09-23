@@ -23,10 +23,12 @@ const ManageRsvp = () => {
 	const [state, setState] = useState<RsvpState | null>(null);
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState("");
+	const [retryableLoad, setRetryableLoad] = useState(false);
 
 	const request = async (action: "status" | "attend" | "decline", currentToken: string) => {
 		setBusy(true);
 		setError("");
+		setRetryableLoad(false);
 		try {
 			const response = await fetch("/api/rsvp/manage", {
 				method: "POST",
@@ -35,14 +37,16 @@ const ManageRsvp = () => {
 			});
 			if (!response.ok) {
 				setError(response.status === 400 ? t("invalid-management-link") : response.status === 409 ? t("attendance-deadline-passed") : t("temporarily-unavailable"));
+				setRetryableLoad(action === "status" && response.status !== 400);
 				if (response.status === 409) setState(previous => previous ? { ...previous, canAttend: false } : null);
 				return;
 			}
 			const next: unknown = await response.json();
-			if (!isRsvpState(next)) { setError(t("temporarily-unavailable")); return; }
+			if (!isRsvpState(next)) { setError(t("temporarily-unavailable")); setRetryableLoad(action === "status"); return; }
 			setState(next);
 		} catch {
 			setError(t("temporarily-unavailable"));
+			setRetryableLoad(action === "status");
 		} finally {
 			setBusy(false);
 		}
@@ -70,6 +74,7 @@ const ManageRsvp = () => {
 				</div>}
 				{state && !state.canAttend && state.status !== "CONFIRMED" && <p className="mt-4 font-rubik text-dark-color">{t("attendance-deadline-passed")}</p>}
 				{error && <p className="mt-5 font-rubik text-red-900" role="alert">{error}</p>}
+				{!state && retryableLoad && token && <button type="button" disabled={busy} onClick={() => void request("status", token)} className="mt-4 rounded-lg border border-dark-primary-color px-6 py-3 font-coolvetica text-lg text-dark-color disabled:opacity-60">{t("retry")}</button>}
 			</section>
 		</App>
 	);

@@ -12,6 +12,7 @@
 	"cancelled": "Your attendance has been cancelled.",
 	"invalid-cancellation-link": "This cancellation link is invalid.",
 	"temporarily-unavailable": "This action is temporarily unavailable. Please try again.",
+	"retry": "Try again",
 	"manage-title": "Manage your RSVP",
 	"manage-status-pending": "You haven't responded yet.",
 	"manage-status-confirmed": "You're attending Hack the Hill III.",

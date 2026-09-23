@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { z } from "zod";
-import { applicationHeaders, applicationRow, createSheetHarness } from "@root/test/helpers/google-sheets-harness";
+import { applicationHeaders, applicationRow, createResponseHarness, createSheetHarness } from "@root/test/helpers/google-sheets-harness";
 
 const response = applicationRow({
 	"Submission ID": "J1exyzX",
@@ -55,7 +55,7 @@ void test("a row must be accepted before the pass action writes to Tracker", () 
 void test("RSVP preparation and reconciliation stay on the response row", () => {
 	let reconciliationCount = 0;
 	const rsvpLink = `https://track.example/rsvp/manage#${"a".repeat(43)}.${"b".repeat(43)}`;
-	const sheet = createSheetHarness({
+	const sheet = createResponseHarness({
 		applications: [response],
 		fetch: request => {
 			if (request.url.endsWith("/hackers")) return { status: 200, body: '{"processed":1}' };
@@ -67,18 +67,17 @@ void test("RSVP preparation and reconciliation stay on the response row", () => 
 			};
 		},
 	});
-	sheet.run("prepareSelectedRowsForRsvp");
-	assert.equal(sheet.savedApplications()[1]?.[firstNewColumn + 5], "PENDING");
-	assert.equal(sheet.savedApplications()[1]?.[firstNewColumn + 4], rsvpLink);
+	sheet.run("prepareAcceptedRowsForRsvp");
+	assert.equal(sheet.rows()[1]?.[firstNewColumn + 5], "PENDING");
+	assert.equal(sheet.rows()[1]?.[firstNewColumn + 4], rsvpLink);
 	sheet.run("refreshResponseRsvpStatus");
-	assert.equal(sheet.savedApplications()[1]?.[firstNewColumn + 5], "CONFIRMED");
-	assert.equal(sheet.savedApplications()[1]?.[firstNewColumn + 6], "https://track.example/cancel#token");
-	assert.equal(sheet.savedRows().length, 0, "New workflow must not create the legacy operations tab");
+	assert.equal(sheet.rows()[1]?.[firstNewColumn + 5], "CONFIRMED");
+	assert.equal(sheet.rows()[1]?.[firstNewColumn + 6], "https://track.example/cancel#token");
 });
 
 void test("reconciliation distinguishes a declined response from no answer", () => {
 	const rsvpLink = `https://track.example/rsvp/manage#${"a".repeat(43)}.${"b".repeat(43)}`;
-	const sheet = createSheetHarness({
+	const sheet = createResponseHarness({
 		applications: [response],
 		fetch: request => {
 			if (request.url.endsWith("/hackers")) return { status: 200, body: '{"processed":1}' };
@@ -86,8 +85,8 @@ void test("reconciliation distinguishes a declined response from no answer", () 
 			return { status: 200, body: JSON.stringify({ records: [{ id: ids[0], confirmed: false, status: "DECLINED", rsvpLink }], missingIds: [] }) };
 		},
 	});
-	sheet.run("prepareSelectedRowsForRsvp");
-	assert.equal(sheet.savedApplications()[1]?.[firstNewColumn + 5], "DECLINED");
+	sheet.run("prepareAcceptedRowsForRsvp");
+	assert.equal(sheet.rows()[1]?.[firstNewColumn + 5], "DECLINED");
 	sheet.run("refreshResponseRsvpStatus");
-	assert.equal(sheet.savedApplications()[1]?.[firstNewColumn + 5], "DECLINED");
+	assert.equal(sheet.rows()[1]?.[firstNewColumn + 5], "DECLINED");
 });
