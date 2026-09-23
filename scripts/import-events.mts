@@ -46,7 +46,8 @@ const parseTorontoDate = (value: string) => {
 
 const nullable = (value: string) => value || null;
 const args = process.argv.slice(2);
-const inputPath = args.find(argument => !argument.startsWith("--")) ?? "prisma/hack-the-hill-iii-events.csv";
+const inputPath = args.find(argument => !argument.startsWith("--"));
+if (!inputPath) throw new Error("Pass the path to a private schedule CSV.");
 const apply = args.includes("--apply");
 const source = await readFile(inputPath, "utf8");
 const parsedRows = await csv({ output: "json" }).fromString(source);

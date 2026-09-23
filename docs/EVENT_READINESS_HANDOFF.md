@@ -14,7 +14,7 @@ Do not treat the older reports as additive backlogs. Several of their items are 
 ## Decisions already made
 
 - Keep Cloudflare Access enabled during development and acceptance testing. Public launch is a separate reviewed action.
-- The downloaded `Hack the Hill III Run of Show - Events Schedule.csv` is the authoritative schedule.
+- The private downloaded `Hack the Hill III Run of Show - Events Schedule.csv` is the authoritative schedule. It must remain outside this public repository.
 - `Hacking`, `Judges Orientation`, and `Project Submission Deadline` are intentionally absent from the authoritative 41-event schedule.
 - The Check-In, Late Check-In, and Merchandise times in that CSV are authoritative.
 - Keep both Devpost deadlines in Resources:
@@ -49,7 +49,7 @@ The production database already matches the authoritative downloaded CSV exactly
 - events with stable `importKey`: 41
 - canonical event-data SHA-256 for both the downloaded CSV and production: `77ddc0a3ef03e2bd0c24d2641a6d7af1b4c880cac773b7e326bc57c90e53cf95`
 
-The repository CSV was stale at 44 rows. The event-readiness branch updates it to the authoritative 41-row source and updates its test expectations. This repository-only correction does not require a production data write because production is already correct.
+The repository previously contained a stale 44-row copy of the schedule. It is being removed from the public repository and purged from reachable Git history. The importer now requires an explicit private input path, its tests use synthetic events, and the migration image no longer embeds the real schedule. This does not require a production data write because production is already correct.
 
 ### Participant state
 
@@ -247,7 +247,7 @@ The primary `review/history-cleanup-ready` checkout and detached `2cc8` / `43fe`
 - an obsolete sponsor-list commit;
 - duplicate migration and Apps Script staging files.
 
-Do not merge or deploy them. After this handoff and the authoritative schedule correction are committed, they may be removed with `git worktree remove --force` only after one final path/status inventory and explicit destructive-action confirmation. Preserve the separate ignored `private-rsvp/` directory unless the operator explicitly authorizes its deletion.
+Do not merge or deploy them. After this handoff and the private-schedule removal are committed, they may be removed with `git worktree remove --force` only after one final path/status inventory and explicit destructive-action confirmation. Preserve the separate ignored `private-rsvp/` directory unless the operator explicitly authorizes its deletion.
 
 The `rsvp-live-test` worktree contains only a stale untracked `docs/REMAINING_WORK.md`; this handoff supersedes it.
 
@@ -277,6 +277,243 @@ For each future code PR:
 - While the review was running, `main` advanced to `d48c265` and Azure deployed revision `track-the-hack--0000057` with that image.
 - Read-only Azure inspection then found 0 participants and 41 events.
 - Canonical comparison proved the 41 production events exactly matched the downloaded authoritative CSV.
-- The repository was updated locally to match that authoritative schedule and to exclude `private-rsvp` from TypeScript.
+- Production was left unchanged because it already matched the private authoritative schedule. The public repository was changed to remove the real schedule, require an explicit private importer input, use synthetic schedule tests, and exclude `private-rsvp` from TypeScript.
 - The operator then ran the accepted-audience preparation menu command.
 - Two subsequent read-only database checks found a stable partial count of 100 participants, indicating the first batch completed and later processing did not.
+
+---
+
+# Appendix: independent code review, 2026-09-23
+
+Appended by a separate review pass. Originally verified against the pre-purge
+event-readiness branch rather than `origin/main` at `d48c265`. Schedule-derived counts
+below were verified against the private authoritative CSV and the matching production
+database; the real CSV is no longer a repository input.
+
+This is **not** an additive backlog. Every item below states whether it is already
+covered by a section above. Items marked "already covered" need no new action and are
+listed only so a future reader can see they were re-checked and not missed.
+
+## Verification performed
+
+| Check                  | Result                                                                     |
+| ---------------------- | -------------------------------------------------------------------------- |
+| `npm test`             | 173 tests: 169 pass, 0 fail, 4 skipped (all four MySQL-only)               |
+| `npm run typecheck`    | pass                                                                       |
+| `npm run lint`         | 0 errors, 0 warnings                                                       |
+| `npx prisma validate`  | pass                                                                       |
+| `next build --webpack` | pass (run at `d48c265`; unchanged by this branch's three commits)          |
+| `npm audit --omit=dev` | 0 vulnerabilities                                                          |
+| Git history            | 711 commits on `origin/main`, 0 merge commits, 0 non-conventional subjects |
+
+Not run, for lack of a Docker daemon on the review machine: live migration
+application, the four MySQL-only tests, `test:e2e:dev`, `test:e2e:pwa`,
+`test:e2e:discord`, and browser verification.
+
+## This document's factual claims were re-checked and hold
+
+Confirmed against the private authoritative CSV and matching production data: 41 rows; 5 hidden; `CHECK_IN` 2,
+`MERCHANDISE` 1, `FOOD` 12, `ATTENDANCE` 26; 41 rows with a non-empty `roomFr`; 41
+unique non-empty `importKey` values; 41 non-empty `seriesKey` values. `Hacking`,
+`Judges Orientation`, and `Project Submission Deadline` are genuinely absent as event
+names — the word "hacking" appears only inside description text, which is a false
+positive worth noting for anyone re-checking with `grep`. The worktree inventory is
+accurate, including that the `/tmp/claude-1000/.../scratchpad/wt` entry is a read-only
+review worktree with no unique changes.
+
+No discrepancy was found in the existing contents of this document.
+
+## Corrections to earlier review reports
+
+Two claims in the superseded `docs/CODEBASE_REVIEW*.md` reports were wrong. They are
+corrected here so the error is not carried forward:
+
+1. **The RSVP reconciliation response did not rename `cancellationLink`.** It still
+   emits `cancellationLink` under exactly the documented condition
+   (`confirmed && capability`). It _adds_ `status` and `rsvpLink` alongside it. The
+   documented field is therefore still correct and backward compatible; the
+   documentation is incomplete, not wrong. See R1.
+2. **The no-op migrations have been applied to production.** An earlier report said
+   production was on revision 33 and had seen none of them, and recommended collapsing
+   them. This document records production on revision `track-the-hack--0000057` running
+   image `d48c265`, and the deploy workflow runs the migration job before promoting the
+   web image. Those migrations are applied and **must be retained**. See R4, whose
+   recommendation is reduced accordingly.
+
+## New findings not covered by the sections above
+
+### R1 — The authoritative Phase 1 documents describe the retired RSVP contract (High)
+
+`73287c4` replaced ID-authorized RSVP with a signed management capability. That is a
+real security improvement: `Hacker.id` is printed in the day-of event QR, so the old
+`POST /api/rsvp/<id>` meant anyone who photographed a participant's pass could confirm
+that participant's attendance. `docs/PROPOSED_FLOW.md` had already reasoned this way
+about cancellation; extending it to confirmation closes the gap.
+
+`docs/PHASE_1_INTEGRATIONS.md` and `docs/PROPOSED_FLOW.md` — the two files this
+repository calls "the authoritative contracts" — were not updated with it:
+
+- `PHASE_1_INTEGRATIONS.md:17` still gives the invitation URL as
+  `${NEXTAUTH_URL}/rsvp/<id>`. That page now renders an "old link" notice and
+  `POST /api/rsvp/<id>` returns `410 old_rsvp_link_retired`.
+- `PHASE_1_INTEGRATIONS.md:47` still documents the whole `POST /api/rsvp/<id>`
+  confirmation flow. Decisions now go to `POST /api/rsvp/manage` with
+  `{ token, action: "status" | "attend" | "decline" }`.
+- `PHASE_1_INTEGRATIONS.md:64-75` documents the reconciliation response as
+  `{ id, confirmed, cancellationLink }`. It is now
+  `{ id, confirmed, status, rsvpLink?, cancellationLink? }`, where `status` is
+  `PENDING | CONFIRMED | DECLINED` and `rsvpLink` is present whenever a capability
+  exists, not only when confirmed. The documented `cancellationLink` behaviour is
+  unchanged.
+- `PHASE_1_INTEGRATIONS.md:17` describes the external RSVP CSV as `email,id` with
+  optional `name`. `scripts/prepare-rsvp-campaign.mts` now emits
+  `email,name,rsvpUrl,deadlineEn,deadlineFr`. This matters beyond accuracy: the CSV now
+  carries **signed bearer capabilities**, which the RSVP runbook correctly says must
+  never reach Git, artifacts, logs, or an issue, while the Phase 1 document still
+  describes a file whose only sensitive content is an email address.
+- `PROPOSED_FLOW.md:69-71` still describes the ID-link confirmation sequence.
+
+Nothing in either document points to `docs/RSVP_EMAIL_RUNBOOK.md`, which does describe
+the current flow correctly and thoroughly.
+
+**Why it matters here:** the RSVP campaign is external, one-shot, and addressed to real
+applicants. A reader following the stated authoritative contract would build it from
+`/rsvp/<id>` links that return `410`.
+
+**Fix:** update those sections and cross-reference the runbook. `Code.gs` was updated in
+lockstep, so only the prose is stale.
+
+### R2 — The scanner station selector cannot distinguish repeated event names (Medium)
+
+`src/pages/qr/index.tsx:90-95` labels each option
+`` `${t(`workflow.${event.scannerWorkflow}`)} — ${name}` `` with no time, and
+`events.scannable` returns every event whose `end` is later than 30 minutes ago. The
+authoritative schedule contains repeated names:
+
+| Occurrences | Selector label                                      |
+| ----------- | --------------------------------------------------- |
+| 5           | `Food — Latte Lab`                                  |
+| 4           | `Attendance — Career Fair`                          |
+| 3           | `Attendance — Judging`                              |
+| 2 each      | `Food — Snacks`, `Food — Breakfast`, `Food — Lunch` |
+
+Before the event begins, all 41 events are in the list, so a volunteer sees five
+identical `Food — Latte Lab` entries and must pick by position alone. The list is
+ordered by `start`, which is the only cue. Selecting the wrong occurrence records
+`Presence` against the wrong event row; it is recoverable through the manual `+`/`−`
+adjustments, but only once someone notices.
+
+This is adjacent to deferred item 3 but not covered by it: that item persists the
+selection and adds feedback, which would make a wrong choice _sticky_ rather than
+prevent it.
+
+**Suggested fix:** include the start time (and date where the run spans days) in the
+option label, e.g. `Food — Latte Lab · Sat 1:30 PM`. This is a label-only change in one
+component and does not need the deferred `scannerEnabled` work.
+
+### R3 — An RSVP decision is rolled back if its audit log write fails (Medium)
+
+`src/server/repositories/prisma-rsvp-management.ts` creates the `Log` row inside the
+same transaction that records the participant's choice (`transaction.hacker.update`
+then `transaction.log.create`). Everywhere else, `src/server/lib/log.ts` deliberately
+swallows failures so an audit problem cannot break a user action. Here the audit write
+is load-bearing: a full `Log` table, a lock timeout, or an oversized `details` value
+would roll the participant's RSVP back and show a generic failure.
+
+This may be intentional — a stronger guarantee for a decision with real consequences —
+but it silently inverts the established pattern.
+
+**Fix:** move the log outside the transaction to match `log()`, or add a comment
+stating that RSVP decisions are deliberately atomic with their audit record.
+
+### R4 — Three pairs of migrations share a timestamp prefix (Low, latent)
+
+```
+20260922000000_add_event_import_identity      20260923000000_remove_sms_reminders
+20260922000000_secure_sms_reminders           20260923000000_restore_event_tiktok_compatibility
+20260923010000_add_event_room_fr              20260923010000_rsvp_management
+```
+
+Prisma orders migrations by full directory name, so ordering currently resolves
+correctly only because the suffixes happen to sort the right way (`remove_` <
+`restore_`, `add_` < `rsvp_`). A future migration whose name sorts earlier would run
+before a dependency with no warning.
+
+Four of these are pure round trips — `secure_sms_reminders` creates six SMS tables plus
+`Event.smsNotifiedAt` and `remove_sms_reminders` drops exactly those six and the column
+(the sets match, so `migrate deploy` will not fail); `restore_event_tiktok_compatibility`
+re-adds `Event.tiktok` and `remove_event_tiktok` drops it again. **They must be kept**,
+because production has applied them (see the corrections above).
+
+**Fix:** no change to existing migrations. Require a unique, generator-produced
+timestamp prefix for every future migration.
+
+### R5 — The organizer event editor modal has no focus trap or Escape handler (Low)
+
+`src/components/ScheduleEventDialog.tsx` uses the native `<dialog>` element with
+`showModal()`, which provides a focus trap, Escape via `onCancel`, and an inert
+background. `src/components/EventEditor.tsx` still renders a `createPortal` div with
+`role="dialog" aria-modal="true"` and neither behaviour, so keyboard focus escapes into
+the page behind it. The organizer-facing dialog is now the less accessible of the two,
+and the better pattern already exists in the codebase.
+
+### R6 — The event reminder control resets on every refetch (Low)
+
+`src/components/ScheduleEventDetails.tsx:75` runs its push-availability effect on
+`[event]`, where `event` is `query.data`. Superjson rebuilds the `Date` fields on each
+refetch, defeating react-query's structural sharing, so the identity changes and the
+effect resets `pushAvailable` and `notifyRequested` to `false` before re-probing. The
+bell briefly shows as unavailable on every refocus.
+
+**Fix:** depend on `event?.id` and `event?.start?.getTime()`.
+
+### R7 — Save-to-schedule star: shared pending state, no optimistic update (Low)
+
+On the schedule cards a single `update` mutation drives every star, so
+`disabled={update.isLoading}` (`src/pages/schedule/index.tsx:465`) disables **all**
+stars while any one save is in flight, and nothing changes visually until the round trip
+completes — on conference wifi the primary new interaction will feel dead.
+`update.isError` renders one alert at the bottom of the list, away from the star that
+failed and without naming it. The control is also bespoke (`★`/`☆` glyphs with custom
+classes) while `EventInterestButton` renders an SVG star with `ui-button ui-button-icon`,
+which is what `docs/ui-consistency.md` asks for.
+
+### R8 — `SKIP_ENV_VALIDATION` does not skip validation (Low)
+
+`next.config.js:33` documents the flag and line 36 honours it, but only for the
+config-time preflight import. `src/env/server.mjs` validates unconditionally whenever it
+is imported, and pages import it, so page-data collection still fails without the
+placeholder values. The Docker build succeeds only because `.github/workflows/build.env`
+is mounted as a secret. This is worth knowing for validation step 5 of the future-PR
+checklist above: a build cannot be run without that file.
+
+**Fix:** honour the flag in `src/env/server.mjs`, or delete the flag and its comment and
+document that a build requires the placeholder env file.
+
+### R9 — Sponsor asset filenames mix case (Housekeeping)
+
+`public/assets/sponsors/` contains `backboard.svg`, `cgi.svg`, `ciena.svg`,
+`elevenlabs.svg` alongside `EEF.svg`, `MathemaTech.svg`, `UOSU.svg`. References match
+today and the build passes, but mixed case is a common source of 404s that appear only
+in the Linux container and not on a case-insensitive development machine. Worth
+normalising while the set is small — and worth doing in the same change as the deferred
+EEF aspect-ratio attribute rather than separately.
+
+## Already covered above; re-checked, no new action
+
+- **Blank `maxCheckIns` on all twelve `FOOD` events.** Confirmed still true in the
+  private authoritative CSV and matching production data: `CHECK_IN` and `MERCHANDISE` set `1`, every `FOOD` row is blank.
+  Deferred item 2 already requires an explicit decision on blank/unlimited behaviour
+  before implementation. Current behaviour, for that decision: blank means `atLimit`
+  never becomes true, so the counter increments without bound and the scanner's `+`
+  control is never disabled.
+- **The five hidden events.** `Merch` and `Late Check-In` remain hidden and are still
+  scannable, because `events.scannable` deliberately has no `hidden` filter — that is
+  correct and intentional. **Merch being hidden from the participant schedule is also
+  intentional** (operator-confirmed 2026-09-23), even though its description reads as
+  participant-facing copy; distribution is communicated outside the schedule. Treat
+  `Merch` as an operational station, like `Late Check-In`, not as a schedule entry. No
+  change required, and a future reviewer should not re-raise it.
+- **Public hidden-event filtering, scanner serialization, expected-value counter
+  updates, offline pass, push leases and scheduler startup.** All verified present in
+  the code and correctly listed as already in `main`.
