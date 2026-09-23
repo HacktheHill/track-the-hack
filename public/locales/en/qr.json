@@ -3,7 +3,7 @@
 	"select-action": "Select a scanner action",
 	"view-participant": "View operational participant record",
 	"unknown-error": "The participant or event action could not be loaded.",
-	"adjust-error": "The attendance count could not be updated.",
+	"adjust-error": "Could not confirm the update. The last confirmed count is shown. Reload and scan again to check before retrying.",
 	"camera-error": "Unable to start the camera.",
 	"manual-label": "Type or paste a participant ID",
 	"manual-help": "Use this for local testing or with a USB scanner when a camera is unavailable.",
@@ -34,5 +34,7 @@
 	"increase-count": "Increase count",
 	"events-of-interest": "Saved events",
 	"no-event-interests": "No saved events.",
-	"loading-interests": "Loading saved events…"
+	"loading-interests": "Loading saved events…",
+	"saving": "Saving…",
+	"zero-count": "Recorded count: 0. Use + to record an entry."
 }

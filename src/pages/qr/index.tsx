@@ -4,6 +4,8 @@ import { getServerSession } from "next-auth";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useCallback, useRef, useState } from "react";
+import PresenceCounter from "@/components/PresenceCounter";
+import { useScannerOperation, type ScannerOperation } from "@/components/useScannerOperation";
 import ScanResult, { MealInfo } from "@/components/ScanResult";
 import App from "@/components/App";
 import ErrorDisplay from "@/components/Error";
@@ -23,6 +25,7 @@ const QR = () => {
 	const utils = trpc.useContext();
 	const events = trpc.events.scannable.useQuery().data ?? [];
 	const { mutateAsync: scanPresence } = trpc.presence.scan.useMutation();
+	const { operation, pending } = useScannerOperation();
 	const selectedAction = useRef(VIEW_PARTICIPANT);
 	const previousId = useRef("");
 	const scanSequence = useRef(0);
@@ -32,9 +35,10 @@ const QR = () => {
 	const scan = useCallback(
 		async (rawId: string) => {
 			const hackerId = rawId.trim();
-			if (!hackerId || hackerId === previousId.current) return;
+			if (!hackerId || hackerId === previousId.current || !operation.begin()) return;
 			const sequence = ++scanSequence.current;
 			previousId.current = hackerId;
+			setDisplay(undefined);
 			setError("");
 
 			try {
@@ -47,15 +51,17 @@ const QR = () => {
 
 				const result = await scanPresence({ eventId: selectedAction.current, hackerId });
 				if (sequence !== scanSequence.current) return;
-				setDisplay(<WorkflowCard result={result} />);
+				setDisplay(<WorkflowCard result={result} operation={operation} />);
 			} catch {
 				if (sequence !== scanSequence.current) return;
 				previousId.current = "";
 				setDisplay(undefined);
 				setError(t("unknown-error"));
+			} finally {
+				operation.end();
 			}
 		},
-		[scanPresence, t, utils],
+		[scanPresence, t, utils, operation],
 	);
 	const handleScan = useCallback((result: string) => void scan(result), [scan]);
 
@@ -68,8 +74,10 @@ const QR = () => {
 			<div className="my-auto flex w-full flex-col items-center gap-8">
 				<select
 					aria-label={t("select-action")}
+					disabled={pending}
 					className="ui-field w-full max-w-4xl text-center"
 					onChange={event => {
+						if (operation.isPending()) return;
 						scanSequence.current += 1;
 						selectedAction.current = event.target.value;
 						previousId.current = "";
@@ -87,7 +95,7 @@ const QR = () => {
 				</select>
 				<div className="grid w-full max-w-4xl gap-6 md:grid-cols-2">
 					<QRScanner onScan={handleScan} setError={setError} />
-					<PhysicalScanner onScan={handleScan} />
+					<PhysicalScanner onScan={handleScan} disabled={pending} />
 				</div>
 				{display}
 				{error && <ErrorDisplay message={error} />}
@@ -117,7 +125,7 @@ const TShirtInfo = ({ size }: { size: TShirtSize }) => {
 	return <p>{size === TShirtSize.NONE ? t("common:no-t-shirt") : t("t-shirt", { value: size })}</p>;
 };
 
-const WorkflowCard = ({ result }: { result: WorkflowScan }) => {
+const WorkflowCard = ({ result, operation }: { result: WorkflowScan; operation: ScannerOperation }) => {
 	const { t, i18n } = useTranslation("qr");
 	const interests = trpc.presence.getEventInterests.useQuery(
 		{ eventId: result.eventId, hackerId: result.participant.id },
@@ -137,69 +145,9 @@ const WorkflowCard = ({ result }: { result: WorkflowScan }) => {
 				eventName={i18n.language === "fr" ? result.nameFr : result.name}
 				initialValue={result.value}
 				initialAtLimit={result.atLimit}
+				operation={operation}
 			/>
 		</ScanResult>
-	);
-};
-
-const PresenceCounter = ({
-	eventId,
-	hackerId,
-	eventName,
-	initialValue,
-	initialAtLimit,
-}: {
-	eventId: string;
-	hackerId: string;
-	eventName: string;
-	initialValue: number;
-	initialAtLimit: boolean;
-}) => {
-	const { t } = useTranslation("qr");
-	const adjustPresence = trpc.presence.adjust.useMutation();
-	const [value, setValue] = useState(initialValue);
-	const [atLimit, setAtLimit] = useState(initialAtLimit);
-	const [error, setError] = useState("");
-
-	const change = async (amount: -1 | 1) => {
-		setError("");
-		try {
-			const next = await adjustPresence.mutateAsync({ eventId, hackerId, amount });
-			setValue(next.value);
-			setAtLimit(next.atLimit);
-		} catch {
-			setError(t("adjust-error"));
-		}
-	};
-
-	return (
-		<>
-			<p className="mt-3 font-bold">
-				{eventName}: {value}
-			</p>
-			{atLimit && <p className="mt-2">{t("maximum-reached")}</p>}
-			<div className="mt-4 flex justify-center gap-8">
-				<button
-					type="button"
-					aria-label={t("decrease-count")}
-					disabled={value <= 0 || adjustPresence.isLoading}
-					className="ui-button ui-button-icon"
-					onClick={() => void change(-1)}
-				>
-					−
-				</button>
-				<button
-					type="button"
-					aria-label={t("increase-count")}
-					disabled={atLimit || adjustPresence.isLoading}
-					className="ui-button ui-button-icon"
-					onClick={() => void change(1)}
-				>
-					+
-				</button>
-			</div>
-			{error && <ErrorDisplay message={error} />}
-		</>
 	);
 };
 
