@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { MealCategory, type PrismaClient } from "@prisma/client";
+import { MealCategory, Prisma, type PrismaClient } from "@prisma/client";
 import type { DietaryUpdate } from "@/server/services/dietary-reconciliation";
 import type {
 	HackerLifecycleRepository,
@@ -8,6 +8,15 @@ import type {
 } from "@/server/services/hacker-lifecycle";
 
 type TransactionClient = Omit<PrismaClient, "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends">;
+
+type ExistingRsvpState = {
+	id: string;
+	confirmed: boolean | number;
+	rsvpRespondedAt: Date | null;
+};
+
+const sameDate = (left: Date | null, right: Date | null) =>
+	left === null ? right === null : right !== null && left.getTime() === right.getTime();
 
 export type HackerLifecycleLockingTransaction = {
 	findCancellationCapabilityOwner(capabilityId: string): Promise<string | null>;
@@ -75,6 +84,17 @@ export class PrismaHackerLifecycleRepository implements HackerLifecycleRepositor
 	async upsertProvisionedBatch(records: ProvisioningRecord[]) {
 		await this.prisma.$transaction(
 			async transaction => {
+				const ids = [...new Set(records.map(record => record.id))].sort();
+				const existingRsvpStates = ids.length === 0
+					? []
+					: await transaction.$queryRaw<ExistingRsvpState[]>(Prisma.sql`
+						SELECT id, confirmed, rsvpRespondedAt
+						FROM \`Hacker\`
+						WHERE id IN (${Prisma.join(ids)})
+						ORDER BY id
+						FOR UPDATE
+					`);
+
 				for (const record of records) {
 					await this.upsertProvisionedInTransaction(transaction, record);
 					// Only the pre-event invitation process mints this capability. The
@@ -84,6 +104,24 @@ export class PrismaHackerLifecycleRepository implements HackerLifecycleRepositor
 						create: { id: randomBytes(32).toString("base64url"), hackerId: record.id },
 						update: {},
 					});
+				}
+
+				if (existingRsvpStates.length > 0) {
+					const after = await transaction.hacker.findMany({
+						where: { id: { in: existingRsvpStates.map(state => state.id) } },
+						select: { id: true, confirmed: true, rsvpRespondedAt: true },
+					});
+					const afterById = new Map(after.map(state => [state.id, state]));
+					for (const before of existingRsvpStates) {
+						const current = afterById.get(before.id);
+						if (
+							!current ||
+							current.confirmed !== Boolean(before.confirmed) ||
+							!sameDate(current.rsvpRespondedAt, before.rsvpRespondedAt)
+						) {
+							throw new Error(`Provisioning attempted to change RSVP state for ${before.id}`);
+						}
+					}
 				}
 			},
 			{ timeout: 30_000 },
