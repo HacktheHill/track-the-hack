@@ -21,6 +21,13 @@ if (requestedBase && !base) {
 	process.exit(1);
 }
 const range = base ? `${base}..${head}` : `${head}^..${head}`;
+const merges = execFileSync("git", ["log", range, "--merges", "--format=%H%x09%s"], { encoding: "utf8" }).trim();
+if (merges) {
+	console.error("Merge commits are not allowed:");
+	for (const line of merges.split("\n")) console.error(`  ${line}`);
+	process.exitCode = 1;
+}
+
 const output = execFileSync("git", ["log", range, "--no-merges", "--format=%H%x09%s"], { encoding: "utf8" }).trim();
 const invalid = output
 	? output.split("\n").filter(line => !conventionalSubject.test(line.slice(line.indexOf("\t") + 1)))
