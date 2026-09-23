@@ -164,7 +164,7 @@ New functionality required by this proposal:
 4. Implement the bound Apps Script integration, one-time claim flow, participant session, and walk-in path.
 5. Update participant profile, event QR, and metrics; remove team storage because Discord is the source of truth.
 
-This design targets a clean, empty database. Legacy database records and participant files are outside the Phase 1 implementation: this repository does not migrate, archive, retain, or delete them. Their handling belongs to the relevant data owner and infrastructure operator under a separately approved retention process.
+This design targeted a clean, empty database for the one-time Phase 1 baseline. Legacy database records and participant files from before that baseline are outside the Phase 1 implementation: this repository does not migrate, archive, retain, or delete them. Their handling belongs to the relevant data owner and infrastructure operator under a separately approved retention process. Later releases preserve the current database and apply versioned Prisma migrations as described in the [database lifecycle](../README.md#database-lifecycle).
 
 ## Participant-selected event interests
 

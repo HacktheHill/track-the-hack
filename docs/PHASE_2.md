@@ -17,7 +17,7 @@ This is one coherent implementation phase. Keep its schema, API, authentication,
 - Phase 1 already supplies the minimal `Hacker` model, Sheet authentication, provisioning, RSVP/cancellation, and organizer-only NextAuth.
 - Work only in this repository. Describe the required Google Sheets and Apps Script behaviour, but do not modify external systems or repositories.
 - Applications already live at `https://apply.hackthehill.com`. Do not add application or `/apply` work.
-- Assume fresh event data. Do not build legacy participant-data migration or compatibility paths.
+- This implementation phase assumed fresh event data at the Phase 1 baseline. It does not require later deployments to reset the current database; see the [database lifecycle](../README.md#database-lifecycle). Do not build legacy participant-data migration or compatibility paths.
 - Preserve unrelated working-tree changes. Do not commit, push, or open a PR unless the task owner explicitly requests it.
 
 ## Access issuance

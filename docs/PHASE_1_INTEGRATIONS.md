@@ -4,9 +4,9 @@ Track the Hack accepts pseudonymous operational records only. Tally and the rest
 
 ## Database scope
 
-Phase 1 targets a clean, empty database. This repository creates the current operational schema but does not migrate, archive, retain, or delete records or files from an older deployment. Any handling of legacy database or object-storage data belongs to the relevant data owner and infrastructure operator outside this implementation.
+The one-time Phase 1 redesign targeted a clean, empty database. This repository creates the current operational schema but does not migrate, archive, retain, or delete records or files from a deployment that predates that baseline. Any handling of legacy database or object-storage data belongs to the relevant data owner and infrastructure operator outside this implementation.
 
-Do not add legacy-data cleanup, compatibility, backfill, or destructive cutover logic to this repository. Never run the clean baseline against an existing database.
+Do not add legacy-data cleanup, compatibility, backfill, or destructive cutover logic to this repository. Never run the clean baseline against a legacy database. Once the current baseline exists, preserve it and apply the versioned Prisma migrations described in the [README](../README.md#database-lifecycle).
 
 ## Participant ID
 
@@ -78,7 +78,7 @@ The call is rerunnable. Confirmed records with an active capability include the 
 Organizer login is Google-only and requires a verified `@ctn-rtc.org` address, an existing `User`, and at least one role. Pre-provision one with:
 
 ```sh
-npm run organizer:provision -- organizer@ctn-rtc.org ORGANIZER
+npm run organizer:provision -- organizer@ctn-rtc.org ORGANIZER ADMIN
 ```
 
 This command is intentionally separate from participant provisioning. Organizer sessions, Sheet API keys, RSVP IDs, and cancellation capabilities are not interchangeable authorization mechanisms.

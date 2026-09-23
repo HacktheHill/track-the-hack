@@ -14,7 +14,7 @@ This is the final implementation phase, not a collection of separate cleanup pha
 - Document contracts required from Sheets, bulk-email tooling, and email-list-manager, but do not modify those external repositories or services. Discord verification also requires the separate bot changes described below.
 - The approved Discord verification integration spans this repository and the separate bot; see [Discord verification](./DISCORD_VERIFICATION.md). The bot owns identity mapping and role assignment.
 - Applications remain at `https://apply.hackthehill.com`; no application or `/apply` work belongs here.
-- Assume fresh event data. Do not add legacy participant-data migration machinery.
+- This implementation phase assumed fresh event data at the Phase 1 baseline. It does not require later deployments to reset the current database; see the [database lifecycle](../README.md#database-lifecycle). Do not add legacy participant-data migration machinery.
 - Preserve unrelated working-tree changes. Do not commit, push, or open a PR unless the task owner explicitly requests it.
 
 ## Team source of truth
