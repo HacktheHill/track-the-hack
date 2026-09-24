@@ -169,6 +169,11 @@ Test one station in each semantic class, not every event row:
 - maximum greater than one: deliberate repeats increment to the cap;
 - attendance: interests load; other workflows cannot request them.
 
+On a real small phone, confirm the camera view fits and scrolls with every control
+reachable. Where station names repeat, confirm the localised weekday and time make each
+choice unambiguous. A disabled station must reject direct scanner and manual-adjustment
+requests, not merely disappear from the selector.
+
 For the capped station:
 
 1. Hold one QR continuously in view; it must count once.
@@ -236,32 +241,149 @@ focused tests prove that boundary more reliably.
 
 ## Discord verification
 
-Use `npm run test:e2e:discord` with the separately configured bot repository. The test
-must prove that an active participant session can complete one signed personal link,
-that GET/link preview is read-only, replay and expired signatures fail, and identity
-mapping remains bot-owned. Follow `DISCORD_VERIFICATION.md` for two-service setup.
+Discord verification crosses the Track browser/session boundary, the signed service
+request boundary, the bot's PostgreSQL identity store, and Discord role assignment.
+Track must never store Discord IDs, usernames, mappings, or team data. Team creation
+and membership tests belong to the bot and must not be duplicated here.
 
-Do not duplicate team creation/membership tests in Tracker; those belong to the bot.
+### Automated two-service test
+
+Use the matching bot checkout documented in `DISCORD_VERIFICATION.md`. Install and
+build it first, then run from Track:
+
+```sh
+npm run test:e2e:discord
+```
+
+This command is intentionally separate from `verify:dev` because the bot repository
+and disposable PostgreSQL container are external prerequisites. It must exercise the
+production proof generator, bot router, mapping store, Track MySQL participant/session
+flow, and English and French browser pages. The Discord role call may remain a local
+double. Confirm that it proves all of the following without logging a proof or private
+identity value:
+
+1. an active participant session completes a valid five-minute personal link;
+2. loading or previewing the link is read-only and does not consume it;
+3. absent, forged, revoked, and expired participant sessions fail;
+4. malformed, wrongly signed, expired, and replayed proofs fail safely;
+5. organiser authentication alone cannot verify a participant;
+6. each Discord account and participant has at most one binding;
+7. concurrent attempts cannot bypass either uniqueness rule;
+8. role-assignment failure preserves the binding and a safe retry can finish;
+9. conflict responses do not disclose the other account or participant; and
+10. test participants, challenges, bindings, sessions, and containers are removed.
+
+Run the bot's own focused tests as well as Track's standard gate. A passing local
+double does not prove the deployed bot has the correct guild permissions or role.
+
+### Controlled deployed verification
+
+After deploying matching Track and bot releases with the same internal secret:
+
+1. Confirm Track reports the feature available without exposing either service secret.
+2. Activate an explicitly approved test participant session through the normal claim
+   flow; organiser authentication is not a substitute.
+3. In Discord, generate a new private verification link using `/verify` or
+   **Generate Verification Link**. Do not paste the link into logs, issues, or chat.
+4. Preview or open the link without pressing **Verify Discord account**. Confirm no
+   binding or role is created.
+5. Complete verification in English. Confirm the bot owns the resulting binding and
+   the expected existing Discord role is present.
+6. Retry the same valid link and confirm the idempotent success path. Generate another
+   link for the same accounts and confirm it cannot silently reassign either identity.
+7. Exercise the French page with a fresh approved test identity, unless the automated
+   browser test is the accepted evidence for this release and no translated UI changed.
+8. Inspect both services for redacted, useful logs. Proofs, Discord IDs, participant
+   IDs, and internal bot error details must not appear in Track logs.
+9. Remove only the test binding with the bot's documented management command. Role
+   removal is a separate organiser decision; verify the intended cleanup explicitly.
+
+Do not deliberately expire production participants, rotate a shared secret, reset all
+event bindings, or break live Discord permissions merely to reproduce automated edge
+cases. Record the Track revision, bot revision, test account class, result, and cleanup
+without recording private identifiers.
 
 ## Google Sheets and real email acceptance
 
-Automated tests use the production mapper with fixtures, not the live Sheet. Before an
-actual campaign or Apps Script update:
+Automated lifecycle tests use the production mapper, real MySQL, browser interactions,
+and captured loopback SMTP with pseudonymous fixtures. They do not write to the live
+Sheet, call Apps Script, send externally, or prove the production service-token path.
+Follow `RSVP_EMAIL_RUNBOOK.md` for campaign preparation and sending; the complete test
+journey and its acceptance evidence are defined here.
 
-1. back up the bound script and response Sheet;
-2. confirm the exact supported Tracker columns and script properties;
-3. update with `clasp`, reload the Sheet, and verify the menu;
-4. run the designated one-row test and confirm the participant ID is unchanged on retry;
-5. verify accepted-audience preparation is complete and Sheet reconciliation has zero
-   missing IDs;
-6. generate a private dry-run recipient CSV and review suppressions, count, sender,
-   deadline, subject, and template;
-7. obtain explicit action-time approval before sending exactly one external test;
-8. complete RSVP, claim, scan, expiry/reissue, and cleanup with that recipient;
-9. obtain separate approval before a full campaign.
+### Preflight and one-row preparation
 
-Follow `RSVP_EMAIL_RUNBOOK.md`; never use the automated loopback mail result as
-authorisation to send externally.
+Use one explicitly approved test submission. Do not use a real participant merely
+because their row is convenient.
+
+1. Back up the bound Apps Script project and response Sheet.
+2. Confirm the response layout has the exact supported Tracker columns and that the
+   required script properties point to the intended protected deployment. Never print
+   their values.
+3. Push the reviewed script with `clasp`, reload the Sheet, and verify that `onOpen()`
+   exposes the expected Track the Hack menu.
+4. Review shared addresses and duplicate submissions before constructing any campaign.
+   Exactly one row per intended recipient may remain in the accepted audience.
+5. Set `TRACK_TEST_SUBMISSION_ID` to the approved submission and run
+   `prepareTestSubmissionForRsvp()` only when fresh setup is required. Remove the
+   property immediately afterward.
+6. Confirm the row has one durable participant ID, one signed management link, the
+   intended deadline, a refreshed RSVP status, and no unexpected changes to applicant
+   fields. Retry preparation and verify the participant ID remains unchanged.
+7. If the selected row already has a confirmed or declined response, do not call that
+   a fresh invitation test. Choose another approved row or obtain explicit approval
+   for the exact reversible reset/reissue operation.
+
+Preparation provisions records and links but sends no email.
+
+### Private recipient artefact and single approved email
+
+1. Export the response tab into ignored `private-rsvp/` without committing or printing
+   its contents.
+2. Run `npm run rsvp:prepare` as documented in `RSVP_EMAIL_RUNBOOK.md` to produce the
+   minimum private recipient CSV. Confirm its restrictive permissions and that no
+   signed capability appears in terminal output.
+3. Dry-run the bilingual campaign in the sibling bulk-email repository. Review the
+   exact recipient count, suppression result, sender, reply-to address, deadline,
+   subject, English and French rendering, text alternative, and campaign identifier.
+4. Obtain action-time approval for the exact recipient, sender, subject, template, and
+   rendered dry run before sending exactly one external test message.
+5. Confirm the delivered message has the expected sender authentication and link host.
+   Do not forward it or paste its management link into an issue, log, or chat.
+
+A loopback SMTP test or successful dry run is not authorisation to send externally.
+
+### Participant RSVP, claim, scanner, and reconciliation journey
+
+Complete one coherent journey with the same designated test participant:
+
+1. Open the RSVP management link and confirm that reading status does not mutate it.
+2. Choose attending; refresh Sheet reconciliation and verify `CONFIRMED` without a new
+   participant or management link.
+3. Choose not attending; reconcile and verify `DECLINED`.
+4. Reopen the original email link, choose attending again, and verify `CONFIRMED`.
+5. Verify the configured deadline: test the boundary with controlled local time or an
+   approved reversible test deadline, not by corrupting the campaign deadline.
+6. Issue a five-minute claim and verify that loading or previewing its page is
+   read-only. Explicitly activate it, then verify the participant session persists.
+7. Open the profile/pass, confirm participant details and QR, and verify the installed
+   PWA's offline pass exposes no extra private profile data.
+8. Optically scan the pass from a second organiser device. Exercise check-in,
+   merchandise, food or another station with `maxCheckIns > 1`, and attendance. Verify
+   each workflow returns only its permitted participant fields.
+9. Reissue access and confirm the old claim and prior participant session no longer
+   grant access. Verify expiry and replay failures through focused automation unless a
+   production-only configuration boundary changed.
+10. Refresh RSVP responses once more and verify participant ID, link, state, and refresh
+    timestamp remain consistent.
+11. Remove only the test Presence/session/capability data that was explicitly created,
+    restore reversible counters, and record anything intentionally retained.
+
+Before a full campaign, verify accepted-audience preparation is complete, reconciliation
+has zero missing or duplicate participant IDs, and the private recipient CSV matches the
+reviewed audience. Obtain separate action-time approval for the final count,
+suppressions, sender, deadline, subject, template, and rendered dry run. A successful
+one-recipient test is not approval to send the campaign.
 
 ## Deployment and production smoke
 

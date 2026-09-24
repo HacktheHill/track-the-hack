@@ -67,32 +67,9 @@ secret. Old raw-ID links and the old `{ discordId }` endpoint contract are
 intentionally rejected. Generate a new link after rollout. No command
 registration changes are needed.
 
-## Local integration test
+## Testing
 
-Keep the bot checkout next to Track, or set `DISCORD_BOT_REPO` to its path.
-With Node 24, Docker, and Chromium installed:
-
-```sh
-# In track-the-hack-bot
-npm ci
-npm run build
-
-# In track-the-hack
-npm run test:e2e:discord
-```
-
-This test requires the matching bot checkout, including its
-`test/fixtures/verification-server.mjs`. It uses the production bot router,
-proof generator, and mapping store; the Discord role call is a local double.
-It creates a disposable PostgreSQL container, runs Track on a private local
-port with the real MySQL/session flow, drives EN/FR browser verification,
-checks invalid/expired links, wrong signatures, absent/forged/revoked/expired
-sessions, organiser-only access, binding conflicts, races, failure/retry, and
-log privacy. It removes its container and test participants afterward.
-Screenshots go in ignored `artifacts/discord-verification/`.
-
-`npm test`, `npm run typecheck`, and `npm run lint` remain the Track regression
-checks; run `npm test` in the bot too. The separate Discord E2E command requires
-the bot checkout and is therefore not part of the single-repository
-`verify:dev` command. It does not validate live Discord permissions or deploy
-either service.
+The authoritative local two-service and controlled deployed verification
+procedures are in [`E2E_TESTING.md`](./E2E_TESTING.md#discord-verification).
+This document defines the protocol and configuration; it does not maintain a
+second test checklist.

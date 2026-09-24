@@ -52,8 +52,10 @@ post-import checks are documented in
 [`docs/SCHEDULE_IMPORT.md`](./docs/SCHEDULE_IMPORT.md).
 
 Discord verification uses the active participant session and signed personal
-links from the separate bot. Setup, bot-owned identity storage, and the local
-two-service test are in [`docs/DISCORD_VERIFICATION.md`](./docs/DISCORD_VERIFICATION.md).
+links from the separate bot. Protocol, configuration, and bot-owned identity
+storage are in [`docs/DISCORD_VERIFICATION.md`](./docs/DISCORD_VERIFICATION.md);
+all local and deployed verification procedures are in
+[`docs/E2E_TESTING.md`](./docs/E2E_TESTING.md#discord-verification).
 
 ## Self-host the database
 
@@ -86,7 +88,9 @@ migrations during each deployment. A normal application release does not reset
 production data. Any future reset is a separate, explicitly approved cutover
 operation with its own retention and rollback plan.
 
-Participant RSVP mail follows [`docs/RSVP_EMAIL_RUNBOOK.md`](./docs/RSVP_EMAIL_RUNBOOK.md).
+Participant RSVP mail follows [`docs/RSVP_EMAIL_RUNBOOK.md`](./docs/RSVP_EMAIL_RUNBOOK.md),
+while the complete one-recipient acceptance journey is in
+[`docs/E2E_TESTING.md`](./docs/E2E_TESTING.md#google-sheets-and-real-email-acceptance).
 Development exercises the same link contract through a credential-free loopback SMTP
 sink but never sends externally.
 
