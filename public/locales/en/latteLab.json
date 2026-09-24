@@ -22,7 +22,7 @@
 	"start": "Start",
 	"ready": "Mark ready",
 	"complete": "Complete",
-	"cancelStaff": "Cancel",
+	"cancelOrganizer": "Cancel",
 	"cancel-reason": "Cancellation reason",
 	"reason": {
 		"PARTICIPANT_CANCELLED": "Cancelled by participant",

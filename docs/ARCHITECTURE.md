@@ -221,7 +221,7 @@ does not alter the queue. A database-unique active-participant key enforces one 
 Preparing, or Ready order per participant, including concurrent submissions. Completed
 and cancelled orders retain anonymised configuration and timestamps for operations.
 
-Both domains use a temporary, 1–40 character pickup name because staff need a spoken
+Both domains use a temporary, 1–40 character pickup name because organisers need a spoken
 label at the physical counter and the pseudonymous participant record has no name. This
 is not a participant-profile field. Hardware clears it transactionally when every loan
 unit has an outcome; Latte Lab clears it on completion or cancellation. Audit logs use

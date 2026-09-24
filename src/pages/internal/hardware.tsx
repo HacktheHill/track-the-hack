@@ -1,4 +1,3 @@
-import { RoleName } from "@prisma/client";
 import type { GetServerSideProps } from "next";
 import { getServerSession } from "next-auth";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
@@ -7,7 +6,7 @@ import { useCallback, useState } from "react";
 import App from "@/components/App";
 import QRScanner from "@/components/QRScanner";
 import { trpc, type RouterOutputs } from "@/server/api/api";
-import { rolesRedirect } from "@/server/lib/redirects";
+import { organizerRedirect } from "@/server/lib/redirects";
 import { getAuthOptions } from "@/pages/api/auth/[...nextauth]";
 
 const newKey = () => crypto.randomUUID().replaceAll("-", "");
@@ -318,7 +317,7 @@ function LoanCard({ loan }: { loan: Loan }) {
 export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
 	const session = await getServerSession(req, res, getAuthOptions());
 	return {
-		redirect: await rolesRedirect(session, "/", [RoleName.ORGANIZER, RoleName.ADMIN]),
+		redirect: organizerRedirect(session, "/internal/hardware"),
 		props: await serverSideTranslations(locale ?? "en", ["hardware", "qr", "navbar", "common"]),
 	};
 };
