@@ -37,8 +37,8 @@ type EventLink = {
 	url: string;
 };
 
-const canRestoreFocus = (element: Element | null): element is Element & { focus: () => void } =>
-	element !== null && "focus" in element && typeof element.focus === "function";
+const canRestoreFocus = (element: Element | null | undefined): element is Element & { focus: () => void } =>
+	element != null && "focus" in element && typeof element.focus === "function";
 
 const eventTypes = [
 	EventType.ALL,

@@ -4,6 +4,7 @@
 	"roles": "Rôles",
 	"metrics": "Statistiques",
 	"submit": "Soumettre",
+	"user-profile": "Profil de l’utilisateur",
 
 	"events": {
 		"title": "Événements",
@@ -25,6 +26,8 @@
 		"type": "Type d'événement",
 		"type-values": {
 			"ALL": "Tous les participants",
+			"GENERAL": "Général",
+			"COMPETITION": "Compétition",
 			"WORKSHOP": "Atelier",
 			"SOCIAL": "Activité sociale",
 			"CAREER_FAIR": "Salon de l'emploi",

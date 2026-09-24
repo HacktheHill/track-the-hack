@@ -31,12 +31,15 @@ export default function ScheduleSaveButton({ eventId, eventName, interested }: P
 		},
 		onError: (_error, input, context) => {
 			if (!context) return;
+			setOptimisticInterested(context.previousInterested);
 			utils.events.savedIds.setData(undefined, previous => {
 				const ids = (previous ?? []).filter(id => id !== input.eventId);
 				return context.previousInterested ? [...ids, input.eventId] : ids;
 			});
 		},
-		onSettled: () => setOptimisticInterested(null),
+		onSettled: (_data, error) => {
+			if (!error) setOptimisticInterested(null);
+		},
 	});
 
 	const displayedInterested = optimisticInterested ?? interested;

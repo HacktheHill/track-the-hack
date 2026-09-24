@@ -54,7 +54,7 @@ const Links = ({ bottom }: LinkProps) => {
 				bottom={bottom}
 				text={t("resources")}
 				src="/assets/resources.svg"
-				alt="Resources"
+				alt={t("resources")}
 			/>
 			<LinkItem
 				href="/sponsors"
@@ -161,7 +161,13 @@ const Navbar = ({ integrated }: NavbarProps) => {
 
 			{sessionData?.user?.image && (
 				// eslint-disable-next-line @next/next/no-img-element
-				<img className="rounded-full" src={sessionData.user.image} width={40} height={40} alt="User avatar" />
+				<img
+					className="rounded-full"
+					src={sessionData.user.image}
+					width={40}
+					height={40}
+					alt={t("user-avatar")}
+				/>
 			)}
 		</nav>
 	);

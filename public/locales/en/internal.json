@@ -4,6 +4,7 @@
 	"roles": "Roles",
 	"metrics": "Metrics",
 	"submit": "Submit",
+	"user-profile": "User profile",
 
 	"events": {
 		"title": "Events",
@@ -25,6 +26,8 @@
 		"type": "Event type",
 		"type-values": {
 			"ALL": "All attendees",
+			"GENERAL": "General",
+			"COMPETITION": "Competition",
 			"WORKSHOP": "Workshop",
 			"SOCIAL": "Social",
 			"CAREER_FAIR": "Career fair",

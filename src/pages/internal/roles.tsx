@@ -81,7 +81,7 @@ const Roles: NextPage = () => {
 												// eslint-disable-next-line @next/next/no-img-element
 												<img
 													src={user.image}
-													alt="User Profile"
+													alt={t("user-profile")}
 													className="h-8 w-8 rounded-full"
 												/>
 											)}

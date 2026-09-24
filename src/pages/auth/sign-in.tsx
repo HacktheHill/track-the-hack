@@ -31,6 +31,10 @@ const SignIn = ({ developmentAuthEnabled }: InferGetServerSidePropsType<typeof g
 	const router = useRouter();
 	const [callbackUrl] = [router.query.callbackUrl].flat();
 	const [error] = [router.query.error].flat();
+	const errorMessage =
+		error === "AccessDenied" || error === "OAuthAccountNotLinked"
+			? t(`next-auth.${error}`)
+			: t("next-auth.Default");
 
 	return (
 		<>
@@ -57,10 +61,10 @@ const SignIn = ({ developmentAuthEnabled }: InferGetServerSidePropsType<typeof g
 						onClick={() => void signIn(DEVELOPMENT_AUTH_PROVIDER_ID, { callbackUrl: callbackUrl ?? "/" })}
 						className="ui-button ui-button-primary"
 					>
-						Sign in as local organiser
+						{t("local-organizer-sign-in")}
 					</button>
 				)}
-				{error && <Error message={t(`next-auth.${error}`)} />}
+				{error && <Error message={errorMessage} />}
 			</main>
 		</>
 	);

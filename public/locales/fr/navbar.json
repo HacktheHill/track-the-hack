@@ -12,5 +12,6 @@
 	"sign-out": "Déconnexion",
 	"sign-in": "Connexion organisateur",
 	"language": "Langue",
-	"bottom-navigation": "Navigation du bas"
+	"bottom-navigation": "Navigation du bas",
+	"user-avatar": "Avatar de l’utilisateur"
 }

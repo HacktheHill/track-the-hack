@@ -17,6 +17,10 @@ const ErrorPage = () => {
 	const { t } = useTranslation("auth");
 	const router = useRouter();
 	const [error] = [router.query.error].flat();
+	const errorMessage =
+		error === "AccessDenied" || error === "OAuthAccountNotLinked"
+			? t(`next-auth.${error}`)
+			: t("next-auth.Default");
 
 	return (
 		<>
@@ -33,7 +37,7 @@ const ErrorPage = () => {
 					/>
 					<h1 className="ui-page-title">{t("error")}</h1>
 				</div>
-				<Error message={(error && t(`next-auth.${error}`)) ?? t("common:unknown-error")} />
+				<Error message={error ? errorMessage : t("common:unknown-error")} />
 			</main>
 		</>
 	);
