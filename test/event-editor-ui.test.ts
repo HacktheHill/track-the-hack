@@ -69,7 +69,10 @@ for (const mode of ["create", "update"]) {
 				? createElement(EventEditor, { event: mode === "update" ? event : null, onClose: () => setOpen(false) })
 				: createElement("button", { onClick: () => setOpen(true) }, "Reopen");
 		};
-		const renderer = create(wrap(createElement(EditorHost)));
+		let renderer!: ReactTestRenderer;
+		await act(() => {
+			renderer = create(wrap(createElement(EditorHost)));
+		});
 		t.after(() => renderer.unmount());
 		const fill = () => {
 			void act(() => {
@@ -174,7 +177,10 @@ void test("editor renders translated scanner controls and responsive shared styl
 		...createElement(Fragment, null, children),
 		children,
 	}));
-	const renderer = create(wrap(createElement(EventEditor, { event, onClose: () => undefined })));
+	let renderer!: ReactTestRenderer;
+	await act(() => {
+		renderer = create(wrap(createElement(EventEditor, { event, onClose: () => undefined })));
+	});
 	t.after(() => renderer.unmount());
 
 	assert.ok(button(renderer, "Enregistrer"));
@@ -191,8 +197,37 @@ void test("editor renders translated scanner controls and responsive shared styl
 			.findAllByType("p")
 			.some(node => node.children.includes("Les heures utilisent l'heure de l'Est (America/Toronto).")),
 	);
-	const dialogClassName: unknown = renderer.root.findByProps({ role: "dialog" }).props.className;
+	const dialog = renderer.root.findByType("dialog");
+	const dialogClassName: unknown = dialog.props.className;
 	if (typeof dialogClassName !== "string") assert.fail("Dialog must have responsive classes");
 	assert.ok(dialogClassName.includes("max-h-[calc(100vh-2rem)]"));
+	assert.equal(dialog.props["aria-labelledby"], "event-editor-title");
+	assert.equal(renderer.root.findByProps({ id: "event-name" }).props.autoFocus, true);
 	assert.ok(renderer.root.findAllByProps({ className: "grid grid-cols-1 gap-4 sm:grid-cols-2" }).length >= 4);
+});
+
+void test("native dialog cancel closes the editor through its cancel callback", async t => {
+	const { wrap } = await setup(t);
+	const previousDocument = Object.getOwnPropertyDescriptor(globalThis, "document");
+	Object.defineProperty(globalThis, "document", { configurable: true, value: { getElementById: () => ({}) } });
+	t.after(() => {
+		if (previousDocument) Object.defineProperty(globalThis, "document", previousDocument);
+		else Reflect.deleteProperty(globalThis, "document");
+	});
+	t.mock.method(ReactDOM, "createPortal", (children: ReactNode) => ({
+		...createElement(Fragment, null, children),
+		children,
+	}));
+	let closed = false;
+	let renderer!: ReactTestRenderer;
+	await act(() => {
+		renderer = create(wrap(createElement(EventEditor, { event: null, onClose: () => (closed = true) })));
+	});
+	t.after(() => renderer.unmount());
+	const handler: unknown = renderer.root.findByType("dialog").props.onCancel;
+	assert.equal(typeof handler, "function");
+	let defaultPrevented = false;
+	if (typeof handler === "function") handler({ preventDefault: () => (defaultPrevented = true) });
+	assert.equal(defaultPrevented, true);
+	assert.equal(closed, true);
 });

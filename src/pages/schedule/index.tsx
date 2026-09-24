@@ -8,6 +8,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import App from "@/components/App";
 import Error from "@/components/Error";
 import Loading from "@/components/Loading";
+import ScheduleSaveButton from "@/components/ScheduleSaveButton";
 import ScheduleEventDialog from "@/components/ScheduleEventDialog";
 import { trpc, type RouterOutputs } from "@/server/api/api";
 import { useHasParticipantPass } from "@/utils/participant-pass";
@@ -56,16 +57,6 @@ const Schedule: NextPage = () => {
 	const eventId = typeof router.query.event === "string" ? router.query.event : null;
 	const query = trpc.events.all.useQuery();
 	const saved = trpc.events.savedIds.useQuery(undefined, { enabled: hasPass, retry: false });
-	const utils = trpc.useUtils();
-	const update = trpc.events.setInterest.useMutation({
-		onSuccess: (interested, input) => {
-			utils.events.savedIds.setData(undefined, previous => {
-				const ids = previous ?? [];
-				return interested ? [...new Set([...ids, input.eventId])] : ids.filter(id => id !== input.eventId);
-			});
-			utils.events.getInterest.setData({ eventId: input.eventId }, interested);
-		},
-	});
 	const [now, setNow] = useState(() => Date.now());
 	const todayKey = scheduleDayKey(new Date(now));
 	const listRef = useRef<HTMLDivElement>(null);
@@ -445,37 +436,17 @@ const Schedule: NextPage = () => {
 																			)}
 																	</Link>
 																	{canSave && (
-																		<button
-																			type="button"
-																			className="absolute right-2 top-2 flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-current bg-white/90 text-xl text-dark-color"
-																			aria-label={t(
-																				(saved.data ?? []).includes(event.id)
-																					? "remove-from-schedule"
-																					: "save-to-schedule",
-																				{
-																					name:
-																						router.locale === "fr"
-																							? event.nameFr
-																							: event.name,
-																				},
-																			)}
-																			aria-pressed={(saved.data ?? []).includes(
+																		<ScheduleSaveButton
+																			eventId={event.id}
+																			eventName={
+																				router.locale === "fr"
+																					? event.nameFr
+																					: event.name
+																			}
+																			interested={(saved.data ?? []).includes(
 																				event.id,
 																			)}
-																			disabled={update.isLoading}
-																			onClick={() =>
-																				update.mutate({
-																					eventId: event.id,
-																					interested: !(
-																						saved.data ?? []
-																					).includes(event.id),
-																				})
-																			}
-																		>
-																			{(saved.data ?? []).includes(event.id)
-																				? "★"
-																				: "☆"}
-																		</button>
+																		/>
 																	)}
 																</div>
 															))}
@@ -493,7 +464,6 @@ const Schedule: NextPage = () => {
 							})}
 						</>
 					)}
-					{update.isError && <p role="alert">{eventText("interest-error")}</p>}
 				</div>
 			</div>
 			{eventId && <ScheduleEventDialog id={eventId} onClose={closeEvent} />}

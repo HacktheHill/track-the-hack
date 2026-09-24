@@ -20,5 +20,6 @@
 	"interested": "Remove from my schedule",
 	"saving-interest": "Saving…",
 	"retry-interest": "Retry",
-	"interest-error": "Could not update your schedule. Please try again."
+	"interest-error": "Could not update your schedule. Please try again.",
+	"interest-error-event": "Could not update {{name}} in your schedule. Please try again."
 }

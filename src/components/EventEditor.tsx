@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
 import { EventType, ScannerWorkflow, type Event } from "@prisma/client";
 import { trpc } from "@/server/api/api";
@@ -37,6 +37,9 @@ type EventLink = {
 	url: string;
 };
 
+const canRestoreFocus = (element: Element | null): element is Element & { focus: () => void } =>
+	element !== null && "focus" in element && typeof element.focus === "function";
+
 const eventTypes = [
 	EventType.ALL,
 	EventType.GENERAL,
@@ -72,10 +75,29 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 		event?.link ? [{ title: event.linkText ?? "", titleFr: event.linkTextFr ?? "", url: event.link }] : [],
 	);
 	const [error, setError] = useState<string | null>(null);
+	const [modalRoot, setModalRoot] = useState<HTMLElement | null>(null);
+	const dialogRef = useRef<HTMLDialogElement>(null);
+	const openerRef = useRef<{ focus: () => void; isConnected: boolean } | null>(null);
 	const saveInFlight = useRef(false);
 	const { t } = useTranslation("internal");
 
 	const utils = trpc.useUtils();
+
+	useEffect(() => {
+		const activeElement = document.activeElement;
+		openerRef.current = canRestoreFocus(activeElement) ? activeElement : null;
+		setModalRoot(document.getElementById("modal-root"));
+	}, []);
+
+	useEffect(() => {
+		const dialog = dialogRef.current;
+		if (!dialog || !modalRoot) return;
+		dialog.showModal();
+		return () => {
+			if (dialog.open) dialog.close();
+			if (openerRef.current?.isConnected) openerRef.current.focus();
+		};
+	}, [modalRoot]);
 
 	const createEvent = trpc.events.create.useMutation({
 		onSuccess: async () => {
@@ -234,8 +256,6 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 		setLinks(links.filter((_, currentIndex) => currentIndex !== index));
 	};
 
-	const modalRoot = document.getElementById("modal-root");
-
 	if (!modalRoot) {
 		return null;
 	}
@@ -246,342 +266,345 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 	} as const;
 
 	return createPortal(
-		<div className="fixed inset-0 z-50 flex items-center justify-center bg-light-tertiary-color bg-opacity-90 p-4">
-			<div
-				role="dialog"
-				aria-modal="true"
-				aria-labelledby="event-editor-title"
-				className="ui-panel max-h-[calc(100vh-2rem)] w-full max-w-3xl overflow-y-auto bg-light-quaternary-color p-4 text-center sm:p-8"
-			>
-				<h2 id="event-editor-title" className="ui-page-title mb-4">
-					{event ? t("events.edit") : t("events.new")}
-				</h2>
+		<dialog
+			ref={dialogRef}
+			className="schedule-dialog ui-panel max-h-[calc(100vh-2rem)] w-full max-w-3xl overflow-y-auto bg-light-quaternary-color p-4 text-center sm:p-8"
+			aria-labelledby="event-editor-title"
+			onCancel={cancelEvent => {
+				cancelEvent.preventDefault();
+				if (!saveInFlight.current) onClose();
+			}}
+			onClick={clickEvent => {
+				if (clickEvent.target === clickEvent.currentTarget && !saveInFlight.current) onClose();
+			}}
+		>
+			<h2 id="event-editor-title" className="ui-page-title mb-4">
+				{event ? t("events.edit") : t("events.new")}
+			</h2>
 
-				{error && (
-					<p
-						id="event-editor-error"
-						role="alert"
-						className="ui-field-error-message mb-4 rounded border border-red-500 p-2 text-left"
-					>
-						{error}
-					</p>
-				)}
-
-				<form
-					onSubmit={handleSave}
-					aria-describedby={error ? "event-editor-error" : undefined}
-					className="flex flex-col gap-4 text-left"
+			{error && (
+				<p
+					id="event-editor-error"
+					role="alert"
+					className="ui-field-error-message mb-4 rounded border border-red-500 p-2 text-left"
 				>
-					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-						<div className="flex flex-1 flex-col gap-1">
-							<label htmlFor="event-name">{t("events.name-en")}</label>
+					{error}
+				</p>
+			)}
 
-							<input
-								id="event-name"
-								type="text"
-								maxLength={191}
-								required
-								value={name}
-								onChange={e => setName(e.target.value)}
-								className="ui-field"
-								{...errorAttributes}
-							/>
-						</div>
+			<form
+				onSubmit={handleSave}
+				aria-describedby={error ? "event-editor-error" : undefined}
+				className="flex flex-col gap-4 text-left"
+			>
+				<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+					<div className="flex flex-1 flex-col gap-1">
+						<label htmlFor="event-name">{t("events.name-en")}</label>
 
-						<div className="flex flex-1 flex-col gap-1">
-							<label htmlFor="event-name-fr">{t("events.name-fr")}</label>
-
-							<input
-								id="event-name-fr"
-								type="text"
-								maxLength={191}
-								required
-								value={nameFr}
-								onChange={e => setNameFr(e.target.value)}
-								className="ui-field"
-								{...errorAttributes}
-							/>
-						</div>
-					</div>
-					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-						<div className="flex flex-col gap-1">
-							<label htmlFor="event-room">{t("events.location-en")}</label>
-
-							<input
-								id="event-room"
-								type="text"
-								maxLength={191}
-								required
-								value={room}
-								onChange={e => setRoom(e.target.value)}
-								className="ui-field"
-								{...errorAttributes}
-							/>
-						</div>
-
-						<div className="flex flex-col gap-1">
-							<label htmlFor="event-room-fr">{t("events.location-fr")}</label>
-
-							<input
-								id="event-room-fr"
-								type="text"
-								maxLength={191}
-								value={roomFr}
-								onChange={e => setRoomFr(e.target.value)}
-								className="ui-field"
-								{...errorAttributes}
-							/>
-						</div>
-					</div>
-
-					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-						<div className="flex flex-1 flex-col gap-1">
-							<label htmlFor="event-start">{t("events.start")}</label>
-
-							<input
-								id="event-start"
-								type="datetime-local"
-								required
-								value={start}
-								onChange={e => setStart(e.target.value)}
-								className="ui-field"
-								{...errorAttributes}
-							/>
-						</div>
-
-						<div className="flex flex-1 flex-col gap-1">
-							<label htmlFor="event-end">{t("events.end")}</label>
-
-							<input
-								id="event-end"
-								type="datetime-local"
-								required
-								value={end}
-								onChange={e => setEnd(e.target.value)}
-								className="ui-field"
-								{...errorAttributes}
-							/>
-						</div>
-					</div>
-					<p className="text-sm">{t("events.timezone")}</p>
-
-					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-						<div className="flex flex-1 flex-col gap-1">
-							<label htmlFor="event-description">{t("events.description-en")}</label>
-
-							<textarea
-								id="event-description"
-								value={description}
-								maxLength={65_535}
-								required
-								onChange={e => setDescription(e.target.value)}
-								rows={4}
-								className="ui-field"
-								{...errorAttributes}
-							/>
-						</div>
-
-						<div className="flex flex-1 flex-col gap-1">
-							<label htmlFor="event-description-fr">{t("events.description-fr")}</label>
-
-							<textarea
-								id="event-description-fr"
-								value={descriptionFr}
-								maxLength={65_535}
-								required
-								onChange={e => setDescriptionFr(e.target.value)}
-								rows={4}
-								className="ui-field"
-								{...errorAttributes}
-							/>
-						</div>
-					</div>
-
-					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-						<div className="flex flex-col gap-1">
-							<label htmlFor="event-type">{t("events.type")}</label>
-							<select
-								id="event-type"
-								value={type}
-								onChange={e =>
-									setType(eventTypes.find(value => value === e.target.value) ?? EventType.ALL)
-								}
-								className="ui-field"
-								{...errorAttributes}
-							>
-								{eventTypes.map(value => (
-									<option key={value} value={value}>
-										{t(`events.type-values.${value}`)}
-									</option>
-								))}
-							</select>
-						</div>
-						<div className="flex flex-col gap-1">
-							<label htmlFor="event-host">{t("events.host")}</label>
-							<input
-								id="event-host"
-								type="text"
-								maxLength={191}
-								value={host}
-								onChange={e => setHost(e.target.value)}
-								className="ui-field"
-								{...errorAttributes}
-							/>
-						</div>
-					</div>
-
-					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-						<div className="flex flex-col gap-1">
-							<label htmlFor="event-scanner-workflow">{t("events.scanner-workflow")}</label>
-							<select
-								id="event-scanner-workflow"
-								value={scannerWorkflow}
-								onChange={e =>
-									setScannerWorkflow(
-										scannerWorkflows.find(value => value === e.target.value) ??
-											ScannerWorkflow.ATTENDANCE,
-									)
-								}
-								className="ui-field"
-								{...errorAttributes}
-							>
-								{scannerWorkflows.map(value => (
-									<option key={value} value={value}>
-										{t(`events.scanner-workflow-values.${value}`)}
-									</option>
-								))}
-							</select>
-						</div>
-						<div className="flex flex-col gap-1">
-							<label htmlFor="event-max-check-ins">{t("events.max-check-ins")}</label>
-							<input
-								id="event-max-check-ins"
-								type="number"
-								min={0}
-								max={2_147_483_647}
-								step={1}
-								value={maxCheckIns}
-								onChange={e => setMaxCheckIns(e.target.value)}
-								className="ui-field"
-								{...errorAttributes}
-							/>
-						</div>
-					</div>
-					<div className="flex items-center gap-2">
 						<input
-							id="event-scanner-enabled"
-							type="checkbox"
-							checked={scannerEnabled}
-							onChange={e => setScannerEnabled(e.target.checked)}
-							className="ui-checkbox"
+							id="event-name"
+							autoFocus
+							type="text"
+							maxLength={191}
+							required
+							value={name}
+							onChange={e => setName(e.target.value)}
+							className="ui-field"
+							{...errorAttributes}
 						/>
-						<label htmlFor="event-scanner-enabled">{t("events.scanner-enabled")}</label>
 					</div>
 
-					<div className="flex flex-col gap-2">
-						<span>{t("events.photo")}</span>
-						{event?.image && (
-							// Existing event photos may use hosts outside Next.js's configured image allowlist.
-							// eslint-disable-next-line @next/next/no-img-element
-							<img
-								src={event.image}
-								alt={t("events.photo")}
-								className="max-h-48 w-full rounded object-cover"
+					<div className="flex flex-1 flex-col gap-1">
+						<label htmlFor="event-name-fr">{t("events.name-fr")}</label>
+
+						<input
+							id="event-name-fr"
+							type="text"
+							maxLength={191}
+							required
+							value={nameFr}
+							onChange={e => setNameFr(e.target.value)}
+							className="ui-field"
+							{...errorAttributes}
+						/>
+					</div>
+				</div>
+				<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+					<div className="flex flex-col gap-1">
+						<label htmlFor="event-room">{t("events.location-en")}</label>
+
+						<input
+							id="event-room"
+							type="text"
+							maxLength={191}
+							required
+							value={room}
+							onChange={e => setRoom(e.target.value)}
+							className="ui-field"
+							{...errorAttributes}
+						/>
+					</div>
+
+					<div className="flex flex-col gap-1">
+						<label htmlFor="event-room-fr">{t("events.location-fr")}</label>
+
+						<input
+							id="event-room-fr"
+							type="text"
+							maxLength={191}
+							value={roomFr}
+							onChange={e => setRoomFr(e.target.value)}
+							className="ui-field"
+							{...errorAttributes}
+						/>
+					</div>
+				</div>
+
+				<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+					<div className="flex flex-1 flex-col gap-1">
+						<label htmlFor="event-start">{t("events.start")}</label>
+
+						<input
+							id="event-start"
+							type="datetime-local"
+							required
+							value={start}
+							onChange={e => setStart(e.target.value)}
+							className="ui-field"
+							{...errorAttributes}
+						/>
+					</div>
+
+					<div className="flex flex-1 flex-col gap-1">
+						<label htmlFor="event-end">{t("events.end")}</label>
+
+						<input
+							id="event-end"
+							type="datetime-local"
+							required
+							value={end}
+							onChange={e => setEnd(e.target.value)}
+							className="ui-field"
+							{...errorAttributes}
+						/>
+					</div>
+				</div>
+				<p className="text-sm">{t("events.timezone")}</p>
+
+				<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+					<div className="flex flex-1 flex-col gap-1">
+						<label htmlFor="event-description">{t("events.description-en")}</label>
+
+						<textarea
+							id="event-description"
+							value={description}
+							maxLength={65_535}
+							required
+							onChange={e => setDescription(e.target.value)}
+							rows={4}
+							className="ui-field"
+							{...errorAttributes}
+						/>
+					</div>
+
+					<div className="flex flex-1 flex-col gap-1">
+						<label htmlFor="event-description-fr">{t("events.description-fr")}</label>
+
+						<textarea
+							id="event-description-fr"
+							value={descriptionFr}
+							maxLength={65_535}
+							required
+							onChange={e => setDescriptionFr(e.target.value)}
+							rows={4}
+							className="ui-field"
+							{...errorAttributes}
+						/>
+					</div>
+				</div>
+
+				<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+					<div className="flex flex-col gap-1">
+						<label htmlFor="event-type">{t("events.type")}</label>
+						<select
+							id="event-type"
+							value={type}
+							onChange={e => setType(eventTypes.find(value => value === e.target.value) ?? EventType.ALL)}
+							className="ui-field"
+							{...errorAttributes}
+						>
+							{eventTypes.map(value => (
+								<option key={value} value={value}>
+									{t(`events.type-values.${value}`)}
+								</option>
+							))}
+						</select>
+					</div>
+					<div className="flex flex-col gap-1">
+						<label htmlFor="event-host">{t("events.host")}</label>
+						<input
+							id="event-host"
+							type="text"
+							maxLength={191}
+							value={host}
+							onChange={e => setHost(e.target.value)}
+							className="ui-field"
+							{...errorAttributes}
+						/>
+					</div>
+				</div>
+
+				<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+					<div className="flex flex-col gap-1">
+						<label htmlFor="event-scanner-workflow">{t("events.scanner-workflow")}</label>
+						<select
+							id="event-scanner-workflow"
+							value={scannerWorkflow}
+							onChange={e =>
+								setScannerWorkflow(
+									scannerWorkflows.find(value => value === e.target.value) ??
+										ScannerWorkflow.ATTENDANCE,
+								)
+							}
+							className="ui-field"
+							{...errorAttributes}
+						>
+							{scannerWorkflows.map(value => (
+								<option key={value} value={value}>
+									{t(`events.scanner-workflow-values.${value}`)}
+								</option>
+							))}
+						</select>
+					</div>
+					<div className="flex flex-col gap-1">
+						<label htmlFor="event-max-check-ins">{t("events.max-check-ins")}</label>
+						<input
+							id="event-max-check-ins"
+							type="number"
+							min={0}
+							max={2_147_483_647}
+							step={1}
+							value={maxCheckIns}
+							onChange={e => setMaxCheckIns(e.target.value)}
+							className="ui-field"
+							{...errorAttributes}
+						/>
+					</div>
+				</div>
+				<div className="flex items-center gap-2">
+					<input
+						id="event-scanner-enabled"
+						type="checkbox"
+						checked={scannerEnabled}
+						onChange={e => setScannerEnabled(e.target.checked)}
+						className="ui-checkbox"
+					/>
+					<label htmlFor="event-scanner-enabled">{t("events.scanner-enabled")}</label>
+				</div>
+
+				<div className="flex flex-col gap-2">
+					<span>{t("events.photo")}</span>
+					{event?.image && (
+						// Existing event photos may use hosts outside Next.js's configured image allowlist.
+						// eslint-disable-next-line @next/next/no-img-element
+						<img
+							src={event.image}
+							alt={t("events.photo")}
+							className="max-h-48 w-full rounded object-cover"
+						/>
+					)}
+					<p className="text-sm">{t("events.photo-read-only")}</p>
+				</div>
+
+				<div className="flex flex-col gap-2">
+					<span>{t("events.links")}</span>
+
+					{links.map((link, index) => (
+						<div key={index} className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+							<input
+								aria-label={t("events.link-title")}
+								type="text"
+								maxLength={191}
+								placeholder={t("events.link-title")}
+								value={link.title}
+								onChange={e => updateLink(index, "title", e.target.value)}
+								className="ui-field"
+								{...errorAttributes}
 							/>
-						)}
-						<p className="text-sm">{t("events.photo-read-only")}</p>
-					</div>
 
-					<div className="flex flex-col gap-2">
-						<span>{t("events.links")}</span>
+							<input
+								aria-label={t("events.link-title-fr")}
+								type="text"
+								maxLength={191}
+								placeholder={t("events.link-title-fr")}
+								value={link.titleFr}
+								onChange={e => updateLink(index, "titleFr", e.target.value)}
+								className="ui-field"
+								{...errorAttributes}
+							/>
 
-						{links.map((link, index) => (
-							<div key={index} className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-								<input
-									aria-label={t("events.link-title")}
-									type="text"
-									maxLength={191}
-									placeholder={t("events.link-title")}
-									value={link.title}
-									onChange={e => updateLink(index, "title", e.target.value)}
-									className="ui-field"
-									{...errorAttributes}
-								/>
+							<input
+								aria-label={t("events.link-url")}
+								type="url"
+								maxLength={191}
+								pattern="https://.*"
+								placeholder={t("events.link-url")}
+								value={link.url}
+								onChange={e => updateLink(index, "url", e.target.value)}
+								className="ui-field"
+								{...errorAttributes}
+							/>
 
-								<input
-									aria-label={t("events.link-title-fr")}
-									type="text"
-									maxLength={191}
-									placeholder={t("events.link-title-fr")}
-									value={link.titleFr}
-									onChange={e => updateLink(index, "titleFr", e.target.value)}
-									className="ui-field"
-									{...errorAttributes}
-								/>
-
-								<input
-									aria-label={t("events.link-url")}
-									type="url"
-									maxLength={191}
-									pattern="https://.*"
-									placeholder={t("events.link-url")}
-									value={link.url}
-									onChange={e => updateLink(index, "url", e.target.value)}
-									className="ui-field"
-									{...errorAttributes}
-								/>
-
-								<button
-									type="button"
-									onClick={() => removeLink(index)}
-									className="ui-button sm:col-span-2 sm:justify-self-start"
-								>
-									{t("events.remove")}
-								</button>
-							</div>
-						))}
-						{links.length === 0 && (
-							<button type="button" onClick={addLink} className="ui-button self-start">
-								+ {t("events.add-link")}
+							<button
+								type="button"
+								onClick={() => removeLink(index)}
+								className="ui-button sm:col-span-2 sm:justify-self-start"
+							>
+								{t("events.remove")}
 							</button>
-						)}
-					</div>
-
-					<div className="flex items-center gap-2">
-						<input
-							id="event-visible"
-							type="checkbox"
-							checked={visible}
-							onChange={e => setVisible(e.target.checked)}
-							className="ui-checkbox"
-						/>
-
-						<label htmlFor="event-visible">{t("events.show")}</label>
-					</div>
-					<div className="flex flex-col-reverse justify-center gap-3 pt-2 sm:flex-row">
-						<button
-							type="button"
-							className="ui-button"
-							onClick={() => {
-								if (!saveInFlight.current) onClose();
-							}}
-							disabled={isSaving}
-						>
-							{t("events.cancel")}
+						</div>
+					))}
+					{links.length === 0 && (
+						<button type="button" onClick={addLink} className="ui-button self-start">
+							+ {t("events.add-link")}
 						</button>
+					)}
+				</div>
 
-						<button
-							type="submit"
-							className="ui-button ui-button-primary"
-							disabled={isSaving}
-							aria-busy={isSaving}
-						>
-							{t("events.save")}
-						</button>
-					</div>
-				</form>
-			</div>
-		</div>,
+				<div className="flex items-center gap-2">
+					<input
+						id="event-visible"
+						type="checkbox"
+						checked={visible}
+						onChange={e => setVisible(e.target.checked)}
+						className="ui-checkbox"
+					/>
+
+					<label htmlFor="event-visible">{t("events.show")}</label>
+				</div>
+				<div className="flex flex-col-reverse justify-center gap-3 pt-2 sm:flex-row">
+					<button
+						type="button"
+						className="ui-button"
+						onClick={() => {
+							if (!saveInFlight.current) onClose();
+						}}
+						disabled={isSaving}
+					>
+						{t("events.cancel")}
+					</button>
+
+					<button
+						type="submit"
+						className="ui-button ui-button-primary"
+						disabled={isSaving}
+						aria-busy={isSaving}
+					>
+						{t("events.save")}
+					</button>
+				</div>
+			</form>
+		</dialog>,
 		modalRoot,
 	);
 };

@@ -25,13 +25,14 @@ const urlBase64ToUint8Array = (value: string) => {
 	return Uint8Array.from(binary, char => char.charCodeAt(0));
 };
 
-const isPushAvailable = () =>
+const isNotificationRequestLookupAvailable = () =>
 	typeof window !== "undefined" &&
 	"Notification" in window &&
 	"serviceWorker" in navigator &&
-	"PushManager" in window &&
-	!!VAPID_PUBLIC_KEY.trim() &&
-	Notification.permission !== "denied";
+	"PushManager" in window;
+
+const isPushAvailable = () =>
+	isNotificationRequestLookupAvailable() && !!VAPID_PUBLIC_KEY.trim() && Notification.permission !== "denied";
 
 type Props = { id: string; onClose?: () => void };
 
@@ -52,6 +53,8 @@ export default function ScheduleEventDetails({ id, onClose }: Props) {
 	const [notifyError, setNotifyError] = useState(false);
 	const pending = useRef(false);
 	const event = query.data;
+	const eventId = event?.id;
+	const eventStartsAt = event?.start.getTime();
 	const notifyLabel = !pushAvailable
 		? notifyRequested
 			? t("notify-me-cancel-unavailable")
@@ -65,11 +68,11 @@ export default function ScheduleEventDetails({ id, onClose }: Props) {
 		setPushAvailable(false);
 		setNotifyRequested(false);
 		setNotifyError(false);
-		if (event && isPushAvailable()) {
-			void isEventNotificationRequested(event.id).then(requested => {
+		if (eventId && eventStartsAt !== undefined && isNotificationRequestLookupAvailable()) {
+			void isEventNotificationRequested(eventId).then(requested => {
 				if (!cancelled) setNotifyRequested(requested);
 			});
-			if (event.start > new Date()) {
+			if (eventStartsAt > Date.now() && VAPID_PUBLIC_KEY.trim()) {
 				void isPushServerAvailable(VAPID_PUBLIC_KEY).then(available => {
 					if (!cancelled) setPushAvailable(available);
 				});
@@ -78,7 +81,7 @@ export default function ScheduleEventDetails({ id, onClose }: Props) {
 		return () => {
 			cancelled = true;
 		};
-	}, [event]);
+	}, [eventId, eventStartsAt]);
 
 	const handleNotifyToggle = async () => {
 		if (!event || pending.current || !isPushAvailable() || (!pushAvailable && !notifyRequested)) return;

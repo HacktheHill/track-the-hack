@@ -20,5 +20,6 @@
 	"interested": "Retirer de mon horaire",
 	"saving-interest": "Enregistrement…",
 	"retry-interest": "Réessayer",
-	"interest-error": "Impossible de modifier votre horaire. Veuillez réessayer."
+	"interest-error": "Impossible de modifier votre horaire. Veuillez réessayer.",
+	"interest-error-event": "Impossible de modifier {{name}} dans votre horaire. Veuillez réessayer."
 }

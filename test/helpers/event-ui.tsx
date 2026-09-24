@@ -16,6 +16,14 @@ import EventPage from "@/pages/schedule/event";
 import type EventEditor from "@/components/EventEditor";
 import internalEn from "@root/public/locales/en/internal.json";
 import internalFr from "@root/public/locales/fr/internal.json";
+import scheduleEn from "@root/public/locales/en/schedule.json";
+import scheduleFr from "@root/public/locales/fr/schedule.json";
+import eventEn from "@root/public/locales/en/event.json";
+import eventFr from "@root/public/locales/fr/event.json";
+import navbarEn from "@root/public/locales/en/navbar.json";
+import navbarFr from "@root/public/locales/fr/navbar.json";
+import commonEn from "@root/public/locales/en/common.json";
+import commonFr from "@root/public/locales/fr/common.json";
 
 export const PublicEvent = ({ router }: { router: NextRouter }) => (
 	<RouterContext.Provider value={router}>
@@ -79,9 +87,12 @@ export const setup = async (t: TestContext, language = "en") => {
 	const i18n = createInstance();
 	await i18n.init({
 		lng: language,
-		ns: ["internal"],
+		ns: ["internal", "schedule", "event", "navbar", "common"],
 		defaultNS: "internal",
-		resources: { en: { internal: internalEn }, fr: { internal: internalFr } },
+		resources: {
+			en: { internal: internalEn, schedule: scheduleEn, event: eventEn, navbar: navbarEn, common: commonEn },
+			fr: { internal: internalFr, schedule: scheduleFr, event: eventFr, navbar: navbarFr, common: commonFr },
+		},
 		fallbackLng: "en",
 		interpolation: { escapeValue: false },
 	});
