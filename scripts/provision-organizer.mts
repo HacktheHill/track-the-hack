@@ -1,6 +1,9 @@
 import { PrismaClient } from "@prisma/client";
-import { hasOrganizerEmailDomain } from "@/server/lib/organizer-auth";
-import { parseOrganizerProvisionInput } from "@/server/lib/organizer-provision";
+// This standalone production-image entrypoint cannot resolve the application's TypeScript alias.
+// eslint-disable-next-line no-restricted-imports
+import { hasOrganizerEmailDomain } from "../src/server/lib/organizer-auth.ts";
+// eslint-disable-next-line no-restricted-imports
+import { parseOrganizerProvisionInput } from "../src/server/lib/organizer-provision.ts";
 
 const prisma = new PrismaClient();
 const { email, admin } = parseOrganizerProvisionInput(process.argv.slice(2), process.env);

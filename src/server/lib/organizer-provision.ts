@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { normalizeOrganizerEmail } from "@/server/lib/organizer-auth";
+import { normalizeOrganizerEmail } from "./organizer-auth";
 
 const emailSchema = z.string().trim().email().max(191);
 
