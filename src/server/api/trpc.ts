@@ -24,6 +24,7 @@ import { prisma } from "@/server/db";
 import { env } from "@/env/server.mjs";
 import { readParticipantSession } from "@/server/lib/participant-session";
 import { PrismaHackerLifecycleRepository } from "@/server/repositories/prisma-hacker-lifecycle";
+import { getOrganizerAccess } from "@/server/lib/organizer-auth";
 
 type CreateContextOptions = {
 	session: Session | null;
@@ -139,6 +140,23 @@ const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
  * @see https://trpc.io/docs/procedures
  */
 export const protectedProcedure = t.procedure.use(enforceUserIsAuthed);
+
+const enforceOrganizerAccess = t.middleware(async ({ ctx, next }) => {
+	if (!ctx.session?.user) throw new TRPCError({ code: "UNAUTHORIZED" });
+	const organizer = await getOrganizerAccess(ctx.prisma, ctx.session.user.id);
+	if (!organizer) throw new TRPCError({ code: "FORBIDDEN" });
+	return next({ ctx: { ...ctx, session: { ...ctx.session, user: ctx.session.user }, organizer } });
+});
+
+const enforceAdminAccess = t.middleware(async ({ ctx, next }) => {
+	if (!ctx.session?.user) throw new TRPCError({ code: "UNAUTHORIZED" });
+	const organizer = await getOrganizerAccess(ctx.prisma, ctx.session.user.id);
+	if (!organizer?.isAdmin) throw new TRPCError({ code: "FORBIDDEN" });
+	return next({ ctx: { ...ctx, session: { ...ctx.session, user: ctx.session.user }, organizer } });
+});
+
+export const organizerProcedure = t.procedure.use(enforceOrganizerAccess);
+export const adminProcedure = t.procedure.use(enforceAdminAccess);
 
 // Participant cookies authorize only participant operations, never organizer procedures.
 export const participantProcedure = t.procedure.use(({ ctx, next, type }) => {

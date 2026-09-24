@@ -1,20 +1,10 @@
-import { RoleName } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { hasRoles } from "@/utils/helpers";
 import { participantIdSchema } from "@/server/services/hacker-lifecycle";
-import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+import { createTRPCRouter, organizerProcedure } from "@/server/api/trpc";
 
 export const hackerRouter = createTRPCRouter({
-	get: protectedProcedure.input(z.object({ id: participantIdSchema })).query(async ({ ctx, input }) => {
-		const organizer = await ctx.prisma.user.findUnique({
-			where: { id: ctx.session.user.id },
-			select: { roles: { select: { name: true } } },
-		});
-		if (!organizer || !hasRoles(organizer, [RoleName.ORGANIZER, RoleName.ADMIN])) {
-			throw new TRPCError({ code: "FORBIDDEN" });
-		}
-
+	get: organizerProcedure.input(z.object({ id: participantIdSchema })).query(async ({ ctx, input }) => {
 		const hacker = await ctx.prisma.hacker.findUnique({
 			where: { id: input.id },
 			select: {

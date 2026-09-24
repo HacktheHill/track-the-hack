@@ -1,5 +1,12 @@
 {
 	"title": "QR scanner",
+	"tabs-label": "Pass options",
+	"my-pass": "My pass",
+	"scan-passes": "Scan passes",
+	"organizer": "Organiser",
+	"organizer-pass": "Organiser: {{name}}",
+	"organizer-qr-alt": "Your organizer pass QR code",
+	"organizer-pass-help": "Show this pass for food, merchandise, check-in, or event attendance. It contains only your organizer identifier.",
 	"select-action": "Station",
 	"view-participant": "Participant details",
 	"unknown-error": "The participant or event action could not be loaded.",

@@ -1,5 +1,5 @@
-import { RoleName, ScannerWorkflow, TShirtSize } from "@prisma/client";
-import type { GetServerSideProps } from "next";
+import { ScannerWorkflow, TShirtSize } from "@prisma/client";
+import type { GetServerSideProps, InferGetServerSidePropsType } from "next";
 import { getServerSession } from "next-auth";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
@@ -13,9 +13,11 @@ import App from "@/components/App";
 import ErrorDisplay from "@/components/Error";
 import PhysicalScanner from "@/components/PhysicalScanner";
 import QRScanner from "@/components/QRScanner";
+import QRCode from "@/components/QRCode";
 import type { RouterOutputs } from "@/server/api/api";
 import { trpc } from "@/server/api/api";
-import { rolesRedirect } from "@/server/lib/redirects";
+import { organizerRedirect } from "@/server/lib/redirects";
+import { createOrganizerPass, parseOrganizerPass } from "@/server/lib/organizer-pass";
 import { getAuthOptions } from "@/pages/api/auth/[...nextauth]";
 
 type Hacker = RouterOutputs["hackers"]["get"];
@@ -23,8 +25,8 @@ type WorkflowScan = RouterOutputs["presence"]["scan"];
 const VIEW_PARTICIPANT = "__view__";
 const SELECTION_KEY = "track-scanner-station";
 
-const QR = () => {
-	const { t, i18n } = useTranslation("qr");
+const QR = ({ organizerPass }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
+	const { t } = useTranslation("qr");
 	const utils = trpc.useContext();
 	const scannable = trpc.events.scannable.useQuery();
 	const events = scannable.data ?? [];
@@ -36,6 +38,7 @@ const QR = () => {
 	const scanSequence = useRef(0);
 	const [display, setDisplay] = useState<React.ReactNode>();
 	const [error, setError] = useState("");
+	const [tab, setTab] = useState<"pass" | "scan">("pass");
 
 	useEffect(() => {
 		if (!scannable.data) return;
@@ -62,9 +65,16 @@ const QR = () => {
 
 			try {
 				if (selectedAction.current === VIEW_PARTICIPANT) {
-					const hacker = await utils.hackers.get.fetch({ id: hackerId });
-					if (sequence !== scanSequence.current) return;
-					setDisplay(<ParticipantCard hacker={hacker} />);
+					const organizerId = parseOrganizerPass(hackerId);
+					if (organizerId) {
+						const organizer = await utils.users.getOrganizerPass.fetch({ id: organizerId });
+						if (sequence !== scanSequence.current) return;
+						setDisplay(<OrganizerCard organizer={organizer} />);
+					} else {
+						const hacker = await utils.hackers.get.fetch({ id: hackerId });
+						if (sequence !== scanSequence.current) return;
+						setDisplay(<ParticipantCard hacker={hacker} />);
+					}
 					playScanFeedback("view");
 					return;
 				}
@@ -98,47 +108,117 @@ const QR = () => {
 		>
 			{/* Auto margins centre the column without making overflow unreachable above the scroll origin. */}
 			<div className="my-auto flex w-full flex-col items-center gap-8">
-				<select
-					aria-label={t("select-action")}
-					disabled={pending}
-					className="ui-field w-full max-w-4xl text-center"
-					value={selectedValue}
-					onChange={event => {
-						if (operation.isPending()) return;
-						scanSequence.current += 1;
-						selectedAction.current = event.target.value;
-						setSelectedValue(event.target.value);
-						try {
-							window.localStorage.setItem(SELECTION_KEY, event.target.value);
-						} catch {
-							// The selection still lasts for this page visit.
-						}
-						previousId.current = "";
-						setDisplay(undefined);
-						setError("");
-					}}
+				<div
+					role="tablist"
+					aria-label={t("tabs-label")}
+					className="flex rounded-xl bg-light-quaternary-color p-1"
 				>
-					<option value={VIEW_PARTICIPANT}>{t("view-participant")}</option>
-					{events.map(event => (
-						<option key={event.id} value={event.id}>
-							{t(`workflow.${event.scannerWorkflow}`)} —{" "}
-							{i18n.language === "fr" ? event.nameFr : event.name} —{" "}
-							{event.start.toLocaleString(i18n.language === "fr" ? "fr-CA" : "en-CA", {
-								weekday: "short",
-								hour: "numeric",
-								minute: "2-digit",
-							})}
-						</option>
-					))}
-				</select>
-				<div className="grid w-full max-w-4xl gap-6 md:grid-cols-2">
-					<QRScanner onScan={handleCameraScan} onClear={handleCameraClear} setError={setError} />
-					<PhysicalScanner onScan={handlePhysicalScan} disabled={pending} />
+					<button
+						type="button"
+						role="tab"
+						aria-selected={tab === "pass"}
+						className={`rounded-lg px-6 py-3 font-coolvetica ${tab === "pass" ? "bg-primary-color text-light-color" : "text-dark-color"}`}
+						onClick={() => setTab("pass")}
+					>
+						{t("my-pass")}
+					</button>
+					<button
+						type="button"
+						role="tab"
+						aria-selected={tab === "scan"}
+						className={`rounded-lg px-6 py-3 font-coolvetica ${tab === "scan" ? "bg-primary-color text-light-color" : "text-dark-color"}`}
+						onClick={() => setTab("scan")}
+					>
+						{t("scan-passes")}
+					</button>
 				</div>
-				{display}
-				{error && <ErrorDisplay message={error} />}
+				{tab === "pass" ? (
+					<section className="flex w-full max-w-xl flex-col items-center gap-4 rounded-xl bg-light-quaternary-color p-8 shadow-lg">
+						<h1 className="text-center font-coolvetica text-3xl text-dark-color">{t("my-pass")}</h1>
+						<QRCode value={organizerPass} label={t("organizer-qr-alt")} />
+						<p className="text-center font-rubik text-sm text-dark-color">{t("organizer-pass-help")}</p>
+					</section>
+				) : (
+					<ScannerPanel
+						events={events}
+						selectedValue={selectedValue}
+						pending={pending}
+						onSelection={value => {
+							if (operation.isPending()) return;
+							scanSequence.current += 1;
+							selectedAction.current = value;
+							setSelectedValue(value);
+							try {
+								window.localStorage.setItem(SELECTION_KEY, value);
+							} catch {
+								// The selection still lasts for this page visit.
+							}
+							previousId.current = "";
+							setDisplay(undefined);
+							setError("");
+						}}
+						onCameraScan={handleCameraScan}
+						onCameraClear={handleCameraClear}
+						onPhysicalScan={handlePhysicalScan}
+						setError={setError}
+					/>
+				)}
+				{tab === "scan" && display}
+				{tab === "scan" && error && <ErrorDisplay message={error} />}
 			</div>
 		</App>
+	);
+};
+
+type ScannerPanelProps = {
+	events: RouterOutputs["events"]["scannable"];
+	selectedValue: string;
+	pending: boolean;
+	onSelection: (value: string) => void;
+	onCameraScan: (result: string) => void;
+	onCameraClear: () => void;
+	onPhysicalScan: (result: string) => void;
+	setError: (value: string) => void;
+};
+
+const ScannerPanel = ({
+	events,
+	selectedValue,
+	pending,
+	onSelection,
+	onCameraScan,
+	onCameraClear,
+	onPhysicalScan,
+	setError,
+}: ScannerPanelProps) => {
+	const { t, i18n } = useTranslation("qr");
+	return (
+		<>
+			<select
+				aria-label={t("select-action")}
+				disabled={pending}
+				className="ui-field w-full max-w-4xl text-center"
+				value={selectedValue}
+				onChange={event => onSelection(event.target.value)}
+			>
+				<option value={VIEW_PARTICIPANT}>{t("view-participant")}</option>
+				{events.map(event => (
+					<option key={event.id} value={event.id}>
+						{t(`workflow.${event.scannerWorkflow}`)} — {i18n.language === "fr" ? event.nameFr : event.name}{" "}
+						—{" "}
+						{event.start.toLocaleString(i18n.language === "fr" ? "fr-CA" : "en-CA", {
+							weekday: "short",
+							hour: "numeric",
+							minute: "2-digit",
+						})}
+					</option>
+				))}
+			</select>
+			<div className="grid w-full max-w-4xl gap-6 md:grid-cols-2">
+				<QRScanner onScan={onCameraScan} onClear={onCameraClear} setError={setError} />
+				<PhysicalScanner onScan={onPhysicalScan} disabled={pending} />
+			</div>
+		</>
 	);
 };
 
@@ -158,6 +238,15 @@ const ParticipantCard = ({ hacker }: { hacker: Hacker }) => {
 	);
 };
 
+const OrganizerCard = ({ organizer }: { organizer: { id: string; name: string | null } }) => {
+	const { t } = useTranslation("qr");
+	return (
+		<div className="rounded-lg bg-light-primary-color p-6 font-rubik text-light-color">
+			<p className="font-bold">{t("organizer-pass", { name: organizer.name ?? t("organizer") })}</p>
+		</div>
+	);
+};
+
 const TShirtInfo = ({ size }: { size: TShirtSize }) => {
 	const { t } = useTranslation("qr");
 	return <p>{size === TShirtSize.NONE ? t("common:no-t-shirt") : t("t-shirt", { value: size })}</p>;
@@ -166,8 +255,8 @@ const TShirtInfo = ({ size }: { size: TShirtSize }) => {
 const WorkflowCard = ({ result, operation }: { result: WorkflowScan; operation: ScannerOperation }) => {
 	const { t, i18n } = useTranslation("qr");
 	const interests = trpc.presence.getEventInterests.useQuery(
-		{ eventId: result.eventId, hackerId: result.participant.id },
-		{ enabled: result.workflow === ScannerWorkflow.ATTENDANCE },
+		{ eventId: result.eventId, hackerId: result.subjectType === "participant" ? result.participant.id : "" },
+		{ enabled: result.subjectType === "participant" && result.workflow === ScannerWorkflow.ATTENDANCE },
 	);
 	return (
 		<ScanResult result={result} interestedEvents={interests.data}>
@@ -178,9 +267,13 @@ const WorkflowCard = ({ result, operation }: { result: WorkflowScan; operation: 
 				</button>
 			)}
 			<PresenceCounter
-				key={`${result.eventId}:${result.participant.id}`}
+				key={`${result.eventId}:${result.subjectType === "participant" ? result.participant.id : result.organizer.id}`}
 				eventId={result.eventId}
-				hackerId={result.participant.id}
+				hackerId={
+					result.subjectType === "participant"
+						? result.participant.id
+						: createOrganizerPass(result.organizer.id)
+				}
 				eventName={i18n.language === "fr" ? result.nameFr : result.name}
 				initialValue={result.value}
 				initialAtLimit={result.atLimit}
@@ -190,11 +283,16 @@ const WorkflowCard = ({ result, operation }: { result: WorkflowScan; operation: 
 	);
 };
 
-export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
+export const getServerSideProps: GetServerSideProps<{ organizerPass: string }> = async ({ req, res, locale }) => {
 	const session = await getServerSession(req, res, getAuthOptions());
+	const redirect = organizerRedirect(session, "/qr");
+	if (redirect) return { redirect };
+	if (!session?.user) throw new Error("Organizer session disappeared after authorization");
 	return {
-		redirect: await rolesRedirect(session, "/qr", [RoleName.ORGANIZER, RoleName.ADMIN]),
-		props: await serverSideTranslations(locale ?? "en", ["qr", "navbar", "common", "event"]),
+		props: {
+			organizerPass: createOrganizerPass(session.user.id),
+			...(await serverSideTranslations(locale ?? "en", ["qr", "navbar", "common", "event"])),
+		},
 	};
 };
 

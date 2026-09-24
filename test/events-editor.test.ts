@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { loadEnvFile } from "node:process";
 import test, { type TestContext } from "node:test";
-import { EventType, PrismaClient, RoleName, ScannerWorkflow } from "@prisma/client";
+import { EventType, PrismaClient, ScannerWorkflow } from "@prisma/client";
 import { z } from "zod";
 
 loadEnvFile(".github/workflows/build.env");
@@ -53,13 +53,23 @@ const publicSelect = {
 
 const setup = async (
 	t: TestContext,
-	roles: RoleName[] | null,
+	access: "organizer" | "denied" | null,
 	foundEvent: typeof existingEvent | null = existingEvent,
 ) => {
 	const { eventsRouter } = await routerModule;
 	const prisma = new PrismaClient({ datasourceUrl: "mysql://test:test@127.0.0.1:1/unreachable" });
 	const userLookup = t.mock.fn(() =>
-		Promise.resolve({ name: "Editor", roles: (roles ?? []).map(name => ({ name })) }),
+		Promise.resolve(
+			access
+				? {
+						id: "editor-1",
+						name: "Editor",
+						email: access === "organizer" ? "editor@ctn-rtc.org" : "editor@example.com",
+						isAdmin: false,
+						disabledAt: null,
+					}
+				: null,
+		),
 	);
 	const eventLookup = t.mock.fn(() => Promise.resolve(foundEvent));
 	const eventFindFirst = t.mock.fn(() => Promise.resolve(foundEvent));
@@ -81,6 +91,7 @@ const setup = async (
 	const deleteSubscriptions = t.mock.fn(() => Promise.resolve({ count: 0 }));
 	const transaction = t.mock.fn((work: (client: PrismaClient) => Promise<unknown>) => work(prisma));
 	Object.assign(prisma.user, { findUnique: userLookup });
+	Object.assign(prisma.organizerAccess, { findUnique: () => Promise.resolve(null) });
 	Object.assign(prisma.event, {
 		findUnique: eventLookup,
 		findFirst: eventFindFirst,
@@ -92,7 +103,12 @@ const setup = async (
 	Object.assign(prisma, { $queryRaw: queryRaw, $transaction: transaction });
 	const caller = eventsRouter.createCaller({
 		prisma,
-		session: roles ? { user: { id: "editor-1", roles }, expires: "2099-01-01T00:00:00Z" } : null,
+		session: access
+			? {
+					user: { id: "editor-1", isOrganizer: access === "organizer", isAdmin: false },
+					expires: "2099-01-01T00:00:00Z",
+				}
+			: null,
 	});
 	return {
 		caller,
@@ -123,7 +139,7 @@ void test("public event queries exclude hidden events and project only public fi
 });
 
 void test("organizer management includes hidden events and all editable scanner fields", async t => {
-	const { caller, eventFindMany } = await setup(t, [RoleName.ORGANIZER]);
+	const { caller, eventFindMany } = await setup(t, "organizer");
 	await caller.manage();
 	assert.deepEqual(eventFindMany.mock.calls[0]?.arguments, [
 		{
@@ -134,7 +150,7 @@ void test("organizer management includes hidden events and all editable scanner 
 });
 
 void test("scanner list includes only explicitly enabled current events", async t => {
-	const { caller, eventFindMany } = await setup(t, [RoleName.ORGANIZER]);
+	const { caller, eventFindMany } = await setup(t, "organizer");
 	const before = Date.now();
 	await caller.scannable();
 	const after = Date.now();
@@ -156,28 +172,26 @@ void test("scanner list includes only explicitly enabled current events", async 
 	});
 });
 
-for (const role of [RoleName.ADMIN, RoleName.ORGANIZER]) {
-	void test(`${role} can create and update events while the API owns the photo`, async t => {
-		const { caller, userLookup, create, update } = await setup(t, [role]);
-		await caller.create(eventInput);
-		assert.deepEqual(create.mock.calls[0]?.arguments, [{ data: { ...eventInput, image: null } }]);
+void test("organizers can create and update events while the API owns the photo", async t => {
+	const { caller, userLookup, create, update } = await setup(t, "organizer");
+	await caller.create(eventInput);
+	assert.deepEqual(create.mock.calls[0]?.arguments, [{ data: { ...eventInput, image: null } }]);
 
-		const editedInput = { ...eventInput, linkText: "Join us", linkTextFr: "Rejoignez-nous" };
-		await caller.update({ id: existingEvent.id, ...editedInput });
-		assert.deepEqual(update.mock.calls[0]?.arguments, [{ where: { id: existingEvent.id }, data: editedInput }]);
-		assert.equal(userLookup.mock.callCount(), 2);
-	});
-}
+	const editedInput = { ...eventInput, linkText: "Join us", linkTextFr: "Rejoignez-nous" };
+	await caller.update({ id: existingEvent.id, ...editedInput });
+	assert.deepEqual(update.mock.calls[0]?.arguments, [{ where: { id: existingEvent.id }, data: editedInput }]);
+	assert.equal(userLookup.mock.callCount(), 2);
+});
 
 void test("removing the event link preserves the existing photo", async t => {
-	const { caller, update } = await setup(t, [RoleName.ADMIN]);
+	const { caller, update } = await setup(t, "organizer");
 	const input = { ...eventInput, link: null, linkText: null, linkTextFr: null };
 	await caller.update({ id: existingEvent.id, ...input });
 	assert.deepEqual(update.mock.calls[0]?.arguments, [{ where: { id: existingEvent.id }, data: input }]);
 });
 
 void test("moving an event to a new future start reopens completion while preserving an active lease", async t => {
-	const { caller, update, transaction, queryRaw } = await setup(t, [RoleName.ADMIN]);
+	const { caller, update, transaction, queryRaw } = await setup(t, "organizer");
 	const start = new Date("2026-09-26T14:00:00Z");
 	await caller.update({ id: existingEvent.id, ...eventInput, start, end: new Date("2026-09-26T15:00:00Z") });
 	assert.equal(transaction.mock.callCount(), 1);
@@ -196,7 +210,7 @@ void test("moving an event to a new future start reopens completion while preser
 });
 
 void test("hiding an event closes reminders without discarding future browser requests", async t => {
-	const { caller, update, deleteSubscriptions } = await setup(t, [RoleName.ADMIN]);
+	const { caller, update, deleteSubscriptions } = await setup(t, "organizer");
 	await caller.update({ id: existingEvent.id, ...eventInput, hidden: true });
 	assert.equal(deleteSubscriptions.mock.callCount(), 0);
 	assert.deepEqual(update.mock.calls[0]?.arguments, [
@@ -213,7 +227,7 @@ void test("hiding an event closes reminders without discarding future browser re
 
 void test("unhiding a future event reopens reminder registration", async t => {
 	const hiddenEvent = { ...existingEvent, hidden: true };
-	const { caller, update } = await setup(t, [RoleName.ADMIN], hiddenEvent);
+	const { caller, update } = await setup(t, "organizer", hiddenEvent);
 	await caller.update({ id: existingEvent.id, ...eventInput });
 	assert.deepEqual(update.mock.calls[0]?.arguments, [
 		{
@@ -243,29 +257,27 @@ for (const [name, invalidInput] of [
 	["client-controlled image", { ...eventInput, image: "https://example.com/replacement.png" }],
 ] as const) {
 	void test(`create rejects ${name}`, async t => {
-		const { caller, userLookup, create } = await setup(t, [RoleName.ADMIN]);
+		const { caller, userLookup, create } = await setup(t, "organizer");
 		// @ts-expect-error The malformed payloads intentionally violate the inferred API input.
 		await assert.rejects(caller.create(invalidInput), { code: "BAD_REQUEST" });
-		assert.equal(userLookup.mock.callCount(), 0);
+		assert.equal(userLookup.mock.callCount(), 1);
 		assert.equal(create.mock.callCount(), 0);
 	});
 }
 
-for (const roles of [[], [RoleName.MAYOR], [RoleName.PREMIER]]) {
-	void test(`users with ${roles.join(", ") || "no roles"} cannot create, update, or manage events`, async t => {
-		const { caller, eventLookup, eventFindMany, create, update } = await setup(t, roles);
-		await assert.rejects(caller.create(eventInput), { code: "FORBIDDEN" });
-		await assert.rejects(caller.update({ id: existingEvent.id, ...eventInput }), { code: "FORBIDDEN" });
-		await assert.rejects(caller.manage(), { code: "FORBIDDEN" });
-		assert.equal(eventLookup.mock.callCount(), 0);
-		assert.equal(eventFindMany.mock.callCount(), 0);
-		assert.equal(create.mock.callCount(), 0);
-		assert.equal(update.mock.callCount(), 0);
-	});
-}
+void test("signed-in users without organizer access cannot create, update, or manage events", async t => {
+	const { caller, eventLookup, eventFindMany, create, update } = await setup(t, "denied");
+	await assert.rejects(caller.create(eventInput), { code: "FORBIDDEN" });
+	await assert.rejects(caller.update({ id: existingEvent.id, ...eventInput }), { code: "FORBIDDEN" });
+	await assert.rejects(caller.manage(), { code: "FORBIDDEN" });
+	assert.equal(eventLookup.mock.callCount(), 0);
+	assert.equal(eventFindMany.mock.callCount(), 0);
+	assert.equal(create.mock.callCount(), 0);
+	assert.equal(update.mock.callCount(), 0);
+});
 
 void test("missing public and editable events return NOT_FOUND", async t => {
-	const { caller } = await setup(t, [RoleName.ADMIN], null);
+	const { caller } = await setup(t, "organizer", null);
 	await assert.rejects(caller.get({ id: "missing" }), { code: "NOT_FOUND" });
 	await assert.rejects(caller.update({ id: "missing", ...eventInput }), { code: "NOT_FOUND" });
 });

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
-import { RoleName, ScannerWorkflow, type PrismaClient } from "@prisma/client";
+import { ScannerWorkflow, type PrismaClient } from "@prisma/client";
 import type { Session } from "next-auth";
 
 // Use the checked-in, non-secret CI fixture; callers below mock every database operation.
@@ -14,7 +14,17 @@ for (const line of readFileSync(new URL("../.github/workflows/build.env", import
 Object.assign(process.env, { NODE_ENV: "test" });
 const routers = Promise.all([import("@/server/api/routers/events"), import("@/server/api/routers/presence")]);
 const hackerId = "wvY1HKlwYnFBO8t-YnQbwg";
-const organizer: Session = { user: { id: "organizer-1", roles: [RoleName.ORGANIZER] }, expires: "2099-01-01" };
+const organizer: Session = {
+	user: { id: "organizer-1", isOrganizer: true, isAdmin: false },
+	expires: "2099-01-01",
+};
+const organizerUser = {
+	id: "organizer-1",
+	name: "Organizer",
+	email: "organizer@ctn-rtc.org",
+	isAdmin: false,
+	disabledAt: null,
+};
 const context = (
 	prisma: object,
 	participantSession: { hackerId: string } | null = { hackerId },
@@ -116,36 +126,43 @@ void test("attendance interest lookup requires an organizer and filters hidden e
 	await assert.rejects(presenceRouter.createCaller(context({})).getEventInterests(input), { code: "UNAUTHORIZED" });
 	await assert.rejects(
 		presenceRouter
-			.createCaller(context({ user: { findUnique: () => ({ roles: [] }) } }, null, organizer))
-			.getEventInterests(input),
-		{ code: "FORBIDDEN" },
-	);
-	const details = { id: "workshop", name: "Workshop", nameFr: "Atelier", start: new Date() };
-	for (const role of [RoleName.ORGANIZER, RoleName.ADMIN]) {
-		const result = await presenceRouter
 			.createCaller(
 				context(
 					{
-						user: { findUnique: () => ({ roles: [{ name: role }] }) },
-						event: { findUnique: () => ({ scannerWorkflow: ScannerWorkflow.ATTENDANCE }) },
-						eventInterest: {
-							findMany: (query: unknown) => {
-								assert.deepEqual(query, {
-									where: { hackerId, Event: { hidden: false } },
-									select: { Event: { select: { id: true, name: true, nameFr: true, start: true } } },
-									orderBy: { Event: { start: "asc" } },
-								});
-								return [{ Event: details }];
-							},
-						},
+						user: { findUnique: () => ({ ...organizerUser, email: "organizer@example.com" }) },
+						organizerAccess: { findUnique: () => null },
 					},
 					null,
 					organizer,
 				),
 			)
-			.getEventInterests(input);
-		assert.deepEqual(result, [details]);
-	}
+			.getEventInterests(input),
+		{ code: "FORBIDDEN" },
+	);
+	const details = { id: "workshop", name: "Workshop", nameFr: "Atelier", start: new Date() };
+	const result = await presenceRouter
+		.createCaller(
+			context(
+				{
+					user: { findUnique: () => organizerUser },
+					event: { findUnique: () => ({ scannerWorkflow: ScannerWorkflow.ATTENDANCE }) },
+					eventInterest: {
+						findMany: (query: unknown) => {
+							assert.deepEqual(query, {
+								where: { hackerId, Event: { hidden: false } },
+								select: { Event: { select: { id: true, name: true, nameFr: true, start: true } } },
+								orderBy: { Event: { start: "asc" } },
+							});
+							return [{ Event: details }];
+						},
+					},
+				},
+				null,
+				organizer,
+			),
+		)
+		.getEventInterests(input);
+	assert.deepEqual(result, [details]);
 });
 
 void test("food, merchandise and check-in workflows cannot look up interests", async () => {
@@ -156,7 +173,7 @@ void test("food, merchandise and check-in workflows cannot look up interests", a
 				.createCaller(
 					context(
 						{
-							user: { findUnique: () => ({ roles: [{ name: RoleName.ORGANIZER }] }) },
+							user: { findUnique: () => organizerUser },
 							event: { findUnique: () => ({ scannerWorkflow }) },
 						},
 						null,
@@ -186,7 +203,7 @@ void test("scanner API reports fresh, incremented, applied, stale, and bounded n
 	};
 	const prisma = {
 		user: {
-			findUnique: () => ({ id: "organizer-1", name: "Organizer", roles: [{ name: RoleName.ORGANIZER }] }),
+			findUnique: () => organizerUser,
 		},
 		event: { findUnique: () => event },
 		hacker: {

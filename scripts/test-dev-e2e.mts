@@ -13,6 +13,7 @@ import { createTRPCProxyClient, httpBatchLink } from "@trpc/client";
 import { chromium, type Browser, type BrowserContext } from "playwright-core";
 import superjson from "superjson";
 import { z } from "zod";
+import { createOrganizerPass } from "@/server/lib/organizer-pass";
 import type { AppRouter } from "@/server/api/root";
 import { provisioningBatchSchema } from "@/server/services/hacker-lifecycle";
 import { applicationRow, createResponseHarness } from "@root/test/helpers/google-sheets-harness";
@@ -58,7 +59,7 @@ const authProviderSchema = z
 const authProvidersSchema = z
 	.object({ google: authProviderSchema, development: authProviderSchema.optional() })
 	.strict();
-const sessionSchema = z.object({ user: z.object({ roles: z.array(z.string()) }) });
+const sessionSchema = z.object({ user: z.object({ id: z.string(), isOrganizer: z.boolean(), isAdmin: z.boolean() }) });
 const unauthorizedErrorSchema = z.object({ data: z.object({ code: z.literal("UNAUTHORIZED") }) });
 
 const wait = (milliseconds: number) => new Promise<void>(resolve => setTimeout(resolve, milliseconds));
@@ -403,7 +404,7 @@ process.stdout.write(JSON.stringify({ status: response.status, body: await respo
 		const attempts = sheet.requests
 			.filter(request => request.url.endsWith("/api/integrations/sheets/hackers"))
 			.map(request =>
-			provisioningBatchSchema.parse(JSON.parse(request.options.payload)).hackers.map(hacker => hacker.id),
+				provisioningBatchSchema.parse(JSON.parse(request.options.payload)).hackers.map(hacker => hacker.id),
 			);
 		assert.deepEqual(attempts[0], attempts[1], "The real API retry must reuse every originally assigned ID");
 		const ids = attempts[0];
@@ -553,9 +554,15 @@ try {
 		.getByText("You've said you can't attend Hack the Hill III.", { exact: true })
 		.waitFor({ timeout: 20_000 });
 	await participantPage.goto(invitationLink, { waitUntil: "domcontentloaded" });
-	await participantPage.getByRole("status").getByText("You've said you can't attend Hack the Hill III.", { exact: true }).waitFor({ timeout: 20_000 });
+	await participantPage
+		.getByRole("status")
+		.getByText("You've said you can't attend Hack the Hill III.", { exact: true })
+		.waitFor({ timeout: 20_000 });
 	await participantPage.getByRole("button", { name: "I'll attend" }).click();
-	await participantPage.getByRole("status").getByText("You're attending Hack the Hill III.", { exact: true }).waitFor({ timeout: 20_000 });
+	await participantPage
+		.getByRole("status")
+		.getByText("You're attending Hack the Hill III.", { exact: true })
+		.waitFor({ timeout: 20_000 });
 	const oldIdOnlyResponse = await jsonRequest(`/api/rsvp/${participantId}`, { confirm: true });
 	assert.equal(oldIdOnlyResponse.status, 410);
 
@@ -666,7 +673,8 @@ try {
 	const organizerCookies = await runOrganizerScannerBrowserE2E();
 	const session = await request("/api/auth/session", {}, organizerCookies);
 	const sessionBody = sessionSchema.parse(await session.json());
-	assert.ok(sessionBody.user.roles.includes("ORGANIZER"), "Development login must produce an organizer session");
+	assert.equal(sessionBody.user.isOrganizer, true, "Development login must produce an organizer session");
+	assert.equal(sessionBody.user.isAdmin, true, "The local development organizer must be an admin");
 	assert.equal((await request("/qr", {}, organizerCookies)).status, 200);
 	assert.equal((await request("/metrics", {}, organizerCookies)).status, 200);
 
@@ -686,6 +694,8 @@ try {
 		return match;
 	};
 	const checkIn = await trpc.presence.scan.mutate({ eventId: event("CHECK_IN").id, hackerId: participantId });
+	assert.equal(checkIn.subjectType, "participant");
+	if (checkIn.subjectType !== "participant") assert.fail("Expected a participant scan");
 	assert.equal(checkIn.workflow, "CHECK_IN");
 	assert.equal(checkIn.participant.confirmed, true);
 	assert.equal(checkIn.atLimit, true);
@@ -693,11 +703,22 @@ try {
 		eventId: event("MERCHANDISE").id,
 		hackerId: participantId,
 	});
+	assert.equal(merchandise.subjectType, "participant");
+	if (merchandise.subjectType !== "participant") assert.fail("Expected a participant scan");
 	assert.equal(merchandise.workflow, "MERCHANDISE");
 	assert.equal(merchandise.participant.tShirtSize, "M");
 	const food = await trpc.presence.scan.mutate({ eventId: event("FOOD").id, hackerId: participantId });
+	assert.equal(food.subjectType, "participant");
+	if (food.subjectType !== "participant") assert.fail("Expected a participant scan");
 	assert.equal(food.workflow, "FOOD");
 	assert.equal(food.participant.requiresFoodLead, true);
+	const organizerFood = await trpc.presence.scan.mutate({
+		eventId: event("FOOD").id,
+		hackerId: createOrganizerPass(sessionBody.user.id),
+	});
+	assert.equal(organizerFood.subjectType, "organizer");
+	if (organizerFood.subjectType !== "organizer") assert.fail("Expected an organizer scan");
+	assert.equal(organizerFood.organizer.id, sessionBody.user.id);
 	await trpc.presence.scan.mutate({ eventId: event("ATTENDANCE").id, hackerId: participantId });
 	await trpc.presence.scan.mutate({ eventId: event("CHECK_IN").id, hackerId: walkInId });
 

@@ -33,7 +33,7 @@ Tracker owns its transactional operational state:
 - signed RSVP-management and cancellation capabilities;
 - one-time claim capabilities and active participant sessions;
 - events, participant interests, reminders, Presence counters, and audit records;
-- organiser users and roles;
+- organiser users, external-email access entries, administrator flags, and organiser Presence counters;
 - aggregate operational metrics.
 - quantity-based hardware inventory, loans, and append-only return outcomes;
 - Latte Lab availability, anonymised order configuration, and queue state.
@@ -54,8 +54,12 @@ current participant choice.
 
 These credentials are deliberately not interchangeable:
 
-- Organisers use NextAuth with a verified, pre-provisioned `@ctn-rtc.org` Google
-  account and an assigned role. Local passwordless organiser auth is loopback-only.
+- A verified `@ctn-rtc.org` Google Workspace identity automatically has organiser
+  access. Other organiser email addresses must first be added to the access list and
+  then sign in through a single-use, 15-minute email link. The sign-in response does
+  not reveal whether an address is on the list. Local organiser auth is loopback-only.
+- `User.isAdmin` protects the external-email access list. It is deliberately not a
+  general role hierarchy: all organisers can scan, manage events, and read metrics.
 - The bound Apps Script uses `Authorization: Bearer <SHEETS_INTEGRATION_API_KEY>` on
   the restricted integration endpoints. The key belongs in Apps Script properties,
   never a cell or client-side dialog.
@@ -68,14 +72,21 @@ These credentials are deliberately not interchangeable:
   `CANCELLATION_TOKEN_SECRET`; the routes expose different actions. Claim and
   participant-session secrets are separate from it and from each other.
 
-Provision an organiser independently of participant workflows:
+Allow an external organiser email independently of participant workflows:
 
 ```sh
-npm run organizer:provision -- organiser@ctn-rtc.org ORGANIZER ADMIN
+npm run organizer:provision -- organiser@example.com
 ```
 
-The command requires a verified organisation-domain address and at least one valid
-role. It does not grant participant access or create an RSVP/claim capability.
+Grant administrator access to a named CTN account through the same CLI:
+
+```sh
+npm run organizer:provision -- daniel.thorp@ctn-rtc.org --admin
+npm run organizer:provision -- agam.singh@ctn-rtc.org --admin
+```
+
+Those grants are database state, not hard-coded identities. The commands do not grant
+participant access or create an RSVP/claim capability.
 
 ## Participant provisioning and RSVP
 
@@ -101,7 +112,7 @@ bilingual Tally headers and sends only allow-listed operational fields.
 Every field except `walkIn` is required. Unknown fields—including name, email, Tally
 ID, application data, `confirmed`, and team data—are rejected. Provisioning is exact-ID
 idempotent and preserves existing RSVP state. `TShirtSize.NONE` is an explicit opt-out,
-not a missing value. `MealCategory.OTHER` tells scanner staff to consult the food lead;
+not a missing value. `MealCategory.OTHER` tells the scanning organiser to consult the food lead;
 the sensitive detail stays in the restricted Sheet.
 
 The accepted-audience preparation command provisions accepted rows and stores stable
@@ -144,6 +155,14 @@ it does not enter the initial GET, normal access logs, or referrer headers. The 
 waits for an explicit tap before `POST /api/claim` consumes it. Redemption is atomic:
 two devices racing one claim cannot both receive a session. The participant session
 lasts 36 hours, and reissue or sign-out revokes the stored verifier immediately.
+
+An authenticated organiser's `/qr` page has two tabs: **My pass** displays that
+organiser's QR code, and **Scan passes** scans participant or organiser passes. An
+organiser pass contains a typed organiser identifier, not an email address, participant
+record, or authentication secret. Scans write to `OrganizerPresence`, separate from
+participant `Presence`; therefore food and merchandise can be counted without adding
+dietary restrictions, T-shirt sizes, RSVP state, or other participant fields to an
+organiser account.
 
 A non-authorising `participant_pass=1` marker lets navigation show “My pass”; forging it
 only reveals a link to a server-protected route. `/profile` is private and network-only.

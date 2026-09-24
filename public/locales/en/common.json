@@ -2,6 +2,7 @@
 	"hack-the-hill-logo-alt": "Hack the Hill logo",
 	"description": "Hack the Hill's event management software",
 	"loading": "Loading...",
+	"or": "or",
 	"no-t-shirt": "No T-shirt requested",
 	"error-message": "Error: {{message}}",
 	"contact-us": "Contact us for help",

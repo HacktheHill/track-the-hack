@@ -6,6 +6,8 @@ const auditNames = [
 	"scanner.scan",
 	"scanner.adjust",
 	"organizer.roles.updated",
+	"organizer.access.added",
+	"organizer.access.removed",
 	"participant.claim.issued",
 	"participant.claim.redeemed",
 	"participant.rsvp.updated",
@@ -24,6 +26,8 @@ const allowedOutcomes: Record<(typeof auditNames)[number], readonly string[]> = 
 	"scanner.scan": ["recorded", "incremented", "duplicate", "limit"],
 	"scanner.adjust": ["applied", "stale", "out_of_bounds"],
 	"organizer.roles.updated": ["applied"],
+	"organizer.access.added": ["added", "unchanged"],
+	"organizer.access.removed": ["removed", "unchanged"],
 	"participant.claim.issued": ["issued"],
 	"participant.claim.redeemed": ["redeemed"],
 	"participant.rsvp.updated": ["attending", "declined", "repeated_attending", "repeated_declined"],
@@ -40,7 +44,11 @@ const allowedOutcomes: Record<(typeof auditNames)[number], readonly string[]> = 
 
 const entitySchema = z
 	.object({
+<<<<<<< HEAD
 		type: z.enum(["hacker", "user", "event", "presence", "role", "hardware_loan", "latte_order"]),
+=======
+		type: z.enum(["hacker", "user", "event", "presence", "role", "organizer_access"]),
+>>>>>>> 3af78a9 (feat(auth): simplify organiser access and passes)
 		id: z.string().min(1).max(191),
 	})
 	.strict();

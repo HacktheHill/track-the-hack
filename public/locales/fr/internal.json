@@ -1,12 +1,22 @@
 {
 	"search": "Rechercher",
 	"title": "Outils organisateurs",
-	"roles": "Rôles",
 	"metrics": "Statistiques",
 	"submit": "Soumettre",
 	"user-profile": "Profil de l’utilisateur",
+<<<<<<< HEAD
 	"hardware": "Comptoir de matériel",
 	"latte-lab": "Labo latte",
+=======
+	"access": {
+		"title": "Accès des organisateurs",
+		"ctn-help": "Les comptes Google Workspace CTN vérifiés ont déjà l’accès organisateur. Ajoutez ici toute autre adresse avant que son propriétaire demande un lien de connexion.",
+		"email": "Adresse courriel",
+		"add": "Autoriser l’adresse",
+		"remove": "Retirer",
+		"empty": "Aucune adresse supplémentaire n’est autorisée."
+	},
+>>>>>>> 3af78a9 (feat(auth): simplify organiser access and passes)
 
 	"events": {
 		"title": "Événements",

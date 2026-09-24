@@ -1,40 +1,42 @@
-import { PrismaClient, RoleName } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
 import { hasOrganizerEmailDomain, normalizeOrganizerEmail } from "@/server/lib/organizer-auth";
 
 const prisma = new PrismaClient();
-const [rawEmail, ...rawRoles] = process.argv.slice(2);
-
-if (!rawEmail || !hasOrganizerEmailDomain(rawEmail)) {
-	throw new Error("Usage: npm run organizer:provision -- organizer@ctn-rtc.org [ROLE ...]");
+const [rawEmail, rawMode] = process.argv.slice(2);
+const parsedEmail = z.string().trim().email().max(191).safeParse(rawEmail);
+if (!parsedEmail.success || (rawMode !== undefined && rawMode !== "--admin")) {
+	throw new Error("Usage: npm run organizer:provision -- organizer@example.com [--admin]");
 }
 
-const email = normalizeOrganizerEmail(rawEmail);
-const parsedRoles = z.array(z.nativeEnum(RoleName)).safeParse(rawRoles.length ? rawRoles : [RoleName.ORGANIZER]);
-if (!parsedRoles.success) {
-	throw new Error(`Roles must be one of: ${Object.values(RoleName).join(", ")}`);
+const email = normalizeOrganizerEmail(parsedEmail.data);
+const admin = rawMode === "--admin";
+if (admin && !hasOrganizerEmailDomain(email)) {
+	throw new Error("Administrators must use a CTN email address");
 }
-const roles = parsedRoles.data;
 
 try {
-	await prisma.$transaction([
-		...roles.map(name => prisma.role.upsert({ where: { name }, create: { name }, update: {} })),
-		prisma.user.upsert({
+	if (admin) {
+		await prisma.user.upsert({
 			where: { email },
-			create: { email, roles: { connect: roles.map(name => ({ name })) } },
-			update: { roles: { set: roles.map(name => ({ name })) } },
-		}),
-	]);
-
-	const provisioned = await prisma.user.findUnique({
-		where: { email },
-		select: { roles: { select: { name: true } } },
-	});
-	const assignedRoles = provisioned?.roles.map(role => role.name) ?? [];
-	if (assignedRoles.length !== roles.length || roles.some(role => !assignedRoles.includes(role))) {
-		throw new Error(`Provisioning verification failed for ${email}`);
+			create: { email, isAdmin: true },
+			update: { isAdmin: true },
+		});
+		const verified = await prisma.user.findUnique({ where: { email }, select: { id: true, isAdmin: true } });
+		if (!verified?.isAdmin) throw new Error("Administrator grant verification failed");
+		console.info(`Granted administrator access to ${email}.`);
+	} else if (hasOrganizerEmailDomain(email)) {
+		console.info(`${email} already has organiser access through CTN Google Workspace.`);
+	} else {
+		await prisma.organizerAccess.upsert({
+			where: { email },
+			create: { email, createdById: "cli" },
+			update: {},
+		});
+		const verified = await prisma.organizerAccess.findUnique({ where: { email }, select: { id: true } });
+		if (!verified) throw new Error("Organiser access verification failed");
+		console.info(`Allowed organiser email ${email}.`);
 	}
 } finally {
 	await prisma.$disconnect();
 }
-console.info(`Provisioned organizer ${email} with roles ${roles.join(", ")}.`);

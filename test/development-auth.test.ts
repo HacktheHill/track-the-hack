@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
 	canUseDevelopmentOrganizerAuth,
+	canUseGoogleOrganizerAuth,
 	DEVELOPMENT_AUTH_PROVIDER_ID,
 	DEVELOPMENT_ORGANIZER_EMAIL,
 	isDevelopmentOrganizerAuthEnabled,
@@ -144,17 +145,44 @@ void test("development organizer auth uses fixed non-production identity constan
 });
 
 void test("Google organizer profiles accept only valid, explicitly verified fields", () => {
-	assert.deepEqual(parseGoogleOrganizerProfile({ email: "organizer@ctn-rtc.org", email_verified: true }), {
-		email: "organizer@ctn-rtc.org",
+	assert.deepEqual(
+		parseGoogleOrganizerProfile({ email: "organizer@ctn-rtc.org", email_verified: true, hd: "ctn-rtc.org" }),
+		{
+			email: "organizer@ctn-rtc.org",
+			emailVerified: true,
+			hostedDomain: "ctn-rtc.org",
+		},
+	);
+	assert.deepEqual(
+		parseGoogleOrganizerProfile({ email: "organizer@ctn-rtc.org", email_verified: false, hd: "ctn-rtc.org" }),
+		{
+			email: "organizer@ctn-rtc.org",
+			emailVerified: false,
+			hostedDomain: "ctn-rtc.org",
+		},
+	);
+	assert.equal(parseGoogleOrganizerProfile({ email: null, email_verified: true, hd: "ctn-rtc.org" }), undefined);
+	assert.equal(
+		parseGoogleOrganizerProfile({ email: "not-an-email", email_verified: true, hd: "ctn-rtc.org" }),
+		undefined,
+	);
+	assert.equal(parseGoogleOrganizerProfile({ email: "organizer@ctn-rtc.org", email_verified: true }), undefined);
+});
+
+void test("Google organizer auth requires a verified CTN hosted-domain identity", () => {
+	const valid = {
+		provider: "google",
+		profileEmail: "Daniel.Thorp@ctn-rtc.org",
+		userEmail: "daniel.thorp@ctn-rtc.org",
 		emailVerified: true,
-	});
-	assert.deepEqual(parseGoogleOrganizerProfile({ email: "organizer@ctn-rtc.org", email_verified: false }), {
-		email: "organizer@ctn-rtc.org",
-		emailVerified: false,
-	});
-	assert.equal(parseGoogleOrganizerProfile({ email: null, email_verified: true }), undefined);
-	assert.equal(parseGoogleOrganizerProfile({ email: "not-an-email", email_verified: true }), undefined);
-	assert.equal(parseGoogleOrganizerProfile({ email: "organizer@ctn-rtc.org" }), undefined);
+		hostedDomain: "ctn-rtc.org",
+	};
+	assert.equal(canUseGoogleOrganizerAuth(valid), true);
+	assert.equal(canUseGoogleOrganizerAuth({ ...valid, provider: "email" }), false);
+	assert.equal(canUseGoogleOrganizerAuth({ ...valid, emailVerified: false }), false);
+	assert.equal(canUseGoogleOrganizerAuth({ ...valid, hostedDomain: "example.com" }), false);
+	assert.equal(canUseGoogleOrganizerAuth({ ...valid, profileEmail: "person@example.com" }), false);
+	assert.equal(canUseGoogleOrganizerAuth({ ...valid, userEmail: "other@ctn-rtc.org" }), false);
 });
 
 void test("development organizer sign-in accepts only the fixed user without account switching", () => {

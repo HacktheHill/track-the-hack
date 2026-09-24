@@ -11,6 +11,7 @@ import common from "@root/public/locales/en/common.json";
 
 type Props = Parameters<typeof ScanResult>[0];
 const base = {
+	subjectType: "participant" as const,
 	eventId: "event-1",
 	name: "Lunch",
 	nameFr: "Déjeuner",
@@ -102,4 +103,15 @@ void test("attendance scans display localized interests and distinguish loading 
 	assert.match(await render(attendance, interests, "fr"), /Atelier de matériel/);
 	assert.match(await render(attendance, []), /No saved events/);
 	assert.match(await render(attendance), /Loading saved events/);
+});
+
+void test("organizer scans identify the organizer without participant food or merchandise fields", async () => {
+	const html = await render({
+		...base,
+		subjectType: "organizer",
+		organizer: { id: "organizer-1", name: "Daniel" },
+		workflow: ScannerWorkflow.FOOD,
+	});
+	assert.match(html, /Organiser: Daniel/);
+	assert.doesNotMatch(html, /Diet:|T-shirt:|Contact the food lead/);
 });

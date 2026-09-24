@@ -1,89 +1,80 @@
-import { Prisma, RoleName } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { hasRoles } from "@/utils/helpers";
-import { log } from "@/server/lib/log";
 import { createAuditEvent, emitAuditEvent, persistAuditEvent } from "@/server/lib/audit-event";
-import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+import { getOrganizerAccess, hasOrganizerEmailDomain, normalizeOrganizerEmail } from "@/server/lib/organizer-auth";
+import { adminProcedure, createTRPCRouter, organizerProcedure } from "@/server/api/trpc";
 
-const getAdmin = async (ctx: Parameters<Parameters<typeof protectedProcedure.query>[0]>[0]["ctx"]) => {
-	const user = await ctx.prisma.user.findUnique({
-		where: { id: ctx.session.user.id },
-		select: { id: true, name: true, roles: { select: { name: true } } },
-	});
-	if (!user || !hasRoles(user, [RoleName.ADMIN])) throw new TRPCError({ code: "FORBIDDEN" });
-	return user;
-};
+const emailSchema = z.string().trim().email().max(191).transform(normalizeOrganizerEmail);
 
 export const userRouter = createTRPCRouter({
-	search: protectedProcedure.input(z.object({ query: z.string().max(200) })).query(async ({ ctx, input }) => {
-		await getAdmin(ctx);
-		return ctx.prisma.user.findMany({
-			where: { OR: [{ email: { contains: input.query } }, { name: { contains: input.query } }] },
-			select: { id: true, name: true, email: true, image: true, roles: { select: { name: true } } },
-		});
+	getOrganizerPass: organizerProcedure
+		.input(z.object({ id: z.string().min(1).max(191) }))
+		.query(async ({ ctx, input }) => {
+			const organizer = await getOrganizerAccess(ctx.prisma, input.id);
+			if (!organizer) throw new TRPCError({ code: "NOT_FOUND", message: "Organiser not found" });
+			return { id: organizer.id, name: organizer.name };
+		}),
+
+	listOrganizerAccess: adminProcedure.query(async ({ ctx }) =>
+		ctx.prisma.organizerAccess.findMany({
+			select: { id: true, email: true, createdAt: true, createdById: true },
+			orderBy: [{ createdAt: "asc" }, { email: "asc" }],
+		}),
+	),
+
+	addOrganizerAccess: adminProcedure.input(z.object({ email: emailSchema })).mutation(async ({ ctx, input }) => {
+		if (hasOrganizerEmailDomain(input.email)) {
+			throw new TRPCError({ code: "BAD_REQUEST", message: "CTN Google accounts already have organiser access" });
+		}
+
+		const { access, auditEvent } = await ctx.prisma.$transaction(
+			async transaction => {
+				const existing = await transaction.organizerAccess.findUnique({
+					where: { email: input.email },
+					select: { id: true, email: true, createdAt: true, createdById: true },
+				});
+				const access =
+					existing ??
+					(await transaction.organizerAccess.create({
+						data: { email: input.email, createdById: ctx.organizer.id },
+						select: { id: true, email: true, createdAt: true, createdById: true },
+					}));
+				const auditEvent = createAuditEvent({
+					name: "organizer.access.added",
+					outcome: existing ? "unchanged" : "added",
+					actor: { type: "organizer", id: ctx.organizer.id },
+					resource: { type: "organizer_access", id: access.id },
+					data: {},
+				});
+				await persistAuditEvent(transaction, auditEvent);
+				return { access, auditEvent };
+			},
+			{ isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+		);
+		emitAuditEvent(auditEvent);
+		return access;
 	}),
 
-	updateRoles: protectedProcedure
-		.input(z.object({ roles: z.array(z.nativeEnum(RoleName)), userIds: z.array(z.string()).min(1) }))
+	removeOrganizerAccess: adminProcedure
+		.input(z.object({ id: z.string().min(1).max(191) }))
 		.mutation(async ({ ctx, input }) => {
-			const admin = await getAdmin(ctx);
-			const userIds = [...new Set(input.userIds)];
-			const roles = [...new Set(input.roles)];
-			const auditEvent = createAuditEvent({
-				name: "organizer.roles.updated",
-				outcome: "applied",
-				actor: { type: "organizer", id: admin.id },
-				resource: { type: "role", id: "organizer-roles" },
-				data: { targetUserIds: userIds.join(","), roles: roles.join(",") },
-			});
-
-			await ctx.prisma.$transaction(
+			const { removed, auditEvent } = await ctx.prisma.$transaction(
 				async transaction => {
-					const foundUsers = await transaction.user.findMany({
-						where: { id: { in: userIds } },
-						select: { id: true },
+					const removed = await transaction.organizerAccess.deleteMany({ where: { id: input.id } });
+					const auditEvent = createAuditEvent({
+						name: "organizer.access.removed",
+						outcome: removed.count === 1 ? "removed" : "unchanged",
+						actor: { type: "organizer", id: ctx.organizer.id },
+						resource: { type: "organizer_access", id: input.id },
+						data: {},
 					});
-					if (foundUsers.length !== userIds.length) {
-						throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
-					}
-
-					for (const name of roles) {
-						await transaction.role.upsert({
-							where: { name },
-							create: { name },
-							update: {},
-						});
-					}
-
-					if (!roles.includes(RoleName.ADMIN)) {
-						const remainingAdmins = await transaction.user.count({
-							where: { id: { notIn: userIds }, roles: { some: { name: RoleName.ADMIN } } },
-						});
-						if (remainingAdmins === 0) {
-							throw new TRPCError({ code: "BAD_REQUEST", message: "At least one admin is required" });
-						}
-					}
-
-					for (const id of userIds) {
-						await transaction.user.update({
-							where: { id },
-							data: { roles: { set: roles.map(name => ({ name })) } },
-						});
-					}
 					await persistAuditEvent(transaction, auditEvent);
+					return { removed: removed.count === 1, auditEvent };
 				},
 				{ isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
 			);
 			emitAuditEvent(auditEvent);
-			await log(ctx, {
-				sourceId: admin.id,
-				sourceType: "User",
-				author: admin.name ?? admin.id,
-				userId: admin.id,
-				route: "/internal/roles",
-				action: "UpdateRoles",
-				details: `Updated organizer roles for user ids ${userIds.join(", ")}.`,
-			});
+			return { removed };
 		}),
 });

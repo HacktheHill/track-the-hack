@@ -1,67 +1,82 @@
 name: Provision Track organizer
 
 on:
-  workflow_dispatch:
+    workflow_dispatch:
+        inputs:
+            email:
+                description: Organiser email address
+                required: true
+                type: string
+            administrator:
+                description: Grant administrator access (CTN email only)
+                required: true
+                default: false
+                type: boolean
 
 permissions:
-  contents: read
+    contents: read
 
 concurrency:
-  group: track-the-hack-organizer-production
-  cancel-in-progress: false
+    group: track-the-hack-organizer-production
+    cancel-in-progress: false
 
 jobs:
-  provision:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    environment: Production
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      - name: Provision organizer
-        shell: bash
-        env:
-          AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
-          ORGANIZER_EMAIL: admin@ctn-rtc.org
-        run: |
-          set -euo pipefail
-          az extension remove -n containerapp 2>/dev/null || true
-          image="$(az containerapp job show \
-            --resource-group "$AZURE_RESOURCE_GROUP" \
-            --name track-the-hack-organizer \
-            --query 'properties.template.containers[0].image' \
-            --output tsv)"
-          execution="$(az containerapp job start \
-            --resource-group "$AZURE_RESOURCE_GROUP" \
-            --name track-the-hack-organizer \
-            --image "$image" \
-            --container-name track-the-hack-organizer \
-            --command /app/node_modules/.bin/tsx \
-            --args scripts/provision-organizer.mts "$ORGANIZER_EMAIL" ORGANIZER ADMIN \
-            --env-vars DATABASE_URL=secretref:database-url \
-            --cpu 0.5 \
-            --memory 1Gi \
-            --query name \
-            --output tsv)"
+    provision:
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        environment: Production
+        permissions:
+            contents: read
+            id-token: write
+        steps:
+            - uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3
+              with:
+                  client-id: ${{ secrets.AZURE_CLIENT_ID }}
+                  tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+                  subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+            - name: Provision organizer
+              shell: bash
+              env:
+                  AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+                  ORGANIZER_EMAIL: ${{ inputs.email }}
+                  ADMINISTRATOR: ${{ inputs.administrator }}
+              run: |
+                  set -euo pipefail
+                  az extension remove -n containerapp 2>/dev/null || true
+                  image="$(az containerapp job show \
+                    --resource-group "$AZURE_RESOURCE_GROUP" \
+                    --name track-the-hack-organizer \
+                    --query 'properties.template.containers[0].image' \
+                    --output tsv)"
+                  args=(scripts/provision-organizer.mts "$ORGANIZER_EMAIL")
+                  if [[ "$ADMINISTRATOR" == "true" ]]; then
+                    args+=(--admin)
+                  fi
+                  execution="$(az containerapp job start \
+                    --resource-group "$AZURE_RESOURCE_GROUP" \
+                    --name track-the-hack-organizer \
+                    --image "$image" \
+                    --container-name track-the-hack-organizer \
+                    --command /app/node_modules/.bin/tsx \
+                    --args "${args[@]}" \
+                    --env-vars DATABASE_URL=secretref:database-url \
+                    --cpu 0.5 \
+                    --memory 1Gi \
+                    --query name \
+                    --output tsv)"
 
-          for attempt in $(seq 1 60); do
-            status="$(az containerapp job execution show \
-              --resource-group "$AZURE_RESOURCE_GROUP" \
-              --name track-the-hack-organizer \
-              --job-execution-name "$execution" \
-              --query properties.status \
-              --output tsv)"
-            case "$status" in
-              Succeeded) exit 0 ;;
-              Failed) exit 1 ;;
-            esac
-            sleep 5
-          done
-          echo "Organizer provisioning timed out." >&2
-          exit 1
+                  for attempt in $(seq 1 60); do
+                    status="$(az containerapp job execution show \
+                      --resource-group "$AZURE_RESOURCE_GROUP" \
+                      --name track-the-hack-organizer \
+                      --job-execution-name "$execution" \
+                      --query properties.status \
+                      --output tsv)"
+                    case "$status" in
+                      Succeeded) exit 0 ;;
+                      Failed) exit 1 ;;
+                    esac
+                    sleep 5
+                  done
+                  echo "Organizer provisioning timed out." >&2
+                  exit 1

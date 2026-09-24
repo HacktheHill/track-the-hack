@@ -1,4 +1,4 @@
-import type { RoleName } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import { z } from "zod";
 
 export const ORGANIZER_EMAIL_DOMAIN = "ctn-rtc.org";
@@ -47,18 +47,6 @@ export const isDevelopmentOrganizerAuthEnabled = (
 	hasLoopbackRequestHost(requestHost) &&
 	hasLoopbackPeerAddress(requestPeerAddress);
 
-type OrganizerUser = {
-	id: string;
-	roles: { name: RoleName }[];
-};
-
-type OrganizerSignInInput = {
-	provider: string | null | undefined;
-	profileEmail: string | null | undefined;
-	userEmail: string | null | undefined;
-	emailVerified: boolean;
-};
-
 type DevelopmentOrganizerSignInInput = {
 	provider: string | null | undefined;
 	userId: string;
@@ -69,6 +57,7 @@ type DevelopmentOrganizerSignInInput = {
 const googleOrganizerProfileSchema = z.object({
 	email: z.string().email(),
 	email_verified: z.boolean(),
+	hd: z.string(),
 });
 
 export const parseGoogleOrganizerProfile = (profile: unknown) => {
@@ -77,10 +66,32 @@ export const parseGoogleOrganizerProfile = (profile: unknown) => {
 	return {
 		email: result.data.email,
 		emailVerified: result.data.email_verified,
+		hostedDomain: result.data.hd,
 	};
 };
 
 export const normalizeOrganizerEmail = (email: string) => email.trim().toLowerCase();
+
+export const hasOrganizerEmailDomain = (email: string) => {
+	const normalized = normalizeOrganizerEmail(email);
+	const [localPart, domain, extra] = normalized.split("@");
+	return !!localPart && domain === ORGANIZER_EMAIL_DOMAIN && extra === undefined;
+};
+
+export const canUseGoogleOrganizerAuth = (input: {
+	provider: string | null | undefined;
+	profileEmail: string | null | undefined;
+	userEmail: string | null | undefined;
+	emailVerified: boolean;
+	hostedDomain: string | null | undefined;
+}) =>
+	input.provider === "google" &&
+	!!input.profileEmail &&
+	!!input.userEmail &&
+	input.emailVerified &&
+	input.hostedDomain === ORGANIZER_EMAIL_DOMAIN &&
+	hasOrganizerEmailDomain(input.profileEmail) &&
+	normalizeOrganizerEmail(input.profileEmail) === normalizeOrganizerEmail(input.userEmail);
 
 export const canUseDevelopmentOrganizerAuth = (
 	input: DevelopmentOrganizerSignInInput,
@@ -95,28 +106,40 @@ export const canUseDevelopmentOrganizerAuth = (
 	normalizeOrganizerEmail(input.userEmail) === DEVELOPMENT_ORGANIZER_EMAIL &&
 	(input.sessionUserId === undefined || input.sessionUserId === input.userId);
 
-export const hasOrganizerEmailDomain = (email: string) => {
-	const normalized = normalizeOrganizerEmail(email);
-	const [localPart, domain, extra] = normalized.split("@");
-	return !!localPart && domain === ORGANIZER_EMAIL_DOMAIN && extra === undefined;
+type OrganizerAllowlistPrisma = Pick<PrismaClient, "organizerAccess">;
+type AccessPrisma = OrganizerAllowlistPrisma & Pick<PrismaClient, "user">;
+
+export type OrganizerAccessContext = {
+	id: string;
+	name: string | null;
+	email: string;
+	isOrganizer: true;
+	isAdmin: boolean;
 };
 
-export const canUseOrganizerAuth = async (
-	input: OrganizerSignInInput,
-	findUserByEmail: (email: string) => Promise<OrganizerUser | null>,
-	sessionUserId?: string,
-) => {
-	if (input.provider !== "google" || !input.profileEmail || !input.userEmail || !input.emailVerified) {
-		return false;
-	}
+export const isOrganizerEmailAllowed = async (prisma: OrganizerAllowlistPrisma, rawEmail: string) => {
+	const email = normalizeOrganizerEmail(rawEmail);
+	if (hasOrganizerEmailDomain(email)) return true;
+	return (await prisma.organizerAccess.findUnique({ where: { email }, select: { id: true } })) !== null;
+};
 
-	if (
-		!hasOrganizerEmailDomain(input.profileEmail) ||
-		normalizeOrganizerEmail(input.profileEmail) !== normalizeOrganizerEmail(input.userEmail)
-	) {
-		return false;
-	}
-
-	const user = await findUserByEmail(normalizeOrganizerEmail(input.profileEmail));
-	return !!user && user.roles.length > 0 && (sessionUserId === undefined || user.id === sessionUserId);
+// Secure organiser checks re-read current database state. Session flags are
+// useful for presentation only and are never the authority for mutations.
+export const getOrganizerAccess = async (
+	prisma: AccessPrisma,
+	userId: string,
+): Promise<OrganizerAccessContext | null> => {
+	const user = await prisma.user.findUnique({
+		where: { id: userId },
+		select: { id: true, name: true, email: true, isAdmin: true, disabledAt: true },
+	});
+	if (!user?.email || user.disabledAt) return null;
+	if (!(await isOrganizerEmailAllowed(prisma, user.email))) return null;
+	return {
+		id: user.id,
+		name: user.name,
+		email: normalizeOrganizerEmail(user.email),
+		isOrganizer: true,
+		isAdmin: user.isAdmin,
+	};
 };
