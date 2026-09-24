@@ -1,8 +1,9 @@
 import type { GetStaticProps } from "next";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import App from "@/components/App";
+import { useDiscordEligibility } from "@/utils/discord-eligibility";
 
 // The page contains no session or proof data. A read-only eligibility request
 // controls the button; the fragment stays in the browser until the explicit
@@ -14,31 +15,8 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => ({
 export default function Discord() {
 	const { t } = useTranslation("discord");
 	const [submitting, setSubmitting] = useState(false);
-	const [eligibility, setEligibility] = useState("checking");
+	const eligibility = useDiscordEligibility();
 	const [result, setResult] = useState("");
-
-	useEffect(() => {
-		let current = true;
-		void fetch("/api/discord/verify", { headers: { Accept: "application/json" } })
-			.then(response => {
-				if (!current) return;
-				setEligibility(
-					response.ok
-						? "eligible"
-						: response.status === 401
-							? "session-required"
-							: response.status === 403
-								? "check-in-required"
-								: "unavailable",
-				);
-			})
-			.catch(() => {
-				if (current) setEligibility("unavailable");
-			});
-		return () => {
-			current = false;
-		};
-	}, []);
 
 	const verify = async () => {
 		setSubmitting(true);
@@ -75,7 +53,6 @@ export default function Discord() {
 		<App className="flex items-center justify-center bg-default-gradient p-6" title={t("title")} noIndex>
 			<section className="w-full max-w-xl rounded-xl bg-light-quaternary-color p-8 text-center shadow-lg">
 				<h1 className="font-coolvetica text-4xl text-dark-color">{t("title")}</h1>
-				<p className="mt-4 font-rubik text-dark-color">{t("explanation")}</p>
 				{result !== "verified" && (
 					<button
 						type="button"
