@@ -4,7 +4,16 @@ const { i18n } = require("./next-i18next.config.js");
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const defaultRuntimeCaching = require("next-pwa/cache");
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const { apiNetworkOnly, publicScheduleData } = require("./pwa-runtime-caching.js");
+const pwaRuntimeCaching = require("./pwa-runtime-caching.js");
+const {
+	apiNetworkOnly,
+	publicScheduleData,
+	isEnglishPrivateNavigation,
+	isEnglishPublicNavigation,
+	isFrenchPrivateNavigation,
+	isFrenchPublicNavigation,
+	isPrivateNextDataRequest,
+} = pwaRuntimeCaching;
 const publicPrecacheUrls = [
 	"/",
 	"/fr",
@@ -51,49 +60,6 @@ const participantProfileNetworkOnly = [
 		options: { precacheFallback: { fallbackURL: "/pass" } },
 	},
 ];
-
-const publicPagePaths = new Set(["/", "/schedule", "/schedule/event", "/maps", "/resources", "/sponsors", "/pass"]);
-const privatePagePaths = new Set([
-	"/auth/error",
-	"/auth/sign-in",
-	"/cancel",
-	"/claim",
-	"/claim/qr",
-	"/discord",
-	"/internal",
-	"/internal/events",
-	"/internal/roles",
-	"/metrics",
-	"/qr",
-	"/rsvp/manage",
-]);
-
-/** @param {string} pathname */
-const withoutLocale = pathname => pathname.replace(/^\/fr(?=\/|$)/, "") || "/";
-/** @param {{ request: Request; url: URL }} context */
-const isPublicNavigation = ({ request, url }) =>
-	request.mode === "navigate" && self.origin === url.origin && publicPagePaths.has(withoutLocale(url.pathname));
-/** @param {{ request: Request; url: URL }} context */
-const isFrenchPublicNavigation = context => isPublicNavigation(context) && context.url.pathname.startsWith("/fr");
-/** @param {{ request: Request; url: URL }} context */
-const isEnglishPublicNavigation = context => isPublicNavigation(context) && !context.url.pathname.startsWith("/fr");
-/** @param {{ request: Request; url: URL }} context */
-const isPrivateNavigation = ({ request, url }) => {
-	if (request.mode !== "navigate" || self.origin !== url.origin) return false;
-	const pathname = withoutLocale(url.pathname);
-	return privatePagePaths.has(pathname) || pathname === "/profile" || pathname.startsWith("/rsvp/");
-};
-/** @param {{ request: Request; url: URL }} context */
-const isFrenchPrivateNavigation = context => isPrivateNavigation(context) && context.url.pathname.startsWith("/fr");
-/** @param {{ request: Request; url: URL }} context */
-const isEnglishPrivateNavigation = context => isPrivateNavigation(context) && !context.url.pathname.startsWith("/fr");
-/** @param {{ url: URL }} context */
-const isPrivateNextDataRequest = ({ url }) => {
-	if (self.origin !== url.origin || !url.pathname.startsWith("/_next/data/")) return false;
-	const route = url.pathname.replace(/^\/_next\/data\/[^/]+\//, "/").replace(/\.json$/, "");
-	const pathname = withoutLocale(route);
-	return privatePagePaths.has(pathname) || pathname === "/profile" || pathname.startsWith("/rsvp/");
-};
 
 /** @satisfies {import("workbox-build").RuntimeCaching[]} */
 const publicNavigationCaching = [

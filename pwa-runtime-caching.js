@@ -31,4 +31,46 @@ const apiNetworkOnly = {
 	options: { cacheName: "private-api-network-only" },
 };
 
-module.exports = { apiNetworkOnly, publicScheduleData };
+// Workbox serializes these match callbacks into the generated service worker.
+// Each callback must therefore be self-contained and may not close over a local
+// helper, set, or regular expression.
+/** @param {{ request: Request; url: URL }} context */
+const isFrenchPublicNavigation = ({ request, url }) =>
+	request.mode === "navigate" &&
+	self.origin === url.origin &&
+	/^\/fr(?:\/(?:schedule(?:\/event)?|maps|resources|sponsors|pass))?\/?$/.test(url.pathname);
+/** @param {{ request: Request; url: URL }} context */
+const isEnglishPublicNavigation = ({ request, url }) =>
+	request.mode === "navigate" &&
+	self.origin === url.origin &&
+	/^\/(?:schedule(?:\/event)?|maps|resources|sponsors|pass)?\/?$/.test(url.pathname);
+/** @param {{ request: Request; url: URL }} context */
+const isFrenchPrivateNavigation = ({ request, url }) =>
+	request.mode === "navigate" &&
+	self.origin === url.origin &&
+	/^\/fr\/(?:auth\/(?:error|sign-in)|cancel|claim(?:\/qr)?|discord|internal(?:\/(?:events|roles))?|metrics|profile|qr|rsvp\/(?:manage|[^/]+))\/?$/.test(
+		url.pathname,
+	);
+/** @param {{ request: Request; url: URL }} context */
+const isEnglishPrivateNavigation = ({ request, url }) =>
+	request.mode === "navigate" &&
+	self.origin === url.origin &&
+	/^\/(?:auth\/(?:error|sign-in)|cancel|claim(?:\/qr)?|discord|internal(?:\/(?:events|roles))?|metrics|profile|qr|rsvp\/(?:manage|[^/]+))\/?$/.test(
+		url.pathname,
+	);
+/** @param {{ url: URL }} context */
+const isPrivateNextDataRequest = ({ url }) =>
+	self.origin === url.origin &&
+	/^\/_next\/data\/[^/]+\/(?:(?:en|fr)\/)?(?:auth\/(?:error|sign-in)|cancel|claim(?:\/qr)?|discord|internal(?:\/(?:events|roles))?|metrics|profile|qr|rsvp\/(?:manage|[^/]+))\.json$/.test(
+		url.pathname,
+	);
+
+module.exports = {
+	apiNetworkOnly,
+	publicScheduleData,
+	isEnglishPrivateNavigation,
+	isEnglishPublicNavigation,
+	isFrenchPrivateNavigation,
+	isFrenchPublicNavigation,
+	isPrivateNextDataRequest,
+};

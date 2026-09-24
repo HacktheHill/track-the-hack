@@ -1,7 +1,15 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { apiNetworkOnly, publicScheduleData } from "@root/pwa-runtime-caching";
+import {
+	apiNetworkOnly,
+	isEnglishPrivateNavigation,
+	isEnglishPublicNavigation,
+	isFrenchPrivateNavigation,
+	isFrenchPublicNavigation,
+	isPrivateNextDataRequest,
+	publicScheduleData,
+} from "@root/pwa-runtime-caching";
 
 void test("PWA configuration keeps participant routes deployment-safe", () => {
 	const previousSelf = Object.getOwnPropertyDescriptor(globalThis, "self");
@@ -11,6 +19,55 @@ void test("PWA configuration keeps participant routes deployment-safe", () => {
 	});
 
 	try {
+		const navigationRequest = new Request("https://track.example/");
+		Object.defineProperty(navigationRequest, "mode", { value: "navigate" });
+		assert.equal(
+			isEnglishPublicNavigation({
+				request: navigationRequest,
+				url: new URL("https://track.example/schedule/event?id=event-1"),
+			}),
+			true,
+		);
+		assert.equal(
+			isFrenchPublicNavigation({ request: navigationRequest, url: new URL("https://track.example/fr/maps") }),
+			true,
+		);
+		assert.equal(
+			isEnglishPrivateNavigation({ request: navigationRequest, url: new URL("https://track.example/qr") }),
+			true,
+		);
+		assert.equal(
+			isFrenchPrivateNavigation({
+				request: navigationRequest,
+				url: new URL("https://track.example/fr/rsvp/participant-id"),
+			}),
+			true,
+		);
+		assert.equal(
+			isPrivateNextDataRequest({
+				url: new URL("https://track.example/_next/data/build/fr/internal/events.json"),
+			}),
+			true,
+		);
+		assert.equal(
+			isPrivateNextDataRequest({
+				url: new URL("https://track.example/_next/data/build/fr/schedule.json"),
+			}),
+			false,
+		);
+		for (const matcher of [
+			isEnglishPrivateNavigation,
+			isEnglishPublicNavigation,
+			isFrenchPrivateNavigation,
+			isFrenchPublicNavigation,
+			isPrivateNextDataRequest,
+		]) {
+			assert.doesNotMatch(
+				matcher.toString(),
+				/isPublicNavigation|isPrivateNavigation|privatePagePaths|withoutLocale/,
+			);
+		}
+
 		const getRequest = new Request("https://track.example/api/trpc/events.all");
 		assert.equal(publicScheduleData.urlPattern({ request: getRequest, url: new URL(getRequest.url) }), true);
 		assert.equal(
