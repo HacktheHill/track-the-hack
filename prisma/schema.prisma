@@ -55,9 +55,11 @@ model User {
   email                   String?                       @unique
   image                   String?
   emailVerified           DateTime?
-  roles                   Role[]
+  isAdmin                 Boolean                       @default(false)
+  disabledAt              DateTime?
   accounts                Account[]
   sessions                Session[]
+  presences               OrganizerPresence[]
   hardwareLoansCheckedOut HardwareLoan[]                @relation("HardwareCheckoutOrganizer")
   hardwareReturns         HardwareReturn[]
   latteStateUpdates       LatteLabState[]
@@ -67,12 +69,40 @@ model User {
   updatedAt               DateTime                      @default(now()) @updatedAt
 }
 
-model Role {
-  id        String   @id @default(cuid())
-  name      RoleName @unique
-  users     User[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+// Organiser scans are intentionally separate from participant Presence rows:
+// organisers do not have participant dietary, merchandise, or RSVP data.
+model OrganizerPresence {
+  id          String   @id @default(cuid())
+  value       Int
+  label       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+  organizer   User     @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+  organizerId String
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId     String
+
+  @@unique([organizerId, eventId])
+  @@index([eventId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// Explicit access for organisers who do not use a CTN Google Workspace
+// account. The email may be added before its owner signs in for the first time.
+model OrganizerAccess {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  createdById String
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
 }
 
 model Hacker {
@@ -174,6 +204,7 @@ model Event {
   notificationLeaseToken String?
   notificationLeaseUntil DateTime?
   presences              Presence[]
+  organizerPresences     OrganizerPresence[]
   createdAt              DateTime        @default(now())
   updatedAt              DateTime        @default(now()) @updatedAt
 
@@ -401,13 +432,6 @@ model LatteOrderTransition {
 
   @@index([orderId])
   @@index([organizerId])
-}
-
-enum RoleName {
-  ADMIN
-  ORGANIZER
-  MAYOR
-  PREMIER
 }
 
 enum HardwareCategory {
