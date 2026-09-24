@@ -39,7 +39,7 @@ export const getStaticProps: GetStaticProps = async ({ params, locale }) => {
 	};
 };
 
-const SponsorPage = ({ id, name, tier, logo, hiringLink, websiteLink, additionalLink }: SponsorData) => {
+const SponsorPage = ({ id, name, logo, hiringLink, websiteLink, additionalLink }: SponsorData) => {
 	const { t } = useTranslation("sponsors");
 
 	return (
@@ -47,7 +47,6 @@ const SponsorPage = ({ id, name, tier, logo, hiringLink, websiteLink, additional
 			<div className="m-auto flex max-w-md flex-col items-center gap-8">
 				<Image src={logo} alt={name} className="h-48 max-w-full object-contain" height={200} width={200} />
 				<h1 className="text-center text-3xl font-semibold">{name}</h1>
-				<h2 className="text-2xl font-semibold">{t("tier", { tier: t(`tiers.${tier}`) })}</h2>
 				<p className="text-lg">{t(`descriptions.${id}`)}</p>
 				<div className="flex flex-wrap items-center justify-center gap-4">
 					{hiringLink && (

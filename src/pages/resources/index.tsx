@@ -291,6 +291,7 @@ const Resources: NextPage = () => {
 							{sponsors.map(sponsor => (
 								<Link
 									key={sponsor.id}
+									aria-label={sponsor.name}
 									className={`flex min-w-0 items-center justify-center drop-shadow-xl transition-transform hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-4 ${
 										sponsor.tier === SponsorTier.IN_KIND
 											? "w-[calc(50%-0.5rem)] max-w-[220px]"

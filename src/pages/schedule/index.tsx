@@ -154,7 +154,8 @@ const Schedule: NextPage = () => {
 
 	if (query.isError) {
 		return (
-			<App className="h-full bg-default-gradient px-16 py-12">
+			<App className="h-full bg-default-gradient px-16 py-12" title={t("title")}>
+				<h1 className="sr-only">{t("title")}</h1>
 				<Error message={t("common:temporarily-unavailable")} />
 			</App>
 		);
@@ -162,6 +163,7 @@ const Schedule: NextPage = () => {
 	if (query.fetchStatus === "paused" && query.data == null) {
 		return (
 			<App className="h-full bg-default-gradient px-16 py-12" title={t("title")}>
+				<h1 className="sr-only">{t("title")}</h1>
 				<p className="text-center font-rubik text-dark-color" role="status">
 					{t("common:offline-schedule-unavailable")}
 				</p>
@@ -170,7 +172,8 @@ const Schedule: NextPage = () => {
 	}
 	if (query.isLoading || query.data == null) {
 		return (
-			<App className="h-full bg-default-gradient px-16 py-12">
+			<App className="h-full bg-default-gradient px-16 py-12" title={t("title")}>
+				<h1 className="sr-only">{t("title")}</h1>
 				<Loading />
 			</App>
 		);
@@ -178,6 +181,7 @@ const Schedule: NextPage = () => {
 
 	return (
 		<App className="flex h-0 flex-col bg-default-gradient" integrated title={t("title")}>
+			<h1 className="sr-only">{t("title")}</h1>
 			<div className="shrink-0 border-b border-dark-color bg-light-quaternary-color px-4 py-2 shadow-navbar">
 				<div className="mx-auto flex max-w-2xl flex-col gap-2">
 					{hasPass && (

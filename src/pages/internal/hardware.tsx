@@ -313,7 +313,7 @@ function LoanCard({ loan }: { loan: Loan }) {
 				return (
 					<fieldset className="border-t pt-3" key={line.id}>
 						<legend className="font-bold">
-							{line.item.name} — {t("outstanding", { count: outstanding })}
+							{line.item.name}: {t("outstanding", { count: outstanding })}
 						</legend>
 						<div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
 							{outcomeKeys.map(key => (

@@ -102,12 +102,15 @@ const Maps = () => {
 	return (
 		<App className="flex h-0 flex-col items-center bg-default-gradient" title={t("title")}>
 			<div className="w-full justify-center overflow-y-auto p-5">
+				<h1 className="ui-page-title pb-3 text-center">{t("title")}</h1>
 				{[...Array(MAX_FLOORS).keys()].map(i => (
-					<div key={i}>
-						<h1 className="py-3 text-center text-xl text-dark-color">{t("floor", { floor: i })}</h1>
+					<section key={i} aria-labelledby={`floor-${i}-title`}>
+						<h2 id={`floor-${i}-title`} className="py-3 text-center text-xl text-dark-color">
+							{t("floor", { floor: i })}
+						</h2>
 
 						<MapFloor floor={i} />
-					</div>
+					</section>
 				))}
 			</div>
 		</App>

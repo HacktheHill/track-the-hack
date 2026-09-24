@@ -48,7 +48,7 @@ export default function Discord() {
 							: response.status === 400
 								? "invalid"
 								: response.status === 409
-									? detailedConflict ?? "conflict"
+									? (detailedConflict ?? "conflict")
 									: "unavailable",
 				);
 			}
@@ -67,7 +67,7 @@ export default function Discord() {
 						type="button"
 						disabled={submitting || eligibility !== "eligible"}
 						onClick={() => void verify()}
-						className="mt-6 rounded-lg border border-dark-primary-color bg-light-primary-color px-6 py-3 font-coolvetica text-lg text-light-color disabled:cursor-not-allowed disabled:opacity-60"
+						className="ui-button ui-button-primary ui-button-large mt-6"
 					>
 						{submitting ? t("verifying") : t("verify")}
 					</button>

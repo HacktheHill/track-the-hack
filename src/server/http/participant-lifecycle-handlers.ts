@@ -19,7 +19,7 @@ type HeaderValue = number | string | readonly string[];
 type LifecycleMessageResponse =
 	| { ok: true; message: string }
 	| { ok: false; message: string };
-type ParticipantSignOutResponse = { error: "method_not_allowed" };
+type ParticipantSignOutResponse = { error: "forbidden" | "method_not_allowed" };
 export type LifecycleApiResponseBody = LifecycleMessageResponse | ParticipantSignOutResponse;
 
 export type LifecycleApiResponse<Body extends LifecycleApiResponseBody = LifecycleApiResponseBody> = {
@@ -58,11 +58,21 @@ export const createCancellationApiHandler =
 	};
 
 export const createParticipantSignOutApiHandler =
-	(revoke: (verifier: string) => Promise<void>, secret: string): LifecycleApiHandler<ParticipantSignOutResponse> =>
+	(
+		revoke: (verifier: string) => Promise<void>,
+		secret: string,
+		expectedOrigin: string,
+	): LifecycleApiHandler<ParticipantSignOutResponse> =>
 	async (req, res) => {
 		res.setHeader("Cache-Control", "no-store");
 		if (rejectNonPost(req.method, value => res.setHeader("Allow", value))) {
 			return res.status(405).json({ error: "method_not_allowed" });
+		}
+		if (
+			(req.headers.origin && req.headers.origin !== expectedOrigin) ||
+			req.headers["sec-fetch-site"] === "cross-site"
+		) {
+			return res.status(403).json({ error: "forbidden" });
 		}
 
 		const verifier = participantSessionVerifierFromRequest(req, secret);

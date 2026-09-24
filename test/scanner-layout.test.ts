@@ -15,9 +15,11 @@ const centredScrollContainers = (source: string) =>
 
 void test("scanner page centres its column without trapping content above the scroll origin", () => {
 	const source = readFileSync("src/pages/qr/index.tsx", "utf8");
+	const manual = readFileSync("src/components/PhysicalScanner.tsx", "utf8");
 
 	assert.deepEqual(centredScrollContainers(source), []);
 	assert.match(source, /overflow-y-auto/);
-	// Auto margins centre the column while leaving the overflow scrollable.
 	assert.match(source, /className="my-auto [^"]*flex-col/);
+	assert.match(manual, /placeholder=\{t\("manual-placeholder"\)\}/);
+	assert.doesNotMatch(manual, /<button/);
 });

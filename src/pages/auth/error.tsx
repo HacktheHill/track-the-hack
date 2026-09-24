@@ -30,8 +30,8 @@ const ErrorPage = () => {
 					<Image
 						src="/assets/hackthehill-logo.svg"
 						alt={t("common:hack-the-hill-logo-alt")}
-						width={128}
-						height={128}
+						width={130}
+						height={78}
 						className="h-auto w-24"
 						priority
 					/>

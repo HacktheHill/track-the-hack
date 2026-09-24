@@ -11,9 +11,9 @@ Shared controls live in `src/styles/globals.css`, with palette and geometry toke
 
 ## Controls
 
-- Use `ui-button` for secondary actions and button-like links. Add `ui-button-primary` for form submission and primary actions. Both use a 44px minimum height, 8px corner radius, 16px Rubik text, and consistent padding.
+- Use `ui-button` for secondary actions and button-like links. Add `ui-button-primary` for the single main action in a form or decision, and `ui-button-tertiary` for low-emphasis navigation or reversible account actions. All three use a 44px minimum height, 8px corner radius, 16px Rubik text, and consistent padding.
 - Use `ui-button-icon` for square icon controls, and `ui-button-large` for the homepage call to action. Give icon controls an accessible name.
-- Use `ui-field` for inputs, selects, and textareas. Set width with layout utilities such as `w-full`; use a visible label linked to the field ID. Textareas keep a 112px minimum height and vertical resizing.
+- Use `ui-field` for inputs, selects, and textareas. Set width with layout utilities such as `w-full`; normally use a visible label linked to the field ID. A compact field may use `aria-label` and a matching placeholder when its purpose is unambiguous in context, as on the scanner. Textareas keep a 112px minimum height and vertical resizing.
 - Use `ui-checkbox` for native checkboxes and `ui-choice` beside an `sr-only peer` radio or checkbox. Keep the native input focusable.
 - Use `ui-page-title` for page headings, `ui-panel` for bordered panels, and `ui-form-layout` for centred administrative forms.
 - Use `disabled`, `aria-busy`, `aria-pressed`, and `aria-selected` to communicate the relevant control state. For validation, connect `aria-invalid` and `aria-describedby` to the inline error. Focus outlines appear immediately.

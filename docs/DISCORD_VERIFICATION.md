@@ -95,6 +95,6 @@ registration changes are needed.
 ## Testing
 
 The authoritative local two-service and controlled deployed verification
-procedures are in [`E2E_TESTING.md`](./E2E_TESTING.md#discord-verification).
+procedures are in [`E2E_TESTING.md`](./E2E_TESTING.md#discord).
 This document defines the protocol and configuration; it does not maintain a
 second test checklist.

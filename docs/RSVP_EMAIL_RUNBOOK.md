@@ -24,6 +24,6 @@ This is a reviewed pre-event process, separate from the one-button day-of pass s
 
 Before the full campaign, complete the one-recipient Sheet, email, RSVP, claim,
 scanner, reconciliation, and cleanup journey in
-[`E2E_TESTING.md`](./E2E_TESTING.md#google-sheets-and-real-email-acceptance).
+[`E2E_TESTING.md`](./E2E_TESTING.md#google-sheets-and-email).
 Do not deploy or send merely because local tests pass. This document defines the
 campaign operation; it does not maintain a second test checklist.

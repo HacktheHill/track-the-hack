@@ -31,7 +31,10 @@ const CancelRsvp = () => {
 
 	const cancel = async () => {
 		const currentToken = window.location.hash.slice(1);
-		if (!currentToken) { setToken(""); return; }
+		if (!currentToken) {
+			setToken("");
+			return;
+		}
 		setSubmitting(true);
 		setResult(null);
 		try {
@@ -50,7 +53,8 @@ const CancelRsvp = () => {
 				setToken("");
 			}
 		} catch {
-			if (window.location.hash.slice(1) === currentToken) setResult({ ok: false, message: t("temporarily-unavailable") });
+			if (window.location.hash.slice(1) === currentToken)
+				setResult({ ok: false, message: t("temporarily-unavailable") });
 		} finally {
 			setSubmitting(false);
 		}
@@ -79,7 +83,7 @@ const CancelRsvp = () => {
 						type="button"
 						disabled={submitting || !token}
 						onClick={() => void cancel()}
-						className="mt-6 rounded-lg border border-dark-primary-color bg-light-primary-color px-6 py-3 font-coolvetica text-lg text-light-color disabled:cursor-not-allowed disabled:opacity-60"
+						className="ui-button ui-button-primary ui-button-large mt-6"
 					>
 						{submitting ? t("cancelling") : t("cancel")}
 					</button>

@@ -15,12 +15,16 @@ const QRScanner = memo(function QRScanner({ onScan, onClear, setError }: QRScann
 	useEffect(() => {
 		if (!video.current) return;
 		let absenceTimer: ReturnType<typeof setTimeout> | undefined;
-		const scanner = new QrScanner(video.current, result => {
-			if (absenceTimer) clearTimeout(absenceTimer);
-			absenceTimer = setTimeout(() => onClear?.(), 750);
-			onScan(result);
-			setError("");
-		});
+		const scanner = new QrScanner(
+			video.current,
+			result => {
+				if (absenceTimer) clearTimeout(absenceTimer);
+				absenceTimer = setTimeout(() => onClear?.(), 750);
+				onScan(result.data);
+				setError("");
+			},
+			{ returnDetailedScanResult: true },
+		);
 		void scanner.start().catch(() => setError(t("camera-error")));
 		return () => {
 			if (absenceTimer) clearTimeout(absenceTimer);
@@ -28,7 +32,15 @@ const QRScanner = memo(function QRScanner({ onScan, onClear, setError }: QRScann
 		};
 	}, [onClear, onScan, setError, t]);
 
-	return <video ref={video} className="aspect-square rounded-3xl object-cover" width="300" height="300" />;
+	return (
+		<video
+			ref={video}
+			className="mx-auto aspect-square w-full max-w-[300px] rounded-3xl object-cover"
+			width="300"
+			height="300"
+			playsInline
+		/>
+	);
 });
 
 export default QRScanner;

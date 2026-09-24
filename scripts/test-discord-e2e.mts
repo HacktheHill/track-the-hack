@@ -333,7 +333,7 @@ try {
 	const organizerContext = await browser.newContext();
 	const organizerPage = await organizerContext.newPage();
 	await organizerPage.goto(`${baseUrl}/auth/sign-in?callbackUrl=${encodeURIComponent(`${baseUrl}/qr`)}`);
-	await organizerPage.getByRole("button", { name: "Sign in as local organizer" }).click();
+	await organizerPage.getByRole("button", { name: "Sign in as local organiser" }).click();
 	await organizerPage.waitForURL(url => url.pathname === "/qr");
 	const organizerCookie = (await organizerContext.cookies(baseUrl))
 		.map(item => `${item.name}=${item.value}`)

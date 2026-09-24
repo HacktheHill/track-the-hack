@@ -65,28 +65,12 @@ availability has no number, and no mutation controls appear. Keep the private CS
 for the approved operational retention period, then dispose of it through the
 organisation's normal secure process.
 
-## Completed production classification correction
+## Existing production inventory
 
-The initial production import predated inventory modes. The guarded correction was
-backed up, dry-run, applied, and verified on 2026-09-24 with application release
-`d1c7686b94e73a4b15eb024bc14b9633c1c51fa3`. Production now has these six uncounted,
-consumption-enabled records with null total and available quantities:
-
-- `small-black-buttons`;
-- `the-red-button`;
-- `mixed-colour-leds`;
-- `male-pin-headers`;
-- `resistors`;
-- `wires`.
-
-`aa-batteries` and `emg-electrodes` remain counted and are consumption-enabled. The
-post-apply dry run reported that the intended reconciliation was already applied.
-
-Do not run `npm run hardware:reconcile -- --apply` again as routine setup and do not
-re-import the source Sheet. `npm run hardware:reconcile` is now a read-only diagnostic:
-its normal result is **Hardware reconciliation is already applied.** A future write is a
-recovery operation requiring a fresh backup, review of all eight exact key matches and
-loan/outcome guards, and separate production authorisation.
+The one-time counted/uncounted correction has already been applied. Do not re-import
+the source Sheet or run `hardware:reconcile --apply` as routine setup. The command
+without `--apply` is a read-only diagnostic. Any future correction needs a current
+backup, dry run, and review of affected loans.
 
 ## Rollback
 

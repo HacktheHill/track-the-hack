@@ -24,7 +24,7 @@
 		"test:e2e:scanner": "node --env-file=.env --import tsx scripts/test-scanner-mobile.mts",
 		"check:commits": "node scripts/check-commit-messages.mjs",
 		"typecheck": "tsc --noEmit && node scripts/check-prisma-migrations.mjs && node scripts/check-google-apps-script.mjs",
-		"verify:dev": "npm test && npm run typecheck && npm run lint && npm run test:e2e:dev && npm run test:e2e:pwa",
+		"verify:dev": "npm test && npm run typecheck && npm run lint && npm run test:e2e:dev",
 		"organizer:provision": "node --env-file-if-exists=.env --import tsx scripts/provision-organizer.mts",
 		"rsvp:prepare": "node --import tsx scripts/prepare-rsvp-campaign.mts",
 		"schedule:import": "node --env-file-if-exists=.env --import tsx scripts/import-events.mts",

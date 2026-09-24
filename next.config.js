@@ -17,6 +17,40 @@ const {
 } = pwaRuntimeCaching;
 const publicPrecacheEntries = publicPrecacheUrls.map(url => ({ url, revision: "development" }));
 
+// Pages Router requires inline bootstrap scripts and the existing UI uses inline
+// styles. Keep the policy explicit so every other resource type remains closed.
+const developmentScriptSources = process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : "";
+const developmentConnectSources = process.env.NODE_ENV === "development" ? " ws: wss:" : "";
+const contentSecurityPolicy = [
+	"default-src 'self'",
+	"base-uri 'self'",
+	`connect-src 'self'${developmentConnectSources}`,
+	"font-src 'self' data:",
+	"form-action 'self'",
+	"frame-ancestors 'none'",
+	"frame-src 'none'",
+	"img-src 'self' data: blob: https://cdn1.hackthehill.com https://lh3.googleusercontent.com",
+	"manifest-src 'self'",
+	"media-src 'self' blob:",
+	"object-src 'none'",
+	`script-src 'self' 'unsafe-inline'${developmentScriptSources}`,
+	"style-src 'self' 'unsafe-inline'",
+	"worker-src 'self' blob:",
+].join("; ");
+
+const securityHeaders = [
+	{ key: "Content-Security-Policy", value: contentSecurityPolicy },
+	{ key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+	{ key: "Permissions-Policy", value: "camera=(self), geolocation=(), microphone=(), payment=(), usb=()" },
+	{ key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+	{ key: "X-Content-Type-Options", value: "nosniff" },
+	{ key: "X-DNS-Prefetch-Control", value: "off" },
+	{ key: "X-Frame-Options", value: "DENY" },
+	...(process.env.NODE_ENV === "production" && process.env.NEXTAUTH_URL?.startsWith("https://")
+		? [{ key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" }]
+		: []),
+];
+
 // /profile is personalized server-rendered data. These rules must stay ahead
 // of next-pwa's broad JSON and same-origin rules so neither the document nor a
 // client-navigation data request can ever enter a runtime cache.
@@ -109,10 +143,15 @@ const withPWA = require("next-pwa")({
 
 module.exports = withPWA({
 	reactStrictMode: true,
+	poweredByHeader: false,
 	i18n,
 	distDir: process.env.NEXT_DIST_DIR || ".next",
 	experimental: { useTypeScriptCli: false },
 	turbopack: {},
+	// Match the raw path once. Letting Next add an i18n prefix would miss `/`
+	// and other default-locale document routes.
+	headers: () =>
+		Promise.resolve([{ source: "/:path*", locale: false, headers: securityHeaders }]),
 	/**
 	 * @template {import("webpack").Configuration & {
 	 *   module: import("webpack").ModuleOptions & { rules: import("webpack").RuleSetRule[] }

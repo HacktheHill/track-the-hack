@@ -47,8 +47,8 @@ const SignIn = ({ developmentAuthEnabled }: InferGetServerSidePropsType<typeof g
 				<Image
 					src="/assets/hackthehill-logo.svg"
 					alt={t("common:hack-the-hill-logo-alt")}
-					width={128}
-					height={128}
+					width={130}
+					height={78}
 				/>
 				<h1 className="ui-page-title">{t("organizer-sign-in")}</h1>
 				<p className="font-rubik text-dark-color">{t("organizer-sign-in-help")}</p>

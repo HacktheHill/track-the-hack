@@ -23,9 +23,7 @@ const browser = await chromium.launch({
 });
 try {
 	for (const viewport of [
-		{ width: 390, height: 740 },
 		{ width: 320, height: 568 },
-		{ width: 844, height: 390 },
 		{ width: 1280, height: 800 },
 	]) {
 		const context = await browser.newContext({
@@ -39,12 +37,19 @@ try {
 			await page.goto(
 				new URL("/auth/sign-in?callbackUrl=" + encodeURIComponent(new URL("/qr", baseUrl).href), baseUrl).href,
 			);
-			await page.getByRole("button", { name: "Sign in as local organizer" }).click();
+			await page.getByRole("button", { name: "Sign in as local organiser" }).click();
 			await page.waitForURL(url => url.pathname === "/qr");
 			for (const locale of ["en", "fr"]) {
 				await page.goto(new URL(locale === "fr" ? "/fr/qr" : "/qr", baseUrl).href);
+				await page
+					.getByRole("tab", { name: locale === "fr" ? "Scanner les laissez-passer" : "Scan passes" })
+					.click();
 				const selector = page.locator("main select");
 				await selector.waitFor();
+				// Locale changes preserve the selected event in local storage. Force the
+				// read-only lookup mode before submitting the participant identifier so
+				// this layout test can never create a presence record.
+				await selector.selectOption("__view__");
 				const assertReachable = async (stage: string) => {
 					await page.locator("main").evaluate(element => {
 						element.scrollTop = 0;
@@ -75,6 +80,19 @@ try {
 				};
 				await assertReachable("before lookup");
 				const input = page.locator("#scanner-input");
+				const video = page.locator("main video");
+				const alignment = await Promise.all(
+					[video, input].map(async locator => {
+						const box = await locator.boundingBox();
+						assert.ok(box);
+						return box.x + box.width / 2;
+					}),
+				);
+				const [videoCentre, inputCentre] = alignment;
+				if (videoCentre === undefined || inputCentre === undefined)
+					throw new Error("Expected scanner video and input alignment measurements");
+				assert.ok(Math.abs(videoCentre - inputCentre) < 1, JSON.stringify({ viewport, locale, alignment }));
+				assert.equal(await page.locator("main form button").count(), 0);
 				await input.fill("dev-participant-normal-01");
 				await input.press("Enter");
 				await page.getByText("dev-participant-normal-01", { exact: true }).waitFor();

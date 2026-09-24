@@ -1,6 +1,6 @@
 {
 	"title": "Commanditaires",
-	"description": "Nous tenons à remercier nos commanditaires pour leur généreux soutien. Découvrez-en plus sur nos commanditaires ci-dessous.",
+	"description": "Merci à nos commanditaires. Apprenez-en plus ci-dessous.",
 	"tier": "Commanditaire {{tier}}",
 	"tiers": {
 		"backbencher": "Député d'arrière-ban",
@@ -9,9 +9,9 @@
 		"mayor": "Maire",
 		"premier": "Premier"
 	},
-	"hiring": "Site Web de Recrutement",
+	"hiring": "Carrières",
 	"website": "Site Web",
-	"additional": "Informations Supplémentaires",
+	"additional": "Renseignements supplémentaires",
 	"descriptions": {
 		"cgi": "CGI est l'une des plus importantes entreprises indépendantes de services-conseils en technologie de l'information et en management au monde. Elle aide les organisations à accélérer leur transformation numérique et à obtenir des résultats mesurables.",
 		"ciena": "Ciena est une entreprise mondiale de systèmes, de services et de logiciels de réseautage dont les technologies permettent une connectivité rapide, fiable et évolutive.",

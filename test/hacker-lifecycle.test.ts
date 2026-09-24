@@ -426,7 +426,7 @@ void test("participant sign-out revokes server state and clears both browser coo
 	const signOut = createParticipantSignOutApiHandler(verifier => {
 		revokedVerifier = verifier;
 		return Promise.resolve();
-	}, sessionSecret);
+	}, sessionSecret, "https://track.example");
 	const result = responseMock();
 	await signOut(
 		requestMock({
@@ -448,6 +448,26 @@ void test("participant sign-out revokes server state and clears both browser coo
 	assert.equal(cleared.length, 2);
 	assert.ok(cleared.every(cookie => cookie.includes("Max-Age=0")));
 	assert.deepEqual(clearParticipantSessionCookies(), cleared);
+});
+
+void test("participant sign-out rejects cross-site requests without revoking the session", async () => {
+	let revoked = false;
+	const signOut = createParticipantSignOutApiHandler(() => {
+		revoked = true;
+		return Promise.resolve();
+	}, "s".repeat(32), "https://track.example");
+	const result = responseMock();
+	await signOut(
+		requestMock({
+			method: "POST",
+			headers: { origin: "https://attacker.example", "sec-fetch-site": "cross-site" },
+		}),
+		result.response,
+	);
+
+	assert.equal(result.statusCode, 403);
+	assert.equal(revoked, false);
+	assert.equal(result.headers["Set-Cookie"], undefined);
 });
 
 void test("organizer Google auth enforces provider, verification, hosted domain, and matching identity", () => {

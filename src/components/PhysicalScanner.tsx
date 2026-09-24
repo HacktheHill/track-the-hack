@@ -22,29 +22,19 @@ const PhysicalScanner = (props: PhysicalScannerProps) => {
 	};
 
 	return (
-		<form className="flex flex-col gap-3 rounded-3xl bg-light-quaternary-color p-5" onSubmit={onSubmit}>
-			<label htmlFor="scanner-input" className="font-coolvetica text-xl text-dark-color">
-				{t("manual-label")}
-			</label>
-			<p className="font-rubik text-sm text-dark-color">{t("manual-help")}</p>
+		<form className="w-full" onSubmit={onSubmit}>
 			<input
 				id="scanner-input"
+				aria-label={t("manual-placeholder")}
 				disabled={props.disabled}
 				name="scannerInput"
 				type="text"
-				autoFocus
 				required
 				className="ui-field w-full"
 				onChange={onChange}
+				placeholder={t("manual-placeholder")}
 				value={scannedCode}
 			/>
-			<button
-				type="submit"
-				disabled={props.disabled || !scannedCode.trim()}
-				className="ui-button ui-button-primary"
-			>
-				{t("manual-submit")}
-			</button>
 		</form>
 	);
 };

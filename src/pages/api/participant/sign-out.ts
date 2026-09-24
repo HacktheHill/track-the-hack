@@ -8,4 +8,5 @@ const repository = new PrismaHackerLifecycleRepository(prisma);
 export default createParticipantSignOutApiHandler(
 	verifier => repository.revokeParticipantSession(verifier),
 	env.PARTICIPANT_SESSION_SECRET,
+	new URL(env.NEXTAUTH_URL).origin,
 );

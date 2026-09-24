@@ -123,6 +123,12 @@ body {
 		background: var(--color-accent);
 		color: var(--color-on-accent);
 	}
+	.ui-button-tertiary {
+		border-color: transparent;
+		background: transparent;
+		text-decoration: underline;
+		text-underline-offset: 0.2em;
+	}
 
 	.ui-button:active:not(:disabled) {
 		background: var(--color-surface-hover);
@@ -342,6 +348,11 @@ body {
 		.peer:checked + .ui-choice:hover {
 			background: var(--color-accent-hover);
 			color: var(--color-on-accent);
+		}
+		.ui-button-tertiary:hover:not(:disabled) {
+			border-color: var(--color-border);
+			background: var(--color-surface);
+			color: var(--color-ink);
 		}
 		.ui-nav-link:hover:not([aria-current="page"]) {
 			background: var(--color-surface);
