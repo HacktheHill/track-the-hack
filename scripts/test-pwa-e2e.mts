@@ -228,7 +228,7 @@ try {
 
 	for (const locale of [
 		{ prefix: "", event: eventName, floor: /^Floor / },
-		{ prefix: "/fr", event: eventNameFr, floor: /^Étage / },
+		{ prefix: "/fr", event: eventNameFr, floor: /^Niveau / },
 	] as const) {
 		await visit(page, `${locale.prefix}/schedule`);
 		await page.getByText(locale.event, { exact: true }).waitFor();
@@ -237,7 +237,9 @@ try {
 		await page.getByRole("heading", { name: locale.event }).waitFor();
 
 		await visit(page, `${locale.prefix}/maps`);
-		assert.equal(await page.getByRole("heading", { name: locale.floor }).count(), 6);
+		const floorHeadings = page.getByRole("heading", { name: locale.floor });
+		await floorHeadings.first().waitFor();
+		assert.equal(await floorHeadings.count(), 6);
 
 		await visit(page, `${locale.prefix}/resources`);
 		await page.getByRole("link", { name: "CGI" }).waitFor();
@@ -259,7 +261,7 @@ try {
 		{
 			prefix: "/fr",
 			event: eventNameFr,
-			floor: /^Étage /,
+			floor: /^Niveau /,
 			offlineHeading: "Vous êtes hors ligne",
 			passHeading: "Votre laissez-passer hors ligne",
 			qrAlt: "Votre code QR pour l’événement",
@@ -272,7 +274,9 @@ try {
 		await page.getByRole("heading", { name: locale.event }).waitFor();
 
 		await visit(page, `${locale.prefix}/maps`);
-		assert.equal(await page.getByRole("heading", { name: locale.floor }).count(), 6);
+		const floorHeadings = page.getByRole("heading", { name: locale.floor });
+		await floorHeadings.first().waitFor();
+		assert.equal(await floorHeadings.count(), 6);
 		const mapResponses = await page.evaluate(async () => {
 			const paths = [
 				"/assets/maps/floor0.svg",
