@@ -10,6 +10,12 @@
 	--color-muted: #805044;
 	--color-error: #84010b;
 	--color-success: #245638;
+	--color-scan-new-surface: #dff4e7;
+	--color-scan-incremented: #175e63;
+	--color-scan-incremented-surface: #d9f1f0;
+	--color-scan-unchanged: #7a4b00;
+	--color-scan-unchanged-surface: #fff0c2;
+	--color-scan-limit-surface: #f8d7da;
 	--font-body: Rubik, sans-serif;
 	--font-display: Coolvetica, sans-serif;
 	--radius-control: 0.5rem;

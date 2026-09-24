@@ -232,6 +232,25 @@ body {
 		border-radius: var(--radius-panel);
 		background: var(--color-surface-hover);
 	}
+	.scan-result {
+		border-width: 4px;
+	}
+	.scan-result[data-outcome="new"] {
+		border-color: var(--color-success);
+		background: var(--color-scan-new-surface);
+	}
+	.scan-result[data-outcome="incremented"] {
+		border-color: var(--color-scan-incremented);
+		background: var(--color-scan-incremented-surface);
+	}
+	.scan-result[data-outcome="unchanged"] {
+		border-color: var(--color-scan-unchanged);
+		background: var(--color-scan-unchanged-surface);
+	}
+	.scan-result[data-outcome="limit"] {
+		border-color: var(--color-error);
+		background: var(--color-scan-limit-surface);
+	}
 	.ui-form-layout {
 		width: 100%;
 		max-width: 42rem;

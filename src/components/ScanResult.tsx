@@ -22,7 +22,8 @@ export default function ScanResult({ result, interestedEvents, children }: ScanR
 		<section
 			aria-label={t("scan-result")}
 			aria-live="polite"
-			className="ui-panel flex w-full max-w-xl flex-col gap-4 break-words p-6 font-rubik text-dark-color"
+			className="scan-result ui-panel flex w-full max-w-xl flex-col gap-4 break-words p-6 font-rubik text-dark-color"
+			data-outcome={result.outcome}
 		>
 			{result.subjectType === "organizer" && (
 				<p className="font-bold">{t("organizer-pass", { name: result.organizer.name ?? t("organizer") })}</p>

@@ -4,7 +4,7 @@ export type ScanFeedback = ScanOutcome | "error" | "view";
 
 let context: AudioContext | null = null;
 
-export const playScanFeedback = (feedback: ScanFeedback) => {
+export const playScanFeedback = async (feedback: ScanFeedback) => {
 	if (typeof window === "undefined") return;
 	const cues: Record<ScanFeedback, { notes: number[]; vibration: number[] }> = {
 		new: { notes: [523, 784], vibration: [120] },
@@ -22,19 +22,20 @@ export const playScanFeedback = (feedback: ScanFeedback) => {
 	}
 	try {
 		const audio = (context ??= new window.AudioContext());
-		if (audio.state === "suspended") void audio.resume();
+		if (audio.state === "suspended") await audio.resume();
 		const start = audio.currentTime;
 		cue.notes.forEach((frequency, index) => {
 			const oscillator = audio.createOscillator();
 			const volume = audio.createGain();
-			const noteStart = start + index * 0.09;
+			const noteStart = start + index * 0.14;
 			oscillator.frequency.value = frequency;
-			oscillator.type = "sine";
-			volume.gain.setValueAtTime(0.08, noteStart);
-			volume.gain.exponentialRampToValueAtTime(0.001, noteStart + 0.12);
+			oscillator.type = "triangle";
+			volume.gain.setValueAtTime(0.001, noteStart);
+			volume.gain.exponentialRampToValueAtTime(0.2, noteStart + 0.01);
+			volume.gain.exponentialRampToValueAtTime(0.001, noteStart + 0.2);
 			oscillator.connect(volume).connect(audio.destination);
 			oscillator.start(noteStart);
-			oscillator.stop(noteStart + 0.12);
+			oscillator.stop(noteStart + 0.2);
 		});
 	} catch {
 		// Visual feedback remains available when audio is blocked or unsupported.

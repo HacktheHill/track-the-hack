@@ -82,6 +82,13 @@ Perform only the section affected by the change.
   phone and desktop in English and French.
 - Scan one participant in each workflow class. Confirm only the required operational
   fields appear.
+- Confirm a new record has a green result card, an increment has a distinct teal-green
+  card, an unchanged record has an amber card, and a limit has a red card. Confirm the
+  written result remains clear without relying on colour.
+- Confirm the ascending success cues and descending limit or error cues are audible
+  above expected room noise on the event device. On a handheld browser that supports
+  vibration, confirm the corresponding vibration cues; unsupported devices may omit
+  vibration without affecting the scan.
 - For cap or concurrency changes, use two organiser sessions once and confirm the
   database count cannot exceed the cap.
 - Use a real camera or USB scanner when decoding, feedback, or desk hardware changed.

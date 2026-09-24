@@ -75,20 +75,20 @@ const QR = ({ organizerPass }: InferGetServerSidePropsType<typeof getServerSideP
 						if (sequence !== scanSequence.current) return;
 						setDisplay(<ParticipantCard hacker={hacker} />);
 					}
-					playScanFeedback("view");
+					void playScanFeedback("view");
 					return;
 				}
 
 				const result = await scanPresence({ eventId: selectedAction.current, hackerId });
 				if (sequence !== scanSequence.current) return;
 				setDisplay(<WorkflowCard result={result} operation={operation} />);
-				playScanFeedback(result.outcome);
+				void playScanFeedback(result.outcome);
 			} catch {
 				if (sequence !== scanSequence.current) return;
 				previousId.current = "";
 				setDisplay(undefined);
 				setError(t("unknown-error"));
-				playScanFeedback("error");
+				void playScanFeedback("error");
 			} finally {
 				operation.end();
 			}

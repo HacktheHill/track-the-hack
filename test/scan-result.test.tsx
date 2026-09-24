@@ -115,3 +115,10 @@ void test("organizer scans identify the organizer without participant food or me
 	assert.match(html, /Organiser: Daniel/);
 	assert.doesNotMatch(html, /Diet:|T-shirt:|Contact the food lead/);
 });
+
+void test("scan results expose every outcome for semantic colour styling", async () => {
+	for (const outcome of ["new", "incremented", "unchanged", "limit"] as const) {
+		const html = await render({ ...food, outcome });
+		assert.match(html, new RegExp(`class="[^"]*scan-result[^"]*"[^>]*data-outcome="${outcome}"`));
+	}
+});
