@@ -143,9 +143,8 @@ jobs:
             --resource-group "$AZURE_RESOURCE_GROUP" \
             --name track-the-hack-organizer \
             --image "$migration_image"
-          if az containerapp job show \
-            --resource-group "$AZURE_RESOURCE_GROUP" \
-            --name track-the-hack-audit-retention >/dev/null 2>&1; then
+          audit_retention_job_id="/subscriptions/$(az account show --query id --output tsv)/resourceGroups/${AZURE_RESOURCE_GROUP}/providers/Microsoft.App/jobs/track-the-hack-audit-retention"
+          if az resource show --ids "$audit_retention_job_id" >/dev/null 2>&1; then
             retry_az az containerapp job update \
               --resource-group "$AZURE_RESOURCE_GROUP" \
               --name track-the-hack-audit-retention \
