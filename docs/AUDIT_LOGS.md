@@ -42,17 +42,21 @@ let AuditEvents = ContainerAppConsoleLogs_CL
 | where toint(audit.schemaVersion) == 1;
 ```
 
-Successful admissions by event and organizer:
+Successful scans by event, scanning organiser, and subject type:
 
 ```kusto
 AuditEvents
 | where tostring(audit.name) == "scanner.scan"
 | where tostring(audit.outcome) in ("recorded", "incremented")
 | project Time=todatetime(audit.occurredAt), EventId=tostring(audit.resource.id),
-          OrganizerId=tostring(audit.actor.id), HackerId=tostring(audit.subject.id),
+          ScanningOrganizerId=tostring(audit.actor.id),
+          SubjectType=tostring(audit.subject.type), SubjectId=tostring(audit.subject.id),
           Workflow=tostring(audit.data.workflow), Count=toint(audit.data.afterCount)
 | order by Time desc
 ```
+
+`SubjectType == "hacker"` is a participant `Presence`; `SubjectType == "user"` is an
+`OrganizerPresence`. Do not label every subject as a participant.
 
 One participant's scanner history:
 
@@ -66,7 +70,7 @@ AuditEvents
 | order by Time desc
 ```
 
-One organizer's actions:
+One organiser's actions:
 
 ```kusto
 AuditEvents
@@ -90,6 +94,26 @@ AuditEvents
 
 The query must show hashes and aggregate counts only. Do not add message bodies,
 participant IDs, Discord identities, or push endpoints to a release evidence export.
+
+External organiser access-list changes:
+
+```kusto
+AuditEvents
+| where tostring(audit.name) in ("organizer.access.added", "organizer.access.removed")
+| project Time=todatetime(audit.occurredAt), Name=tostring(audit.name),
+          Outcome=tostring(audit.outcome), AdministratorId=tostring(audit.actor.id),
+          AccessRecordId=tostring(audit.resource.id), Data=audit.data
+| order by Time desc
+```
+
+`Outcome` is `added` or `removed` for a change and `unchanged` for an idempotent repeat.
+The event must not contain the external email address, verification token, QR value, or
+session cookie. See [`ORGANISER_ACCESS.md`](./ORGANISER_ACCESS.md#4-administrator-access-list-audit)
+for the corresponding acceptance procedure.
+
+`organizer.roles.updated` may appear only as preserved legacy evidence. Current code
+must not emit it; administrator status is provisioned separately and the access-list UI
+emits only the two `organizer.access.*` names above.
 
 Event Services records `hardware.item.availability_changed`,
 `hardware.loan.checked_out`, `hardware.loan.returned`, `latte.order.placed`,

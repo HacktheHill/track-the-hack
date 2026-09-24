@@ -21,6 +21,12 @@ Use the narrowest layer that proves the behaviour:
 A release is not “fully tested” if a required layer was skipped. Record skipped checks
 with the concrete reason and the environment in which they still need to run.
 
+For organiser authentication, administrator access, emailed sign-in links, organiser
+passes, revocation, and separate organiser Presence, follow the complete
+[`ORGANISER_ACCESS.md`](./ORGANISER_ACCESS.md#release-acceptance) checklist. It is the
+feature-specific closure checklist; this document defines the application-wide test
+layers and evidence rules.
+
 ## Safety and data rules
 
 - Use only loopback development URLs for local organiser auth.
@@ -113,9 +119,12 @@ Script mapper, and loopback SMTP. It must cover:
 6. replacement issuance revoking an older claim and active session;
 7. the walk-in flag through the same reviewed provisioning and claim path;
 8. loopback-only organiser sign-in and protected scanner/metrics access;
-9. manual scanner input writing a real Presence row;
-10. all four scanner workflow response allowlists and aggregate metrics;
-11. cleanup of generated participants, sessions, capabilities, Presence, and logs.
+9. manual scanner input writing real participant `Presence` and organiser
+   `OrganizerPresence` rows;
+10. all four scanner workflow response allowlists, organiser field separation, and
+    aggregate metrics;
+11. cleanup of generated participants, sessions, capabilities, Presence,
+    OrganizerPresence, and logs.
 
 ## Event Services acceptance
 
@@ -623,6 +632,13 @@ audience isolation through closeout. A production campaign test is prohibited wh
 the checked-in snapshot could include a non-test Hacker; use protected staging or a
 reviewed window containing only designated test participants. Deployment approval is
 not send approval.
+
+For an organiser-access release, the bullets above are only the initial smoke. Complete
+the CTN administrator and non-administrator sign-ins, allowed and unknown magic-link
+cases, removal before redemption, removal during an active JWT, both QR tabs,
+participant and organiser scans, database separation, audit review, metrics invariance,
+and cleanup in [`ORGANISER_ACCESS.md`](./ORGANISER_ACCESS.md#release-acceptance). Do not
+mark the release complete while any item in its final checklist is pending.
 
 Do not repeat destructive edge cases in production. Do not create a hardware loan,
 Latte order, or availability change solely for smoke testing. Verify counts before and

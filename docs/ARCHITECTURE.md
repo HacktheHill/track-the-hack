@@ -88,6 +88,11 @@ npm run organizer:provision -- agam.singh@ctn-rtc.org --admin
 Those grants are database state, not hard-coded identities. The commands do not grant
 participant access or create an RSVP/claim capability.
 
+The access-list UI, production provisioning workflow, revocation semantics, and full
+release-acceptance procedure are documented in
+[`ORGANISER_ACCESS.md`](./ORGANISER_ACCESS.md). `/internal/roles` is retained only as a
+compatibility redirect to `/internal/access`; there is no role-management API behind it.
+
 ## Participant provisioning and RSVP
 
 The bound Apps Script is versioned under `integrations/google-sheets/`. It maps the
@@ -163,6 +168,11 @@ record, or authentication secret. Scans write to `OrganizerPresence`, separate f
 participant `Presence`; therefore food and merchandise can be counted without adding
 dietary restrictions, T-shirt sizes, RSVP state, or other participant fields to an
 organiser account.
+
+An organiser subject is resolved again at scan time. Removing an external address or
+setting `User.disabledAt` therefore invalidates that person's pass for future scans
+without deleting historical `OrganizerPresence`. Scanner audit records use subject type
+`user` for organisers and `hacker` for participants.
 
 A non-authorising `participant_pass=1` marker lets navigation show “My pass”; forging it
 only reveals a link to a server-protected route. `/profile` is private and network-only.
