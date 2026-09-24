@@ -49,16 +49,17 @@ authorization model and [`docs/SECURITY.md`](./docs/SECURITY.md) for security co
 
 ## Common operations
 
-| Task | Documentation |
-| --- | --- |
-| Schedule import | [`docs/SCHEDULE_IMPORT.md`](./docs/SCHEDULE_IMPORT.md) |
-| Hardware import | [`docs/HARDWARE_IMPORT.md`](./docs/HARDWARE_IMPORT.md) |
-| RSVP recipient preparation | [`docs/RSVP_EMAIL_RUNBOOK.md`](./docs/RSVP_EMAIL_RUNBOOK.md) |
-| Discord verification | [`docs/DISCORD_VERIFICATION.md`](./docs/DISCORD_VERIFICATION.md) |
-| Organiser access | [`docs/ORGANISER_ACCESS.md`](./docs/ORGANISER_ACCESS.md) |
-| Notifications | [`docs/NOTIFICATIONS.md`](./docs/NOTIFICATIONS.md) |
-| Audit records and legacy-log retirement | [`docs/AUDIT_LOGS.md`](./docs/AUDIT_LOGS.md) |
-| Offline behaviour | [`docs/OFFLINE_ACCEPTANCE.md`](./docs/OFFLINE_ACCEPTANCE.md) |
+| Task                                     | Documentation                                                    |
+| ---------------------------------------- | ---------------------------------------------------------------- |
+| Schedule import                          | [`docs/SCHEDULE_IMPORT.md`](./docs/SCHEDULE_IMPORT.md)           |
+| Hardware import                          | [`docs/HARDWARE_IMPORT.md`](./docs/HARDWARE_IMPORT.md)           |
+| RSVP recipient preparation               | [`docs/RSVP_EMAIL_RUNBOOK.md`](./docs/RSVP_EMAIL_RUNBOOK.md)     |
+| Discord verification                     | [`docs/DISCORD_VERIFICATION.md`](./docs/DISCORD_VERIFICATION.md) |
+| Organiser access                         | [`docs/ORGANISER_ACCESS.md`](./docs/ORGANISER_ACCESS.md)         |
+| Notifications                            | [`docs/NOTIFICATIONS.md`](./docs/NOTIFICATIONS.md)               |
+| Audit records and legacy-log retirement  | [`docs/AUDIT_LOGS.md`](./docs/AUDIT_LOGS.md)                     |
+| Audit end-to-end acceptance and closeout | [`docs/AUDIT_ACCEPTANCE.md`](./docs/AUDIT_ACCEPTANCE.md)         |
+| Offline behaviour                        | [`docs/OFFLINE_ACCEPTANCE.md`](./docs/OFFLINE_ACCEPTANCE.md)     |
 
 ## Deployment
 

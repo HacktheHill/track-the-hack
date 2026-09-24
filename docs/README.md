@@ -39,8 +39,8 @@ the same procedure.
 | Events editor and schedule import                     | [`SCHEDULE_IMPORT.md`](./SCHEDULE_IMPORT.md), [`USER_GUIDE.md`](./USER_GUIDE.md)                                                         |
 | Organiser access and roles                            | [`ORGANISER_ACCESS.md`](./ORGANISER_ACCESS.md), [`ARCHITECTURE.md`](./ARCHITECTURE.md)                                                   |
 | Metrics                                               | [`ARCHITECTURE.md`](./ARCHITECTURE.md), [`USER_GUIDE.md`](./USER_GUIDE.md)                                                               |
-| Audit ledger and retention                            | [`AUDIT_LOGS.md`](./AUDIT_LOGS.md)                                                                                                       |
-| Security and credential handling                      | [`SECURITY.md`](./SECURITY.md), [`ARCHITECTURE.md`](./ARCHITECTURE.md), [`E2E_TESTING.md`](./E2E_TESTING.md)                            |
+| Audit ledger and retention                            | [`AUDIT_LOGS.md`](./AUDIT_LOGS.md), [`AUDIT_ACCEPTANCE.md`](./AUDIT_ACCEPTANCE.md)                                                       |
+| Security and credential handling                      | [`SECURITY.md`](./SECURITY.md), [`ARCHITECTURE.md`](./ARCHITECTURE.md), [`E2E_TESTING.md`](./E2E_TESTING.md)                             |
 | Build, deployment, health and rollback                | [`../README.md`](../README.md), [`DEVELOPMENT.md`](./DEVELOPMENT.md), [`E2E_TESTING.md`](./E2E_TESTING.md)                               |
 | Visual language, components and localization          | [`ui-consistency.md`](./ui-consistency.md), [`USER_GUIDE.md`](./USER_GUIDE.md)                                                           |
 
