@@ -8,19 +8,14 @@ Earlier `REMAINING_WORK.md` reports came from different checkouts and are supers
 Do not combine them into an additive backlog, and do not deploy an abandoned worktree
 or prototype branch wholesale.
 
-## Current release boundary
+## Acceptance target and private data boundary
 
-The source of truth is the current `origin/main`; resolve its exact SHA immediately
-before deployment. The production application is still Azure Container App revision
-`track-the-hack--0000058`, running image
-`trackthehackacr.azurecr.io/track-the-hack:85af7abb4adda34541b172ded3a766e4b3a01a41`.
-The production revision is healthy and receives 100% of traffic, but it predates the
-current source. Do not describe the new code as deployed until the Azure migration,
-application rollout, and post-deployment checks below have all succeeded.
-
-The production database is privately networked. Use the existing Azure Container Apps
-migration job rather than exposing MySQL or copying database credentials elsewhere.
-Keep Cloudflare Access enabled during testing. Public launch is a separate decision.
+Run the remaining acceptance checks against release
+`21924e0fbcc6287dca3ae8965cac5067ee32f973`, Azure revision
+`track-the-hack--0000059`. Before testing, confirm that it is still the live revision;
+if `origin/main` or production has advanced, reassess the target instead of assuming
+these instructions still describe it. Keep Cloudflare Access enabled during testing.
+Public launch is a separate decision.
 
 The private schedule CSV and RSVP exports are operational data:
 
@@ -33,62 +28,11 @@ The private schedule CSV and RSVP exports are operational data:
 - Removing the schedule CSV from Git did not remove database events or affect the
   Sheet-to-database participant integration.
 
-## 1. Deploy and accept current `main`
+## 1. Complete physical scanner and offline acceptance
 
-This is the highest-priority outstanding item. The release changes the `Event` schema
-and day-of scanner behaviour, so migration and application rollout must remain one
-ordered operation.
-
-### Pre-deployment review
-
-1. Fetch `origin/main`, record the exact release SHA, and review every commit since the
-   currently deployed application image before deploying.
-2. Confirm the push-triggered workflow is not reporting a real build, test, or image
-   failure. Waiting for redundant checks is not required, but do not ignore a known
-   failure.
-3. Review
-   `prisma/migrations/20260924010000_add_event_scanner_enabled/migration.sql`. It adds
-   `Event.scannerEnabled`, defaults existing rows to enabled, then disables every
-   `CAREER_FAIR` event and events currently named `Team Formation` or
-   `Closing Ceremony`.
-4. Confirm that this remains the intended initial disabled set. If operations identifies
-   another schedule-only event, do not add a mutable-name runtime rule. Apply the
-   migration, then update the explicit field through a reviewed editor/database
-   operation.
-5. Confirm Azure still shows revision `0000058` and image `85af7abb…`. A different live
-   revision means another operator deployed and the rollout must be reassessed.
-
-### Deployment mechanism
-
-Dispatch `.github/workflows/container.yml` from `main`. Its Production job is the
-authoritative release path and performs these steps in order:
-
-1. Build and push runtime, migration, and Prisma Studio images tagged with the release
-   commit SHA.
-2. Update and start the `track-the-hack-migrate` Container Apps job.
-3. Wait for that exact migration execution to report `Succeeded`.
-4. Update the `track-the-hack-organizer` job to the new migration image.
-5. Update the `track-the-hack` and `track-the-hack-prisma` applications.
-6. Reapply the configured health probes.
-
-Do not update the application image manually before the migration succeeds. If the
-migration fails, inspect that execution's logs; do not repeatedly start new executions
-without determining whether the failure is transient or deterministic.
-
-### Post-deployment provider checks
-
-Record non-secret evidence for the release SHA and migration execution, then verify:
-
-- the migration execution is `Succeeded`;
-- latest and latest-ready revision are the same new revision;
-- the new revision is `Running`, `Healthy`, and `Provisioned` and receives 100% of
-  traffic;
-- `/api/healthz` and `/api/readyz` succeed through the protected production route;
-- runtime, migration, organiser-job, and Prisma Studio image tags match the release SHA;
-- exactly one applied `20260924010000_add_event_scanner_enabled` migration exists;
-- all 41 events and schedule content remain present;
-- scanner-disabled rows are exactly the operator-approved set;
-- participant, RSVP, claim, session, and presence counts have not unexpectedly changed.
+The release and migration are complete, but camera/USB behaviour, two-device
+concurrency, and installed-PWA behaviour still require the physical environments below.
+These are the highest-priority outstanding acceptance checks.
 
 ### Scanner acceptance
 
