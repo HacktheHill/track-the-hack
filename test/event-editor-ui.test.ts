@@ -127,6 +127,7 @@ for (const mode of ["create", "update"]) {
 				"description" in saved &&
 				"descriptionFr" in saved &&
 				"type" in saved &&
+				"scannerEnabled" in saved &&
 				"scannerWorkflow" in saved &&
 				"maxCheckIns" in saved &&
 				"host" in saved &&
@@ -135,6 +136,7 @@ for (const mode of ["create", "update"]) {
 		assert.equal(saved.description, event.description);
 		assert.equal(saved.descriptionFr, event.descriptionFr);
 		assert.equal(saved.type, event.type);
+		assert.equal(saved.scannerEnabled, event.scannerEnabled);
 		assert.equal(saved.scannerWorkflow, event.scannerWorkflow);
 		assert.equal(saved.maxCheckIns, event.maxCheckIns);
 		assert.equal(saved.host, event.host);
@@ -179,6 +181,7 @@ void test("editor renders translated scanner controls and responsive shared styl
 	assert.ok(button(renderer, "Annuler"));
 	assert.equal(renderer.root.findByProps({ id: "event-type" }).props.className, "ui-field");
 	assert.equal(renderer.root.findByProps({ id: "event-scanner-workflow" }).props.className, "ui-field");
+	assert.equal(renderer.root.findByProps({ id: "event-scanner-enabled" }).props.className, "ui-checkbox");
 	assert.equal(renderer.root.findByProps({ id: "event-max-check-ins" }).props.className, "ui-field");
 	assert.equal(renderer.root.findByProps({ id: "event-host" }).props.className, "ui-field");
 	assert.equal(renderer.root.findByProps({ id: "event-room-fr" }).props.className, "ui-field");

@@ -1,8 +1,8 @@
 {
 	"search": "Rechercher",
-	"title": "Interne",
+	"title": "Outils organisateurs",
 	"roles": "Rôles",
-	"metrics": "Métriques",
+	"metrics": "Statistiques",
 	"submit": "Soumettre",
 
 	"events": {
@@ -31,6 +31,7 @@
 			"FOOD": "Repas"
 		},
 		"host": "Hôte (facultatif)",
+		"scanner-enabled": "Disponible comme poste de lecture",
 		"scanner-workflow": "Fonction du lecteur",
 		"scanner-workflow-values": {
 			"ATTENDANCE": "Présence à l'événement",

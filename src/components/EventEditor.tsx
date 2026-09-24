@@ -19,6 +19,7 @@ type EventEditorProps = {
 		| "end"
 		| "hidden"
 		| "type"
+		| "scannerEnabled"
 		| "scannerWorkflow"
 		| "maxCheckIns"
 		| "host"
@@ -63,6 +64,7 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 	const [end, setEnd] = useState(event?.end ? formatTorontoDateTimeLocal(event.end) : "");
 	const [visible, setVisible] = useState(event ? !event.hidden : false);
 	const [type, setType] = useState(event?.type ?? EventType.ALL);
+	const [scannerEnabled, setScannerEnabled] = useState(event?.scannerEnabled ?? true);
 	const [scannerWorkflow, setScannerWorkflow] = useState(event?.scannerWorkflow ?? ScannerWorkflow.ATTENDANCE);
 	const [maxCheckIns, setMaxCheckIns] = useState(event?.maxCheckIns?.toString() ?? "");
 	const [host, setHost] = useState(event?.host ?? "");
@@ -195,6 +197,7 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 			descriptionFr: descriptionFr.trim(),
 			hidden: !visible,
 			type,
+			scannerEnabled,
 			scannerWorkflow,
 			maxCheckIns: maxCheckIns === "" ? null : Number(maxCheckIns),
 			host: host.trim() || null,
@@ -463,6 +466,16 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 								{...errorAttributes}
 							/>
 						</div>
+					</div>
+					<div className="flex items-center gap-2">
+						<input
+							id="event-scanner-enabled"
+							type="checkbox"
+							checked={scannerEnabled}
+							onChange={e => setScannerEnabled(e.target.checked)}
+							className="ui-checkbox"
+						/>
+						<label htmlFor="event-scanner-enabled">{t("events.scanner-enabled")}</label>
 					</div>
 
 					<div className="flex flex-col gap-2">

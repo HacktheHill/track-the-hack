@@ -12,7 +12,7 @@ type ScanResultProps = {
 
 export const MealInfo = ({ mealCategory }: { mealCategory: MealCategory }) => {
 	const { t } = useTranslation("qr");
-	return <p>{t("meal", { value: t(`meal-category.${mealCategory}`) })}</p>;
+	return <p>{t("diet", { value: t(`meal-category.${mealCategory}`) })}</p>;
 };
 
 export default function ScanResult({ result, interestedEvents, children }: ScanResultProps) {
@@ -24,8 +24,6 @@ export default function ScanResult({ result, interestedEvents, children }: ScanR
 			aria-live="polite"
 			className="flex w-full max-w-xl flex-col gap-4 break-words rounded-lg bg-light-primary-color p-6 font-rubik text-light-color"
 		>
-			<h2 className="break-all font-coolvetica text-2xl">{result.participant.id}</h2>
-			<p>{french ? result.nameFr : result.name}</p>
 			{result.workflow === ScannerWorkflow.CHECK_IN && (
 				<p>{t("confirmed", { value: result.participant.confirmed ? t("yes") : t("no") })}</p>
 			)}

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { loadEnvFile } from "node:process";
 import test, { type TestContext } from "node:test";
 import { EventType, PrismaClient, RoleName, ScannerWorkflow } from "@prisma/client";
+import { z } from "zod";
 
 loadEnvFile(".github/workflows/build.env");
 const routerModule = import("@/server/api/routers/events");
@@ -17,6 +18,7 @@ const eventInput = {
 	descriptionFr: "Bienvenue à l'événement",
 	hidden: false,
 	type: EventType.ALL,
+	scannerEnabled: true,
 	scannerWorkflow: ScannerWorkflow.ATTENDANCE,
 	maxCheckIns: null,
 	host: null,
@@ -61,7 +63,10 @@ const setup = async (
 	);
 	const eventLookup = t.mock.fn(() => Promise.resolve(foundEvent));
 	const eventFindFirst = t.mock.fn(() => Promise.resolve(foundEvent));
-	const eventFindMany = t.mock.fn(() => Promise.resolve(foundEvent ? [foundEvent] : []));
+	const eventFindMany = t.mock.fn((request: unknown) => {
+		void request;
+		return Promise.resolve(foundEvent ? [foundEvent] : []);
+	});
 	const create = t.mock.fn(() => Promise.resolve(existingEvent));
 	const update = t.mock.fn(() => Promise.resolve(existingEvent));
 	const eventRow = foundEvent
@@ -122,10 +127,33 @@ void test("organizer management includes hidden events and all editable scanner 
 	await caller.manage();
 	assert.deepEqual(eventFindMany.mock.calls[0]?.arguments, [
 		{
-			select: { ...publicSelect, hidden: true, scannerWorkflow: true, maxCheckIns: true },
+			select: { ...publicSelect, hidden: true, scannerEnabled: true, scannerWorkflow: true, maxCheckIns: true },
 			orderBy: { start: "asc" },
 		},
 	]);
+});
+
+void test("scanner list includes only explicitly enabled current events", async t => {
+	const { caller, eventFindMany } = await setup(t, [RoleName.ORGANIZER]);
+	const before = Date.now();
+	await caller.scannable();
+	const after = Date.now();
+	const request = z
+		.object({
+			where: z.object({ scannerEnabled: z.boolean(), end: z.object({ gt: z.date() }) }),
+			select: z.record(z.boolean()),
+		})
+		.parse(eventFindMany.mock.calls[0]?.arguments[0]);
+	assert.equal(request?.where.scannerEnabled, true);
+	assert.ok(request?.where.end.gt.getTime() >= before - 30 * 60 * 1000);
+	assert.ok(request?.where.end.gt.getTime() <= after - 30 * 60 * 1000);
+	assert.deepEqual(request?.select, {
+		id: true,
+		name: true,
+		nameFr: true,
+		start: true,
+		scannerWorkflow: true,
+	});
 });
 
 for (const role of [RoleName.ADMIN, RoleName.ORGANIZER]) {

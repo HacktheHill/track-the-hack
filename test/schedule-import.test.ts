@@ -13,11 +13,11 @@ const scheduleRowsSchema = z.array(
 		.passthrough(),
 );
 
-const scheduleSource = `importKey,seriesKey,start,end,hidden,name,nameFr,type,scannerWorkflow,host,description,descriptionFr,room,roomFr,image,link,linkText,linkTextFr,maxCheckIns
-merch-test,merch-test,9/25/2030 5:00 PM,9/25/2030 7:00 PM,TRUE,Merch,Marchandise,GENERAL,MERCHANDISE,,Merchandise pickup.,Ramassage de marchandises.,Lobby,Hall d'entrée,,,,,1
-check-in-test,check-in-test,9/25/2030 5:00 PM,9/25/2030 7:00 PM,FALSE,Check-In,Enregistrement,GENERAL,CHECK_IN,,Participant check-in.,Enregistrement des participants.,Lobby,Hall d'entrée,,,,,1
-late-check-in-test,late-check-in-test,9/25/2030 8:30 PM,9/25/2030 10:00 PM,TRUE,Late Check-In,Enregistrement tardif,GENERAL,CHECK_IN,,Late participant check-in.,Enregistrement tardif des participants.,Lobby,Hall d'entrée,,,,,1
-food-test,food-test,9/25/2030 10:00 PM,9/26/2030 1:00 AM,FALSE,Snacks,Collations,FOOD,FOOD,,Test food service.,Service alimentaire d'essai.,Food room,Salle de restauration,,,,,2
+const scheduleSource = `importKey,seriesKey,start,end,hidden,name,nameFr,type,scannerEnabled,scannerWorkflow,host,description,descriptionFr,room,roomFr,image,link,linkText,linkTextFr,maxCheckIns
+merch-test,merch-test,9/25/2030 5:00 PM,9/25/2030 7:00 PM,TRUE,Merch,Marchandise,GENERAL,TRUE,MERCHANDISE,,Merchandise pickup.,Ramassage de marchandises.,Lobby,Hall d'entrée,,,,,1
+check-in-test,check-in-test,9/25/2030 5:00 PM,9/25/2030 7:00 PM,FALSE,Check-In,Enregistrement,GENERAL,TRUE,CHECK_IN,,Participant check-in.,Enregistrement des participants.,Lobby,Hall d'entrée,,,,,1
+late-check-in-test,late-check-in-test,9/25/2030 8:30 PM,9/25/2030 10:00 PM,TRUE,Late Check-In,Enregistrement tardif,GENERAL,TRUE,CHECK_IN,,Late participant check-in.,Enregistrement tardif des participants.,Lobby,Hall d'entrée,,,,,1
+food-test,food-test,9/25/2030 10:00 PM,9/26/2030 1:00 AM,FALSE,Snacks,Collations,FOOD,TRUE,FOOD,,Test food service.,Service alimentaire d'essai.,Food room,Salle de restauration,,,,,2
 `;
 
 void test("the private schedule contract assigns operational scanner workflows", async () => {

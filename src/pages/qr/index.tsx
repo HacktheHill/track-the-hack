@@ -3,7 +3,8 @@ import type { GetServerSideProps } from "next";
 import { getServerSession } from "next-auth";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { playScanFeedback } from "@/client/scan-feedback";
 import PresenceCounter from "@/components/PresenceCounter";
 import { useScannerOperation, type ScannerOperation } from "@/components/useScannerOperation";
 import ScanResult, { MealInfo } from "@/components/ScanResult";
@@ -20,23 +21,40 @@ import { getAuthOptions } from "@/pages/api/auth/[...nextauth]";
 type Hacker = RouterOutputs["hackers"]["get"];
 type WorkflowScan = RouterOutputs["presence"]["scan"];
 const VIEW_PARTICIPANT = "__view__";
+const SELECTION_KEY = "track-scanner-station";
 
 const QR = () => {
 	const { t, i18n } = useTranslation("qr");
 	const utils = trpc.useContext();
-	const events = trpc.events.scannable.useQuery().data ?? [];
+	const scannable = trpc.events.scannable.useQuery();
+	const events = scannable.data ?? [];
 	const { mutateAsync: scanPresence } = trpc.presence.scan.useMutation();
 	const { operation, pending } = useScannerOperation();
 	const selectedAction = useRef(VIEW_PARTICIPANT);
+	const [selectedValue, setSelectedValue] = useState(VIEW_PARTICIPANT);
 	const previousId = useRef("");
 	const scanSequence = useRef(0);
 	const [display, setDisplay] = useState<React.ReactNode>();
 	const [error, setError] = useState("");
 
+	useEffect(() => {
+		if (!scannable.data) return;
+		let saved: string | null = null;
+		try {
+			saved = window.localStorage.getItem(SELECTION_KEY);
+		} catch {
+			// The scanner still works when local storage is unavailable.
+		}
+		const next = saved && scannable.data.some(event => event.id === saved) ? saved : VIEW_PARTICIPANT;
+		selectedAction.current = next;
+		setSelectedValue(next);
+	}, [scannable.data]);
+
 	const scan = useCallback(
-		async (rawId: string) => {
+		async (rawId: string, suppressContinuousDuplicate: boolean) => {
 			const hackerId = rawId.trim();
-			if (!hackerId || hackerId === previousId.current || !operation.begin()) return;
+			if (!hackerId || (suppressContinuousDuplicate && hackerId === previousId.current) || !operation.begin())
+				return;
 			const sequence = ++scanSequence.current;
 			previousId.current = hackerId;
 			setDisplay(undefined);
@@ -47,24 +65,31 @@ const QR = () => {
 					const hacker = await utils.hackers.get.fetch({ id: hackerId });
 					if (sequence !== scanSequence.current) return;
 					setDisplay(<ParticipantCard hacker={hacker} />);
+					playScanFeedback("view");
 					return;
 				}
 
 				const result = await scanPresence({ eventId: selectedAction.current, hackerId });
 				if (sequence !== scanSequence.current) return;
 				setDisplay(<WorkflowCard result={result} operation={operation} />);
+				playScanFeedback(result.outcome);
 			} catch {
 				if (sequence !== scanSequence.current) return;
 				previousId.current = "";
 				setDisplay(undefined);
 				setError(t("unknown-error"));
+				playScanFeedback("error");
 			} finally {
 				operation.end();
 			}
 		},
 		[scanPresence, t, utils, operation],
 	);
-	const handleScan = useCallback((result: string) => void scan(result), [scan]);
+	const handleCameraScan = useCallback((result: string) => void scan(result, true), [scan]);
+	const handleCameraClear = useCallback(() => {
+		previousId.current = "";
+	}, []);
+	const handlePhysicalScan = useCallback((result: string) => void scan(result, false), [scan]);
 
 	return (
 		<App
@@ -77,10 +102,17 @@ const QR = () => {
 					aria-label={t("select-action")}
 					disabled={pending}
 					className="ui-field w-full max-w-4xl text-center"
+					value={selectedValue}
 					onChange={event => {
 						if (operation.isPending()) return;
 						scanSequence.current += 1;
 						selectedAction.current = event.target.value;
+						setSelectedValue(event.target.value);
+						try {
+							window.localStorage.setItem(SELECTION_KEY, event.target.value);
+						} catch {
+							// The selection still lasts for this page visit.
+						}
 						previousId.current = "";
 						setDisplay(undefined);
 						setError("");
@@ -90,13 +122,18 @@ const QR = () => {
 					{events.map(event => (
 						<option key={event.id} value={event.id}>
 							{t(`workflow.${event.scannerWorkflow}`)} —{" "}
-							{i18n.language === "fr" ? event.nameFr : event.name}
+							{i18n.language === "fr" ? event.nameFr : event.name} —{" "}
+							{event.start.toLocaleString(i18n.language === "fr" ? "fr-CA" : "en-CA", {
+								weekday: "short",
+								hour: "numeric",
+								minute: "2-digit",
+							})}
 						</option>
 					))}
 				</select>
 				<div className="grid w-full max-w-4xl gap-6 md:grid-cols-2">
-					<QRScanner onScan={handleScan} setError={setError} />
-					<PhysicalScanner onScan={handleScan} disabled={pending} />
+					<QRScanner onScan={handleCameraScan} onClear={handleCameraClear} setError={setError} />
+					<PhysicalScanner onScan={handlePhysicalScan} disabled={pending} />
 				</div>
 				{display}
 				{error && <ErrorDisplay message={error} />}
@@ -134,7 +171,7 @@ const WorkflowCard = ({ result, operation }: { result: WorkflowScan; operation: 
 	);
 	return (
 		<ScanResult result={result} interestedEvents={interests.data}>
-			<ScannerResultStatus recordedNow={result.recordedNow} />
+			<ScannerResultStatus outcome={result.outcome} />
 			{result.workflow === ScannerWorkflow.ATTENDANCE && interests.isError && (
 				<button type="button" className="ui-button" onClick={() => void interests.refetch()}>
 					{t("event:retry-interest")}

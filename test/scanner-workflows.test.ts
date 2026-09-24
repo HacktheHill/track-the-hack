@@ -14,11 +14,13 @@ const scannerDatabase = (
 	workflow: ScannerWorkflow,
 	maxCheckIns: number | null = 3,
 	tShirtSize: TShirtSize = TShirtSize.L,
+	scannerEnabled = true,
 ) => {
 	const event = {
 		id: eventId,
 		name: "Operational event",
 		nameFr: "Événement opérationnel",
+		scannerEnabled,
 		scannerWorkflow: workflow,
 		maxCheckIns,
 	};
@@ -36,7 +38,7 @@ const scannerDatabase = (
 
 	const repository: ScannerRepository = {
 		findEvent: id => Promise.resolve(id === eventId ? event : null),
-		findEventMaximum: id => Promise.resolve(id === eventId ? { maxCheckIns } : null),
+		findEventMaximum: id => Promise.resolve(id === eventId ? { maxCheckIns, scannerEnabled } : null),
 		findCheckInParticipant: id =>
 			Promise.resolve(
 				id === hackerId ? { id: hacker.id, confirmed: hacker.confirmed, tShirtSize: hacker.tShirtSize } : null,
@@ -57,6 +59,12 @@ const scannerDatabase = (
 				});
 			}
 			return Promise.resolve();
+		},
+		incrementPresence: ({ eventId: adjustedEventId, hackerId: adjustedHackerId, maximum }) => {
+			const presence = presences.get(`${adjustedHackerId}:${adjustedEventId}`);
+			if (!presence || presence.value >= maximum) return Promise.resolve(false);
+			presence.value += 1;
+			return Promise.resolve(true);
 		},
 		adjustPresence: ({ eventId: adjustedEventId, hackerId: adjustedHackerId, amount, expectedValue, maximum }) => {
 			const presence = presences.get(`${adjustedHackerId}:${adjustedEventId}`);
@@ -117,16 +125,44 @@ void test("food OTHER tells the scanner to contact the food lead", async () => {
 	assert.equal(result.participant.requiresFoodLead, true);
 });
 
-void test("repeated scans preserve the event-linked counter", async () => {
+void test("repeated scans increment every capped multi-check-in workflow up to its limit", async () => {
+	for (const workflow of Object.values(ScannerWorkflow)) {
+		const { repository, value } = scannerDatabase(workflow, 3);
+		const first = await scanParticipantForEvent(repository, eventId, hackerId);
+		assert.equal(first.value, 1);
+		assert.equal(first.outcome, "new");
+		assert.equal((await scanParticipantForEvent(repository, eventId, hackerId)).outcome, "incremented");
+		assert.equal((await scanParticipantForEvent(repository, eventId, hackerId)).outcome, "incremented");
+		const limited = await scanParticipantForEvent(repository, eventId, hackerId);
+		assert.equal(limited.outcome, "limit");
+		assert.equal(limited.value, 3);
+		assert.equal(value(), 3);
+	}
+});
+
+void test("uncapped and single-check-in stations remain idempotent on repeat scans", async () => {
+	for (const maximum of [null, 1] as const) {
+		const { repository, value } = scannerDatabase(ScannerWorkflow.ATTENDANCE, maximum);
+		assert.equal((await scanParticipantForEvent(repository, eventId, hackerId)).outcome, "new");
+		const repeated = await scanParticipantForEvent(repository, eventId, hackerId);
+		assert.equal(repeated.outcome, maximum === 1 ? "limit" : "unchanged");
+		assert.equal(value(), 1);
+	}
+});
+
+void test("manual adjustments retain expected-value reconciliation", async () => {
 	const { repository, value } = scannerDatabase(ScannerWorkflow.ATTENDANCE, 3);
 	const first = await scanParticipantForEvent(repository, eventId, hackerId);
 	assert.equal(first.value, 1);
 	assert.equal(first.recordedNow, true);
 	assert.equal((await adjustPresenceForEvent(repository, eventId, hackerId, 1, 1)).value, 2);
-	const repeated = await scanParticipantForEvent(repository, eventId, hackerId);
-	assert.equal(repeated.value, 2);
-	assert.equal(repeated.recordedNow, false);
 	assert.equal(value(), 2);
+});
+
+void test("scanner-disabled events reject scans and manual adjustments", async () => {
+	const { repository } = scannerDatabase(ScannerWorkflow.ATTENDANCE, 3, TShirtSize.L, false);
+	await assert.rejects(scanParticipantForEvent(repository, eventId, hackerId), /EVENT_NOT_FOUND/);
+	await assert.rejects(adjustPresenceForEvent(repository, eventId, hackerId, 1, 0), /EVENT_NOT_FOUND/);
 });
 
 void test("concurrent first scans share one event-linked counter", async () => {

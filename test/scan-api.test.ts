@@ -169,7 +169,7 @@ void test("food, merchandise and check-in workflows cannot look up interests", a
 	}
 });
 
-void test("scanner API reports fresh, duplicate, applied, stale, and bounded no-op audit actions", async () => {
+void test("scanner API reports fresh, incremented, applied, stale, and bounded no-op audit actions", async () => {
 	const [, { presenceRouter }] = await routers;
 	let presence: { id: string; value: number } | null = null;
 	const actions: string[] = [];
@@ -177,8 +177,9 @@ void test("scanner API reports fresh, duplicate, applied, stale, and bounded no-
 		id: "event-1",
 		name: "Check-in",
 		nameFr: "Enregistrement",
+		scannerEnabled: true,
 		scannerWorkflow: ScannerWorkflow.CHECK_IN,
-		maxCheckIns: 2,
+		maxCheckIns: 3,
 	};
 	const prisma = {
 		user: {
@@ -192,6 +193,12 @@ void test("scanner API reports fresh, duplicate, applied, stale, and bounded no-
 			const statement = query.join("");
 			if (statement.includes("INSERT INTO")) {
 				presence ??= { id: String(values[0]), value: 1 };
+				return 1;
+			}
+			if (!statement.includes("AND `value` =") && statement.includes("+ 1")) {
+				const maximum = values[2];
+				if (!presence || typeof maximum !== "number" || presence.value >= maximum) return 0;
+				presence.value += 1;
 				return 1;
 			}
 			const expected = values[2];
@@ -215,15 +222,15 @@ void test("scanner API reports fresh, duplicate, applied, stale, and bounded no-
 	const caller = presenceRouter.createCaller(context(prisma, null, organizer));
 
 	const fresh = await caller.scan({ eventId: event.id, hackerId });
-	const duplicate = await caller.scan({ eventId: event.id, hackerId });
-	const applied = await caller.adjust({ eventId: event.id, hackerId, amount: 1, expectedValue: 1 });
-	const stale = await caller.adjust({ eventId: event.id, hackerId, amount: -1, expectedValue: 1 });
-	const bounded = await caller.adjust({ eventId: event.id, hackerId, amount: 1, expectedValue: 2 });
+	const incremented = await caller.scan({ eventId: event.id, hackerId });
+	const applied = await caller.adjust({ eventId: event.id, hackerId, amount: 1, expectedValue: 2 });
+	const stale = await caller.adjust({ eventId: event.id, hackerId, amount: -1, expectedValue: 2 });
+	const bounded = await caller.adjust({ eventId: event.id, hackerId, amount: 1, expectedValue: 3 });
 
 	assert.equal(fresh.recordedNow, true);
-	assert.equal(duplicate.recordedNow, false);
-	assert.deepEqual(applied, { value: 2, atLimit: true, applied: true, stale: false });
-	assert.deepEqual(stale, { value: 2, atLimit: true, applied: false, stale: true });
-	assert.deepEqual(bounded, { value: 2, atLimit: true, applied: false, stale: false });
-	assert.deepEqual(actions, ["scan", "scan_duplicate", "adjust", "adjust_stale", "adjust_noop"]);
+	assert.equal(incremented.outcome, "incremented");
+	assert.deepEqual(applied, { value: 3, atLimit: true, applied: true, stale: false });
+	assert.deepEqual(stale, { value: 3, atLimit: true, applied: false, stale: true });
+	assert.deepEqual(bounded, { value: 3, atLimit: true, applied: false, stale: false });
+	assert.deepEqual(actions, ["scan", "scan_incremented", "adjust", "adjust_stale", "adjust_noop"]);
 });

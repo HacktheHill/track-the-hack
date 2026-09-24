@@ -39,6 +39,7 @@ export const event: EventFixture = {
 	descriptionFr: "Bienvenue\nà l'événement",
 	hidden: false,
 	type: EventType.ALL,
+	scannerEnabled: true,
 	scannerWorkflow: ScannerWorkflow.ATTENDANCE,
 	maxCheckIns: null,
 	host: null,

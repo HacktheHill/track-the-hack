@@ -23,6 +23,7 @@ const eventInputShape = {
 	descriptionFr: text,
 	hidden: z.boolean(),
 	type: z.nativeEnum(EventType),
+	scannerEnabled: z.boolean(),
 	scannerWorkflow: z.nativeEnum(ScannerWorkflow),
 	maxCheckIns: z.number().int().min(0).max(2_147_483_647).nullable(),
 	host: varchar.nullable(),
@@ -77,6 +78,7 @@ const publicEventSelect = {
 const managedEventSelect = {
 	...publicEventSelect,
 	hidden: true,
+	scannerEnabled: true,
 	scannerWorkflow: true,
 	maxCheckIns: true,
 } as const;
@@ -177,11 +179,12 @@ export const eventsRouter = createTRPCRouter({
 		const gracePeriodMs = 30 * 60 * 1000;
 		const cutoff = new Date(Date.now() - gracePeriodMs);
 		return ctx.prisma.event.findMany({
-			where: { end: { gt: cutoff } },
+			where: { end: { gt: cutoff }, scannerEnabled: true },
 			select: {
 				id: true,
 				name: true,
 				nameFr: true,
+				start: true,
 				scannerWorkflow: true,
 			},
 			orderBy: { start: "asc" },
@@ -226,6 +229,7 @@ export const eventsRouter = createTRPCRouter({
 				descriptionFr: input.descriptionFr,
 				hidden: input.hidden,
 				type: input.type,
+				scannerEnabled: input.scannerEnabled,
 				scannerWorkflow: input.scannerWorkflow,
 				maxCheckIns: input.maxCheckIns,
 				host: input.host,
@@ -287,6 +291,7 @@ export const eventsRouter = createTRPCRouter({
 					descriptionFr: input.descriptionFr,
 					hidden: input.hidden,
 					type: input.type,
+					scannerEnabled: input.scannerEnabled,
 					scannerWorkflow: input.scannerWorkflow,
 					maxCheckIns: input.maxCheckIns,
 					host: input.host,

@@ -71,15 +71,27 @@ export const presenceRouter = createTRPCRouter({
 				input.hackerId,
 			);
 			await log(ctx, {
-				action: result.recordedNow ? "scan" : "scan_duplicate",
+				action:
+					result.outcome === "new"
+						? "scan"
+						: result.outcome === "incremented"
+							? "scan_incremented"
+							: result.outcome === "limit"
+								? "scan_limit"
+								: "scan_duplicate",
 				sourceId: presenceId,
 				sourceType: "Presence",
 				author: organizer.name ?? "Unknown",
 				userId: organizer.id,
 				route: "presence.scan",
-				details: result.recordedNow
-					? `Recorded participant ${input.hackerId} for event ${input.eventId} (${result.workflow})`
-					: `Participant ${input.hackerId} was already recorded for event ${input.eventId} (${result.workflow})`,
+				details:
+					result.outcome === "new"
+						? `Recorded participant ${input.hackerId} for event ${input.eventId} (${result.workflow})`
+						: result.outcome === "incremented"
+							? `Incremented participant ${input.hackerId} for event ${input.eventId} (${result.workflow}) to ${result.value}`
+							: result.outcome === "limit"
+								? `Participant ${input.hackerId} reached the limit for event ${input.eventId} (${result.workflow}) at ${result.value}`
+								: `Participant ${input.hackerId} was already recorded for event ${input.eventId} (${result.workflow})`,
 			});
 			return result;
 		} catch (error) {

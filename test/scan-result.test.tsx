@@ -17,6 +17,7 @@ const base = {
 	value: 1,
 	atLimit: true,
 	recordedNow: true,
+	outcome: "new" as const,
 };
 const participantId = "wvY1HKlwYnFBO8t-YnQbwg";
 const food: Props["result"] = {
@@ -50,7 +51,7 @@ void test("check-in and merchandise display operational shirt data including opt
 	const html = await render(checkIn, interests);
 	assert.match(html, /T-shirt: M/);
 	assert.match(html, /Confirmed: Yes/);
-	assert.doesNotMatch(html, /Hardware Workshop|Meal:/);
+	assert.doesNotMatch(html, /Hardware Workshop|Diet:/);
 	const optOut = await render({
 		...base,
 		workflow: ScannerWorkflow.MERCHANDISE,
@@ -58,14 +59,14 @@ void test("check-in and merchandise display operational shirt data including opt
 	});
 	assert.match(optOut, new RegExp(common["no-t-shirt"]));
 });
-void test("food scans display meal category and food-lead escalation, without interests", async () => {
+void test("food scans display diet category and food-lead escalation, without interests", async () => {
 	const html = await render(food, interests);
-	assert.match(html, /Meal: Other/);
+	assert.match(html, /Diet: Other/);
 	assert.match(html, /Contact the food lead/);
 	assert.doesNotMatch(html, /Hardware Workshop|T-shirt:/);
 	const frenchHtml = await render(food, [], "fr");
-	assert.match(frenchHtml, /Déjeuner/);
-	assert.match(frenchHtml, /Repas : Autre/);
+	assert.doesNotMatch(frenchHtml, /Déjeuner/);
+	assert.match(frenchHtml, /Régime: Autre/);
 	assert.match(frenchHtml, /Communiquez avec la personne responsable des repas/);
 });
 void test("food scans localize every meal category in English and French", async () => {
@@ -87,8 +88,8 @@ void test("food scans localize every meal category in English and French", async
 				requiresFoodLead: mealCategory === MealCategory.OTHER,
 			},
 		};
-		assert.match(await render(result), new RegExp(`Meal: ${englishLabel}`));
-		assert.match(await render(result, undefined, "fr"), new RegExp(`Repas : ${frenchLabel}`));
+		assert.match(await render(result), new RegExp(`Diet: ${englishLabel}`));
+		assert.match(await render(result, undefined, "fr"), new RegExp(`Régime: ${frenchLabel}`));
 	}
 });
 void test("attendance scans display localized interests and distinguish loading from empty", async () => {

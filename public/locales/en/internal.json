@@ -1,6 +1,6 @@
 {
 	"search": "Search",
-	"title": "Internal",
+	"title": "Organiser tools",
 	"roles": "Roles",
 	"metrics": "Metrics",
 	"submit": "Submit",
@@ -31,6 +31,7 @@
 			"FOOD": "Food"
 		},
 		"host": "Host (optional)",
+		"scanner-enabled": "Available as a scanner station",
 		"scanner-workflow": "Scanner workflow",
 		"scanner-workflow-values": {
 			"ATTENDANCE": "Event attendance",

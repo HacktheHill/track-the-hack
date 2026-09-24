@@ -151,6 +151,7 @@ model Event {
   nameFr                 String
   type                   EventType       @default(ALL)
   interests              EventInterest[]
+  scannerEnabled         Boolean         @default(true)
   scannerWorkflow        ScannerWorkflow @default(ATTENDANCE)
   host                   String?
   description            String          @db.Text

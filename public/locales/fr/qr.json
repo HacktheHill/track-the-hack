@@ -1,21 +1,25 @@
 {
-	"title": "Lecteur QR opérationnel",
-	"select-action": "Sélectionner une action du lecteur",
-	"view-participant": "Afficher le dossier opérationnel du participant",
+	"title": "Lecteur de codes QR",
+	"select-action": "Poste",
+	"view-participant": "Détails du participant",
 	"unknown-error": "Le participant ou l’action de l’événement n’a pas pu être chargé.",
 	"adjust-error": "Impossible de confirmer la mise à jour. Le dernier nombre confirmé est affiché. Rechargez la page et scannez à nouveau pour vérifier avant de réessayer.",
-	"adjust-stale": "Le nombre a changé sur un autre appareil. Nombre actuel : {{value}}. Vérifiez-le avant de réessayer.",
-	"scan-recorded": "Entrée enregistrée.",
-	"scan-duplicate": "Déjà enregistré. Aucune entrée supplémentaire n’a été ajoutée.",
+	"adjust-stale": "Le nombre a changé sur un autre appareil. Nombre actuel: {{value}}. Vérifiez-le avant de réessayer.",
+	"scan-outcome": {
+		"new": "Entrée enregistrée.",
+		"incremented": "Nombre augmenté.",
+		"unchanged": "Déjà enregistré. Le nombre n’a pas changé.",
+		"limit": "Limite atteinte. Le nombre n’a pas changé."
+	},
 	"camera-error": "Impossible de démarrer la caméra.",
 	"manual-label": "Saisir ou coller un identifiant de participant",
 	"manual-help": "Utilisez cette option pour les tests locaux ou avec un lecteur USB lorsqu’aucune caméra n’est disponible.",
 	"manual-submit": "Exécuter l’action sélectionnée",
-	"confirmed": "Confirmé : {{value}}",
+	"confirmed": "Confirmé: {{value}}",
 	"yes": "Oui",
 	"no": "Non",
-	"t-shirt": "T-shirt : {{value}}",
-	"meal": "Repas : {{value}}",
+	"t-shirt": "T-shirt: {{value}}",
+	"diet": "Régime: {{value}}",
 	"meal-category": {
 		"STANDARD": "Standard",
 		"VEGETARIAN": "Végétarien",
@@ -39,5 +43,5 @@
 	"no-event-interests": "Aucun événement enregistré.",
 	"loading-interests": "Chargement des événements enregistrés…",
 	"saving": "Enregistrement…",
-	"zero-count": "Nombre enregistré : 0. Utilisez + pour enregistrer une entrée."
+	"zero-count": "Nombre enregistré: 0. Utilisez + pour enregistrer une entrée."
 }

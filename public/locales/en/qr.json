@@ -1,12 +1,16 @@
 {
-	"title": "Operational QR scanner",
-	"select-action": "Select a scanner action",
-	"view-participant": "View operational participant record",
+	"title": "QR scanner",
+	"select-action": "Station",
+	"view-participant": "Participant details",
 	"unknown-error": "The participant or event action could not be loaded.",
 	"adjust-error": "Could not confirm the update. The last confirmed count is shown. Reload and scan again to check before retrying.",
 	"adjust-stale": "The count changed on another device. Current count: {{value}}. Review it before trying again.",
-	"scan-recorded": "Entry recorded.",
-	"scan-duplicate": "Already recorded. No additional entry was added.",
+	"scan-outcome": {
+		"new": "Entry recorded.",
+		"incremented": "Count increased.",
+		"unchanged": "Already recorded. The count did not change.",
+		"limit": "Limit reached. The count did not change."
+	},
 	"camera-error": "Unable to start the camera.",
 	"manual-label": "Type or paste a participant ID",
 	"manual-help": "Use this for local testing or with a USB scanner when a camera is unavailable.",
@@ -15,7 +19,7 @@
 	"yes": "Yes",
 	"no": "No",
 	"t-shirt": "T-shirt: {{value}}",
-	"meal": "Meal: {{value}}",
+	"diet": "Diet: {{value}}",
 	"meal-category": {
 		"STANDARD": "Standard",
 		"VEGETARIAN": "Vegetarian",

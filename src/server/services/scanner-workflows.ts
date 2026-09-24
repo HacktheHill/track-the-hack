@@ -8,6 +8,7 @@ type ScannerEventRecord = {
 	id: string;
 	name: string;
 	nameFr: string;
+	scannerEnabled: boolean;
 	scannerWorkflow: ScannerWorkflow;
 	maxCheckIns: number | null;
 };
@@ -57,11 +58,15 @@ type ScannerParticipant =
 	| { workflow: typeof ScannerWorkflow.FOOD; participant: FoodParticipant }
 	| { workflow: typeof ScannerWorkflow.ATTENDANCE; participant: AttendanceParticipant };
 
-export type ScannerResult = ScannerParticipant & ScannerEvent & PresenceState & { recordedNow: boolean };
+export type ScanOutcome = "new" | "incremented" | "unchanged" | "limit";
+
+export type ScannerResult = ScannerParticipant &
+	ScannerEvent &
+	PresenceState & { recordedNow: boolean; outcome: ScanOutcome };
 
 export type ScannerRepository = {
 	findEvent(id: string): Promise<ScannerEventRecord | null>;
-	findEventMaximum(id: string): Promise<{ maxCheckIns: number | null } | null>;
+	findEventMaximum(id: string): Promise<{ maxCheckIns: number | null; scannerEnabled: boolean } | null>;
 	findCheckInParticipant(id: string): Promise<CheckInParticipant | null>;
 	findMerchandiseParticipant(id: string): Promise<MerchandiseParticipant | null>;
 	findFoodParticipant(id: string): Promise<Omit<FoodParticipant, "requiresFoodLead"> | null>;
@@ -73,6 +78,7 @@ export type ScannerRepository = {
 		label: string;
 		initialValue: number;
 	}): Promise<void>;
+	incrementPresence(input: { eventId: string; hackerId: string; maximum: number }): Promise<boolean>;
 	adjustPresence(input: {
 		eventId: string;
 		hackerId: string;
@@ -96,6 +102,7 @@ const eventSelect = {
 	id: true,
 	name: true,
 	nameFr: true,
+	scannerEnabled: true,
 	scannerWorkflow: true,
 	maxCheckIns: true,
 } satisfies Prisma.EventSelect;
@@ -104,7 +111,8 @@ const normalizeMaximum = (maximum: number | null) => (maximum === null ? null : 
 
 export const createPrismaScannerRepository = (prisma: ScannerPrisma): ScannerRepository => {
 	const findEvent = (id: string) => prisma.event.findUnique({ where: { id }, select: eventSelect });
-	const findEventMaximum = (id: string) => prisma.event.findUnique({ where: { id }, select: { maxCheckIns: true } });
+	const findEventMaximum = (id: string) =>
+		prisma.event.findUnique({ where: { id }, select: { maxCheckIns: true, scannerEnabled: true } });
 	const findCheckInParticipant = (id: string) =>
 		prisma.hacker.findUnique({
 			where: { id },
@@ -145,6 +153,16 @@ export const createPrismaScannerRepository = (prisma: ScannerPrisma): ScannerRep
 					if (!deadlock || attempt === 2) throw error;
 				}
 			}
+		},
+		incrementPresence: async ({ eventId, hackerId, maximum }) => {
+			const updated = await prisma.$executeRaw`
+				UPDATE \`Presence\`
+				SET \`value\` = \`value\` + 1
+				WHERE \`hackerId\` = ${hackerId}
+					AND \`eventId\` = ${eventId}
+					AND \`value\` < ${maximum}
+			`;
+			return updated === 1;
 		},
 		adjustPresence: async ({ eventId, hackerId, amount, expectedValue, maximum }) => {
 			if (amount < 0) {
@@ -221,12 +239,13 @@ export const scanParticipantForEvent = async (
 	hackerId: string,
 ): Promise<ScannerResult> => {
 	const event = await repository.findEvent(eventId);
-	if (!event) throw new ScannerWorkflowError("EVENT_NOT_FOUND");
+	if (!event?.scannerEnabled) throw new ScannerWorkflowError("EVENT_NOT_FOUND");
 	const participant = await findParticipant(repository, event.scannerWorkflow, hackerId);
 	if (!participant) throw new ScannerWorkflowError("PARTICIPANT_NOT_FOUND");
 
 	const maxCheckIns = normalizeMaximum(event.maxCheckIns);
 	const initialValue = maxCheckIns === null || maxCheckIns > 0 ? 1 : 0;
+	const before = await repository.findPresence(eventId, hackerId);
 	const candidatePresenceId = randomUUID();
 	await repository.ensurePresence({
 		id: candidatePresenceId,
@@ -235,8 +254,19 @@ export const scanParticipantForEvent = async (
 		label: event.name,
 		initialValue,
 	});
-	const presence = await repository.findPresence(eventId, hackerId);
+	let presence = await repository.findPresence(eventId, hackerId);
 	if (!presence) throw new ScannerWorkflowError("PRESENCE_NOT_FOUND");
+	const recordedNow = presence.id === candidatePresenceId;
+	let outcome: ScanOutcome;
+	if (before && maxCheckIns !== null && maxCheckIns > 1) {
+		const incremented = await repository.incrementPresence({ eventId, hackerId, maximum: maxCheckIns });
+		presence = (await repository.findPresence(eventId, hackerId)) ?? presence;
+		outcome = incremented ? "incremented" : presence.value >= maxCheckIns ? "limit" : "unchanged";
+	} else if (recordedNow) {
+		outcome = maxCheckIns === 0 ? "limit" : "new";
+	} else {
+		outcome = maxCheckIns !== null && presence.value >= maxCheckIns ? "limit" : "unchanged";
+	}
 
 	return {
 		eventId: event.id,
@@ -244,7 +274,8 @@ export const scanParticipantForEvent = async (
 		nameFr: event.nameFr,
 		...presence,
 		atLimit: maxCheckIns !== null && presence.value >= maxCheckIns,
-		recordedNow: presence.id === candidatePresenceId,
+		recordedNow,
+		outcome,
 		...participant,
 	};
 };
@@ -257,7 +288,7 @@ export const adjustPresenceForEvent = async (
 	expectedValue: number,
 ): Promise<AdjustmentState> => {
 	const event = await repository.findEventMaximum(eventId);
-	if (!event) throw new ScannerWorkflowError("EVENT_NOT_FOUND");
+	if (!event?.scannerEnabled) throw new ScannerWorkflowError("EVENT_NOT_FOUND");
 
 	const maxCheckIns = normalizeMaximum(event.maxCheckIns);
 	const applied = await repository.adjustPresence({

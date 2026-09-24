@@ -18,33 +18,34 @@ npm run schedule:import -- /absolute/private/path/events.csv --apply
 
 The production database is privately networked. A future production import therefore needs a separately reviewed one-off Azure Container Apps job that receives the private CSV through an approved private input mechanism and uses the existing database secret. The ordinary migration image deliberately does not contain the real schedule. This repository does not provide a production schedule-import workflow. Record the application image SHA, private input SHA-256, job execution, and operator in the deployment log without publishing the CSV.
 
-After applying, verify the event count, hidden-event count, scanner-workflow counts, and `maxCheckIns` values against the CSV. Open the public schedule and organizer event list in both languages before treating the import as complete.
+After applying, verify the event count, hidden-event count, scanner-enabled count, scanner-workflow counts, and `maxCheckIns` values against the CSV. Open the public schedule and organiser event list in both languages before treating the import as complete.
 
 ## CSV contract
 
 The importer requires every column below and rejects unknown columns.
 
-| Column                         | Rule                                                                                                                                                                              |
-| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `importKey`                    | Unique, stable event identity. A later import updates the row with this key.                                                                                                      |
-| `seriesKey`                    | Stable grouping key for related event occurrences. It does not control upsert identity.                                                                                           |
-| `start`, `end`                 | `M/D/YYYY h:mm AM` in `America/Toronto`. The hour must be 1–12. The importer applies the date's actual Eastern offset and rejects nonexistent or ambiguous daylight-saving times. |
-| `hidden`                       | `TRUE` or `FALSE`. Hidden events do not appear on the public schedule.                                                                                                            |
-| `name`, `nameFr`               | Required English and French names.                                                                                                                                                |
-| `type`                         | A Prisma `EventType` value.                                                                                                                                                       |
-| `scannerWorkflow`              | `ATTENDANCE`, `CHECK_IN`, `MERCHANDISE`, or `FOOD`.                                                                                                                               |
-| `host`                         | Optional host name.                                                                                                                                                               |
-| `description`, `descriptionFr` | Required localized descriptions that fit a MySQL `TEXT` value in UTF-8 bytes.                                                                                                     |
-| `room`                         | Required location.                                                                                                                                                                |
-| `roomFr`                       | Optional French location; blank falls back to `room`.                                                                                                                             |
-| `image`                        | Optional local path or HTTPS URL allowed by the Next.js image configuration.                                                                                                      |
-| `link`                         | Optional HTTPS URL.                                                                                                                                                               |
-| `linkText`, `linkTextFr`       | Required together when `link` is present; otherwise all three must be blank.                                                                                                      |
-| `maxCheckIns`                  | Blank for unlimited scans, or a non-negative integer.                                                                                                                             |
+| Column                         | Rule                                                                                                                                                                                                   |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `importKey`                    | Unique, stable event identity. A later import updates the row with this key.                                                                                                                           |
+| `seriesKey`                    | Stable grouping key for related event occurrences. It does not control upsert identity.                                                                                                                |
+| `start`, `end`                 | `M/D/YYYY h:mm AM` in `America/Toronto`. The hour must be 1–12. The importer applies the date's actual Eastern offset and rejects nonexistent or ambiguous daylight-saving times.                      |
+| `hidden`                       | `TRUE` or `FALSE`. Hidden events do not appear on the public schedule.                                                                                                                                 |
+| `name`, `nameFr`               | Required English and French names.                                                                                                                                                                     |
+| `type`                         | A Prisma `EventType` value.                                                                                                                                                                            |
+| `scannerEnabled`               | `TRUE` or `FALSE`. Only explicitly enabled events appear as scanner stations or accept scans and manual count adjustments.                                                                             |
+| `scannerWorkflow`              | `ATTENDANCE`, `CHECK_IN`, `MERCHANDISE`, or `FOOD`.                                                                                                                                                    |
+| `host`                         | Optional host name.                                                                                                                                                                                    |
+| `description`, `descriptionFr` | Required localized descriptions that fit a MySQL `TEXT` value in UTF-8 bytes.                                                                                                                          |
+| `room`                         | Required location.                                                                                                                                                                                     |
+| `roomFr`                       | Optional French location; blank falls back to `room`.                                                                                                                                                  |
+| `image`                        | Optional local path or HTTPS URL allowed by the Next.js image configuration.                                                                                                                           |
+| `link`                         | Optional HTTPS URL.                                                                                                                                                                                    |
+| `linkText`, `linkTextFr`       | Required together when `link` is present; otherwise all three must be blank.                                                                                                                           |
+| `maxCheckIns`                  | Blank or `1` makes repeat scans idempotent; an integer greater than `1` lets deliberate repeat scans increment atomically to that cap. `0` records a capped zero. Manual adjustments remain available. |
 
 ## Update behavior
 
-The CSV is authoritative for every imported event field. Applying it overwrites organizer edits made in the event editor when the same `importKey` appears. Export or reproduce those edits in the CSV before applying it again.
+The CSV is authoritative for every imported event field. Applying it overwrites organiser edits made in the event editor when the same `importKey` appears. Export or reproduce those edits in the CSV before applying it again.
 
 The importer preserves reminder state when an unchanged visible event is re-imported. Hiding an event marks its reminder complete. Unhiding a future event or moving its start time reopens reminder registration. The import locks each existing event row while applying these rules.
 
