@@ -8,12 +8,10 @@ import {
 	LatteSweetener,
 	LatteTemperature,
 	Prisma,
-	RoleName,
 	type PrismaClient,
 } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { hasRoles } from "@/utils/helpers";
 import { createAuditEvent, emitAuditEvent, persistAuditEvent } from "@/server/lib/audit-event";
 import { log } from "@/server/lib/log";
 import {
@@ -22,7 +20,7 @@ import {
 	availableRecipe,
 	configurationError,
 } from "@/server/services/latte-lab";
-import { createTRPCRouter, participantProcedure, protectedProcedure } from "@/server/api/trpc";
+import { createTRPCRouter, organizerProcedure, participantProcedure } from "@/server/api/trpc";
 
 const idempotencyKey = z
 	.string()
@@ -54,15 +52,6 @@ const orderSelection = {
 	cancelledAt: true,
 	cancellationReason: true,
 } satisfies Prisma.LatteOrderSelect;
-
-const requireOrganizer = async (prisma: PrismaClient, userId: string) => {
-	const user = await prisma.user.findUnique({
-		where: { id: userId },
-		select: { id: true, name: true, roles: { select: { name: true } } },
-	});
-	if (!user || !hasRoles(user, [RoleName.ORGANIZER, RoleName.ADMIN])) throw new TRPCError({ code: "FORBIDDEN" });
-	return user;
-};
 
 const currentAvailability = async (prisma: PrismaClient | Prisma.TransactionClient) =>
 	new Set(
@@ -217,8 +206,7 @@ export const latteLabRouter = createTRPCRouter({
 			emitAuditEvent(auditEvent);
 			return null;
 		}),
-	queue: protectedProcedure.query(async ({ ctx }) => {
-		await requireOrganizer(ctx.prisma, ctx.session.user.id);
+	queue: organizerProcedure.query(async ({ ctx }) => {
 		const [state, ingredients, orders] = await Promise.all([
 			ctx.prisma.latteLabState.findUnique({ where: { id: 1 } }),
 			ctx.prisma.latteIngredientAvailability.findMany({ orderBy: { ingredient: "asc" } }),
@@ -234,8 +222,8 @@ export const latteLabRouter = createTRPCRouter({
 			orders: orders.map(order => ({ ...order, allergens: allergensForConfiguration(order) })),
 		};
 	}),
-	setOpen: protectedProcedure.input(z.object({ open: z.boolean() }).strict()).mutation(async ({ ctx, input }) => {
-		const organizer = await requireOrganizer(ctx.prisma, ctx.session.user.id);
+	setOpen: organizerProcedure.input(z.object({ open: z.boolean() }).strict()).mutation(async ({ ctx, input }) => {
+		const organizer = ctx.organizer;
 		const { result, auditEvent } = await ctx.prisma.$transaction(async tx => {
 			const result = await tx.latteLabState.upsert({
 				where: { id: 1 },
@@ -255,10 +243,10 @@ export const latteLabRouter = createTRPCRouter({
 		emitAuditEvent(auditEvent);
 		return result;
 	}),
-	setIngredientAvailability: protectedProcedure
+	setIngredientAvailability: organizerProcedure
 		.input(z.object({ ingredient: z.nativeEnum(LatteIngredient), available: z.boolean() }).strict())
 		.mutation(async ({ ctx, input }) => {
-			const organizer = await requireOrganizer(ctx.prisma, ctx.session.user.id);
+			const organizer = ctx.organizer;
 			const { result, auditEvent } = await ctx.prisma.$transaction(async tx => {
 				const result = await tx.latteIngredientAvailability.upsert({
 					where: { ingredient: input.ingredient },
@@ -277,7 +265,7 @@ export const latteLabRouter = createTRPCRouter({
 			emitAuditEvent(auditEvent);
 			return result;
 		}),
-	transitionOrder: protectedProcedure
+	transitionOrder: organizerProcedure
 		.input(
 			z
 				.object({
@@ -290,7 +278,7 @@ export const latteLabRouter = createTRPCRouter({
 				.strict(),
 		)
 		.mutation(async ({ ctx, input }) => {
-			const organizer = await requireOrganizer(ctx.prisma, ctx.session.user.id);
+			const organizer = ctx.organizer;
 			const previous = await ctx.prisma.latteOrderTransition.findUnique({
 				where: { requestKey: input.requestKey },
 				select: { order: { select: orderSelection } },

@@ -1,11 +1,10 @@
-import { HardwareLoanStatus, Prisma, RoleName, type PrismaClient } from "@prisma/client";
+import { HardwareLoanStatus, Prisma, type PrismaClient } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { hasRoles } from "@/utils/helpers";
 import { createAuditEvent, emitAuditEvent, persistAuditEvent } from "@/server/lib/audit-event";
 import { log } from "@/server/lib/log";
 import { participantIdSchema } from "@/server/services/hacker-lifecycle";
-import { createTRPCRouter, participantProcedure, protectedProcedure } from "@/server/api/trpc";
+import { createTRPCRouter, organizerProcedure, participantProcedure } from "@/server/api/trpc";
 
 const key = z
 	.string()
@@ -22,15 +21,6 @@ const returnLine = z
 	})
 	.strict()
 	.refine(value => value.good + value.damaged + value.missing > 0, "At least one item must be returned");
-
-const requireOrganizer = async (prisma: PrismaClient, userId: string) => {
-	const user = await prisma.user.findUnique({
-		where: { id: userId },
-		select: { id: true, name: true, roles: { select: { name: true } } },
-	});
-	if (!user || !hasRoles(user, [RoleName.ORGANIZER, RoleName.ADMIN])) throw new TRPCError({ code: "FORBIDDEN" });
-	return user;
-};
 
 const catalogue = (prisma: PrismaClient) =>
 	prisma.hardwareItem.findMany({
@@ -68,11 +58,8 @@ const loanSelection = {
 
 export const hardwareRouter = createTRPCRouter({
 	catalogue: participantProcedure.query(({ ctx }) => catalogue(ctx.prisma)),
-	organizerCatalogue: protectedProcedure.query(async ({ ctx }) => {
-		await requireOrganizer(ctx.prisma, ctx.session.user.id);
-		return catalogue(ctx.prisma);
-	}),
-	checkout: protectedProcedure
+	organizerCatalogue: organizerProcedure.query(({ ctx }) => catalogue(ctx.prisma)),
+	checkout: organizerProcedure
 		.input(
 			z
 				.object({
@@ -89,7 +76,7 @@ export const hardwareRouter = createTRPCRouter({
 				}),
 		)
 		.mutation(async ({ ctx, input }) => {
-			const organizer = await requireOrganizer(ctx.prisma, ctx.session.user.id);
+			const organizer = ctx.organizer;
 			const existing = await ctx.prisma.hardwareLoan.findUnique({
 				where: { checkoutKey: input.idempotencyKey },
 				select: loanSelection,
@@ -176,16 +163,15 @@ export const hardwareRouter = createTRPCRouter({
 				throw error;
 			}
 		}),
-	activeLoans: protectedProcedure
+	activeLoans: organizerProcedure
 		.input(
 			z
 				.object({ search: z.string().trim().max(40).optional() })
 				.strict()
 				.optional(),
 		)
-		.query(async ({ ctx, input }) => {
-			await requireOrganizer(ctx.prisma, ctx.session.user.id);
-			return ctx.prisma.hardwareLoan.findMany({
+		.query(({ ctx, input }) =>
+			ctx.prisma.hardwareLoan.findMany({
 				where: {
 					status: HardwareLoanStatus.OPEN,
 					...(input?.search ? { pickupName: { contains: input.search } } : {}),
@@ -193,19 +179,18 @@ export const hardwareRouter = createTRPCRouter({
 				select: loanSelection,
 				orderBy: { checkedOutAt: "asc" },
 				take: 100,
-			});
-		}),
-	loanByParticipant: protectedProcedure
+			}),
+		),
+	loanByParticipant: organizerProcedure
 		.input(z.object({ hackerId: participantIdSchema }).strict())
-		.query(async ({ ctx, input }) => {
-			await requireOrganizer(ctx.prisma, ctx.session.user.id);
-			return ctx.prisma.hardwareLoan.findFirst({
+		.query(({ ctx, input }) =>
+			ctx.prisma.hardwareLoan.findFirst({
 				where: { hackerId: input.hackerId, status: HardwareLoanStatus.OPEN },
 				select: loanSelection,
 				orderBy: { checkedOutAt: "desc" },
-			});
-		}),
-	returnItems: protectedProcedure
+			}),
+		),
+	returnItems: organizerProcedure
 		.input(
 			z
 				.object({
@@ -221,7 +206,7 @@ export const hardwareRouter = createTRPCRouter({
 				}),
 		)
 		.mutation(async ({ ctx, input }) => {
-			const organizer = await requireOrganizer(ctx.prisma, ctx.session.user.id);
+			const organizer = ctx.organizer;
 			const prior = await ctx.prisma.hardwareReturn.findUnique({
 				where: { idempotencyKey: input.idempotencyKey },
 				select: { loan: { select: loanSelection } },

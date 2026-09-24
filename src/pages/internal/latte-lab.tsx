@@ -1,4 +1,4 @@
-import { LatteCancellationReason, LatteOrderStatus, RoleName } from "@prisma/client";
+import { LatteCancellationReason, LatteOrderStatus } from "@prisma/client";
 import type { GetServerSideProps } from "next";
 import { getServerSession } from "next-auth";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
@@ -6,7 +6,7 @@ import { useTranslation } from "next-i18next";
 import { useState } from "react";
 import App from "@/components/App";
 import { trpc } from "@/server/api/api";
-import { rolesRedirect } from "@/server/lib/redirects";
+import { organizerRedirect } from "@/server/lib/redirects";
 import { getAuthOptions } from "@/pages/api/auth/[...nextauth]";
 
 const newKey = () => crypto.randomUUID().replaceAll("-", "");
@@ -152,7 +152,7 @@ export default function LatteLabQueue() {
 												)
 											}
 										>
-											{t("cancelStaff")}
+											{t("cancelOrganizer")}
 										</button>
 									</div>
 								</div>
@@ -168,7 +168,7 @@ export default function LatteLabQueue() {
 export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
 	const session = await getServerSession(req, res, getAuthOptions());
 	return {
-		redirect: await rolesRedirect(session, "/", [RoleName.ORGANIZER, RoleName.ADMIN]),
+		redirect: organizerRedirect(session, "/internal/latte-lab"),
 		props: await serverSideTranslations(locale ?? "en", ["latteLab", "navbar", "common"]),
 	};
 };

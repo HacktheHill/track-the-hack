@@ -22,7 +22,7 @@
 	"start": "Commencer",
 	"ready": "Marquer prête",
 	"complete": "Terminer",
-	"cancelStaff": "Annuler",
+	"cancelOrganizer": "Annuler",
 	"cancel-reason": "Motif d’annulation",
 	"reason": {
 		"PARTICIPANT_CANCELLED": "Annulée par le participant",
