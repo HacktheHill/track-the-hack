@@ -50,16 +50,21 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  image         String?
-  emailVerified DateTime?
-  roles         Role[]
-  accounts      Account[]
-  sessions      Session[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @default(now()) @updatedAt
+  id                      String                        @id @default(cuid())
+  name                    String?
+  email                   String?                       @unique
+  image                   String?
+  emailVerified           DateTime?
+  roles                   Role[]
+  accounts                Account[]
+  sessions                Session[]
+  hardwareLoansCheckedOut HardwareLoan[]                @relation("HardwareCheckoutOrganizer")
+  hardwareReturns         HardwareReturn[]
+  latteStateUpdates       LatteLabState[]
+  latteIngredientUpdates  LatteIngredientAvailability[]
+  latteOrdersHandled      LatteOrder[]                  @relation("LatteOrderHandler")
+  createdAt               DateTime                      @default(now())
+  updatedAt               DateTime                      @default(now()) @updatedAt
 }
 
 model Role {
@@ -85,6 +90,8 @@ model Hacker {
   cancellationCapability CancellationCapability?
   claimToken             ClaimToken?
   participantSession     ParticipantSession?
+  hardwareLoans          HardwareLoan[]
+  latteOrders            LatteOrder[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -241,11 +248,252 @@ model Hardware {
   @@index([name])
 }
 
+// Hardware is intentionally quantity-based. The legacy Hardware table above is
+// retained so the guarded initial importer can refuse to proceed if it contains
+// unexpected historical data.
+model HardwareItem {
+  id                String             @id @default(cuid())
+  importKey         String             @unique
+  category          HardwareCategory
+  name              String
+  normalizedName    String
+  description       String?            @db.Text
+  imageURL          String?
+  totalQuantity     Int
+  availableQuantity Int
+  damagedQuantity   Int                @default(0)
+  missingQuantity   Int                @default(0)
+  active            Boolean            @default(true)
+  loanLines         HardwareLoanLine[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @default(now()) @updatedAt
+
+  @@unique([category, normalizedName])
+  @@index([name])
+}
+
+model HardwareLoan {
+  id                  String             @id @default(cuid())
+  hackerId            String
+  hacker              Hacker             @relation(fields: [hackerId], references: [id], onDelete: Restrict)
+  pickupName          String?
+  checkoutOrganizerId String
+  checkoutOrganizer   User               @relation("HardwareCheckoutOrganizer", fields: [checkoutOrganizerId], references: [id], onDelete: Restrict)
+  checkoutKey         String             @unique
+  status              HardwareLoanStatus @default(OPEN)
+  idCollectedAt       DateTime
+  idReturnedAt        DateTime?
+  checkedOutAt        DateTime           @default(now())
+  closedAt            DateTime?
+  lines               HardwareLoanLine[]
+  returns             HardwareReturn[]
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @default(now()) @updatedAt
+
+  @@index([hackerId, status])
+  @@index([pickupName])
+  @@index([checkoutOrganizerId])
+}
+
+model HardwareLoanLine {
+  id               String               @id @default(cuid())
+  loanId           String
+  loan             HardwareLoan         @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  itemId           String
+  item             HardwareItem         @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  borrowedQuantity Int
+  goodQuantity     Int                  @default(0)
+  damagedQuantity  Int                  @default(0)
+  missingQuantity  Int                  @default(0)
+  returnLines      HardwareReturnLine[]
+
+  @@unique([loanId, itemId])
+  @@index([itemId])
+}
+
+model HardwareReturn {
+  id             String               @id @default(cuid())
+  loanId         String
+  loan           HardwareLoan         @relation(fields: [loanId], references: [id], onDelete: Restrict)
+  organizerId    String
+  organizer      User                 @relation(fields: [organizerId], references: [id], onDelete: Restrict)
+  idempotencyKey String               @unique
+  returnedAt     DateTime             @default(now())
+  lines          HardwareReturnLine[]
+
+  @@index([loanId])
+  @@index([organizerId])
+}
+
+model HardwareReturnLine {
+  id              String           @id @default(cuid())
+  returnId        String
+  hardwareReturn  HardwareReturn   @relation(fields: [returnId], references: [id], onDelete: Cascade)
+  loanLineId      String
+  loanLine        HardwareLoanLine @relation(fields: [loanLineId], references: [id], onDelete: Restrict)
+  goodQuantity    Int              @default(0)
+  damagedQuantity Int              @default(0)
+  missingQuantity Int              @default(0)
+
+  @@unique([returnId, loanLineId])
+  @@index([loanLineId])
+}
+
+model LatteLabState {
+  id                   Int      @id @default(1)
+  open                 Boolean  @default(false)
+  updatedByOrganizerId String?
+  updatedByOrganizer   User?    @relation(fields: [updatedByOrganizerId], references: [id], onDelete: SetNull)
+  updatedAt            DateTime @default(now()) @updatedAt
+
+  @@index([updatedByOrganizerId])
+}
+
+model LatteIngredientAvailability {
+  ingredient           LatteIngredient @id
+  available            Boolean         @default(true)
+  updatedByOrganizerId String?
+  updatedByOrganizer   User?           @relation(fields: [updatedByOrganizerId], references: [id], onDelete: SetNull)
+  updatedAt            DateTime        @default(now()) @updatedAt
+
+  @@index([updatedByOrganizerId])
+}
+
+model LatteOrder {
+  id                   String                   @id @default(cuid())
+  hackerId             String
+  hacker               Hacker                   @relation(fields: [hackerId], references: [id], onDelete: Restrict)
+  activeHackerId       String?                  @unique
+  pickupName           String?
+  drink                LatteDrink
+  temperature          LatteTemperature
+  milkBase             LatteMilkBase
+  flavour              LatteFlavour
+  sweetener            LatteSweetener
+  status               LatteOrderStatus         @default(QUEUED)
+  submissionKey        String                   @unique
+  cancellationReason   LatteCancellationReason?
+  handledByOrganizerId String?
+  handledByOrganizer   User?                    @relation("LatteOrderHandler", fields: [handledByOrganizerId], references: [id], onDelete: SetNull)
+  submittedAt          DateTime                 @default(now())
+  preparingAt          DateTime?
+  readyAt              DateTime?
+  completedAt          DateTime?
+  cancelledAt          DateTime?
+  createdAt            DateTime                 @default(now())
+  updatedAt            DateTime                 @default(now()) @updatedAt
+  transitions          LatteOrderTransition[]
+
+  @@index([hackerId, status])
+  @@index([status, submittedAt])
+  @@index([handledByOrganizerId])
+}
+
+model LatteOrderTransition {
+  id          String           @id @default(cuid())
+  orderId     String
+  order       LatteOrder       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  requestKey  String           @unique
+  fromStatus  LatteOrderStatus
+  toStatus    LatteOrderStatus
+  organizerId String
+  createdAt   DateTime         @default(now())
+
+  @@index([orderId])
+  @@index([organizerId])
+}
+
 enum RoleName {
   ADMIN
   ORGANIZER
   MAYOR
   PREMIER
+}
+
+enum HardwareCategory {
+  INPUTS
+  OUTPUTS
+  MICROCONTROLLERS
+  MISCELLANEOUS
+}
+
+enum HardwareLoanStatus {
+  OPEN
+  CLOSED
+  CLOSED_WITH_MISSING
+}
+
+enum LatteDrink {
+  COFFEE
+  DECAF_COFFEE
+  LATTE
+  MOCHA
+  CHAI_LATTE
+  LONDON_FOG
+  TEA
+  HOT_CHOCOLATE
+}
+
+enum LatteTemperature {
+  HOT
+  ICED
+}
+
+enum LatteMilkBase {
+  NONE
+  WATER
+  DAIRY
+  OAT
+  ALMOND
+}
+
+enum LatteFlavour {
+  NONE
+  FRENCH_VANILLA
+  CARAMEL
+  BROWN_SUGAR_CINNAMON
+  CHOCOLATE
+}
+
+enum LatteSweetener {
+  NONE
+  SUGAR
+  SUBSTITUTE
+}
+
+enum LatteIngredient {
+  COFFEE
+  DECAF
+  ICE
+  DAIRY_MILK
+  OAT_MILK
+  ALMOND_MILK
+  FRENCH_VANILLA
+  CARAMEL
+  BROWN_SUGAR_CINNAMON
+  CHOCOLATE
+  CHAI_CONCENTRATE
+  EARL_GREY
+  TEA
+  HOT_CHOCOLATE_MIX
+  SUGAR
+  SUGAR_SUBSTITUTE
+}
+
+enum LatteOrderStatus {
+  QUEUED
+  PREPARING
+  READY
+  COMPLETED
+  CANCELLED
+}
+
+enum LatteCancellationReason {
+  PARTICIPANT_CANCELLED
+  INGREDIENT_UNAVAILABLE
+  DUPLICATE
+  UNCLAIMED
+  OTHER
 }
 
 enum EventType {
