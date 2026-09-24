@@ -25,6 +25,14 @@ const urlBase64ToUint8Array = (value: string) => {
 	return Uint8Array.from(binary, char => char.charCodeAt(0));
 };
 
+const serializeParticipantSubscription = (subscription: PushSubscription) => {
+	const value = subscription.toJSON();
+	const p256dh = value.keys?.p256dh;
+	const auth = value.keys?.auth;
+	if (!value.endpoint || !p256dh || !auth) throw new globalThis.Error("Incomplete push subscription");
+	return { endpoint: value.endpoint, keys: { p256dh, auth } };
+};
+
 const isNotificationRequestLookupAvailable = () =>
 	typeof window !== "undefined" &&
 	"Notification" in window &&
@@ -56,7 +64,13 @@ export default function ScheduleEventDetails({ id, onClose }: Props) {
 	const event = query.data;
 	const eventId = event?.id;
 	const eventStartsAt = event?.start.getTime();
-	const notifyLabel = !pushAvailable
+	const participantReminder = trpc.notifications.eventReminderStatus.useQuery(
+		{ eventId: eventId ?? "" },
+		{ enabled: !!eventId, retry: false },
+	);
+	const setParticipantReminder = trpc.notifications.setEventReminder.useMutation();
+	const anyNotificationAvailable = pushAvailable || Boolean(participantReminder.data?.discordAvailable);
+	const notifyLabel = !anyNotificationAvailable
 		? notifyRequested
 			? t("notify-me-cancel-unavailable")
 			: t("notify-me-unavailable")
@@ -79,17 +93,53 @@ export default function ScheduleEventDetails({ id, onClose }: Props) {
 				});
 			}
 		}
+		if (participantReminder.data?.participant) setNotifyRequested(participantReminder.data.requested);
 		return () => {
 			cancelled = true;
 		};
-	}, [eventId, eventStartsAt]);
+	}, [eventId, eventStartsAt, participantReminder.data?.participant, participantReminder.data?.requested]);
 
 	const handleNotifyToggle = async () => {
-		if (!event || pending.current || !isPushAvailable() || (!pushAvailable && !notifyRequested)) return;
+		if (!event || pending.current || (!anyNotificationAvailable && !notifyRequested)) return;
 		pending.current = true;
 		setNotifyPending(true);
 		setNotifyError(false);
 		try {
+			if (participantReminder.data?.participant) {
+				if (notifyRequested) {
+					await setParticipantReminder.mutateAsync({
+						eventId: event.id,
+						enabled: false,
+						locale: router.locale === "fr" ? "fr" : "en",
+					});
+					setNotifyRequested(false);
+					return;
+				}
+				let subscription: ReturnType<typeof serializeParticipantSubscription> | undefined;
+				if (pushAvailable && isPushAvailable()) {
+					const permissionGranted =
+						Notification.permission === "granted" || (await Notification.requestPermission()) === "granted";
+					if (permissionGranted) {
+						await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+						const registration = await navigator.serviceWorker.ready;
+						subscription = serializeParticipantSubscription(
+							await registration.pushManager.subscribe({
+								userVisibleOnly: true,
+								applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+							}),
+						);
+					}
+				}
+				if (!subscription && !participantReminder.data.discordAvailable) return;
+				await setParticipantReminder.mutateAsync({
+					eventId: event.id,
+					enabled: true,
+					subscription,
+					locale: router.locale === "fr" ? "fr" : "en",
+				});
+				setNotifyRequested(true);
+				return;
+			}
 			if (notifyRequested) {
 				const registration = await navigator.serviceWorker.getRegistration("/");
 				const subscription = await registration?.pushManager.getSubscription();
@@ -140,12 +190,12 @@ export default function ScheduleEventDetails({ id, onClose }: Props) {
 					<button
 						type="button"
 						onClick={() => void handleNotifyToggle()}
-						disabled={notifyPending || (!pushAvailable && !notifyRequested)}
+						disabled={notifyPending || (!anyNotificationAvailable && !notifyRequested)}
 						aria-busy={notifyPending}
 						aria-pressed={notifyRequested}
 						aria-label={notifyLabel}
 						title={notifyLabel}
-						className={`ui-button ui-button-icon ${!pushAvailable && !notifyRequested ? "border-dark-color bg-light-primary-color text-dark-color opacity-70" : notifyRequested ? "border-dark-color bg-dark-color text-light-color" : "border-dark-color bg-light-primary-color text-dark-color hover:bg-dark-secondary-color"}`}
+						className={`ui-button ui-button-icon ${!anyNotificationAvailable && !notifyRequested ? "border-dark-color bg-light-primary-color text-dark-color opacity-70" : notifyRequested ? "border-dark-color bg-dark-color text-light-color" : "border-dark-color bg-light-primary-color text-dark-color hover:bg-dark-secondary-color"}`}
 					>
 						<svg
 							viewBox="0 0 24 24"

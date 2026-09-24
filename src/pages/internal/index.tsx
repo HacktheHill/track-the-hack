@@ -32,6 +32,9 @@ const Internal: NextPage = () => {
 						<Link href="/internal/latte-lab" className="ui-button ui-button-primary">
 							{t("latte-lab")}
 						</Link>
+						<Link href="/internal/notifications" className="ui-button ui-button-primary">
+							{t("notifications.title")}
+						</Link>
 					</div>
 				</div>
 			</Access>

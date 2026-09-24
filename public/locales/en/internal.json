@@ -14,6 +14,40 @@
 		"remove": "Remove",
 		"empty": "No additional emails have been allowed."
 	},
+	"notifications": {
+		"title": "Participant notifications",
+		"checked-in": "{{count}} hackers are checked in; {{dietary}} have dietary-priority meals.",
+		"discord-unavailable": "Discord eligibility counts are temporarily unavailable. Web-push delivery can still proceed; Discord deliveries will retry if the bot is unavailable.",
+		"new-campaign": "New food-service campaign",
+		"campaign-name": "Campaign name",
+		"maximum-size": "Maximum hackers per cohort",
+		"generate": "Generate cohorts",
+		"snapshot": "Frozen snapshot: {{count}} hackers at {{date}}",
+		"regenerate": "Regenerate draft",
+		"archive": "Archive",
+		"late-check-ins": "{{count}} hackers checked in after this snapshot and are not included.",
+		"cohort": "Cohort {{number}} · {{count}} hackers",
+		"eligibility": "Dietary priority: {{dietary}} · Push: {{push}} · Discord: {{discord}} · Both: {{dual}} · Unreachable: {{unreachable}}",
+		"status": {
+			"unsent": "Unsent",
+			"queued": "Queued",
+			"sending": "Sending",
+			"complete": "Complete",
+			"partially-failed": "Partially failed"
+		},
+		"message": "Bilingual message",
+		"draft": "Draft announcement",
+		"preview": "Preview send",
+		"preview-counts": "{{hackers}} unique hackers · {{push}} web-push deliveries · {{discord}} Discord deliveries · {{unreachable}} unreachable",
+		"delivery-status": "Pending {{PENDING}} · Sending {{SENDING}} · Sent {{SENT}} · Failed {{FAILED}} · Skipped {{SKIPPED}}",
+		"uncertain": "{{count}} Discord deliveries have an uncertain outcome and will not be resent automatically. Confirm with the affected participants before taking further action.",
+		"retry": "Retry temporary failures",
+		"confirm-send": "Confirm notification to cohort {{number}}",
+		"confirm-retry": "Confirm retry of unsuccessful deliveries",
+		"confirm": "Confirm",
+		"cancel": "Cancel",
+		"action-error": "The notification action could not be completed. Please try again."
+	},
 
 	"events": {
 		"title": "Events",

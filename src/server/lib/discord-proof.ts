@@ -25,3 +25,10 @@ export const readDiscordProof = (token: string, secret: string, now = Date.now()
 
 export const signDiscordRequest = (body: string, timestamp: string, secret: string) =>
 	createHmac("sha256", secret).update(`discord-complete:v1:${timestamp}.${body}`).digest("hex");
+
+export const signNotificationRequest = (
+	domain: "participant-links-status" | "notifications-deliver",
+	body: string,
+	timestamp: string,
+	secret: string,
+) => createHmac("sha256", secret).update(`discord-${domain}:v1:${timestamp}.${body}`).digest("hex");

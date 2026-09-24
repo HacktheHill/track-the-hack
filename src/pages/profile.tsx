@@ -5,6 +5,7 @@ import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useEffect } from "react";
 import App from "@/components/App";
 import ParticipantSignOut from "@/components/ParticipantSignOut";
+import NotificationPreferences from "@/components/NotificationPreferences";
 import QRCode from "@/components/QRCode";
 import { env } from "@/env/server.mjs";
 import { prisma } from "@/server/db";
@@ -70,7 +71,10 @@ export const getServerSideProps: GetServerSideProps<{ profile: ProfileData }> = 
 	};
 };
 
-const Profile = ({ profile }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
+const Profile = ({
+	profile,
+	notificationPreferences,
+}: InferGetServerSidePropsType<typeof getServerSideProps> & { notificationPreferences?: React.ReactNode }) => {
 	const { t } = useTranslation("profile");
 
 	useEffect(() => {
@@ -99,6 +103,12 @@ const Profile = ({ profile }: InferGetServerSidePropsType<typeof getServerSidePr
 					/>
 					<Row label={t("meal")} value={t(`meal-category.${profile.mealCategory}`)} />
 				</dl>
+			</section>
+
+			<section className="w-full max-w-xl rounded-xl bg-light-quaternary-color p-8 shadow-lg">
+				<h2 className="font-coolvetica text-2xl text-dark-color">{t("notifications.title")}</h2>
+				<p className="mt-2 font-rubik text-sm text-dark-color">{t("notifications.explanation")}</p>
+				{notificationPreferences === undefined ? <NotificationPreferences /> : notificationPreferences}
 			</section>
 
 			<section className="w-full max-w-xl rounded-xl bg-light-quaternary-color p-8 shadow-lg">

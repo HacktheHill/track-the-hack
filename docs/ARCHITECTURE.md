@@ -253,8 +253,20 @@ also online-only, while the public schedule remains available from its cache.
 ## Reminders, metrics, and privacy
 
 Participants can request reminders for visible events. Push subscriptions are scoped
-to event and endpoint. Due-event processing uses leases and bounded provider work;
-`PUSH_NOTIFICATIONS.md` documents the operational protocol.
+to event and endpoint for anonymous visitors. An authenticated participant reminder is
+instead scoped to Hacker and event and fans out to every enabled participant channel:
+the participant's one active Web Push subscription and the bot-owned Discord link.
+Per-channel completion timestamps prevent a temporary failure on one transport from
+duplicating a successful delivery on the other. Due-event processing uses leases and
+bounded provider work; `PUSH_NOTIFICATIONS.md` documents the operational protocol.
+
+Organisers create a fresh notification campaign for each food service. Campaign
+creation snapshots distinct positive `CHECK_IN` presences, deterministically shuffles
+all non-standard meal categories before standard meals, and balances the ordered
+participants into bounded frozen cohorts. The first queued announcement locks the
+snapshot. Delivery rows are durable and leased; preferences are re-read immediately
+before each Web Push or Discord attempt. The bot alone stores Discord IDs, while Track
+stores opaque Hacker IDs, channel preferences, safe outcomes, and audit identifiers.
 
 Tracker metrics are aggregate and operational. Demographic reporting comes from Tally
 or the restricted Sheet. Individual sponsor sharing requires separate explicit consent,

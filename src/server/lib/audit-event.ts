@@ -20,6 +20,12 @@ const auditNames = [
 	"latte.order.transitioned",
 	"latte.lab.open_changed",
 	"latte.ingredient.availability_changed",
+	"participant.notifications.updated",
+	"notification.campaign.created",
+	"notification.campaign.regenerated",
+	"notification.announcement.queued",
+	"notification.announcement.completed",
+	"notification.delivery.retried",
 	"legacy.migrated",
 ] as const;
 
@@ -41,6 +47,12 @@ const allowedOutcomes: Record<(typeof auditNames)[number], readonly string[]> = 
 	"latte.order.transitioned": ["preparing", "ready", "completed", "cancelled"],
 	"latte.lab.open_changed": ["opened", "closed"],
 	"latte.ingredient.availability_changed": ["available", "unavailable"],
+	"participant.notifications.updated": ["applied"],
+	"notification.campaign.created": ["created"],
+	"notification.campaign.regenerated": ["regenerated"],
+	"notification.announcement.queued": ["queued"],
+	"notification.announcement.completed": ["completed"],
+	"notification.delivery.retried": ["queued"],
 	"legacy.migrated": ["migrated"],
 };
 
@@ -56,6 +68,8 @@ const entitySchema = z
 			"hardware_loan",
 			"hardware_item",
 			"latte_order",
+			"notification_campaign",
+			"notification_announcement",
 		]),
 		id: z.string().min(1).max(191),
 	})
