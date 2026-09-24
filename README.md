@@ -55,6 +55,10 @@ ongoing inventory synchronisation source. Follow the detailed
 for local fixtures, Hardware checkout/return, Latte ordering/queue handling, privacy,
 physical-device checks, cleanup, and the final no-remaining-work criteria.
 
+Organiser authentication, administrator provisioning, external-email access, organiser
+passes, scanning, revocation, and the zero-open-items release checklist are documented
+in [`docs/ORGANISER_ACCESS.md`](./docs/ORGANISER_ACCESS.md).
+
 The current data ownership, authorisation boundaries, participant lifecycle, scanner
 semantics, and offline privacy model are documented in
 [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md).
@@ -118,6 +122,14 @@ key, and `VAPID_EMAIL`. Deploy the bot migration and healthy bot revision before
 Track migration and UI, then complete the protected real-provider acceptance in
 [`docs/NOTIFICATIONS.md`](./docs/NOTIFICATIONS.md). Deployment approval does not
 authorize an external test message.
+
+After the migration succeeds, use the protected **Provision Track organizer** workflow
+for named administrator grants and external organiser access. The workflow accepts an
+email plus an administrator Boolean and verifies the resulting database row. Do not
+provision a fixed or shared address in application code. Complete the production
+acceptance and cleanup checklist in
+[`docs/ORGANISER_ACCESS.md`](./docs/ORGANISER_ACCESS.md#release-acceptance) before
+declaring the organiser release finished.
 
 ### Database lifecycle
 
