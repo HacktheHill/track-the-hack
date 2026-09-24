@@ -14,6 +14,7 @@ import {
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { hasRoles } from "@/utils/helpers";
+import { createAuditEvent, emitAuditEvent, persistAuditEvent } from "@/server/lib/audit-event";
 import { log } from "@/server/lib/log";
 import {
 	ACTIVE_LATTE_STATUSES,
@@ -132,17 +133,37 @@ export const latteLabRouter = createTRPCRouter({
 				};
 			}
 			try {
-				await ctx.prisma.$transaction(
+				const auditEvent = await ctx.prisma.$transaction(
 					async tx => {
 						const state = await tx.latteLabState.findUnique({ where: { id: 1 } });
 						if (!state?.open)
 							throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Latte Lab is closed" });
 						const error = configurationError(input, await currentAvailability(tx));
 						if (error) throw new TRPCError({ code: "PRECONDITION_FAILED", message: error });
-						await tx.latteOrder.create({ data: { ...input, hackerId, activeHackerId: hackerId } });
+						const order = await tx.latteOrder.create({
+							data: { ...input, hackerId, activeHackerId: hackerId },
+							select: { id: true },
+						});
+						const auditEvent = createAuditEvent({
+							name: "latte.order.placed",
+							outcome: "queued",
+							actor: { type: "participant", id: hackerId },
+							subject: { type: "hacker", id: hackerId },
+							resource: { type: "latte_order", id: order.id },
+							data: {
+								drink: input.drink,
+								temperature: input.temperature,
+								milkBase: input.milkBase,
+								flavour: input.flavour,
+								sweetener: input.sweetener,
+							},
+						});
+						await persistAuditEvent(tx, auditEvent);
+						return auditEvent;
 					},
 					{ isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
 				);
+				emitAuditEvent(auditEvent);
 			} catch (error) {
 				if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
 					const retry = await ctx.prisma.latteOrder.findUnique({
@@ -166,16 +187,29 @@ export const latteLabRouter = createTRPCRouter({
 			if (order.status === LatteOrderStatus.CANCELLED) return null;
 			if (order.status !== LatteOrderStatus.QUEUED)
 				throw new TRPCError({ code: "CONFLICT", message: "Only queued orders can be cancelled" });
-			await ctx.prisma.latteOrder.update({
-				where: { id: input.orderId },
-				data: {
-					status: LatteOrderStatus.CANCELLED,
-					activeHackerId: null,
-					pickupName: null,
-					cancelledAt: new Date(),
-					cancellationReason: LatteCancellationReason.PARTICIPANT_CANCELLED,
-				},
+			const auditEvent = await ctx.prisma.$transaction(async tx => {
+				await tx.latteOrder.update({
+					where: { id: input.orderId },
+					data: {
+						status: LatteOrderStatus.CANCELLED,
+						activeHackerId: null,
+						pickupName: null,
+						cancelledAt: new Date(),
+						cancellationReason: LatteCancellationReason.PARTICIPANT_CANCELLED,
+					},
+				});
+				const auditEvent = createAuditEvent({
+					name: "latte.order.cancelled",
+					outcome: "cancelled",
+					actor: { type: "participant", id: ctx.participantSession.hackerId },
+					subject: { type: "hacker", id: ctx.participantSession.hackerId },
+					resource: { type: "latte_order", id: input.orderId },
+					data: { reason: LatteCancellationReason.PARTICIPANT_CANCELLED },
+				});
+				await persistAuditEvent(tx, auditEvent);
+				return auditEvent;
 			});
+			emitAuditEvent(auditEvent);
 			return null;
 		}),
 	queue: protectedProcedure.query(async ({ ctx }) => {
@@ -197,22 +231,46 @@ export const latteLabRouter = createTRPCRouter({
 	}),
 	setOpen: protectedProcedure.input(z.object({ open: z.boolean() }).strict()).mutation(async ({ ctx, input }) => {
 		const organizer = await requireOrganizer(ctx.prisma, ctx.session.user.id);
-		return ctx.prisma.latteLabState.upsert({
-			where: { id: 1 },
-			create: { id: 1, open: input.open, updatedByOrganizerId: organizer.id },
-			update: { open: input.open, updatedByOrganizerId: organizer.id },
-			select: { open: true, updatedAt: true },
+		const { result, auditEvent } = await ctx.prisma.$transaction(async tx => {
+			const result = await tx.latteLabState.upsert({
+				where: { id: 1 },
+				create: { id: 1, open: input.open, updatedByOrganizerId: organizer.id },
+				update: { open: input.open, updatedByOrganizerId: organizer.id },
+				select: { open: true, updatedAt: true },
+			});
+			const auditEvent = createAuditEvent({
+				name: "latte.lab.open_changed",
+				outcome: input.open ? "opened" : "closed",
+				actor: { type: "organizer", id: organizer.id },
+				data: { open: input.open },
+			});
+			await persistAuditEvent(tx, auditEvent);
+			return { result, auditEvent };
 		});
+		emitAuditEvent(auditEvent);
+		return result;
 	}),
 	setIngredientAvailability: protectedProcedure
 		.input(z.object({ ingredient: z.nativeEnum(LatteIngredient), available: z.boolean() }).strict())
 		.mutation(async ({ ctx, input }) => {
 			const organizer = await requireOrganizer(ctx.prisma, ctx.session.user.id);
-			return ctx.prisma.latteIngredientAvailability.upsert({
-				where: { ingredient: input.ingredient },
-				create: { ...input, updatedByOrganizerId: organizer.id },
-				update: { available: input.available, updatedByOrganizerId: organizer.id },
+			const { result, auditEvent } = await ctx.prisma.$transaction(async tx => {
+				const result = await tx.latteIngredientAvailability.upsert({
+					where: { ingredient: input.ingredient },
+					create: { ...input, updatedByOrganizerId: organizer.id },
+					update: { available: input.available, updatedByOrganizerId: organizer.id },
+				});
+				const auditEvent = createAuditEvent({
+					name: "latte.ingredient.availability_changed",
+					outcome: input.available ? "available" : "unavailable",
+					actor: { type: "organizer", id: organizer.id },
+					data: { ingredient: input.ingredient, available: input.available },
+				});
+				await persistAuditEvent(tx, auditEvent);
+				return { result, auditEvent };
 			});
+			emitAuditEvent(auditEvent);
+			return result;
 		}),
 	transitionOrder: protectedProcedure
 		.input(
@@ -245,7 +303,12 @@ export const latteLabRouter = createTRPCRouter({
 			if (!allowed || (input.nextStatus === LatteOrderStatus.CANCELLED && !input.reason))
 				throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid state transition" });
 			const now = new Date();
-			const order = await ctx.prisma.$transaction(async tx => {
+			const { order, auditEvent } = await ctx.prisma.$transaction(async tx => {
+				const current = await tx.latteOrder.findUnique({
+					where: { id: input.orderId },
+					select: { hackerId: true },
+				});
+				if (!current) throw new TRPCError({ code: "NOT_FOUND" });
 				const updated = await tx.latteOrder.updateMany({
 					where: { id: input.orderId, status: input.expectedStatus },
 					data: {
@@ -276,7 +339,24 @@ export const latteLabRouter = createTRPCRouter({
 						organizerId: organizer.id,
 					},
 				});
-				return tx.latteOrder.findUniqueOrThrow({ where: { id: input.orderId }, select: orderSelection });
+				const order = await tx.latteOrder.findUniqueOrThrow({
+					where: { id: input.orderId },
+					select: orderSelection,
+				});
+				const auditEvent = createAuditEvent({
+					name: "latte.order.transitioned",
+					outcome: input.nextStatus.toLowerCase(),
+					actor: { type: "organizer", id: organizer.id },
+					subject: { type: "hacker", id: current.hackerId },
+					resource: { type: "latte_order", id: input.orderId },
+					data: {
+						fromStatus: input.expectedStatus,
+						toStatus: input.nextStatus,
+						reason: input.reason ?? null,
+					},
+				});
+				await persistAuditEvent(tx, auditEvent);
+				return { order, auditEvent };
 			});
 			await log(ctx, {
 				sourceId: order.id,
@@ -287,6 +367,7 @@ export const latteLabRouter = createTRPCRouter({
 				action: input.nextStatus.toLowerCase(),
 				details: `Transitioned Latte order ${order.id} to ${input.nextStatus}`,
 			});
+			emitAuditEvent(auditEvent);
 			return order;
 		}),
 });

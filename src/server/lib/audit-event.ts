@@ -10,6 +10,13 @@ const auditNames = [
 	"participant.claim.redeemed",
 	"participant.rsvp.updated",
 	"participant.rsvp.cancelled",
+	"hardware.loan.checked_out",
+	"hardware.loan.returned",
+	"latte.order.placed",
+	"latte.order.cancelled",
+	"latte.order.transitioned",
+	"latte.lab.open_changed",
+	"latte.ingredient.availability_changed",
 	"legacy.migrated",
 ] as const;
 
@@ -21,12 +28,19 @@ const allowedOutcomes: Record<(typeof auditNames)[number], readonly string[]> = 
 	"participant.claim.redeemed": ["redeemed"],
 	"participant.rsvp.updated": ["attending", "declined", "repeated_attending", "repeated_declined"],
 	"participant.rsvp.cancelled": ["cancelled"],
+	"hardware.loan.checked_out": ["recorded"],
+	"hardware.loan.returned": ["partial", "closed", "closed_with_missing"],
+	"latte.order.placed": ["queued"],
+	"latte.order.cancelled": ["cancelled"],
+	"latte.order.transitioned": ["preparing", "ready", "completed", "cancelled"],
+	"latte.lab.open_changed": ["opened", "closed"],
+	"latte.ingredient.availability_changed": ["available", "unavailable"],
 	"legacy.migrated": ["migrated"],
 };
 
 const entitySchema = z
 	.object({
-		type: z.enum(["hacker", "user", "event", "presence", "role"]),
+		type: z.enum(["hacker", "user", "event", "presence", "role", "hardware_loan", "latte_order"]),
 		id: z.string().min(1).max(191),
 	})
 	.strict();

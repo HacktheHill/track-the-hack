@@ -2,6 +2,7 @@ import { HardwareLoanStatus, Prisma, RoleName, type PrismaClient } from "@prisma
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { hasRoles } from "@/utils/helpers";
+import { createAuditEvent, emitAuditEvent, persistAuditEvent } from "@/server/lib/audit-event";
 import { log } from "@/server/lib/log";
 import { participantIdSchema } from "@/server/services/hacker-lifecycle";
 import { createTRPCRouter, participantProcedure, protectedProcedure } from "@/server/api/trpc";
@@ -95,7 +96,7 @@ export const hardwareRouter = createTRPCRouter({
 			});
 			if (existing) return existing;
 			try {
-				const loan = await ctx.prisma.$transaction(
+				const { loan, auditEvent } = await ctx.prisma.$transaction(
 					async tx => {
 						const hacker = await tx.hacker.findUnique({
 							where: { id: input.hackerId },
@@ -120,7 +121,7 @@ export const hardwareRouter = createTRPCRouter({
 								});
 							}
 						}
-						return tx.hardwareLoan.create({
+						const loan = await tx.hardwareLoan.create({
 							data: {
 								hackerId: input.hackerId,
 								pickupName: input.pickupName,
@@ -136,6 +137,20 @@ export const hardwareRouter = createTRPCRouter({
 							},
 							select: loanSelection,
 						});
+						const auditEvent = createAuditEvent({
+							name: "hardware.loan.checked_out",
+							outcome: "recorded",
+							actor: { type: "organizer", id: organizer.id },
+							subject: { type: "hacker", id: input.hackerId },
+							resource: { type: "hardware_loan", id: loan.id },
+							data: {
+								lineCount: input.lines.length,
+								unitCount: input.lines.reduce((sum, line) => sum + line.quantity, 0),
+								idCollected: true,
+							},
+						});
+						await persistAuditEvent(tx, auditEvent);
+						return { loan, auditEvent };
 					},
 					{ isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
 				);
@@ -148,6 +163,7 @@ export const hardwareRouter = createTRPCRouter({
 					action: "checkout",
 					details: `Checked out hardware loan ${loan.id} to participant ${loan.hackerId}`,
 				});
+				emitAuditEvent(auditEvent);
 				return loan;
 			} catch (error) {
 				if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
@@ -211,7 +227,7 @@ export const hardwareRouter = createTRPCRouter({
 				select: { loan: { select: loanSelection } },
 			});
 			if (prior) return prior.loan;
-			const loan = await ctx.prisma
+			const { loan, auditEvent } = await ctx.prisma
 				.$transaction(
 					async tx => {
 						const current = await tx.hardwareLoan.findUnique({
@@ -298,7 +314,31 @@ export const hardwareRouter = createTRPCRouter({
 								},
 							});
 						}
-						return tx.hardwareLoan.findUniqueOrThrow({ where: { id: current.id }, select: loanSelection });
+						const loan = await tx.hardwareLoan.findUniqueOrThrow({
+							where: { id: current.id },
+							select: loanSelection,
+						});
+						const auditEvent = createAuditEvent({
+							name: "hardware.loan.returned",
+							outcome:
+								loan.status === HardwareLoanStatus.OPEN
+									? "partial"
+									: loan.status === HardwareLoanStatus.CLOSED_WITH_MISSING
+										? "closed_with_missing"
+										: "closed",
+							actor: { type: "organizer", id: organizer.id },
+							subject: { type: "hacker", id: loan.hackerId },
+							resource: { type: "hardware_loan", id: loan.id },
+							data: {
+								lineCount: input.lines.length,
+								goodUnits: input.lines.reduce((sum, line) => sum + line.good, 0),
+								damagedUnits: input.lines.reduce((sum, line) => sum + line.damaged, 0),
+								missingUnits: input.lines.reduce((sum, line) => sum + line.missing, 0),
+								idReturned: input.idReturned,
+							},
+						});
+						await persistAuditEvent(tx, auditEvent);
+						return { loan, auditEvent };
 					},
 					{ isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
 				)
@@ -308,7 +348,7 @@ export const hardwareRouter = createTRPCRouter({
 							where: { idempotencyKey: input.idempotencyKey },
 							select: { loan: { select: loanSelection } },
 						});
-						if (retry) return retry.loan;
+						if (retry) return { loan: retry.loan, auditEvent: null };
 					}
 					throw error;
 				});
@@ -321,6 +361,7 @@ export const hardwareRouter = createTRPCRouter({
 				action: "return",
 				details: `Recorded hardware return for loan ${loan.id} and participant ${loan.hackerId}`,
 			});
+			if (auditEvent) emitAuditEvent(auditEvent);
 			return loan;
 		}),
 });

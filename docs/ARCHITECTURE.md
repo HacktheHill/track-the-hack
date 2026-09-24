@@ -235,7 +235,7 @@ a documented purpose, and field-minimal disclosure.
 
 Audit records use the versioned, append-only `AuditEvent` ledger and opaque
 operational IDs; they must not copy Tally/Sheet identity or application data.
-Scanner mutations and their audit entries commit atomically. Structured copies
+Scanner and Event Services mutations and their audit entries commit atomically. Structured copies
 are emitted to Azure Log Analytics after commit for operational search, while
 MySQL remains authoritative. Both copies have a 90-day retention policy; see
 `AUDIT_LOGS.md`. Exact participant and capability identifiers use binary
