@@ -1,7 +1,7 @@
 -- Event Services are additive. The legacy `Hardware` table is deliberately
 -- retained so the one-time importer can detect and refuse unexpected data.
 CREATE TABLE `HardwareItem` (
-  `id` VARCHAR(191) NOT NULL, `importKey` VARCHAR(191) NOT NULL,
+  `id` VARCHAR(191) NOT NULL, `importKey` VARCHAR(191) COLLATE utf8mb4_bin NOT NULL,
   `category` ENUM('INPUTS','OUTPUTS','MICROCONTROLLERS','MISCELLANEOUS') NOT NULL,
   `name` VARCHAR(191) NOT NULL, `normalizedName` VARCHAR(191) NOT NULL,
   `description` TEXT NULL, `imageURL` VARCHAR(191) NULL,
@@ -16,9 +16,9 @@ CREATE TABLE `HardwareItem` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE `HardwareLoan` (
-  `id` VARCHAR(191) NOT NULL, `hackerId` VARCHAR(191) NOT NULL,
+  `id` VARCHAR(191) NOT NULL, `hackerId` VARCHAR(191) COLLATE utf8mb4_bin NOT NULL,
   `pickupName` VARCHAR(191) NULL, `checkoutOrganizerId` VARCHAR(191) NOT NULL,
-  `checkoutKey` VARCHAR(191) NOT NULL,
+  `checkoutKey` VARCHAR(191) COLLATE utf8mb4_bin NOT NULL,
   `status` ENUM('OPEN','CLOSED','CLOSED_WITH_MISSING') NOT NULL DEFAULT 'OPEN',
   `idCollectedAt` DATETIME(3) NOT NULL, `idReturnedAt` DATETIME(3) NULL,
   `checkedOutAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3), `closedAt` DATETIME(3) NULL,
@@ -40,7 +40,7 @@ CREATE TABLE `HardwareLoanLine` (
 
 CREATE TABLE `HardwareReturn` (
   `id` VARCHAR(191) NOT NULL, `loanId` VARCHAR(191) NOT NULL, `organizerId` VARCHAR(191) NOT NULL,
-  `idempotencyKey` VARCHAR(191) NOT NULL, `returnedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `idempotencyKey` VARCHAR(191) COLLATE utf8mb4_bin NOT NULL, `returnedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   UNIQUE INDEX `HardwareReturn_idempotencyKey_key`(`idempotencyKey`),
   INDEX `HardwareReturn_loanId_idx`(`loanId`), INDEX `HardwareReturn_organizerId_idx`(`organizerId`),
   PRIMARY KEY (`id`)
@@ -69,13 +69,13 @@ CREATE TABLE `LatteIngredientAvailability` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE `LatteOrder` (
-  `id` VARCHAR(191) NOT NULL, `hackerId` VARCHAR(191) NOT NULL, `activeHackerId` VARCHAR(191) NULL,
+  `id` VARCHAR(191) NOT NULL, `hackerId` VARCHAR(191) COLLATE utf8mb4_bin NOT NULL, `activeHackerId` VARCHAR(191) COLLATE utf8mb4_bin NULL,
   `pickupName` VARCHAR(191) NULL, `drink` ENUM('COFFEE','DECAF_COFFEE','LATTE','MOCHA','CHAI_LATTE','LONDON_FOG','TEA','HOT_CHOCOLATE') NOT NULL,
   `temperature` ENUM('HOT','ICED') NOT NULL, `milkBase` ENUM('NONE','WATER','DAIRY','OAT','ALMOND') NOT NULL,
   `flavour` ENUM('NONE','FRENCH_VANILLA','CARAMEL','BROWN_SUGAR_CINNAMON','CHOCOLATE') NOT NULL,
   `sweetener` ENUM('NONE','SUGAR','SUBSTITUTE') NOT NULL,
   `status` ENUM('QUEUED','PREPARING','READY','COMPLETED','CANCELLED') NOT NULL DEFAULT 'QUEUED',
-  `submissionKey` VARCHAR(191) NOT NULL,
+  `submissionKey` VARCHAR(191) COLLATE utf8mb4_bin NOT NULL,
   `cancellationReason` ENUM('PARTICIPANT_CANCELLED','INGREDIENT_UNAVAILABLE','DUPLICATE','UNCLAIMED','OTHER') NULL,
   `handledByOrganizerId` VARCHAR(191) NULL,
   `submittedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3), `preparingAt` DATETIME(3) NULL,
@@ -97,7 +97,7 @@ INSERT INTO `LatteIngredientAvailability` (`ingredient`, `available`) VALUES
  ('SUGAR',true),('SUGAR_SUBSTITUTE',true);
 
 CREATE TABLE `LatteOrderTransition` (
-  `id` VARCHAR(191) NOT NULL, `orderId` VARCHAR(191) NOT NULL, `requestKey` VARCHAR(191) NOT NULL,
+  `id` VARCHAR(191) NOT NULL, `orderId` VARCHAR(191) NOT NULL, `requestKey` VARCHAR(191) COLLATE utf8mb4_bin NOT NULL,
   `fromStatus` ENUM('QUEUED','PREPARING','READY','COMPLETED','CANCELLED') NOT NULL,
   `toStatus` ENUM('QUEUED','PREPARING','READY','COMPLETED','CANCELLED') NOT NULL,
   `organizerId` VARCHAR(191) NOT NULL, `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),

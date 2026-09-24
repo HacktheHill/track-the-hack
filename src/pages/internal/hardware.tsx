@@ -41,6 +41,7 @@ export default function HardwareDesk() {
 				utils.hardware.activeLoans.invalidate(),
 			]);
 		},
+		onError: () => void utils.hardware.organizerCatalogue.invalidate(),
 	});
 	const scan = useCallback((value: string) => setHackerId(value.trim()), []);
 	const selected = inventory.data?.filter(item => cart[item.id]) ?? [];

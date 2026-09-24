@@ -85,3 +85,21 @@ void test("Latte availability and allergen badges derive from ingredients", () =
 		["ALMOND"],
 	);
 });
+
+void test("Hot Chocolate uses its dedicated mix without requiring mocha chocolate", () => {
+	const available = new Set([LatteIngredient.HOT_CHOCOLATE_MIX]);
+	assert.equal(availableRecipe(LatteDrink.HOT_CHOCOLATE, available).enabled, true);
+	assert.equal(
+		configurationError(
+			{
+				drink: LatteDrink.HOT_CHOCOLATE,
+				temperature: LatteTemperature.HOT,
+				milkBase: LatteMilkBase.WATER,
+				flavour: LatteFlavour.CHOCOLATE,
+				sweetener: LatteSweetener.NONE,
+			},
+			available,
+		),
+		null,
+	);
+});

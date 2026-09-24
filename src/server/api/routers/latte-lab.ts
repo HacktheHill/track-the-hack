@@ -188,8 +188,12 @@ export const latteLabRouter = createTRPCRouter({
 			if (order.status !== LatteOrderStatus.QUEUED)
 				throw new TRPCError({ code: "CONFLICT", message: "Only queued orders can be cancelled" });
 			const auditEvent = await ctx.prisma.$transaction(async tx => {
-				await tx.latteOrder.update({
-					where: { id: input.orderId },
+				const updated = await tx.latteOrder.updateMany({
+					where: {
+						id: input.orderId,
+						hackerId: ctx.participantSession.hackerId,
+						status: LatteOrderStatus.QUEUED,
+					},
 					data: {
 						status: LatteOrderStatus.CANCELLED,
 						activeHackerId: null,
@@ -198,6 +202,7 @@ export const latteLabRouter = createTRPCRouter({
 						cancellationReason: LatteCancellationReason.PARTICIPANT_CANCELLED,
 					},
 				});
+				if (updated.count !== 1) throw new TRPCError({ code: "CONFLICT", message: "Order state changed" });
 				const auditEvent = createAuditEvent({
 					name: "latte.order.cancelled",
 					outcome: "cancelled",

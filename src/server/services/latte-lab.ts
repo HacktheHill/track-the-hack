@@ -116,7 +116,8 @@ export const ingredientsForConfiguration = (configuration: LatteConfiguration) =
 	if (configuration.temperature === LatteTemperature.ICED) ingredients.push(LatteIngredient.ICE);
 	const milk = milkIngredient[configuration.milkBase];
 	if (milk) ingredients.push(milk);
-	const flavour = flavourIngredient[configuration.flavour];
+	const flavour =
+		configuration.drink === LatteDrink.HOT_CHOCOLATE ? undefined : flavourIngredient[configuration.flavour];
 	if (flavour) ingredients.push(flavour);
 	const sweetener = sweetenerIngredient[configuration.sweetener];
 	if (sweetener) ingredients.push(sweetener);
@@ -159,6 +160,7 @@ export const availableRecipe = (drink: LatteDrink, available: Set<LatteIngredien
 		return !ingredient || available.has(ingredient);
 	});
 	const flavours = recipe.flavours.filter(value => {
+		if (drink === LatteDrink.HOT_CHOCOLATE) return true;
 		const ingredient = flavourIngredient[value];
 		return !ingredient || available.has(ingredient);
 	});
