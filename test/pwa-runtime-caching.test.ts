@@ -8,6 +8,7 @@ import {
 	isFrenchPrivateNavigation,
 	isFrenchPublicNavigation,
 	isPrivateNextDataRequest,
+	publicPrecacheUrls,
 	publicScheduleData,
 } from "@root/pwa-runtime-caching";
 
@@ -31,6 +32,24 @@ void test("PWA configuration keeps participant routes deployment-safe", () => {
 		assert.equal(
 			isFrenchPublicNavigation({ request: navigationRequest, url: new URL("https://track.example/fr/maps") }),
 			true,
+		);
+		assert.equal(
+			isEnglishPublicNavigation({
+				request: navigationRequest,
+				url: new URL("https://track.example/sponsors/cgi"),
+			}),
+			true,
+		);
+		assert.equal(
+			isFrenchPublicNavigation({
+				request: navigationRequest,
+				url: new URL("https://track.example/fr/sponsors/cgi"),
+			}),
+			true,
+		);
+		assert.equal(
+			isEnglishPublicNavigation({ request: navigationRequest, url: new URL("https://track.example/sponsors") }),
+			false,
 		);
 		assert.equal(
 			isEnglishPrivateNavigation({ request: navigationRequest, url: new URL("https://track.example/qr") }),
@@ -111,8 +130,10 @@ void test("PWA configuration keeps participant routes deployment-safe", () => {
 	assert.match(config, /buildExcludes: \[\/dynamic-css-manifest\\\.json\$\/\]/);
 	assert.match(config, /for \(const entry of publicPrecacheEntries\) entry\.revision = buildId/);
 	assert.doesNotMatch(config, /revision: null/);
-	assert.match(config, /"\/schedule\/event"/);
-	assert.match(config, /"\/assets\/maps\/floor4-current\.svg"/);
+	assert.ok(publicPrecacheUrls.includes("/schedule/event"));
+	assert.ok(publicPrecacheUrls.includes("/assets/maps/floor4-current.svg"));
+	assert.equal(publicPrecacheUrls.includes("/sponsors"), false);
+	assert.equal(publicPrecacheUrls.includes("/fr/sponsors"), false);
 	assert.match(config, /precacheFallback: \{ fallbackURL: "\/fr\/_offline" \}/);
 	assert.match(config, /precacheFallback: \{ fallbackURL: "\/_offline" \}/);
 
@@ -123,7 +144,10 @@ void test("PWA configuration keeps participant routes deployment-safe", () => {
 
 	const eventDetails = readFileSync("src/components/ScheduleEventDetails.tsx", "utf8");
 	assert.match(eventDetails, /trpc\.events\.all\.useQuery/);
+	assert.match(eventDetails, /networkMode: "offlineFirst"/);
 	assert.doesNotMatch(eventDetails, /trpc\.events\.get\.useQuery/);
+	const schedule = readFileSync("src/pages/schedule/index.tsx", "utf8");
+	assert.match(schedule, /events\.all\.useQuery\(undefined, \{ networkMode: "offlineFirst" \}\)/);
 
 	const dockerfile = readFileSync("Dockerfile", "utf8");
 	assert.match(dockerfile, /COPY --from=build[^\n]*\/app\/pwa-runtime-caching\.js \.\//);

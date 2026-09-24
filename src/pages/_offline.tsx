@@ -19,7 +19,6 @@ const Offline: NextPage = () => {
 			<div className="flex max-w-lg flex-col items-center gap-5 rounded-3xl bg-light-color/80 p-8 shadow-lg">
 				<h1 className="ui-page-title">{t("title")}</h1>
 				<p className="text-lg">{t("description")}</p>
-				<p>{t("public-pages")}</p>
 				<Link href="/schedule" className="ui-button">
 					{t("open-schedule")}
 				</Link>

@@ -6,6 +6,7 @@
 	"error-message": "Erreur: {{message}}",
 	"contact-us": "Contactez-nous pour de l'aide",
 	"unknown-error": "Erreur inconnue",
+	"offline-schedule-unavailable": "Horaire non disponible hors ligne. Reconnectez-vous et ouvrez-le une fois pour l'enregistrer.",
 	"temporarily-unavailable": "Cette page est temporairement indisponible. Veuillez réessayer.",
 	"unauthorized": "Vous n'êtes pas autorisé à voir ceci."
 }

@@ -45,6 +45,7 @@ export default function ScheduleEventDetails({ id, onClose }: Props) {
 	// every event detail, including when a participant later opens one offline.
 	const query = trpc.events.all.useQuery(undefined, {
 		enabled: !!id,
+		networkMode: "offlineFirst",
 		select: events => events.find(event => event.id === id),
 	});
 	const [pushAvailable, setPushAvailable] = useState(false);
@@ -183,7 +184,11 @@ export default function ScheduleEventDetails({ id, onClose }: Props) {
 					</svg>
 				</button>
 			</div>
-			{query.isError || (query.isSuccess && !event) ? (
+			{query.fetchStatus === "paused" && !event ? (
+				<p className="font-rubik text-dark-color" role="status">
+					{t("common:offline-schedule-unavailable")}
+				</p>
+			) : query.isError || (query.isSuccess && !event) ? (
 				<Error message={t("common:temporarily-unavailable")} />
 			) : !event ? (
 				<Loading />

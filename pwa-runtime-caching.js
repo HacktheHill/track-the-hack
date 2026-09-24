@@ -1,5 +1,29 @@
 // @ts-check
 
+// Every URL in this list is fetched during service-worker installation. Keep
+// it limited to real, public routes and assets that must always be available.
+const publicPrecacheUrls = [
+	"/",
+	"/fr",
+	"/schedule",
+	"/fr/schedule",
+	"/schedule/event",
+	"/fr/schedule/event",
+	"/maps",
+	"/fr/maps",
+	"/resources",
+	"/fr/resources",
+	"/pass",
+	"/fr/pass",
+	"/fr/_offline",
+	"/assets/maps/floor0.svg",
+	"/assets/maps/floor1.svg",
+	"/assets/maps/floor2.svg",
+	"/assets/maps/floor3.svg",
+	"/assets/maps/floor4-current.svg",
+	"/assets/maps/floor5.svg",
+];
+
 // The only API response allowed into a runtime cache is the public,
 // server-filtered schedule. Keeping it out of a tRPC batch prevents a cached
 // response from ever carrying participant or organiser data alongside it.
@@ -38,12 +62,12 @@ const apiNetworkOnly = {
 const isFrenchPublicNavigation = ({ request, url }) =>
 	request.mode === "navigate" &&
 	self.origin === url.origin &&
-	/^\/fr(?:\/(?:schedule(?:\/event)?|maps|resources|sponsors|pass))?\/?$/.test(url.pathname);
+	/^\/fr(?:\/(?:schedule(?:\/event)?|maps|resources|sponsors\/[^/]+|pass))?\/?$/.test(url.pathname);
 /** @param {{ request: Request; url: URL }} context */
 const isEnglishPublicNavigation = ({ request, url }) =>
 	request.mode === "navigate" &&
 	self.origin === url.origin &&
-	/^\/(?:schedule(?:\/event)?|maps|resources|sponsors|pass)?\/?$/.test(url.pathname);
+	/^\/(?:schedule(?:\/event)?|maps|resources|sponsors\/[^/]+|pass)?\/?$/.test(url.pathname);
 /** @param {{ request: Request; url: URL }} context */
 const isFrenchPrivateNavigation = ({ request, url }) =>
 	request.mode === "navigate" &&
@@ -67,6 +91,7 @@ const isPrivateNextDataRequest = ({ url }) =>
 
 module.exports = {
 	apiNetworkOnly,
+	publicPrecacheUrls,
 	publicScheduleData,
 	isEnglishPrivateNavigation,
 	isEnglishPublicNavigation,

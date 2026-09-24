@@ -176,10 +176,11 @@ load `/services`, `/hardware`, `/latte-lab`, `/internal/hardware`, and
 page; catalogue quantities, loans, orders, queue position, pickup names, and ingredient
 availability must not appear in Cache Storage or private Next-data responses.
 
-The automated PWA test must build and start production mode, activate the service
-worker, load an authenticated profile, go offline, and verify that `/profile` becomes
-the same QR-only pass without profile details. Public-route offline acceptance is also
-required after public cache changes; see the manual PWA section below.
+The automated PWA test must build and start production mode, verify every explicit
+precache URL, activate the service worker, cache public English and French routes, and
+reload them offline. It also loads an authenticated profile and verifies that `/profile`
+becomes the same QR-only pass without profile details, while private routes use the
+offline fallback. Scanning and all writes remain online-only.
 
 ## Manual local journey
 
@@ -271,11 +272,12 @@ For public-cache or worker changes, use Android Chrome or an equivalent installe
 environment with a production build:
 
 1. Load online and wait until the service worker is activated and controls the page.
-2. Visit home, populated schedule, a real event detail, maps, resources, sponsors, and
-   participant pass in English and French.
+2. Visit home, populated schedule, a real event detail, maps, resources, a sponsor
+   detail, and participant pass in English and French.
 3. Disconnect, then reload each. Confirm event data and all six map SVGs remain usable.
-4. Confirm organiser, metrics, auth, RSVP, claim, and private data/API routes do not
-   reveal cached private responses. `/profile` may show only the QR-only pass fallback.
+4. Confirm organiser scanning, metrics, auth, RSVP, claim, and private data/API routes
+   do not reveal cached private responses. `/profile` may show only the QR-only pass
+   fallback; all writes remain unavailable offline.
 5. Confirm English and French offline failures render in the correct language.
 6. Reconnect and activate a newer worker in a controlled second build. Confirm no mixed
    old/new asset failure, stale private cache, or reload loop.

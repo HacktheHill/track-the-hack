@@ -55,7 +55,7 @@ const Schedule: NextPage = () => {
 	const view = hasPass && router.query.view === "mine" ? "mine" : "all";
 	const tab = eventTypes.find(type => type === router.query.tab) ?? EventType.ALL;
 	const eventId = typeof router.query.event === "string" ? router.query.event : null;
-	const query = trpc.events.all.useQuery();
+	const query = trpc.events.all.useQuery(undefined, { networkMode: "offlineFirst" });
 	const saved = trpc.events.savedIds.useQuery(undefined, { enabled: hasPass, retry: false });
 	const [now, setNow] = useState(() => Date.now());
 	const todayKey = scheduleDayKey(new Date(now));
@@ -156,6 +156,15 @@ const Schedule: NextPage = () => {
 		return (
 			<App className="h-full bg-default-gradient px-16 py-12">
 				<Error message={t("common:temporarily-unavailable")} />
+			</App>
+		);
+	}
+	if (query.fetchStatus === "paused" && query.data == null) {
+		return (
+			<App className="h-full bg-default-gradient px-16 py-12" title={t("title")}>
+				<p className="text-center font-rubik text-dark-color" role="status">
+					{t("common:offline-schedule-unavailable")}
+				</p>
 			</App>
 		);
 	}

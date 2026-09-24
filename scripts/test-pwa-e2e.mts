@@ -6,9 +6,10 @@ import { constants as fsConstants } from "node:fs";
 import { access, rm } from "node:fs/promises";
 import { createServer } from "node:net";
 import { join } from "node:path";
-import { PrismaClient } from "@prisma/client";
-import { chromium, type Browser } from "playwright-core";
+import { EventType, PrismaClient, ScannerWorkflow } from "@prisma/client";
+import { chromium, type Browser, type Page } from "playwright-core";
 import { z } from "zod";
+import { publicPrecacheUrls } from "@root/pwa-runtime-caching";
 
 const participantSchema = z
 	.object({
@@ -110,6 +111,9 @@ const waitForReady = async () => {
 };
 
 const participantId = randomBytes(16).toString("base64url");
+const eventId = `pwa-${randomBytes(8).toString("hex")}`;
+const eventName = `PWA offline event ${eventId.slice(-6)}`;
+const eventNameFr = `Événement hors ligne PWA ${eventId.slice(-6)}`;
 const participant = participantSchema.parse({
 	id: participantId,
 	tShirtSize: "M",
@@ -146,11 +150,40 @@ const cleanUp = async () => {
 		prisma.claimToken.deleteMany({ where: { hackerId: participantId } }),
 		prisma.cancellationCapability.deleteMany({ where: { hackerId: participantId } }),
 		prisma.hacker.deleteMany({ where: { id: participantId } }),
+		prisma.event.deleteMany({ where: { id: eventId } }),
 	]);
+};
+
+const visit = async (page: Page, path: string) => {
+	await page.goto(`${baseUrl}${path}`, { waitUntil: "domcontentloaded" });
 };
 
 try {
 	await waitForReady();
+	for (const url of publicPrecacheUrls) {
+		const response = await fetch(`${baseUrl}${url}`);
+		assert.equal(response.ok, true, `Precache URL ${url} returned ${response.status}`);
+	}
+
+	const eventStart = new Date(Date.now() + 60 * 60 * 1000);
+	await prisma.event.create({
+		data: {
+			id: eventId,
+			name: eventName,
+			nameFr: eventNameFr,
+			room: "PWA test room",
+			roomFr: "Salle de test PWA",
+			start: eventStart,
+			end: new Date(eventStart.getTime() + 60 * 60 * 1000),
+			description: "Available from the offline schedule cache.",
+			descriptionFr: "Disponible depuis le cache de l’horaire hors ligne.",
+			hidden: false,
+			type: EventType.GENERAL,
+			scannerEnabled: false,
+			scannerWorkflow: ScannerWorkflow.ATTENDANCE,
+		},
+	});
+
 	const provision = await fetch(`${baseUrl}/api/integrations/sheets/hackers`, {
 		method: "POST",
 		headers: integrationHeaders,
@@ -193,18 +226,107 @@ try {
 	if (!(await page.evaluate(() => Boolean(navigator.serviceWorker.controller)))) await page.reload();
 	await page.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
 
+	for (const locale of [
+		{ prefix: "", event: eventName, floor: /^Floor / },
+		{ prefix: "/fr", event: eventNameFr, floor: /^Étage / },
+	] as const) {
+		await visit(page, `${locale.prefix}/schedule`);
+		await page.getByText(locale.event, { exact: true }).waitFor();
+
+		await visit(page, `${locale.prefix}/schedule/event?id=${eventId}`);
+		await page.getByRole("heading", { name: locale.event }).waitFor();
+
+		await visit(page, `${locale.prefix}/maps`);
+		assert.equal(await page.getByRole("heading", { name: locale.floor }).count(), 6);
+
+		await visit(page, `${locale.prefix}/resources`);
+		await page.getByRole("link", { name: "CGI" }).waitFor();
+
+		await visit(page, `${locale.prefix}/sponsors/cgi`);
+		await page.getByRole("heading", { name: "CGI", exact: true }).waitFor();
+	}
+
 	await context.setOffline(true);
-	await page.reload({ waitUntil: "domcontentloaded" });
-	await page.getByRole("heading", { name: "Your offline event pass" }).waitFor();
-	const offlineQr = page.getByAltText("Your event QR code");
-	await offlineQr.waitFor();
-	assert.equal(await offlineQr.getAttribute("src"), onlineQrSource, "Offline pass must preserve the same QR payload");
-	const offlineBody = await page.locator("body").innerText();
-	assert.doesNotMatch(offlineBody, /Your details|T-shirt size|Meal category|Your attendance/);
+	for (const locale of [
+		{
+			prefix: "",
+			event: eventName,
+			floor: /^Floor /,
+			offlineHeading: "You're offline",
+			passHeading: "Your offline event pass",
+			qrAlt: "Your event QR code",
+		},
+		{
+			prefix: "/fr",
+			event: eventNameFr,
+			floor: /^Étage /,
+			offlineHeading: "Vous êtes hors ligne",
+			passHeading: "Votre laissez-passer hors ligne",
+			qrAlt: "Votre code QR pour l’événement",
+		},
+	] as const) {
+		await visit(page, `${locale.prefix}/schedule`);
+		await page.getByText(locale.event, { exact: true }).waitFor();
+
+		await visit(page, `${locale.prefix}/schedule/event?id=${eventId}`);
+		await page.getByRole("heading", { name: locale.event }).waitFor();
+
+		await visit(page, `${locale.prefix}/maps`);
+		assert.equal(await page.getByRole("heading", { name: locale.floor }).count(), 6);
+		const mapResponses = await page.evaluate(async () => {
+			const paths = [
+				"/assets/maps/floor0.svg",
+				"/assets/maps/floor1.svg",
+				"/assets/maps/floor2.svg",
+				"/assets/maps/floor3.svg",
+				"/assets/maps/floor4-current.svg",
+				"/assets/maps/floor5.svg",
+			];
+			return Promise.all(paths.map(async path => ({ path, ok: (await fetch(path)).ok })));
+		});
+		assert.equal(
+			mapResponses.every(response => response.ok),
+			true,
+			JSON.stringify(mapResponses),
+		);
+
+		await visit(page, `${locale.prefix}/resources`);
+		await page.getByRole("link", { name: "CGI" }).waitFor();
+
+		await visit(page, `${locale.prefix}/sponsors/cgi`);
+		await page.getByRole("heading", { name: "CGI", exact: true }).waitFor();
+
+		await visit(page, `${locale.prefix}/profile`);
+		await page.getByRole("heading", { name: locale.passHeading }).waitFor();
+		const offlineQr = page.getByAltText(locale.qrAlt);
+		await offlineQr.waitFor();
+		assert.equal(
+			await offlineQr.getAttribute("src"),
+			onlineQrSource,
+			"Offline pass must preserve the same QR payload",
+		);
+		const passBody = await page.locator("body").innerText();
+		assert.doesNotMatch(
+			passBody,
+			/Your details|T-shirt size|Meal category|Your attendance|Vos informations|Taille de t-shirt|Catégorie de repas|Votre participation/,
+		);
+
+		for (const privatePath of [
+			"/qr",
+			"/services",
+			"/hardware",
+			"/latte-lab",
+			"/internal/hardware",
+			"/internal/latte-lab",
+		]) {
+			await visit(page, `${locale.prefix}${privatePath}`);
+			await page.getByRole("heading", { name: locale.offlineHeading }).waitFor();
+		}
+	}
 
 	await context.setOffline(false);
 	console.info(
-		"PWA E2E passed: authenticated profile installed the service worker and reloaded offline as the QR-only pass.",
+		"PWA E2E passed: public EN/FR routes and the QR-only participant pass survived offline reloads while private routes used the offline fallback.",
 	);
 } catch (error) {
 	console.error(serverOutput.join(""));

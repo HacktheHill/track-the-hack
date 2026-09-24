@@ -64,3 +64,38 @@ jobs:
             - run: npm run lint
             - run: git diff --check
             - run: npm run build
+
+    pwa:
+        runs-on: ubuntu-latest
+        timeout-minutes: 20
+        services:
+            mysql:
+                image: mysql@sha256:66aec17cd21a956029b83f083b813073859e8355dc1a00e55df6ba02f0e32345
+                env:
+                    MYSQL_ROOT_PASSWORD: test
+                    MYSQL_DATABASE: pwa_test
+                ports:
+                    - 3306:3306
+                options: >-
+                    --health-cmd="mysqladmin ping -h localhost -ptest --silent"
+                    --health-interval=5s --health-timeout=5s --health-retries=20
+        env:
+            DATABASE_URL: mysql://root:test@127.0.0.1:3306/pwa_test
+            NODE_ENV: production
+            NEXTAUTH_SECRET: build-only-secret
+            NEXTAUTH_URL: https://build.invalid
+            GOOGLE_CLIENT_ID: build
+            GOOGLE_CLIENT_SECRET: build
+            SHEETS_INTEGRATION_API_KEY: build-only-sheets-key-with-at-least-32-characters
+            CANCELLATION_TOKEN_SECRET: build-only-cancellation-secret-at-least-32-characters
+            CLAIM_TOKEN_SECRET: build-only-claim-token-secret-at-least-32-characters
+            PARTICIPANT_SESSION_SECRET: build-only-participant-session-secret-at-least-32-chars
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+            - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+              with:
+                  node-version: 24.x
+                  cache: npm
+            - run: npm ci --include=dev
+            - run: npx prisma migrate deploy
+            - run: node scripts/run-pwa-e2e.mjs

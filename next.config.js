@@ -13,30 +13,8 @@ const {
 	isFrenchPrivateNavigation,
 	isFrenchPublicNavigation,
 	isPrivateNextDataRequest,
+	publicPrecacheUrls,
 } = pwaRuntimeCaching;
-const publicPrecacheUrls = [
-	"/",
-	"/fr",
-	"/schedule",
-	"/fr/schedule",
-	"/schedule/event",
-	"/fr/schedule/event",
-	"/maps",
-	"/fr/maps",
-	"/resources",
-	"/fr/resources",
-	"/sponsors",
-	"/fr/sponsors",
-	"/pass",
-	"/fr/pass",
-	"/fr/_offline",
-	"/assets/maps/floor0.svg",
-	"/assets/maps/floor1.svg",
-	"/assets/maps/floor2.svg",
-	"/assets/maps/floor3.svg",
-	"/assets/maps/floor4-current.svg",
-	"/assets/maps/floor5.svg",
-];
 const publicPrecacheEntries = publicPrecacheUrls.map(url => ({ url, revision: "development" }));
 
 // /profile is personalized server-rendered data. These rules must stay ahead

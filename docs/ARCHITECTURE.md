@@ -214,14 +214,18 @@ organiser IDs, or audit data.
 ## Public offline data
 
 The service worker may cache only these public surfaces after an online load: home,
-schedule, visible event details, maps and map assets, resources, sponsors, and the
-static participant pass. `events.all` is isolated into its own GET before caching so it
-can never share a tRPC batch with private data. Hidden events are filtered server-side.
+schedule, visible event details, maps and map assets, resources, previously opened
+sponsor details, and the static participant pass. `events.all` uses React Query's
+offline-first request mode and is isolated into its own GET before caching, so an
+offline reload can reach the service-worker cache without ever sharing a tRPC batch
+with private data. Hidden events are filtered server-side.
 
 All other APIs are network-only. Organiser, metrics, authentication, RSVP, claim,
 participant-profile, Event Services, and private Next data routes must show an offline/unavailable state
 rather than cached private content. The custom push worker is independent of the route
-cache.
+cache. Scanning and all state-changing workflows remain online-only; there is no offline
+write queue or locally cached operational roster. The personalized saved-events view is
+also online-only, while the public schedule remains available from its cache.
 
 ## Reminders, metrics, and privacy
 

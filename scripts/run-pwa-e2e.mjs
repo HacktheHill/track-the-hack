@@ -77,7 +77,7 @@ const runPwaE2e = async () => {
 		} finally {
 			generatedNames = new Set((await artifactNames(publicDirectory)).filter(name => !snapshot.has(name)));
 		}
-		run(process.execPath, ["--env-file=.env", "--import", "tsx", "scripts/test-pwa-e2e.mts"], "PWA E2E");
+		run(process.execPath, ["--env-file-if-exists=.env", "--import", "tsx", "scripts/test-pwa-e2e.mts"], "PWA E2E");
 	} finally {
 		await restorePwaArtifacts(publicDirectory, snapshot, generatedNames);
 	}
