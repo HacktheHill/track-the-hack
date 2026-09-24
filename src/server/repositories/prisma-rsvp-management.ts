@@ -1,8 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
-import {
-	managedRsvpState,
-	type RsvpManagementRepository,
-} from "@/server/services/rsvp-management";
+import { log } from "@/server/lib/log";
+import { managedRsvpState, type RsvpManagementRepository } from "@/server/services/rsvp-management";
 
 export class PrismaRsvpManagementRepository implements RsvpManagementRepository {
 	constructor(private readonly prisma: PrismaClient) {}
@@ -15,13 +13,11 @@ export class PrismaRsvpManagementRepository implements RsvpManagementRepository 
 			},
 		});
 		const hacker = capability?.hacker;
-		return hacker
-			? managedRsvpState(hacker.confirmed, hacker.rsvpRespondedAt, hacker.acceptanceExpiry, now)
-			: null;
+		return hacker ? managedRsvpState(hacker.confirmed, hacker.rsvpRespondedAt, hacker.acceptanceExpiry, now) : null;
 	}
 
 	async decide(capabilityId: string, attending: boolean, now: Date) {
-		return this.prisma.$transaction(async transaction => {
+		const decision = await this.prisma.$transaction(async transaction => {
 			const capability = await transaction.cancellationCapability.findUnique({
 				where: { id: capabilityId },
 				select: { hackerId: true },
@@ -47,19 +43,35 @@ export class PrismaRsvpManagementRepository implements RsvpManagementRepository 
 					data: { confirmed: attending, rsvpRespondedAt: now },
 				});
 			}
-			await transaction.log.create({
-				data: {
-					sourceId: hacker.id,
-					sourceType: "Hacker",
-					author: "rsvp-management-capability",
-					route: "/api/rsvp/manage",
-					action: attending ? "ManageRsvpAttend" : "ManageRsvpDecline",
-					details: shouldWrite
-						? `Participant selected ${attending ? "attending" : "not attending"}.`
-						: `Participant repeated ${attending ? "attending" : "not attending"}.`,
-				},
-			});
-			return managedRsvpState(attending, shouldWrite ? now : hacker.rsvpRespondedAt, hacker.acceptanceExpiry, now);
+			return {
+				state: managedRsvpState(
+					attending,
+					shouldWrite ? now : hacker.rsvpRespondedAt,
+					hacker.acceptanceExpiry,
+					now,
+				),
+				sourceId: hacker.id,
+				action: attending ? "ManageRsvpAttend" : "ManageRsvpDecline",
+				details: shouldWrite
+					? `Participant selected ${attending ? "attending" : "not attending"}.`
+					: `Participant repeated ${attending ? "attending" : "not attending"}.`,
+			};
 		});
+
+		if (decision === null || decision === "expired") return decision;
+
+		// RSVP intent is authoritative; a logging outage must not roll back a participant's choice.
+		await log(
+			{ prisma: this.prisma },
+			{
+				sourceId: decision.sourceId,
+				sourceType: "Hacker",
+				author: "rsvp-management-capability",
+				route: "/api/rsvp/manage",
+				action: decision.action,
+				details: decision.details,
+			},
+		);
+		return decision.state;
 	}
 }
