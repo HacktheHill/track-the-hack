@@ -11,8 +11,8 @@ or prototype branch wholesale.
 ## Acceptance target and private data boundary
 
 Run the remaining acceptance checks against release
-`94e837d56e6ae35a83aa84faf37f6551f233419c`, Azure revision
-`track-the-hack--0000060`. The deployment workflow completed successfully on
+`b7085f5cc2dbe28bcabf533be779a286f6de2840`, Azure revision
+`track-the-hack--0000061`. The deployment workflow completed successfully on
 2026-09-23 and Azure reported the revision healthy, provisioned, running, and receiving
 100% of traffic. Before testing, confirm that it is still the live revision;
 later documentation-only commits do not change the test target. If application code or
