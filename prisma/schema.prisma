@@ -201,6 +201,31 @@ model Log {
   @@index([userId])
 }
 
+// Append-only, versioned operational audit ledger. Identifier fields are
+// deliberately not foreign keys so the evidence survives source-record removal.
+model AuditEvent {
+  id            String   @id
+  schemaVersion Int      @default(1)
+  occurredAt    DateTime
+  name          String
+  outcome       String
+  correlationId String
+  actorType     String
+  actorId       String
+  subjectType   String?
+  subjectId     String?
+  resourceType  String?
+  resourceId    String?
+  data          Json
+  createdAt     DateTime @default(now())
+
+  @@index([actorId, occurredAt])
+  @@index([subjectType, subjectId, occurredAt])
+  @@index([resourceType, resourceId, occurredAt])
+  @@index([name, outcome, occurredAt])
+  @@index([occurredAt])
+}
+
 model Hardware {
   id                String   @id @default(cuid())
   imageURL          String?

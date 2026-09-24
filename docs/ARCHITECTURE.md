@@ -202,9 +202,14 @@ Tracker metrics are aggregate and operational. Demographic reporting comes from 
 or the restricted Sheet. Individual sponsor sharing requires separate explicit consent,
 a documented purpose, and field-minimal disclosure.
 
-Audit records use opaque operational IDs and must not copy Tally/Sheet identity or
-application data. Exact participant and capability identifiers use binary collation;
-new migrations that add such references must preserve case-sensitive identity.
+Audit records use the versioned, append-only `AuditEvent` ledger and opaque
+operational IDs; they must not copy Tally/Sheet identity or application data.
+Scanner mutations and their audit entries commit atomically. Structured copies
+are emitted to Azure Log Analytics after commit for operational search, while
+MySQL remains authoritative. Both copies have a 90-day retention policy; see
+`AUDIT_LOGS.md`. Exact participant and capability identifiers use binary
+collation; new migrations that add such references must preserve case-sensitive
+identity.
 
 ## Database lifecycle
 

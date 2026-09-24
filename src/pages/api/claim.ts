@@ -3,6 +3,7 @@ import { z, ZodError } from "zod";
 import { env } from "@/env/server.mjs";
 import { prisma } from "@/server/db";
 import { log } from "@/server/lib/log";
+import { createAuditEvent, emitAuditEvent } from "@/server/lib/audit-event";
 import {
 	createParticipantSession,
 	createParticipantHintCookie,
@@ -27,18 +28,30 @@ export default async function claim(req: NextApiRequest, res: NextApiResponse) {
 		const { token } = claimBodySchema.parse(req.body);
 		const now = new Date();
 		const session = createParticipantSession(env.PARTICIPANT_SESSION_SECRET, now);
-		const { hackerId } = await consumeClaimToken(
+		const { hackerId, auditEvent } = await consumeClaimToken(
 			repository,
 			token,
 			env.CLAIM_TOKEN_SECRET,
 			{ verifier: session.verifier, expiresAt: session.expiresAt },
 			now,
+			(id, occurredAt) =>
+				createAuditEvent({
+					name: "participant.claim.redeemed",
+					outcome: "redeemed",
+					actor: { type: "participant", id },
+					subject: { type: "hacker", id },
+					data: {},
+					occurredAt,
+				}),
 		);
 
 		res.setHeader("Set-Cookie", [
 			createParticipantSessionCookie(session.token, session.expiresAt, now),
 			createParticipantHintCookie(session.expiresAt, now),
 		]);
+
+		if (!auditEvent) throw new Error("Claim redemption audit event missing");
+		emitAuditEvent(auditEvent);
 
 		await log(
 			{ prisma },

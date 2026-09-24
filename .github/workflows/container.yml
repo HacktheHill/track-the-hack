@@ -143,6 +143,14 @@ jobs:
             --resource-group "$AZURE_RESOURCE_GROUP" \
             --name track-the-hack-organizer \
             --image "$migration_image"
+          if az containerapp job show \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --name track-the-hack-audit-retention >/dev/null 2>&1; then
+            retry_az az containerapp job update \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --name track-the-hack-audit-retention \
+              --image "$migration_image"
+          fi
           retry_az az containerapp update \
             --resource-group "$AZURE_RESOURCE_GROUP" \
             --name track-the-hack \

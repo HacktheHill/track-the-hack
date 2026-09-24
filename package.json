@@ -28,6 +28,7 @@
 		"organizer:provision": "node --env-file-if-exists=.env --import tsx scripts/provision-organizer.mts",
 		"rsvp:prepare": "node --import tsx scripts/prepare-rsvp-campaign.mts",
 		"schedule:import": "node --env-file-if-exists=.env --import tsx scripts/import-events.mts",
+		"audit:purge": "node --env-file-if-exists=.env --import tsx scripts/purge-audit-events.mts",
 		"postinstall": "prisma generate",
 		"lint": "eslint src prisma scripts test integrations/google-sheets/Code.gs next.config.js next-i18next.config.js tailwind.config.mjs --ext .gs,.js,.mjs,.ts,.tsx,.mts",
 		"start": "next start",

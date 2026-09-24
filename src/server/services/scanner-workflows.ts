@@ -27,6 +27,8 @@ type PresenceState = {
 };
 
 type AdjustmentState = PresenceState & {
+	beforeValue: number;
+	workflow: ScannerWorkflow;
 	applied: boolean;
 	stale: boolean;
 };
@@ -66,7 +68,9 @@ export type ScannerResult = ScannerParticipant &
 
 export type ScannerRepository = {
 	findEvent(id: string): Promise<ScannerEventRecord | null>;
-	findEventMaximum(id: string): Promise<{ maxCheckIns: number | null; scannerEnabled: boolean } | null>;
+	findEventMaximum(
+		id: string,
+	): Promise<{ maxCheckIns: number | null; scannerEnabled: boolean; scannerWorkflow: ScannerWorkflow } | null>;
 	findCheckInParticipant(id: string): Promise<CheckInParticipant | null>;
 	findMerchandiseParticipant(id: string): Promise<MerchandiseParticipant | null>;
 	findFoodParticipant(id: string): Promise<Omit<FoodParticipant, "requiresFoodLead"> | null>;
@@ -112,7 +116,10 @@ const normalizeMaximum = (maximum: number | null) => (maximum === null ? null : 
 export const createPrismaScannerRepository = (prisma: ScannerPrisma): ScannerRepository => {
 	const findEvent = (id: string) => prisma.event.findUnique({ where: { id }, select: eventSelect });
 	const findEventMaximum = (id: string) =>
-		prisma.event.findUnique({ where: { id }, select: { maxCheckIns: true, scannerEnabled: true } });
+		prisma.event.findUnique({
+			where: { id },
+			select: { maxCheckIns: true, scannerEnabled: true, scannerWorkflow: true },
+		});
 	const findCheckInParticipant = (id: string) =>
 		prisma.hacker.findUnique({
 			where: { id },
@@ -307,6 +314,8 @@ export const adjustPresenceForEvent = async (
 	return {
 		...presence,
 		atLimit: maxCheckIns !== null && presence.value >= maxCheckIns,
+		beforeValue: expectedValue,
+		workflow: event.scannerWorkflow,
 		applied,
 		stale: !applied && presence.value !== expectedValue,
 	};

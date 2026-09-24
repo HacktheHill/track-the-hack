@@ -1,6 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
 
-type LogInput = {
+export type LegacyLogInput = {
 	sourceId: string;
 	sourceType: "Account" | "Hacker" | "Presence" | "Role" | "User";
 	author: string;
@@ -14,7 +14,7 @@ async function log(
 	ctx: {
 		prisma: PrismaClient;
 	},
-	{ sourceId, sourceType, author, userId, route, action, details }: LogInput,
+	{ sourceId, sourceType, author, userId, route, action, details }: LegacyLogInput,
 ) {
 	try {
 		await ctx.prisma.log.create({

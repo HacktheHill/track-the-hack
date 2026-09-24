@@ -38,7 +38,8 @@ const scannerDatabase = (
 
 	const repository: ScannerRepository = {
 		findEvent: id => Promise.resolve(id === eventId ? event : null),
-		findEventMaximum: id => Promise.resolve(id === eventId ? { maxCheckIns, scannerEnabled } : null),
+		findEventMaximum: id =>
+			Promise.resolve(id === eventId ? { maxCheckIns, scannerEnabled, scannerWorkflow: workflow } : null),
 		findCheckInParticipant: id =>
 			Promise.resolve(
 				id === hackerId ? { id: hacker.id, confirmed: hacker.confirmed, tShirtSize: hacker.tShirtSize } : null,

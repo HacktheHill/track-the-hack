@@ -172,7 +172,10 @@ void test("food, merchandise and check-in workflows cannot look up interests", a
 void test("scanner API reports fresh, incremented, applied, stale, and bounded no-op audit actions", async () => {
 	const [, { presenceRouter }] = await routers;
 	let presence: { id: string; value: number } | null = null;
+	const currentPresence = () => presence;
+	let auditFailure = false;
 	const actions: string[] = [];
+	const auditEvents: Array<Record<string, unknown>> = [];
 	const event = {
 		id: "event-1",
 		name: "Check-in",
@@ -218,7 +221,25 @@ void test("scanner API reports fresh, incremented, applied, stale, and bounded n
 				return {};
 			},
 		},
+		auditEvent: {
+			create: ({ data }: { data: Record<string, unknown> }) => {
+				if (auditFailure) return Promise.reject(new Error("audit insert failed"));
+				auditEvents.push(data);
+				return Promise.resolve({});
+			},
+		},
 	};
+	Object.assign(prisma, {
+		$transaction: async (operation: (transaction: typeof prisma) => Promise<unknown>) => {
+			const snapshot = presence ? { ...presence } : null;
+			try {
+				return await operation(prisma);
+			} catch (error) {
+				presence = snapshot;
+				throw error;
+			}
+		},
+	});
 	const caller = presenceRouter.createCaller(context(prisma, null, organizer));
 
 	const fresh = await caller.scan({ eventId: event.id, hackerId });
@@ -233,4 +254,26 @@ void test("scanner API reports fresh, incremented, applied, stale, and bounded n
 	assert.deepEqual(stale, { value: 3, atLimit: true, applied: false, stale: true });
 	assert.deepEqual(bounded, { value: 3, atLimit: true, applied: false, stale: false });
 	assert.deepEqual(actions, ["scan", "scan_incremented", "adjust", "adjust_stale", "adjust_noop"]);
+	assert.deepEqual(
+		auditEvents.map(event => [event.name, event.outcome]),
+		[
+			["scanner.scan", "recorded"],
+			["scanner.scan", "incremented"],
+			["scanner.adjust", "applied"],
+			["scanner.adjust", "stale"],
+			["scanner.adjust", "out_of_bounds"],
+		],
+	);
+	assert.ok(auditEvents.every(event => event.actorId === "organizer-1"));
+	assert.ok(auditEvents.every(event => event.subjectId === hackerId));
+	assert.ok(auditEvents.every(auditEvent => auditEvent.resourceId === event.id));
+
+	auditFailure = true;
+	await assert.rejects(
+		caller.adjust({ eventId: event.id, hackerId, amount: -1, expectedValue: 3 }),
+		/audit insert failed/,
+	);
+	assert.equal(currentPresence()?.value, 3);
+	assert.equal(actions.length, 5);
+	assert.equal(auditEvents.length, 5);
 });

@@ -4,6 +4,7 @@ import { env } from "@/env/server.mjs";
 import { prisma } from "@/server/db";
 import { hasIntegrationApiKey } from "@/server/lib/integration-auth";
 import { log } from "@/server/lib/log";
+import { createAuditEvent, emitAuditEvent } from "@/server/lib/audit-event";
 import { PrismaHackerLifecycleRepository } from "@/server/repositories/prisma-hacker-lifecycle";
 import { issueParticipantAccess } from "@/server/services/hacker-lifecycle";
 
@@ -21,12 +22,26 @@ export default async function claim(req: NextApiRequest, res: NextApiResponse) {
 	}
 
 	try {
-		const { hackerId, ...result } = await issueParticipantAccess(
+		const now = new Date();
+		const { hackerId, auditEvent, ...result } = await issueParticipantAccess(
 			repository,
 			req.body,
 			env.NEXTAUTH_URL,
 			env.CLAIM_TOKEN_SECRET,
+			now,
+			undefined,
+			(id, occurredAt) =>
+				createAuditEvent({
+					name: "participant.claim.issued",
+					outcome: "issued",
+					actor: { type: "integration", id: "google-sheets" },
+					subject: { type: "hacker", id },
+					data: {},
+					occurredAt,
+				}),
 		);
+		if (!auditEvent) throw new Error("Claim issuance audit event missing");
+		emitAuditEvent(auditEvent);
 
 		await log(
 			{ prisma },
