@@ -24,17 +24,21 @@ export default function ScanResult({ result, interestedEvents, children }: ScanR
 			aria-live="polite"
 			className="flex w-full max-w-xl flex-col gap-4 break-words rounded-lg bg-light-primary-color p-6 font-rubik text-light-color"
 		>
-			{result.workflow === ScannerWorkflow.CHECK_IN && (
+			{result.subjectType === "organizer" && (
+				<p className="font-bold">{t("organizer-pass", { name: result.organizer.name ?? t("organizer") })}</p>
+			)}
+			{result.subjectType === "participant" && result.workflow === ScannerWorkflow.CHECK_IN && (
 				<p>{t("confirmed", { value: result.participant.confirmed ? t("yes") : t("no") })}</p>
 			)}
-			{(result.workflow === ScannerWorkflow.CHECK_IN || result.workflow === ScannerWorkflow.MERCHANDISE) && (
-				<p>
-					{result.participant.tShirtSize === TShirtSize.NONE
-						? t("common:no-t-shirt")
-						: t("t-shirt", { value: result.participant.tShirtSize })}
-				</p>
-			)}
-			{result.workflow === ScannerWorkflow.FOOD && (
+			{result.subjectType === "participant" &&
+				(result.workflow === ScannerWorkflow.CHECK_IN || result.workflow === ScannerWorkflow.MERCHANDISE) && (
+					<p>
+						{result.participant.tShirtSize === TShirtSize.NONE
+							? t("common:no-t-shirt")
+							: t("t-shirt", { value: result.participant.tShirtSize })}
+					</p>
+				)}
+			{result.subjectType === "participant" && result.workflow === ScannerWorkflow.FOOD && (
 				<>
 					<MealInfo mealCategory={result.participant.mealCategory} />
 					{result.participant.requiresFoodLead && (
@@ -44,7 +48,7 @@ export default function ScanResult({ result, interestedEvents, children }: ScanR
 					)}
 				</>
 			)}
-			{result.workflow === ScannerWorkflow.ATTENDANCE && (
+			{result.subjectType === "participant" && result.workflow === ScannerWorkflow.ATTENDANCE && (
 				<div>
 					<h3 className="font-bold">{t("events-of-interest")}</h3>
 					{interestedEvents === undefined ? (

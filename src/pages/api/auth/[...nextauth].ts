@@ -2,24 +2,30 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import NextAuth, { type NextAuthOptions } from "next-auth";
 import { getToken } from "next-auth/jwt";
 import CredentialsProvider from "next-auth/providers/credentials";
+import EmailProvider from "next-auth/providers/email";
 import GoogleProvider from "next-auth/providers/google";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { env } from "@/env/server.mjs";
 import { prisma } from "@/server/db";
 import {
 	canUseDevelopmentOrganizerAuth,
-	canUseOrganizerAuth,
+	canUseGoogleOrganizerAuth,
 	DEVELOPMENT_AUTH_PROVIDER_ID,
 	DEVELOPMENT_ORGANIZER_EMAIL,
+	getOrganizerAccess,
 	isDevelopmentOrganizerAuthEnabled,
+	isOrganizerEmailAllowed,
+	normalizeOrganizerEmail,
 	parseGoogleOrganizerProfile,
 } from "@/server/lib/organizer-auth";
+import { sendOrganizerVerificationRequest } from "@/server/lib/organizer-email";
+import { restrictOrganizerVerificationTokens } from "@/server/lib/organizer-adapter";
 
 export const getAuthOptions = (req?: NextApiRequest) =>
 	({
-		adapter: PrismaAdapter(prisma),
+		adapter: restrictOrganizerVerificationTokens(PrismaAdapter(prisma), prisma),
 		callbacks: {
-			async signIn({ user, account, profile }) {
+			async signIn({ user, account, profile, email }) {
 				const sessionUserId = req ? (await getToken({ req, secret: env.NEXTAUTH_SECRET }))?.sub : undefined;
 				if (account?.provider === DEVELOPMENT_AUTH_PROVIDER_ID) {
 					return canUseDevelopmentOrganizerAuth(
@@ -34,35 +40,32 @@ export const getAuthOptions = (req?: NextApiRequest) =>
 						req?.socket.remoteAddress,
 					);
 				}
+				if (account?.provider === "email") {
+					// The custom sender silently withholds mail for unknown addresses.
+					// Redemption is checked again in case access changed after issuance.
+					if (email?.verificationRequest) return true;
+					return !!user.email && (await isOrganizerEmailAllowed(prisma, user.email));
+				}
 				const googleProfile = parseGoogleOrganizerProfile(profile);
-				return canUseOrganizerAuth(
-					{
-						provider: account?.provider,
-						profileEmail: googleProfile?.email,
-						userEmail: user.email,
-						emailVerified: googleProfile?.emailVerified === true,
-					},
-					email =>
-						prisma.user.findUnique({
-							where: { email },
-							select: { id: true, roles: { select: { name: true } } },
-						}),
-					sessionUserId,
-				);
+				return canUseGoogleOrganizerAuth({
+					provider: account?.provider,
+					profileEmail: googleProfile?.email,
+					userEmail: user.email,
+					emailVerified: googleProfile?.emailVerified === true,
+					hostedDomain: googleProfile?.hostedDomain,
+				});
 			},
 			async session({ session, token }) {
 				if (!token.sub) return { ...session, user: undefined };
-				const organizer = await prisma.user.findUnique({
-					where: { id: token.sub },
-					select: { id: true, roles: { select: { name: true } } },
-				});
+				const organizer = await getOrganizerAccess(prisma, token.sub);
 
 				return {
 					...session,
 					user: {
 						...session.user,
 						id: organizer?.id ?? token.sub,
-						roles: organizer?.roles.map(role => role.name) ?? [],
+						isOrganizer: organizer !== null,
+						isAdmin: organizer?.isAdmin ?? false,
 					},
 				};
 			},
@@ -71,9 +74,20 @@ export const getAuthOptions = (req?: NextApiRequest) =>
 			GoogleProvider({
 				clientId: env.GOOGLE_CLIENT_ID,
 				clientSecret: env.GOOGLE_CLIENT_SECRET,
-				// Linking is safe here because signIn first requires a verified domain
-				// address that already belongs to a provisioned organizer User.
+				// Linking is safe here because signIn first requires a verified CTN
+				// Workspace identity with a matching provider and account email.
 				allowDangerousEmailAccountLinking: true,
+			}),
+			EmailProvider({
+				server: {
+					host: env.EMAIL_SERVER_HOST,
+					port: env.EMAIL_SERVER_PORT,
+					auth: { user: env.EMAIL_SERVER_USER, pass: env.EMAIL_SERVER_PASSWORD },
+				},
+				from: `Hack the Hill <${env.EMAIL_FROM}>`,
+				maxAge: 15 * 60,
+				normalizeIdentifier: normalizeOrganizerEmail,
+				sendVerificationRequest: sendOrganizerVerificationRequest,
 			}),
 			...(isDevelopmentOrganizerAuthEnabled(process.env, req?.headers.host, req?.socket.remoteAddress)
 				? [
@@ -89,10 +103,11 @@ export const getAuthOptions = (req?: NextApiRequest) =>
 										email: true,
 										name: true,
 										image: true,
-										roles: { select: { name: true } },
+										isAdmin: true,
+										disabledAt: true,
 									},
 								});
-								if (!organizer?.email || organizer.roles.length === 0) return null;
+								if (!organizer?.email || organizer.disabledAt) return null;
 								return {
 									id: organizer.id,
 									email: organizer.email,

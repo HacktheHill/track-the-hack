@@ -5,6 +5,7 @@ import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Image from "next/image";
 import { useRouter } from "next/router";
+import { useState } from "react";
 import Error from "@/components/Error";
 import Head from "@/components/Head";
 import { getAuthOptions } from "@/pages/api/auth/[...nextauth]";
@@ -31,6 +32,9 @@ const SignIn = ({ developmentAuthEnabled }: InferGetServerSidePropsType<typeof g
 	const router = useRouter();
 	const [callbackUrl] = [router.query.callbackUrl].flat();
 	const [error] = [router.query.error].flat();
+	const [email, setEmail] = useState("");
+	const [emailSent, setEmailSent] = useState(false);
+	const [emailPending, setEmailPending] = useState(false);
 	const errorMessage =
 		error === "AccessDenied" || error === "OAuthAccountNotLinked"
 			? t(`next-auth.${error}`)
@@ -55,6 +59,47 @@ const SignIn = ({ developmentAuthEnabled }: InferGetServerSidePropsType<typeof g
 				>
 					{t("google-sign-in")}
 				</button>
+				<div className="flex w-full max-w-sm items-center gap-3" aria-hidden="true">
+					<span className="h-px flex-1 bg-dark-primary-color/30" />
+					<span className="font-rubik text-dark-color">{t("common:or")}</span>
+					<span className="h-px flex-1 bg-dark-primary-color/30" />
+				</div>
+				<form
+					className="flex w-full max-w-sm flex-col gap-3"
+					onSubmit={event => {
+						event.preventDefault();
+						setEmailPending(true);
+						void signIn("email", { email, callbackUrl: callbackUrl ?? "/", redirect: false }).finally(
+							() => {
+								setEmailPending(false);
+								setEmailSent(true);
+							},
+						);
+					}}
+				>
+					<label htmlFor="organizer-sign-in-email" className="sr-only">
+						{t("email")}
+					</label>
+					<input
+						id="organizer-sign-in-email"
+						type="email"
+						required
+						maxLength={191}
+						autoComplete="email"
+						value={email}
+						onChange={event => setEmail(event.target.value)}
+						placeholder={t("email")}
+						className="ui-field"
+					/>
+					<button type="submit" disabled={emailPending} className="ui-button ui-button-primary">
+						{t("email-sign-in")}
+					</button>
+				</form>
+				{emailSent && (
+					<p className="max-w-sm font-rubik text-dark-color" role="status">
+						{t("email-sent")}
+					</p>
+				)}
 				{developmentAuthEnabled && (
 					<button
 						type="button"

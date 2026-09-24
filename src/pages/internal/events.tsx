@@ -7,9 +7,8 @@ import Error from "@/components/Error";
 import { trpc } from "@/server/api/api";
 import { useState } from "react";
 import EventEditor from "@/components/EventEditor";
-import { RoleName } from "@prisma/client";
 import { getServerSession } from "next-auth";
-import { rolesRedirect } from "@/server/lib/redirects";
+import { organizerRedirect } from "@/server/lib/redirects";
 import { getAuthOptions } from "@/pages/api/auth/[...nextauth]";
 import type { RouterOutputs } from "@/server/api/api";
 import { getEventRoom } from "@/utils/event-room";
@@ -129,7 +128,7 @@ const Events: NextPage = () => {
 export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
 	const session = await getServerSession(req, res, getAuthOptions());
 	return {
-		redirect: await rolesRedirect(session, "/internal/events", [RoleName.ORGANIZER, RoleName.ADMIN]),
+		redirect: organizerRedirect(session, "/internal/events"),
 		props: {
 			...(await serverSideTranslations(locale ?? "en", ["internal", "navbar", "common"])),
 		},

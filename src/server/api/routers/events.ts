@@ -1,9 +1,8 @@
-import { EventType, Prisma, RoleName, ScannerWorkflow } from "@prisma/client";
+import { EventType, Prisma, ScannerWorkflow } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { httpsUrl } from "@/server/lib/event-validation";
-import { hasRoles } from "@/utils/helpers";
-import { createTRPCRouter, protectedProcedure, publicProcedure, participantProcedure } from "@/server/api/trpc";
+import { createTRPCRouter, organizerProcedure, publicProcedure, participantProcedure } from "@/server/api/trpc";
 
 const varchar = z.string().trim().min(1).max(191);
 const text = z
@@ -153,29 +152,13 @@ export const eventsRouter = createTRPCRouter({
 		return ctx.prisma.event.findMany({ where: { hidden: false }, select: publicEventSelect });
 	}),
 
-	manage: protectedProcedure.query(async ({ ctx }) => {
-		const organizer = await ctx.prisma.user.findUnique({
-			where: { id: ctx.session.user.id },
-			select: { roles: { select: { name: true } } },
-		});
-		if (!organizer || !hasRoles(organizer, [RoleName.ORGANIZER, RoleName.ADMIN])) {
-			throw new TRPCError({ code: "FORBIDDEN" });
-		}
-
+	manage: organizerProcedure.query(async ({ ctx }) => {
 		return ctx.prisma.event.findMany({ select: managedEventSelect, orderBy: { start: "asc" } });
 	}),
 
 	// The scanner gets only its server-owned action contract. Schedule content
 	// and arbitrary participant fields do not need to cross this boundary.
-	scannable: protectedProcedure.query(async ({ ctx }) => {
-		const organizer = await ctx.prisma.user.findUnique({
-			where: { id: ctx.session.user.id },
-			select: { roles: { select: { name: true } } },
-		});
-		if (!organizer || !hasRoles(organizer, [RoleName.ORGANIZER, RoleName.ADMIN])) {
-			throw new TRPCError({ code: "FORBIDDEN" });
-		}
-
+	scannable: organizerProcedure.query(async ({ ctx }) => {
 		const gracePeriodMs = 30 * 60 * 1000;
 		const cutoff = new Date(Date.now() - gracePeriodMs);
 		return ctx.prisma.event.findMany({
@@ -192,31 +175,7 @@ export const eventsRouter = createTRPCRouter({
 	}),
 
 	// Create event
-	create: protectedProcedure.input(eventInputSchema).mutation(async ({ ctx, input }) => {
-		const userId = ctx.session.user.id;
-
-		const user = await ctx.prisma.user.findUnique({
-			where: {
-				id: userId,
-			},
-			select: {
-				name: true,
-				roles: {
-					select: {
-						name: true,
-					},
-				},
-			},
-		});
-
-		if (!user) {
-			throw new TRPCError({ code: "UNAUTHORIZED", message: "User not found" });
-		}
-
-		if (!hasRoles(user, [RoleName.ORGANIZER, RoleName.ADMIN])) {
-			throw new TRPCError({ code: "FORBIDDEN", message: "You do not have permission to create events" });
-		}
-
+	create: organizerProcedure.input(eventInputSchema).mutation(async ({ ctx, input }) => {
 		return ctx.prisma.event.create({
 			data: {
 				name: input.name,
@@ -241,31 +200,7 @@ export const eventsRouter = createTRPCRouter({
 		});
 	}),
 	// Update event
-	update: protectedProcedure.input(eventUpdateInputSchema).mutation(async ({ ctx, input }) => {
-		const userId = ctx.session.user.id;
-
-		const user = await ctx.prisma.user.findUnique({
-			where: {
-				id: userId,
-			},
-			select: {
-				name: true,
-				roles: {
-					select: {
-						name: true,
-					},
-				},
-			},
-		});
-
-		if (!user) {
-			throw new TRPCError({ code: "UNAUTHORIZED", message: "User not found" });
-		}
-
-		if (!hasRoles(user, [RoleName.ORGANIZER, RoleName.ADMIN])) {
-			throw new TRPCError({ code: "FORBIDDEN", message: "You do not have permission to update events" });
-		}
-
+	update: organizerProcedure.input(eventUpdateInputSchema).mutation(async ({ ctx, input }) => {
 		return ctx.prisma.$transaction(async transaction => {
 			const [existingEvent] = await transaction.$queryRaw<
 				Array<{ id: string; start: Date; hidden: boolean; now: Date }>

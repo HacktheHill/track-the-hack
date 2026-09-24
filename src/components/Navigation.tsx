@@ -1,11 +1,10 @@
-import { RoleName } from "@prisma/client";
 import { signOut, useSession } from "next-auth/react";
 import { useTranslation } from "next-i18next";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useHasParticipantPass } from "@/utils/participant-pass";
-import Filter from "./Filter";
+import Access from "./Access";
 
 type LinkItemProps = {
 	href: string;
@@ -38,6 +37,7 @@ const Links = ({ bottom }: LinkProps) => {
 		<>
 			<LinkItem href="/" bottom={bottom} text={t("home")} src="/assets/home.svg" alt={t("home")} />
 			{hasPass && <LinkItem href="/pass" bottom={bottom} text={t("pass")} src="/assets/qr.svg" alt={t("pass")} />}
+<<<<<<< HEAD
 			{hasPass && (
 				<LinkItem
 					href="/services"
@@ -48,8 +48,11 @@ const Links = ({ bottom }: LinkProps) => {
 				/>
 			)}
 			<Filter value={[RoleName.ORGANIZER, RoleName.ADMIN]} silent method="some">
+=======
+			<Access silent>
+>>>>>>> 3af78a9 (feat(auth): simplify organiser access and passes)
 				<LinkItem href="/qr" bottom={bottom} text={t("qr")} src="/assets/qr.svg" alt={t("qr")} />
-			</Filter>
+			</Access>
 			<LinkItem
 				href="/schedule"
 				bottom={bottom}
@@ -66,7 +69,7 @@ const Links = ({ bottom }: LinkProps) => {
 				alt={t("resources")}
 			/>
 			{sessionData?.user && (
-				<Filter value={[RoleName.PREMIER, RoleName.ORGANIZER, RoleName.ADMIN]} silent method="some">
+				<Access silent>
 					<LinkItem
 						href="/metrics"
 						bottom={bottom}
@@ -74,7 +77,7 @@ const Links = ({ bottom }: LinkProps) => {
 						src="/assets/metrics.svg"
 						alt={t("metrics")}
 					/>
-				</Filter>
+				</Access>
 			)}
 		</>
 	);

@@ -21,7 +21,8 @@ the local `track-the-hack` MySQL database.
 Choose **Sign in as local organiser** on the sign-in page to reach `/qr` and
 `/metrics`. That passwordless provider is opt-in and accepts only when the
 configured URL, request host, and network peer are all loopback; Google remains
-the only organiser provider on LAN or deployed instances.
+available on LAN and deployed instances, together with emailed sign-in links for
+addresses on the organiser access list.
 
 Run the complete credential-free development verification with:
 
@@ -75,6 +76,11 @@ waits for success, then promotes the web and Prisma Studio images and reapplies
 the health probes. Roll back by redeploying a previously built image only after
 confirming its code remains compatible with the migrated schema; migrations are
 not automatically reversed.
+
+The web app also requires `EMAIL_SERVER_HOST`, `EMAIL_SERVER_PORT`,
+`EMAIL_SERVER_USER`, `EMAIL_SERVER_PASSWORD`, and `EMAIL_FROM` for organiser
+magic links. Configure them as Container App secret references before promoting
+this version; do not put SMTP credentials in GitHub variables or the image.
 
 ### Database lifecycle
 

@@ -1,12 +1,22 @@
 {
 	"search": "Search",
 	"title": "Organiser tools",
-	"roles": "Roles",
 	"metrics": "Metrics",
 	"submit": "Submit",
 	"user-profile": "User profile",
+<<<<<<< HEAD
 	"hardware": "Hardware Desk",
 	"latte-lab": "Latte Lab",
+=======
+	"access": {
+		"title": "Organiser access",
+		"ctn-help": "Verified CTN Google Workspace accounts already have organiser access. Add another email here before its owner requests a sign-in link.",
+		"email": "Email address",
+		"add": "Allow email",
+		"remove": "Remove",
+		"empty": "No additional emails have been allowed."
+	},
+>>>>>>> 3af78a9 (feat(auth): simplify organiser access and passes)
 
 	"events": {
 		"title": "Events",

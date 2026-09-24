@@ -1,4 +1,4 @@
-import { RoleName, TShirtSize } from "@prisma/client";
+import { TShirtSize } from "@prisma/client";
 import type { GetServerSideProps } from "next";
 import { getServerSession } from "next-auth";
 import { useTranslation } from "next-i18next";
@@ -8,7 +8,7 @@ import App from "@/components/App";
 import Error from "@/components/Error";
 import Loading from "@/components/Loading";
 import { trpc } from "@/server/api/api";
-import { rolesRedirect } from "@/server/lib/redirects";
+import { organizerRedirect } from "@/server/lib/redirects";
 import { getAuthOptions } from "@/pages/api/auth/[...nextauth]";
 
 const Metrics = () => {
@@ -82,7 +82,7 @@ const OperationalChart = ({ title, data, x, y }: { title: string; data: object[]
 export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
 	const session = await getServerSession(req, res, getAuthOptions());
 	return {
-		redirect: await rolesRedirect(session, "/metrics", [RoleName.ORGANIZER, RoleName.ADMIN, RoleName.PREMIER]),
+		redirect: organizerRedirect(session, "/metrics"),
 		props: await serverSideTranslations(locale ?? "en", ["navbar", "common", "metrics"]),
 	};
 };

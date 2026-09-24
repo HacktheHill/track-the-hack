@@ -46,7 +46,7 @@ npm run dev:setup
 `dev:setup` fills only missing ignored `.env` values, starts MySQL, deploys every
 migration, and idempotently seeds:
 
-- `dev-organizer@ctn-rtc.org` with `ADMIN` and `ORGANIZER`;
+- `dev-organizer@ctn-rtc.org` with organiser and administrator access;
 - normal participant `dev-participant-normal-01`;
 - walk-in participant `dev-participant-walkin-01`;
 - current check-in, merchandise, food, and attendance events.
@@ -459,7 +459,7 @@ migration execution, revision, health, and traffic without recording secrets.
 Smoke-test only what production configuration adds beyond local E2E:
 
 - protected `healthz` and `readyz`;
-- Google OAuth redirect and pre-provisioned organiser access;
+- verified CTN Google OAuth, external-email allowlist, and magic-link delivery;
 - live Apps Script authentication with the designated test row;
 - public schedule/event data and bilingual static routes;
 - one controlled participant claim/profile/pass path;

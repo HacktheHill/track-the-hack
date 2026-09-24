@@ -1,5 +1,12 @@
 {
 	"title": "Lecteur de codes QR",
+	"tabs-label": "Options du laissez-passer",
+	"my-pass": "Mon laissez-passer",
+	"scan-passes": "Scanner les laissez-passer",
+	"organizer": "Organisateur",
+	"organizer-pass": "Organisateur : {{name}}",
+	"organizer-qr-alt": "Code QR de votre laissez-passer d’organisateur",
+	"organizer-pass-help": "Présentez ce laissez-passer pour les repas, les articles promotionnels, l’enregistrement ou la présence aux événements. Il contient uniquement votre identifiant d’organisateur.",
 	"select-action": "Poste",
 	"view-participant": "Détails du participant",
 	"unknown-error": "Le participant ou l’action de l’événement n’a pas pu être chargé.",

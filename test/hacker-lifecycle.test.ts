@@ -1,13 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { PrismaClient, RoleName } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import {
 	createCancellationApiHandler,
 	createParticipantSignOutApiHandler,
 	type LifecycleApiResponse,
 	type LifecycleApiResponseBody,
 } from "@/server/http/participant-lifecycle-handlers";
-import { canUseOrganizerAuth } from "@/server/lib/organizer-auth";
+import { canUseGoogleOrganizerAuth } from "@/server/lib/organizer-auth";
 import {
 	PrismaHackerLifecycleRepository,
 	type HackerLifecycleLockingTransaction,
@@ -450,124 +450,66 @@ void test("participant sign-out revokes server state and clears both browser coo
 	assert.deepEqual(clearParticipantSessionCookies(), cleared);
 });
 
-void test("organizer auth removes participant providers and enforces verification and provisioning", async () => {
-	const findUser = (email: string) =>
-		Promise.resolve(
-			email === "organizer@ctn-rtc.org"
-				? { id: "user", roles: [{ name: RoleName.ORGANIZER }] }
-				: email === "replacement@ctn-rtc.org"
-					? { id: "replacement", roles: [{ name: RoleName.ORGANIZER }] }
-					: null,
-		);
+void test("organizer Google auth enforces provider, verification, hosted domain, and matching identity", () => {
 	assert.equal(
-		await canUseOrganizerAuth(
-			{
-				provider: "google",
-				profileEmail: "organizer@ctn-rtc.org",
-				userEmail: "organizer@ctn-rtc.org",
-				emailVerified: true,
-			},
-			findUser,
-		),
+		canUseGoogleOrganizerAuth({
+			provider: "google",
+			profileEmail: "organizer@ctn-rtc.org",
+			userEmail: "organizer@ctn-rtc.org",
+			emailVerified: true,
+			hostedDomain: "ctn-rtc.org",
+		}),
 		true,
 	);
 	assert.equal(
-		await canUseOrganizerAuth(
-			{
-				provider: "credentials",
-				profileEmail: "organizer@ctn-rtc.org",
-				userEmail: "organizer@ctn-rtc.org",
-				emailVerified: true,
-			},
-			findUser,
-		),
+		canUseGoogleOrganizerAuth({
+			provider: "credentials",
+			profileEmail: "organizer@ctn-rtc.org",
+			userEmail: "organizer@ctn-rtc.org",
+			emailVerified: true,
+			hostedDomain: "ctn-rtc.org",
+		}),
 		false,
 	);
 	assert.equal(
-		await canUseOrganizerAuth(
-			{
-				provider: "google",
-				profileEmail: "person@example.com",
-				userEmail: "person@example.com",
-				emailVerified: true,
-			},
-			findUser,
-		),
+		canUseGoogleOrganizerAuth({
+			provider: "google",
+			profileEmail: "person@example.com",
+			userEmail: "person@example.com",
+			emailVerified: true,
+			hostedDomain: "example.com",
+		}),
 		false,
 	);
 	assert.equal(
-		await canUseOrganizerAuth(
-			{
-				provider: "google",
-				profileEmail: "organizer@ctn-rtc.org",
-				userEmail: "organizer@ctn-rtc.org",
-				emailVerified: false,
-			},
-			findUser,
-		),
+		canUseGoogleOrganizerAuth({
+			provider: "google",
+			profileEmail: "organizer@ctn-rtc.org",
+			userEmail: "organizer@ctn-rtc.org",
+			emailVerified: false,
+			hostedDomain: "ctn-rtc.org",
+		}),
 		false,
 	);
 	assert.equal(
-		await canUseOrganizerAuth(
-			{
-				provider: "google",
-				profileEmail: "missing@ctn-rtc.org",
-				userEmail: "missing@ctn-rtc.org",
-				emailVerified: true,
-			},
-			findUser,
-		),
-		false,
-	);
-	assert.equal(
-		await canUseOrganizerAuth(
-			{
-				provider: "google",
-				profileEmail: "replacement@ctn-rtc.org",
-				userEmail: "organizer@ctn-rtc.org",
-				emailVerified: true,
-			},
-			findUser,
-		),
-		false,
-	);
-	assert.equal(
-		await canUseOrganizerAuth(
-			{
-				provider: "google",
-				profileEmail: "replacement@ctn-rtc.org",
-				userEmail: "replacement@ctn-rtc.org",
-				emailVerified: true,
-			},
-			findUser,
-			"user",
-		),
-		false,
-	);
-	assert.equal(
-		await canUseOrganizerAuth(
-			{
-				provider: "google",
-				profileEmail: "organizer@ctn-rtc.org",
-				userEmail: "organizer@ctn-rtc.org",
-				emailVerified: true,
-			},
-			findUser,
-			"",
-		),
-		false,
-	);
-	assert.equal(
-		await canUseOrganizerAuth(
-			{
-				provider: "google",
-				profileEmail: "replacement@ctn-rtc.org",
-				userEmail: "replacement@ctn-rtc.org",
-				emailVerified: true,
-			},
-			findUser,
-		),
+		canUseGoogleOrganizerAuth({
+			provider: "google",
+			profileEmail: "missing@ctn-rtc.org",
+			userEmail: "missing@ctn-rtc.org",
+			emailVerified: true,
+			hostedDomain: "ctn-rtc.org",
+		}),
 		true,
+	);
+	assert.equal(
+		canUseGoogleOrganizerAuth({
+			provider: "google",
+			profileEmail: "replacement@ctn-rtc.org",
+			userEmail: "organizer@ctn-rtc.org",
+			emailVerified: true,
+			hostedDomain: "ctn-rtc.org",
+		}),
+		false,
 	);
 });
 
