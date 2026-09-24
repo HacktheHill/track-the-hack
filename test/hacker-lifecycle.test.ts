@@ -155,12 +155,12 @@ void test("provisioning validates the entire request before one batch write", as
 		batchCalls += 1;
 		await original(records);
 	};
-	await assert.rejects(
-		provisionHackers(repository, { hackers: [provisionInput(), provisionInput({ id: "123" })] }),
-	);
+	await assert.rejects(provisionHackers(repository, { hackers: [provisionInput(), provisionInput({ id: "123" })] }));
 	assert.equal(batchCalls, 0);
 	assert.equal(repository.hackers.size, 0);
-	await provisionHackers(repository, { hackers: [provisionInput(), provisionInput({ id: "second_participant_0123456789" })] });
+	await provisionHackers(repository, {
+		hackers: [provisionInput(), provisionInput({ id: "second_participant_0123456789" })],
+	});
 	assert.equal(batchCalls, 1);
 	assert.equal(repository.hackers.size, 2);
 });
@@ -215,6 +215,7 @@ void test("cancellation rejects a capability replaced before its participant loc
 		},
 		updateHackerConfirmation: () =>
 			Promise.reject(new Error("A replaced capability must not cancel the participant")),
+		persistAuditEvent: () => Promise.resolve(),
 	};
 	const runTransaction: HackerLifecycleTransactionRunner = operation => operation(transaction);
 	const repository = new PrismaHackerLifecycleRepository(prisma, runTransaction);

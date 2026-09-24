@@ -27,6 +27,7 @@ void test("RSVP decisions write participant-scoped audit evidence without the ca
 				},
 			]),
 		hacker: { update },
+		auditEvent: { create: () => Promise.resolve({}) },
 	};
 	// Partial database mock exposes only the transaction operations exercised here.
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -50,7 +51,7 @@ void test("RSVP decisions write participant-scoped audit evidence without the ca
 	assert.doesNotMatch(JSON.stringify(audit), new RegExp(capabilityId));
 });
 
-void test("RSVP decision remains committed when its best-effort audit write fails", async t => {
+void test("RSVP decision remains committed when its best-effort legacy write fails", async t => {
 	const participantId = "participant_0123456789_abcdef";
 	const capabilityId = "private-capability-value";
 	const now = new Date("2026-09-23T21:00:00.000Z");
@@ -71,6 +72,7 @@ void test("RSVP decision remains committed when its best-effort audit write fail
 				},
 			]),
 		hacker: { update },
+		auditEvent: { create: () => Promise.resolve({}) },
 	};
 	// Partial database mock exposes only the transaction operations exercised here.
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions

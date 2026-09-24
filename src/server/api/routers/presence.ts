@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { hasRoles } from "@/utils/helpers";
 import { log } from "@/server/lib/log";
+import { createAuditEvent, emitAuditEvent, persistAuditEvent } from "@/server/lib/audit-event";
 import { participantIdSchema } from "@/server/services/hacker-lifecycle";
 import {
 	adjustPresenceForEvent,
@@ -65,11 +66,37 @@ export const presenceRouter = createTRPCRouter({
 	scan: protectedProcedure.input(scannerInput).mutation(async ({ ctx, input }) => {
 		const organizer = await requireScannerOrganizer(ctx);
 		try {
-			const { id: presenceId, ...result } = await scanParticipantForEvent(
-				createPrismaScannerRepository(ctx.prisma),
-				input.eventId,
-				input.hackerId,
-			);
+			const { presenceId, result, auditEvent } = await ctx.prisma.$transaction(async transaction => {
+				const { id: presenceId, ...result } = await scanParticipantForEvent(
+					createPrismaScannerRepository(transaction),
+					input.eventId,
+					input.hackerId,
+				);
+				const outcome =
+					result.outcome === "new"
+						? "recorded"
+						: result.outcome === "unchanged"
+							? "duplicate"
+							: result.outcome;
+				const appliedDelta = result.outcome === "new" ? result.value : result.outcome === "incremented" ? 1 : 0;
+				const auditEvent = createAuditEvent({
+					name: "scanner.scan",
+					outcome,
+					actor: { type: "organizer", id: organizer.id },
+					subject: { type: "hacker", id: input.hackerId },
+					resource: { type: "event", id: input.eventId },
+					data: {
+						workflow: result.workflow,
+						presenceId,
+						beforeCount: result.value - appliedDelta,
+						afterCount: result.value,
+						requestedDelta: 1,
+						appliedDelta,
+					},
+				});
+				await persistAuditEvent(transaction, auditEvent);
+				return { presenceId, result, auditEvent };
+			});
 			await log(ctx, {
 				action:
 					result.outcome === "new"
@@ -93,6 +120,7 @@ export const presenceRouter = createTRPCRouter({
 								? `Participant ${input.hackerId} reached the limit for event ${input.eventId} (${result.workflow}) at ${result.value}`
 								: `Participant ${input.hackerId} was already recorded for event ${input.eventId} (${result.workflow})`,
 			});
+			emitAuditEvent(auditEvent);
 			return result;
 		} catch (error) {
 			return scannerError(error);
@@ -109,13 +137,37 @@ export const presenceRouter = createTRPCRouter({
 		.mutation(async ({ ctx, input }) => {
 			const organizer = await requireScannerOrganizer(ctx);
 			try {
-				const { id: presenceId, ...result } = await adjustPresenceForEvent(
-					createPrismaScannerRepository(ctx.prisma),
-					input.eventId,
-					input.hackerId,
-					input.amount,
-					input.expectedValue,
-				);
+				const { presenceId, result, auditEvent } = await ctx.prisma.$transaction(async transaction => {
+					const {
+						id: presenceId,
+						beforeValue,
+						workflow,
+						...result
+					} = await adjustPresenceForEvent(
+						createPrismaScannerRepository(transaction),
+						input.eventId,
+						input.hackerId,
+						input.amount,
+						input.expectedValue,
+					);
+					const auditEvent = createAuditEvent({
+						name: "scanner.adjust",
+						outcome: result.applied ? "applied" : result.stale ? "stale" : "out_of_bounds",
+						actor: { type: "organizer", id: organizer.id },
+						subject: { type: "hacker", id: input.hackerId },
+						resource: { type: "event", id: input.eventId },
+						data: {
+							workflow,
+							presenceId,
+							beforeCount: result.applied ? beforeValue : result.value,
+							afterCount: result.value,
+							requestedDelta: input.amount,
+							appliedDelta: result.applied ? input.amount : 0,
+						},
+					});
+					await persistAuditEvent(transaction, auditEvent);
+					return { presenceId, result, auditEvent };
+				});
 				await log(ctx, {
 					action: result.applied ? "adjust" : result.stale ? "adjust_stale" : "adjust_noop",
 					sourceId: presenceId,
@@ -129,6 +181,7 @@ export const presenceRouter = createTRPCRouter({
 							? `Rejected stale adjustment for participant ${input.hackerId} at event ${input.eventId}; expected ${input.expectedValue}, current ${result.value}`
 							: `Ignored out-of-bounds adjustment for participant ${input.hackerId} at event ${input.eventId}; current ${result.value}`,
 				});
+				emitAuditEvent(auditEvent);
 				return result;
 			} catch (error) {
 				return scannerError(error);

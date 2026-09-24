@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { MealCategory, Prisma, type PrismaClient } from "@prisma/client";
 import type { DietaryUpdate } from "@/server/services/dietary-reconciliation";
+import { persistAuditEvent, type AuditEventV1 } from "@/server/lib/audit-event";
 import type {
 	HackerLifecycleRepository,
 	NewParticipantSession,
@@ -23,6 +24,7 @@ export type HackerLifecycleLockingTransaction = {
 	lockHacker(id: string): Promise<boolean>;
 	findLockedCancellationCapabilityId(hackerId: string): Promise<string | null>;
 	updateHackerConfirmation(id: string, confirmed: boolean): Promise<void>;
+	persistAuditEvent(event: AuditEventV1): Promise<void>;
 };
 
 export type HackerLifecycleTransactionRunner = <Result>(
@@ -54,8 +56,12 @@ const createTransactionRunner =
 					return capability?.id ?? null;
 				},
 				updateHackerConfirmation: async (id, confirmed) => {
-					await transaction.hacker.update({ where: { id }, data: { confirmed, rsvpRespondedAt: new Date() } });
+					await transaction.hacker.update({
+						where: { id },
+						data: { confirmed, rsvpRespondedAt: new Date() },
+					});
 				},
+				persistAuditEvent: event => persistAuditEvent(transaction, event),
 			}),
 		);
 
@@ -66,28 +72,41 @@ export class PrismaHackerLifecycleRepository implements HackerLifecycleRepositor
 	) {}
 
 	async updateExistingMealCategories(participants: DietaryUpdate[]) {
-		return this.prisma.$transaction(async transaction => {
-			const ids = participants.map(participant => participant.id);
-			const existing = await transaction.hacker.findMany({ where: { id: { in: ids } }, select: { id: true } });
-			const present = new Set(existing.map(participant => participant.id));
-			const missingIds = ids.filter(id => !present.has(id));
-			if (missingIds.length) return { missingIds };
+		return this.prisma.$transaction(
+			async transaction => {
+				const ids = participants.map(participant => participant.id);
+				const existing = await transaction.hacker.findMany({
+					where: { id: { in: ids } },
+					select: { id: true },
+				});
+				const present = new Set(existing.map(participant => participant.id));
+				const missingIds = ids.filter(id => !present.has(id));
+				if (missingIds.length) return { missingIds };
 
-			for (const mealCategory of Object.values(MealCategory)) {
-				const matching = participants.filter(participant => participant.mealCategory === mealCategory).map(participant => participant.id);
-				if (matching.length) await transaction.hacker.updateMany({ where: { id: { in: matching } }, data: { mealCategory } });
-			}
-			return { missingIds: [] };
-		}, { timeout: 30_000 });
+				for (const mealCategory of Object.values(MealCategory)) {
+					const matching = participants
+						.filter(participant => participant.mealCategory === mealCategory)
+						.map(participant => participant.id);
+					if (matching.length)
+						await transaction.hacker.updateMany({
+							where: { id: { in: matching } },
+							data: { mealCategory },
+						});
+				}
+				return { missingIds: [] };
+			},
+			{ timeout: 30_000 },
+		);
 	}
 
 	async upsertProvisionedBatch(records: ProvisioningRecord[]) {
 		await this.prisma.$transaction(
 			async transaction => {
 				const ids = [...new Set(records.map(record => record.id))].sort();
-				const existingRsvpStates = ids.length === 0
-					? []
-					: await transaction.$queryRaw<ExistingRsvpState[]>(Prisma.sql`
+				const existingRsvpStates =
+					ids.length === 0
+						? []
+						: await transaction.$queryRaw<ExistingRsvpState[]>(Prisma.sql`
 						SELECT id, confirmed, rsvpRespondedAt
 						FROM \`Hacker\`
 						WHERE id IN (${Prisma.join(ids)})
@@ -150,7 +169,7 @@ export class PrismaHackerLifecycleRepository implements HackerLifecycleRepositor
 		});
 	}
 
-	async cancelByCapability(capabilityId: string) {
+	async cancelByCapability(capabilityId: string, auditEventFor?: (hackerId: string) => AuditEventV1) {
 		return this.runLockingTransaction(async transaction => {
 			const hackerId = await transaction.findCancellationCapabilityOwner(capabilityId);
 			if (!hackerId) return null;
@@ -163,11 +182,17 @@ export class PrismaHackerLifecycleRepository implements HackerLifecycleRepositor
 			if (activeCapabilityId !== capabilityId) return null;
 
 			await transaction.updateHackerConfirmation(hackerId, false);
+			if (auditEventFor) await transaction.persistAuditEvent(auditEventFor(hackerId));
 			return hackerId;
 		});
 	}
 
-	async replaceParticipantAccess(record: ProvisioningRecord, claimId: string, expiresAt: Date) {
+	async replaceParticipantAccess(
+		record: ProvisioningRecord,
+		claimId: string,
+		expiresAt: Date,
+		auditEvent?: AuditEventV1,
+	) {
 		await this.prisma.$transaction(async transaction => {
 			// Keep the Phase 1 upsert semantics: operational fields are refreshed,
 			// while RSVP confirmation and every unrelated relation are preserved.
@@ -181,10 +206,16 @@ export class PrismaHackerLifecycleRepository implements HackerLifecycleRepositor
 				update: { id: claimId, expiresAt, consumedAt: null },
 			});
 			await transaction.participantSession.deleteMany({ where: { hackerId: record.id } });
+			if (auditEvent) await persistAuditEvent(transaction, auditEvent);
 		});
 	}
 
-	async redeemClaimToken(claimId: string, now: Date, session: NewParticipantSession) {
+	async redeemClaimToken(
+		claimId: string,
+		now: Date,
+		session: NewParticipantSession,
+		auditEventFor?: (hackerId: string) => AuditEventV1,
+	) {
 		return this.prisma.$transaction(async transaction => {
 			// The conditions live in the UPDATE rather than a read followed by a
 			// write, so two devices scanning at once cannot both be handed a
@@ -212,6 +243,7 @@ export class PrismaHackerLifecycleRepository implements HackerLifecycleRepositor
 					expiresAt: session.expiresAt,
 				},
 			});
+			if (auditEventFor) await persistAuditEvent(transaction, auditEventFor(claim.hackerId));
 
 			return claim.hackerId;
 		});

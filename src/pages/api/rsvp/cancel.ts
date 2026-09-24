@@ -5,11 +5,23 @@ import { PrismaHackerLifecycleRepository } from "@/server/repositories/prisma-ha
 import { cancelRsvp } from "@/server/services/hacker-lifecycle";
 import { prisma } from "@/server/db";
 import { log } from "@/server/lib/log";
+import { createAuditEvent, emitAuditEvent } from "@/server/lib/audit-event";
 
 const repository = new PrismaHackerLifecycleRepository(prisma);
 
 const handler = createCancellationApiHandler(async token => {
-	const result = await cancelRsvp(repository, token, env.CANCELLATION_TOKEN_SECRET);
+	const result = await cancelRsvp(repository, token, env.CANCELLATION_TOKEN_SECRET, (id, occurredAt) =>
+		createAuditEvent({
+			name: "participant.rsvp.cancelled",
+			outcome: "cancelled",
+			actor: { type: "participant", id },
+			subject: { type: "hacker", id },
+			data: {},
+			occurredAt,
+		}),
+	);
+	if (!result.auditEvent) throw new Error("RSVP cancellation audit event missing");
+	emitAuditEvent(result.auditEvent);
 	await log(
 		{ prisma },
 		{

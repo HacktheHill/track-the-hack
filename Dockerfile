@@ -30,8 +30,10 @@ COPY prisma ./prisma
 COPY tsconfig.json ./
 COPY scripts/provision-organizer.mts ./scripts/
 COPY scripts/import-events.mts ./scripts/
+COPY scripts/purge-audit-events.mts ./scripts/
 COPY src/server/lib/event-validation.ts ./src/server/lib/
 COPY src/server/lib/organizer-auth.ts ./src/server/lib/
+COPY src/server/services/audit-retention.ts ./src/server/services/
 COPY src/utils/toronto-time.ts ./src/utils/
 RUN npm ci --include=dev && npm cache clean --force
 USER app

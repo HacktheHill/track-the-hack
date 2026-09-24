@@ -28,12 +28,15 @@ void test("role updates upsert requested roles and use serializable isolation", 
 				count: () => Promise.resolve(1),
 				update,
 			},
+			auditEvent: { create: () => Promise.resolve({}) },
 		});
 	});
 	// Partial database mock exposes only the operations exercised by this caller.
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 	const prisma = {
-		user: { findUnique: () => Promise.resolve({ id: "admin-1", name: "Admin", roles: [{ name: RoleName.ADMIN }] }) },
+		user: {
+			findUnique: () => Promise.resolve({ id: "admin-1", name: "Admin", roles: [{ name: RoleName.ADMIN }] }),
+		},
 		$transaction: transaction,
 		log: { create: createLog },
 	} as unknown as PrismaClient;
@@ -77,6 +80,7 @@ void test("concurrent updates cannot remove both remaining admins", async () => 
 						return Promise.resolve({});
 					},
 				},
+				auditEvent: { create: () => Promise.resolve({}) },
 			});
 		} finally {
 			release();

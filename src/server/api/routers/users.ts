@@ -3,6 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { hasRoles } from "@/utils/helpers";
 import { log } from "@/server/lib/log";
+import { createAuditEvent, emitAuditEvent, persistAuditEvent } from "@/server/lib/audit-event";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 
 const getAdmin = async (ctx: Parameters<Parameters<typeof protectedProcedure.query>[0]>[0]["ctx"]) => {
@@ -29,6 +30,13 @@ export const userRouter = createTRPCRouter({
 			const admin = await getAdmin(ctx);
 			const userIds = [...new Set(input.userIds)];
 			const roles = [...new Set(input.roles)];
+			const auditEvent = createAuditEvent({
+				name: "organizer.roles.updated",
+				outcome: "applied",
+				actor: { type: "organizer", id: admin.id },
+				resource: { type: "role", id: "organizer-roles" },
+				data: { targetUserIds: userIds.join(","), roles: roles.join(",") },
+			});
 
 			await ctx.prisma.$transaction(
 				async transaction => {
@@ -63,9 +71,11 @@ export const userRouter = createTRPCRouter({
 							data: { roles: { set: roles.map(name => ({ name })) } },
 						});
 					}
+					await persistAuditEvent(transaction, auditEvent);
 				},
 				{ isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
 			);
+			emitAuditEvent(auditEvent);
 			await log(ctx, {
 				sourceId: admin.id,
 				sourceType: "User",

@@ -1,6 +1,7 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { MealCategory, TShirtSize } from "@prisma/client";
 import { z } from "zod";
+import type { AuditEventV1 } from "@/server/lib/audit-event";
 
 export const participantIdSchema = z
 	.string()
@@ -60,13 +61,26 @@ export type ParticipantSessionRecord = NewParticipantSession & {
 
 export interface HackerLifecycleRepository {
 	upsertProvisionedBatch(records: ProvisioningRecord[]): Promise<void>;
-	cancelByCapability(capabilityId: string): Promise<string | null>;
+	cancelByCapability(
+		capabilityId: string,
+		auditEventFor?: (hackerId: string) => AuditEventV1,
+	): Promise<string | null>;
 	reconcile(ids: string[]): Promise<ReconciliationRecord[]>;
 	// Provisioning, claim replacement and active-session revocation are one operation.
-	replaceParticipantAccess(record: ProvisioningRecord, claimId: string, expiresAt: Date): Promise<void>;
+	replaceParticipantAccess(
+		record: ProvisioningRecord,
+		claimId: string,
+		expiresAt: Date,
+		auditEvent?: AuditEventV1,
+	): Promise<void>;
 	// Returns the participant id, or null for a spent, expired, or unknown claim.
 	// A successful redemption stores the replacement participant session atomically.
-	redeemClaimToken(claimId: string, now: Date, session: NewParticipantSession): Promise<string | null>;
+	redeemClaimToken(
+		claimId: string,
+		now: Date,
+		session: NewParticipantSession,
+		auditEventFor?: (hackerId: string) => AuditEventV1,
+	): Promise<string | null>;
 	findParticipantSession(verifier: string, now: Date): Promise<ParticipantSessionRecord | null>;
 	revokeParticipantSession(verifier: string): Promise<void>;
 }
@@ -123,19 +137,32 @@ export const createClaimToken = (claimId: string, secret: string) => createSigne
 
 export const readClaimToken = (token: string, secret: string) => readSignedToken(token, secret);
 
-export const cancelRsvp = async (repository: HackerLifecycleRepository, tokenInput: unknown, secret: string) => {
+export const cancelRsvp = async (
+	repository: HackerLifecycleRepository,
+	tokenInput: unknown,
+	secret: string,
+	auditEventFor?: (hackerId: string, occurredAt: Date) => AuditEventV1,
+) => {
 	const token = z.string().min(1).max(256).parse(tokenInput);
 	const capabilityId = readCancellationToken(token, secret);
 	if (!capabilityId) {
 		throw new ParticipantLifecycleError("INVALID_CANCELLATION_CAPABILITY");
 	}
 
-	const participantId = await repository.cancelByCapability(capabilityId);
+	const occurredAt = new Date();
+	let auditEvent: AuditEventV1 | undefined;
+	const auditFactory = auditEventFor
+		? (hackerId: string) => {
+				auditEvent = auditEventFor(hackerId, occurredAt);
+				return auditEvent;
+			}
+		: undefined;
+	const participantId = await repository.cancelByCapability(capabilityId, auditFactory);
 	if (!participantId) {
 		throw new ParticipantLifecycleError("INVALID_CANCELLATION_CAPABILITY");
 	}
 
-	return { confirmed: false as const, participantId };
+	return { confirmed: false as const, participantId, ...(auditEvent ? { auditEvent } : {}) };
 };
 
 export const reconcileRsvps = async (
@@ -194,12 +221,14 @@ export const issueParticipantAccess = async (
 	secret: string,
 	now = new Date(),
 	createClaimId = () => randomBytes(32).toString("base64url"),
+	auditEventFor?: (hackerId: string, occurredAt: Date) => AuditEventV1,
 ) => {
 	const record = provisioningRecordSchema.parse(recordInput);
 	const claimId = createClaimId();
 	const expiresAt = new Date(now.getTime() + CLAIM_TOKEN_TTL_MS);
+	const auditEvent = auditEventFor?.(record.id, now);
 
-	await repository.replaceParticipantAccess(record, claimId, expiresAt);
+	await repository.replaceParticipantAccess(record, claimId, expiresAt, auditEvent);
 
 	// Fragment, not query: it never reaches the server on the GET and stays out
 	// of access logs, same as the cancellation link.
@@ -207,6 +236,7 @@ export const issueParticipantAccess = async (
 		claimUrl: `${baseUrl.replace(/\/$/, "")}/claim#${createClaimToken(claimId, secret)}`,
 		expiresAt,
 		hackerId: record.id,
+		...(auditEvent ? { auditEvent } : {}),
 	};
 };
 
@@ -216,6 +246,7 @@ export const consumeClaimToken = async (
 	secret: string,
 	session: NewParticipantSession,
 	now = new Date(),
+	auditEventFor?: (hackerId: string, occurredAt: Date) => AuditEventV1,
 ) => {
 	const token = z.string().min(1).max(256).parse(tokenInput);
 	const claimId = readClaimToken(token, secret);
@@ -225,10 +256,17 @@ export const consumeClaimToken = async (
 
 	// Spent, expired and unknown all fail the same way on purpose: telling them
 	// apart would confirm to an attacker that a token was real.
-	const hackerId = await repository.redeemClaimToken(claimId, now, session);
+	let auditEvent: AuditEventV1 | undefined;
+	const auditFactory = auditEventFor
+		? (hackerId: string) => {
+				auditEvent = auditEventFor(hackerId, now);
+				return auditEvent;
+			}
+		: undefined;
+	const hackerId = await repository.redeemClaimToken(claimId, now, session, auditFactory);
 	if (!hackerId) {
 		throw new ParticipantLifecycleError("INVALID_CLAIM_TOKEN");
 	}
 
-	return { hackerId };
+	return { hackerId, ...(auditEvent ? { auditEvent } : {}) };
 };

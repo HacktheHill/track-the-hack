@@ -1,5 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
 import { log } from "@/server/lib/log";
+import { createAuditEvent, emitAuditEvent, persistAuditEvent } from "@/server/lib/audit-event";
 import { managedRsvpState, type RsvpManagementRepository } from "@/server/services/rsvp-management";
 
 export class PrismaRsvpManagementRepository implements RsvpManagementRepository {
@@ -43,6 +44,21 @@ export class PrismaRsvpManagementRepository implements RsvpManagementRepository 
 					data: { confirmed: attending, rsvpRespondedAt: now },
 				});
 			}
+			const auditEvent = createAuditEvent({
+				name: "participant.rsvp.updated",
+				outcome: attending
+					? shouldWrite
+						? "attending"
+						: "repeated_attending"
+					: shouldWrite
+						? "declined"
+						: "repeated_declined",
+				actor: { type: "participant", id: hacker.id },
+				subject: { type: "hacker", id: hacker.id },
+				data: { attending, stateChanged: shouldWrite },
+				occurredAt: now,
+			});
+			await persistAuditEvent(transaction, auditEvent);
 			return {
 				state: managedRsvpState(
 					attending,
@@ -55,12 +71,15 @@ export class PrismaRsvpManagementRepository implements RsvpManagementRepository 
 				details: shouldWrite
 					? `Participant selected ${attending ? "attending" : "not attending"}.`
 					: `Participant repeated ${attending ? "attending" : "not attending"}.`,
+				auditEvent,
 			};
 		});
 
 		if (decision === null || decision === "expired") return decision;
+		emitAuditEvent(decision.auditEvent);
 
-		// RSVP intent is authoritative; a logging outage must not roll back a participant's choice.
+		// The structured event committed with the choice. This compatibility write
+		// remains best-effort while the legacy Log table is being retired.
 		await log(
 			{ prisma: this.prisma },
 			{
