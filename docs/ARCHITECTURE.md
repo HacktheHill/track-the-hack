@@ -307,7 +307,7 @@ MySQL remains authoritative. Both copies have a 90-day retention policy; see
 `AUDIT_LOGS.md`. The temporary legacy `Log` dual-write is compatibility evidence,
 not a second authority. Its reconciliation, write shutdown, 90-day wait from the
 final legacy write, and separately reviewed removal are defined in
-`AUDIT_LOGS.md`. Exact participant and capability identifiers use binary
+`AUDIT_ACCEPTANCE.md`. Exact participant and capability identifiers use binary
 collation; new migrations that add such references must preserve case-sensitive
 identity.
 

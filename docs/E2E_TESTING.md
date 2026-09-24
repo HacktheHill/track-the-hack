@@ -19,15 +19,15 @@ runs it independently and most changes do not affect offline behaviour. During
 development, run the narrowest relevant command first, then the applicable gate once
 before handoff.
 
-| Change | Additional check |
-| --- | --- |
-| Scanner layout or feedback | `npm run test:e2e:scanner`; use one real camera or USB scanner before event use |
-| Discord protocol | `npm run test:e2e:discord` with the matching bot checkout |
-| Schema or transaction logic | Clean MySQL migration plus the relevant concurrency test |
-| Offline caching or participant pass | Follow [`OFFLINE_ACCEPTANCE.md`](./OFFLINE_ACCEPTANCE.md) |
-| Notification provider behaviour | Follow the short provider check in [`NOTIFICATIONS.md`](./NOTIFICATIONS.md) |
-| Organiser authentication or access | Follow the acceptance check in [`ORGANISER_ACCESS.md`](./ORGANISER_ACCESS.md) |
-| Schedule, hardware, or RSVP import | Run its dry run and review the summary before `--apply` |
+| Change                              | Additional check                                                                |
+| ----------------------------------- | ------------------------------------------------------------------------------- |
+| Scanner layout or feedback          | `npm run test:e2e:scanner`; use one real camera or USB scanner before event use |
+| Discord protocol                    | `npm run test:e2e:discord` with the matching bot checkout                       |
+| Schema or transaction logic         | Clean MySQL migration plus the relevant concurrency test                        |
+| Offline caching or participant pass | Follow [`OFFLINE_ACCEPTANCE.md`](./OFFLINE_ACCEPTANCE.md)                       |
+| Notification provider behaviour     | Follow the short provider check in [`NOTIFICATIONS.md`](./NOTIFICATIONS.md)     |
+| Organiser authentication or access  | Follow the acceptance check in [`ORGANISER_ACCESS.md`](./ORGANISER_ACCESS.md)   |
+| Schedule, hardware, or RSVP import  | Run its dry run and review the summary before `--apply`                         |
 
 Skipped checks are acceptable when they are unrelated to the change. State what was
 skipped and why.
@@ -149,6 +149,11 @@ Production smoke tests only deployment-specific boundaries:
 - non-mutating hardware and Latte catalogue reads when Event Services changed; and
 - real provider readiness when authentication or notifications changed.
 
+When a release changes scanner persistence, audit events, retention, or the temporary
+legacy `Log` path, complete [`AUDIT_ACCEPTANCE.md`](./AUDIT_ACCEPTANCE.md). Its scanner
+matrix, MySQL/Azure reconciliation, privacy queries, scheduled-retention proof, and
+legacy-table closeout are required in addition to this short production smoke.
+
 Do not run exhaustive edge cases, create real loans or orders, or alter production
 configuration merely to create test evidence. Keep Cloudflare Access enabled until
 public launch is separately approved.
@@ -159,3 +164,7 @@ Report the commit and environment, commands and results, relevant browser or dev
 manual paths exercised, skipped checks with reasons, and test data cleanup. Never
 include secrets, cookies, participant links, provider identifiers, or private recipient
 data.
+
+For audit-related releases, also record the audit and correlation IDs, retention
+execution, Azure table policy, legacy-write stop time, earliest table-removal time, and
+current legacy-table status defined by [`AUDIT_ACCEPTANCE.md`](./AUDIT_ACCEPTANCE.md).

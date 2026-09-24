@@ -3,6 +3,11 @@
 This document defines the ledger, investigation queries, retention, and the temporary
 legacy-log retirement path.
 
+Use [`AUDIT_ACCEPTANCE.md`](./AUDIT_ACCEPTANCE.md) for the complete development,
+production, cross-store reconciliation, retention, dual-write shutdown, and final
+legacy-table removal procedure. The rollout is not complete until that runbook's final
+checklist is signed off.
+
 `AuditEvent` is the authoritative, append-only operational ledger. `Presence`
 remains the current participant/event counter. A scanner event records the
 server-observed processing time; it does not prove how long someone stayed.
@@ -180,3 +185,6 @@ second release ceremony:
 
 `legacy.migrated` means the old record was retained without inventing semantics. Never
 export its free-form `legacyDetails` to Azure.
+
+The exact migration execution window, boundary-row queries, V1 name/outcome validation,
+and final definition of done are in [`AUDIT_ACCEPTANCE.md`](./AUDIT_ACCEPTANCE.md).
