@@ -3,6 +3,7 @@ import { readDiscordProof, signDiscordRequest } from "@/server/lib/discord-proof
 
 export const discordVerificationBodySchema = z.object({ token: z.string().min(1).max(256) }).strict();
 const botSuccessSchema = z.object({ ok: z.literal(true) }).strict();
+export type DiscordVerificationStatus = "verified" | "invalid" | "conflict" | "unavailable";
 
 export const completeDiscordVerification = async (
 	token: string,
@@ -10,7 +11,7 @@ export const completeDiscordVerification = async (
 	config: { botUrl: string; secret: string },
 	send: typeof fetch = fetch,
 	now = Date.now(),
-) => {
+): Promise<DiscordVerificationStatus> => {
 	if (!readDiscordProof(token, config.secret, now)) return "invalid";
 	const body = JSON.stringify({ token, hackerId });
 	const timestamp = String(Math.floor(now / 1000));

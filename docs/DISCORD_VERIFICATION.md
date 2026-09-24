@@ -1,9 +1,10 @@
 # Discord verification
 
-Participants activate their day-of access in a browser, generate a personal link
-using `/verify` or **Generate Verification Link** in Discord, and press **Verify
-Discord account** at `/discord`. English and French are supported. Organiser
-sign-in alone cannot verify a participant.
+Participants activate their day-of access in a browser and an organiser checks
+them in through a scanner station whose workflow is `CHECK_IN`. They then generate
+a personal link using `/verify` or **Generate Verification Link** in Discord and
+press **Verify Discord account** at `/discord`. English and French are supported.
+Organiser sign-in alone cannot verify a participant.
 
 ## Ownership and protocol
 
@@ -13,9 +14,15 @@ sign-in alone cannot verify a participant.
 - The HMAC-SHA256 link signature covers `discord-link:v1.REFERENCE.EXPIRES`.
   `EXPIRES` is Unix seconds. Both services validate the signature and expiry.
   Neither the page GET nor a link preview consumes or completes verification.
-- The browser posts only `{ token }` to `/api/discord/verify`. Track checks the
-  active, unexpired, non-revoked participant session and takes `Hacker.id` from
-  that session. Extra identity fields and cross-origin browser requests fail.
+- On page load, the browser makes a read-only `GET` to `/api/discord/verify`.
+  Track enables the button only when the browser has an active, unexpired,
+  non-revoked participant session and that participant has a positive Presence
+  for an event whose scanner workflow is `CHECK_IN`. The link fragment is not
+  sent or consumed by this request.
+- The browser posts only `{ token }` to `/api/discord/verify` after the participant
+  presses the enabled button. Track repeats the session and positive check-in
+  checks, then takes `Hacker.id` from that session. Extra identity fields and
+  cross-origin browser requests fail.
 - Track posts `{ token, hackerId }` to the bot's `/verify`. The headers are
   `x-track-the-hack-timestamp` (Unix seconds) and `x-track-the-hack-signature`
   (hex HMAC-SHA256 of `discord-complete:v1:TIMESTAMP.EXACT_JSON_BODY`). Request
@@ -34,11 +41,12 @@ sign-in alone cannot verify a participant.
   fragment until success, which removes it from browser history. It is a private
   bearer capability: participants must not share their links.
 
-The page is static translated copy; authorisation happens on the POST. Its
-cached HTML contains no participant or proof data, and `/api/*` uses the
-existing service worker NetworkOnly rule. There is no pre-event participant
-login or restoration of participant User/OAuth/HACKER roles in Track. The
-Discord Hacker role and Discord-owned teams remain separate.
+The page is static translated copy. Its read-only eligibility request controls
+the button, while authorisation is repeated on the POST. Its cached HTML contains
+no participant or proof data, and `/api/*` uses the existing service worker
+NetworkOnly rule. There is no pre-event participant login or restoration of
+participant User/OAuth/HACKER roles in Track. The Discord Hacker role and
+Discord-owned teams remain separate.
 
 ## Configuration
 

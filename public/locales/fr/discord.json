@@ -3,8 +3,10 @@
 	"explanation": "Enregistrez d’abord votre présence à Hack the Hill III, puis utilisez le bouton de vérification dans Discord.",
 	"verify": "Vérifier le compte Discord",
 	"verifying": "Vérification…",
+	"checking": "Vérification de votre enregistrement…",
 	"verified": "Votre compte Discord est vérifié. Vous pouvez retourner sur Discord.",
-	"session-required": "Ouvrez votre lien d’accès du jour de l’événement et activez votre laissez-passer dans ce navigateur, puis revenez ici. Une connexion d’organisateur ne donne pas accès en tant que participant.",
+	"session-required": "Vous devez vous enregistrer avant de pouvoir vérifier votre compte Discord.",
+	"check-in-required": "Vous devez vous enregistrer avant de pouvoir vérifier votre compte Discord.",
 	"invalid": "Ce lien de vérification est absent, invalide ou expiré. Générez un nouveau lien personnel dans Discord.",
 	"conflict": "Ce participant ou ce compte Discord est déjà associé à un autre compte. Demandez de l’aide à un organisateur.",
 	"unavailable": "La vérification est temporairement indisponible. Réessayez. Si votre lien expire, générez-en un nouveau dans Discord."

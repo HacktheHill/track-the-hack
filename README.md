@@ -52,9 +52,10 @@ The production schedule CSV, dry-run and apply commands, overwrite behaviour, an
 post-import checks are documented in
 [`docs/SCHEDULE_IMPORT.md`](./docs/SCHEDULE_IMPORT.md).
 
-Discord verification uses the active participant session and signed personal
-links from the separate bot. Protocol, configuration, and bot-owned identity
-storage are in [`docs/DISCORD_VERIFICATION.md`](./docs/DISCORD_VERIFICATION.md);
+Discord verification requires both an active participant session and a positive
+check-in scan, then uses signed personal links from the separate bot. Protocol,
+configuration, and bot-owned identity storage are in
+[`docs/DISCORD_VERIFICATION.md`](./docs/DISCORD_VERIFICATION.md);
 all local and deployed verification procedures are in
 [`docs/E2E_TESTING.md`](./docs/E2E_TESTING.md#discord-verification).
 

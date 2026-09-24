@@ -327,7 +327,8 @@ flow, and English and French browser pages. The Discord role call may remain a l
 double. Confirm that it proves all of the following without logging a proof or private
 identity value:
 
-1. an active participant session completes a valid five-minute personal link;
+1. only an active participant session with a positive `CHECK_IN` presence can
+   complete a valid five-minute personal link;
 2. loading or previewing the link is read-only and does not consume it;
 3. absent, forged, revoked, and expired participant sessions fail;
 4. malformed, wrongly signed, expired, and replayed proofs fail safely;
@@ -350,17 +351,21 @@ After deploying matching Track and bot releases with the same internal secret:
    flow; organiser authentication is not a substitute.
 3. In Discord, generate a new private verification link using `/verify` or
    **Generate Verification Link**. Do not paste the link into logs, issues, or chat.
-4. Preview or open the link without pressing **Verify Discord account**. Confirm no
-   binding or role is created.
-5. Complete verification in English. Confirm the bot owns the resulting binding and
+4. Before check-in, open the link and confirm the button is disabled with the
+   check-in-required message and no binding or role is created.
+5. Scan that participant at a station whose workflow is `CHECK_IN`, reload the same
+   link, and confirm the button becomes enabled while no binding or role has yet been
+   created. An attendance, food, or merchandise Presence must not satisfy this
+   requirement.
+6. Complete verification in English. Confirm the bot owns the resulting binding and
    the expected existing Discord role is present.
-6. Retry the same valid link and confirm the idempotent success path. Generate another
+7. Retry the same valid link and confirm the idempotent success path. Generate another
    link for the same accounts and confirm it cannot silently reassign either identity.
-7. Exercise the French page with a fresh approved test identity, unless the automated
+8. Exercise the French page with a fresh approved test identity, unless the automated
    browser test is the accepted evidence for this release and no translated UI changed.
-8. Inspect both services for redacted, useful logs. Proofs, Discord IDs, participant
+9. Inspect both services for redacted, useful logs. Proofs, Discord IDs, participant
    IDs, and internal bot error details must not appear in Track logs.
-9. Remove only the test binding with the bot's documented management command. Role
+10. Remove only the test binding with the bot's documented management command. Role
    removal is a separate organiser decision; verify the intended cleanup explicitly.
 
 Do not deliberately expire production participants, rotate a shared secret, reset all
