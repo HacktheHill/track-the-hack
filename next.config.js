@@ -106,11 +106,9 @@ const privateNavigationNetworkOnly = [
 	},
 ];
 
-/**
- * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation.
- * This is especially useful for Docker builds.
- */
-!process.env.SKIP_ENV_VALIDATION && import("./src/env/server.mjs");
+// Validate during Next config loading; src/env/server.mjs also validates any
+// importing server route at build or request time. There is no validation bypass.
+import("./src/env/server.mjs");
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const withPWA = require("next-pwa")({

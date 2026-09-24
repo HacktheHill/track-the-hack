@@ -23,7 +23,7 @@
 		"test:e2e:pwa": "npm run dev:setup && NEXT_DIST_DIR=.next-pwa-e2e node scripts/run-pwa-e2e.mjs",
 		"test:e2e:scanner": "node --env-file=.env --import tsx scripts/test-scanner-mobile.mts",
 		"check:commits": "node scripts/check-commit-messages.mjs",
-		"typecheck": "tsc --noEmit && node scripts/check-google-apps-script.mjs",
+		"typecheck": "tsc --noEmit && node scripts/check-prisma-migrations.mjs && node scripts/check-google-apps-script.mjs",
 		"verify:dev": "npm test && npm run typecheck && npm run lint && npm run test:e2e:dev && npm run test:e2e:pwa",
 		"organizer:provision": "node --env-file-if-exists=.env --import tsx scripts/provision-organizer.mts",
 		"rsvp:prepare": "node --import tsx scripts/prepare-rsvp-campaign.mts",

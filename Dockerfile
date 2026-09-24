@@ -50,7 +50,6 @@ RUN npm ci
 COPY . .
 ARG NEXT_PUBLIC_VAPID_PUBLIC_KEY
 ENV NODE_ENV=production
-ENV SKIP_ENV_VALIDATION=1
 ENV NEXT_PUBLIC_VAPID_PUBLIC_KEY=${NEXT_PUBLIC_VAPID_PUBLIC_KEY}
 RUN --mount=type=secret,id=env \
 	set -a && . /run/secrets/env && set +a && npm run build

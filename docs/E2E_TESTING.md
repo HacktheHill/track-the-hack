@@ -87,6 +87,10 @@ npm run test:e2e:discord
 npm run test:e2e:scanner
 ```
 
+Next config and server modules always validate their environment. There is no
+`SKIP_ENV_VALIDATION` bypass: builds that import server modules must provide values
+matching `src/env/schema.mjs`, and production server imports keep the same validation.
+
 Do not run all narrower commands after `verify:dev` merely to duplicate the same work.
 Run a focused command first during development, then the full gate once before handoff.
 

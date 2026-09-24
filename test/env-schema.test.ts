@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
+import { resolve } from "node:path";
 import test from "node:test";
 import { resolveNextAuthUrl, serverSchema } from "@/env/schema.mjs";
 
@@ -40,4 +42,18 @@ void test("NEXTAUTH_URL remains required when no public URL is configured", () =
 		if (previousVercelUrl === undefined) delete process.env.VERCEL_URL;
 		else process.env.VERCEL_URL = previousVercelUrl;
 	}
+});
+
+void test("SKIP_ENV_VALIDATION cannot bypass server environment validation", () => {
+	const serverEnvPath = resolve(process.cwd(), "src/env/server.mjs");
+	const result = spawnSync(
+		process.execPath,
+		["--input-type=module", "-e", `import(${JSON.stringify(new URL(`file://${serverEnvPath}`).href)})`],
+		{
+			encoding: "utf8",
+			env: { PATH: process.env.PATH, NODE_ENV: "production", SKIP_ENV_VALIDATION: "1" },
+		},
+	);
+	assert.notEqual(result.status, 0);
+	assert.match(`${result.stdout}\n${result.stderr}`, /Invalid environment variables/);
 });

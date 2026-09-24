@@ -30,7 +30,6 @@ jobs:
                     --health-cmd="mysqladmin ping -h localhost -ptest --silent"
                     --health-interval=5s --health-timeout=5s --health-retries=20
         env:
-            SKIP_ENV_VALIDATION: "1"
             DATABASE_URL: mysql://root:test@127.0.0.1:3306/push_test
             PUSH_TEST_DATABASE_URL: mysql://root:test@127.0.0.1:3306/push_test
             NODE_ENV: production
