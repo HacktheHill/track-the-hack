@@ -1,16 +1,9 @@
 import { PrismaClient } from "@prisma/client";
-import { z } from "zod";
-import { hasOrganizerEmailDomain, normalizeOrganizerEmail } from "@/server/lib/organizer-auth";
+import { hasOrganizerEmailDomain } from "@/server/lib/organizer-auth";
+import { parseOrganizerProvisionInput } from "@/server/lib/organizer-provision";
 
 const prisma = new PrismaClient();
-const [rawEmail, rawMode] = process.argv.slice(2);
-const parsedEmail = z.string().trim().email().max(191).safeParse(rawEmail);
-if (!parsedEmail.success || (rawMode !== undefined && rawMode !== "--admin")) {
-	throw new Error("Usage: npm run organizer:provision -- organizer@example.com [--admin]");
-}
-
-const email = normalizeOrganizerEmail(parsedEmail.data);
-const admin = rawMode === "--admin";
+const { email, admin } = parseOrganizerProvisionInput(process.argv.slice(2), process.env);
 if (admin && !hasOrganizerEmailDomain(email)) {
 	throw new Error("Administrators must use a CTN email address");
 }

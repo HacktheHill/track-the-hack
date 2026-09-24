@@ -48,19 +48,14 @@ jobs:
                     --name track-the-hack-organizer \
                     --query 'properties.template.containers[0].image' \
                     --output tsv)"
-                  if [[ "$ADMINISTRATOR" == "true" ]]; then
-                    command_line='exec /app/node_modules/.bin/tsx scripts/provision-organizer.mts "$ORGANIZER_EMAIL" --admin'
-                  else
-                    command_line='exec /app/node_modules/.bin/tsx scripts/provision-organizer.mts "$ORGANIZER_EMAIL"'
-                  fi
                   execution="$(az containerapp job start \
                     --resource-group "$AZURE_RESOURCE_GROUP" \
                     --name track-the-hack-organizer \
                     --image "$image" \
                     --container-name track-the-hack-organizer \
-                    --command /bin/sh \
-                    --args -c "$command_line" \
-                    --env-vars DATABASE_URL=secretref:database-url ORGANIZER_EMAIL="$ORGANIZER_EMAIL" \
+                    --command /app/node_modules/.bin/tsx \
+                    --args scripts/provision-organizer.mts \
+                    --env-vars DATABASE_URL=secretref:database-url ORGANIZER_PROVISION_EMAIL="$ORGANIZER_EMAIL" ORGANIZER_PROVISION_ADMINISTRATOR="$ADMINISTRATOR" \
                     --cpu 0.5 \
                     --memory 1Gi \
                     --query name \
