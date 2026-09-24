@@ -7,15 +7,16 @@ items are not an additive backlog.
 
 Status verified on September 23, 2026:
 
-| Surface         | Verified state                                                                                                                                                                                                                                                                                                                                                                 |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Repository      | The reviewed `main` baseline was `d30cfc218dd838c77f07d86b7a1888a750a970a7` after the schedule-history rewrite and two rebase merges. This handoff adds another docs-only commit; start new work from a fresh fetch of `origin/main`.                                                                                                                                          |
-| Production app  | Azure Container App revision `track-the-hack--0000058` is Running, Healthy, Provisioned, and receives 100% of traffic. Its image is tagged `85af7abb4adda34541b172ded3a766e4b3a01a41`; the later `d30cfc2` commit changes only this handoff.                                                                                                                                   |
-| Release checks  | Deployment run [35935204267](https://github.com/HacktheHill/track-the-hack/actions/runs/35935204267) succeeded. CI and image validation also passed on final `main` `d30cfc2`. Local tests: 174 total, 170 passed, four MySQL-only cases skipped without Docker; typecheck, lint, and Prisma validation passed. Hosted CI exercised MySQL migrations and the production build. |
-| Production data | 41 events matching the private authoritative schedule; the last audited participant count was a partial 100 provisioned, all unconfirmed. Refresh these mutable counts before acting.                                                                                                                                                                                          |
+| Surface         | Verified state                                                                                                                                                                                                                                                                                                                                                                                                          |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Repository      | The implementation was rebuilt directly on the post-cleanup `main` baseline `6c8e9b2`. Scanner work is `c38c958`, public offline support is `5d90a6d` plus matcher correction `c2fbf34`, and language/EEF work is `a758b15`. This handoff is the only later documentation change. Start future work from a fresh fetch of `origin/main`.                                                                                   |
+| Production app  | Azure Container App revision `track-the-hack--0000058` is Running, Healthy, Provisioned, and receives 100% of traffic. Its image is tagged `85af7abb4adda34541b172ded3a766e4b3a01a41`; the later `d30cfc2` commit changes only this handoff.                                                                                                                                                                            |
+| Release checks  | Deployment run [35935204267](https://github.com/HacktheHill/track-the-hack/actions/runs/35935204267) succeeded for the currently deployed image. For the new implementation, local tests report 178 total, 174 passed, and four MySQL-only cases skipped because Docker is unavailable; typecheck, lint, Prisma validation, XML validation, and a production PWA build passed. Hosted CI and deployment remain pending. |
+| Production data | 41 events matching the private authoritative schedule; the last audited participant count was a partial 100 provisioned, all unconfirmed. Refresh these mutable counts before acting.                                                                                                                                                                                                                                   |
 
-`main` and the deployed image have different SHAs because the last merge only updated
-this document. A new app change will require the usual reviewed deployment. The
+`main` and the deployed image now have different application code. The scanner schema
+change requires migration `20260924010000_add_event_scanner_enabled` before the new
+application revision receives traffic. The
 container workflow validates images on a `main` push; its Production job runs only on
 manual dispatch from `main` (`.github/workflows/container.yml`). Cloudflare Access
 must remain enabled during testing.
@@ -61,6 +62,13 @@ in this file has drifted.
 - Public hidden-event filtering; participant offline pass.
 - Persisted push subscriptions, invalid-subscription cleanup, leases, and scheduler
   startup from `src/instrumentation.ts`.
+- Explicit scanner eligibility, capped repeat-scan outcomes, persisted station choice,
+  date/time station labels, and progressive audio/vibration feedback.
+- Public-only offline caching for home, schedule and event data, maps, resources,
+  sponsors, and participant pass; private routes and APIs remain network-only.
+- British-Canadian English and French-Canadian punctuation rules in
+  `docs/ui-consistency.md`, the targeted interface terminology changes, and EEF SVG
+  aspect-ratio hardening.
 
 ## Current state and private data
 
@@ -115,7 +123,7 @@ the app. Never commit, upload, paste into an issue, or log their contents.
     - reopen the original link and choose attending again;
     - issue and consume a five-minute claim;
     - verify participant session persistence and offline pass;
-    - scan optically from a second organizer device;
+    - scan optically from a second organiser device;
     - exercise check-in, merchandise, food/multi-count, attendance, expiry, reissue, and cleanup.
 11. Do not send the full campaign without a separate action-time approval of the final recipient count, suppressions, sender, deadline, subject, template, and dry-run output. `scripts/prepare-rsvp-campaign.mts` prepares a private recipient CSV; it does not send email. `RSVP Refreshed At`, not generic `Last Sync`, is the Sheet freshness signal.
 
@@ -142,113 +150,103 @@ For each future code PR:
 9. Verify GitHub Actions and the resulting Azure revision/image after landing.
 10. Keep Cloudflare Access enabled until the separately reviewed public-launch step.
 
-## Deferred implementation work
+## Implemented event-readiness work
 
-These six items are approved for handoff rather than implementation in the current
-cleanup. They are product changes, not evidence that the current deployment is broken.
-Implement them in small PRs from current `main`; check that each item is still missing
-before coding. The practical order is scanner eligibility, repeat-scan semantics,
-scanner interface and feedback, public offline support, then terminology. The scanner
-items share code and physical acceptance tests, but separate reviewable commits remain
-useful. The offline item has the widest caching and privacy impact.
+The six previously deferred items were rechecked against `main` before implementation
+and are now present in the commits named in the status table. Do not reapply the
+abandoned prototypes.
 
-### 1. Explicit scanner eligibility
+### Scanner eligibility and event data
 
-Add `scannerEnabled Boolean @default(true)` to `Event` and carry it through:
+`Event.scannerEnabled` is explicit throughout the Prisma schema, event editor, APIs,
+scanner service, schedule importer, synthetic CSV tests, and import documentation. The
+migration defaults existing events to enabled, then disables Career Fair events and
+events whose current English name is `Team Formation` or `Closing Ceremony`. That
+name/type matching is a one-time data migration only; runtime authorization uses the
+stored boolean. Scans and manual count adjustments both reject disabled events.
 
-- Prisma schema, clean-baseline migration, and generated client;
-- event create/update schemas;
-- organizer event editor;
-- managed/scannable API selections;
-- schedule importer and CSV contract;
-- server-side scan and adjustment authorization;
-- tests and operational documentation.
+Before production deployment, inspect the migration's planned update against the 41
+current events and confirm with operations whether any additional schedule-only rows
+should be disabled. After deployment, query the actual disabled set; do not assume the
+seed matched forever. Future changes belong in the editor or private authoritative CSV
+using its required `scannerEnabled` column.
 
-Initial scanner-disabled events must include:
+### Repeat scans, station selection, and feedback
 
-- Career Fair;
-- Team Formation;
-- Closing Ceremony.
+The server returns `new`, `incremented`, `unchanged`, or `limit`. A deliberate repeat
+scan increments every workflow when `maxCheckIns > 1`, using one conditional SQL
+update so concurrent devices cannot exceed the cap. Blank/unlimited and `1` remain
+idempotent; `0` remains capped at zero. Manual adjustments retain expected-value
+compare-and-set reconciliation and the server's count remains authoritative.
 
-Review the complete schedule with operations for any additional schedule-only events. Do not infer eligibility from mutable English/French names or broad event types.
+The camera suppresses continuous detections of the same visible code and clears that
+suppression after 750 ms without a detection; A → B → A and a code deliberately
+removed and presented again can therefore increment. Every USB/manual submission is
+treated as deliberate. The scanner keeps `useScannerOperation`, so scans, selector
+changes, and count adjustments cannot race through the interface.
 
-### 2. Repeat-scan semantics for every multi-check-in station
+The selected station is saved in local storage and safely falls back to participant
+view if the event is no longer scannable. Labels include localized weekday/time to
+distinguish repeated names. Visual text, Web Audio cues, and vibration patterns differ
+for each outcome and errors; storage, audio, and vibration failures are non-fatal.
+Workflow cards no longer repeat the event name or participant ID, and food information
+uses `Diet`/`Régime`. Audit actions now distinguish increments and caps from unchanged
+duplicates.
 
-The rule is based on `maxCheckIns`, not on `FOOD` alone:
+Automated coverage includes workflow allowlists, all multi-check-in workflow types,
+uncapped/single-count idempotence, disabled events, first-scan races, cap concurrency,
+stale adjustments, editor/API projections, localized feedback, and importer shape.
+Still required in the deployed environment: real-MySQL concurrency, a small-phone
+camera test, USB scanner input, and two simultaneous organiser devices.
 
-- If `maxCheckIns` is greater than 1, a deliberate repeat scan increments atomically up to that limit.
-- If `maxCheckIns` is 0 or 1, repeat scanning remains idempotent.
-- Decide explicitly how a blank/unlimited `maxCheckIns` should behave before implementation; do not silently treat it as repeatable without an operator-approved cap.
-- Holding one QR continuously in the camera frame must count once.
-- Removing and deliberately presenting it again, including A → B → A, may increment at a multi-check-in station.
-- Manual `+`/`−` adjustments remain available and use the server-authoritative count.
-- Cross-device updates must retain current expected-value/stale reconciliation or an equivalently safe atomic contract.
+### Public-information offline support
 
-Return a typed outcome such as `new`, `incremented`, `unchanged`, or `limit`, and test first-scan races, concurrent increments at the cap, stale decrements, and two physical organizers scanning the same participant.
+The service worker precaches localized shells for home, schedule, event details, maps,
+resources, sponsors, and participant pass, plus all six current SVG floor maps. Only
+the server-filtered public `events.all` query is split into a dedicated GET and cached;
+all other API traffic remains network-only. Event details select from that public list,
+so a successful schedule load carries the real ID and detail payload for every visible
+event. Hidden events are still filtered by the server before the response can enter a
+cache.
 
-An earlier prototype, in an abandoned worktree and never merged, removed
-`useScannerOperation` and its expected-value parameter. Do not port that; both are
-regressions relative to `main`.
+Organiser, metrics, authentication, RSVP, claim, participant-profile, and private Next
+data requests have earlier network-only rules. Profile preserves its existing static
+pass fallback; other private navigation receives a localized `/_offline` page rather
+than private cached content. Generated fallback workers are excluded from TypeScript,
+Git, and Workbox's ordinary public-file scan. No custom push-worker behaviour was
+changed.
 
-### 3. Scanner interface and feedback
+The production build generated a service worker containing the intended route order,
+cache names, public manifest entries, and private network-only rules. Still required:
+exercise install/update/activation and offline reload in Android Chrome, confirm French
+and English route fallbacks, and load a populated production-equivalent schedule before
+disconnecting. The four MySQL-dependent tests and full PWA browser E2E remain skipped
+locally because `/var/run/docker.sock` is unavailable.
 
-- Persist the selected event/station in local storage, falling back safely if that event is no longer scannable.
-- Provide distinct visual, sound, and vibration feedback for new, incremented, unchanged/duplicate, limit, and error outcomes.
-- Keep feedback progressively enhanced: scanning must still work if audio, vibration, or local storage is unavailable.
-- Compact the manual/USB scanner input without removing its disabled/pending protection.
-- Remove redundant participant ID and event-name output from workflow result cards.
-- Use bilingual `Diet / Régime` wording for food information.
-- Verify on a small phone, a desktop USB scanner, and two concurrent organizer devices.
+### Language, terminology, and sponsor asset
 
-### 4. Public-information offline support
+`docs/ui-consistency.md` now records British-Canadian `-ise` house spelling and the
+French-Canadian no-space-before-`: ; ? !` rule, with explicit exclusions for
+identifiers, CSS properties, APIs, data keys, URLs, proper names, and quotations.
+User-facing English copy was audited for the targeted American forms, and current
+French locale JSON plus Resources copy was normalized to the punctuation rule.
 
-After the first successful online load/install, make these public surfaces reloadable offline:
-
-- home;
-- schedule;
-- individual event details with their actual event IDs/data;
-- maps and map assets;
-- resources;
-- sponsors;
-- participant pass.
-
-Keep organizer, metrics, authentication, RSVP, claim, participant-profile, and private API responses network-only. They must show an explicit unavailable/offline state rather than cached private content.
-
-An earlier offline prototype, in an abandoned worktree and never merged, is
-requirements evidence only. It omits home, precaches a parameterless `/schedule/event`, alters unrelated configuration, and hand-edits worker behavior. Reimplement on current main after reading the installed Next.js 16 and `next-pwa` documentation. Test the production service worker, update/activation behavior, populated schedule data, route fallback, and Android offline reload.
-
-### 5. Targeted bilingual terminology
-
-Approved changes:
-
-- French `Metrics` → `Statistiques`;
-- French `Interne` → `Outils organisateurs`;
-- organizer navigation `QR` → `Scanner`;
-- French scanner page title → `Lecteur de codes QR`.
-
-Already-correct `Accueil` and translated map reset controls should not be reopened.
-Keep the two Devpost deadlines and leave other Resources content unchanged unless it
-receives a separate content review. Verify the four terms in both locale files and the
-rendered organizer and participant views.
-
-### 6. EEF aspect-ratio hardening — low priority
-
-The current sponsor SVG already has the accepted crop, transparent cutouts, orange
-emblem, and black text. The remaining small improvement is to add
-`preserveAspectRatio="xMidYMid meet"` to `public/assets/sponsors/EEF.svg`, then validate
-the XML, render it at sponsor-card size, and compare its aspect ratio. Do not port the
-older `review/history-cleanup-ready` sponsor-list commit; its tiers, links,
-dimensions, and placeholder assets are obsolete relative to `main`.
+The approved labels are now `Statistiques`, `Outils organisateurs`, navigation
+`Scanner`, and `Lecteur de codes QR`. The two Devpost deadlines and the closing novelty
+quotation remain unchanged. The EEF SVG has `preserveAspectRatio="xMidYMid meet"`;
+`xmllint` passed and a 354×110 white-background render retained the orange emblem,
+black text, transparent cutouts, and accepted proportions.
 
 ## How to use the review findings
 
-The findings below were independently reviewed at the pre-merge branch `faebc48`.
-They are candidates to triage, not authorization to land every suggestion. Verify
-each against freshly fetched `main` before changing code. Prioritize the retired
-RSVP documentation before an invitation campaign and the ambiguous scanner selector
-before volunteers use repeated station names. The audit-transaction question needs an
+The open findings below were independently reviewed at the pre-merge branch `faebc48`.
+They are candidates to triage, not authorization to land every suggestion. Verify each
+against freshly fetched `main` before changing code. Prioritize the retired RSVP
+documentation before an invitation campaign. The audit-transaction question needs an
 explicit product decision; the remaining UI, build-flag, and migration-naming items
-can be scoped with related work. Preserve applied migrations exactly as they are.
+can be scoped with related work. Preserve applied migrations exactly as they are. The
+scanner selector and Canadian-language findings from that review are resolved by the
+implementation section above and have been removed from the open list.
 
 ## Review findings
 
@@ -300,35 +298,6 @@ applicants. A reader following the stated authoritative contract would build it 
 **Fix:** update those sections and cross-reference the runbook. `Code.gs` was updated in
 lockstep, so only the prose is stale.
 
-### The scanner station selector cannot distinguish repeated event names
-
-`src/pages/qr/index.tsx:90-95` labels each option
-`` `${t(`workflow.${event.scannerWorkflow}`)} — ${name}` `` with no time, and
-`events.scannable` returns every event whose `end` is later than 30 minutes ago. The
-authoritative schedule observed on 2026-09-23 contained repeated names (counts are from
-the private schedule CSV, which is not in this repository):
-
-| Occurrences | Selector label                                      |
-| ----------- | --------------------------------------------------- |
-| 5           | `Food — Latte Lab`                                  |
-| 4           | `Attendance — Career Fair`                          |
-| 3           | `Attendance — Judging`                              |
-| 2 each      | `Food — Snacks`, `Food — Breakfast`, `Food — Lunch` |
-
-Before the event begins, all 41 events are in the list, so a volunteer sees five
-identical `Food — Latte Lab` entries and must pick by position alone. The list is
-ordered by `start`, which is the only cue. Selecting the wrong occurrence records
-`Presence` against the wrong event row; it is recoverable through the manual `+`/`−`
-adjustments, but only once someone notices.
-
-This is adjacent to deferred item 3 but not covered by it: that item persists the
-selection and adds feedback, which would make a wrong choice _sticky_ rather than
-prevent it.
-
-**Suggested fix:** include the start time (and date where the run spans days) in the
-option label, e.g. `Food — Latte Lab · Sat 1:30 PM`. This is a label-only change in one
-component and does not need the deferred `scannerEnabled` work.
-
 ### An RSVP decision is rolled back if its audit log write fails
 
 `src/server/repositories/prisma-rsvp-management.ts` creates the `Log` row inside the
@@ -368,13 +337,13 @@ be deleted from the migration history.
 **Fix:** no change to existing migrations. Require a unique, generator-produced
 timestamp prefix for every future migration.
 
-### The organizer event editor modal has no focus trap or Escape handler
+### The organiser event editor modal has no focus trap or Escape handler
 
 `src/components/ScheduleEventDialog.tsx` uses the native `<dialog>` element with
 `showModal()`, which provides a focus trap, Escape via `onCancel`, and an inert
 background. `src/components/EventEditor.tsx` still renders a `createPortal` div with
 `role="dialog" aria-modal="true"` and neither behaviour, so keyboard focus escapes into
-the page behind it. The organizer-facing dialog is now the less accessible of the two,
+the page behind it. The organiser-facing dialog is now the less accessible of the two,
 and the better pattern already exists in the codebase.
 
 ### The event reminder control resets on every refetch
@@ -410,43 +379,37 @@ checklist above: a build cannot be run without that file.
 **Fix:** honour the flag in `src/env/server.mjs`, or delete the flag and its comment and
 document that a build requires the placeholder env file.
 
-### British-Canadian English consistency in user-facing text
-
-The repository mixes American and Canadian spelling in English user-facing copy.
-This is a style issue, not a functional defect. Inventory rendered UI text (including
-validation messages, email templates, and other participant-facing copy), then
-document the **British-Canadian** house style in `docs/ui-consistency.md` and update
-the copy consistently: `colour`, `centre`, `organise`, `organisation`, and analogous
-forms where appropriate. This `-ise`/`-isation` preference is an explicit house-style
-choice even where other Canadian authorities use `-ize`/`-ization`. Use the team's
-licensed _Canadian Press Stylebook_ for other editorial questions, but let the
-explicit house spelling preference prevail if they differ. Verify the edition
-actually available to the team rather than hard-coding the proposed "16th edition,
-2023" citation ([the publisher currently lists a 20th edition](https://the-canadian-press-store.myshopify.com/collections/print-editions)).
-Scope the edit to English prose only:
-preserve identifiers, CSS properties, APIs, dependencies, data keys, proper names,
-quoted source material, and French translations. Review the resulting screens and
-messages in context, not just search-and-replace results.
-
-For French-Canadian (`fr-CA`) user-facing copy, the project's house typography is
-**no space before `:`, `;`, `?`, or `!`** (for example, `Prêt?`, not `Prêt ?`). Add
-this rule to `docs/ui-consistency.md` alongside the English spelling rule, audit
-the rendered French strings and templates, and fix inconsistent copy without
-changing variable interpolation, placeholders, URLs, or code syntax. This is a
-project preference; do not infer it from the English spelling rule or apply it to
-other locales.
-
 ## Local prototype disposition and chronology
 
-The primary `review/history-cleanup-ready` checkout and detached `2cc8`/`43fe`
-worktrees contained mixed old implementation, review reports, and untracked files.
-The useful requirements are captured above. They must not be merged or deployed
-wholesale: their RSVP, scanner, offline, and push variants predate later safeguards on
-`main`. The `rsvp-live-test` worktree has a superseded remaining-work report. The
-separate ignored `.env` files in some otherwise clean worktrees may contain credentials;
-preserve them until their owner decides where to retain the settings. The unique
-`65033ce` sponsor-list commit is obsolete. Create new work in a clean worktree from
-fresh `origin/main`.
+The primary `review/history-cleanup-ready` checkout and detached `2cc8`/`43fe` and
+`rsvp-live-test` worktrees contained mixed old implementation, review reports, and
+untracked files. Their useful requirements are captured above; their code must not be
+merged or deployed wholesale. The obsolete worktrees were removed. Before switching
+the primary checkout to `main`, all of its tracked and untracked prototype work was
+saved recoverably as `stash@{0}` with message `archive:
+review-history-cleanup-ready prototypes before 2026-09-23 cleanup`. The ignored
+primary-checkout `.env`, `google-credentials.json`, and `private-rsvp/` were not moved,
+deleted, or committed. The unique `65033ce` sponsor-list commit is obsolete.
+
+The following 16 non-`main` remote branches remain. They survived the cleanup because
+they are long-lived year branches or standalone histories without sufficient merged-PR
+evidence to treat deletion as lossless. The repository history rewrite makes a simple
+“not merged” result inconclusive. Do not deploy them or merge them wholesale; delete
+one only after an owner or a content-level review confirms its unique commits are no
+longer needed.
+
+- Year snapshots: `2023`, `2025`.
+- Older data/registration/auth experiments: `database-refactor`,
+  `feat/model-change-luis`, `hacker-registrations-v2`, `microsoft-login`,
+  `ticket-tailor`.
+- Event and participant feature histories: `feat/discord-team-operations`,
+  `feature/event-notification`, `notifications`, `fix/revert-qr-rotation`,
+  `feat/qr-code-offline-support`, `feat/qr-code-offline-support-v2`.
+- Content/tooling histories: `hackhers`, `hardware-tracking-tool`,
+  `localization-wip`.
+
+`origin/HEAD` is only the symbolic remote default and is not an additional branch.
+Create future work from fresh `origin/main`.
 
 Chronology relevant to a future agent:
 
@@ -464,5 +427,11 @@ Chronology relevant to a future agent:
 5. The manually dispatched workflow deployed revision `0000058` using image `85af7abb`.
    PR 342 then recorded that provider state in this handoff; final `main` was `d30cfc2`.
 6. A later cleanup deleted 92 closed automated or merged PR branches. Historical
-   branches without a PR and worktrees with uncommitted or ignored private data were
-   retained. Check the live branch and worktree inventory before any further cleanup.
+   branches without a PR were retained. The final local cleanup archived the primary
+   prototype changes in the stash named above, removed every auxiliary worktree, and
+   left only the primary checkout on `main`. Check the live branch, stash, and worktree
+   inventory before any further cleanup.
+7. On current `main`, the event-readiness implementation was rebuilt rather than copied
+   from those prototypes: scanner work in `c38c958`, offline work in `5d90a6d` and
+   `c2fbf34`, and language/EEF work in `a758b15`. No production deployment had
+   occurred when this handoff was updated.
