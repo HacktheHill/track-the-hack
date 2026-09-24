@@ -178,21 +178,21 @@ model Presence {
 }
 
 model Event {
-  id                     String          @id @default(cuid())
-  importKey              String?         @unique
+  id                     String              @id @default(cuid())
+  importKey              String?             @unique
   seriesKey              String?
   start                  DateTime
   end                    DateTime
-  hidden                 Boolean         @default(false)
+  hidden                 Boolean             @default(false)
   name                   String
   nameFr                 String
-  type                   EventType       @default(ALL)
+  type                   EventType           @default(ALL)
   interests              EventInterest[]
-  scannerEnabled         Boolean         @default(true)
-  scannerWorkflow        ScannerWorkflow @default(ATTENDANCE)
+  scannerEnabled         Boolean             @default(true)
+  scannerWorkflow        ScannerWorkflow     @default(ATTENDANCE)
   host                   String?
-  description            String          @db.Text
-  descriptionFr          String          @db.Text
+  description            String              @db.Text
+  descriptionFr          String              @db.Text
   room                   String
   roomFr                 String?
   image                  String?
@@ -205,8 +205,8 @@ model Event {
   notificationLeaseUntil DateTime?
   presences              Presence[]
   organizerPresences     OrganizerPresence[]
-  createdAt              DateTime        @default(now())
-  updatedAt              DateTime        @default(now()) @updatedAt
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @default(now()) @updatedAt
 
   @@index([seriesKey, start])
 }
