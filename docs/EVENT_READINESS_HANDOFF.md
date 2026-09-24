@@ -11,8 +11,10 @@ or prototype branch wholesale.
 ## Acceptance target and private data boundary
 
 Run the remaining acceptance checks against release
-`21924e0fbcc6287dca3ae8965cac5067ee32f973`, Azure revision
-`track-the-hack--0000059`. Before testing, confirm that it is still the live revision;
+`94e837d56e6ae35a83aa84faf37f6551f233419c`, Azure revision
+`track-the-hack--0000060`. The deployment workflow completed successfully on
+2026-09-23 and Azure reported the revision healthy, provisioned, running, and receiving
+100% of traffic. Before testing, confirm that it is still the live revision;
 later documentation-only commits do not change the test target. If application code or
 production has advanced, reassess the target instead of assuming these instructions
 still describe it. Keep Cloudflare Access enabled during testing. Public launch is a
@@ -89,23 +91,42 @@ release fully accepted.
 
 ## 2. Resolve recipient decisions and run the one-recipient RSVP acceptance test
 
-Sheet-side provisioning and reconciliation are complete: all 664 accepted rows have a
-durable participant ID, a valid signed management link, `PENDING` status, the intended
-deadline `2026-09-25T03:59:59.000Z`, and an RSVP refresh timestamp. The Sheet and
-production participant counts match. Do not rerun preparation merely to repeat this
-check. Preparation provisions records and links; it sends no email.
+Sheet-side provisioning and reconciliation are complete. Before the test-row change,
+all 664 accepted rows had a durable participant ID, a valid signed management link,
+`PENDING` status, the intended deadline `2026-09-25T03:59:59.000Z`, and an RSVP refresh
+timestamp, and the Sheet and production participant counts matched. Row 2 was then
+deliberately changed from `Excluded (member)` to `Accepted` for the one-recipient test.
+It already has a participant ID and signed link, but its existing Tracker RSVP state is
+`CONFIRMED`; do not mistake that stale test state for a fresh invitation response. Do
+not rerun preparation merely to repeat provisioning checks. Preparation provisions
+records and links; it sends no email.
 
 No invitation was known to have been sent at the last audit. Before generating the
-campaign, decide how to handle the eight accepted row pairs that still share a
-normalised recipient address: 31/329, 37/668, 79/347, 168/332, 296/432, 382/641,
-428/598, and 454/559. Each row has its own participant ID and signed link, so the
-campaign generator correctly rejects the duplicates instead of guessing whether one or
-both applications should receive mail.
+campaign, resolve the eight accepted row pairs that still share a normalised recipient
+address: 31/329, 37/668, 79/347, 168/332, 296/432, 382/641, 428/598, and 454/559.
+Each pair has the same normalised email address, a later second submission, and strong
+same-person evidence; all eight should use the later row. The strongest pair has
+identical narratives and only six of 84 compared cells changed. The least certain pair
+still matches 12 of 14 identity fields, including phone, age, and school, but changes a
+last-name field and some supporting material; it is best explained as a corrected
+resubmission rather than a second applicant. The other six match names plus core
+identity details while updating phone/contact fields, links, files, accessibility or
+travel answers, or rewritten narratives. No pair shares a submission ID, respondent
+ID, or participant ID, so production currently contains distinct participant records
+for both rows in every pair.
 
-Row 2 is not a suitable default live test: its current admission status is `Excluded
-(member)` even though stale Tracker fields show a confirmed RSVP. Select a different,
-explicitly approved accepted row. External email requires action-time approval of the
-exact recipient, sender, subject, template, and dry-run output.
+The Sheet status list has no `Duplicate` or `Superseded` value. Before changing live
+records, obtain confirmation to mark each earlier row `Rejected` and record
+`Duplicate submission; superseded by row N` in its review reasoning. A Sheet-only
+change prevents duplicate campaign recipients but leaves eight unused production
+participant records. Deleting those records is a separate destructive cleanup and
+requires action-time confirmation of the exact eight participant IDs after confirming
+none has meaningful RSVP, claim, session, presence, or audit state.
+
+Row 2 is the explicitly approved live test row, but reset or reissue its existing
+confirmed RSVP state only after confirming the exact reversible test operation.
+External email requires action-time approval of the exact recipient, sender, subject,
+template, and dry-run output.
 
 1. Set `TRACK_TEST_SUBMISSION_ID` to the approved accepted row's submission ID and run
    `prepareTestSubmissionForRsvp()` only if fresh setup is needed. Remove the property
@@ -124,18 +145,3 @@ Do not send the full campaign without separate action-time approval of final rec
 count, suppressions, sender, deadline, subject, template, and dry-run output.
 `scripts/prepare-rsvp-campaign.mts` creates a private CSV and never sends mail. See
 `docs/RSVP_EMAIL_RUNBOOK.md` for the message and suppression review.
-
-## 3. Retained remote branches
-
-The obsolete remote branches have been deleted. Exactly four non-`main` branches remain:
-
-- `2023` and `2025` are intentional year snapshots from histories that do not share a
-  useful merge base with the rewritten `main`.
-- `hackhers` preserves event-specific HackHers challenge narratives that are not in the
-  current or archived resource pages on `main`.
-- `ticket-tailor` contains a potentially valuable event-specific registration-question
-  and response-capture concept. It does not fit the current architecture well enough to
-  cherry-pick. Retain it until the product owner either declines that feature or asks
-  for a narrow reimplementation against the current RSVP model.
-
-`origin/HEAD` is symbolic and is not an additional branch.
