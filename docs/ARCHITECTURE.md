@@ -35,6 +35,8 @@ Tracker owns its transactional operational state:
 - events, participant interests, reminders, Presence counters, and audit records;
 - organiser users and roles;
 - aggregate operational metrics.
+- quantity-based hardware inventory, loans, and append-only return outcomes;
+- Latte Lab availability, anonymised order configuration, and queue state.
 
 The Sheet refreshes RSVP state from Tracker. A stale Sheet value is not evidence of the
 current participant choice.
@@ -180,6 +182,35 @@ Participants may save interests in visible events. Only their participant sessio
 change their selections. Organiser attendance scans may display those public-event
 interests; food, merchandise, and check-in workflows cannot retrieve them.
 
+## Event Services
+
+Hardware Desk and Latte Lab are separate domains. They share participant sessions,
+organiser authorization, audit conventions, transactional mutations, idempotency, and
+localisation, but no generic store, cart, inventory, or workflow framework.
+
+Hardware inventory is quantity-based. A checkout atomically moves units from available
+to on loan. Each return action is append-only and divides units into good, damaged, and
+missing outcomes. Good units become available; damaged and missing units remain
+unavailable. At all times, total quantity equals available plus outstanding loans plus
+damaged plus missing. There is no application inventory editor or repair workflow. The
+restricted source Sheet is used only to prepare the reviewed initial import described
+in `HARDWARE_IMPORT.md`; after import, Tracker owns the operational inventory.
+
+Latte recipes and compatibility rules are code-owned. Ingredient availability is a
+boolean operational switch, not stock accounting. Lab closure prevents new orders but
+does not alter the queue. A database-unique active-participant key enforces one Queued,
+Preparing, or Ready order per participant, including concurrent submissions. Completed
+and cancelled orders retain anonymised configuration and timestamps for operations.
+
+Both domains use a temporary, 1–40 character pickup name because staff need a spoken
+label at the physical counter and the pseudonymous participant record has no name. This
+is not a participant-profile field. Hardware clears it transactionally when every loan
+unit has an outcome; Latte Lab clears it on completion or cancellation. Audit logs use
+only opaque loan, order, and participant IDs. Hardware records only acknowledgements
+that a physical ID was collected or returned—never its type, number, image, or other
+contents. Participant responses never expose other participants, pickup names,
+organiser IDs, or audit data.
+
 ## Public offline data
 
 The service worker may cache only these public surfaces after an online load: home,
@@ -188,7 +219,7 @@ static participant pass. `events.all` is isolated into its own GET before cachin
 can never share a tRPC batch with private data. Hidden events are filtered server-side.
 
 All other APIs are network-only. Organiser, metrics, authentication, RSVP, claim,
-participant-profile, and private Next data routes must show an offline/unavailable state
+participant-profile, Event Services, and private Next data routes must show an offline/unavailable state
 rather than cached private content. The custom push worker is independent of the route
 cache.
 

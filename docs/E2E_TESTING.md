@@ -113,6 +113,69 @@ Script mapper, and loopback SMTP. It must cover:
 10. all four scanner workflow response allowlists and aggregate metrics;
 11. cleanup of generated participants, sessions, capabilities, Presence, and logs.
 
+## Event Services acceptance
+
+Use seeded development participants and disposable imported inventory. Never use the
+production import or a real participant merely to test these paths.
+
+For Hardware Desk, dry-run a fixture containing valid rows plus duplicate keys,
+normalized duplicate names, unknown categories, negative/fractional quantities, and
+bulk wording. Apply the valid fixture to an empty target; prove a second apply and a
+target with a legacy `Hardware` row both fail. Then complete one journey:
+
+1. With an active participant session, open Services and search the catalogue in both
+   languages. Confirm exact quantities and that no cart or mutation is offered.
+2. As an organiser, build a multi-item cart, adjust quantities, scan the participant QR,
+   enter a temporary pickup name, acknowledge physical-ID collection, and review the
+   final cart before one checkout.
+3. From two organiser sessions, race checkout of the last unit. Exactly one succeeds,
+   no quantity becomes negative, and retrying the winning idempotency key creates no
+   second loan.
+4. Find the loan by QR, then by pickup name. Partially return one line. On a later atomic
+   return, split units across Good, Damaged, and Missing; verify only Good is available.
+5. Retry the return key and confirm no duplicate outcome. Finish the remaining lines,
+   acknowledge returning the physical ID, and verify the temporary name disappears
+   from database results and search. Repeat closure without the acknowledgement and
+   confirm it warns rather than blocking the physical-desk decision.
+6. Reconcile each item: total equals available plus open-loan units plus damaged plus
+   runtime missing. Confirm logs contain opaque IDs but no pickup name or ID details.
+
+For Latte Lab, leave the seeded lab closed and complete this journey at the smallest
+supported phone viewport:
+
+1. Open Services as a participant. Confirm the menu says closed and no order can be
+   submitted. As an organiser, enable the lab and all ingredients.
+2. Time a normal order from drink selection through review and submission; it should
+   take under 30 seconds. Check required milk/base choices, optional defaults, direct
+   editing, one prominent submit action, and the dairy/almond badges plus persistent
+   cross-contact notice.
+3. Double-click submit and race a second device for the same participant. Exactly one
+   active order exists. Verify Queued position, cancel while Queued, and rejection of a
+   participant cancellation after preparation starts.
+4. Place two participant orders. On the organiser queue, move the first through
+   Queued → Preparing → Ready → Completed. Confirm skipped, reversed, repeated, stale,
+   and concurrently raced transitions fail, while retrying one successful transition
+   key is idempotent. Participant polling must replace queue position with Preparing
+   and Ready status.
+5. Confirm terminal orders clear pickup names while retaining configuration and
+   timestamps. Cancel active orders with each supported reason class and verify the same
+   privacy behaviour.
+6. Toggle ice, each milk, each syrup, sweeteners, and every fixed base ingredient. A
+   drink with no valid configuration is disabled; unavailable options disappear or are
+   disabled; a stale hidden configuration is rejected server-side. Existing queued
+   orders remain unchanged. Closing the lab blocks new orders without altering them.
+7. Exercise every drink/temperature/milk/flavour/sweetener combination in focused tests,
+   not the browser. In the browser, sample one optional-milk drink, one required-milk
+   drink, London Fog, and Hot Chocolate.
+
+For both services, repeat the browser path in English and French where labels are
+longest. Check keyboard-only operation, visible focus, labels, associated errors, screen
+reader announcements, and 44-pixel-or-larger touch controls. In a production PWA build,
+load `/services`, `/hardware`, `/latte-lab`, `/internal/hardware`, and
+`/internal/latte-lab`, then go offline. Each must fail closed to the localized offline
+page; catalogue quantities, loans, orders, queue position, pickup names, and ingredient
+availability must not appear in Cache Storage or private Next-data responses.
+
 The automated PWA test must build and start production mode, activate the service
 worker, load an authenticated profile, go offline, and verify that `/profile` becomes
 the same QR-only pass without profile details. Public-route offline acceptance is also
