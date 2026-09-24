@@ -234,9 +234,20 @@ try {
 	const verify = (value: string, session = cookie) => post("/api/discord/verify", { token: value }, session);
 	assert.equal(new URL(personalLink).search, "");
 	assert.equal(personalLink.includes(discordIds[0] ?? "missing"), false);
-	assert.equal((await fetch(`${baseUrl}/api/discord/verify`)).status, 405);
+	assert.equal((await fetch(`${baseUrl}/api/discord/verify`)).status, 401);
+	assert.equal((await fetch(`${baseUrl}/api/discord/verify`, { headers: { Cookie: cookie } })).status, 403);
+	assert.equal((await verify(token)).status, 403, "Verification must remain blocked before check-in");
 	assert.equal((await verify(token, "")).status, 401);
 	assert.equal((await verify(token, "participant_session=forged")).status, 401);
+	const checkInEvent = await prisma.event.findFirst({
+		where: { scannerWorkflow: "CHECK_IN", scannerEnabled: true },
+		select: { id: true },
+	});
+	assert.ok(checkInEvent, "The development fixture must include a check-in event");
+	await prisma.presence.createMany({
+		data: ids.map(hackerId => ({ hackerId, eventId: checkInEvent.id, label: "discord-e2e", value: 1 })),
+	});
+	assert.equal((await fetch(`${baseUrl}/api/discord/verify`, { headers: { Cookie: cookie } })).status, 200);
 	assert.equal((await post("/api/discord/verify", { token, hackerId: otherId }, cookie)).status, 400);
 	assert.equal((await post("/api/discord/verify", { token, discordId: discordIds[0] }, cookie)).status, 400);
 	assert.equal(
@@ -285,10 +296,11 @@ try {
 	});
 	const anonymousContext = await browser.newContext();
 	const anonymousPage = await anonymousContext.newPage();
+	anonymousPage.setDefaultNavigationTimeout(120_000);
 	await anonymousPage.goto(personalLink);
-	await anonymousPage.getByRole("button", { name: "Verify Discord account" }).click();
-	await anonymousPage.getByRole("status").getByText("Open your day-of access link", { exact: false }).waitFor();
-	await anonymousPage.getByRole("button", { name: "Organizer Sign In" }).click();
+	await anonymousPage.getByRole("status").getByText("Activate participant access", { exact: false }).waitFor();
+	assert.equal(await anonymousPage.getByRole("button", { name: "Verify Discord account" }).isDisabled(), true);
+	await anonymousPage.getByRole("button", { name: "Organiser Sign In" }).click();
 	await anonymousPage.waitForURL(url => url.pathname === "/auth/sign-in");
 	assert.equal(new URL(anonymousPage.url()).searchParams.get("callbackUrl"), "/discord");
 	await anonymousContext.close();
@@ -297,6 +309,7 @@ try {
 		{ name: "participant_session", value: cookie.slice("participant_session=".length), url: baseUrl },
 	]);
 	const page = await context.newPage();
+	page.setDefaultNavigationTimeout(120_000);
 	await page.goto(personalLink);
 	assert.deepEqual(
 		stateSchema.parse(await command({ command: "state" })).mappings,
@@ -332,6 +345,7 @@ try {
 	// A real organizer session must not stand in for participant access.
 	const organizerContext = await browser.newContext();
 	const organizerPage = await organizerContext.newPage();
+	organizerPage.setDefaultNavigationTimeout(120_000);
 	await organizerPage.goto(`${baseUrl}/auth/sign-in?callbackUrl=${encodeURIComponent(`${baseUrl}/qr`)}`);
 	await organizerPage.getByRole("button", { name: "Sign in as local organiser" }).click();
 	await organizerPage.waitForURL(url => url.pathname === "/qr");
