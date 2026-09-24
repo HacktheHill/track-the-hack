@@ -1,6 +1,8 @@
 import type { GetStaticProps, NextPage } from "next";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
+import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import type { Components } from "react-markdown";
 import ReactMarkdown from "react-markdown";
@@ -10,13 +12,14 @@ import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeSlug from "rehype-slug";
 import remarkToc from "remark-toc";
 
+import { sponsorsData, SponsorTier } from "@/client/sponsors";
 import App from "@/components/App";
 import en from "./en.md";
 import fr from "./fr.md";
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
 	return {
-		props: await serverSideTranslations(locale ?? "en", ["common", "navbar", "resources"]),
+		props: await serverSideTranslations(locale ?? "en", ["common", "navbar", "resources", "sponsors"]),
 	};
 };
 
@@ -236,8 +239,10 @@ const plugins = [
 
 const Resources: NextPage = () => {
 	const { t } = useTranslation("resources");
+	const { t: sponsorsT } = useTranslation("sponsors");
 	const router = useRouter();
 	const { locale } = router;
+	const sponsorsByTier = (tier: SponsorTier) => sponsorsData.filter(sponsor => sponsor.tier === tier);
 
 	return (
 		<App
@@ -261,6 +266,58 @@ const Resources: NextPage = () => {
 			>
 				{locale === "fr" ? fr : en}
 			</ReactMarkdown>
+			<section
+				id="sponsors"
+				aria-labelledby="sponsors-title"
+				className="mx-auto flex w-full max-w-6xl flex-col items-center gap-8 px-4 sm:px-8"
+			>
+				<h2 id="sponsors-title" className="ui-page-title text-center">
+					{sponsorsT("title")}
+				</h2>
+				<p className="text-center text-xl">{sponsorsT("description")}</p>
+				{Object.values(SponsorTier).map(tier => {
+					const sponsors = sponsorsByTier(tier);
+					if (sponsors.length === 0) return null;
+
+					return (
+						<div
+							key={tier}
+							className={
+								tier === SponsorTier.BACKBENCHER
+									? "flex w-full flex-wrap items-center justify-center gap-4"
+									: "flex w-full flex-wrap items-center justify-evenly gap-4"
+							}
+						>
+							{sponsors.map(sponsor => (
+								<Link
+									key={sponsor.id}
+									className={`flex min-w-0 items-center justify-center drop-shadow-xl transition-transform hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-4 ${
+										sponsor.tier === SponsorTier.IN_KIND
+											? "w-[calc(50%-0.5rem)] max-w-[220px]"
+											: sponsor.tier === SponsorTier.BACKBENCHER
+												? "w-[calc(50%-0.5rem)] max-w-[500px]"
+												: "max-w-full"
+									}`}
+									href={`/sponsors/${sponsor.id}`}
+								>
+									<Image
+										src={sponsor.logo}
+										alt={sponsor.name}
+										width={sponsor.displayWidth}
+										height={sponsor.displayHeight}
+										className={
+											sponsor.tier === SponsorTier.IN_KIND ||
+											sponsor.tier === SponsorTier.BACKBENCHER
+												? "h-auto w-full object-contain"
+												: "h-auto max-w-full object-contain"
+										}
+									/>
+								</Link>
+							))}
+						</div>
+					);
+				})}
+			</section>
 		</App>
 	);
 };
