@@ -23,5 +23,22 @@
 	"signing-out": "Déconnexion…",
 	"sign-out-error": "Impossible de vous déconnecter. Vérifiez votre connexion et réessayez.",
 	"yes": "Oui",
-	"no": "Non"
+	"no": "Non",
+	"notifications": {
+		"title": "Notifications",
+		"explanation": "Choisissez comment recevoir les rappels d’événements et de repas. Si les deux canaux sont activés, vous recevrez les deux.",
+		"discord": "Messages privés Discord",
+		"push": "Notifications poussées Web",
+		"discord-linked": "Votre compte Discord vérifié est connecté.",
+		"discord-unlinked": "Effectuez la vérification avec le bot Discord de Hack the Hill avant d’activer les messages privés.",
+		"status-unavailable": "L’état du lien Discord est temporairement indisponible.",
+		"push-enabled": "Les notifications poussées sont activées sur cet appareil.",
+		"push-disabled": "Les notifications poussées sont désactivées.",
+		"push-unavailable": "Les notifications poussées sont indisponibles ou bloquées dans ce navigateur. Vérifiez les paramètres du navigateur.",
+		"enable": "Activer",
+		"disable": "Désactiver",
+		"loading": "Chargement des préférences de notification…",
+		"unavailable": "Les préférences de notification sont temporairement indisponibles.",
+		"update-error": "Impossible de modifier les préférences. Réessayez."
+	}
 }

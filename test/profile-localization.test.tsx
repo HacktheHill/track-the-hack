@@ -77,6 +77,7 @@ async function render(language: "en" | "fr", eventLabel: string) {
 			<SessionProvider session={null}>
 				<I18nextProvider i18n={i18n}>
 					<Profile
+						notificationPreferences={null}
 						profile={{
 							...profile,
 							presences: [{ id: "presence-1", label: eventLabel, value: 1 }],

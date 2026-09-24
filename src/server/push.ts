@@ -1,7 +1,8 @@
-import { createECDH, ECDH, randomUUID } from "node:crypto";
+import { createECDH, createHash, ECDH, randomUUID } from "node:crypto";
 import type { PrismaClient } from "@prisma/client";
 import webPush from "web-push";
 import { z } from "zod";
+import { deliverDiscordNotifications } from "@/server/services/discord-notifications";
 
 export type PushSubscriptionPayload = {
 	endpoint: string;
@@ -95,7 +96,8 @@ export const startEventReminderScheduler = () => {
 	if (reminderScheduler) return reminderScheduler;
 	let running = false;
 	const tick = async () => {
-		if (running || !getPushConfiguration()) return;
+		if (running || (!getPushConfiguration() && (!process.env.DISCORD_BOT_URL || !process.env.INTERNAL_API_SECRET)))
+			return;
 		running = true;
 		try {
 			await sendDueEventNotifications();
@@ -164,7 +166,11 @@ export const unregisterEventPushSubscription = async (
 
 // A total request deadline (including DNS/connect/response) stays well below the
 // two-minute lease. web-push's own timeout only limits socket inactivity.
-const sendPushNotification = async (subscription: PushSubscriptionPayload, payload: string, signal: AbortSignal) => {
+export const sendPushNotification = async (
+	subscription: PushSubscriptionPayload,
+	payload: string,
+	signal: AbortSignal,
+) => {
 	const configuration = getPushConfiguration();
 	if (!configuration) throw new Error("Push notifications unavailable");
 	const request = webPush.generateRequestDetails(subscription, payload, { vapidDetails: configuration });
@@ -196,8 +202,10 @@ export const sendDueEventNotifications = async (
 	prismaClient?: PrismaClient,
 	sendNotification = sendPushNotification,
 ) => {
-	// Never mark reminders complete while sending is unavailable.
-	if (!getPushConfiguration()) return 0;
+	// Never mark reminders complete while every configured transport is unavailable.
+	const pushConfigured = getPushConfiguration() !== null;
+	const discordConfig = { botUrl: process.env.DISCORD_BOT_URL, secret: process.env.INTERNAL_API_SECRET };
+	if (!pushConfigured && (!discordConfig.botUrl || !discordConfig.secret)) return 0;
 	const client = prismaClient ?? (await getPrismaClient());
 	const dueEvents = await client.event.findMany({
 		where: { hidden: false, start: { lte: new Date() }, notifiedAt: null },
@@ -217,6 +225,96 @@ export const sendDueEventNotifications = async (
 			// Fast providers can drain many batches; a slow event yields after 30s.
 			const deadline = AbortSignal.timeout(30_000);
 			const failedIds: string[] = [];
+			const participantReminders = await client.participantEventReminder.findMany({
+				where: { eventId: event.id },
+				include: { hacker: { include: { notificationPreference: true, participantPushSubscription: true } } },
+			});
+			for (const reminder of participantReminders) {
+				if (!(await renewLease(client, event.id, token))) break;
+				const preference = reminder.hacker.notificationPreference;
+				let pushTerminal = reminder.pushCompletedAt !== null;
+				let discordTerminal = reminder.discordCompletedAt !== null;
+				if (
+					!pushTerminal &&
+					pushConfigured &&
+					preference?.pushEnabled &&
+					reminder.hacker.participantPushSubscription
+				) {
+					const subscription = reminder.hacker.participantPushSubscription;
+					try {
+						// A participant reminder owns this endpoint for this event. Remove any
+						// legacy/anonymous registration before sending so the old path cannot
+						// deliver a duplicate even if it was registered after participant opt-in.
+						await client.pushSubscription.deleteMany({
+							where: { eventId: event.id, endpoint: subscription.endpoint },
+						});
+						const status = await sendNotification(
+							{
+								endpoint: subscription.endpoint,
+								keys: { p256dh: subscription.p256dh, auth: subscription.auth },
+							},
+							JSON.stringify({
+								title: subscription.locale === "fr" ? event.nameFr : event.name,
+								body:
+									subscription.locale === "fr"
+										? "Cet événement a commencé."
+										: "This event has started.",
+								tag: `event-${event.id}`,
+								icon: "/icons/android-chrome-192x192.png",
+								data: {
+									url: `${subscription.locale === "fr" ? "/fr" : ""}/schedule/event?id=${encodeURIComponent(event.id)}`,
+								},
+							}),
+							AbortSignal.timeout(20_000),
+						);
+						if (status === 404 || status === 410) {
+							await client.participantPushSubscription.deleteMany({
+								where: { hackerId: reminder.hackerId, endpoint: subscription.endpoint },
+							});
+							await client.notificationPreference.updateMany({
+								where: { hackerId: reminder.hackerId },
+								data: { pushEnabled: false },
+							});
+							pushTerminal = true;
+						} else if (status >= 200 && status < 300) pushTerminal = true;
+					} catch {
+						pushTerminal = false;
+					}
+				} else if (!preference?.pushEnabled || !reminder.hacker.participantPushSubscription) {
+					pushTerminal = true;
+				}
+				if (!discordTerminal && (preference?.discordEnabled ?? true)) {
+					if (!discordConfig.botUrl || !discordConfig.secret) {
+						discordTerminal = false;
+					} else {
+						const digest = createHash("sha256")
+							.update(`event:${event.id}:${reminder.hackerId}:discord`)
+							.digest("hex");
+						const deliveryId = `${digest.slice(0, 8)}-${digest.slice(8, 12)}-5${digest.slice(13, 16)}-a${digest.slice(17, 20)}-${digest.slice(20, 32)}`;
+						const content = `${event.name} / ${event.nameFr}\nThis event has started. / Cet événement a commencé.`;
+						const result = await deliverDiscordNotifications(
+							[{ id: deliveryId, hackerId: reminder.hackerId, content }],
+							discordConfig,
+						);
+						discordTerminal = Boolean(result && result[0]?.outcome !== "temporary_failure");
+					}
+				} else if (!(preference?.discordEnabled ?? true)) {
+					discordTerminal = true;
+				}
+				if (pushTerminal || discordTerminal) {
+					await client.participantEventReminder.updateMany({
+						where: { hackerId: reminder.hackerId, eventId: event.id },
+						data: {
+							pushCompletedAt: pushTerminal ? new Date() : undefined,
+							discordCompletedAt: discordTerminal ? new Date() : undefined,
+						},
+					});
+				}
+				if (pushTerminal && discordTerminal)
+					await client.participantEventReminder.deleteMany({
+						where: { hackerId: reminder.hackerId, eventId: event.id },
+					});
+			}
 			while (!deadline.aborted) {
 				const subscriptions = await client.pushSubscription.findMany({
 					where: { eventId: event.id, id: { notIn: failedIds } },
@@ -284,6 +382,7 @@ export const sendDueEventNotifications = async (
 				AND notificationLeaseUntil > UTC_TIMESTAMP(3) AND notifiedAt IS NULL
 				AND hidden = 0 AND start <= UTC_TIMESTAMP(3)
 				AND NOT EXISTS (SELECT 1 FROM PushSubscription WHERE eventId = ${event.id})
+				AND NOT EXISTS (SELECT 1 FROM ParticipantEventReminder WHERE eventId = ${event.id})
 			`;
 		} finally {
 			await client.event.updateMany({

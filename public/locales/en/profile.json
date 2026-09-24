@@ -23,5 +23,22 @@
 	"signing-out": "Signing out…",
 	"sign-out-error": "Could not sign out. Check your connection and try again.",
 	"yes": "Yes",
-	"no": "No"
+	"no": "No",
+	"notifications": {
+		"title": "Notifications",
+		"explanation": "Choose how you receive event and food-service updates. If both channels are enabled, you will receive both.",
+		"discord": "Discord direct messages",
+		"push": "Web push notifications",
+		"discord-linked": "Your verified Discord account is connected.",
+		"discord-unlinked": "Verify through the Hack the Hill Discord bot before enabling direct messages.",
+		"status-unavailable": "Discord link status is temporarily unavailable.",
+		"push-enabled": "Push notifications are enabled on this device.",
+		"push-disabled": "Push notifications are disabled.",
+		"push-unavailable": "Push is unavailable or blocked in this browser. Check your browser settings.",
+		"enable": "Enable",
+		"disable": "Disable",
+		"loading": "Loading notification preferences…",
+		"unavailable": "Notification preferences are temporarily unavailable.",
+		"update-error": "Could not update notification preferences. Please try again."
+	}
 }

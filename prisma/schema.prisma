@@ -115,13 +115,18 @@ model Hacker {
   walkIn           Boolean      @default(false)
   acceptanceExpiry DateTime
 
-  presences              Presence[]
-  eventInterests         EventInterest[]
-  cancellationCapability CancellationCapability?
-  claimToken             ClaimToken?
-  participantSession     ParticipantSession?
-  hardwareLoans          HardwareLoan[]
-  latteOrders            LatteOrder[]
+  presences                     Presence[]
+  eventInterests                EventInterest[]
+  cancellationCapability        CancellationCapability?
+  claimToken                    ClaimToken?
+  participantSession            ParticipantSession?
+  notificationPreference        NotificationPreference?
+  participantPushSubscription   ParticipantPushSubscription?
+  eventReminders                ParticipantEventReminder[]
+  notificationCohortMemberships NotificationCohortMember[]
+  notificationDeliveries        NotificationDelivery[]
+  hardwareLoans                 HardwareLoan[]
+  latteOrders                   LatteOrder[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -178,21 +183,21 @@ model Presence {
 }
 
 model Event {
-  id                     String              @id @default(cuid())
-  importKey              String?             @unique
+  id                     String                     @id @default(cuid())
+  importKey              String?                    @unique
   seriesKey              String?
   start                  DateTime
   end                    DateTime
-  hidden                 Boolean             @default(false)
+  hidden                 Boolean                    @default(false)
   name                   String
   nameFr                 String
-  type                   EventType           @default(ALL)
+  type                   EventType                  @default(ALL)
   interests              EventInterest[]
-  scannerEnabled         Boolean             @default(true)
-  scannerWorkflow        ScannerWorkflow     @default(ATTENDANCE)
+  scannerEnabled         Boolean                    @default(true)
+  scannerWorkflow        ScannerWorkflow            @default(ATTENDANCE)
   host                   String?
-  description            String              @db.Text
-  descriptionFr          String              @db.Text
+  description            String                     @db.Text
+  descriptionFr          String                     @db.Text
   room                   String
   roomFr                 String?
   image                  String?
@@ -205,8 +210,9 @@ model Event {
   notificationLeaseUntil DateTime?
   presences              Presence[]
   organizerPresences     OrganizerPresence[]
-  createdAt              DateTime            @default(now())
-  updatedAt              DateTime            @default(now()) @updatedAt
+  participantReminders   ParticipantEventReminder[]
+  createdAt              DateTime                   @default(now())
+  updatedAt              DateTime                   @default(now()) @updatedAt
 
   @@index([seriesKey, start])
 }
@@ -223,6 +229,121 @@ model PushSubscription {
 
   @@unique([eventId, endpoint])
   @@index([eventId])
+}
+
+model NotificationPreference {
+  hackerId       String   @id
+  discordEnabled Boolean  @default(true)
+  pushEnabled    Boolean  @default(false)
+  hacker         Hacker   @relation(fields: [hackerId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now()) @updatedAt
+}
+
+model ParticipantPushSubscription {
+  hackerId  String   @id
+  endpoint  String   @unique @db.VarChar(512)
+  p256dh    String
+  auth      String
+  locale    String   @default("en") @db.VarChar(2)
+  hacker    Hacker   @relation(fields: [hackerId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
+model ParticipantEventReminder {
+  hackerId           String
+  eventId            String
+  pushCompletedAt    DateTime?
+  discordCompletedAt DateTime?
+  hacker             Hacker    @relation(fields: [hackerId], references: [id], onDelete: Cascade)
+  event              Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  createdAt          DateTime  @default(now())
+
+  @@id([hackerId, eventId])
+  @@index([eventId])
+}
+
+model NotificationCampaign {
+  id                String                     @id @default(cuid())
+  name              String
+  maximumCohortSize Int
+  seed              String
+  snapshotAt        DateTime
+  snapshotCount     Int
+  createdById       String
+  status            NotificationCampaignStatus @default(DRAFT)
+  archivedAt        DateTime?
+  cohorts           NotificationCohort[]
+  createdAt         DateTime                   @default(now())
+  updatedAt         DateTime                   @default(now()) @updatedAt
+
+  @@index([createdAt])
+  @@index([status])
+}
+
+model NotificationCohort {
+  id           String                     @id @default(cuid())
+  campaignId   String
+  ordinal      Int
+  campaign     NotificationCampaign       @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  members      NotificationCohortMember[]
+  announcement NotificationAnnouncement?
+  createdAt    DateTime                   @default(now())
+
+  @@unique([campaignId, ordinal])
+  @@index([campaignId])
+}
+
+model NotificationCohortMember {
+  id              String             @id @default(cuid())
+  campaignId      String
+  cohortId        String
+  hackerId        String
+  position        Int
+  dietaryPriority Boolean
+  cohort          NotificationCohort @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  hacker          Hacker             @relation(fields: [hackerId], references: [id], onDelete: Cascade)
+  createdAt       DateTime           @default(now())
+
+  @@unique([campaignId, hackerId])
+  @@unique([cohortId, position])
+  @@index([cohortId])
+  @@index([hackerId])
+}
+
+model NotificationAnnouncement {
+  id          String                 @id @default(cuid())
+  cohortId    String                 @unique
+  body        String                 @db.VarChar(500)
+  contentHash String                 @db.Char(64)
+  createdById String
+  cohort      NotificationCohort     @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  deliveries  NotificationDelivery[]
+  createdAt   DateTime               @default(now())
+  completedAt DateTime?
+}
+
+model NotificationDelivery {
+  id             String                     @id
+  announcementId String
+  hackerId       String
+  channel        NotificationChannel
+  status         NotificationDeliveryStatus @default(PENDING)
+  failureCode    String?                    @db.VarChar(32)
+  attempts       Int                        @default(0)
+  nextAttemptAt  DateTime                   @default(now())
+  leaseToken     String?
+  leaseUntil     DateTime?
+  sentAt         DateTime?
+  announcement   NotificationAnnouncement   @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  hacker         Hacker                     @relation(fields: [hackerId], references: [id], onDelete: Cascade)
+  createdAt      DateTime                   @default(now())
+  updatedAt      DateTime                   @default(now()) @updatedAt
+
+  @@unique([announcementId, hackerId, channel])
+  @@index([status, nextAttemptAt])
+  @@index([hackerId])
 }
 
 model Log {
@@ -563,6 +684,25 @@ enum MealCategory {
   VEGAN
   HALAL
   OTHER
+}
+
+enum NotificationCampaignStatus {
+  DRAFT
+  LOCKED
+  COMPLETED
+}
+
+enum NotificationChannel {
+  WEB_PUSH
+  DISCORD
+}
+
+enum NotificationDeliveryStatus {
+  PENDING
+  SENDING
+  SENT
+  FAILED
+  SKIPPED
 }
 
 model EventInterest {

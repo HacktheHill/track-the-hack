@@ -3,6 +3,7 @@ import { hackerRouter } from "./routers/hackers";
 import { presenceRouter } from "./routers/presence";
 import { userRouter } from "./routers/users";
 import { metricsRouter } from "./routers/metrics";
+import { notificationsRouter } from "./routers/notifications";
 import { createTRPCRouter } from "./trpc";
 import { hardwareRouter } from "./routers/hardware";
 import { latteLabRouter } from "./routers/latte-lab";
@@ -20,6 +21,7 @@ export const appRouter = createTRPCRouter({
 	metrics: metricsRouter,
 	hardware: hardwareRouter,
 	latteLab: latteLabRouter,
+	notifications: notificationsRouter,
 });
 
 // export type definition of API
