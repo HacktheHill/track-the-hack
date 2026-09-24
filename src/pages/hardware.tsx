@@ -19,6 +19,7 @@ export default function HardwareCatalogue() {
 				<h1 className="ui-page-title">{t("catalogue")}</h1>
 				<input
 					className="ui-field w-full"
+					type="search"
 					value={search}
 					onChange={event => setSearch(event.target.value)}
 					placeholder={t("search")}
