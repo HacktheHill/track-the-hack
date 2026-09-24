@@ -279,25 +279,28 @@ model Hardware {
   @@index([name])
 }
 
-// Hardware is intentionally quantity-based. The legacy Hardware table above is
-// retained so the guarded initial importer can refuse to proceed if it contains
-// unexpected historical data.
+// The legacy Hardware table above is retained so the guarded initial importer
+// can refuse to proceed if it contains unexpected historical data.
 model HardwareItem {
-  id                String             @id @default(cuid())
-  importKey         String             @unique
-  category          HardwareCategory
-  name              String
-  normalizedName    String
-  description       String?            @db.Text
-  imageURL          String?
-  totalQuantity     Int
-  availableQuantity Int
-  damagedQuantity   Int                @default(0)
-  missingQuantity   Int                @default(0)
-  active            Boolean            @default(true)
-  loanLines         HardwareLoanLine[]
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @default(now()) @updatedAt
+  id                   String                @id @default(cuid())
+  importKey            String                @unique
+  category             HardwareCategory
+  inventoryMode        HardwareInventoryMode @default(COUNTED)
+  name                 String
+  normalizedName       String
+  description          String?               @db.Text
+  imageURL             String?
+  totalQuantity        Int?
+  availableQuantity    Int?
+  availableForCheckout Boolean               @default(true)
+  consumptionAllowed   Boolean               @default(false)
+  damagedQuantity      Int                   @default(0)
+  missingQuantity      Int                   @default(0)
+  consumedQuantity     Int                   @default(0)
+  active               Boolean               @default(true)
+  loanLines            HardwareLoanLine[]
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @default(now()) @updatedAt
 
   @@unique([category, normalizedName])
   @@index([name])
@@ -336,6 +339,7 @@ model HardwareLoanLine {
   goodQuantity     Int                  @default(0)
   damagedQuantity  Int                  @default(0)
   missingQuantity  Int                  @default(0)
+  consumedQuantity Int                  @default(0)
   returnLines      HardwareReturnLine[]
 
   @@unique([loanId, itemId])
@@ -357,14 +361,15 @@ model HardwareReturn {
 }
 
 model HardwareReturnLine {
-  id              String           @id @default(cuid())
-  returnId        String
-  hardwareReturn  HardwareReturn   @relation(fields: [returnId], references: [id], onDelete: Cascade)
-  loanLineId      String
-  loanLine        HardwareLoanLine @relation(fields: [loanLineId], references: [id], onDelete: Restrict)
-  goodQuantity    Int              @default(0)
-  damagedQuantity Int              @default(0)
-  missingQuantity Int              @default(0)
+  id               String           @id @default(cuid())
+  returnId         String
+  hardwareReturn   HardwareReturn   @relation(fields: [returnId], references: [id], onDelete: Cascade)
+  loanLineId       String
+  loanLine         HardwareLoanLine @relation(fields: [loanLineId], references: [id], onDelete: Restrict)
+  goodQuantity     Int              @default(0)
+  damagedQuantity  Int              @default(0)
+  missingQuantity  Int              @default(0)
+  consumedQuantity Int              @default(0)
 
   @@unique([returnId, loanLineId])
   @@index([loanLineId])
@@ -439,6 +444,11 @@ enum HardwareCategory {
   OUTPUTS
   MICROCONTROLLERS
   MISCELLANEOUS
+}
+
+enum HardwareInventoryMode {
+  COUNTED
+  UNCOUNTED
 }
 
 enum HardwareLoanStatus {

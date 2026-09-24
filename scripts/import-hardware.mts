@@ -18,6 +18,8 @@ const rows = z
 				category: z.string(),
 				name: z.string(),
 				quantity: z.string(),
+				inventoryMode: z.string(),
+				consumptionAllowed: z.string(),
 				description: z.string().optional(),
 				imageUrl: z.string().optional(),
 			})
@@ -30,7 +32,7 @@ if (result.errors.length) {
 	process.exitCode = 1;
 } else if (!apply)
 	console.log(
-		`Dry run passed: ${result.rows.length} item types, ${result.totalQuantity} checkout units. Re-run with --apply after review.`,
+		`Dry run passed: ${result.countedItemCount} counted item types, ${result.totalKnownQuantity} known units, ${result.uncountedItemCount} uncounted item types, and ${result.consumptionEnabledItemCount} consumption-enabled item types. Re-run with --apply after review.`,
 	);
 else console.log(await applyHardwareImport(prisma, result.rows));
 await prisma.$disconnect();

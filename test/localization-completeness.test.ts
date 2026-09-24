@@ -4,6 +4,7 @@ import test from "node:test";
 import {
 	EventType,
 	HardwareCategory,
+	HardwareInventoryMode,
 	LatteCancellationReason,
 	LatteDrink,
 	LatteFlavour,
@@ -76,17 +77,10 @@ void test("dynamic enum-backed translation domains cover every runtime value", (
 		[
 			"discord",
 			"",
-			[
-				"checking",
-				"verified",
-				"session-required",
-				"check-in-required",
-				"invalid",
-				"conflict",
-				"unavailable",
-			],
+			["checking", "verified", "session-required", "check-in-required", "invalid", "conflict", "unavailable"],
 		],
 		["hardware", "category", Object.values(HardwareCategory)],
+		["hardware", "inventory-mode", Object.values(HardwareInventoryMode)],
 		["latteLab", "drink", Object.values(LatteDrink)],
 		["latteLab", "description", Object.values(LatteDrink)],
 		["latteLab", "temperatureValue", Object.values(LatteTemperature)],

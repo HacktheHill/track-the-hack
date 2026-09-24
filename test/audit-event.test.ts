@@ -31,6 +31,18 @@ void test("canonical audit events are strict, UTC, and action-aware", () => {
 	);
 });
 
+void test("hardware availability audit records only opaque operational state", () => {
+	const event = createAuditEvent({
+		name: "hardware.item.availability_changed",
+		outcome: "out_of_stock",
+		actor: { type: "organizer", id: "organizer-1" },
+		resource: { type: "hardware_item", id: "item-1" },
+		data: { previousAvailable: true, available: false },
+	});
+	assert.equal(event.resource?.id, "item-1");
+	assert.equal(auditEventV1Schema.safeParse({ ...event, data: { name: "Resistors" } }).success, false);
+});
+
 void test("audit persistence flattens searchable fields", async t => {
 	const create = t.mock.fn((input: { data: Record<string, unknown> }) => {
 		assert.ok(input.data);

@@ -42,6 +42,10 @@ export default function HardwareDesk() {
 		},
 		onError: () => void utils.hardware.organizerCatalogue.invalidate(),
 	});
+	const availability = trpc.hardware.setUncountedAvailability.useMutation({
+		onSuccess: async () => utils.hardware.organizerCatalogue.invalidate(),
+		onError: async () => utils.hardware.organizerCatalogue.invalidate(),
+	});
 	const scan = useCallback((value: string) => setHackerId(value.trim()), []);
 	const selected = inventory.data?.filter(item => cart[item.id]) ?? [];
 	const visible = inventory.data?.filter(item => item.name.toLowerCase().includes(search.toLowerCase())) ?? [];
@@ -59,24 +63,54 @@ export default function HardwareDesk() {
 						onChange={event => setSearch(event.target.value)}
 					/>
 					<div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-						{visible.map(item => (
-							<article className="ui-panel p-4" key={item.id}>
-								<h3 className="font-bold">{item.name}</h3>
-								<p>{t("available", { count: item.availableQuantity })}</p>
-								<button
-									className="ui-button mt-2"
-									disabled={
-										item.availableQuantity === 0 || (cart[item.id] ?? 0) >= item.availableQuantity
-									}
-									onClick={() =>
-										setCart(value => ({ ...value, [item.id]: (value[item.id] ?? 0) + 1 }))
-									}
-								>
-									{t("add")}
-								</button>
-							</article>
-						))}
+						{visible.map(item => {
+							const atCartLimit =
+								item.inventoryMode === "COUNTED"
+									? (cart[item.id] ?? 0) >= (item.availableQuantity ?? 0)
+									: (cart[item.id] ?? 0) >= 999;
+							return (
+								<article className="ui-panel p-4" key={item.id}>
+									<h3 className="font-bold">{item.name}</h3>
+									<p>
+										{item.inventoryMode === "COUNTED"
+											? item.isAvailable
+												? t("available-count", { count: item.availableQuantity })
+												: t("out-of-stock")
+											: item.isAvailable
+												? t("available")
+												: t("out-of-stock")}
+									</p>
+									<button
+										className="ui-button mt-2"
+										disabled={!item.isAvailable || atCartLimit}
+										onClick={() =>
+											setCart(value => ({ ...value, [item.id]: (value[item.id] ?? 0) + 1 }))
+										}
+									>
+										{t("add")}
+									</button>
+									{item.inventoryMode === "UNCOUNTED" && (
+										<button
+											type="button"
+											className="ui-button ml-2 mt-2"
+											disabled={availability.isLoading}
+											aria-label={`${item.isAvailable ? t("mark-out-of-stock") : t("mark-available")} ${item.name}`}
+											onClick={() =>
+												availability.mutate({
+													itemId: item.id,
+													available: !item.isAvailable,
+													expectedUpdatedAt: item.updatedAt,
+												})
+											}
+										>
+											{item.isAvailable ? t("mark-out-of-stock") : t("mark-available")}
+										</button>
+									)}
+								</article>
+							);
+						})}
 					</div>
+					{availability.isError && <p role="alert">{t("error")}</p>}
 				</section>
 				<section className="ui-panel space-y-4 p-4">
 					<h2 className="font-coolvetica text-2xl">{t("cart")}</h2>
@@ -101,7 +135,12 @@ export default function HardwareDesk() {
 								<button
 									type="button"
 									className="ui-button"
-									disabled={(cart[item.id] ?? 0) >= item.availableQuantity}
+									disabled={
+										!item.isAvailable ||
+										(item.inventoryMode === "COUNTED"
+											? (cart[item.id] ?? 0) >= (item.availableQuantity ?? 0)
+											: (cart[item.id] ?? 0) >= 999)
+									}
 									aria-label={`${t("add")} ${item.name}`}
 									onClick={() =>
 										setCart(value => ({ ...value, [item.id]: (value[item.id] ?? 0) + 1 }))
@@ -227,9 +266,15 @@ function LoanCard({ loan }: { loan: Loan }) {
 			loan.lines.map(line => [
 				line.id,
 				{
-					good: line.borrowedQuantity - line.goodQuantity - line.damagedQuantity - line.missingQuantity,
+					good:
+						line.borrowedQuantity -
+						line.goodQuantity -
+						line.damagedQuantity -
+						line.missingQuantity -
+						line.consumedQuantity,
 					damaged: 0,
 					missing: 0,
+					consumed: 0,
 				},
 			]),
 		),
@@ -243,11 +288,11 @@ function LoanCard({ loan }: { loan: Loan }) {
 			]);
 		},
 	});
-	const update = (id: string, key: "good" | "damaged" | "missing", raw: string) =>
+	const update = (id: string, key: "good" | "damaged" | "missing" | "consumed", raw: string) =>
 		setValues(current => ({
 			...current,
 			[id]: {
-				...(current[id] ?? { good: 0, damaged: 0, missing: 0 }),
+				...(current[id] ?? { good: 0, damaged: 0, missing: 0, consumed: 0 }),
 				[key]: Math.max(0, Number.parseInt(raw || "0", 10)),
 			},
 		}));
@@ -257,14 +302,21 @@ function LoanCard({ loan }: { loan: Loan }) {
 			<p className="break-all text-sm">{loan.hackerId}</p>
 			{loan.lines.map(line => {
 				const outstanding =
-					line.borrowedQuantity - line.goodQuantity - line.damagedQuantity - line.missingQuantity;
+					line.borrowedQuantity -
+					line.goodQuantity -
+					line.damagedQuantity -
+					line.missingQuantity -
+					line.consumedQuantity;
+				const outcomeKeys = line.item.consumptionAllowed
+					? (["good", "damaged", "missing", "consumed"] as const)
+					: (["good", "damaged", "missing"] as const);
 				return (
 					<fieldset className="border-t pt-3" key={line.id}>
 						<legend className="font-bold">
 							{line.item.name} — {t("outstanding", { count: outstanding })}
 						</legend>
-						<div className="grid grid-cols-3 gap-2">
-							{(["good", "damaged", "missing"] as const).map(key => (
+						<div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+							{outcomeKeys.map(key => (
 								<label key={key}>
 									{t(key)}
 									<input
@@ -302,9 +354,9 @@ function LoanCard({ loan }: { loan: Loan }) {
 						lines: loan.lines
 							.map(line => ({
 								loanLineId: line.id,
-								...(values[line.id] ?? { good: 0, damaged: 0, missing: 0 }),
+								...(values[line.id] ?? { good: 0, damaged: 0, missing: 0, consumed: 0 }),
 							}))
-							.filter(line => line.good + line.damaged + line.missing > 0),
+							.filter(line => line.good + line.damaged + line.missing + line.consumed > 0),
 					})
 				}
 			>

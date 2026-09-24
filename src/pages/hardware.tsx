@@ -40,7 +40,15 @@ export default function HardwareCatalogue() {
 							<h2 className="font-coolvetica text-xl">{item.name}</h2>
 							<p className="text-sm">{t(`category.${item.category}`)}</p>
 							{item.description && <p>{item.description}</p>}
-							<p className="font-bold">{t("available", { count: item.availableQuantity })}</p>
+							<p className="font-bold">
+								{item.inventoryMode === "COUNTED"
+									? item.isAvailable
+										? t("available-count", { count: item.availableQuantity })
+										: t("out-of-stock")
+									: item.isAvailable
+										? t("available")
+										: t("out-of-stock")}
+							</p>
 						</article>
 					))}
 				</div>

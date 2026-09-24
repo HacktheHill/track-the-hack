@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import test from "node:test";
 import {
 	HardwareCategory,
+	HardwareInventoryMode,
 	LatteDrink,
 	LatteFlavour,
 	LatteMilkBase,
@@ -15,6 +16,11 @@ import {
 } from "@prisma/client";
 import { PrismaHackerLifecycleRepository } from "@/server/repositories/prisma-hacker-lifecycle";
 import type { ProvisioningRecord } from "@/server/services/hacker-lifecycle";
+import {
+	applyHardwareReconciliation,
+	hardwareReconciliationKeys,
+	inspectHardwareReconciliation,
+} from "@/server/services/hardware-reconciliation";
 
 // This suite requires a migrated, disposable local MySQL database.
 const testDatabase = process.env.PUSH_TEST_DATABASE_URL;
@@ -226,3 +232,53 @@ void test(
 		assert.equal(await prisma.latteOrder.count({ where: { activeHackerId: hackerId } }), 1);
 	},
 );
+
+void test("hardware reconciliation is guarded and idempotent", { skip: !testDatabase }, async t => {
+	assert.ok(testDatabase);
+	const url = new URL(testDatabase);
+	assert.ok(
+		["localhost", "127.0.0.1"].includes(url.hostname) && /test|review/.test(url.pathname),
+		"Use an isolated local test database",
+	);
+	const prisma = new PrismaClient({ datasourceUrl: testDatabase });
+	t.after(async () => {
+		await prisma.hardwareItem.deleteMany({ where: { importKey: { in: [...hardwareReconciliationKeys] } } });
+		await prisma.$disconnect();
+	});
+	assert.equal(
+		await prisma.hardwareItem.count({ where: { importKey: { in: [...hardwareReconciliationKeys] } } }),
+		0,
+		"Reconciliation keys must be unused in the isolated test database",
+	);
+	await prisma.hardwareItem.createMany({
+		data: hardwareReconciliationKeys.map((importKey, index) => ({
+			importKey,
+			category: HardwareCategory.MISCELLANEOUS,
+			name: `Reconciliation item ${index}`,
+			normalizedName: `reconciliation-item-${index}`,
+			description: index < 6 ? "Checkout unit: one bag." : null,
+			totalQuantity: index + 1,
+			availableQuantity: index + 1,
+		})),
+	});
+	const dryRun = await inspectHardwareReconciliation(prisma);
+	assert.deepEqual(dryRun.errors, []);
+	assert.equal(dryRun.alreadyApplied, false);
+	const applied = await applyHardwareReconciliation(prisma);
+	assert.equal(applied.changed, true);
+	const converted = await prisma.hardwareItem.findMany({
+		where: { importKey: { in: [...hardwareReconciliationKeys.slice(0, 6)] } },
+	});
+	assert.equal(converted.length, 6);
+	assert.equal(
+		converted.every(
+			item =>
+				item.inventoryMode === HardwareInventoryMode.UNCOUNTED &&
+				item.totalQuantity === null &&
+				item.availableQuantity === null &&
+				item.consumptionAllowed,
+		),
+		true,
+	);
+	assert.equal((await applyHardwareReconciliation(prisma)).changed, false);
+});

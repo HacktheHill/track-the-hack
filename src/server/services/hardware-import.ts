@@ -1,10 +1,12 @@
-import { HardwareCategory, type PrismaClient } from "@prisma/client";
+import { HardwareCategory, HardwareInventoryMode, type PrismaClient } from "@prisma/client";
 
 export type HardwareImportRow = {
 	importKey: string;
 	category: string;
 	name: string;
 	quantity: string;
+	inventoryMode: string;
+	consumptionAllowed: string;
 	description?: string;
 	imageUrl?: string;
 };
@@ -13,7 +15,9 @@ export type ValidHardwareImportRow = {
 	category: HardwareCategory;
 	name: string;
 	normalizedName: string;
-	quantity: number;
+	inventoryMode: HardwareInventoryMode;
+	quantity: number | null;
+	consumptionAllowed: boolean;
 	description?: string;
 	imageURL?: string;
 };
@@ -36,17 +40,26 @@ export const validateHardwareImport = (rows: HardwareImportRow[]) => {
 		const importKey = row.importKey?.trim();
 		const name = row.name?.trim();
 		const category = categories[row.category?.trim().toLocaleLowerCase("en-CA")];
-		const quantity = Number(row.quantity);
+		const inventoryModeText = row.inventoryMode?.trim().toUpperCase();
+		const inventoryMode = Object.values(HardwareInventoryMode).find(value => value === inventoryModeText);
+		const quantityText = row.quantity?.trim() ?? "";
+		const quantity = Number(quantityText);
+		const consumptionText = row.consumptionAllowed?.trim().toLocaleLowerCase("en-CA");
+		const consumptionAllowed = consumptionText === "true" ? true : consumptionText === "false" ? false : null;
 		if (!importKey || !/^[a-z0-9][a-z0-9_-]*$/i.test(importKey))
 			errors.push(`Row ${line}: invalid stable import key`);
 		else if (keys.has(importKey)) errors.push(`Row ${line}: duplicate import key ${importKey}`);
 		else keys.add(importKey);
 		if (!category) errors.push(`Row ${line}: unknown category ${row.category ?? ""}`);
+		if (!inventoryMode) errors.push(`Row ${line}: inventory mode must be COUNTED or UNCOUNTED`);
 		if (!name) errors.push(`Row ${line}: blank display name`);
-		if (!/^\d+$/.test(row.quantity?.trim() ?? "") || !Number.isSafeInteger(quantity) || quantity < 0)
-			errors.push(`Row ${line}: quantity must be a non-negative integer`);
-		if (/\b(bulk|bag|box|assorted|various)\b/i.test(`${row.quantity ?? ""} ${name ?? ""}`))
-			errors.push(`Row ${line}: unresolved bulk checkout unit`);
+		if (inventoryMode === HardwareInventoryMode.COUNTED) {
+			if (!/^\d+$/.test(quantityText) || !Number.isSafeInteger(quantity) || quantity < 0)
+				errors.push(`Row ${line}: counted quantity must be a non-negative integer`);
+		} else if (inventoryMode === HardwareInventoryMode.UNCOUNTED && quantityText)
+			errors.push(`Row ${line}: uncounted quantity must be blank`);
+		if (/\b(bulk|bag|box)\b/i.test(name ?? "")) errors.push(`Row ${line}: unresolved bulk display name`);
+		if (consumptionAllowed === null) errors.push(`Row ${line}: consumptionAllowed must be true or false`);
 		if (row.imageUrl && !/^\/assets\/[A-Za-z0-9_./-]+$/.test(row.imageUrl.trim()))
 			errors.push(`Row ${line}: image must be a reviewed local /assets/ reference`);
 		const normalizedName = normalizeHardwareName(name ?? "");
@@ -55,18 +68,35 @@ export const validateHardwareImport = (rows: HardwareImportRow[]) => {
 			if (names.has(nameKey)) errors.push(`Row ${line}: duplicate normalized name within category`);
 			else names.add(nameKey);
 		}
-		if (importKey && category && name && Number.isSafeInteger(quantity) && quantity >= 0)
+		if (
+			importKey &&
+			category &&
+			name &&
+			inventoryMode &&
+			consumptionAllowed !== null &&
+			(inventoryMode === HardwareInventoryMode.UNCOUNTED ||
+				(Number.isSafeInteger(quantity) && quantity >= 0 && /^\d+$/.test(quantityText)))
+		)
 			valid.push({
 				importKey,
 				category,
 				name,
 				normalizedName,
-				quantity,
+				inventoryMode,
+				quantity: inventoryMode === HardwareInventoryMode.COUNTED ? quantity : null,
+				consumptionAllowed,
 				...(row.description?.trim() ? { description: row.description.trim() } : {}),
 				...(row.imageUrl?.trim() ? { imageURL: row.imageUrl.trim() } : {}),
 			});
 	});
-	return { errors, rows: valid, totalQuantity: valid.reduce((sum, row) => sum + row.quantity, 0) };
+	return {
+		errors,
+		rows: valid,
+		countedItemCount: valid.filter(row => row.inventoryMode === HardwareInventoryMode.COUNTED).length,
+		totalKnownQuantity: valid.reduce((sum, row) => sum + (row.quantity ?? 0), 0),
+		uncountedItemCount: valid.filter(row => row.inventoryMode === HardwareInventoryMode.UNCOUNTED).length,
+		consumptionEnabledItemCount: valid.filter(row => row.consumptionAllowed).length,
+	};
 };
 
 export const applyHardwareImport = async (prisma: PrismaClient, rows: ValidHardwareImportRow[]) =>
@@ -87,9 +117,17 @@ export const applyHardwareImport = async (prisma: PrismaClient, rows: ValidHardw
 				normalizedName: row.normalizedName,
 				description: row.description,
 				imageURL: row.imageURL,
+				inventoryMode: row.inventoryMode,
 				totalQuantity: row.quantity,
 				availableQuantity: row.quantity,
+				consumptionAllowed: row.consumptionAllowed,
 			})),
 		});
-		return { itemCount: rows.length, totalQuantity: rows.reduce((sum, row) => sum + row.quantity, 0) };
+		return {
+			itemCount: rows.length,
+			countedItemCount: rows.filter(row => row.inventoryMode === HardwareInventoryMode.COUNTED).length,
+			totalKnownQuantity: rows.reduce((sum, row) => sum + (row.quantity ?? 0), 0),
+			uncountedItemCount: rows.filter(row => row.inventoryMode === HardwareInventoryMode.UNCOUNTED).length,
+			consumptionEnabledItemCount: rows.filter(row => row.consumptionAllowed).length,
+		};
 	});

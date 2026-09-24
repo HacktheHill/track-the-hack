@@ -2,7 +2,7 @@ import type { PrismaClient } from "@prisma/client";
 
 export type LegacyLogInput = {
 	sourceId: string;
-	sourceType: "Account" | "Hacker" | "HardwareLoan" | "LatteOrder" | "Presence" | "Role" | "User";
+	sourceType: "Account" | "Hacker" | "HardwareItem" | "HardwareLoan" | "LatteOrder" | "Presence" | "Role" | "User";
 	author: string;
 	userId?: string;
 	route: string;

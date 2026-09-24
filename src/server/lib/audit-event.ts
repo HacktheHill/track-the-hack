@@ -14,6 +14,7 @@ const auditNames = [
 	"participant.rsvp.cancelled",
 	"hardware.loan.checked_out",
 	"hardware.loan.returned",
+	"hardware.item.availability_changed",
 	"latte.order.placed",
 	"latte.order.cancelled",
 	"latte.order.transitioned",
@@ -34,6 +35,7 @@ const allowedOutcomes: Record<(typeof auditNames)[number], readonly string[]> = 
 	"participant.rsvp.cancelled": ["cancelled"],
 	"hardware.loan.checked_out": ["recorded"],
 	"hardware.loan.returned": ["partial", "closed", "closed_with_missing"],
+	"hardware.item.availability_changed": ["available", "out_of_stock"],
 	"latte.order.placed": ["queued"],
 	"latte.order.cancelled": ["cancelled"],
 	"latte.order.transitioned": ["preparing", "ready", "completed", "cancelled"],
@@ -52,6 +54,7 @@ const entitySchema = z
 			"role",
 			"organizer_access",
 			"hardware_loan",
+			"hardware_item",
 			"latte_order",
 		]),
 		id: z.string().min(1).max(191),
@@ -102,10 +105,7 @@ export const auditEventV1Schema = z
 		if (!allowedOutcomes[event.name].includes(event.outcome)) {
 			context.addIssue({ code: "custom", path: ["outcome"], message: `Invalid outcome for ${event.name}` });
 		}
-		if (
-			event.name.startsWith("scanner.") &&
-			(!event.subject || !["hacker", "user"].includes(event.subject.type))
-		) {
+		if (event.name.startsWith("scanner.") && (!event.subject || !["hacker", "user"].includes(event.subject.type))) {
 			context.addIssue({
 				code: "custom",
 				path: ["subject"],

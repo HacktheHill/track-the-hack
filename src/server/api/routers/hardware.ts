@@ -1,9 +1,15 @@
-import { HardwareLoanStatus, Prisma, type PrismaClient } from "@prisma/client";
+import { HardwareInventoryMode, HardwareLoanStatus, Prisma, type PrismaClient } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { createAuditEvent, emitAuditEvent, persistAuditEvent } from "@/server/lib/audit-event";
 import { log } from "@/server/lib/log";
 import { participantIdSchema } from "@/server/services/hacker-lifecycle";
+import {
+	hardwareReturnError,
+	isHardwareAvailable,
+	outstandingHardwareQuantity,
+	resolvedHardwareQuantity,
+} from "@/server/services/hardware-inventory";
 import { createTRPCRouter, organizerProcedure, participantProcedure } from "@/server/api/trpc";
 
 const key = z
@@ -18,12 +24,13 @@ const returnLine = z
 		good: z.number().int().nonnegative(),
 		damaged: z.number().int().nonnegative(),
 		missing: z.number().int().nonnegative(),
+		consumed: z.number().int().nonnegative().default(0),
 	})
 	.strict()
-	.refine(value => value.good + value.damaged + value.missing > 0, "At least one item must be returned");
+	.refine(value => resolvedHardwareQuantity(value) > 0, "At least one item must be resolved");
 
-const catalogue = (prisma: PrismaClient) =>
-	prisma.hardwareItem.findMany({
+const catalogue = async (prisma: PrismaClient) => {
+	const items = await prisma.hardwareItem.findMany({
 		where: { active: true },
 		select: {
 			id: true,
@@ -32,10 +39,19 @@ const catalogue = (prisma: PrismaClient) =>
 			name: true,
 			description: true,
 			imageURL: true,
+			inventoryMode: true,
 			availableQuantity: true,
+			availableForCheckout: true,
+			consumptionAllowed: true,
+			updatedAt: true,
 		},
 		orderBy: [{ category: "asc" }, { name: "asc" }],
 	});
+	return items.map(item => ({
+		...item,
+		isAvailable: isHardwareAvailable(item),
+	}));
+};
 
 const loanSelection = {
 	id: true,
@@ -51,14 +67,89 @@ const loanSelection = {
 			goodQuantity: true,
 			damagedQuantity: true,
 			missingQuantity: true,
-			item: { select: { id: true, name: true } },
+			consumedQuantity: true,
+			item: {
+				select: {
+					id: true,
+					name: true,
+					inventoryMode: true,
+					consumptionAllowed: true,
+				},
+			},
 		},
 	},
 } satisfies Prisma.HardwareLoanSelect;
 
 export const hardwareRouter = createTRPCRouter({
-	catalogue: participantProcedure.query(({ ctx }) => catalogue(ctx.prisma)),
+	catalogue: participantProcedure.query(async ({ ctx }) => {
+		const items = await catalogue(ctx.prisma);
+		return items.map(item => ({
+			id: item.id,
+			category: item.category,
+			name: item.name,
+			description: item.description,
+			imageURL: item.imageURL,
+			inventoryMode: item.inventoryMode,
+			availableQuantity: item.availableQuantity,
+			isAvailable: item.isAvailable,
+		}));
+	}),
 	organizerCatalogue: organizerProcedure.query(({ ctx }) => catalogue(ctx.prisma)),
+	setUncountedAvailability: organizerProcedure
+		.input(
+			z
+				.object({
+					itemId: z.string().min(1),
+					available: z.boolean(),
+					expectedUpdatedAt: z.date(),
+				})
+				.strict(),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const organizer = ctx.organizer;
+			const { item, auditEvent } = await ctx.prisma.$transaction(
+				async tx => {
+					const current = await tx.hardwareItem.findUnique({ where: { id: input.itemId } });
+					if (!current || !current.active) throw new TRPCError({ code: "NOT_FOUND" });
+					if (current.inventoryMode !== HardwareInventoryMode.UNCOUNTED)
+						throw new TRPCError({
+							code: "BAD_REQUEST",
+							message: "Only uncounted hardware has manual availability",
+						});
+					if (current.availableForCheckout === input.available) return { item: current, auditEvent: null };
+					const updated = await tx.hardwareItem.updateMany({
+						where: { id: current.id, updatedAt: input.expectedUpdatedAt },
+						data: { availableForCheckout: input.available },
+					});
+					if (updated.count !== 1)
+						throw new TRPCError({ code: "CONFLICT", message: "Hardware availability changed" });
+					const item = await tx.hardwareItem.findUniqueOrThrow({ where: { id: current.id } });
+					const auditEvent = createAuditEvent({
+						name: "hardware.item.availability_changed",
+						outcome: input.available ? "available" : "out_of_stock",
+						actor: { type: "organizer", id: organizer.id },
+						resource: { type: "hardware_item", id: current.id },
+						data: { previousAvailable: current.availableForCheckout, available: input.available },
+					});
+					await persistAuditEvent(tx, auditEvent);
+					return { item, auditEvent };
+				},
+				{ isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+			);
+			if (auditEvent) {
+				emitAuditEvent(auditEvent);
+				await log(ctx, {
+					sourceId: item.id,
+					sourceType: "HardwareItem",
+					author: organizer.name ?? "Unknown",
+					userId: organizer.id,
+					route: "hardware.setUncountedAvailability",
+					action: input.available ? "available" : "out_of_stock",
+					details: `Changed availability for hardware item ${item.id}`,
+				});
+			}
+			return item;
+		}),
 	checkout: organizerProcedure
 		.input(
 			z
@@ -91,19 +182,40 @@ export const hardwareRouter = createTRPCRouter({
 						});
 						if (!hacker) throw new TRPCError({ code: "NOT_FOUND", message: "Participant not found" });
 						for (const line of input.lines) {
-							const updated = await tx.hardwareItem.updateMany({
-								where: { id: line.itemId, active: true, availableQuantity: { gte: line.quantity } },
-								data: { availableQuantity: { decrement: line.quantity } },
-							});
+							const item = await tx.hardwareItem.findUnique({ where: { id: line.itemId } });
+							const updated = item
+								? await tx.hardwareItem.updateMany({
+										where:
+											item.inventoryMode === HardwareInventoryMode.COUNTED
+												? {
+														id: line.itemId,
+														active: true,
+														inventoryMode: HardwareInventoryMode.COUNTED,
+														availableQuantity: { gte: line.quantity },
+													}
+												: {
+														id: line.itemId,
+														active: true,
+														inventoryMode: HardwareInventoryMode.UNCOUNTED,
+														availableForCheckout: true,
+													},
+										data:
+											item.inventoryMode === HardwareInventoryMode.COUNTED
+												? { availableQuantity: { decrement: line.quantity } }
+												: { availableForCheckout: true },
+									})
+								: { count: 0 };
 							if (updated.count !== 1) {
-								const item = await tx.hardwareItem.findUnique({
+								const current = await tx.hardwareItem.findUnique({
 									where: { id: line.itemId },
-									select: { name: true, availableQuantity: true },
+									select: { name: true, inventoryMode: true, availableQuantity: true },
 								});
 								throw new TRPCError({
 									code: "CONFLICT",
-									message: item
-										? `${item.name} has ${item.availableQuantity} available`
+									message: current
+										? current.inventoryMode === HardwareInventoryMode.COUNTED
+											? `${current.name} has ${current.availableQuantity ?? 0} available`
+											: `${current.name} is out of stock`
 										: "Hardware item not found",
 								});
 							}
@@ -217,7 +329,7 @@ export const hardwareRouter = createTRPCRouter({
 					async tx => {
 						const current = await tx.hardwareLoan.findUnique({
 							where: { id: input.loanId },
-							include: { lines: true },
+							include: { lines: { include: { item: true } } },
 						});
 						if (!current || current.status !== HardwareLoanStatus.OPEN)
 							throw new TRPCError({ code: "CONFLICT", message: "Loan is not open" });
@@ -225,13 +337,11 @@ export const hardwareRouter = createTRPCRouter({
 						for (const returned of input.lines) {
 							const line = byId.get(returned.loanLineId);
 							if (!line) throw new TRPCError({ code: "BAD_REQUEST", message: "Unknown loan line" });
-							const outstanding =
-								line.borrowedQuantity - line.goodQuantity - line.damagedQuantity - line.missingQuantity;
-							if (returned.good + returned.damaged + returned.missing > outstanding)
-								throw new TRPCError({
-									code: "BAD_REQUEST",
-									message: "Return exceeds outstanding quantity",
-								});
+							const error = hardwareReturnError(
+								{ ...line, consumptionAllowed: line.item.consumptionAllowed },
+								returned,
+							);
+							if (error) throw new TRPCError({ code: "BAD_REQUEST", message: error });
 						}
 						const hardwareReturn = await tx.hardwareReturn.create({
 							data: {
@@ -250,6 +360,7 @@ export const hardwareRouter = createTRPCRouter({
 									goodQuantity: returned.good,
 									damagedQuantity: returned.damaged,
 									missingQuantity: returned.missing,
+									consumedQuantity: returned.consumed,
 								},
 							});
 							await tx.hardwareLoanLine.update({
@@ -258,26 +369,26 @@ export const hardwareRouter = createTRPCRouter({
 									goodQuantity: { increment: returned.good },
 									damagedQuantity: { increment: returned.damaged },
 									missingQuantity: { increment: returned.missing },
+									consumedQuantity: { increment: returned.consumed },
 								},
 							});
-							await tx.hardwareItem.update({
-								where: { id: line.itemId },
-								data: {
-									availableQuantity: { increment: returned.good },
-									damagedQuantity: { increment: returned.damaged },
-									missingQuantity: { increment: returned.missing },
-								},
-							});
+							if (line.item.inventoryMode === HardwareInventoryMode.COUNTED)
+								await tx.hardwareItem.update({
+									where: { id: line.itemId },
+									data: {
+										availableQuantity: { increment: returned.good },
+										damagedQuantity: { increment: returned.damaged },
+										missingQuantity: { increment: returned.missing },
+										consumedQuantity: { increment: returned.consumed },
+									},
+								});
 						}
 						const remaining = current.lines.reduce((sum, line) => {
 							const returned = input.lines.find(value => value.loanLineId === line.id);
 							return (
 								sum +
-								line.borrowedQuantity -
-								line.goodQuantity -
-								line.damagedQuantity -
-								line.missingQuantity -
-								(returned ? returned.good + returned.damaged + returned.missing : 0)
+								outstandingHardwareQuantity(line) -
+								(returned ? resolvedHardwareQuantity(returned) : 0)
 							);
 						}, 0);
 						if (remaining === 0) {
@@ -319,6 +430,7 @@ export const hardwareRouter = createTRPCRouter({
 								goodUnits: input.lines.reduce((sum, line) => sum + line.good, 0),
 								damagedUnits: input.lines.reduce((sum, line) => sum + line.damaged, 0),
 								missingUnits: input.lines.reduce((sum, line) => sum + line.missing, 0),
+								consumedUnits: input.lines.reduce((sum, line) => sum + line.consumed, 0),
 								idReturned: input.idReturned,
 							},
 						});
