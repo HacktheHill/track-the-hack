@@ -2,7 +2,7 @@ import type { GetStaticProps } from "next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useTranslation } from "next-i18next";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import App from "@/components/App";
 import { trpc } from "@/server/api/api";
 
@@ -10,9 +10,9 @@ export default function HardwareCatalogue() {
 	const { t } = useTranslation("hardware");
 	const [search, setSearch] = useState("");
 	const query = trpc.hardware.catalogue.useQuery(undefined, { retry: false, staleTime: 0 });
-	const items = (query.data ?? []).filter(item =>
-		`${item.name} ${item.description ?? ""}`.toLowerCase().includes(search.toLowerCase()),
-	);
+	const items = useMemo(() => {
+		return (query.data ?? []).filter(item => `${item.name} ${item.description ?? ""}`.toLowerCase().includes(search.toLowerCase()));
+	}, [query.data, search]);
 	return (
 		<App title={t("title")} className="overflow-y-auto bg-default-gradient">
 			<div className="ui-form-layout space-y-5">
