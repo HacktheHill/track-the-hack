@@ -13,9 +13,10 @@ or prototype branch wholesale.
 Run the remaining acceptance checks against release
 `21924e0fbcc6287dca3ae8965cac5067ee32f973`, Azure revision
 `track-the-hack--0000059`. Before testing, confirm that it is still the live revision;
-if `origin/main` or production has advanced, reassess the target instead of assuming
-these instructions still describe it. Keep Cloudflare Access enabled during testing.
-Public launch is a separate decision.
+later documentation-only commits do not change the test target. If application code or
+production has advanced, reassess the target instead of assuming these instructions
+still describe it. Keep Cloudflare Access enabled during testing. Public launch is a
+separate decision.
 
 The private schedule CSV and RSVP exports are operational data:
 
