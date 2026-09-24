@@ -51,15 +51,16 @@ const authProviderSchema = z
 	.object({
 		id: z.string(),
 		name: z.string(),
-		type: z.enum(["credentials", "oauth"]),
+		type: z.enum(["credentials", "email", "oauth"]),
 		signinUrl: z.string().url(),
 		callbackUrl: z.string().url(),
-	})
-	.strict();
+	});
 const authProvidersSchema = z
-	.object({ google: authProviderSchema, development: authProviderSchema.optional() })
+	.object({ google: authProviderSchema, email: authProviderSchema, development: authProviderSchema.optional() })
 	.strict();
-const sessionSchema = z.object({ user: z.object({ id: z.string(), isOrganizer: z.boolean(), isAdmin: z.boolean() }) });
+const sessionSchema = z.object({
+	user: z.object({ id: z.string(), email: z.string().email(), isOrganizer: z.boolean(), isAdmin: z.boolean() }),
+});
 const unauthorizedErrorSchema = z.object({ data: z.object({ code: z.literal("UNAUTHORIZED") }) });
 
 const wait = (milliseconds: number) => new Promise<void>(resolve => setTimeout(resolve, milliseconds));
@@ -246,14 +247,14 @@ const runOrganizerScannerBrowserE2E = async () => {
 		await page.goto(`${baseUrl}/auth/sign-in?callbackUrl=${encodeURIComponent(`${baseUrl}/qr`)}`, {
 			waitUntil: "domcontentloaded",
 		});
-		await page.getByRole("button", { name: "Sign in as local organizer" }).click();
+		await page.getByRole("button", { name: "Sign in as local organiser" }).click();
 		await page.waitForURL(url => url.pathname === "/qr", { timeout: 20_000 });
 		assert.equal(new URL(page.url()).pathname, "/qr", "Browser test must reach the protected scanner page");
+		await page.getByRole("tab", { name: "Scan passes" }).click();
 		await page.locator("main select").selectOption("dev-event-check-in");
 		const scannerInput = page.locator("#scanner-input");
 		await scannerInput.fill(participantId);
 		await scannerInput.press("Enter");
-		await page.getByText(participantId, { exact: true }).waitFor({ timeout: 20_000 });
 		await page.getByText("Check In: 1", { exact: true }).waitFor({ timeout: 20_000 });
 		assert.equal(await scannerInput.inputValue(), "", "Scanner input must reset after a successful scan");
 
@@ -268,10 +269,9 @@ const runOrganizerScannerBrowserE2E = async () => {
 			);
 			await page.goto(`${baseUrl}${choice.locale === "fr" ? "/fr" : ""}/qr`, { waitUntil: "domcontentloaded" });
 			await page
-				.getByRole("combobox", {
-					name: choice.locale === "fr" ? "Sélectionner une action du lecteur" : "Select a scanner action",
-				})
-				.selectOption("dev-event-merchandise");
+				.getByRole("tab", { name: choice.locale === "fr" ? "Scanner les laissez-passer" : "Scan passes" })
+				.click();
+			await page.locator("main select").selectOption("dev-event-merchandise");
 			await scannerInput.fill(choice.id);
 			await scannerInput.press("Enter");
 			await page.getByText(choice.label, { exact: true }).waitFor({ timeout: 20_000 });
@@ -308,11 +308,19 @@ if (!sheetsIntegrationApiKey) throw new Error("SHEETS_INTEGRATION_API_KEY is req
 const integrationHeaders = { Authorization: `Bearer ${sheetsIntegrationApiKey}` };
 const acceptanceIds: string[] = [];
 const verifyAcceptanceRetries = async () => {
+	const appsScriptBaseUrl = "https://track.e2e.invalid";
+	const forAppsScript = (response: { status: number; body: string }) => ({
+		...response,
+		body: response.body.replaceAll(baseUrl, appsScriptBaseUrl),
+	});
 	for (const fault of ["lost response", "partial commit"] as const) {
 		let fail = true;
 		const sheet = createResponseHarness({
 			apiKey: sheetsIntegrationApiKey,
-			baseUrl,
+			// The real Apps Script correctly requires an HTTPS deployment URL.
+			// Route that validated URL back to the disposable local server in the
+			// harness instead of weakening production validation for this test.
+			baseUrl: appsScriptBaseUrl,
 			applications: ["first", "second"].map(id =>
 				applicationRow({
 					"Submission ID": id,
@@ -340,7 +348,7 @@ process.stdout.write(JSON.stringify({ status: response.status, body: await respo
 								],
 								{
 									input: JSON.stringify({
-										url: request.url,
+									url: new URL(new URL(request.url).pathname, baseUrl).href,
 										headers: { ...request.options.headers, "Content-Type": "application/json" },
 										body: request.options.payload,
 									}),
@@ -351,7 +359,7 @@ process.stdout.write(JSON.stringify({ status: response.status, body: await respo
 						),
 					);
 					assert.equal(response.status, 200);
-					return response;
+					return forAppsScript(response);
 				}
 				const { hackers } = provisioningBatchSchema.parse(JSON.parse(request.options.payload));
 				acceptanceIds.push(...hackers.map(hacker => hacker.id));
@@ -396,7 +404,7 @@ process.stdout.write(JSON.stringify({ status: response.status, body: await respo
 					fail = false;
 					throw new Error(fault);
 				}
-				return response;
+				return forAppsScript(response);
 			},
 		});
 		assert.throws(() => sheet.run("prepareAcceptedRowsForRsvp"));

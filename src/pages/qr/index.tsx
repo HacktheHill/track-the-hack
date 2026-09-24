@@ -111,13 +111,13 @@ const QR = ({ organizerPass }: InferGetServerSidePropsType<typeof getServerSideP
 				<div
 					role="tablist"
 					aria-label={t("tabs-label")}
-					className="flex rounded-xl bg-light-quaternary-color p-1"
+					className="flex max-w-full rounded-xl bg-light-quaternary-color p-1"
 				>
 					<button
 						type="button"
 						role="tab"
 						aria-selected={tab === "pass"}
-						className={`rounded-lg px-6 py-3 font-coolvetica ${tab === "pass" ? "bg-primary-color text-light-color" : "text-dark-color"}`}
+						className="ui-button flex-1 border-transparent sm:px-6"
 						onClick={() => setTab("pass")}
 					>
 						{t("my-pass")}
@@ -126,7 +126,7 @@ const QR = ({ organizerPass }: InferGetServerSidePropsType<typeof getServerSideP
 						type="button"
 						role="tab"
 						aria-selected={tab === "scan"}
-						className={`rounded-lg px-6 py-3 font-coolvetica ${tab === "scan" ? "bg-primary-color text-light-color" : "text-dark-color"}`}
+						className="ui-button flex-1 border-transparent sm:px-6"
 						onClick={() => setTab("scan")}
 					>
 						{t("scan-passes")}
@@ -197,15 +197,14 @@ const ScannerPanel = ({
 			<select
 				aria-label={t("select-action")}
 				disabled={pending}
-				className="ui-field w-full max-w-4xl text-center"
+				className="ui-field w-full max-w-xl text-center"
 				value={selectedValue}
 				onChange={event => onSelection(event.target.value)}
 			>
 				<option value={VIEW_PARTICIPANT}>{t("view-participant")}</option>
 				{events.map(event => (
 					<option key={event.id} value={event.id}>
-						{t(`workflow.${event.scannerWorkflow}`)} — {i18n.language === "fr" ? event.nameFr : event.name}{" "}
-						—{" "}
+						{t(`workflow.${event.scannerWorkflow}`)}: {i18n.language === "fr" ? event.nameFr : event.name},{" "}
 						{event.start.toLocaleString(i18n.language === "fr" ? "fr-CA" : "en-CA", {
 							weekday: "short",
 							hour: "numeric",
@@ -214,7 +213,7 @@ const ScannerPanel = ({
 					</option>
 				))}
 			</select>
-			<div className="grid w-full max-w-4xl gap-6 md:grid-cols-2">
+			<div className="flex w-full max-w-sm flex-col items-center gap-3">
 				<QRScanner onScan={onCameraScan} onClear={onCameraClear} setError={setError} />
 				<PhysicalScanner onScan={onPhysicalScan} disabled={pending} />
 			</div>
@@ -228,7 +227,7 @@ const ParticipantCard = ({ hacker }: { hacker: Hacker }) => {
 	const { t } = useTranslation("qr");
 
 	return (
-		<div className="rounded-lg bg-light-primary-color p-6 font-rubik text-light-color">
+		<div className="ui-panel rounded-lg p-6 font-rubik text-dark-color">
 			<p className="break-all font-bold">{hacker.id}</p>
 			<p>{t("confirmed", { value: hacker.confirmed ? t("yes") : t("no") })}</p>
 			<TShirtInfo size={hacker.tShirtSize} />
@@ -241,7 +240,7 @@ const ParticipantCard = ({ hacker }: { hacker: Hacker }) => {
 const OrganizerCard = ({ organizer }: { organizer: { id: string; name: string | null } }) => {
 	const { t } = useTranslation("qr");
 	return (
-		<div className="rounded-lg bg-light-primary-color p-6 font-rubik text-light-color">
+		<div className="ui-panel rounded-lg p-6 font-rubik text-dark-color">
 			<p className="font-bold">{t("organizer-pass", { name: organizer.name ?? t("organizer") })}</p>
 		</div>
 	);

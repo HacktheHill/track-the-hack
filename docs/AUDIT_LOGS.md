@@ -1,5 +1,8 @@
 # Structured audit and attendance ledger
 
+This document defines the ledger, investigation queries, retention, and the temporary
+legacy-log retirement path.
+
 `AuditEvent` is the authoritative, append-only operational ledger. `Presence`
 remains the current participant/event counter. A scanner event records the
 server-observed processing time; it does not prove how long someone stayed.
@@ -14,7 +17,28 @@ The app mirrors committed events to standard output as one-line JSON with
 `ContainerAppConsoleLogs_CL`. Azure is a searchable mirror, not the system of
 record. Its ingestion can lag or lose a line after the database commits.
 
-Notification audit events deliberately separate exact announcements from the general
+The registered V1 event names are:
+
+- scanner: `scanner.scan`, `scanner.adjust`;
+- organizer security: `organizer.roles.updated`, `organizer.access.added`,
+  `organizer.access.removed`;
+- participant lifecycle: `participant.claim.issued`,
+  `participant.claim.redeemed`, `participant.rsvp.updated`,
+  `participant.rsvp.cancelled`, `participant.notifications.updated`;
+- Event Services: `hardware.loan.checked_out`, `hardware.loan.returned`,
+  `hardware.item.availability_changed`, `latte.order.placed`,
+  `latte.order.cancelled`, `latte.order.transitioned`,
+  `latte.lab.open_changed`, `latte.ingredient.availability_changed`;
+- notifications: `notification.campaign.created`,
+  `notification.campaign.regenerated`, `notification.announcement.queued`,
+  `notification.announcement.completed`, `notification.delivery.retried`; and
+- migration: `legacy.migrated`.
+
+Adding a name or outcome requires a schema/test change, a privacy review of its
+typed `data`, and updated query documentation. Human-readable messages never
+belong in the canonical event.
+
+Notification events deliberately separate the exact announcement from the general
 audit stream:
 
 | Event                                 | Safe audit data                                                     |
@@ -42,21 +66,17 @@ let AuditEvents = ContainerAppConsoleLogs_CL
 | where toint(audit.schemaVersion) == 1;
 ```
 
-Successful scans by event, scanning organiser, and subject type:
+Successful admissions by event and organizer:
 
 ```kusto
 AuditEvents
 | where tostring(audit.name) == "scanner.scan"
 | where tostring(audit.outcome) in ("recorded", "incremented")
 | project Time=todatetime(audit.occurredAt), EventId=tostring(audit.resource.id),
-          ScanningOrganizerId=tostring(audit.actor.id),
-          SubjectType=tostring(audit.subject.type), SubjectId=tostring(audit.subject.id),
+          OrganizerId=tostring(audit.actor.id), HackerId=tostring(audit.subject.id),
           Workflow=tostring(audit.data.workflow), Count=toint(audit.data.afterCount)
 | order by Time desc
 ```
-
-`SubjectType == "hacker"` is a participant `Presence`; `SubjectType == "user"` is an
-`OrganizerPresence`. Do not label every subject as a participant.
 
 One participant's scanner history:
 
@@ -70,7 +90,7 @@ AuditEvents
 | order by Time desc
 ```
 
-One organiser's actions:
+One organizer's actions:
 
 ```kusto
 AuditEvents
@@ -94,26 +114,6 @@ AuditEvents
 
 The query must show hashes and aggregate counts only. Do not add message bodies,
 participant IDs, Discord identities, or push endpoints to a release evidence export.
-
-External organiser access-list changes:
-
-```kusto
-AuditEvents
-| where tostring(audit.name) in ("organizer.access.added", "organizer.access.removed")
-| project Time=todatetime(audit.occurredAt), Name=tostring(audit.name),
-          Outcome=tostring(audit.outcome), AdministratorId=tostring(audit.actor.id),
-          AccessRecordId=tostring(audit.resource.id), Data=audit.data
-| order by Time desc
-```
-
-`Outcome` is `added` or `removed` for a change and `unchanged` for an idempotent repeat.
-The event must not contain the external email address, verification token, QR value, or
-session cookie. See [`ORGANISER_ACCESS.md`](./ORGANISER_ACCESS.md#4-administrator-access-list-audit)
-for the corresponding acceptance procedure.
-
-`organizer.roles.updated` may appear only as preserved legacy evidence. Current code
-must not emit it; administrator status is provisioned separately and the access-list UI
-emits only the two `organizer.access.*` names above.
 
 Event Services records `hardware.item.availability_changed`,
 `hardware.loan.checked_out`, `hardware.loan.returned`, `latte.order.placed`,
@@ -162,39 +162,21 @@ for 90 days. The daily `audit:purge` job deletes database rows where
 cutoff remains until a later run. The job never changes `Presence` or other
 domain state, and Azure expiration need not occur at the same second.
 
-## Deployment and migration checks
+## Legacy `Log` retirement
 
-The additive migration backfills only the preceding 90 days of `Log`. Before
-ending the dual-write release, compare:
+The structured-ledger migration backfilled the preceding 90 days and temporarily kept
+legacy writes for comparison. Close that compatibility path without maintaining a
+second release ceremony:
 
-```sql
-SELECT COUNT(*) AS legacy_source
-FROM `Log`
-WHERE `timestamp` >= DATE_SUB(UTC_TIMESTAMP(3), INTERVAL 90 DAY);
+1. Compare `Log` rows from the recorded migration window with `AuditEvent` rows named
+   `legacy-<Log.id>`. Investigate missing, orphaned, and boundary rows.
+2. Confirm current scanner actions appear in both MySQL and the Azure mirror without
+   sensitive fields.
+3. Remove legacy writes in a focused release and record the final legacy-write time.
+4. Keep `Log` read-only for 90 complete days so its last records age out of the normal
+   retention window.
+5. After a current backup and dependency search, remove the model, helper, and table in
+   one reviewed migration.
 
-SELECT COUNT(*) AS legacy_backfilled
-FROM `AuditEvent`
-WHERE `id` LIKE 'legacy-%';
-
-SELECT `name`, `outcome`, COUNT(*) AS records
-FROM `AuditEvent`
-WHERE `id` LIKE 'legacy-%'
-GROUP BY `name`, `outcome`
-ORDER BY `name`, `outcome`;
-```
-
-The first two counts must match. Review `legacy.migrated` separately; it means
-the old row was retained without assigning semantics that the old fields could
-not prove. Do not export backfilled `legacyDetails` to Azure.
-
-Roll out in this order:
-
-1. deploy the application migration and dual-write release behind Cloudflare Access;
-2. apply the reviewed infrastructure plan to create the scheduled purge job and
-   set `ContainerAppConsoleLogs_CL` retention;
-3. redeploy the application once after the job exists so the release workflow
-   pins the purge job to the current migration image;
-4. start the purge job once on demand, verify its structured summary, and run
-   the database and KQL acceptance queries;
-5. leave `Log` read-only until a separately reviewed removal migration after
-   the 90-day compatibility period.
+`legacy.migrated` means the old record was retained without inventing semantics. Never
+export its free-form `legacyDetails` to Azure.

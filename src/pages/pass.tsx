@@ -39,10 +39,7 @@ const Pass = () => {
 
 			{participantId && (
 				<div className="flex flex-col items-center gap-4">
-					<Link
-						href="/profile"
-						className="rounded-lg border border-dark-primary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-secondary-color"
-					>
+					<Link href="/profile" className="ui-button ui-button-tertiary">
 						{t("view-profile")}
 					</Link>
 					<ParticipantSignOut />

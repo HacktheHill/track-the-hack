@@ -112,13 +112,13 @@ const Navbar = ({ integrated }: NavbarProps) => {
 			aria-label={t("navigation")}
 		>
 			<div className="mr-auto flex shrink-0 xl:mr-0">
-				<Link href="/" className="flex min-h-11 items-center">
+				<Link href="/" className="flex min-h-11 items-center" aria-label={t("home")}>
 					<Image
-						className="block"
+						className="block h-10 w-auto"
 						priority
 						src="/assets/hackthehill-logo.svg"
-						height={44}
-						width={44}
+						height={39}
+						width={65}
 						alt={t("logo")}
 					/>
 				</Link>
@@ -130,7 +130,7 @@ const Navbar = ({ integrated }: NavbarProps) => {
 
 			<select
 				aria-label={t("language")}
-				className="hover:bg-light-quaternary ml-auto whitespace-nowrap rounded-lg border border-dark-primary-color bg-light-quaternary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors sm:visible"
+				className="ui-field ml-auto whitespace-nowrap sm:visible"
 				onChange={handleLanguageChange}
 				value={locale ?? "en"}
 			>

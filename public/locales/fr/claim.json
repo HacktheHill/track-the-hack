@@ -1,6 +1,6 @@
 {
 	"title": "Activer votre accès à l’événement",
-	"explanation": "Ce code peut être utilisé une seule fois, sur l’appareil de votre choix. L’activation de l’accès vous connecte sur cet appareil. L’ouverture de cette page n’utilise pas le code.",
+	"explanation": "Activez ce code à usage unique sur l’appareil que vous utiliserez pendant l’événement. Il reste valide jusqu’à ce que vous sélectionniez Activer l’accès.",
 	"activate": "Activer l’accès",
 	"activating": "Activation…",
 	"qr-title": "Code QR d’accès participant",

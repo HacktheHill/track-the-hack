@@ -21,6 +21,6 @@
 	"manage-decline": "Je ne pourrai pas participer",
 	"loading-status": "Chargement de votre réponse…",
 	"invalid-management-link": "Ce lien de réponse est invalide. Ouvrez le lien dans votre courriel d'invitation ou communiquez avec nous.",
-	"attendance-deadline-passed": "La date limite est passée; vous ne pouvez plus répondre que vous participerez.",
+	"attendance-deadline-passed": "La date limite est passée. Vous ne pouvez plus confirmer votre présence.",
 	"old-rsvp-link": "Ce lien a été remplacé. Utilisez le bouton de gestion de réponse dans votre courriel d'invitation."
 }

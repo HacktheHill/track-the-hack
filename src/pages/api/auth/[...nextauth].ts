@@ -125,5 +125,6 @@ export const getAuthOptions = (req?: NextApiRequest) =>
 	}) satisfies NextAuthOptions;
 
 export default async function auth(req: NextApiRequest, res: NextApiResponse) {
+	res.setHeader("Cache-Control", "no-store");
 	await NextAuth(req, res, getAuthOptions(req));
 }

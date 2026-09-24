@@ -74,7 +74,7 @@ const Claim = () => {
 					type="button"
 					disabled={submitting}
 					onClick={() => void activate()}
-					className="mt-6 rounded-lg border border-dark-primary-color bg-light-primary-color px-6 py-3 font-coolvetica text-lg text-light-color disabled:cursor-not-allowed disabled:opacity-60"
+					className="ui-button ui-button-primary ui-button-large mt-6"
 				>
 					{submitting ? t("activating") : t("activate")}
 				</button>

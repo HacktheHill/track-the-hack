@@ -69,12 +69,12 @@ const ManageRsvp = () => {
 				{state && <p className="mt-5 font-rubik text-dark-color" role="status">{t(`manage-status-${state.status.toLowerCase()}`)}</p>}
 				{!state && !error && <p className="mt-5 font-rubik text-dark-color">{t("loading-status")}</p>}
 				{state && <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-					{state.canAttend && state.status !== "CONFIRMED" && <button type="button" disabled={busy} onClick={() => void request("attend", token)} className="rounded-lg bg-light-primary-color px-6 py-3 font-coolvetica text-lg text-light-color disabled:opacity-60">{t("manage-attend")}</button>}
-					{state.status !== "DECLINED" && <button type="button" disabled={busy} onClick={() => void request("decline", token)} className="rounded-lg border border-dark-primary-color px-6 py-3 font-coolvetica text-lg text-dark-color disabled:opacity-60">{t("manage-decline")}</button>}
+					{state.canAttend && state.status !== "CONFIRMED" && <button type="button" disabled={busy} onClick={() => void request("attend", token)} className="ui-button ui-button-primary ui-button-large">{t("manage-attend")}</button>}
+					{state.status !== "DECLINED" && <button type="button" disabled={busy} onClick={() => void request("decline", token)} className="ui-button ui-button-large">{t("manage-decline")}</button>}
 				</div>}
 				{state && !state.canAttend && state.status !== "CONFIRMED" && <p className="mt-4 font-rubik text-dark-color">{t("attendance-deadline-passed")}</p>}
 				{error && <p className="mt-5 font-rubik text-red-900" role="alert">{error}</p>}
-				{!state && retryableLoad && token && <button type="button" disabled={busy} onClick={() => void request("status", token)} className="mt-4 rounded-lg border border-dark-primary-color px-6 py-3 font-coolvetica text-lg text-dark-color disabled:opacity-60">{t("retry")}</button>}
+				{!state && retryableLoad && token && <button type="button" disabled={busy} onClick={() => void request("status", token)} className="ui-button mt-4">{t("retry")}</button>}
 			</section>
 		</App>
 	);

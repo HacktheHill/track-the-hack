@@ -12,7 +12,6 @@ export default function Services() {
 		<App title={t("title")} className="overflow-y-auto bg-default-gradient">
 			<div className="ui-form-layout space-y-6">
 				<h1 className="ui-page-title">{t("title")}</h1>
-				<p>{t("intro")}</p>
 				{access.isError && (
 					<p className="ui-panel p-4" role="alert">
 						{t("session-required")}

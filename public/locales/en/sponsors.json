@@ -1,6 +1,6 @@
 {
 	"title": "Sponsors",
-	"description": "We would like to thank our sponsors for their generous support. Find out more about our sponsors below.",
+	"description": "Thank you to our sponsors. Learn more below.",
 	"tier": "{{tier}} Sponsor",
 	"tiers": {
 		"backbencher": "Backbencher",
@@ -9,9 +9,9 @@
 		"mayor": "Mayor",
 		"premier": "Premier"
 	},
-	"hiring": "Hiring Website",
+	"hiring": "Careers",
 	"website": "Website",
-	"additional": "Additional Information",
+	"additional": "More information",
 	"descriptions": {
 		"cgi": "CGI is one of the world's largest independent IT and business consulting services firms, helping organisations accelerate digital transformation and achieve measurable results.",
 		"ciena": "Ciena is a global networking systems, services, and software company whose technology enables fast, reliable, and scalable connectivity.",

@@ -1,73 +1,43 @@
 # Web Push transport
 
-This document covers Web Push configuration and scheduler internals. Participant
-preferences, Discord fan-out, food-service campaigns, release order, and the
-real-provider acceptance procedure are authoritative in
-[`NOTIFICATIONS.md`](./NOTIFICATIONS.md).
+This page documents transport-specific behaviour. Participant preferences, Discord,
+campaigns, and operator steps are in [`NOTIFICATIONS.md`](./NOTIFICATIONS.md).
 
-Generate a VAPID key pair with `npx web-push generate-vapid-keys`. Set
-`VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` on the server and set
-`NEXT_PUBLIC_VAPID_PUBLIC_KEY` to that same public key **before building** the
-browser bundle. `VAPID_EMAIL` is optional and defaults to hello@hackthehill.com.
-Blank keys disable push. Missing, invalid, or mismatched keys make the readiness
-endpoint unavailable and registration fails rather than promising a reminder.
-Keep the private key server-side and preserve the pair across deployments.
+## Configuration
 
-Registration accepts only a canonical Web Push subscription: an allowlisted
-HTTPS provider endpoint, a 65-byte uncompressed P-256 public key, and a 16-byte
-authentication secret. The API body is limited to 4 KB. Each event accepts at
-most 5,000 distinct endpoints; an existing endpoint can still refresh its keys
-or language at that limit. English and French registrations store only the
-two-letter locale needed to choose the event name, notification body, and link.
+Generate a VAPID pair with `npx web-push generate-vapid-keys` and set:
 
-Run `prisma migrate deploy` before starting the application. The existing Docker
-`npm start` / `next start` deployment starts the reminder scheduler from Next.js
-instrumentation, immediately and once per minute, without waiting for an API
-request. The hook is not run during production builds. This scheduler requires a
-continuously running Node server; a deployment using short-lived serverless
-functions would need a separately scheduled worker.
+- `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` on the server;
+- `NEXT_PUBLIC_VAPID_PUBLIC_KEY` to the same public key before building; and
+- `VAPID_EMAIL` to the contact address, or leave its documented default.
 
-Each due event is claimed atomically in MySQL for two minutes using the database
-clock. Workers renew ownership before each batch of at most ten concurrent sends. Fast
-providers can drain multiple batches in a tick; each event has a shared 30-second
-budget before processing moves to the next event. Failed subscriptions move
-behind other pending subscriptions and are retried on a later tick. Push HTTP requests
-have a 30-second total deadline. Another process or overlapping tick cannot
-claim an unexpired lease; an expired lease lets a replacement worker recover
-after a restart. Deletes and completion are fenced by the lease token. Successful
-and expired subscriptions are removed; temporary failures remain for the next
-run. A unique event/endpoint key prevents concurrent registrations from creating
-duplicate subscriptions.
-Malformed legacy subscriptions are treated as permanently invalid and removed
-instead of consuming retry work forever.
+Missing, invalid, or mismatched keys disable push. Keep the private key server-side and
+preserve the pair across deployments.
 
-Delivery is at least once: a crash after a push service accepts a request but
-before the database records its success can cause a retry. A process suspended
-past its lease can also leave an in-flight request ambiguous. Web push offers no
-transaction spanning remote delivery and MySQL; avoiding that retry would risk
-losing reminders. The stable notification tag lets the service worker replace
-an existing notification for the same event.
+Registration accepts allow-listed HTTPS push providers, canonical P-256 keys, and a
+two-letter locale. Each event accepts at most 5,000 distinct endpoints. The server
+rejects private or arbitrary destinations.
 
-Moving an event to a future start time clears its completion marker under the
-event row lock but preserves an active lease. This lets the current worker record
-already-launched requests, then prevents it from renewing the lease or completing
-an event that is no longer due. A provider may already have accepted an in-flight
-push, which cannot be recalled. Successful subscriptions are deleted as normal;
-unsent and temporarily failed subscriptions remain eligible at the new start.
-Hiding an event closes registration and marks its reminder complete under the
-same row lock while preserving an active lease. Pending subscriptions are
-retained so a future unhide can reopen registration without leaving browser
-state out of sync. Hidden events cannot renew or complete worker claims, but an
-in-flight provider request can record its result before the worker releases its
-lease.
+## Delivery
 
-The `worker/index.js` push listener is bundled by next-pwa into a generated
-`worker-*.js` file imported by `public/sw.js`. Both are copied to the production
-image with the other public assets. Generated assets are ignored by Git.
+The Node process checks due events once per minute. MySQL leases prevent overlapping
+workers from completing the same event, and expired leases allow recovery after a
+restart. Provider requests have bounded timeouts. Successful or expired subscriptions
+are removed; temporary failures remain for retry.
 
-CI runs the reminder concurrency/recovery suite against an isolated MySQL
-service after applying migrations. Locally, set `PUSH_TEST_DATABASE_URL` to an
-isolated loopback database whose name contains `test` or `review`, apply
-migrations there, then run `npm test`. Without that variable, only the real
-MySQL tests are skipped; configuration, API rejection, and browser state tests
-still run. The integration suite never uses the app's `DATABASE_URL`.
+Delivery is at least once. A crash after a provider accepts a request but before MySQL
+records success can cause a retry. The stable notification tag lets the browser replace
+an earlier notification for the same event.
+
+Moving a visible event to a future time reopens reminders. Hiding it closes new
+registration. Existing in-flight provider requests cannot be recalled.
+
+The custom push listener in `worker/index.js` is bundled into the generated service
+worker. Generated worker files are build artefacts and are not committed.
+
+## Verification
+
+Focused tests cover endpoint restrictions, key validation, caps, leases, recovery,
+timeouts, rescheduling, hidden events, and browser state. MySQL concurrency tests use
+`PUSH_TEST_DATABASE_URL`, which must be a disposable loopback database whose name
+contains `test` or `review`.

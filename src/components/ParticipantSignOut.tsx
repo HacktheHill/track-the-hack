@@ -34,7 +34,7 @@ const ParticipantSignOut = () => {
 		<div className="flex flex-col items-center gap-2">
 			<button
 				type="button"
-				className="rounded-lg border border-dark-primary-color px-4 py-2 font-coolvetica text-dark-primary-color transition-colors hover:bg-light-secondary-color disabled:cursor-wait disabled:opacity-60"
+				className="ui-button ui-button-tertiary"
 				disabled={submitting}
 				onClick={() => void signOut()}
 			>
