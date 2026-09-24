@@ -87,36 +87,27 @@ MySQL-dependent automated cases and database-backed PWA E2E were therefore skipp
 locally. Run them in hosted CI or a disposable MySQL environment before calling the
 release fully accepted.
 
-## 2. Confirm Sheet-side accepted-participant reconciliation
+## 2. Resolve recipient decisions and run the one-recipient RSVP acceptance test
 
-Production now contains 664 participants, all pending, non-walk-in, and using the one
-intended deadline `2026-09-25T03:59:59.000Z`. This confirms that the preparation run
-advanced beyond the earlier 100-record partial state. The restricted Responses Sheet
-must still establish that 664 is the complete accepted audience and that it retained
-the matching stable IDs and signed links.
+Sheet-side provisioning and reconciliation are complete: all 664 accepted rows have a
+durable participant ID, a valid signed management link, `PENDING` status, the intended
+deadline `2026-09-25T03:59:59.000Z`, and an RSVP refresh timestamp. The Sheet and
+production participant counts match. Do not rerun preparation merely to repeat this
+check. Preparation provisions records and links; it sends no email.
 
-Do not insert participants directly into MySQL or rerun preparation unless the Sheet
-comparison finds a mismatch.
+No invitation was known to have been sent at the last audit. Before generating the
+campaign, decide how to handle the eight accepted row pairs that still share a
+normalised recipient address: 31/329, 37/668, 79/347, 168/332, 296/432, 382/641,
+428/598, and 454/559. Each row has its own participant ID and signed link, so the
+campaign generator correctly rejects the duplicates instead of guessing whether one or
+both applications should receive mail.
 
-1. Confirm the complete `Accepted`/`Accepté`/`Acceptée` count in the Responses Sheet is 664.
-2. Verify every accepted row has a durable Participant ID, signed
-   `/rsvp/manage#…` link, `PENDING` status, the intended deadline, and refresh
-   timestamp.
-3. Run **Refresh RSVP responses** and require zero missing IDs. `RSVP Refreshed At`,
-   not generic `Last Sync`, is the freshness signal.
-4. Recheck shared-recipient submissions. Earlier evidence flagged row pairs 31/329,
-   37/668, 79/347, 168/332, 296/432, 382/641, 428/598, and 454/559, but the rows and
-   decisions may have changed.
+Row 2 is not a suitable default live test: its current admission status is `Excluded
+(member)` even though stale Tracker fields show a confirmed RSVP. Select a different,
+explicitly approved accepted row. External email requires action-time approval of the
+exact recipient, sender, subject, template, and dry-run output.
 
-Preparation provisions records and links; it sends no email.
-
-## 3. Run the one-recipient RSVP acceptance test
-
-No invitation was known to have been sent at the last audit. Row 2 is the designated
-live test, but external email requires action-time approval of the exact recipient,
-sender, subject, template, and dry-run output.
-
-1. Set `TRACK_TEST_SUBMISSION_ID` to row 2's approved submission ID and run
+1. Set `TRACK_TEST_SUBMISSION_ID` to the approved accepted row's submission ID and run
    `prepareTestSubmissionForRsvp()` only if fresh setup is needed. Remove the property
    afterward.
 2. Generate and inspect the minimal private test recipient CSV without printing its
@@ -134,71 +125,17 @@ count, suppressions, sender, deadline, subject, template, and dry-run output.
 `scripts/prepare-rsvp-campaign.mts` creates a private CSV and never sends mail. See
 `docs/RSVP_EMAIL_RUNBOOK.md` for the message and suppression review.
 
-## 4. Decide the RSVP audit-transaction policy
+## 3. Retained remote branches
 
-`src/server/repositories/prisma-rsvp-management.ts` writes the RSVP decision and `Log`
-row in one transaction. A log failure rolls the decision back. Elsewhere,
-`src/server/lib/log.ts` swallows audit failures so logging cannot break a user action.
+The obsolete remote branches have been deleted. Exactly four non-`main` branches remain:
 
-- If RSVP decisions require atomic audit evidence, retain the transaction and add an
-  explicit comment and policy test.
-- If participant intent must survive a log failure, commit the decision first and use
-  non-blocking logging afterward, with a failure-path test.
+- `2023` and `2025` are intentional year snapshots from histories that do not share a
+  useful merge base with the rewritten `main`.
+- `hackhers` preserves event-specific HackHers challenge narratives that are not in the
+  current or archived resource pages on `main`.
+- `ticket-tailor` contains a potentially valuable event-specific registration-question
+  and response-capture concept. It does not fit the current architecture well enough to
+  cherry-pick. Retain it until the product owner either declines that feature or asks
+  for a narrow reimplementation against the current RSVP model.
 
-Do not change the boundary until the intended guarantee is confirmed.
-
-## 5. Remaining interface and build findings
-
-Recheck each against current `main` before editing.
-
-### Organiser event editor accessibility
-
-`EventEditor` uses a portalled `role="dialog"` rather than the native `<dialog>` pattern
-used by `ScheduleEventDialog`. Focus can escape and Escape is not handled. Use the
-established modal pattern or add equivalent focus trapping, Escape cancellation,
-initial focus, and focus restoration. Test keyboard-only create/edit/cancel/save flows.
-
-### Event reminder refetch flicker
-
-`ScheduleEventDetails` resets notification state in an effect depending on the event
-object. Superjson may recreate dates on refetch and briefly make the bell unavailable.
-Depend on stable primitives such as ID and start timestamp, then test an existing
-reminder through refocus/refetch.
-
-### Save-to-schedule interaction
-
-One mutation pending state disables every schedule star, gives no immediate response,
-and reports failures at the list bottom. Use per-event optimistic/pending state, roll
-back on failure, identify the event in the error, and reuse shared interest-button
-styling where practical.
-
-### `SKIP_ENV_VALIDATION` contract
-
-`next.config.js` says the flag skips validation, but `src/env/server.mjs` validates when
-pages import it. Either honour the flag or remove the misleading comment and document
-the build environment requirement. Do not weaken runtime production validation.
-
-### Migration naming
-
-Several applied migration pairs share timestamp prefixes. Do not rename or delete them.
-Require a unique generator-produced timestamp prefix for every new migration.
-
-## 6. Remote branches still requiring a decision
-
-Sixteen non-`main` branches remain. They are year branches or standalone histories
-without enough merged-PR evidence to call deletion lossless after the history rewrite.
-A simple `git branch --merged` result is not reliable.
-
-- Year snapshots: `2023`, `2025`.
-- Data, registration, and authentication: `database-refactor`,
-  `feat/model-change-luis`, `hacker-registrations-v2`, `microsoft-login`,
-  `ticket-tailor`.
-- Event and participant features: `feat/discord-team-operations`,
-  `feature/event-notification`, `notifications`, `fix/revert-qr-rotation`,
-  `feat/qr-code-offline-support`, `feat/qr-code-offline-support-v2`.
-- Content and tooling: `hackhers`, `hardware-tracking-tool`, `localization-wip`.
-
-`origin/HEAD` is symbolic and not an additional branch. Inspect unique commits and
-current-main equivalents, ask the relevant owner when content is ambiguous, then
-extract a narrow change or delete the branch. Once a branch decision is completed,
-remove it from this list.
+`origin/HEAD` is symbolic and is not an additional branch.
