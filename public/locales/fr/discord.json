@@ -4,7 +4,7 @@
 	"verifying": "Vérification…",
 	"checking": "Vérification de votre enregistrement…",
 	"verified": "Votre compte Discord est vérifié. Vous pouvez retourner sur Discord.",
-	"session-required": "Vous devez vous enregistrer avant de pouvoir vérifier votre compte Discord.",
+	"session-required": "Configurez votre laissez-passer de participant dans ce navigateur avant de pouvoir vérifier votre compte Discord.",
 	"check-in-required": "Vous devez vous enregistrer avant de pouvoir vérifier votre compte Discord.",
 	"invalid": "Ce lien de vérification est absent, invalide ou expiré. Générez un nouveau lien personnel dans Discord.",
 	"conflict": "Ce participant ou ce compte Discord est déjà associé à un autre compte. Demandez de l’aide à un organisateur.",

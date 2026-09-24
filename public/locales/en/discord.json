@@ -4,7 +4,7 @@
 	"verifying": "Verifying…",
 	"checking": "Checking your check-in status…",
 	"verified": "Your Discord account is verified. You can return to Discord.",
-	"session-required": "You must check in before you can verify your Discord account.",
+	"session-required": "Set up your participant pass in this browser before you can verify your Discord account.",
 	"check-in-required": "You must check in before you can verify your Discord account.",
 	"invalid": "This verification link is missing, invalid, or expired. Generate a new personal link in Discord.",
 	"conflict": "This participant or Discord account is already linked to a different account. Ask an organiser for help.",
