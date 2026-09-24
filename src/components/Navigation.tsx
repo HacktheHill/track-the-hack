@@ -37,7 +37,6 @@ const Links = ({ bottom }: LinkProps) => {
 		<>
 			<LinkItem href="/" bottom={bottom} text={t("home")} src="/assets/home.svg" alt={t("home")} />
 			{hasPass && <LinkItem href="/pass" bottom={bottom} text={t("pass")} src="/assets/qr.svg" alt={t("pass")} />}
-<<<<<<< HEAD
 			{hasPass && (
 				<LinkItem
 					href="/services"
@@ -47,10 +46,7 @@ const Links = ({ bottom }: LinkProps) => {
 					alt={t("services")}
 				/>
 			)}
-			<Filter value={[RoleName.ORGANIZER, RoleName.ADMIN]} silent method="some">
-=======
 			<Access silent>
->>>>>>> 3af78a9 (feat(auth): simplify organiser access and passes)
 				<LinkItem href="/qr" bottom={bottom} text={t("qr")} src="/assets/qr.svg" alt={t("qr")} />
 			</Access>
 			<LinkItem

@@ -44,11 +44,16 @@ const allowedOutcomes: Record<(typeof auditNames)[number], readonly string[]> = 
 
 const entitySchema = z
 	.object({
-<<<<<<< HEAD
-		type: z.enum(["hacker", "user", "event", "presence", "role", "hardware_loan", "latte_order"]),
-=======
-		type: z.enum(["hacker", "user", "event", "presence", "role", "organizer_access"]),
->>>>>>> 3af78a9 (feat(auth): simplify organiser access and passes)
+		type: z.enum([
+			"hacker",
+			"user",
+			"event",
+			"presence",
+			"role",
+			"organizer_access",
+			"hardware_loan",
+			"latte_order",
+		]),
 		id: z.string().min(1).max(191),
 	})
 	.strict();
@@ -97,8 +102,15 @@ export const auditEventV1Schema = z
 		if (!allowedOutcomes[event.name].includes(event.outcome)) {
 			context.addIssue({ code: "custom", path: ["outcome"], message: `Invalid outcome for ${event.name}` });
 		}
-		if (event.name.startsWith("scanner.") && (!event.subject || event.subject.type !== "hacker")) {
-			context.addIssue({ code: "custom", path: ["subject"], message: "Scanner events require a hacker subject" });
+		if (
+			event.name.startsWith("scanner.") &&
+			(!event.subject || !["hacker", "user"].includes(event.subject.type))
+		) {
+			context.addIssue({
+				code: "custom",
+				path: ["subject"],
+				message: "Scanner events require a participant or organiser subject",
+			});
 		}
 		if (event.name.startsWith("scanner.") && (!event.resource || event.resource.type !== "event")) {
 			context.addIssue({
