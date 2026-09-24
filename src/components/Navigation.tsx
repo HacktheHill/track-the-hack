@@ -38,6 +38,15 @@ const Links = ({ bottom }: LinkProps) => {
 		<>
 			<LinkItem href="/" bottom={bottom} text={t("home")} src="/assets/home.svg" alt={t("home")} />
 			{hasPass && <LinkItem href="/pass" bottom={bottom} text={t("pass")} src="/assets/qr.svg" alt={t("pass")} />}
+			{hasPass && (
+				<LinkItem
+					href="/services"
+					bottom={bottom}
+					text={t("services")}
+					src="/assets/resources.svg"
+					alt={t("services")}
+				/>
+			)}
 			<Filter value={[RoleName.ORGANIZER, RoleName.ADMIN]} silent method="some">
 				<LinkItem href="/qr" bottom={bottom} text={t("qr")} src="/assets/qr.svg" alt={t("qr")} />
 			</Filter>

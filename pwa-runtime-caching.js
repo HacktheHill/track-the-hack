@@ -48,20 +48,20 @@ const isEnglishPublicNavigation = ({ request, url }) =>
 const isFrenchPrivateNavigation = ({ request, url }) =>
 	request.mode === "navigate" &&
 	self.origin === url.origin &&
-	/^\/fr\/(?:auth\/(?:error|sign-in)|cancel|claim(?:\/qr)?|discord|internal(?:\/(?:events|roles))?|metrics|profile|qr|rsvp\/(?:manage|[^/]+))\/?$/.test(
+	/^\/fr\/(?:auth\/(?:error|sign-in)|cancel|claim(?:\/qr)?|discord|hardware|internal(?:\/(?:events|roles|hardware|latte-lab))?|latte-lab|metrics|profile|qr|rsvp\/(?:manage|[^/]+)|services)\/?$/.test(
 		url.pathname,
 	);
 /** @param {{ request: Request; url: URL }} context */
 const isEnglishPrivateNavigation = ({ request, url }) =>
 	request.mode === "navigate" &&
 	self.origin === url.origin &&
-	/^\/(?:auth\/(?:error|sign-in)|cancel|claim(?:\/qr)?|discord|internal(?:\/(?:events|roles))?|metrics|profile|qr|rsvp\/(?:manage|[^/]+))\/?$/.test(
+	/^\/(?:auth\/(?:error|sign-in)|cancel|claim(?:\/qr)?|discord|hardware|internal(?:\/(?:events|roles|hardware|latte-lab))?|latte-lab|metrics|profile|qr|rsvp\/(?:manage|[^/]+)|services)\/?$/.test(
 		url.pathname,
 	);
 /** @param {{ url: URL }} context */
 const isPrivateNextDataRequest = ({ url }) =>
 	self.origin === url.origin &&
-	/^\/_next\/data\/[^/]+\/(?:(?:en|fr)\/)?(?:auth\/(?:error|sign-in)|cancel|claim(?:\/qr)?|discord|internal(?:\/(?:events|roles))?|metrics|profile|qr|rsvp\/(?:manage|[^/]+))\.json$/.test(
+	/^\/_next\/data\/[^/]+\/(?:(?:en|fr)\/)?(?:auth\/(?:error|sign-in)|cancel|claim(?:\/qr)?|discord|hardware|internal(?:\/(?:events|roles|hardware|latte-lab))?|latte-lab|metrics|profile|qr|rsvp\/(?:manage|[^/]+)|services)\.json$/.test(
 		url.pathname,
 	);
 

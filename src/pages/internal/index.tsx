@@ -27,6 +27,12 @@ const Internal: NextPage = () => {
 						<Link href="/internal/events" className="ui-button ui-button-primary">
 							{t("events.title")}
 						</Link>
+						<Link href="/internal/hardware" className="ui-button ui-button-primary">
+							{t("hardware")}
+						</Link>
+						<Link href="/internal/latte-lab" className="ui-button ui-button-primary">
+							{t("latte-lab")}
+						</Link>
 					</div>
 				</div>
 			</Filter>

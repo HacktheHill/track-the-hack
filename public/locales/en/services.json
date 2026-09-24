@@ -1,0 +1,9 @@
+{
+	"title": "Event services",
+	"intro": "Use event services available to participants.",
+	"session-required": "An active participant pass is required to use these services.",
+	"hardware": "Hardware Desk",
+	"hardware-description": "Browse currently available hardware.",
+	"latte": "Latte Lab",
+	"latte-description": "Order a drink when Latte Lab is open."
+}

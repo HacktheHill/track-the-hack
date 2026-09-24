@@ -1,7 +1,20 @@
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
 import test from "node:test";
-import { EventType, MealCategory, ScannerWorkflow } from "@prisma/client";
+import {
+	EventType,
+	HardwareCategory,
+	LatteCancellationReason,
+	LatteDrink,
+	LatteFlavour,
+	LatteIngredient,
+	LatteMilkBase,
+	LatteOrderStatus,
+	LatteSweetener,
+	LatteTemperature,
+	MealCategory,
+	ScannerWorkflow,
+} from "@prisma/client";
 
 type TranslationTree = { [key: string]: string | TranslationTree };
 
@@ -61,6 +74,16 @@ void test("dynamic enum-backed translation domains cover every runtime value", (
 		["qr", "scan-outcome", ["new", "incremented", "unchanged", "limit"]],
 		["rsvp", "", ["manage-status-pending", "manage-status-confirmed", "manage-status-declined"]],
 		["discord", "", ["verified", "session-required", "invalid", "conflict", "unavailable"]],
+		["hardware", "category", Object.values(HardwareCategory)],
+		["latteLab", "drink", Object.values(LatteDrink)],
+		["latteLab", "description", Object.values(LatteDrink)],
+		["latteLab", "temperatureValue", Object.values(LatteTemperature)],
+		["latteLab", "milk", Object.values(LatteMilkBase)],
+		["latteLab", "flavourValue", Object.values(LatteFlavour)],
+		["latteLab", "sweetenerValue", Object.values(LatteSweetener)],
+		["latteLab", "ingredient", Object.values(LatteIngredient)],
+		["latteLab", "status", Object.values(LatteOrderStatus)],
+		["latteLab", "reason", Object.values(LatteCancellationReason)],
 	] as const;
 	for (const locale of ["en", "fr"] as const) {
 		for (const [namespace, prefix, values] of domains) {

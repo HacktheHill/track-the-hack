@@ -36,6 +36,16 @@ void test("PWA configuration keeps participant routes deployment-safe", () => {
 			isEnglishPrivateNavigation({ request: navigationRequest, url: new URL("https://track.example/qr") }),
 			true,
 		);
+		for (const path of ["/services", "/hardware", "/latte-lab", "/internal/hardware", "/internal/latte-lab"]) {
+			assert.equal(
+				isEnglishPrivateNavigation({
+					request: navigationRequest,
+					url: new URL(`https://track.example${path}`),
+				}),
+				true,
+				`${path} must remain network-only`,
+			);
+		}
 		assert.equal(
 			isFrenchPrivateNavigation({
 				request: navigationRequest,
