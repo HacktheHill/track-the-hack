@@ -35,6 +35,21 @@ The release and migration are complete, but camera/USB behaviour, two-device
 concurrency, and installed-PWA behaviour still require the physical environments below.
 These are the highest-priority outstanding acceptance checks.
 
+### Read-only database check
+
+The Azure exec endpoint rate-limited the fresh aggregate query after deployment. Once
+it is available again, run one read-only query from the application container and
+verify:
+
+- exactly one successful `20260924010000_add_event_scanner_enabled` migration exists;
+- all 41 events and their schedule fields remain present;
+- scanner-disabled rows are exactly the operator-approved career-fair events, `Team
+Formation`, and `Closing Ceremony`;
+- participant, claim, participant-session, Presence, and RSVP-state counts did not
+  change unexpectedly during the schema-only release.
+
+Do not start a mutable job or expose MySQL merely to perform this check.
+
 ### Scanner acceptance
 
 Use test participants and reversible count adjustments; do not modify real participant
