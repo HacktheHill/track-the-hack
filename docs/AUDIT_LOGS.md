@@ -60,12 +60,15 @@ AuditEvents
 | order by Time desc
 ```
 
-Event Services records `hardware.loan.checked_out`, `hardware.loan.returned`,
-`latte.order.placed`, `latte.order.cancelled`, `latte.order.transitioned`,
-`latte.lab.open_changed`, and `latte.ingredient.availability_changed`. These events use
-only opaque participant, loan, order, and organiser identifiers plus fixed enums and
-counts. Pickup names and physical-ID details must never be added to either structured
-events or their legacy human-readable companion entries.
+Event Services records `hardware.item.availability_changed`,
+`hardware.loan.checked_out`, `hardware.loan.returned`, `latte.order.placed`,
+`latte.order.cancelled`, `latte.order.transitioned`, `latte.lab.open_changed`, and
+`latte.ingredient.availability_changed`. These events use only opaque participant,
+item, loan, order, and organiser identifiers plus fixed enums and counts. A hardware
+return may record aggregate `goodUnits`, `damagedUnits`, `missingUnits`, and
+`consumedUnits`; it must not copy line descriptions into the audit record. Pickup names
+and physical-ID details must never be added to either structured events or their legacy
+human-readable companion entries.
 
 No-op and reconciliation outcomes:
 

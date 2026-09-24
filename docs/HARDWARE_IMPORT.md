@@ -1,7 +1,7 @@
 # Hardware initial import
 
 This runbook is for the one-time, reviewed import that makes Track the Hack the
-authoritative hardware inventory. It is not a synchronization process. Never commit the
+authoritative hardware inventory. It is not a synchronisation process. Never commit the
 source Sheet export or cleaned CSV: costs, missing-item notes, and private operational
 working data do not belong in this repository.
 
@@ -39,11 +39,11 @@ npm run hardware:import -- /absolute/private/path/hardware-cleaned.csv
 ```
 
 The dry run reports counted item types, total known units, uncounted item types, and
-consumption-enabled item types. It rejects duplicate keys, duplicate normalized names
+consumption-enabled item types. It rejects duplicate keys, duplicate normalised names
 within a category, blank names, invalid modes or Boolean flags, invalid counted
 quantities, quantities on uncounted items, unknown categories, unsafe images, and bulk
 bag/box display names. Reconcile known totals against the physical count and have a
-second organiser review the CSV and output before requesting authorization to apply it.
+second organiser review the CSV and output before requesting authorisation to apply it.
 
 ## Apply once
 
@@ -65,21 +65,34 @@ availability has no number, and no mutation controls appear. Keep the private CS
 for the approved operational retention period, then dispose of it through the
 organisation's normal secure process.
 
-## One-time production classification correction
+## Completed production classification correction
 
-The initial production import predated inventory modes. Use `npm run
-hardware:reconcile` to inspect the exact eight stable keys and guards without writing.
-The command refuses the six uncounted conversions if they have any loan history or
-aggregate outcome quantities. After a verified backup and separate authorization, run
-`npm run hardware:reconcile -- --apply`. It atomically converts the six reviewed bulk
-component records to uncounted, removes their bag/container descriptions, and enables
-Consumed for those records plus AA batteries and EMG electrodes. It never re-imports
-the source Sheet and is safe to dry-run again after application.
+The initial production import predated inventory modes. The guarded correction was
+backed up, dry-run, applied, and verified on 2026-09-24 with application release
+`d1c7686b94e73a4b15eb024bc14b9633c1c51fa3`. Production now has these six uncounted,
+consumption-enabled records with null total and available quantities:
+
+- `small-black-buttons`;
+- `the-red-button`;
+- `mixed-colour-leds`;
+- `male-pin-headers`;
+- `resistors`;
+- `wires`.
+
+`aa-batteries` and `emg-electrodes` remain counted and are consumption-enabled. The
+post-apply dry run reported that the intended reconciliation was already applied.
+
+Do not run `npm run hardware:reconcile -- --apply` again as routine setup and do not
+re-import the source Sheet. `npm run hardware:reconcile` is now a read-only diagnostic:
+its normal result is **Hardware reconciliation is already applied.** A future write is a
+recovery operation requiring a fresh backup, review of all eight exact key matches and
+loan/outcome guards, and separate production authorisation.
 
 ## Rollback
 
-Before apply, take and verify the normal database backup. If verification fails before
-any checkout, restore that backup or—only with explicit database authorization—remove
+Before an initial import, take and verify the normal database backup. If verification
+fails before any checkout, restore that backup or—only with explicit database
+authorisation—remove
 the newly imported rows as one reviewed operation. Once a loan exists, do not delete or
 re-import inventory: preserve the audit trail and correct it through a separately
 reviewed reconciliation procedure.

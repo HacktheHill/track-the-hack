@@ -46,6 +46,15 @@ English/French matrix on Android Chrome and an iPhone home-screen web app, parti
 pass privacy and cleanup, production deployment evidence, and the exact definition of
 complete.
 
+Hardware Desk and Latte Lab share one participant Services entry point but remain
+separate operational domains. The initial hardware import contract and the completed
+production counted/uncounted correction are recorded in
+[`docs/HARDWARE_IMPORT.md`](./docs/HARDWARE_IMPORT.md). The source Sheet is not an
+ongoing inventory synchronisation source. Follow the detailed
+[`Event Services acceptance`](./docs/E2E_TESTING.md#event-services-acceptance) journey
+for local fixtures, Hardware checkout/return, Latte ordering/queue handling, privacy,
+physical-device checks, cleanup, and the final no-remaining-work criteria.
+
 The current data ownership, authorisation boundaries, participant lifecycle, scanner
 semantics, and offline privacy model are documented in
 [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md).

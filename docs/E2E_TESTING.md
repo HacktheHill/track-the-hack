@@ -115,79 +115,205 @@ Script mapper, and loopback SMTP. It must cover:
 
 ## Event Services acceptance
 
-Use seeded development participants and disposable imported inventory. Never use the
-production import or a real participant merely to test these paths.
+This is the complete acceptance procedure for Hardware Desk and Latte Lab. Run it on a
+disposable local database after the standard automated gate. Never re-run the production
+hardware import, create a real participant loan, or place a real participant order merely
+to test these paths.
 
-For Hardware Desk, dry-run counted and uncounted fixtures plus duplicate keys,
-normalized duplicate names, unknown modes/categories, invalid Boolean flags,
-negative/fractional counted quantities, an uncounted quantity, and bag/box display
-wording. Apply the valid fixture to an empty target; prove a second apply and a target
-with a legacy `Hardware` row both fail. Then complete one journey:
+The automated gate already covers malformed hardware CSV rows, importer guards,
+counted-stock concurrency, checkout and return idempotency, invalid disposition and
+Latte transitions, one-active-order concurrency, recipe compatibility, allergen
+derivation, locale-key completeness, reconciliation guards, and private-route PWA
+behaviour. Do not repeat every enum or invalid payload manually. The browser journey
+below proves the cross-role, physical-desk, responsive, and privacy behaviour that the
+focused tests cannot.
 
-1. With an active participant session, open Services and search the catalogue in both
-   languages. Confirm counted items show exact quantities, uncounted items show only
-   Available or Out of stock, and no cart or mutation is offered.
-2. As an organiser, toggle an uncounted item Out of stock and back to Available. Build
-   a mixed counted/uncounted cart, adjust individual quantities, scan the participant QR,
-   enter a temporary pickup name, acknowledge physical-ID collection, and review the
-   final cart before one checkout.
-3. From two organiser sessions, race checkout of the last unit. Exactly one succeeds,
-   no quantity becomes negative, and retrying the winning idempotency key creates no
-   second loan.
-4. Find the loan by QR, then by pickup name. Partially return one line. On a later atomic
-   return, split an eligible line across Returned, Damaged, Missing, and Consumed;
-   verify only Returned counted units become available and uncounted outcomes do not
-   change global quantities. Confirm Consumed is absent for an ineligible reusable item
-   and a forged Consumed request is rejected.
-5. Retry the return key and confirm no duplicate outcome. Finish the remaining lines,
-   acknowledge returning the physical ID, and verify the temporary name disappears
-   from database results and search. Repeat closure without the acknowledgement and
-   confirm it warns rather than blocking the physical-desk decision.
-6. Reconcile counted items: total equals available plus open-loan units plus damaged,
-   missing, and consumed. Reconcile every loan line against all four outcomes. Confirm
-   logs contain opaque IDs but no pickup name or ID details.
+### Isolated setup and fixtures
 
-For Latte Lab, leave the seeded lab closed and complete this journey at the smallest
-supported phone viewport:
+Use a dedicated local `track-the-hack` database. If the current local database contains
+hardware or Event Services records that must be retained, create a separate Compose
+project and database; do not delete shared development data to make the importer pass.
+Only for a confirmed disposable current Compose project, a full reset is:
 
-1. Open Services as a participant. Confirm the menu says closed and no order can be
-   submitted. As an organiser, enable the lab and all ingredients.
-2. Time a normal order from drink selection through review and submission; it should
-   take under 30 seconds. Check required milk/base choices, optional defaults, direct
-   editing, one prominent submit action, and the dairy/almond badges plus persistent
-   cross-contact notice.
-3. Double-click submit and race a second device for the same participant. Exactly one
-   active order exists. Verify Queued position, cancel while Queued, and rejection of a
-   participant cancellation after preparation starts.
-4. Place two participant orders. On the organiser queue, move the first through
-   Queued → Preparing → Ready → Completed. Confirm skipped, reversed, repeated, stale,
-   and concurrently raced transitions fail, while retrying one successful transition
-   key is idempotent. Participant polling must replace queue position with Preparing
-   and Ready status.
-5. Confirm terminal orders clear pickup names while retaining configuration and
-   timestamps. Cancel active orders with each supported reason class and verify the same
-   privacy behaviour.
-6. Toggle ice, each milk, each syrup, sweeteners, and every fixed base ingredient. A
-   drink with no valid configuration is disabled; unavailable options disappear or are
-   disabled; a stale hidden configuration is rejected server-side. Existing queued
-   orders remain unchanged. Closing the lab blocks new orders without altering them.
-7. Exercise every drink/temperature/milk/flavour/sweetener combination in focused tests,
-   not the browser. In the browser, sample one optional-milk drink, one required-milk
-   drink, London Fog, and Hot Chocolate.
+```sh
+docker compose down --volumes
+npm run dev:setup
+```
 
-For both services, repeat the browser path in English and French where labels are
-longest. Check keyboard-only operation, visible focus, labels, associated errors, screen
-reader announcements, and 44-pixel-or-larger touch controls. In a production PWA build,
-load `/services`, `/hardware`, `/latte-lab`, `/internal/hardware`, and
-`/internal/latte-lab`, then go offline. Each must fail closed to the localized offline
-page; catalogue quantities, loans, orders, queue position, pickup names, and ingredient
-availability must not appear in Cache Storage or private Next-data responses.
+The first command destroys the current Compose project's local MySQL volume. Different
+worktrees can resolve to the same default Compose project name, so inspect the project
+and volume before running it. It is never a production or shared-development cleanup
+command.
 
-The automated PWA test must build and start production mode, verify every explicit
-precache URL, activate the service worker, cache public English and French routes, and
-reload them offline. It also loads an authenticated profile and verifies that `/profile`
-becomes the same QR-only pass without profile details, while private routes use the
-offline fallback. Scanning and all writes remain online-only.
+Create an ignored file such as `prisma/event-services-e2e.csv`:
+
+```csv
+importKey,category,name,inventoryMode,quantity,consumptionAllowed,description,imageUrl
+e2e-reusable,MISCELLANEOUS,E2E reusable board,COUNTED,2,false,Reusable board,
+e2e-batteries,MISCELLANEOUS,E2E batteries,COUNTED,4,true,Batteries returned to the desk,
+e2e-components,MISCELLANEOUS,E2E components,UNCOUNTED,,true,Loose components,
+```
+
+Dry-run and review it before applying it to the empty disposable target:
+
+```sh
+npm run hardware:import -- prisma/event-services-e2e.csv
+npm run hardware:import -- prisma/event-services-e2e.csv --apply
+```
+
+The dry run must report two counted item types, six known counted units, one uncounted
+item type, and two consumption-enabled item types. The apply must create exactly those
+three records. The focused importer tests—not this browser journey—prove the invalid-row,
+duplicate, non-empty-target, and legacy-table rejection cases.
+
+Start the app and create two separate participant sessions:
+
+```sh
+npm run dev
+npm run dev:participant -- claim
+npm run dev:participant -- walk-in
+```
+
+Open each emitted claim link in a different browser profile and explicitly activate it;
+loading the link alone does not consume the claim. Use a third profile to choose **Sign
+in as local organiser**. Keep the organiser, normal participant, and walk-in participant
+profiles separate throughout the test.
+
+For the database and audit inspections called out below, start Prisma Studio in another
+terminal and open the printed loopback URL:
+
+```sh
+npx prisma studio --browser none --port 5555
+```
+
+Inspect `HardwareItem`, `HardwareLoan`, `HardwareLoanLine`, `HardwareReturnLine`,
+`LatteOrder`, and `AuditEvent` directly. Do not edit rows through Studio during the
+journey; use it as read-only evidence so the UI and server remain the only writers.
+
+### Hardware Desk journey
+
+Use `/hardware` for the participant and `/internal/hardware` for the organiser. Record
+the starting fixture state before checkout.
+
+1. In English, then Canadian French, search for all three fixture items. Confirm the
+   reusable board shows `2` available, batteries show `4` available, and components
+   show Available/`Disponible` without a number. Confirm a participant has no cart,
+   checkout, return, or availability controls.
+2. As the organiser, mark the uncounted components Out of stock/`Épuisé`. Reload or
+   wait for the participant catalogue to refetch and confirm it cannot be added. Restore
+   it to Available/`Disponible` before continuing.
+3. Add one reusable board, two batteries, and three components to one cart. Adjust a
+   quantity and remove/re-add a line once to verify ordinary cart correction. Scan the
+   normal participant's QR or enter its opaque ID, enter a clearly synthetic temporary
+   pickup name, confirm physical-ID collection, review the full summary, and submit one
+   checkout.
+4. Confirm the entire checkout either succeeds or fails together. After success, the
+   reusable board must show `1` available, batteries `2` available, and components must
+   still show Available without an invented global quantity.
+5. Find the open loan first by participant QR/opaque ID, then by its temporary pickup
+   name. In the return modal, note that every outstanding line defaults to Returned.
+   Set unrelated lines to zero before submitting a partial return of one battery as
+   Returned and one battery as Consumed. Confirm batteries now show `3` available: the
+   Returned unit is available again and the Consumed unit is not.
+6. Finish the loan in one atomic return: record the reusable board as Damaged; record
+   the three components as one Returned, one Missing, and one Consumed; and acknowledge
+   physical-ID return. Consumed must not be offered for the reusable board.
+7. Confirm the terminal status is `CLOSED_WITH_MISSING`, the pickup name no longer finds
+   an active loan, and the stored pickup name is null. The expected counted invariants
+   are reusable total `2 = 1 available + 1 damaged`, and batteries total
+   `4 = 3 available + 1 consumed`. The uncounted item keeps null total/available fields;
+   its exact Returned, Missing, and Consumed outcomes live only on its loan and return
+   records.
+8. Inspect the corresponding structured audit events. They may contain opaque organiser,
+   participant, item, loan, and return IDs plus disposition counts; they must contain no
+   pickup name, physical-ID type, number, image, or other document detail.
+
+The automated database test is the acceptance evidence for the last-counted-unit race,
+duplicate idempotency keys, forged Consumed request, and arithmetic constraints. Do not
+try to reproduce those cases by corrupting browser requests.
+
+### Latte Lab journey
+
+Use `/latte-lab` for participants and `/internal/latte-lab` for the organiser. Run the
+participant path at the smallest supported phone viewport and time the first normal
+order from drink selection to submission.
+
+1. Confirm the lab starts closed and a participant cannot submit an order. Confirm the
+   organiser queue is protected from participants. As the organiser, ensure every
+   ingredient is available and open the lab.
+2. As the normal participant, choose an iced Latte with oat milk and caramel. Confirm
+   required milk selection, directly editable review fields, dairy/almond allergen
+   badges when those choices are selected, the persistent cross-contact notice, and one
+   prominent Place Order action. Enter a synthetic 1–40 character pickup name. Complete
+   the normal path in under 30 seconds.
+3. Double-click Place Order once as a user would accidentally. Confirm only one active
+   order appears. The focused concurrency test—not repeated browser racing—is the
+   database evidence that a participant cannot acquire two active orders.
+4. Place a Tea order from the walk-in participant profile. Confirm both participants see
+   their correct queued positions. In the organiser queue, move the older order through
+   Queued → Preparing → Ready → Completed. Each participant page should reconcile
+   within its polling interval (normally about three seconds), and the queue number must
+   disappear once preparation starts.
+5. While the second order is still Queued, cancel it from the participant page and
+   confirm it leaves the active queue. Place another order, start it, and confirm the
+   participant can no longer cancel it; finish or cancel it from the organiser queue
+   using one appropriate reason.
+6. Place one more order and leave it queued. Disable ice and confirm iced configurations
+   disappear or become unavailable for new orders without changing the queued order.
+   Disable Earl Grey and confirm London Fog becomes unavailable. Restore both ingredients
+   before continuing.
+7. Close the lab. Confirm new submissions are blocked while an existing active order is
+   unchanged. Resolve the retained order through the organiser queue, then leave the lab
+   closed unless it is deliberately being opened for event operations.
+8. Inspect terminal `LatteOrder` rows and confirm `pickupName` and `activeHackerId` are
+   null while the anonymised drink configuration and lifecycle timestamps remain.
+   Confirm audit events use opaque IDs and never contain the pickup name.
+
+The focused tests are the acceptance evidence for every recipe combination, unavailable
+hidden configurations, invalid/skipped/reversed/stale transitions, idempotent retries,
+all cancellation reason enums, and one-active-order races. Browser acceptance needs one
+representative optional-milk drink and one required-milk drink, not every combination.
+
+### Accessibility, language, physical devices, and privacy
+
+Repeat the longest and most consequential portions of both journeys in English and
+Canadian French. French interface text must not introduce extra spaces before `:`, `;`,
+`?`, or `!`. Verify keyboard-only navigation, visible focus, meaningful labels,
+associated validation errors, screen-reader announcements, and touch targets of at least
+44 pixels. On the physical desk devices, verify the actual camera or USB scanner can
+enter a participant QR and that the cart and four-outcome return controls fit the
+supported phone/tablet viewport without hidden actions.
+
+`npm run test:e2e:pwa` is the authoritative private-cache test. It must build and start
+production mode, activate the service worker, and confirm `/services`, `/hardware`,
+`/latte-lab`, `/internal/hardware`, and `/internal/latte-lab` fail closed offline.
+Catalogue quantities, loans, orders, queue positions, pickup names, and ingredient
+availability must not appear in Cache Storage or private Next-data responses. The same
+test verifies that authenticated `/profile` becomes only the QR pass offline while
+public English and French routes remain cached.
+
+### Cleanup, evidence, and completion criteria
+
+Before declaring Event Services complete:
+
+1. Resolve every test loan and Latte order; do not leave active rows behind.
+2. Restore every uncounted fixture item to Available and every Latte ingredient to
+   available. Leave Latte Lab closed.
+3. Confirm terminal hardware and Latte pickup names are null and no audit line contains
+   either temporary name or physical-ID detail.
+4. Delete the ignored `prisma/event-services-e2e.csv`. Retain the disposable database
+   only as long as its evidence is useful. If it is truly disposable, remove its Docker
+   volume with `docker compose down --volumes`; this destroys all local database data.
+5. Record the commit, commands and exact pass/skip totals, browser profiles and physical
+   devices, English/French paths, starting and ending inventory values, test record IDs,
+   privacy inspection, and cleanup result.
+6. For a deployed release, complete the non-mutating production smoke below. Do not
+   create a production loan or order solely for validation.
+
+When the standard automated gate passes, this manual journey passes, the production
+smoke passes, all test state is cleaned up, and no skipped check remains unexplained,
+Event Services has no remaining implementation or test work. Opening Latte Lab for an
+event and processing real hardware loans are operations, not unfinished development.
 
 ## Manual local journey
 
@@ -475,6 +601,10 @@ Smoke-test only what production configuration adds beyond local E2E:
 - public schedule/event data and bilingual static routes;
 - one controlled participant claim/profile/pass path;
 - scanner authorisation and a reversible test Presence;
+- Event Services route authorisation and non-mutating catalogue/menu reads with a
+  designated test session; verify the six production uncounted hardware types show no
+  invented quantity, AA batteries and EMG electrodes remain counted, and Latte Lab is
+  in its intended closed/open operational state;
 - push readiness/key match if reminders changed;
 - Cloudflare Access remains enabled.
 
@@ -483,8 +613,9 @@ For an offline/PWA change, complete every production and physical-device step in
 the offline portion of the production-smoke evidence; a green build or unauthenticated
 Cloudflare redirect does not replace it.
 
-Do not repeat destructive edge cases in production. Verify counts before and after, and
-remove only explicitly created test records.
+Do not repeat destructive edge cases in production. Do not create a hardware loan,
+Latte order, or availability change solely for smoke testing. Verify counts before and
+after, and remove only explicitly created test records.
 
 ## Evidence to report
 

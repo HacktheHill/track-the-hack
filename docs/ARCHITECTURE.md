@@ -204,7 +204,7 @@ interests; food, merchandise, and check-in workflows cannot retrieve them.
 ## Event Services
 
 Hardware Desk and Latte Lab are separate domains. They share participant sessions,
-organiser authorization, audit conventions, transactional mutations, idempotency, and
+organiser authorisation, audit conventions, transactional mutations, idempotency, and
 localisation, but no generic store, cart, inventory, or workflow framework.
 
 Hardware items are either counted or uncounted. Counted items expose exact availability;
@@ -218,6 +218,9 @@ loans plus damaged, missing, and consumed. Every loan line equals outstanding pl
 four resolved outcomes. There is no quantity editor, recount, or repair workflow. The
 restricted source Sheet is used only to prepare the reviewed initial import described
 in `HARDWARE_IMPORT.md`; after import, Track the Hack owns the operational inventory.
+The production classification correction is complete; its exact stable keys and
+verification state are recorded in that runbook rather than encoded as application
+startup behaviour.
 
 Latte recipes and compatibility rules are code-owned. Ingredient availability is a
 boolean operational switch, not stock accounting. Lab closure prevents new orders but
