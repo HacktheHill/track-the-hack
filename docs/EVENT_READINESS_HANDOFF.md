@@ -35,21 +35,6 @@ The release and migration are complete, but camera/USB behaviour, two-device
 concurrency, and installed-PWA behaviour still require the physical environments below.
 These are the highest-priority outstanding acceptance checks.
 
-### Read-only database check
-
-The Azure exec endpoint rate-limited the fresh aggregate query after deployment. Once
-it is available again, run one read-only query from the application container and
-verify:
-
-- exactly one successful `20260924010000_add_event_scanner_enabled` migration exists;
-- all 41 events and their schedule fields remain present;
-- scanner-disabled rows are exactly the operator-approved career-fair events, `Team
-Formation`, and `Closing Ceremony`;
-- participant, claim, participant-session, Presence, and RSVP-state counts did not
-  change unexpectedly during the schema-only release.
-
-Do not start a mutable job or expose MySQL merely to perform this check.
-
 ### Scanner acceptance
 
 Use test participants and reversible count adjustments; do not modify real participant
@@ -102,31 +87,24 @@ MySQL-dependent automated cases and database-backed PWA E2E were therefore skipp
 locally. Run them in hosted CI or a disposable MySQL environment before calling the
 release fully accepted.
 
-## 2. Complete accepted-participant provisioning
+## 2. Confirm Sheet-side accepted-participant reconciliation
 
-The operator ran **Prepare accepted RSVP invitations**. Two later read-only production
-checks found exactly 100 provisioned participants, all unconfirmed and non-walk-in,
-with deadline `2026-09-25T03:59:59.000Z`. This looked like a stable partial batch, not
-proof that the entire accepted audience completed. The exact Apps Script error or toast
-was not captured.
+Production now contains 664 participants, all pending, non-walk-in, and using the one
+intended deadline `2026-09-25T03:59:59.000Z`. This confirms that the preparation run
+advanced beyond the earlier 100-record partial state. The restricted Responses Sheet
+must still establish that 664 is the complete accepted audience and that it retained
+the matching stable IDs and signed links.
 
-Do not insert participants directly into MySQL. The Responses Sheet owns stable IDs and
-signed management links, and preparation is intentionally idempotent.
+Do not insert participants directly into MySQL or rerun preparation unless the Sheet
+comparison finds a mismatch.
 
-1. Capture the exact error/toast if available; otherwise inspect existing Sheet state
-   before rerunning.
-2. Verify completed rows have durable Participant IDs, signed `/rsvp/manage#…` links,
-   RSVP status, deadline, and refresh timestamps.
-3. Correct the batch failure without replacing existing IDs or links.
-4. Rerun **Prepare accepted RSVP invitations**. It scans every
-   `Accepted`/`Accepté`/`Acceptée` response regardless of selection, filters, or hidden
-   rows.
-5. Confirm `processed` equals the complete accepted count.
-6. Query production read-only and confirm the same count, one intended deadline, zero
-   unexpected walk-ins, and no duplicate IDs.
-7. Run the Sheet RSVP refresh and require zero missing IDs. `RSVP Refreshed At`, not
-   generic `Last Sync`, is the freshness signal.
-8. Recheck shared-recipient submissions. Earlier evidence flagged row pairs 31/329,
+1. Confirm the complete `Accepted`/`Accepté`/`Acceptée` count in the Responses Sheet is 664.
+2. Verify every accepted row has a durable Participant ID, signed
+   `/rsvp/manage#…` link, `PENDING` status, the intended deadline, and refresh
+   timestamp.
+3. Run **Refresh RSVP responses** and require zero missing IDs. `RSVP Refreshed At`,
+   not generic `Last Sync`, is the freshness signal.
+4. Recheck shared-recipient submissions. Earlier evidence flagged row pairs 31/329,
    37/668, 79/347, 168/332, 296/432, 382/641, 428/598, and 454/559, but the rows and
    decisions may have changed.
 
