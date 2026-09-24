@@ -1,6 +1,13 @@
 # UI consistency
 
-Shared controls live in `src/styles/globals.css`, with palette and geometry tokens in `src/styles/tokens.css`. They use the existing Hack the Hill colors, Rubik body text, and Coolvetica display headings.
+Shared controls live in `src/styles/globals.css`, with palette and geometry tokens in `src/styles/tokens.css`. They use the existing Hack the Hill colours, Rubik body text, and Coolvetica display headings.
+
+## Language and typography
+
+- Use British-Canadian English in all English user-facing copy: `colour`, `centre`, `organise`, `organisation`, `organiser`, and analogous forms. Use the team's licensed _Canadian Press Stylebook_ for other editorial questions; this explicit house spelling prevails where conventions differ.
+- Use French-Canadian (`fr-CA`) copy for French interfaces. The project house style uses no space before `:`, `;`, `?`, or `!`.
+- Apply these rules to rendered prose, validation messages, email templates, and participant- or organiser-facing documentation. Do not mechanically rename identifiers, CSS properties, APIs, data keys, dependencies, URLs, proper names, or quoted source material.
+- Review replacements in their rendered context and preserve interpolation tokens and placeholders.
 
 ## Controls
 
@@ -8,9 +15,9 @@ Shared controls live in `src/styles/globals.css`, with palette and geometry toke
 - Use `ui-button-icon` for square icon controls, and `ui-button-large` for the homepage call to action. Give icon controls an accessible name.
 - Use `ui-field` for inputs, selects, and textareas. Set width with layout utilities such as `w-full`; use a visible label linked to the field ID. Textareas keep a 112px minimum height and vertical resizing.
 - Use `ui-checkbox` for native checkboxes and `ui-choice` beside an `sr-only peer` radio or checkbox. Keep the native input focusable.
-- Use `ui-page-title` for page headings, `ui-panel` for bordered panels, and `ui-form-layout` for centered administrative forms.
+- Use `ui-page-title` for page headings, `ui-panel` for bordered panels, and `ui-form-layout` for centred administrative forms.
 - Use `disabled`, `aria-busy`, `aria-pressed`, and `aria-selected` to communicate the relevant control state. For validation, connect `aria-invalid` and `aria-describedby` to the inline error. Focus outlines appear immediately.
-- Keep layout utilities at the call site. Avoid adding competing colors, padding, fonts, shadows, or corner radii to shared controls.
+- Keep layout utilities at the call site. Avoid adding competing colours, padding, fonts, shadows, or corner radii to shared controls.
 
 ## Original verification (before the participant-model migration)
 
@@ -34,4 +41,4 @@ The current repository provides `npm run lint` and `npm run typecheck`.
 
 ## Integration with the current app
 
-The merge from `main` retains the organizer-only sign-in, participant passes, operational metrics, scanner workflow restrictions, and current validation/error handling. Legacy application, account-registration, and attendee-management pages removed by `main` stay removed. Shared control styling is applied to the replacement sign-in, scanner, and metrics screens. The gallery above documents the original design pass; it is not a verification of the replacement screens.
+The merge from `main` retains the organiser-only sign-in, participant passes, operational metrics, scanner workflow restrictions, and current validation/error handling. Legacy application, account-registration, and attendee-management pages removed by `main` stay removed. Shared control styling is applied to the replacement sign-in, scanner, and metrics screens. The gallery above documents the original design pass; it is not a verification of the replacement screens.

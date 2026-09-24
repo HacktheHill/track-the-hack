@@ -4,8 +4,8 @@
 	"verify": "Verify Discord account",
 	"verifying": "Verifying…",
 	"verified": "Your Discord account is verified. You can return to Discord.",
-	"session-required": "Open your day-of access link and activate your pass in this browser, then return here. An organizer sign-in does not provide participant access.",
+	"session-required": "Open your day-of access link and activate your pass in this browser, then return here. An organiser sign-in does not provide participant access.",
 	"invalid": "This verification link is missing, invalid, or expired. Generate a new personal link in Discord.",
-	"conflict": "This participant or Discord account is already linked to a different account. Ask an organizer for help.",
+	"conflict": "This participant or Discord account is already linked to a different account. Ask an organiser for help.",
 	"unavailable": "Verification is temporarily unavailable. Try again. If your link expires, generate a new one in Discord."
 }

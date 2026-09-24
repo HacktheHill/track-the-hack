@@ -17,7 +17,7 @@ Stay connected with us on these platforms to receive updates, ask questions, and
 
 ### Incident reporting and emergency contacts
 
-**Emergency:** On campus, call uOttawa Protection Services at **613-562-5411**. Off campus, call **9-1-1**. Contact emergency services first. Once it is safe to do so, notify the organizing team.
+**Emergency:** On campus, call uOttawa Protection Services at **613-562-5411**. Off campus, call **9-1-1**. Contact emergency services first. Once it is safe to do so, notify the organising team.
 
 For misconduct, harassment, rule violations, cheating, or other concerns:
 
@@ -27,7 +27,7 @@ For misconduct, harassment, rule violations, cheating, or other concerns:
 
 Do not post sensitive incident details publicly.
 
-You may report directly to MLH if you are uncomfortable contacting an event organizer. Reports go to MLH's incident response team, and you may remain anonymous.
+You may report directly to MLH if you are uncomfortable contacting an event organiser. Reports go to MLH's incident response team, and you may remain anonymous.
 
 - **MLH Canada:** +1 343-453-4532 · [incidents@mlh.io](mailto:incidents@mlh.io)
 
@@ -40,7 +40,7 @@ You may report directly to MLH if you are uncomfortable contacting an event orga
 Stuck on a tech issue? You can:
 
 - **Online**: Create a ticket in the [`#get-help`](https://discord.gg/ryFTjgx4xR) channel on Discord.
-- **In-Person**: Locate an organizer or mentor.
+- **In-Person**: Locate an organiser or mentor.
 
 ### GitHub Guide
 

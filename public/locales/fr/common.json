@@ -3,7 +3,7 @@
 	"description": "Logiciel de gestion d'événements de Hack the Hill",
 	"loading": "Chargement en cours...",
 	"no-t-shirt": "Aucun t-shirt demandé",
-	"error-message": "Erreur : {{message}}",
+	"error-message": "Erreur: {{message}}",
 	"contact-us": "Contactez-nous pour de l'aide",
 	"unknown-error": "Erreur inconnue",
 	"temporarily-unavailable": "Cette page est temporairement indisponible. Veuillez réessayer.",
