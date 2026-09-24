@@ -39,6 +39,12 @@ when Chromium is not installed in a common system location.
 
 See [`docs/E2E_TESTING.md`](./docs/E2E_TESTING.md) for the authoritative automated,
 browser, physical-device, external-integration, and production acceptance process.
+Offline changes have an additional release-closing checklist in
+[`docs/OFFLINE_ACCEPTANCE.md`](./docs/OFFLINE_ACCEPTANCE.md). It covers the
+production-build MySQL/Chromium gate, installation and clean-storage setup, the full
+English/French matrix on Android Chrome and an iPhone home-screen web app, participant
+pass privacy and cleanup, production deployment evidence, and the exact definition of
+complete.
 
 The current data ownership, authorisation boundaries, participant lifecycle, scanner
 semantics, and offline privacy model are documented in
@@ -67,16 +73,24 @@ all local and deployed verification procedures are in
 
 ## Azure Container Apps deployment
 
-The `container.yml` workflow deploys only from `main` through the `Production`
-environment. Configure `AZURE_RESOURCE_GROUP` and `AZURE_ACR_LOGIN_SERVER` as
-environment variables, plus `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, and
+The `container.yml` workflow validates all three container images on pushes and
+pull requests. Its production `deploy` job runs only from an explicit
+`workflow_dispatch` of `main` through the `Production` environment:
+
+```sh
+gh workflow run container.yml --ref main
+```
+
+Configure `AZURE_RESOURCE_GROUP` and `AZURE_ACR_LOGIN_SERVER` as environment
+variables, plus `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, and
 `AZURE_SUBSCRIPTION_ID` as environment secrets for OIDC login. The resource
 group, registry, web app, Prisma Studio app, and `track-the-hack-migrate` job
 must already exist. The workflow updates and runs the migration job first,
 waits for success, then promotes the web and Prisma Studio images and reapplies
-the health probes. Roll back by redeploying a previously built image only after
-confirming its code remains compatible with the migrated schema; migrations are
-not automatically reversed.
+the health probes. A green push run with a skipped `deploy` job is image
+validation, not a production deployment. Roll back by redeploying a previously
+built image only after confirming its code remains compatible with the migrated
+schema; migrations are not automatically reversed.
 
 The web app also requires `EMAIL_SERVER_HOST`, `EMAIL_SERVER_PORT`,
 `EMAIL_SERVER_USER`, `EMAIL_SERVER_PASSWORD`, and `EMAIL_FROM` for organiser

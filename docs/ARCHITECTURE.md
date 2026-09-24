@@ -244,11 +244,23 @@ offline reload can reach the service-worker cache without ever sharing a tRPC ba
 with private data. Hidden events are filtered server-side.
 
 All other APIs are network-only. Organiser, metrics, authentication, RSVP, claim,
-participant-profile, Event Services, and private Next data routes must show an offline/unavailable state
-rather than cached private content. The custom push worker is independent of the route
-cache. Scanning and all state-changing workflows remain online-only; there is no offline
-write queue or locally cached operational roster. The personalized saved-events view is
-also online-only, while the public schedule remains available from its cache.
+participant-profile, Event Services, and private Next data routes must show an
+offline/unavailable state rather than cached private content. `/profile` is the one
+navigation exception: its network request remains private and uncached, but an offline
+failure may fall back to the static `/pass` shell. That shell reads only the validated
+opaque participant ID previously stored by a successful online profile load and uses it
+to render the QR. Participant sign-out clears that value.
+
+The custom push worker is independent of the route cache. Scanning and all
+state-changing workflows remain online-only; there is no offline write queue or locally
+cached operational roster. The personalized saved-events view is also online-only,
+while the public schedule remains available from its seven-day cache. Sponsor details
+are runtime-cached only after the individual page is opened online.
+
+The implementation boundary, automated assertions, Android and iPhone test matrices,
+privacy checks, cleanup, evidence template, and release-closing criteria are maintained
+in [`OFFLINE_ACCEPTANCE.md`](./OFFLINE_ACCEPTANCE.md). That runbook, rather than cache
+inspection alone, defines end-to-end acceptance for this subsystem.
 
 ## Reminders, metrics, and privacy
 

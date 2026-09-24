@@ -267,29 +267,28 @@ Use manual `+`/`−` to restore test counters when safe, and verify cleanup dire
 ## PWA and offline acceptance
 
 The service worker is disabled in `next dev`; never use development mode to claim
-offline behaviour works.
+offline behaviour works. [`OFFLINE_ACCEPTANCE.md`](./OFFLINE_ACCEPTANCE.md) is the
+authoritative release-closing procedure. It includes:
 
-First run the automated profile privacy check:
+- the local production-build MySQL/Chromium command and its required assertions;
+- the hosted CI jobs that must pass;
+- clean installation and empty-cache checks;
+- the complete English/French route matrix on Android Chrome and an iPhone
+  home-screen web app;
+- participant-pass privacy, sign-out cleanup, reconnect behaviour, and test-data
+  cleanup;
+- production deployment evidence and an explicit definition of complete.
+
+Run at minimum:
 
 ```sh
 npm run test:e2e:pwa
 ```
 
-For public-cache or worker changes, use Android Chrome or an equivalent installed-PWA
-environment with a production build:
-
-1. Load online and wait until the service worker is activated and controls the page.
-2. Visit home, populated schedule, a real event detail, maps, resources, a sponsor
-   detail, and participant pass in English and French.
-3. Disconnect, then reload each. Confirm event data and all six map SVGs remain usable.
-4. Confirm organiser scanning, metrics, auth, RSVP, claim, and private data/API routes
-   do not reveal cached private responses. `/profile` may show only the QR-only pass
-   fallback; all writes remain unavailable offline.
-5. Confirm English and French offline failures render in the correct language.
-6. Reconnect and activate a newer worker in a controlled second build. Confirm no mixed
-   old/new asset failure, stale private cache, or reload loop.
-
-Inspecting cache names is useful diagnosis but is not a substitute for these reloads.
+Then follow the linked physical-device and production sections in order. Inspecting
+cache names is useful diagnosis but is not a substitute for an offline relaunch on both
+required device platforms. Do not mark the PWA accepted while the runbook contains a
+failed or unexplained skipped item.
 
 ## Event, reminder, and interest acceptance
 
@@ -478,6 +477,11 @@ Smoke-test only what production configuration adds beyond local E2E:
 - scanner authorisation and a reversible test Presence;
 - push readiness/key match if reminders changed;
 - Cloudflare Access remains enabled.
+
+For an offline/PWA change, complete every production and physical-device step in
+[`OFFLINE_ACCEPTANCE.md`](./OFFLINE_ACCEPTANCE.md). Its completed acceptance record is
+the offline portion of the production-smoke evidence; a green build or unauthenticated
+Cloudflare redirect does not replace it.
 
 Do not repeat destructive edge cases in production. Verify counts before and after, and
 remove only explicitly created test records.
