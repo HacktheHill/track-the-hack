@@ -5,7 +5,7 @@
  *
  * We also create a few inference helpers for input and output types
  */
-import { httpBatchLink } from "@trpc/client";
+import { httpBatchLink, httpLink, splitLink } from "@trpc/client";
 import { createTRPCNext } from "@trpc/next";
 import { type inferRouterInputs, type inferRouterOutputs } from "@trpc/server";
 import superjson from "superjson";
@@ -35,8 +35,13 @@ export const trpc = createTRPCNext<AppRouter>({
 			 * @see https://trpc.io/docs/links
 			 * */
 			links: [
-				httpBatchLink({
-					url: `${getBaseUrl()}/api/trpc`,
+				splitLink({
+					// Keep the public schedule in its own GET request so the service
+					// worker can cache it without ever caching a mixed batch that may
+					// contain authenticated participant or organiser data.
+					condition: operation => operation.path === "events.all",
+					true: httpLink({ url: `${getBaseUrl()}/api/trpc` }),
+					false: httpBatchLink({ url: `${getBaseUrl()}/api/trpc` }),
 				}),
 			],
 		};

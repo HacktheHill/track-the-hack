@@ -53,6 +53,7 @@ sw.js
 sw.js.map
 workbox-*.js
 workbox-*.js.map
+/public/fallback-*.js
 /public/worker-*.js
 /public/worker-*.js.map
 

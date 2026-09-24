@@ -36,11 +36,13 @@ for (const locale of ["en", "fr"]) {
 	]) {
 		void test(`public ${locale} descriptions preserve ${format} line breaks and blank lines`, async t => {
 			const { queryClient, wrap } = await setup(t);
-			queryClient.setQueryData(getQueryKey(trpc.events.get, { id: event.id }, "query"), {
-				...event,
-				description: ["Welcome", "", "Next session", "End"].join(separator),
-				descriptionFr: ["Bienvenue", "", "Prochaine séance", "Fin"].join(separator),
-			});
+			queryClient.setQueryData(getQueryKey(trpc.events.all, undefined, "query"), [
+				{
+					...event,
+					description: ["Welcome", "", "Next session", "End"].join(separator),
+					descriptionFr: ["Bienvenue", "", "Prochaine séance", "Fin"].join(separator),
+				},
+			]);
 			const html = renderToStaticMarkup(wrap(createElement(PublicEvent, { router: routerFor(locale) })));
 			const lines =
 				locale === "fr" ? ["Bienvenue", "", "Prochaine séance", "Fin"] : ["Welcome", "", "Next session", "End"];
@@ -56,7 +58,7 @@ for (const locale of ["en", "fr"]) {
 
 void test("public French event details fall back to the English room when roomFr is absent", async t => {
 	const { queryClient, wrap } = await setup(t);
-	queryClient.setQueryData(getQueryKey(trpc.events.get, { id: event.id }, "query"), { ...event, roomFr: null });
+	queryClient.setQueryData(getQueryKey(trpc.events.all, undefined, "query"), [{ ...event, roomFr: null }]);
 	const html = renderToStaticMarkup(wrap(createElement(PublicEvent, { router: routerFor("fr") })));
 	assert.ok(html.includes('<p class="text-lg">Auditorium</p>'));
 });

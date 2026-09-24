@@ -39,7 +39,13 @@ export default function ScheduleEventDetails({ id, onClose }: Props) {
 	const { t } = useTranslation("event");
 	const router = useRouter();
 	const locale = router.locale === "fr" ? "fr-CA" : "en-CA";
-	const query = trpc.events.get.useQuery({ id }, { enabled: !!id });
+	// events.all is the deliberately public, hidden-filtered schedule payload.
+	// Reusing it here means one successful schedule load contains the data for
+	// every event detail, including when a participant later opens one offline.
+	const query = trpc.events.all.useQuery(undefined, {
+		enabled: !!id,
+		select: events => events.find(event => event.id === id),
+	});
 	const [pushAvailable, setPushAvailable] = useState(false);
 	const [notifyRequested, setNotifyRequested] = useState(false);
 	const [notifyPending, setNotifyPending] = useState(false);
@@ -174,7 +180,7 @@ export default function ScheduleEventDetails({ id, onClose }: Props) {
 					</svg>
 				</button>
 			</div>
-			{query.isError ? (
+			{query.isError || (query.isSuccess && !event) ? (
 				<Error message={t("common:temporarily-unavailable")} />
 			) : !event ? (
 				<Loading />

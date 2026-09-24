@@ -1,11 +1,7 @@
 {
 	"compilerOptions": {
 		"target": "ES2022",
-		"lib": [
-			"dom",
-			"dom.iterable",
-			"esnext"
-		],
+		"lib": ["dom", "dom.iterable", "esnext"],
 		"allowJs": true,
 		"checkJs": true,
 		"skipLibCheck": true,
@@ -17,16 +13,10 @@
 		"moduleResolution": "bundler",
 		"baseUrl": ".",
 		"paths": {
-			"@/*": [
-				"src/*"
-			],
-			"@root/*": [
-				"*"
-			]
+			"@/*": ["src/*"],
+			"@root/*": ["*"]
 		},
-		"types": [
-			"node"
-		],
+		"types": ["node"],
 		"allowImportingTsExtensions": true,
 		"resolveJsonModule": true,
 		"isolatedModules": true,
@@ -34,21 +24,14 @@
 		"incremental": true,
 		"noUncheckedIndexedAccess": true
 	},
-	"include": [
-		"next-env.d.ts",
-		"**/*.ts",
-		"**/*.tsx",
-		"**/*.cjs",
-		"**/*.mjs",
-		"**/*.mts",
-		"**/*.cts",
-		"**/*.js"
-	],
+	"include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.cjs", "**/*.mjs", "**/*.mts", "**/*.cts", "**/*.js"],
 	"exclude": [
 		"node_modules",
 		"private-rsvp",
 		"public/sw.js",
 		"public/sw.js.map",
+		"public/fallback-*.js",
+		"public/fallback-*.js.map",
 		"public/worker-*.js",
 		"public/worker-*.js.map",
 		"public/workbox-*.js",
