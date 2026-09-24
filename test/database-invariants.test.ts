@@ -1,7 +1,18 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import test from "node:test";
-import { MealCategory, PrismaClient, TShirtSize } from "@prisma/client";
+import {
+	HardwareCategory,
+	LatteDrink,
+	LatteFlavour,
+	LatteMilkBase,
+	LatteSweetener,
+	LatteTemperature,
+	MealCategory,
+	Prisma,
+	PrismaClient,
+	TShirtSize,
+} from "@prisma/client";
 import { PrismaHackerLifecycleRepository } from "@/server/repositories/prisma-hacker-lifecycle";
 import type { ProvisioningRecord } from "@/server/services/hacker-lifecycle";
 
@@ -116,8 +127,102 @@ void test("MySQL provisioning preserves confirmed and declined RSVP responses", 
 			acceptanceExpiry: true,
 		},
 	});
-	assert.deepEqual(hackers, [
-		{ id: confirmedId, confirmed: true, rsvpRespondedAt: confirmedAt, ...updated },
-		{ id: declinedId, confirmed: false, rsvpRespondedAt: declinedAt, ...updated },
-	].sort((left, right) => left.id.localeCompare(right.id)));
+	assert.deepEqual(
+		hackers,
+		[
+			{ id: confirmedId, confirmed: true, rsvpRespondedAt: confirmedAt, ...updated },
+			{ id: declinedId, confirmed: false, rsvpRespondedAt: declinedAt, ...updated },
+		].sort((left, right) => left.id.localeCompare(right.id)),
+	);
 });
+
+void test(
+	"MySQL enforces last-unit checkout and one active Latte order under concurrency",
+	{ skip: !testDatabase },
+	async t => {
+		assert.ok(testDatabase);
+		const url = new URL(testDatabase);
+		assert.ok(
+			["localhost", "127.0.0.1"].includes(url.hostname) && /test|review/.test(url.pathname),
+			"Use an isolated local test database",
+		);
+		const prisma = new PrismaClient({ datasourceUrl: testDatabase });
+		const suffix = randomUUID().replaceAll("-", "");
+		const hackerId = `services-${suffix}`;
+		const userId = `organizer-${suffix}`;
+		const itemId = `item-${suffix}`;
+		t.after(async () => {
+			await prisma.latteOrderTransition.deleteMany({ where: { order: { hackerId } } });
+			await prisma.latteOrder.deleteMany({ where: { hackerId } });
+			await prisma.hardwareReturnLine.deleteMany({ where: { loanLine: { loan: { hackerId } } } });
+			await prisma.hardwareReturn.deleteMany({ where: { loan: { hackerId } } });
+			await prisma.hardwareLoanLine.deleteMany({ where: { loan: { hackerId } } });
+			await prisma.hardwareLoan.deleteMany({ where: { hackerId } });
+			await prisma.hardwareItem.deleteMany({ where: { id: itemId } });
+			await prisma.hacker.deleteMany({ where: { id: hackerId } });
+			await prisma.user.deleteMany({ where: { id: userId } });
+			await prisma.$disconnect();
+		});
+		await prisma.user.create({ data: { id: userId } });
+		await prisma.hacker.create({
+			data: {
+				id: hackerId,
+				tShirtSize: TShirtSize.M,
+				mealCategory: MealCategory.STANDARD,
+				acceptanceExpiry: new Date("2027-01-01"),
+			},
+		});
+		await prisma.hardwareItem.create({
+			data: {
+				id: itemId,
+				importKey: `key-${suffix}`,
+				category: HardwareCategory.INPUTS,
+				name: "Last unit",
+				normalizedName: `last-unit-${suffix}`,
+				totalQuantity: 1,
+				availableQuantity: 1,
+			},
+		});
+		const checkout = (checkoutKey: string) =>
+			prisma.$transaction(
+				async tx => {
+					const result = await tx.hardwareItem.updateMany({
+						where: { id: itemId, availableQuantity: { gte: 1 } },
+						data: { availableQuantity: { decrement: 1 } },
+					});
+					if (result.count !== 1) throw new Error("unavailable");
+					return tx.hardwareLoan.create({
+						data: {
+							hackerId,
+							pickupName: "Temporary",
+							checkoutOrganizerId: userId,
+							checkoutKey,
+							idCollectedAt: new Date(),
+							lines: { create: { itemId, borrowedQuantity: 1 } },
+						},
+					});
+				},
+				{ isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+			);
+		const checkouts = await Promise.allSettled([checkout(`a-${suffix}`), checkout(`b-${suffix}`)]);
+		assert.equal(checkouts.filter(result => result.status === "fulfilled").length, 1);
+		assert.equal((await prisma.hardwareItem.findUniqueOrThrow({ where: { id: itemId } })).availableQuantity, 0);
+		const order = (submissionKey: string) =>
+			prisma.latteOrder.create({
+				data: {
+					hackerId,
+					activeHackerId: hackerId,
+					pickupName: "Temporary",
+					submissionKey,
+					drink: LatteDrink.LATTE,
+					temperature: LatteTemperature.HOT,
+					milkBase: LatteMilkBase.OAT,
+					flavour: LatteFlavour.NONE,
+					sweetener: LatteSweetener.NONE,
+				},
+			});
+		const orders = await Promise.allSettled([order(`a-${suffix}`), order(`b-${suffix}`)]);
+		assert.equal(orders.filter(result => result.status === "fulfilled").length, 1);
+		assert.equal(await prisma.latteOrder.count({ where: { activeHackerId: hackerId } }), 1);
+	},
+);

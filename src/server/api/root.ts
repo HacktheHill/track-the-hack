@@ -4,6 +4,8 @@ import { presenceRouter } from "./routers/presence";
 import { userRouter } from "./routers/users";
 import { metricsRouter } from "./routers/metrics";
 import { createTRPCRouter } from "./trpc";
+import { hardwareRouter } from "./routers/hardware";
+import { latteLabRouter } from "./routers/latte-lab";
 
 /**
  * This is the primary router for your server.
@@ -16,6 +18,8 @@ export const appRouter = createTRPCRouter({
 	events: eventsRouter,
 	presence: presenceRouter,
 	metrics: metricsRouter,
+	hardware: hardwareRouter,
+	latteLab: latteLabRouter,
 });
 
 // export type definition of API
