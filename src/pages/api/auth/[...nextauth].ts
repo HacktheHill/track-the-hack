@@ -79,7 +79,7 @@ export const getAuthOptions = (req?: NextApiRequest) =>
 				? [
 						CredentialsProvider({
 							id: DEVELOPMENT_AUTH_PROVIDER_ID,
-							name: "Local development organizer",
+							name: "Local development organiser",
 							credentials: {},
 							async authorize() {
 								const organizer = await prisma.user.findUnique({

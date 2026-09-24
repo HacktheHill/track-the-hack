@@ -57,7 +57,7 @@ const SignIn = ({ developmentAuthEnabled }: InferGetServerSidePropsType<typeof g
 						onClick={() => void signIn(DEVELOPMENT_AUTH_PROVIDER_ID, { callbackUrl: callbackUrl ?? "/" })}
 						className="ui-button ui-button-primary"
 					>
-						Sign in as local organizer
+						Sign in as local organiser
 					</button>
 				)}
 				{error && <Error message={t(`next-auth.${error}`)} />}
