@@ -46,7 +46,6 @@ void test("completion signs the exact payload and exposes only a fixed success/e
 		"invalid",
 	);
 	for (const [code, expected] of [
-		[409, "conflict"],
 		[410, "invalid"],
 		[403, "unavailable"],
 		[500, "unavailable"],
@@ -62,6 +61,32 @@ void test("completion signs the exact payload and exposes only a fixed success/e
 			expected,
 		);
 	}
+	for (const [reason, expected] of [
+		["discord-account-linked", "discord-account-conflict"],
+		["participant-linked", "participant-conflict"],
+		["both-linked", "conflict"],
+	] as const) {
+		assert.equal(
+			await completeDiscordVerification(
+				token,
+				hackerId,
+				config,
+				() => Promise.resolve(Response.json({ ok: false, reason }, { status: 409 })),
+				now,
+			),
+			expected,
+		);
+	}
+	assert.equal(
+		await completeDiscordVerification(
+			token,
+			hackerId,
+			config,
+			() => Promise.resolve(Response.json({ ok: false, reason: "private" }, { status: 409 })),
+			now,
+		),
+		"conflict",
+	);
 	assert.equal(
 		await completeDiscordVerification(
 			token,

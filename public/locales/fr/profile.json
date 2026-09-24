@@ -3,7 +3,7 @@
 	"offline-title": "Votre laissez-passer hors ligne",
 	"qr-alt": "Votre code QR pour l’événement",
 	"qr-explanation": "Présentez-le à un organisateur pour l’enregistrement, les repas, les articles promotionnels et les ateliers. Il fonctionne sans connexion.",
-	"offline-explanation": "Ce code QR est enregistré sur cet appareil et reste disponible sans connexion.",
+	"offline-explanation": "Ce code QR est enregistré sur cet appareil et reste disponible sans connexion. Il vous identifie aux postes de lecture de l’événement; il ne signifie pas que l’accès de participant en ligne est actif dans ce navigateur.",
 	"no-offline-pass": "Aucun laissez-passer n’est enregistré sur cet appareil. Ouvrez d’abord votre profil de participant en ligne.",
 	"details": "Vos informations",
 	"confirmed": "Présence confirmée",

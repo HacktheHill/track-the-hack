@@ -1,17 +1,22 @@
 import { useEffect, useState } from "react";
+import { readOfflineParticipantPass } from "@/utils/participant-pass";
 
 export type DiscordEligibility =
 	| "checking"
 	| "eligible"
 	| "session-required"
+	| "saved-pass-session-required"
 	| "check-in-required"
 	| "unavailable";
 
-export const readDiscordEligibility = async (send: typeof fetch = fetch): Promise<DiscordEligibility> => {
+export const readDiscordEligibility = async (
+	send: typeof fetch = fetch,
+	hasSavedPass = () => readOfflineParticipantPass() !== null,
+): Promise<DiscordEligibility> => {
 	try {
 		const response = await send("/api/discord/verify", { headers: { Accept: "application/json" } });
 		if (response.ok) return "eligible";
-		if (response.status === 401) return "session-required";
+		if (response.status === 401) return hasSavedPass() ? "saved-pass-session-required" : "session-required";
 		if (response.status === 403) return "check-in-required";
 		return "unavailable";
 	} catch {

@@ -4,9 +4,12 @@
 	"verifying": "Verifying…",
 	"checking": "Checking your check-in status…",
 	"verified": "Your Discord account is verified. You can return to Discord.",
-	"session-required": "Set up your participant pass in this browser before you can verify your Discord account.",
+	"session-required": "Activate participant access in this browser before you can verify your Discord account.",
+	"saved-pass-session-required": "Your saved QR pass still works at event scanners, but participant access in this browser has expired or was replaced. Ask an organiser to reactivate it.",
 	"check-in-required": "You must check in before you can verify your Discord account.",
 	"invalid": "This verification link is missing, invalid, or expired. Generate a new personal link in Discord.",
-	"conflict": "This participant or Discord account is already linked to a different account. Ask an organiser for help.",
+	"discord-account-conflict": "Your Discord account is already linked to a different participant pass. Ask an organiser to reset your Discord verification.",
+	"participant-conflict": "This participant pass is already linked to a different Discord account. Ask an organiser to reset the participant’s Discord verification.",
+	"conflict": "Both the participant pass and Discord account have previous verification bindings. Ask an organiser to reset Discord verification.",
 	"unavailable": "Verification is temporarily unavailable. Try again. If your link expires, generate a new one in Discord."
 }

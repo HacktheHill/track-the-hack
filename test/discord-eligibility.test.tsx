@@ -19,6 +19,10 @@ void test("eligibility responses preserve session and check-in failures", async 
 		const send = () => Promise.resolve(new Response(null, { status }));
 		assert.equal(await readDiscordEligibility(send), expected);
 	}
+	assert.equal(
+		await readDiscordEligibility(() => Promise.resolve(new Response(null, { status: 401 })), () => true),
+		"saved-pass-session-required",
+	);
 });
 
 void test("eligibility rechecks until a completed check-in enables verification", async t => {

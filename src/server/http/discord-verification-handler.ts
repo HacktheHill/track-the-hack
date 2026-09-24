@@ -41,7 +41,14 @@ export const createDiscordVerificationHandler = (dependencies: DiscordVerificati
 			const body = discordVerificationBodySchema.safeParse(request.body);
 			if (!body.success) return response.status(400).json({ status: "invalid" });
 			const status = await dependencies.complete(body.data.token, session.hackerId);
-			const code = { verified: 200, invalid: 400, conflict: 409, unavailable: 503 };
+			const code = {
+				verified: 200,
+				invalid: 400,
+				conflict: 409,
+				"discord-account-conflict": 409,
+				"participant-conflict": 409,
+				unavailable: 503,
+			};
 			return response.status(code[status]).json({ status });
 		} catch {
 			console.error("Discord verification failed");

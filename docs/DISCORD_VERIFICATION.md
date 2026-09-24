@@ -34,8 +34,11 @@ Organiser sign-in alone cannot verify a participant.
 - The same participant can retry the same link while valid, or generate a new
   link for the same Discord account. A failed role assignment retains the
   binding so a retry can finish safely. Neither side of a binding can silently
-  switch accounts; a conflict needs organiser assistance. There is no automatic
-  reassignment or role revocation in this flow.
+  switch accounts; a conflict needs organiser assistance. The bot returns only
+  a fixed conflict category so Track can say whether the Discord account,
+  participant pass, or both already have a binding without disclosing the other
+  identifier. There is no automatic reassignment or role revocation in this
+  flow.
 - Track stores no Discord IDs, usernames, mappings, or team data. It does not
   log proofs or pass through bot error details. The proof stays in the URL
   fragment until success, which removes it from browser history. It is a private
@@ -47,6 +50,15 @@ no participant or proof data, and `/api/*` uses the existing service worker
 NetworkOnly rule. There is no pre-event participant login or restoration of
 participant User/OAuth/HACKER roles in Track. The Discord Hacker role and
 Discord-owned teams remain separate.
+
+The saved offline QR and the authenticated participant session are deliberately
+separate. A later activation replaces the server-side session because only one
+browser may perform participant-authorised actions, but it does not erase QR
+copies already saved on other devices. Those copies still contain the same
+opaque participant identifier and remain useful at event scanners. When Track
+finds a saved QR alongside a replaced or expired session, it explains this
+state and requires organiser-assisted reactivation instead of claiming that no
+pass exists.
 
 ## Configuration
 

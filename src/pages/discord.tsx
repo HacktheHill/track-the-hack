@@ -27,10 +27,19 @@ export default function Discord() {
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ token: window.location.hash.slice(1) }),
 			});
+			const payload: unknown = await response.json().catch(() => null);
 			if (response.ok) {
 				setResult("verified");
 				window.history.replaceState(null, "", window.location.pathname);
 			} else {
+				const detailedConflict =
+					response.status === 409 &&
+					payload !== null &&
+					typeof payload === "object" &&
+					"status" in payload &&
+					(payload.status === "discord-account-conflict" || payload.status === "participant-conflict")
+						? payload.status
+						: null;
 				setResult(
 					response.status === 401
 						? "session-required"
@@ -39,7 +48,7 @@ export default function Discord() {
 							: response.status === 400
 								? "invalid"
 								: response.status === 409
-									? "conflict"
+									? detailedConflict ?? "conflict"
 									: "unavailable",
 				);
 			}
