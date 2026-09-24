@@ -158,6 +158,40 @@ const visit = async (page: Page, path: string) => {
 	await page.goto(`${baseUrl}${path}`, { waitUntil: "domcontentloaded" });
 };
 
+const waitForCachedSchedule = async (page: Page, expectedEventNames: readonly string[]) => {
+	await page.waitForFunction(
+		async names => {
+			const cache = await caches.open("public-schedule-data");
+			const requests = await cache.keys();
+			if (requests.length === 0) return false;
+			for (const request of requests) {
+				const response = await cache.match(request);
+				if (!response) return false;
+				const body = await response.text();
+				if (!names.every(name => body.includes(name))) return false;
+			}
+			return true;
+		},
+		expectedEventNames,
+		{ timeout: 20_000 },
+	);
+};
+
+const waitForCachedRoutes = async (page: Page, cacheName: string, paths: readonly string[]) => {
+	await page.waitForFunction(
+		async ({ name, expectedPaths }) => {
+			const cache = await caches.open(name);
+			return (
+				await Promise.all(
+					expectedPaths.map(async path => Boolean(await cache.match(new URL(path, location.origin).href))),
+				)
+			).every(Boolean);
+		},
+		{ name: cacheName, expectedPaths: paths },
+		{ timeout: 20_000 },
+	);
+};
+
 try {
 	await waitForReady();
 	for (const url of publicPrecacheUrls) {
@@ -246,7 +280,15 @@ try {
 
 		await visit(page, `${locale.prefix}/sponsors/cgi`);
 		await page.getByRole("heading", { name: "CGI", exact: true }).waitFor();
+		await waitForCachedRoutes(page, locale.prefix ? "public-pages-fr" : "public-pages-en", [
+			`${locale.prefix}/schedule`,
+			`${locale.prefix}/schedule/event?id=${eventId}`,
+			`${locale.prefix}/maps`,
+			`${locale.prefix}/resources`,
+			`${locale.prefix}/sponsors/cgi`,
+		]);
 	}
+	await waitForCachedSchedule(page, [eventName, eventNameFr]);
 
 	await context.setOffline(true);
 	for (const locale of [
