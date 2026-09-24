@@ -1,5 +1,14 @@
-import { prisma } from "@/server/db";
-import { applyHardwareReconciliation, inspectHardwareReconciliation } from "@/server/services/hardware-reconciliation";
+import { PrismaClient } from "@prisma/client";
+
+// This script also runs from the deliberately minimal production migration image,
+// so keep its imports relative instead of depending on application path aliases.
+// eslint-disable-next-line no-restricted-imports
+import {
+	applyHardwareReconciliation,
+	inspectHardwareReconciliation,
+} from "../src/server/services/hardware-reconciliation.ts";
+
+const prisma = new PrismaClient();
 
 const apply = process.argv.includes("--apply");
 const inspection = await inspectHardwareReconciliation(prisma);
