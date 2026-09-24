@@ -2,7 +2,7 @@
 
 Participants activate their day-of access in a browser, generate a personal link
 using `/verify` or **Generate Verification Link** in Discord, and press **Verify
-Discord account** at `/discord`. English and French are supported. Organizer
+Discord account** at `/discord`. English and French are supported. Organiser
 sign-in alone cannot verify a participant.
 
 ## Ownership and protocol
@@ -27,14 +27,14 @@ sign-in alone cannot verify a participant.
 - The same participant can retry the same link while valid, or generate a new
   link for the same Discord account. A failed role assignment retains the
   binding so a retry can finish safely. Neither side of a binding can silently
-  switch accounts; a conflict needs organizer assistance. There is no automatic
+  switch accounts; a conflict needs organiser assistance. There is no automatic
   reassignment or role revocation in this flow.
 - Track stores no Discord IDs, usernames, mappings, or team data. It does not
   log proofs or pass through bot error details. The proof stays in the URL
   fragment until success, which removes it from browser history. It is a private
   bearer capability: participants must not share their links.
 
-The page is static translated copy; authorization happens on the POST. Its
+The page is static translated copy; authorisation happens on the POST. Its
 cached HTML contains no participant or proof data, and `/api/*` uses the
 existing service worker NetworkOnly rule. There is no pre-event participant
 login or restoration of participant User/OAuth/HACKER roles in Track. The
@@ -60,7 +60,7 @@ with exactly one Discord or participant ID; the transaction removes the binding
 and that Discord account's outstanding challenges. For an event reset, pause
 verification on both services and run `verification:manage reset
 --confirm-current-event-reset`. Reset does not remove Discord roles, which
-requires a separate organizer decision.
+requires a separate organiser decision.
 
 Deploy the matching Track and bot changes together and configure the same
 secret. Old raw-ID links and the old `{ discordId }` endpoint contract are
@@ -87,7 +87,7 @@ proof generator, and mapping store; the Discord role call is a local double.
 It creates a disposable PostgreSQL container, runs Track on a private local
 port with the real MySQL/session flow, drives EN/FR browser verification,
 checks invalid/expired links, wrong signatures, absent/forged/revoked/expired
-sessions, organizer-only access, binding conflicts, races, failure/retry, and
+sessions, organiser-only access, binding conflicts, races, failure/retry, and
 log privacy. It removes its container and test participants afterward.
 Screenshots go in ignored `artifacts/discord-verification/`.
 

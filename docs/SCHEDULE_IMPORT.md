@@ -35,7 +35,7 @@ The importer requires every column below and rejects unknown columns.
 | `scannerEnabled`               | `TRUE` or `FALSE`. Only explicitly enabled events appear as scanner stations or accept scans and manual count adjustments.                                                                             |
 | `scannerWorkflow`              | `ATTENDANCE`, `CHECK_IN`, `MERCHANDISE`, or `FOOD`.                                                                                                                                                    |
 | `host`                         | Optional host name.                                                                                                                                                                                    |
-| `description`, `descriptionFr` | Required localized descriptions that fit a MySQL `TEXT` value in UTF-8 bytes.                                                                                                                          |
+| `description`, `descriptionFr` | Required localised descriptions that fit a MySQL `TEXT` value in UTF-8 bytes.                                                                                                                          |
 | `room`                         | Required location.                                                                                                                                                                                     |
 | `roomFr`                       | Optional French location; blank falls back to `room`.                                                                                                                                                  |
 | `image`                        | Optional local path or HTTPS URL allowed by the Next.js image configuration.                                                                                                                           |
@@ -43,7 +43,7 @@ The importer requires every column below and rejects unknown columns.
 | `linkText`, `linkTextFr`       | Required together when `link` is present; otherwise all three must be blank.                                                                                                                           |
 | `maxCheckIns`                  | Blank or `1` makes repeat scans idempotent; an integer greater than `1` lets deliberate repeat scans increment atomically to that cap. `0` records a capped zero. Manual adjustments remain available. |
 
-## Update behavior
+## Update behaviour
 
 The CSV is authoritative for every imported event field. Applying it overwrites organiser edits made in the event editor when the same `importKey` appears. Export or reproduce those edits in the CSV before applying it again.
 
