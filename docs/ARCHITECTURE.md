@@ -207,13 +207,17 @@ Hardware Desk and Latte Lab are separate domains. They share participant session
 organiser authorization, audit conventions, transactional mutations, idempotency, and
 localisation, but no generic store, cart, inventory, or workflow framework.
 
-Hardware inventory is quantity-based. A checkout atomically moves units from available
-to on loan. Each return action is append-only and divides units into good, damaged, and
-missing outcomes. Good units become available; damaged and missing units remain
-unavailable. At all times, total quantity equals available plus outstanding loans plus
-damaged plus missing. There is no application inventory editor or repair workflow. The
+Hardware items are either counted or uncounted. Counted items expose exact availability;
+uncounted items expose only an organiser-controlled Available or Out of stock state,
+while loans still record the exact number of pieces handed out. A checkout atomically
+decrements counted stock or verifies uncounted availability. Each return action is
+append-only and divides units into Returned, Damaged, Missing, and—only for approved
+item types—Consumed outcomes. Returned counted units become available; all other counted
+outcomes remain unavailable. For counted items, total equals available plus outstanding
+loans plus damaged, missing, and consumed. Every loan line equals outstanding plus its
+four resolved outcomes. There is no quantity editor, recount, or repair workflow. The
 restricted source Sheet is used only to prepare the reviewed initial import described
-in `HARDWARE_IMPORT.md`; after import, Tracker owns the operational inventory.
+in `HARDWARE_IMPORT.md`; after import, Track the Hack owns the operational inventory.
 
 Latte recipes and compatibility rules are code-owned. Ingredient availability is a
 boolean operational switch, not stock accounting. Lab closure prevents new orders but

@@ -118,27 +118,34 @@ Script mapper, and loopback SMTP. It must cover:
 Use seeded development participants and disposable imported inventory. Never use the
 production import or a real participant merely to test these paths.
 
-For Hardware Desk, dry-run a fixture containing valid rows plus duplicate keys,
-normalized duplicate names, unknown categories, negative/fractional quantities, and
-bulk wording. Apply the valid fixture to an empty target; prove a second apply and a
-target with a legacy `Hardware` row both fail. Then complete one journey:
+For Hardware Desk, dry-run counted and uncounted fixtures plus duplicate keys,
+normalized duplicate names, unknown modes/categories, invalid Boolean flags,
+negative/fractional counted quantities, an uncounted quantity, and bag/box display
+wording. Apply the valid fixture to an empty target; prove a second apply and a target
+with a legacy `Hardware` row both fail. Then complete one journey:
 
 1. With an active participant session, open Services and search the catalogue in both
-   languages. Confirm exact quantities and that no cart or mutation is offered.
-2. As an organiser, build a multi-item cart, adjust quantities, scan the participant QR,
+   languages. Confirm counted items show exact quantities, uncounted items show only
+   Available or Out of stock, and no cart or mutation is offered.
+2. As an organiser, toggle an uncounted item Out of stock and back to Available. Build
+   a mixed counted/uncounted cart, adjust individual quantities, scan the participant QR,
    enter a temporary pickup name, acknowledge physical-ID collection, and review the
    final cart before one checkout.
 3. From two organiser sessions, race checkout of the last unit. Exactly one succeeds,
    no quantity becomes negative, and retrying the winning idempotency key creates no
    second loan.
 4. Find the loan by QR, then by pickup name. Partially return one line. On a later atomic
-   return, split units across Good, Damaged, and Missing; verify only Good is available.
+   return, split an eligible line across Returned, Damaged, Missing, and Consumed;
+   verify only Returned counted units become available and uncounted outcomes do not
+   change global quantities. Confirm Consumed is absent for an ineligible reusable item
+   and a forged Consumed request is rejected.
 5. Retry the return key and confirm no duplicate outcome. Finish the remaining lines,
    acknowledge returning the physical ID, and verify the temporary name disappears
    from database results and search. Repeat closure without the acknowledgement and
    confirm it warns rather than blocking the physical-desk decision.
-6. Reconcile each item: total equals available plus open-loan units plus damaged plus
-   runtime missing. Confirm logs contain opaque IDs but no pickup name or ID details.
+6. Reconcile counted items: total equals available plus open-loan units plus damaged,
+   missing, and consumed. Reconcile every loan line against all four outcomes. Confirm
+   logs contain opaque IDs but no pickup name or ID details.
 
 For Latte Lab, leave the seeded lab closed and complete this journey at the smallest
 supported phone viewport:
@@ -366,7 +373,7 @@ After deploying matching Track and bot releases with the same internal secret:
 9. Inspect both services for redacted, useful logs. Proofs, Discord IDs, participant
    IDs, and internal bot error details must not appear in Track logs.
 10. Remove only the test binding with the bot's documented management command. Role
-   removal is a separate organiser decision; verify the intended cleanup explicitly.
+    removal is a separate organiser decision; verify the intended cleanup explicitly.
 
 Do not deliberately expire production participants, rotate a shared secret, reset all
 event bindings, or break live Discord permissions merely to reproduce automated edge

@@ -8,23 +8,26 @@ working data do not belong in this repository.
 ## Prepare and review the CSV
 
 Before export, physically resolve every value in the Sheet's `Missing` column. Reduce
-the starting quantity for equipment confirmed missing. Count every bag, box, or bulk
-row into an explicit number of meaningful checkout units; the importer deliberately
-rejects unresolved bulk wording.
+the starting quantity for counted equipment confirmed missing. Mark an item uncounted
+when its starting physical stock is genuinely unknown; do not turn a bag or box into a
+fictional checkout unit. Give every item a clean display name without bag/box wording.
 
 Create a private UTF-8 CSV with exactly these headings:
 
 ```csv
-importKey,category,name,quantity,description,imageUrl
-arduino-uno,MICROCONTROLLERS,Arduino Uno,12,Microcontroller board,/assets/hardware/arduino-uno.webp
+importKey,category,name,inventoryMode,quantity,consumptionAllowed,description,imageUrl
+arduino-uno,MICROCONTROLLERS,Arduino Uno,COUNTED,12,false,Microcontroller board,/assets/hardware/arduino-uno.webp
+resistors,MISCELLANEOUS,Resistors,UNCOUNTED,,true,,
 ```
 
-`importKey`, `category`, `name`, and `quantity` are required. The key must be stable and
-URL-safe. Categories are `INPUTS`, `OUTPUTS`, `MICROCONTROLLERS`, or `MISCELLANEOUS`.
-Quantity is a non-negative whole number. Description is optional. `imageUrl`, when
-present, must be a reviewed local path below `/assets/`; add and review that asset in
-the same application revision. Do not include unit cost, tax, total cost, or the old
-Missing column.
+`importKey`, `category`, `name`, `inventoryMode`, `quantity`, and
+`consumptionAllowed` headings are required. The key must be stable and URL-safe.
+Categories are `INPUTS`, `OUTPUTS`, `MICROCONTROLLERS`, or `MISCELLANEOUS`. Mode is
+`COUNTED` or `UNCOUNTED`. Quantity is a non-negative whole number for counted items and
+must be blank for uncounted items. `consumptionAllowed` is exactly `true` or `false`.
+Description is optional. `imageUrl`, when present, must be a reviewed local path below
+`/assets/`; add and review that asset in the same application revision. Do not include
+unit cost, tax, total cost, or the old Missing column.
 
 ## Validate without writing
 
@@ -35,11 +38,12 @@ configuration:
 npm run hardware:import -- /absolute/private/path/hardware-cleaned.csv
 ```
 
-The dry run reports item-type and checkout-unit totals. It rejects duplicate keys,
-duplicate normalized names within a category, blank names, non-integer or negative
-quantities, unknown categories, unsafe images, and unresolved bulk wording. Reconcile
-both totals against the physical count and have a second organiser review the CSV and
-output before requesting authorization to apply it.
+The dry run reports counted item types, total known units, uncounted item types, and
+consumption-enabled item types. It rejects duplicate keys, duplicate normalized names
+within a category, blank names, invalid modes or Boolean flags, invalid counted
+quantities, quantities on uncounted items, unknown categories, unsafe images, and bulk
+bag/box display names. Reconcile known totals against the physical count and have a
+second organiser review the CSV and output before requesting authorization to apply it.
 
 ## Apply once
 
@@ -55,10 +59,22 @@ those rows automatically. Investigate their ownership and obtain an explicit mig
 decision.
 
 After apply, compare the reported totals with the reviewed dry run, open the organiser
-catalogue, and spot-check each category plus zero-, one-, and multi-quantity items. From
-a participant session, confirm the same exact availability is visible but no mutation
-controls appear. Keep the private CSV only for the approved operational retention
-period, then dispose of it through the organisation's normal secure process.
+catalogue, and spot-check each category plus zero-, one-, multi-quantity, and uncounted
+items. From a participant session, confirm counted availability is exact, uncounted
+availability has no number, and no mutation controls appear. Keep the private CSV only
+for the approved operational retention period, then dispose of it through the
+organisation's normal secure process.
+
+## One-time production classification correction
+
+The initial production import predated inventory modes. Use `npm run
+hardware:reconcile` to inspect the exact eight stable keys and guards without writing.
+The command refuses the six uncounted conversions if they have any loan history or
+aggregate outcome quantities. After a verified backup and separate authorization, run
+`npm run hardware:reconcile -- --apply`. It atomically converts the six reviewed bulk
+component records to uncounted, removes their bag/container descriptions, and enables
+Consumed for those records plus AA batteries and EMG electrodes. It never re-imports
+the source Sheet and is safe to dry-run again after application.
 
 ## Rollback
 
