@@ -74,6 +74,12 @@ configuration, and bot-owned identity storage are in
 all local and deployed verification procedures are in
 [`docs/E2E_TESTING.md`](./docs/E2E_TESTING.md#discord-verification).
 
+Participant Web Push and Discord preferences, event reminders, food-service
+campaigns, deployment order, routine operation, failure handling, and the complete
+real-provider acceptance checklist are documented in
+[`docs/NOTIFICATIONS.md`](./docs/NOTIFICATIONS.md). Follow that runbook through its
+close-acceptance checklist before declaring a notification release complete.
+
 ## Self-host the database
 
 `npm run dev:setup` is the supported local path. For manual control, run
@@ -105,6 +111,13 @@ The web app also requires `EMAIL_SERVER_HOST`, `EMAIL_SERVER_PORT`,
 `EMAIL_SERVER_USER`, `EMAIL_SERVER_PASSWORD`, and `EMAIL_FROM` for organiser
 magic links. Configure them as Container App secret references before promoting
 this version; do not put SMTP credentials in GitHub variables or the image.
+
+Participant notifications additionally use `DISCORD_BOT_URL`, the matching
+Track/bot `INTERNAL_API_SECRET`, the server VAPID pair, the build-time public VAPID
+key, and `VAPID_EMAIL`. Deploy the bot migration and healthy bot revision before the
+Track migration and UI, then complete the protected real-provider acceptance in
+[`docs/NOTIFICATIONS.md`](./docs/NOTIFICATIONS.md). Deployment approval does not
+authorize an external test message.
 
 ### Database lifecycle
 

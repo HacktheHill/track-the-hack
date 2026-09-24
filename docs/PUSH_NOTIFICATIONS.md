@@ -1,4 +1,9 @@
-# Event reminders
+# Web Push transport
+
+This document covers Web Push configuration and scheduler internals. Participant
+preferences, Discord fan-out, food-service campaigns, release order, and the
+real-provider acceptance procedure are authoritative in
+[`NOTIFICATIONS.md`](./NOTIFICATIONS.md).
 
 Generate a VAPID key pair with `npx web-push generate-vapid-keys`. Set
 `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` on the server and set

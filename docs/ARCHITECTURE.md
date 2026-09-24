@@ -282,6 +282,8 @@ participants into bounded frozen cohorts. The first queued announcement locks th
 snapshot. Delivery rows are durable and leased; preferences are re-read immediately
 before each Web Push or Discord attempt. The bot alone stores Discord IDs, while Track
 stores opaque Hacker IDs, channel preferences, safe outcomes, and audit identifiers.
+The complete operator workflow, delivery-state semantics, privacy boundaries, and
+real-provider acceptance criteria are in [`NOTIFICATIONS.md`](./NOTIFICATIONS.md).
 
 Tracker metrics are aggregate and operational. Demographic reporting comes from Tally
 or the restricted Sheet. Individual sponsor sharing requires separate explicit consent,

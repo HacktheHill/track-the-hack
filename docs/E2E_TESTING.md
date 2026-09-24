@@ -33,6 +33,10 @@ with the concrete reason and the environment in which they still need to run.
 - External email, production database writes, real Apps Script writes, and production
   deployment require separate action-time authorisation and a reviewed target.
 - Keep Cloudflare Access enabled throughout private production acceptance.
+- Participant Web Push, Discord reminders, and food-service campaigns use the
+  authoritative real-provider procedure and completion checklist in
+  [`NOTIFICATIONS.md`](./NOTIFICATIONS.md#real-provider-end-to-end-acceptance). It
+  requires separately confirmed sends and an isolated, consenting test audience.
 
 ## Prerequisites
 
@@ -612,6 +616,13 @@ For an offline/PWA change, complete every production and physical-device step in
 [`OFFLINE_ACCEPTANCE.md`](./OFFLINE_ACCEPTANCE.md). Its completed acceptance record is
 the offline portion of the production-smoke evidence; a green build or unauthenticated
 Cloudflare redirect does not replace it.
+
+Notification changes add a real-provider acceptance gate after these generic checks.
+Run [`NOTIFICATIONS.md`](./NOTIFICATIONS.md#real-provider-end-to-end-acceptance) from
+audience isolation through closeout. A production campaign test is prohibited when
+the checked-in snapshot could include a non-test Hacker; use protected staging or a
+reviewed window containing only designated test participants. Deployment approval is
+not send approval.
 
 Do not repeat destructive edge cases in production. Do not create a hardware loan,
 Latte order, or availability change solely for smoke testing. Verify counts before and

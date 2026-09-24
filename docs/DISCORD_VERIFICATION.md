@@ -1,5 +1,10 @@
 # Discord verification
 
+This document covers account linking and the Track-to-bot identity boundary. The same
+bot-owned binding is used for participant DMs. Notification behaviour, deployment
+order, safe outcomes, and the complete real-provider acceptance procedure are in
+[`NOTIFICATIONS.md`](./NOTIFICATIONS.md).
+
 Participants activate their day-of access in a browser and an organiser checks
 them in through a scanner station whose workflow is `CHECK_IN`. They then generate
 a personal link using `/verify` or **Generate Verification Link** in Discord and

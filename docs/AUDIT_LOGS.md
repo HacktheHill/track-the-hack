@@ -14,6 +14,23 @@ The app mirrors committed events to standard output as one-line JSON with
 `ContainerAppConsoleLogs_CL`. Azure is a searchable mirror, not the system of
 record. Its ingestion can lag or lose a line after the database commits.
 
+Notification audit events deliberately separate exact announcements from the general
+audit stream:
+
+| Event                                 | Safe audit data                                                     |
+| ------------------------------------- | ------------------------------------------------------------------- |
+| `participant.notifications.updated`   | `channel` and `enabled`                                             |
+| `notification.campaign.created`       | `snapshotCount` and `maximumCohortSize`                             |
+| `notification.campaign.regenerated`   | `snapshotCount` and `maximumCohortSize`                             |
+| `notification.announcement.queued`    | `participantCount`, fixed `channelCount`, and SHA-256 `contentHash` |
+| `notification.announcement.completed` | `contentHash`, `sentCount`, `failedCount`, and `skippedCount`       |
+| `notification.delivery.retried`       | `deliveryCount`                                                     |
+
+The message body belongs only in `NotificationAnnouncement`; push endpoints and keys
+belong only in `ParticipantPushSubscription`; Discord identifiers and provider receipt
+details belong only in the bot. Do not join or export those values into audit logs.
+See [`NOTIFICATIONS.md`](./NOTIFICATIONS.md) for delivery-state handling and acceptance.
+
 ## Log Analytics queries
 
 All examples begin with the same parser:
@@ -59,6 +76,20 @@ AuditEvents
           Outcome=tostring(audit.outcome), Subject=audit.subject, Resource=audit.resource
 | order by Time desc
 ```
+
+Notification campaign lifecycle and aggregate outcome:
+
+```kusto
+AuditEvents
+| where tostring(audit.name) startswith "notification."
+| project Time=todatetime(audit.occurredAt), Name=tostring(audit.name),
+          Outcome=tostring(audit.outcome), ResourceId=tostring(audit.resource.id),
+          ActorType=tostring(audit.actor.type), Data=audit.data
+| order by Time asc
+```
+
+The query must show hashes and aggregate counts only. Do not add message bodies,
+participant IDs, Discord identities, or push endpoints to a release evidence export.
 
 Event Services records `hardware.item.availability_changed`,
 `hardware.loan.checked_out`, `hardware.loan.returned`, `latte.order.placed`,
