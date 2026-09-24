@@ -1,6 +1,6 @@
 {
 	"title": "Verify your Discord account",
-	"explanation": "Activate your day-of participant access on this browser first, then use your personal verification link from the Hack the Hill Discord bot. Links expire after five minutes. Keep your link private.",
+	"explanation": "Check in at Hack the Hill III first, then use the verification button in Discord.",
 	"verify": "Verify Discord account",
 	"verifying": "Verifying…",
 	"verified": "Your Discord account is verified. You can return to Discord.",
