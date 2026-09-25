@@ -35,7 +35,7 @@ export const isHardwareAvailable = (item: {
 	inventoryMode: HardwareInventoryMode;
 	availableQuantity: number | null;
 	availableForCheckout: boolean;
-}) =>
-	item.inventoryMode === HardwareInventoryMode.COUNTED
-		? (item.availableQuantity ?? 0) > 0
-		: item.availableForCheckout;
+}) => {
+	if (!item.availableForCheckout) return false;
+	return item.inventoryMode === HardwareInventoryMode.COUNTED ? (item.availableQuantity ?? 0) > 0 : true;
+};

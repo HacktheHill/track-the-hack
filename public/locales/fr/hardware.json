@@ -4,6 +4,8 @@
 	"search": "Rechercher du matériel",
 	"available": "Disponible",
 	"available-count": "{{count}} disponible(s)",
+	"desk-use-only": "Utilisation au comptoir de matériel seulement",
+	"owned-by": "Propriété de {{owner}}",
 	"out-of-stock": "Épuisé",
 	"mark-available": "Marquer comme disponible",
 	"mark-out-of-stock": "Marquer comme épuisé",
@@ -33,6 +35,10 @@
 	"inventory-mode": {
 		"COUNTED": "Compté",
 		"UNCOUNTED": "Non compté"
+	},
+	"owner": {
+		"CTN": "CTN",
+		"MLH": "MLH"
 	},
 	"category": {
 		"INPUTS": "Entrées",

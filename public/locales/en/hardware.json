@@ -4,6 +4,8 @@
 	"search": "Search hardware",
 	"available": "Available",
 	"available-count": "{{count}} available",
+	"desk-use-only": "Hardware Desk use only",
+	"owned-by": "Owned by {{owner}}",
 	"out-of-stock": "Out of stock",
 	"mark-available": "Mark available",
 	"mark-out-of-stock": "Mark out of stock",
@@ -33,6 +35,10 @@
 	"inventory-mode": {
 		"COUNTED": "Counted",
 		"UNCOUNTED": "Uncounted"
+	},
+	"owner": {
+		"CTN": "CTN",
+		"MLH": "MLH"
 	},
 	"category": {
 		"INPUTS": "Inputs",

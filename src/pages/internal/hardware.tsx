@@ -71,24 +71,29 @@ export default function HardwareDesk() {
 							return (
 								<article className="ui-panel p-4" key={item.id}>
 									<h3 className="font-bold">{item.name}</h3>
+									<p className="text-sm">{t("owned-by", { owner: t(`owner.${item.owner}`) })}</p>
 									<p>
-										{item.inventoryMode === "COUNTED"
-											? item.isAvailable
-												? t("available-count", { count: item.availableQuantity })
-												: t("out-of-stock")
-											: item.isAvailable
-												? t("available")
-												: t("out-of-stock")}
+										{!item.availableForCheckout
+											? t("desk-use-only")
+											: item.inventoryMode === "COUNTED"
+												? item.isAvailable
+													? t("available-count", { count: item.availableQuantity })
+													: t("out-of-stock")
+												: item.isAvailable
+													? t("available")
+													: t("out-of-stock")}
 									</p>
-									<button
-										className="ui-button mt-2"
-										disabled={!item.isAvailable || atCartLimit}
-										onClick={() =>
-											setCart(value => ({ ...value, [item.id]: (value[item.id] ?? 0) + 1 }))
-										}
-									>
-										{t("add")}
-									</button>
+									{item.availableForCheckout && (
+										<button
+											className="ui-button mt-2"
+											disabled={!item.isAvailable || atCartLimit}
+											onClick={() =>
+												setCart(value => ({ ...value, [item.id]: (value[item.id] ?? 0) + 1 }))
+											}
+										>
+											{t("add")}
+										</button>
+									)}
 									{item.inventoryMode === "UNCOUNTED" && (
 										<button
 											type="button"
