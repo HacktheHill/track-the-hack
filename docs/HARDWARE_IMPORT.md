@@ -72,6 +72,35 @@ the source Sheet or run `hardware:reconcile --apply` as routine setup. The comma
 without `--apply` is a read-only diagnostic. Any future correction needs a current
 backup, dry run, and review of affected loans.
 
+## MLH Hardware Lab supplement
+
+The MLH kit is a guarded additive import, not a rerun of the initial CTN import. Its
+catalogue records are owned by `MLH`; all earlier records default to `CTN`. The bundled
+images and published quantities come from the reviewed
+[MLH Hardware Lab Contents](https://guide.mlh.com/organizer-resources/hardware-lab-contents)
+page. MLH says exact kit counts may vary, so reconcile the physical kit before applying.
+The capacitor and resistor assortments intentionally remain uncounted. The six shared
+tools appear in the catalogue but cannot be added to a checkout, because MLH instructs
+events to keep them at the Hardware Desk.
+
+After the ownership migration is deployed, inspect without writing:
+
+```sh
+npm run hardware:import-mlh
+```
+
+The command refuses partial imports, stable-key drift, and category/name collisions. Take
+and verify a current database backup, review the 43-item/quantity summary and the physical
+kit, then obtain explicit action-time authorisation before applying:
+
+```sh
+npm run hardware:import-mlh -- --apply
+```
+
+Re-run without `--apply`, confirm that it reports the supplement already present, and
+spot-check CTN/MLH ownership, images, quantities, uncounted assortments, and desk-only
+tools in both organiser and participant catalogues.
+
 ## Rollback
 
 Before an initial import, take and verify the normal database backup. If verification

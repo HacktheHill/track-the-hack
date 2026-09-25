@@ -39,15 +39,18 @@ export default function HardwareCatalogue() {
 							)}
 							<h2 className="font-coolvetica text-xl">{item.name}</h2>
 							<p className="text-sm">{t(`category.${item.category}`)}</p>
+							<p className="text-sm">{t("owned-by", { owner: t(`owner.${item.owner}`) })}</p>
 							{item.description && <p>{item.description}</p>}
 							<p className="font-bold">
-								{item.inventoryMode === "COUNTED"
-									? item.isAvailable
-										? t("available-count", { count: item.availableQuantity })
-										: t("out-of-stock")
-									: item.isAvailable
-										? t("available")
-										: t("out-of-stock")}
+								{!item.availableForCheckout
+									? t("desk-use-only")
+									: item.inventoryMode === "COUNTED"
+										? item.isAvailable
+											? t("available-count", { count: item.availableQuantity })
+											: t("out-of-stock")
+										: item.isAvailable
+											? t("available")
+											: t("out-of-stock")}
 							</p>
 						</article>
 					))}

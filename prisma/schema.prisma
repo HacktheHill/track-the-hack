@@ -406,6 +406,7 @@ model HardwareItem {
   id                   String                @id @default(cuid())
   importKey            String                @unique
   category             HardwareCategory
+  owner                HardwareOwner         @default(CTN)
   inventoryMode        HardwareInventoryMode @default(COUNTED)
   name                 String
   normalizedName       String
@@ -565,6 +566,11 @@ enum HardwareCategory {
   OUTPUTS
   MICROCONTROLLERS
   MISCELLANEOUS
+}
+
+enum HardwareOwner {
+  CTN
+  MLH
 }
 
 enum HardwareInventoryMode {

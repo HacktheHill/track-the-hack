@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
 import test from "node:test";
 import {
 	LatteDrink,
@@ -10,6 +11,7 @@ import {
 	LatteTemperature,
 } from "@prisma/client";
 import { normalizeHardwareName, validateHardwareImport } from "@/server/services/hardware-import";
+import { evaluateMlhHardwareImport, mlhHardwareItems } from "@/server/services/mlh-hardware";
 import {
 	hardwareReturnError,
 	isHardwareAvailable,
@@ -87,6 +89,14 @@ void test("hardware availability distinguishes exact and uncounted stock", () =>
 	assert.equal(
 		isHardwareAvailable({
 			inventoryMode: HardwareInventoryMode.COUNTED,
+			availableQuantity: 5,
+			availableForCheckout: false,
+		}),
+		false,
+	);
+	assert.equal(
+		isHardwareAvailable({
+			inventoryMode: HardwareInventoryMode.COUNTED,
 			availableQuantity: 0,
 			availableForCheckout: true,
 		}),
@@ -100,6 +110,27 @@ void test("hardware availability distinguishes exact and uncounted stock", () =>
 		}),
 		true,
 	);
+});
+
+void test("MLH hardware supplement has stable unique catalogue records", () => {
+	assert.equal(mlhHardwareItems.length, 43);
+	assert.equal(new Set(mlhHardwareItems.map(item => item.importKey)).size, mlhHardwareItems.length);
+	assert.equal(
+		new Set(mlhHardwareItems.map(item => `${item.category}:${normalizeHardwareName(item.name)}`)).size,
+		mlhHardwareItems.length,
+	);
+	assert.equal(mlhHardwareItems.filter(item => item.quantity === null).length, 2);
+	assert.equal(mlhHardwareItems.filter(item => !item.availableForCheckout).length, 6);
+	assert.equal(mlhHardwareItems.filter(item => item.availableForCheckout && item.quantity !== null).length, 35);
+	assert.equal(
+		mlhHardwareItems.reduce((sum, item) => sum + (item.quantity ?? 0), 0),
+		355,
+	);
+	assert.equal(
+		mlhHardwareItems.every(item => existsSync(`public${item.imageURL}`)),
+		true,
+	);
+	assert.deepEqual(evaluateMlhHardwareImport([]).errors, []);
 });
 
 void test("hardware outcomes include consumed and enforce per-item eligibility", () => {

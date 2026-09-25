@@ -36,6 +36,7 @@ const catalogue = async (prisma: PrismaClient) => {
 			id: true,
 			importKey: true,
 			category: true,
+			owner: true,
 			name: true,
 			description: true,
 			imageURL: true,
@@ -86,12 +87,14 @@ export const hardwareRouter = createTRPCRouter({
 		return items.map(item => ({
 			id: item.id,
 			category: item.category,
+			owner: item.owner,
 			name: item.name,
 			description: item.description,
 			imageURL: item.imageURL,
 			inventoryMode: item.inventoryMode,
 			availableQuantity: item.availableQuantity,
 			isAvailable: item.isAvailable,
+			availableForCheckout: item.availableForCheckout,
 		}));
 	}),
 	organizerCatalogue: organizerProcedure.query(({ ctx }) => catalogue(ctx.prisma)),
@@ -190,14 +193,15 @@ export const hardwareRouter = createTRPCRouter({
 												? {
 														id: line.itemId,
 														active: true,
+														availableForCheckout: true,
 														inventoryMode: HardwareInventoryMode.COUNTED,
 														availableQuantity: { gte: line.quantity },
 													}
 												: {
 														id: line.itemId,
 														active: true,
-														inventoryMode: HardwareInventoryMode.UNCOUNTED,
 														availableForCheckout: true,
+														inventoryMode: HardwareInventoryMode.UNCOUNTED,
 													},
 										data:
 											item.inventoryMode === HardwareInventoryMode.COUNTED

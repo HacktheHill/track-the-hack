@@ -30,6 +30,7 @@
 		"schedule:import": "node --env-file-if-exists=.env --import tsx scripts/import-events.mts",
 		"audit:purge": "node --env-file-if-exists=.env --import tsx scripts/purge-audit-events.mts",
 		"hardware:import": "node --env-file-if-exists=.env --import tsx scripts/import-hardware.mts",
+		"hardware:import-mlh": "node --env-file-if-exists=.env --import tsx scripts/import-mlh-hardware.mts",
 		"hardware:reconcile": "node --env-file-if-exists=.env --import tsx scripts/reconcile-hardware-inventory.mts",
 		"postinstall": "prisma generate",
 		"lint": "eslint src prisma scripts test integrations/google-sheets/Code.gs next.config.js next-i18next.config.js tailwind.config.mjs --ext .gs,.js,.mjs,.ts,.tsx,.mts",
