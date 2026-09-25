@@ -1,5 +1,15 @@
-import { prisma } from "@/server/db";
-import { applyMlhHardwareImport, inspectMlhHardwareImport, mlhHardwareSource } from "@/server/services/mlh-hardware";
+import { PrismaClient } from "@prisma/client";
+
+// This script runs from the deliberately minimal production migration image,
+// so keep its imports relative instead of depending on application path aliases.
+// eslint-disable-next-line no-restricted-imports
+import {
+	applyMlhHardwareImport,
+	inspectMlhHardwareImport,
+	mlhHardwareSource,
+} from "../src/server/services/mlh-hardware.ts";
+
+const prisma = new PrismaClient();
 
 const apply = process.argv.slice(2).includes("--apply");
 const inspection = await inspectMlhHardwareImport(prisma);
