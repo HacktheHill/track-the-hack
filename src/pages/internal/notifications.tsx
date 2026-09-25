@@ -31,13 +31,17 @@ const Notifications: NextPage = () => {
 	const retry = trpc.notifications.retryAnnouncement.useMutation({ onSuccess: () => void query.refetch() });
 	const archive = trpc.notifications.archiveCampaign.useMutation({ onSuccess: () => void query.refetch() });
 	const [name, setName] = useState("");
-	const [maximum, setMaximum] = useState(50);
+	const [maximum, setMaximum] = useState("50");
 	const [selectedCohortId, setSelectedCohortId] = useState<string | null>(null);
 	const [message, setMessage] = useState("");
 	const [confirmation, setConfirmation] = useState<Confirmation>(null);
 	const [error, setError] = useState("");
 	const dialogRef = useRef<HTMLElement>(null);
 	const pending = create.isLoading || regenerate.isLoading || queue.isLoading || retry.isLoading || archive.isLoading;
+	const maximumCohortSize = maximum.trim() === "" ? null : Number(maximum);
+	const maximumInvalid =
+		maximumCohortSize !== null &&
+		(!Number.isInteger(maximumCohortSize) || maximumCohortSize < 1 || maximumCohortSize > 500);
 
 	useEffect(() => {
 		if (!confirmation) return;
@@ -128,18 +132,22 @@ const Notifications: NextPage = () => {
 						<label className="ui-field">
 							<span>{t("notifications.maximum-size")}</span>
 							<input
+								aria-describedby="notification-maximum-help"
 								type="number"
 								min={1}
 								max={500}
 								value={maximum}
-								onChange={event => setMaximum(Number(event.target.value))}
+								onChange={event => setMaximum(event.target.value)}
 							/>
+							<span id="notification-maximum-help" className="text-sm font-normal">
+								{t("notifications.maximum-size-help")}
+							</span>
 						</label>
 						<button
 							type="button"
 							className="ui-button ui-button-primary"
-							disabled={pending || !name.trim() || maximum < 1 || maximum > 500}
-							onClick={() => void run(() => create.mutateAsync({ name, maximumCohortSize: maximum }))}
+							disabled={pending || !name.trim() || maximumInvalid}
+							onClick={() => void run(() => create.mutateAsync({ name, maximumCohortSize }))}
 						>
 							{t("notifications.generate")}
 						</button>
@@ -156,6 +164,13 @@ const Notifications: NextPage = () => {
 										count: campaign.snapshotCount,
 										date: campaign.snapshotAt.toLocaleString(),
 									})}
+								</p>
+								<p className="font-rubik text-sm text-dark-color">
+									{campaign.maximumCohortSize === null
+										? t("notifications.cohort-mode-all")
+										: t("notifications.cohort-mode-sized", {
+												count: campaign.maximumCohortSize,
+											})}
 								</p>
 							</div>
 							<div className="flex gap-2">

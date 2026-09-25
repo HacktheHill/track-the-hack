@@ -55,6 +55,9 @@ audit stream:
 | `notification.announcement.completed` | `contentHash`, `sentCount`, `failedCount`, and `skippedCount`       |
 | `notification.delivery.retried`       | `deliveryCount`                                                     |
 
+For campaign events, a null `maximumCohortSize` is the safe, intentional marker for
+the all-participants-in-one-cohort mode. It contains no participant data.
+
 The message body belongs only in `NotificationAnnouncement`; push endpoints and keys
 belong only in `ParticipantPushSubscription`; Discord identifiers and provider receipt
 details belong only in the bot. Do not join or export those values into audit logs.

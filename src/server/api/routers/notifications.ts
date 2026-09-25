@@ -18,6 +18,7 @@ import { generateNotificationCohorts } from "@/server/services/notification-coho
 
 const varchar = z.string().trim().min(1).max(191);
 const messageBody = z.string().trim().min(1).max(500);
+const maximumCohortSize = z.number().int().min(1).max(500).nullable();
 const localeSchema = z.enum(["en", "fr"]);
 const subscriptionSchema = z
 	.object({
@@ -48,7 +49,7 @@ const statusMap = async (hackerIds: string[]) => {
 
 const buildCampaign = async (
 	transaction: Prisma.TransactionClient,
-	input: { name: string; maximumCohortSize: number; seed: string; createdById: string },
+	input: { name: string; maximumCohortSize: number | null; seed: string; createdById: string },
 	existingId?: string,
 ) => {
 	const hackers = await checkedInHackers(transaction);
@@ -206,7 +207,7 @@ export const notificationsRouter = createTRPCRouter({
 		};
 	}),
 	createCampaign: organizerProcedure
-		.input(z.object({ name: varchar, maximumCohortSize: z.number().int().min(1).max(500) }).strict())
+		.input(z.object({ name: varchar, maximumCohortSize }).strict())
 		.mutation(async ({ ctx, input }) =>
 			ctx.prisma.$transaction(async transaction => {
 				const campaign = await buildCampaign(transaction, {
@@ -228,7 +229,7 @@ export const notificationsRouter = createTRPCRouter({
 			}),
 		),
 	regenerateCampaign: organizerProcedure
-		.input(z.object({ id: varchar, name: varchar, maximumCohortSize: z.number().int().min(1).max(500) }).strict())
+		.input(z.object({ id: varchar, name: varchar, maximumCohortSize }).strict())
 		.mutation(async ({ ctx, input }) =>
 			ctx.prisma.$transaction(async transaction => {
 				const existing = await transaction.notificationCampaign.findUnique({ where: { id: input.id } });

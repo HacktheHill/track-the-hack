@@ -24,9 +24,15 @@ const shuffle = <T>(values: T[], random: () => number) => {
 	return result;
 };
 
-export const generateNotificationCohorts = (candidates: CohortCandidate[], maximumSize: number, seed: string) => {
-	if (!Number.isInteger(maximumSize) || maximumSize < 1) throw new Error("Invalid maximum cohort size");
+export const generateNotificationCohorts = (
+	candidates: CohortCandidate[],
+	maximumSize: number | null,
+	seed: string,
+) => {
+	if (maximumSize !== null && (!Number.isInteger(maximumSize) || maximumSize < 1))
+		throw new Error("Invalid maximum cohort size");
 	if (!candidates.length) return [];
+	const effectiveMaximumSize = maximumSize ?? candidates.length;
 	const random = seededRandom(seed);
 	const dietary = shuffle(
 		candidates.filter(candidate => candidate.mealCategory !== MealCategory.STANDARD),
@@ -37,7 +43,7 @@ export const generateNotificationCohorts = (candidates: CohortCandidate[], maxim
 		random,
 	);
 	const ordered = [...dietary, ...standard];
-	const cohortCount = Math.ceil(ordered.length / maximumSize);
+	const cohortCount = Math.ceil(ordered.length / effectiveMaximumSize);
 	const baseSize = Math.floor(ordered.length / cohortCount);
 	const largerCohorts = ordered.length % cohortCount;
 	let offset = 0;

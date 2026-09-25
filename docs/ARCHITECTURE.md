@@ -287,9 +287,11 @@ bounded provider work; `PUSH_NOTIFICATIONS.md` documents the operational protoco
 
 Organisers create a fresh notification campaign for each food service. Campaign
 creation snapshots distinct positive `CHECK_IN` presences, deterministically shuffles
-all non-standard meal categories before standard meals, and balances the ordered
-participants into bounded frozen cohorts. The first queued announcement locks the
-snapshot. Delivery rows are durable and leased; preferences are re-read immediately
+all non-standard meal categories before standard meals, and either balances the
+ordered participants into bounded frozen cohorts or, when the maximum is null, stores
+one all-participants cohort. The null mode remains durable across draft regeneration;
+it is not replaced with the snapshot's current count. The first queued announcement
+locks the snapshot. Delivery rows are durable and leased; preferences are re-read immediately
 before each Web Push or Discord attempt. The bot alone stores Discord IDs, while Track
 stores opaque Hacker IDs, channel preferences, safe outcomes, and audit identifiers.
 The complete operator workflow, delivery-state semantics, privacy boundaries, and

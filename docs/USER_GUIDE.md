@@ -33,18 +33,18 @@ remain network-only.
 
 ## Organiser screens
 
-| Route                     | Purpose                                                                                                                                                                                  |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/auth/sign-in`           | Sign in with verified CTN Google Workspace, an allowed email magic link, or the loopback-only development account.                                                                       |
-| `/qr`                     | Switch between the organiser pass and the scanner. Select the station, centre the participant QR in the camera, or scan/type the ID into the field immediately below it and press Enter. |
-| `/metrics`                | View aggregate operational counts without exposing participant identity.                                                                                                                 |
-| `/internal`               | Open the organiser tools available to the signed-in role.                                                                                                                                |
-| `/internal/events`        | Create, edit, show, or hide programme events and configure optional scanner stations.                                                                                                    |
-| `/internal/hardware`      | Manage inventory visibility, checkout carts, physical-ID custody, loans, and returns.                                                                                                    |
-| `/internal/latte-lab`     | Open or close ordering, set ingredient availability, and move orders through the queue.                                                                                                  |
-| `/internal/notifications` | Prepare food-service cohorts, review delivery totals, confirm announcements, inspect safe outcomes, and retry eligible failures.                                                         |
-| `/internal/access`        | Administrators allow or remove additional organiser email addresses. CTN Workspace access is implicit.                                                                                   |
-| `/internal/roles`         | Compatibility route for older role-management links; current authorisation is defined in `ARCHITECTURE.md`.                                                                              |
+| Route                     | Purpose                                                                                                                                                                                            |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/auth/sign-in`           | Sign in with verified CTN Google Workspace, an allowed email magic link, or the loopback-only development account.                                                                                 |
+| `/qr`                     | Switch between the organiser pass and the scanner. Select the station, centre the participant QR in the camera, or scan/type the ID into the field immediately below it and press Enter.           |
+| `/metrics`                | View aggregate operational counts without exposing participant identity.                                                                                                                           |
+| `/internal`               | Open the organiser tools available to the signed-in role.                                                                                                                                          |
+| `/internal/events`        | Create, edit, show, or hide programme events and configure optional scanner stations.                                                                                                              |
+| `/internal/hardware`      | Manage inventory visibility, checkout carts, physical-ID custody, loans, and returns.                                                                                                              |
+| `/internal/latte-lab`     | Open or close ordering, set ingredient availability, and move orders through the queue.                                                                                                            |
+| `/internal/notifications` | Prepare food-service cohorts (or leave the maximum size blank for one all-participants cohort), review delivery totals, confirm announcements, inspect safe outcomes, and retry eligible failures. |
+| `/internal/access`        | Administrators allow or remove additional organiser email addresses. CTN Workspace access is implicit.                                                                                             |
+| `/internal/roles`         | Compatibility route for older role-management links; current authorisation is defined in `ARCHITECTURE.md`.                                                                                        |
 
 The scanner station selector determines whether a scan shows participant details or
 records check-in, merchandise, food, or event attendance. Camera scans suppress only

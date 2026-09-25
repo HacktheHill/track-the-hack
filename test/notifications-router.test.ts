@@ -73,6 +73,56 @@ void test("announcement bodies and cohort sizes retain conservative validation l
 	});
 });
 
+void test("a null cohort maximum is persisted and creates one all-participants cohort", async () => {
+	const { notificationsRouter } = await routerModule;
+	const storedMaximums: Array<number | null> = [];
+	const cohortMemberCounts: number[] = [];
+	let cohortNumber = 0;
+	const transaction = {
+		hacker: {
+			findMany: () =>
+				Promise.resolve([
+					{ id: "standard", mealCategory: "STANDARD" },
+					{ id: "vegan", mealCategory: "VEGAN" },
+					{ id: "halal", mealCategory: "HALAL" },
+				]),
+		},
+		notificationCampaign: {
+			create: ({ data }: { data: { maximumCohortSize: number | null; snapshotCount: number } }) => {
+				storedMaximums.push(data.maximumCohortSize);
+				return Promise.resolve({ id: "campaign-1", ...data });
+			},
+		},
+		notificationCohort: {
+			create: () => Promise.resolve({ id: `cohort-${++cohortNumber}` }),
+		},
+		notificationCohortMember: {
+			createMany: ({ data }: { data: unknown[] }) => {
+				cohortMemberCounts.push(data.length);
+				return Promise.resolve({ count: data.length });
+			},
+		},
+		auditEvent: { create: () => Promise.resolve({}) },
+	};
+	const prisma = {
+		...organizerPrisma,
+		$transaction: (operation: (client: typeof transaction) => Promise<unknown>) => operation(transaction),
+	} as unknown as PrismaClient;
+
+	await notificationsRouter
+		.createCaller({
+			prisma,
+			session: organizerSession,
+			participantSession: null,
+			participantOriginAllowed: true,
+		})
+		.createCampaign({ name: "Seconds", maximumCohortSize: null });
+
+	assert.deepEqual(storedMaximums, [null]);
+	assert.equal(cohortNumber, 1);
+	assert.deepEqual(cohortMemberCounts, [3]);
+});
+
 void test("only completed notification campaigns can be archived", async () => {
 	const { notificationsRouter } = await routerModule;
 	const prisma = {

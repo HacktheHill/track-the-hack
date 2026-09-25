@@ -9,7 +9,8 @@ the bot.
 
 - Participants may enable either channel independently.
 - An event reminder sends when a saved event begins.
-- A food-service campaign snapshots checked-in participants into bounded cohorts.
+- A food-service campaign snapshots checked-in participants into either bounded
+  cohorts or one all-participants cohort.
 - A cohort can be sent once. Retry applies only to unsuccessful deliveries.
 - `uncertain` Discord results require a human decision because a message may already
   have been delivered.
@@ -72,7 +73,8 @@ subscriptions, bad signatures, timeouts, retries, and ambiguous receipts.
 ## Routine food-service operation
 
 1. Review the checked-in and dietary-priority totals.
-2. Create a campaign with the approved cohort size.
+2. Create a campaign with the approved maximum cohort size. Leave the maximum blank
+   when everyone currently checked in should be placed into one cohort.
 3. Review cohort size and reachable-channel counts.
 4. Write and preview the bilingual message.
 5. Obtain the operational send confirmation and confirm once.
@@ -80,6 +82,17 @@ subscriptions, bad signatures, timeouts, retries, and ambiguous receipts.
    the cause and receiving another confirmation.
 7. Archive the campaign when all cohorts are complete. Late check-ins belong in a new
    campaign.
+
+For seconds or another event-wide call, create a fresh campaign and leave the maximum
+cohort size blank. This takes a new checked-in snapshot, includes people who arrived
+after an earlier meal campaign, and produces one cohort. It does not resend an earlier
+cohort or add overlapping membership to a locked campaign. The normal preview and
+confirmation steps still apply.
+
+A blank maximum is stored as the campaign's all-participants mode, not converted to
+the current headcount. Regenerating that campaign while it is still a draft therefore
+refreshes the snapshot and keeps everyone together even if the checked-in population
+has grown. Once the first announcement is queued, the snapshot remains locked.
 
 If Discord counts are unavailable, push is unavailable, or the audience is not the
 intended group, stop and fix that condition before sending.

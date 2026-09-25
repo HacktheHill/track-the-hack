@@ -267,7 +267,7 @@ model ParticipantEventReminder {
 model NotificationCampaign {
   id                String                     @id @default(cuid())
   name              String
-  maximumCohortSize Int
+  maximumCohortSize Int?
   seed              String
   snapshotAt        DateTime
   snapshotCount     Int
