@@ -1,5 +1,6 @@
 import { HardwareCategory, HardwareInventoryMode, HardwareOwner, Prisma, type PrismaClient } from "@prisma/client";
-import { normalizeHardwareName } from "@/server/services/hardware-import";
+
+const normalizeHardwareName = (value: string) => value.trim().toLocaleLowerCase("en-CA").replace(/\s+/g, " ");
 
 export const mlhHardwareSource = "https://guide.mlh.com/organizer-resources/hardware-lab-contents";
 
