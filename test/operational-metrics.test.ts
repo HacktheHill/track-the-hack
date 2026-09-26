@@ -8,19 +8,18 @@ import {
 } from "@/server/services/operational-metrics";
 
 void test("checked-in count uses distinct participant IDs across check-in events", async t => {
-	const groupBy = t.mock.fn(() => Promise.resolve([{ hackerId: "participant-1" }, { hackerId: "participant-2" }]));
+	const count = t.mock.fn(() => Promise.resolve(2));
 	// Partial database mock exposes only the operation exercised by this repository method.
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 	const prisma = {
-		presence: { groupBy },
+		hacker: { count },
 	} as unknown as Pick<PrismaClient, "event" | "hacker" | "presence">;
 
 	const repository = createPrismaOperationalMetricsRepository(prisma);
 	assert.equal(await repository.countCheckedIn(), 2);
-	assert.deepEqual(groupBy.mock.calls[0]?.arguments, [
+	assert.deepEqual(count.mock.calls[0]?.arguments, [
 		{
-			by: ["hackerId"],
-			where: { event: { scannerWorkflow: ScannerWorkflow.CHECK_IN }, value: { gt: 0 } },
+			where: { presences: { some: { event: { scannerWorkflow: ScannerWorkflow.CHECK_IN }, value: { gt: 0 } } } },
 		},
 	]);
 });
