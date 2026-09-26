@@ -81,7 +81,7 @@ Late submissions will not normally be accepted. Organizers may make reasonable a
 
 # Main Tracks and Prizes
 
-Hack the Hill III has three main tracks. **Each team may compete in only one.** The advertised maximum prize assumes a four-person team.
+Hack the Hill III has three main tracks. **Each team may compete in only one.**
 
 | Challenge                            |  1st |  2nd |  3rd |
 | ------------------------------------ | ---: | ---: | ---: |
