@@ -95,21 +95,57 @@ Only eligible, registered, checked-in competitors listed on the winning team's f
 
 # CGI Challenge — The Northwind Brief
 
-The CGI Challenge places teams in the role of a consulting team advising the fictional **Northwind Utilities**.
+You are the CGI consulting team. Northwind Utilities is the client. You have the weekend to diagnose the problem, build something that works, and explain what it is worth.
 
-Northwind supplies electricity and water to **1.8 million homes and businesses across six regions**. It is regulated, under pressure, and dealing with a serious customer-complaints problem:
+| Challenge format | Requirement                                                                                        |
+| ---------------- | -------------------------------------------------------------------------------------------------- |
+| **Deliver**      | A five-minute client pitch, three minutes of questions, a working build, and a one-page value case |
+| **Judged by**    | A CGI panel evaluating the proposal as a real client would                                         |
+| **Total**        | 100 points                                                                                         |
 
-- **1,599 complaints** are currently open;
+You do not need consulting experience to win. Strong technical work without a credible commercial case is incomplete; the challenge rewards teams that balance both.
+
+## The Client
+
+Northwind was founded in **1976** and supplies electricity and water to **1.8 million homes and businesses across six regions**. It is regulated, under pressure, and dealing with a serious customer-complaints problem:
+
+- the complaints backlog has grown from a few hundred cases to **1,599 currently open**;
 - average resolution time has risen from **9.1 to 38.2 days**;
 - **77% of complaints** breach Northwind's service-level targets;
-- its regulator satisfaction score has fallen from **4.3 to 2.6 out of 5**; and
-- agents may need to use four of Northwind's 15 systems to answer one call.
+- its regulator satisfaction score has fallen from **4.3 to 2.6 out of 5**, and the regulator has written to the board;
+- cost to serve per account is rising while first-contact resolution is falling; and
+- contact-centre agents may need to work across four screens to answer one call.
 
-Northwind has asked for an AI-powered complaint-triage and response system that can clear the backlog and raise its regulator score above 4.0 within twelve months. **Your first job is to decide whether that is the right solution.**
+Northwind operates **15 systems** across customer service, billing, and metering. The oldest went live in **1998**.
 
-Your answer could be AI, data analysis, a process redesign, infrastructure, an integration, a product prototype, a pricing or organizational change, or something else entirely. No approach is pre-approved. Judges will assess whether your recommendation follows from the evidence and whether your build supports it.
+The board announced an AI strategy in March, but the Chief Operating Officer could not explain what the strategy contained when questioned by the regulator.
 
-Northwind previously ran a nine-month AI assistant pilot in 2025 and paused it. Its results are included in the data.
+## What the Client Asked For
+
+Northwind has invited four consulting firms to pitch. It has asked for an AI-powered solution that automates complaint triage and response, clears the backlog, and raises the regulator score above 4.0 within twelve months. It also expects a proposed solution and implementation plan.
+
+**Your first job is to decide whether that is the right brief.**
+
+## Anything Can Be the Answer
+
+You are being asked to solve the client's problem, not simply build the technology the client requested. Your answer could be:
+
+- an AI system;
+- a data pipeline or analysis;
+- a process or service redesign;
+- infrastructure or an integration layer;
+- a pricing or organizational change;
+- a small, focused software tool;
+- a recommendation that Northwind stop doing something; or
+- another approach supported by the evidence.
+
+You may conclude that Northwind's twelve-month target is not achievable through its proposed route. If so, show the arithmetic, explain what is achievable, and recommend a better path.
+
+No option is prohibited or pre-approved. Judges will assess whether the recommendation follows from the evidence. Challenge the client's assumptions when appropriate, but do so with evidence rather than instinct.
+
+Clients are often right about the pain they can see but wrong about its cause. Building exactly what was requested will still fail if it does not solve the underlying problem.
+
+Northwind previously ran a nine-month AI assistant pilot in 2025 and paused it. The results are included in the data, and judges will expect teams to examine what happened.
 
 ## Challenge Data
 
@@ -117,51 +153,144 @@ Northwind previously ran a nine-month AI assistant pilot in 2025 and paused it. 
 
 The archive contains six synthetic CSV files that are safe to publish, share, and commit to a repository:
 
-| File                          | Contents                                                                                                   |
-| ----------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `northwind_complaints.csv`    | Two years of complaint records, including resolution, SLA, transfer, reopening, and bill-correction fields |
-| `northwind_systems.csv`       | Northwind's 15 systems, their age, technology, integrations, cost, owner, and notes                        |
-| `northwind_monthly_kpis.csv`  | 24 months of operational volumes, resolution, calls, cost to serve, and regulator scores                   |
-| `northwind_meter_reads.csv`   | Metering, estimated reads, smart-meter coverage, and billing exceptions by region and month                |
-| `northwind_ai_pilot_2025.csv` | Nine months of results from the paused AskNorthwind assistant pilot                                        |
-| `northwind_unit_costs.csv`    | Starting-point costs for calls, complaints, corrections, visits, smart meters, staff, and penalties        |
+| File                          |    Rows | Contents                                                                                                                                                                                                                                        |
+| ----------------------------- | ------: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `northwind_complaints.csv`    | ~25,400 | Two years of individual complaints: dates, channel, category, priority, region, originating system, transfers, SLA target, days to close, breach and reopening flags, resolution action, information-only resolution, and bill-correction value |
+| `northwind_systems.csv`       |      15 | The full application estate: age, vendor, technology, integration method, annual run cost, owning function, and notes                                                                                                                           |
+| `northwind_monthly_kpis.csv`  |      24 | Monthly complaint volumes, average resolution time, first-contact resolution, call volume, cost to serve, and regulator score                                                                                                                   |
+| `northwind_meter_reads.csv`   |     144 | Accounts, estimated-read rate, smart-meter penetration, billing exceptions, and serving systems by region and month                                                                                                                             |
+| `northwind_ai_pilot_2025.csv` |       9 | The AskNorthwind pilot's sessions, containment, escalation, abandonment, repeat contact, and satisfaction results                                                                                                                               |
+| `northwind_unit_costs.csv`    |      10 | Starting-point costs for calls, complaints, bill corrections, field visits, smart meters, agent staffing, and regulator penalties                                                                                                               |
 
-Read all six files. A central insight requires connecting evidence across files. You may use outside benchmarks or public data, but you must cite the source.
+Read all six files. The challenge's central insight is not visible in one file alone; it requires connecting two files that may not appear related.
 
-At **3:00 PM Saturday**, Northwind will provide an update that changes part of the situation. Teams should be prepared to adapt their proposal.
+You may use outside data, including public regulatory benchmarks and industry cost figures, but cite every outside source.
 
 ## Required Deliverables
 
-CGI teams must submit and demonstrate:
+All three deliverables are scored.
 
-- a **five-minute executive-style pitch**, followed by **three minutes of questions**, covering the diagnosis, proposal, live demo, value, and delivery approach;
-- a **working build** demonstrated live—the build may be an analysis, AI or ML system, product prototype, integration, architecture, service design, or another appropriate artefact; and
-- a **one-page value case** showing build and operating costs, expected savings or benefits, payback, assumptions, and the effect of those assumptions being wrong.
+### 1. Client Pitch
 
-Every team member must speak for at least **30 seconds** during the pitch. Slides are optional; a working demo is not.
+Pitch to the judges as though they are Northwind's executive committee. They are busy, sceptical, and have already heard three other firms. You have **five minutes**, followed by **three minutes of questions**. Five minutes is a hard limit.
 
-AI development tools are allowed. Teams must be able to explain and defend everything they present, including model behaviour, accuracy, costs, and failure modes where relevant.
+Cover, in whatever order works best:
 
-The final Devpost submission must include a repository or folder link, the one-page value case, and any slides used. Use only synthetic data—do not use real customer data.
+- the diagnosis—what is actually wrong, supported by the data;
+- the proposed solution, including its scope and sequence;
+- a live demonstration of the build;
+- the value—cost, benefit, payback, and assumptions; and
+- the delivery approach—phases, team, risks, and what could go wrong.
+
+Every team member must speak for at least **30 seconds**. Slides are optional; a live demo is required.
+
+### 2. Working Build
+
+Build a real, working artefact and demonstrate it live. It does not need to be production-grade, but it must run. Choose or combine whichever approaches fit the evidence:
+
+| Approach                        | What a strong build could demonstrate                                                                                                                     |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Data and analysis**           | A notebook or dashboard proving the diagnosis from raw data through segmentation, root-cause analysis, or backlog forecasts under different interventions |
+| **AI or machine learning**      | A classifier, clustering model, retrieval assistant, or response-drafting agent, with an honest account of accuracy, cost, and failure modes              |
+| **Product or prototype**        | A working front end for the proposal, such as a unified agent desktop, customer journey, or exception-handling queue                                      |
+| **Engineering or architecture** | A running integration layer, API, or data model that passes data end to end and shows how the application estate could be improved                        |
+| **Service or process design**   | A redesigned and clickable journey supported by a clear operating model and role changes                                                                  |
+| **Another approach**            | The smallest working artefact that proves the evidence-supported recommendation                                                                           |
+
+AI development tools are allowed. Teams must be able to explain and defend everything they present, including model behaviour, accuracy, costs, limitations, and failure modes. “The model wrote it” is not an explanation.
+
+### 3. One-Page Value Case
+
+Submit one page containing numbers that a finance director could evaluate:
+
+- what the solution costs to build and operate;
+- what it saves, avoids, or earns, and over what period;
+- the expected payback;
+- every material assumption; and
+- what happens if those assumptions are wrong.
+
+Estimated figures are acceptable because Northwind is fictional, and `northwind_unit_costs.csv` provides a starting point. Undeclared estimates are not. Show the working: a defensible estimate with visible assumptions is stronger than an unsupported confident number.
+
+## CGI Timeline
+
+All times are Ottawa time. Deadlines are firm; the suggested working pace is guidance. The official competition schedule above remains authoritative.
+
+| Time                               | CGI milestone and suggested focus                                                                                                                              |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Friday, 7:00 PM**                | Opening ceremony and challenge release. Form the team, read the data, and understand the client. Do not begin project work before the official hacking period. |
+| **Friday, 9:00 PM**                | Team-formation milestone. Discuss the evidence and agree on an initial hypothesis.                                                                             |
+| **Friday, 10:00 PM**               | Official hacking period begins. Diagnose the problem and write the hypothesis in one sentence.                                                                 |
+| **Saturday morning**               | Test the hypothesis against the data. Discard it if the evidence does not support it, then scope the build.                                                    |
+| **Saturday, 3:00 PM**              | A client update will be posted on Discord. It changes part of the situation, and how the team adapts is scored.                                                |
+| **Saturday afternoon and evening** | Build the solution and register the team on Devpost if needed.                                                                                                 |
+| **Sunday, 12:00 AM**               | Devpost team registration and draft submission deadline—midnight Saturday night.                                                                               |
+| **Sunday morning**                 | Finish the build, prepare the value case, and rehearse the timed pitch out loud at least twice.                                                                |
+| **Sunday, 10:00 AM sharp**         | Final Devpost submissions close. Late submissions are not accepted.                                                                                            |
+| **Sunday, 10:30 AM–5:00 PM**       | Pitches and judging. Exact times and rooms will be posted on Discord.                                                                                          |
+| **Sunday, 5:00 PM**                | Closing Ceremony in C140 and winner announcements.                                                                                                             |
+
+Teams often spend the entire weekend building and leave too little time to rehearse. Treat the five-minute client pitch as a performance.
+
+## CGI Rules and Submission Checklist
+
+1. Every team member must speak for at least 30 seconds during the pitch.
+2. Project-specific work must be produced during the official hacking period. Pre-existing libraries, frameworks, public datasets, and AI tools are allowed; a pre-built solution is not.
+3. Register the team on Devpost and submit a draft by 12:00 AM Sunday—midnight Saturday night.
+4. Submit the final project by 10:00 AM Sunday with a repository or folder link, the one-page value case, and any slides used.
+5. The pitch stops at five minutes and is followed by three minutes of questions.
+6. Use only synthetic data. Do not use real customer data from any source.
+7. Cite anything brought in from outside the provided data pack.
+8. Be able to explain everything presented, including material produced with AI tools.
 
 ## CGI Judging
 
 The CGI Challenge uses its own 100-point rubric:
 
-| Criterion              |  Points |
-| ---------------------- | ------: |
-| Problem Framing        |      20 |
-| Solution & Feasibility |      20 |
-| The Build              |      25 |
-| Value Case             |      20 |
-| Pitch                  |      15 |
-| **Total**              | **100** |
+| Criterion                    |  Points | Question behind the score                                                                       |
+| ---------------------------- | ------: | ----------------------------------------------------------------------------------------------- |
+| **Problem Framing**          |      20 | Did the team identify the real problem, or merely deliver the brief it was handed?              |
+| **Solution and Feasibility** |      20 | Could the proposal actually be delivered, at what cost, over what timeline, and with what risk? |
+| **The Build**                |      25 | Does it run, was it demonstrated rather than described, and was it the right thing to build?    |
+| **Value Case**               |      20 | Are the assumptions visible and reasonable, and would a finance director accept the analysis?   |
+| **Pitch**                    |      15 | Was it clear, confident, on time, and supported by strong answers to the judges' questions?     |
+| **Total**                    | **100** |                                                                                                 |
 
-Judges will look at whether the team identified the real problem, proposed a feasible response, built something that supports that response, made a credible value case, and communicated it effectively.
+### What Wins Points
 
-Strong submissions use the data to challenge or validate the client's assumptions, scope an achievable first phase, state what the proposal does not fix, show a reliable live demo, and make their financial assumptions visible. Technology without a supported diagnosis, slides in place of a working build, unsupported benefit estimates, running over time, and leaving the presentation to one person will lose points.
+- a diagnosis that challenges the client's brief and proves the conclusion with Northwind's data;
+- honest scope, including what should happen in the first 90 days and what should wait;
+- naming what the proposed solution does not fix;
+- a live demo that works the first time because the team tested it;
+- visible and defensible financial assumptions; and
+- a candid answer about the proposal's biggest risk.
 
-Northwind's fictional Chief Operating Officer will take questions at times announced on Discord. Asking focused client questions is encouraged.
+### What Loses Points
+
+- accepting the client's requested solution without testing the underlying assumptions;
+- proposing technology that is not connected to the diagnosed problem;
+- showing slides that describe a build instead of demonstrating one;
+- presenting benefits without the assumptions behind them;
+- running over the five-minute limit; and
+- leaving the presentation to one person while the rest of the team stands behind them.
+
+## A Workable Approach for First-Time Teams
+
+1. Describe the situation in plain language before selecting a tool. What is Northwind's business, who is unhappy, and who pays?
+2. Separate symptom from cause. The backlog is a symptom; the source of complaint volume and the factors slowing resolution may be different problems requiring different fixes.
+3. Size the problem before solving it. Count which categories drive the greatest volume and cost.
+4. Ask what a fix is worth before designing it. An excellent solution to a negligible part of the problem is still a weak recommendation.
+5. Build the smallest thing that proves the point. A narrow working artefact is stronger than a broad unfinished one.
+6. Rehearse the complete pitch out loud and against a timer at least twice.
+
+Suggested roles include someone responsible for the diagnosis, someone for the build, someone for the numbers, and someone for the story. Team members may rotate roles, but ensure that each responsibility has an owner by Saturday lunchtime.
+
+## Asking the Client Questions
+
+Northwind's fictional Chief Operating Officer will take questions at times announced on Discord. Asking focused questions is part of the consulting challenge, and judges will hear about the questions teams asked.
+
+The COO will answer honestly when asked directly but will not volunteer information. Use the opportunity to test assumptions and close important evidence gaps.
+
+CGI has been doing this work for fifty years. Show what the next fifty could look like.
 
 # Civic Technology Challenge
 
@@ -171,13 +300,15 @@ Northwind's fictional Chief Operating Officer will take questions at times annou
 
 Build something that brings **government closer to people, or people closer to government**.
 
+Public institutions increasingly depend on digital systems that shape how people access services, understand public information, participate in decisions, establish identity, protect their privacy, and communicate with government. These may be policy questions, but they are also practical design and engineering problems.
+
+Build a useful, responsible solution for the people and institutions that would actually rely on it. Consider their real constraints: accessibility, privacy, trust, limited resources, legacy systems, language, connectivity, and ease of use.
+
 This can include tools related to public services, legislation, public information, civic participation, communication with institutions or representatives, feedback on public decisions, or other meaningful interactions between people and government.
 
-Software, hardware, data, AI, and other technical approaches are all welcome.
+The team's demo should clearly identify **the people being served, the public institution or civic process involved, and the interaction the project improves**. The connection may work in either direction: helping people interact with government or helping public institutions understand and serve people more effectively.
 
-To qualify for the Civic Technology Challenge, the team's demo must clearly demonstrate that people–government connection. This is an **eligibility requirement**, not an additional hidden scoring category.
-
-Qualifying Civic Technology projects are judged using the general Hack the Hill rubric.
+Civic Technology projects are judged using the general Hack the Hill rubric.
 
 # General Challenge — Best Overall
 
@@ -195,25 +326,32 @@ There is no required theme. The goal is to recognize the strongest overall proje
 
 Mini-challenges are separate from the three main tracks. A team may enter **any number of mini-challenges** for which its project qualifies, regardless of whether its selected main track is General, CGI, or Civic Technology.
 
-**Shared prize:** Each Hack the Hill mini-challenge selects one winning team and awards **$200 total to that team**. Any additional sponsor awards are noted below.
+The following Hack the Hill mini-challenges each select one winning team and award **$200 total to that team**:
+
+- Best FOSS Project;
+- Best UI/UX;
+- Best Hardware Hack; and
+- MathemaTech — Education for Everyone.
+
+The combined ElevenLabs challenge and the MLH prize categories have their own sponsor-provided awards described below. They do **not** include the $200 Hack the Hill mini-challenge prize.
 
 Teams must select every mini-challenge they want to enter on their final Devpost submission.
 
-## Best Project Built with ElevenLabs
+## Best Project Built with ElevenLabs — Combined Challenge
 
-Build a project that makes meaningful use of ElevenLabs.
+Hack the Hill's **Best Project Built with ElevenLabs** and MLH's **Best Use of ElevenLabs** are one combined challenge. One winning team will receive both the Hack the Hill ElevenLabs award and the MLH ElevenLabs award described below.
+
+Build a project that makes meaningful, functional use of ElevenLabs to create natural, expressive, or dynamic audio. This could include an interactive AI companion, narrated experience, voice-enabled application, autonomous audio experience, or another project in which ElevenLabs contributes substantially to the result.
 
 ### ElevenLabs Access and Awards
 
-| Recipient                                     | ElevenLabs benefit                                                                                          |
-| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| **All participants**                          | One free month of the Creator tier—normally $22/month—with 131,000 credits                                  |
-| **First-place General Challenge team**        | Three months of the Pro tier for each team member—a $297 value per person—with 600,000 credits/month        |
-| **Best Project Built with ElevenLabs winner** | Three months of the Scale tier for each team member—an $897 value per person—with 1.8 million credits/month |
+| Recipient                                      | ElevenLabs and MLH benefit                                                                                                                                           |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **All participants**                           | One free month of the Creator tier—normally $22/month—with 131,000 credits                                                                                           |
+| **First-place General Challenge team**         | Three months of the Pro tier for each team member—a $297 value per person—with 600,000 credits/month                                                                 |
+| **Combined ElevenLabs challenge winning team** | Three months of the Scale tier for each team member—an $897 value per person, with 1.8 million credits/month—**plus the wireless-earbuds award offered through MLH** |
 
-The winning ElevenLabs mini-challenge team also receives the shared **$200 team prize**.
-
-Use the [ElevenLabs Hacker Guide](https://docs.google.com/document/d/1mCh5MtOzBw0aJpurQVUmIVFfPMAHW3MjNemE-LNiMto/edit?usp=sharing) for the documentation and resources needed to start building.
+Use the [ElevenLabs Hacker Guide](https://docs.google.com/document/d/1mCh5MtOzBw0aJpurQVUmIVFfPMAHW3MjNemE-LNiMto/edit?usp=sharing) and [ElevenLabs documentation](https://mlh.link/elevenlabs?utm_content=Best+Use+of+ElevenLabs&utm_medium=referral&utm_source=mlh) to start building. The [official MLH prize page](https://www.mlh.com/events/hack-the-hill-30/prizes) contains the current MLH prize listing and fulfillment information.
 
 ### Claiming the Free Creator Tier
 
@@ -224,7 +362,7 @@ Use the [ElevenLabs Hacker Guide](https://docs.google.com/document/d/1mCh5MtOzBw
 
 See the [redemption video tutorial](https://youtu.be/S143_JtCtV8) for a walkthrough.
 
-This Hack the Hill mini-challenge is separate from MLH's **Best Use of ElevenLabs** prize category. Teams may enter both if they meet both sets of requirements.
+There is no separate MLH ElevenLabs winner: the team selected for this combined challenge wins both ElevenLabs awards.
 
 ## Best FOSS Project
 
@@ -248,22 +386,25 @@ Build something that empowers education for the better. Your project could:
 - explore a new way of learning; or
 - serve an overlooked or underserved niche in a way no one has tried before.
 
-## MLH Prize Categories
+## Other MLH Prize Categories
 
 MLH also offers separate sponsor prize categories. Teams may enter as many as their project qualifies for, without changing their selected main track or building a separate project.
 
-The current MLH categories are:
+| MLH category                               | Prize listed by MLH              | What the project should demonstrate                                                                                                                                       |
+| ------------------------------------------ | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Best Use of Gemini API**                 | MLH Swag Kits                    | Meaningful use of Gemini to add AI capabilities such as language interaction, analysis, summarization, or content generation                                              |
+| **Best Use of Solana**                     | Ledger Nano S Plus               | Meaningful use of Solana in an application such as a game, social or consumer product, decentralized-finance tool, supply-chain system, identity product, or payment tool |
+| **Best Use of Tiger Data**                 | Stream Deck Mini                 | An innovative and effective use of Tiger Data for PostgreSQL-backed real-time data, time-series workloads, metrics, analytics, or high-performance dashboards             |
+| **Best Use of Presage**                    | Fitbit Inspire and Presage perks | Use of a Presage SDK to incorporate capabilities such as contactless vital signs, movement, emotion, engagement, or focus tracking                                        |
+| **Best Use of Vultr**                      | Portable Screens                 | Meaningful use of Vultr infrastructure, cloud compute, or cloud GPUs to run or support the project                                                                        |
+| **Best Use of Auth0**                      | Wireless Headphones              | Meaningful use of an Auth0 API for authentication or security capabilities such as social sign-in, multi-factor authentication, passwordless login, or AI-agent security  |
+| **Best Domain Name from GoDaddy Registry** | Digital Gift Card                | Effective use of a domain registered through GoDaddy Registry                                                                                                             |
 
-- **Best Use of ElevenLabs**
-- **Best Use of Gemini API**
-- **Best Use of Solana**
-- **Best Use of Tiger Data**
-- **Best Use of Presage**
-- **Best Use of Vultr**
-- **Best Use of Auth0**
-- **Best Domain Name from GoDaddy Registry**
+The Presage award also includes free refills of Presage development credits for three months and 30% off Presage usage charges during the first year after going live.
 
-See the [official MLH prize page](https://www.mlh.com/events/hack-the-hill-30/prizes) for each category's required technology, eligibility requirements, and current prize details.
+The MLH ElevenLabs category is combined with **Best Project Built with ElevenLabs** above and is not judged as a separate category.
+
+These summaries reflect the prizes currently published by MLH. See the [official MLH prize page](https://www.mlh.com/events/hack-the-hill-30/prizes) for sponsor links, claim codes, complete requirements, and any updates.
 
 # Judging Format
 
@@ -296,11 +437,7 @@ General and Civic Technology projects receive **40 core points plus up to 5 bonu
 
 ## Technical Execution
 
-Judges should focus on **working implementation**, not repository aesthetics.
-
-A technically strong project should do what the team claims it does and demonstrate meaningful technical work. Judges may ask how important parts of the system work or why particular approaches were chosen.
-
-Code cleanliness, naming conventions, comment density, repository organization, test coverage, or whether code appears AI-generated are not independent judging criteria.
+Technical Execution rewards **working functionality**, meaningful technical work, sound decisions, and the team's understanding of what it built. Teams should be ready to explain how important parts of the project work and why they chose their approach.
 
 ## Idea & Impact
 
@@ -320,8 +457,6 @@ Teams should be able to explain important challenges, trade-offs, and lessons fr
 
 Using familiar technologies does not prevent a strong score, and using unfamiliar technologies does not automatically earn one. Judges should look for genuine learning and problem-solving.
 
-AI-assisted development is fully compatible with a high score.
-
 ## Judging Principles
 
 **Depth matters more than breadth.** A team does not earn additional points merely for adding more screens, dashboards, integrations, or features.
@@ -330,24 +465,12 @@ AI-assisted development is fully compatible with a high score.
 
 **Technical understanding matters.** Judges may ask reasonable questions about architecture, data flow, technical choices, limitations, or challenges encountered.
 
-**This is not a code review.** Judges should not spend the judging period inspecting source-code style or trying to determine whether code was written manually or generated with AI.
-
 **This is not only a pitch competition.** A strong presentation helps communicate a good project but cannot substitute for implementation.
+
+**Integrity matters.** Intentional cheating or misrepresentation—including presenting substantial pre-existing or third-party project work as work completed by the team during the hackathon—may result in disqualification.
 
 ## Judge Scoring Guidance
 
 Judges should use the full scoring range and evaluate projects as **36-hour hackathon projects**, not as production software.
 
 A low score indicates that the criterion is substantially missing or poorly demonstrated. A middle score indicates competent execution. A high score should represent work that clearly stands out from the other projects judged.
-
-Different project types should be evaluated according to their purpose. A game should not be expected to solve a public-policy problem, a backend tool should not require an elaborate visual interface, and a hardware project should not be judged as though it were a web application.
-
-# Rule Violations and Disqualification
-
-Judges should report suspected rule violations to organizers rather than independently disqualifying teams.
-
-Organizers may take reasonable action for violations of the Competition Rules, Participant & Event Policy, MLH Code of Conduct, or applicable venue requirements. Depending on the circumstances, this may range from guidance or a warning to removal or disqualification.
-
-Disqualification is not automatic for every mistake unless a rule expressly says otherwise. Organizers may consider seriousness, intent, competitive impact, safety, and whether the issue can reasonably be corrected.
-
-Intentional cheating or misrepresentation—including presenting substantial pre-existing or third-party project work as work completed by the team during the hackathon—may result in disqualification.
