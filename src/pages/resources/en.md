@@ -50,8 +50,6 @@ Substantive work on a competition project must take place during the official ha
 
 Before 10:00 PM Friday, teams may research, brainstorm, plan, discuss architecture, or develop ideas. They may also revisit an idea they have explored previously. However, teams may not enter a substantially pre-built project or reuse substantial project-specific implementation created before the hackathon.
 
-Teams may use normal development resources, including libraries, frameworks, APIs, SDKs, open-source software, templates, public datasets, pretrained models, development tools, code generators, and other generally available resources. Applicable licences and attribution requirements still apply.
-
 ### AI-Assisted Development
 
 **AI-assisted development is allowed.**
@@ -70,9 +68,9 @@ Where there is a genuine question about compliance, organizers may request reaso
 
 ## Hardware
 
-Teams may use their own hardware as well as equipment provided by Hack the Hill or MLH, subject to venue and safety requirements.
+Teams may use their own hardware as well as equipment provided by Hack the Hill or MLH.
 
-Borrowed hardware must be signed out, used according to the Hardware Rules, and returned when required.
+Borrowed hardware must be signed out and returned when required.
 
 # Submission Rules
 
@@ -216,25 +214,6 @@ Submit one page containing numbers that a finance director could evaluate:
 
 Estimated figures are acceptable because Northwind is fictional, and `northwind_unit_costs.csv` provides a starting point. Undeclared estimates are not. Show the working: a defensible estimate with visible assumptions is stronger than an unsupported confident number.
 
-## CGI Timeline
-
-Deadlines are firm; the suggested working pace is guidance. The official competition schedule above remains authoritative.
-
-| Time                               | CGI milestone and suggested focus                                                                                                                              |
-| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Friday, 7:00 PM**                | Opening ceremony and challenge release. Form the team, read the data, and understand the client. Do not begin project work before the official hacking period. |
-| **Friday, 9:00 PM**                | Team-formation milestone. Discuss the evidence and agree on an initial hypothesis.                                                                             |
-| **Friday, 10:00 PM**               | Official hacking period begins. Diagnose the problem and write the hypothesis in one sentence.                                                                 |
-| **Saturday morning**               | Test the hypothesis against the data. Discard it if the evidence does not support it, then scope the build.                                                    |
-| **Saturday afternoon and evening** | Build the solution and register the team on Devpost if needed.                                                                                                 |
-| **Sunday, 12:00 AM**               | Devpost team registration and draft submission deadline—midnight Saturday night.                                                                               |
-| **Sunday morning**                 | Finish the build, prepare the value case, and rehearse the timed pitch out loud at least twice.                                                                |
-| **Sunday, 10:00 AM sharp**         | Final Devpost submissions close. The general Submission Rules regarding technical or event-wide submission failures apply.                                    |
-| **Sunday, 10:30 AM–5:00 PM**       | Pitches and judging. Exact times and rooms will be posted on Discord.                                                                                          |
-| **Sunday, 5:00 PM**                | Closing Ceremony in C140 and winner announcements.                                                                                                             |
-
-Teams often spend the entire weekend building and leave too little time to rehearse. Treat the five-minute client pitch as a performance.
-
 ## CGI Rules and Submission Checklist
 
 1. Every team member must speak for at least 30 seconds during the pitch.
@@ -341,15 +320,13 @@ The following Hack the Hill mini-challenges each select one winning team and awa
 
 Each $200 Hack the Hill mini-challenge prize is divided equally among the eligible members of the winning team. A team may win more than one mini-challenge and may win a mini-challenge in addition to its selected main track.
 
-The combined ElevenLabs challenge and the MLH prize categories have their own sponsor-provided awards described below. They do **not** include the $200 Hack the Hill mini-challenge prize.
-
 Teams must select every mini-challenge they want to enter on their final Devpost submission.
 
 Mini-challenges are judged as part of the team's normal main-track judging session. Teams do not receive a separate presentation or demo for mini-challenges. Judges will consider each mini-challenge selected on the team's final Devpost submission while evaluating the same project demonstration.
 
 Mini-challenge assessments from the different judging panels will be compared after judging to determine the winner of each category.
 
-## Best Project Built with ElevenLabs — Combined Challenge
+## Best Project Built with ElevenLabs
 
 Hack the Hill's **Best Project Built with ElevenLabs** and MLH's **Best Use of ElevenLabs** are one combined challenge with one winning team. The winner receives both components of the combined award: the ElevenLabs Scale benefit provided through Hack the Hill and ElevenLabs, and the wireless-earbuds prize provided through MLH.
 
@@ -423,8 +400,6 @@ MLH also offers separate sponsor prize categories. Teams may enter as many as th
 | **Best Domain Name from GoDaddy Registry** | Digital Gift Card                | Effective use of a domain registered through GoDaddy Registry                                                                                                             |
 
 The Presage award also includes free refills of Presage development credits for three months and 30% off Presage usage charges during the first year after going live.
-
-The MLH ElevenLabs category is combined with **Best Project Built with ElevenLabs** above and is not judged as a separate category.
 
 These summaries reflect the prizes currently published by MLH. See the [official MLH prize page](https://www.mlh.com/events/hack-the-hill-30/prizes) for sponsor links, claim codes, complete requirements, and any updates.
 
