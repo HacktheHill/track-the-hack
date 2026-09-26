@@ -2,7 +2,7 @@ import type { GetServerSideProps } from "next";
 import { getServerSession } from "next-auth";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useTranslation } from "next-i18next";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useMemo } from "react";
 import App from "@/components/App";
 import QRScanner from "@/components/QRScanner";
 import { trpc, type RouterOutputs } from "@/server/api/api";
@@ -47,8 +47,12 @@ export default function HardwareDesk() {
 		onError: async () => utils.hardware.organizerCatalogue.invalidate(),
 	});
 	const scan = useCallback((value: string) => setHackerId(value.trim()), []);
-	const selected = inventory.data?.filter(item => cart[item.id]) ?? [];
-	const visible = inventory.data?.filter(item => item.name.toLowerCase().includes(search.toLowerCase())) ?? [];
+	const selected = useMemo(() => {
+		return inventory.data?.filter(item => cart[item.id]) ?? [];
+	}, [inventory.data, cart]);
+	const visible = useMemo(() => {
+		return inventory.data?.filter(item => item.name.toLowerCase().includes(search.toLowerCase())) ?? [];
+	}, [inventory.data, search]);
 	return (
 		<App title={t("organiser-title")} className="overflow-y-auto bg-default-gradient">
 			<div className="mx-auto max-w-6xl space-y-8 p-4 py-8">

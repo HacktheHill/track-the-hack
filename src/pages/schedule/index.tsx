@@ -110,7 +110,9 @@ const Schedule: NextPage = () => {
 			)
 			.sort((a, b) => a.start.getTime() - b.start.getTime() || a.end.getTime() - b.end.getTime());
 	}, [query.data, saved.data, view, now, todayKey]);
-	const displayed = visible.filter(event => tab === EventType.ALL || event.type === tab);
+	const displayed = useMemo(() => {
+		return visible.filter(event => tab === EventType.ALL || event.type === tab);
+	}, [visible, tab]);
 	const days = useMemo(() => {
 		const keys = [...new Set(displayed.flatMap(event => scheduleDayKeys(event.start, event.end)))]
 			.filter(key => view === "mine" || key >= todayKey)
@@ -124,8 +126,12 @@ const Schedule: NextPage = () => {
 			),
 		}));
 	}, [displayed, view, todayKey]);
-	const active = displayed.filter(event => event.start.getTime() <= now && event.end.getTime() > now);
-	const next = displayed.find(event => event.start.getTime() > now);
+	const active = useMemo(() => {
+		return displayed.filter(event => event.start.getTime() <= now && event.end.getTime() > now);
+	}, [displayed, now]);
+	const next = useMemo(() => {
+		return displayed.find(event => event.start.getTime() > now);
+	}, [displayed, now]);
 	const jumpToNow = () => {
 		const current = active.find(event => scheduleDayKey(event.start) === todayKey) ?? active[0];
 		if (current) {
