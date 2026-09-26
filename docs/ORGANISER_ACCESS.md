@@ -9,7 +9,9 @@ can also manage external organiser addresses at `/internal/access`.
   an organiser. Role and shared CTN mailboxes such as `logistics@ctn-rtc.org` are denied.
 - A named CTN organiser with `User.isAdmin = true` is an administrator.
 - An external address must be in `OrganizerAccess` and uses a single-use email link
-  that expires after 15 minutes.
+  that expires after 15 minutes. The link opens a confirmation page; only the
+  organiser's explicit **Continue signing in** action redeems the token, so automated
+  email security scanners cannot consume it during link inspection.
 - `User.disabledAt` denies access, including for an existing browser session.
 - Protected procedures reload current database access. Session claims are display
   hints, not mutation authority.
