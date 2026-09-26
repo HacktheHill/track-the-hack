@@ -238,7 +238,7 @@ export default function ScheduleEventDetails({ id, onClose }: Props) {
 				<p className="font-rubik text-dark-color" role="status">
 					{t("common:offline-schedule-unavailable")}
 				</p>
-			) : query.isError || (query.isSuccess && !event) ? (
+			) : !event && (query.isError || query.isSuccess) ? (
 				<Error message={t("common:temporarily-unavailable")} />
 			) : !event ? (
 				<Loading />

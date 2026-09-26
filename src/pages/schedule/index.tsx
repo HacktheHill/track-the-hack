@@ -152,7 +152,8 @@ const Schedule: NextPage = () => {
 		</div>
 	);
 
-	if (query.isError) {
+	// A background refresh can fail while the last successful schedule is usable.
+	if (query.isError && query.data == null) {
 		return (
 			<App className="h-full bg-default-gradient px-16 py-12" title={t("title")}>
 				<h1 className="sr-only">{t("title")}</h1>

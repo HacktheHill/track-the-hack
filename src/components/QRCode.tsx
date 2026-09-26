@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { useTranslation } from "next-i18next";
 import qrcode from "qrcode";
 import { useEffect, useState } from "react";
 
@@ -11,13 +12,20 @@ type QRCodeProps = {
 // nothing here to refresh or re-fetch. It renders once and keeps working with
 // no connection, which is the point.
 const QRCode = ({ value, label }: QRCodeProps) => {
+	return <QRCodeContent key={value} value={value} label={label} />;
+};
+
+const QRCodeContent = ({ value, label }: QRCodeProps) => {
+	const { t } = useTranslation("common");
 	const [dataUrl, setDataUrl] = useState<string | null>(null);
 	const [failed, setFailed] = useState(false);
+	const [attempt, setAttempt] = useState(0);
 
 	useEffect(() => {
 		let active = true;
-		qrcode
-			.toDataURL(value, { errorCorrectionLevel: "M", margin: 2, width: 320 })
+		setFailed(false);
+		Promise.resolve()
+			.then(() => qrcode.toDataURL(value, { errorCorrectionLevel: "M", margin: 2, width: 320 }))
 			.then(result => {
 				if (active) setDataUrl(result);
 			})
@@ -28,9 +36,19 @@ const QRCode = ({ value, label }: QRCodeProps) => {
 		return () => {
 			active = false;
 		};
-	}, [value]);
+	}, [value, attempt]);
 
-	if (failed) return null;
+	if (failed)
+		return (
+			<div className="flex flex-col items-center gap-4">
+				<p role="alert" className="text-center font-rubik text-dark-color">
+					{t("qr-generation-failed")}
+				</p>
+				<button type="button" className="ui-button" onClick={() => setAttempt(previous => previous + 1)}>
+					{t("retry")}
+				</button>
+			</div>
+		);
 	if (!dataUrl)
 		return <div className="aspect-square w-[280px] animate-pulse rounded-3xl bg-light-primary-color/40" />;
 

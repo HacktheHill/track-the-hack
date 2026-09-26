@@ -78,11 +78,74 @@ export const useHasParticipantPass = () => {
 export const useOfflineParticipantPass = () => {
 	const [participantId, setParticipantId] = useState<string | null>(null);
 	const [loaded, setLoaded] = useState(false);
+	const [recovering, setRecovering] = useState(false);
+	const [recoveryError, setRecoveryError] = useState<"session" | "unavailable" | null>(null);
+	const [attempt, setAttempt] = useState(0);
 
 	useEffect(() => {
-		setParticipantId(readOfflineParticipantPass());
+		const savedId = readOfflineParticipantPass();
+		setParticipantId(savedId);
 		setLoaded(true);
-	}, []);
+		setRecovering(false);
+		setRecoveryError(null);
+		if (savedId) return;
 
-	return { loaded, participantId };
+		let active = true;
+		const controller = new AbortController();
+		const timeout = setTimeout(() => controller.abort(), 10_000);
+		const retryOnReconnect = () => setAttempt(previous => previous + 1);
+		window.addEventListener("online", retryOnReconnect);
+		setRecovering(true);
+		setRecoveryError(null);
+
+		void (async () => {
+			try {
+				const response = await fetch("/api/participant/pass", {
+					credentials: "same-origin",
+					cache: "no-store",
+					signal: controller.signal,
+				});
+				if (!active) return;
+				if (response.status === 401) {
+					setRecoveryError("session");
+					return;
+				}
+				if (!response.ok) throw new Error("Pass recovery failed");
+				const data: unknown = await response.json();
+				if (
+					!data ||
+					typeof data !== "object" ||
+					!("participantId" in data) ||
+					typeof data.participantId !== "string" ||
+					!isParticipantId(data.participantId)
+				)
+					throw new Error("Invalid pass response");
+				if (!active) return;
+				// Display the recovered QR even when the browser cannot persist it.
+				setParticipantId(data.participantId);
+				storeOfflineParticipantPass(data.participantId);
+				window.removeEventListener("online", retryOnReconnect);
+			} catch {
+				if (active) setRecoveryError("unavailable");
+			} finally {
+				clearTimeout(timeout);
+				if (active) setRecovering(false);
+			}
+		})();
+
+		return () => {
+			active = false;
+			clearTimeout(timeout);
+			controller.abort();
+			window.removeEventListener("online", retryOnReconnect);
+		};
+	}, [attempt]);
+
+	return {
+		loaded,
+		participantId,
+		recovering,
+		recoveryError,
+		retryRecovery: () => setAttempt(previous => previous + 1),
+	};
 };

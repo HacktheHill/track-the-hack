@@ -297,7 +297,7 @@ try {
 			event: eventName,
 			floor: /^Floor /,
 			offlineHeading: "You're offline",
-			passHeading: "Your offline event pass",
+			passHeading: "Your event pass",
 			qrAlt: "Your event QR code",
 		},
 		{
@@ -305,7 +305,7 @@ try {
 			event: eventNameFr,
 			floor: /^Niveau /,
 			offlineHeading: "Vous êtes hors ligne",
-			passHeading: "Votre laissez-passer hors ligne",
+			passHeading: "Votre laissez-passer",
 			qrAlt: "Votre code QR pour l’événement",
 		},
 	] as const) {

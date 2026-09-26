@@ -1,10 +1,10 @@
 {
 	"title": "Votre laissez-passer",
-	"offline-title": "Votre laissez-passer hors ligne",
 	"qr-alt": "Votre code QR pour l’événement",
 	"qr-explanation": "Présentez-le à un organisateur pour l’enregistrement, les repas, les articles promotionnels et les ateliers. Il fonctionne sans connexion.",
-	"offline-explanation": "Ce laissez-passer reste sur cet appareil et fonctionne hors ligne aux postes de lecture. Reconnectez-vous pour utiliser les fonctions en ligne.",
 	"no-offline-pass": "Aucun laissez-passer n’est enregistré sur cet appareil. Ouvrez d’abord votre profil de participant en ligne.",
+	"pass-session-required": "Votre laissez-passer n’a pas pu être récupéré dans ce navigateur. Ouvrez-le dans le navigateur où vous l’avez activé ou demandez un nouveau code d’accès à un organisateur.",
+	"pass-recovery-failed": "Votre laissez-passer n’a pas pu être chargé et aucune copie n’est enregistrée. Vérifiez votre connexion et réessayez.",
 	"details": "Vos informations",
 	"confirmed": "Présence confirmée",
 	"t-shirt": "Taille de t-shirt",
