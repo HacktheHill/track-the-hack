@@ -148,7 +148,9 @@ Northwind previously ran a nine-month AI assistant pilot in 2025 and paused it. 
 
 [Download the Northwind synthetic data pack (ZIP)](/assets/resources/cgi/Northwind_Challenge_Data.zip)
 
-The archive contains six synthetic CSV files that are safe to publish, share, and commit to a repository:
+**AI data restriction:** Using AI to analyze, interpret, or process the challenge data is strongly discouraged because this challenge is designed to assess how well your team understands the dataset's underlying structure and relationships. You may still use AI tools to write, explain, or debug code that processes the CSV files locally. Your team will be evaluated on its understanding of the data and must be able to explain its analysis and conclusions.
+
+The archive contains six synthetic CSV files:
 
 | File                          |    Rows | Contents                                                                                                                                                                                                                                        |
 | ----------------------------- | ------: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
