@@ -225,15 +225,7 @@ A CGI panel evaluates the proposal as a real client would, using the following 1
 | **Pitch**                    |      15 | Was it clear, confident, on time, and supported by strong answers to the judges' questions?     |
 | **Total**                    | **100** |                                                                                                 |
 
-## Asking the Client Questions
-
-Northwind's fictional Chief Operating Officer will take questions at times announced on Discord. Asking focused questions is part of the consulting challenge, and judges will hear about the questions teams asked.
-
-The COO will answer honestly when asked directly but will not volunteer information. Use the opportunity to test assumptions and close important evidence gaps.
-
-CGI has been doing this work for fifty years. Show what the next fifty could look like.
-
-# CGI Challenge Tips
+## CGI Challenge Tips
 
 ## What Wins Points
 
