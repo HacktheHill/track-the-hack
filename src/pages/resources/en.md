@@ -106,8 +106,8 @@ You do not need consulting experience to win. Strong technical work without a cr
 
 Northwind was founded in **1976** and supplies electricity and water to **1.8 million homes and businesses across six regions**. It is regulated, under pressure, and dealing with a serious customer-complaints problem:
 
-- the complaints backlog has grown from a few hundred cases to **1,599 currently open**;
-- average resolution time has risen from **9.1 to 38.2 days**;
+- the complaints backlog has grown from a few hundred cases to **1,758 currently open**;
+- average resolution time has risen from **9.1 to 43.8 days**;
 - **77% of complaints** breach Northwind's service-level targets;
 - its regulator satisfaction score has fallen from **4.3 to 2.6 out of 5**, and the regulator has written to the board;
 - cost to serve per account is rising while first-contact resolution is falling; and
@@ -148,20 +148,25 @@ Northwind previously ran a nine-month AI assistant pilot in 2025 and paused it. 
 
 [Download the Northwind synthetic data pack (ZIP)](/assets/resources/cgi/Northwind_Challenge_Data.zip)
 
+[Download the Northwind challenge brief (Word)](/assets/resources/cgi/Northwind_Challenge_Brief.docx)
+
+The downloadable brief provides the challenge background. Where it differs from this competition guide, follow this guide's event rules, AI guidance, submission deadlines, and judging format.
+
 **AI data restriction:** Using AI to analyze, interpret, or process the challenge data is strongly discouraged because this challenge is designed to assess how well your team understands the dataset's underlying structure and relationships. You may still use AI tools to write, explain, or debug code that processes the CSV files locally. Your team will be evaluated on its understanding of the data and must be able to explain its analysis and conclusions.
 
-The archive contains six synthetic CSV files:
+The data archive contains seven synthetic CSV files:
 
 | File                          |    Rows | Contents                                                                                                                                                                                                                                        |
 | ----------------------------- | ------: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `northwind_complaints.csv`    | ~25,400 | Two years of individual complaints: dates, channel, category, priority, region, originating system, transfers, SLA target, days to close, breach and reopening flags, resolution action, information-only resolution, and bill-correction value |
+| `northwind_complaints.csv`    | ~25,500 | Two years of individual complaints: dates, channel, category, priority, region, originating system, transfers, SLA target, days to close, breach and reopening flags, resolution action, information-only resolution, and bill-correction value |
 | `northwind_systems.csv`       |      15 | The full application estate: age, vendor, technology, integration method, annual run cost, owning function, and notes                                                                                                                           |
 | `northwind_monthly_kpis.csv`  |      24 | Monthly complaint volumes, average resolution time, first-contact resolution, call volume, cost to serve, and regulator score                                                                                                                   |
 | `northwind_meter_reads.csv`   |     144 | Accounts, estimated-read rate, smart-meter penetration, billing exceptions, and serving systems by region and month                                                                                                                             |
 | `northwind_ai_pilot_2025.csv` |       9 | The AskNorthwind pilot's sessions, containment, escalation, abandonment, repeat contact, and satisfaction results                                                                                                                               |
-| `northwind_unit_costs.csv`    |      10 | Starting-point costs for calls, complaints, bill corrections, field visits, smart meters, agent staffing, and regulator penalties                                                                                                               |
+| `northwind_contact_centre_staffing.csv` | 144 | Agent headcount, open vacancies, attrition rate, complaints opened per agent, and operations notes by region and month |
+| `northwind_unit_costs.csv`    |      11 | Starting-point costs for calls, complaints, bill corrections, field visits, smart meters, agent staffing, recruitment, and regulator penalties                                                                                                               |
 
-Read all six files. The challenge's central insight is not visible in one file alone; it requires connecting two files that may not appear related.
+Read all seven files. The challenge's central insight is not visible in one file alone; it requires connecting files that may not appear related, and at least one thing in the pack looks more important than it is.
 
 Use only synthetic data. Do not use real customer data from any source.
 
