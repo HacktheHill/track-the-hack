@@ -75,6 +75,15 @@ const Links = ({ bottom }: LinkProps) => {
 					/>
 				</Access>
 			)}
+			<Access silent>
+				<LinkItem
+					href="/internal"
+					bottom={bottom}
+					text={t("organiser-tools")}
+					src="/assets/internal.svg"
+					alt={t("organiser-tools")}
+				/>
+			</Access>
 		</>
 	);
 };
