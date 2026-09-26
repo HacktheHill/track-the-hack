@@ -84,17 +84,50 @@ The final Devpost project must include all competing team members, the team's se
 
 Late submissions will not normally be accepted. Organizers may make reasonable accommodations for an event-wide technical failure, Devpost outage, or another circumstance clearly outside the team's control.
 
-# Main Tracks and Prizes
+# Prize Overview
 
-Hack the Hill III has three main tracks. **Each team may compete in only one.**
-
-| Main track                           |  1st |  2nd |  3rd |
-| ------------------------------------ | ---: | ---: | ---: |
-| **CGI — The Northwind Brief**        | $500 | $300 | $200 |
-| **Civic Technology**                 | $500 | $300 | $200 |
-| **General Challenge — Best Overall** | $500 | $300 | $200 |
+Each team may compete in **one main track** and enter **any number of mini-challenges or MLH prize categories** for which its project qualifies. Detailed eligibility and judging requirements appear in the challenge sections below.
 
 Only eligible, registered, checked-in competitors listed on the winning team's final Devpost submission may receive Hack the Hill competition prizes.
+
+## Main-Track Awards
+
+| Main track                           |  1st |  2nd |  3rd | Additional first-place award                                                                                         |
+| ------------------------------------ | ---: | ---: | ---: | -------------------------------------------------------------------------------------------------------------------- |
+| **CGI — The Northwind Brief**        | $500 | $300 | $200 | —                                                                                                                    |
+| **Civic Technology**                 | $500 | $300 | $200 | —                                                                                                                    |
+| **General Challenge — Best Overall** | $500 | $300 | $200 | Three months of ElevenLabs Pro per team member—$297 value per person, with 600,000 credits per month                 |
+
+## Mini-Challenge Awards
+
+| Mini-challenge                                      | Winning award                                                                                                                                      |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Best FOSS Project**                               | $200 total for the team                                                                                                                            |
+| **Best UI/UX**                                      | $200 total for the team                                                                                                                            |
+| **Best Hardware Hack**                              | $200 total for the team                                                                                                                            |
+| **MathemaTech — Education for Everyone**            | $200 total for the team                                                                                                                            |
+| **Best Project Built with ElevenLabs / Best Use of ElevenLabs** | Three months of ElevenLabs Scale per team member—$897 value per person, with 1.8 million credits per month—plus the MLH wireless-earbuds award |
+
+## Other MLH Prize Awards
+
+| MLH category                               | Winning award                                                              |
+| ------------------------------------------ | -------------------------------------------------------------------------- |
+| **Best Use of Gemini API**                 | MLH Swag Kits                                                              |
+| **Best Use of Solana**                     | Ledger Nano S Plus                                                         |
+| **Best Use of Tiger Data**                 | Stream Deck Mini                                                           |
+| **Best Use of Presage**                    | Fitbit Inspire, three months of Presage development-credit refills, and 30% off Presage usage charges during the first year after launch |
+| **Best Use of Vultr**                      | Portable Screens                                                           |
+| **Best Use of Auth0**                      | Wireless Headphones                                                        |
+| **Best Domain Name from GoDaddy Registry** | Digital Gift Card                                                          |
+
+See the [official MLH prize page](https://www.mlh.com/events/hack-the-hill-30/prizes) for sponsor links, claim codes, complete requirements, and updates.
+
+## Participant Benefits — Not Judged Prizes
+
+| Benefit                    | Who receives it  | How to claim                                                                                                                                                                         |
+| -------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **ElevenLabs Creator**     | All participants | One free month—normally $22/month—with 131,000 credits. Follow the Discord redemption instructions in the ElevenLabs challenge section below.                                        |
+| **Backboard developer credits** | All participants | Redeem **$10 in developer credits** with code **`HTH2026`** at [app.backboard.io/hackathon](https://app.backboard.io/hackathon) by **September 28, 2026**. Credits work across Backboard's Unified API, Studio, R-CLI, and Terminal Bench. |
 
 # CGI Challenge — The Northwind Brief
 
@@ -256,10 +289,6 @@ Suggested roles include someone responsible for the diagnosis, someone for the b
 
 # Civic Technology Challenge
 
-- **1st:** $500
-- **2nd:** $300
-- **3rd:** $200
-
 Build something that brings **government closer to people, or people closer to government**.
 
 Public institutions increasingly depend on digital systems that shape how people access services, understand public information, participate in decisions, establish identity, protect their privacy, and communicate with government. These may be policy questions, but they are also practical design and engineering problems.
@@ -274,19 +303,13 @@ Civic Technology projects are judged using the general Hack the Hill rubric.
 
 # General Challenge — Best Overall
 
-- **1st:** $500
-- **2nd:** $300
-- **3rd:** $200
-
 The General Challenge is open to any eligible software, hardware, data, AI, game, developer-tool, creative-technology, or other technical project.
 
 There is no required theme. The goal is to recognize the strongest overall projects developed during the weekend.
 
-**Additional ElevenLabs award:** Each member of the first-place General Challenge team receives **three months of the Pro tier**, a $297 value per person, with 600,000 credits per month.
+# Mini-Challenge Details
 
-# Mini-Challenges
-
-Mini-challenges are separate from the three main tracks. A team may enter **any number of mini-challenges** for which its project qualifies, regardless of whether its selected main track is General, CGI, or Civic Technology. Awards vary by category and are listed below.
+Mini-challenges are separate from the three main tracks. A team may enter **any number of mini-challenges** for which its project qualifies, regardless of whether its selected main track is General, CGI, or Civic Technology. Awards are summarized in the Prize Overview.
 
 Teams must select every mini-challenge they want to enter on their final Devpost submission.
 
@@ -294,34 +317,19 @@ Mini-challenges are judged as part of the team's normal main-track judging sessi
 
 Mini-challenge assessments from the different judging panels will be compared after judging to determine the winner of each category.
 
-## $200 Hack the Hill Mini-Challenges
+## Hack the Hill Mini-Challenges
 
-Each of the following selects one winning team and awards **$200 total to that team**:
-
-- Best FOSS Project;
-- Best UI/UX;
-- Best Hardware Hack; and
-- MathemaTech — Education for Everyone.
-
-Each prize is divided equally among the eligible members of the winning team. A team may win more than one mini-challenge and may win a mini-challenge in addition to its selected main track.
+Each category below selects one winning team. Hack the Hill cash prizes are divided equally among the eligible members of the winning team. A team may win more than one mini-challenge and may win a mini-challenge in addition to its selected main track.
 
 ## Sponsor-Awarded Mini-Challenge: Best Project Built with ElevenLabs
 
-Hack the Hill's **Best Project Built with ElevenLabs** and MLH's **Best Use of ElevenLabs** are one combined challenge with one winning team. The winner receives both components of the combined award: the ElevenLabs Scale benefit provided through Hack the Hill and ElevenLabs, and the wireless-earbuds prize provided through MLH.
+Hack the Hill's **Best Project Built with ElevenLabs** and MLH's **Best Use of ElevenLabs** are one combined challenge with one winning team.
 
 Build a project that makes meaningful, functional use of ElevenLabs to create natural, expressive, or dynamic audio. This could include an interactive AI companion, narrated experience, voice-enabled application, autonomous audio experience, or another project in which ElevenLabs contributes substantially to the result.
 
-### ElevenLabs Access and Awards
-
-| Recipient                                      | ElevenLabs and MLH benefit                                                                                                                                           |
-| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **All participants**                           | One free month of the Creator tier—normally $22/month—with 131,000 credits                                                                                           |
-| **First-place General Challenge team**         | Three months of the Pro tier for each team member—a $297 value per person—with 600,000 credits/month                                                                 |
-| **Combined ElevenLabs challenge winning team** | Three months of the Scale tier for each team member—an $897 value per person, with 1.8 million credits/month—**plus the wireless-earbuds award offered through MLH** |
-
 Use the [ElevenLabs Hacker Guide](https://docs.google.com/document/d/1mCh5MtOzBw0aJpurQVUmIVFfPMAHW3MjNemE-LNiMto/edit?usp=sharing) and [ElevenLabs documentation](https://mlh.link/elevenlabs?utm_content=Best+Use+of+ElevenLabs&utm_medium=referral&utm_source=mlh) to start building. The [official MLH prize page](https://www.mlh.com/events/hack-the-hill-30/prizes) contains the current MLH prize listing and fulfillment information.
 
-### Claiming the Free Creator Tier
+### Claiming the Participant Creator Benefit
 
 1. Join the [ElevenLabs Discord server](https://discord.com/invite/VnBvbbcdEC).
 2. Open the `#🎟️│coupon-codes` channel and select **Start Redemption**.
@@ -330,7 +338,9 @@ Use the [ElevenLabs Hacker Guide](https://docs.google.com/document/d/1mCh5MtOzBw
 
 See the [redemption video tutorial](https://youtu.be/S143_JtCtV8) for a walkthrough.
 
-## Best FOSS Project — $200
+If automated redemption does not work, ask an organizer; a limited number of extra codes are available.
+
+## Best FOSS Project
 
 Build the strongest project whose core implementation uses **only open-source technologies**.
 
@@ -338,7 +348,7 @@ To qualify, the technologies that provide the project's core functionality—inc
 
 Judges will consider the quality of the project, its technical execution, and how effectively the team has built the solution using an open-source technology stack.
 
-## Best UI/UX — $200
+## Best UI/UX
 
 Awarded to the project with the strongest overall user experience.
 
@@ -346,7 +356,7 @@ Judges will consider usability, interaction design, visual or physical coherence
 
 Projects without a traditional graphical interface may still qualify where they provide a meaningful user experience.
 
-## Best Hardware Hack — $200
+## Best Hardware Hack
 
 Awarded to the strongest project that **meaningfully incorporates hardware into its core functionality**.
 
@@ -354,7 +364,7 @@ Judges will consider how important the hardware is to the project, the quality o
 
 Simply connecting a peripheral to an otherwise software-only project is not enough; the hardware should be a meaningful part of the hack.
 
-## MathemaTech — Education for Everyone — $200
+## MathemaTech — Education for Everyone
 
 MathemaTech's mission is to make world-class education accessible to everyone.
 
@@ -368,19 +378,17 @@ Judges will consider educational value, accessibility and reach, creativity, and
 
 MLH also offers separate sponsor prize categories. Teams may enter as many as their project qualifies for, without changing their selected main track or building a separate project.
 
-| MLH category                               | Prize listed by MLH              | What the project should demonstrate                                                                                                                                       |
-| ------------------------------------------ | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Best Use of Gemini API**                 | MLH Swag Kits                    | Meaningful use of Gemini to add AI capabilities such as language interaction, analysis, summarization, or content generation                                              |
-| **Best Use of Solana**                     | Ledger Nano S Plus               | Meaningful use of Solana in an application such as a game, social or consumer product, decentralized-finance tool, supply-chain system, identity product, or payment tool |
-| **Best Use of Tiger Data**                 | Stream Deck Mini                 | An innovative and effective use of Tiger Data for PostgreSQL-backed real-time data, time-series workloads, metrics, analytics, or high-performance dashboards             |
-| **Best Use of Presage**                    | Fitbit Inspire and Presage perks | Use of a Presage SDK to incorporate capabilities such as contactless vital signs, movement, emotion, engagement, or focus tracking                                        |
-| **Best Use of Vultr**                      | Portable Screens                 | Meaningful use of Vultr infrastructure, cloud compute, or cloud GPUs to run or support the project                                                                        |
-| **Best Use of Auth0**                      | Wireless Headphones              | Meaningful use of an Auth0 API for authentication or security capabilities such as social sign-in, multi-factor authentication, passwordless login, or AI-agent security  |
-| **Best Domain Name from GoDaddy Registry** | Digital Gift Card                | Effective use of a domain registered through GoDaddy Registry                                                                                                             |
+| MLH category                               | What the project should demonstrate                                                                                                                                       |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Best Use of Gemini API**                 | Meaningful use of Gemini to add AI capabilities such as language interaction, analysis, summarization, or content generation                                              |
+| **Best Use of Solana**                     | Meaningful use of Solana in an application such as a game, social or consumer product, decentralized-finance tool, supply-chain system, identity product, or payment tool |
+| **Best Use of Tiger Data**                 | An innovative and effective use of Tiger Data for PostgreSQL-backed real-time data, time-series workloads, metrics, analytics, or high-performance dashboards             |
+| **Best Use of Presage**                    | Use of a Presage SDK to incorporate capabilities such as contactless vital signs, movement, emotion, engagement, or focus tracking                                        |
+| **Best Use of Vultr**                      | Meaningful use of Vultr infrastructure, cloud compute, or cloud GPUs to run or support the project                                                                        |
+| **Best Use of Auth0**                      | Meaningful use of an Auth0 API for authentication or security capabilities such as social sign-in, multi-factor authentication, passwordless login, or AI-agent security  |
+| **Best Domain Name from GoDaddy Registry** | Effective use of a domain registered through GoDaddy Registry                                                                                                             |
 
-The Presage award also includes free refills of Presage development credits for three months and 30% off Presage usage charges during the first year after going live.
-
-These summaries reflect the prizes currently published by MLH. See the [official MLH prize page](https://www.mlh.com/events/hack-the-hill-30/prizes) for sponsor links, claim codes, complete requirements, and any updates.
+See the Prize Overview for awards and the [official MLH prize page](https://www.mlh.com/events/hack-the-hill-30/prizes) for sponsor links, claim codes, complete requirements, and updates.
 
 # Judging Format
 
