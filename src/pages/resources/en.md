@@ -37,7 +37,9 @@ Participants are expected to participate in person. They may temporarily leave t
 
 Teams may receive advice, mentorship, debugging assistance, technical guidance, and feedback from people outside the team. Outside assistance must not amount to someone else substantially doing the team's project for them.
 
-A project may be entered into as many Hack the Hill and MLH prize categories as it qualifies for. A team may win more than one category unless a particular prize says otherwise.
+Each team must choose **exactly one** of the three main tracks: General, CGI, or Civic Technology. A team cannot compete in more than one main track.
+
+The same project may also be entered into **as many mini-challenges as it qualifies for**, including the MLH prize categories. Each mini-challenge has one winning team. Entering mini-challenges does not require a separate project and does not affect the team's choice of main track.
 
 ## Project Development
 
@@ -79,9 +81,9 @@ The final Devpost project must include all competing team members and all challe
 
 Late submissions will not normally be accepted. Organizers may make reasonable accommodations for an event-wide technical failure, Devpost outage, or another circumstance clearly outside the team's control.
 
-# Main Challenges and Prizes
+# Main Tracks and Prizes
 
-Hack the Hill III has three main competition categories. The advertised maximum prize assumes a four-person team.
+Hack the Hill III has three main tracks. **Each team may compete in only one.** The advertised maximum prize assumes a four-person team.
 
 | Challenge                            |  1st |  2nd |  3rd |
 | ------------------------------------ | ---: | ---: | ---: |
@@ -89,17 +91,42 @@ Hack the Hill III has three main competition categories. The advertised maximum 
 | **Civic Technology**                 | $500 | $300 | $200 |
 | **General Challenge — Best Overall** | $500 | $300 | $200 |
 
-Hack the Hill cash prizes are awarded at **$125 per eligible team member for first place, $75 for second, and $50 for third**, up to the advertised four-person maximum. Smaller teams do not receive the unused portion of the prize.
-
 Only eligible, registered, checked-in competitors listed on the winning team's final Devpost submission may receive Hack the Hill competition prizes.
 
 # CGI Challenge — The Northwind Brief
 
 The CGI Challenge places teams in the role of a consulting team advising the fictional **Northwind Utilities**.
 
-Northwind is experiencing a serious customer-complaints backlog and has initially asked for an AI-powered complaint-triage and response system. The challenge is not simply to build what the client requested. Teams are expected to analyze the provided evidence, identify the underlying problem, and propose an appropriate solution.
+Northwind supplies electricity and water to **1.8 million homes and businesses across six regions**. It is regulated, under pressure, and dealing with a serious customer-complaints problem:
 
-The official CGI challenge brief and synthetic data package on Devpost contain the detailed scenario and data. Teams should use that brief as the authoritative source for challenge-specific facts and requirements.
+- **1,599 complaints** are currently open;
+- average resolution time has risen from **9.1 to 38.2 days**;
+- **77% of complaints** breach Northwind's service-level targets;
+- its regulator satisfaction score has fallen from **4.3 to 2.6 out of 5**; and
+- agents may need to use four of Northwind's 15 systems to answer one call.
+
+Northwind has asked for an AI-powered complaint-triage and response system that can clear the backlog and raise its regulator score above 4.0 within twelve months. **Your first job is to decide whether that is the right solution.**
+
+Your answer could be AI, data analysis, a process redesign, infrastructure, an integration, a product prototype, a pricing or organizational change, or something else entirely. No approach is pre-approved. Judges will assess whether your recommendation follows from the evidence and whether your build supports it.
+
+Northwind previously ran a nine-month AI assistant pilot in 2025 and paused it. Its results are included in the data.
+
+## Challenge Data
+
+[Download the Northwind synthetic data pack (ZIP)](/assets/resources/cgi/Northwind_Challenge_Data.zip)
+
+The archive contains six synthetic CSV files that are safe to publish, share, and commit to a repository:
+
+| File                          | Contents                                                                                                   |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `northwind_complaints.csv`    | Two years of complaint records, including resolution, SLA, transfer, reopening, and bill-correction fields |
+| `northwind_systems.csv`       | Northwind's 15 systems, their age, technology, integrations, cost, owner, and notes                        |
+| `northwind_monthly_kpis.csv`  | 24 months of operational volumes, resolution, calls, cost to serve, and regulator scores                   |
+| `northwind_meter_reads.csv`   | Metering, estimated reads, smart-meter coverage, and billing exceptions by region and month                |
+| `northwind_ai_pilot_2025.csv` | Nine months of results from the paused AskNorthwind assistant pilot                                        |
+| `northwind_unit_costs.csv`    | Starting-point costs for calls, complaints, corrections, visits, smart meters, staff, and penalties        |
+
+Read all six files. A central insight requires connecting evidence across files. You may use outside benchmarks or public data, but you must cite the source.
 
 At **3:00 PM Saturday**, Northwind will provide an update that changes part of the situation. Teams should be prepared to adapt their proposal.
 
@@ -107,11 +134,15 @@ At **3:00 PM Saturday**, Northwind will provide an update that changes part of t
 
 CGI teams must submit and demonstrate:
 
-- a **working build** that supports their proposed solution;
-- a **one-page value case** explaining expected costs, benefits, payback, and assumptions;
-- a **five-minute executive-style pitch**, followed by questions.
+- a **five-minute executive-style pitch**, followed by **three minutes of questions**, covering the diagnosis, proposal, live demo, value, and delivery approach;
+- a **working build** demonstrated live—the build may be an analysis, AI or ML system, product prototype, integration, architecture, service design, or another appropriate artefact; and
+- a **one-page value case** showing build and operating costs, expected savings or benefits, payback, assumptions, and the effect of those assumptions being wrong.
 
-Every team member should participate in the CGI presentation.
+Every team member must speak for at least **30 seconds** during the pitch. Slides are optional; a working demo is not.
+
+AI development tools are allowed. Teams must be able to explain and defend everything they present, including model behaviour, accuracy, costs, and failure modes where relevant.
+
+The final Devpost submission must include a repository or folder link, the one-page value case, and any slides used. Use only synthetic data—do not use real customer data.
 
 ## CGI Judging
 
@@ -127,6 +158,10 @@ The CGI Challenge uses its own 100-point rubric:
 | **Total**              | **100** |
 
 Judges will look at whether the team identified the real problem, proposed a feasible response, built something that supports that response, made a credible value case, and communicated it effectively.
+
+Strong submissions use the data to challenge or validate the client's assumptions, scope an achievable first phase, state what the proposal does not fix, show a reliable live demo, and make their financial assumptions visible. Technology without a supported diagnosis, slides in place of a working build, unsupported benefit estimates, running over time, and leaving the presentation to one person will lose points.
+
+Northwind's fictional Chief Operating Officer will take questions at times announced on Discord. Asking focused client questions is encouraged.
 
 # Civic Technology Challenge
 
@@ -154,15 +189,60 @@ The General Challenge is open to any eligible software, hardware, data, AI, game
 
 There is no required theme. The goal is to recognize the strongest overall projects developed during the weekend.
 
-The first-place General Challenge team also receives the announced **ElevenLabs prize** for each eligible team member.
+# Mini-Challenges
 
-# MLH Prizes
+Mini-challenges are separate from the three main tracks. A team may enter **any number of mini-challenges** for which its project qualifies, regardless of whether its selected main track is General, CGI, or Civic Technology. Each mini-challenge selects **one winning team**.
 
-Teams may also enter the MLH prize categories available at Hack the Hill III. These are separate from the three main Hack the Hill challenges, and teams do not need to build a separate project.
+Teams must select every mini-challenge they want to enter on their final Devpost submission.
 
-The current Hack the Hill MLH categories include prizes for ElevenLabs, Gemini API, Solana, Tiger Data, Presage, Vultr, Auth0, and GoDaddy Registry. Teams should consult the [official MLH prize page](https://mlh.com/events/hack-the-hill-30/prizes) for the exact eligibility requirements, technologies that must be used, and current prize details.
+## Best Project Built with ElevenLabs
 
-MLH's own prize terms govern MLH prizes.
+Build a project that makes meaningful use of ElevenLabs.
+
+**Prize:** Each eligible member of the winning team receives **three months of ElevenLabs Pro**.
+
+This Hack the Hill mini-challenge is separate from MLH's **Best Use of ElevenLabs** prize category. Teams may enter both if they meet both sets of requirements.
+
+## Best FOSS Project
+
+Build the strongest project using **only open-source technology**.
+
+## Best UI/UX
+
+Awarded to the project with the strongest user interface and overall user experience.
+
+## Best Hardware Hack
+
+Awarded to the strongest project that meaningfully incorporates hardware.
+
+## MathemaTech — Education for Everyone
+
+**Prize: $200 total for the winning team**
+
+MathemaTech’s mission is to make world-class education accessible to everyone.
+
+Build something that empowers education for the better. Your project could:
+
+- remove an existing barrier to education;
+- explore a new way of learning; or
+- serve an overlooked or underserved niche in a way no one has tried before.
+
+## MLH Prize Categories
+
+The MLH categories are also mini-challenges. Teams may enter as many as their project qualifies for, without changing their selected main track or building a separate project.
+
+The current MLH categories are:
+
+- **Best Use of ElevenLabs**
+- **Best Use of Gemini API**
+- **Best Use of Solana**
+- **Best Use of Tiger Data**
+- **Best Use of Presage**
+- **Best Use of Vultr**
+- **Best Use of Auth0**
+- **Best Domain Name from GoDaddy Registry**
+
+See the [official MLH prize page](https://www.mlh.com/events/hack-the-hill-30/prizes) for each category's required technology, eligibility requirements, and current prize details.
 
 # Judging Format
 
@@ -181,7 +261,7 @@ Judges evaluate what the team actually built and demonstrated. Mockups, slides, 
 
 Projects do not need to be production-ready or fully feature-complete. A focused project that executes its core idea well may score more highly than a broader project containing many incomplete features.
 
-# General Judging Criteria
+# General Judging Criteria, Principles & Scoring Guidance
 
 General and Civic Technology projects receive **40 core points plus up to 5 bonus points for presentation**.
 
@@ -211,8 +291,6 @@ A game, creative project, technical experiment, or developer tool may have stron
 
 Judges should consider whether someone can reasonably understand and use the project's core functionality.
 
-This includes basic accessibility where relevant, but it is **not a formal accessibility or WCAG compliance audit**. Teams are building an MVP in 36 hours.
-
 Visual polish can strengthen a project but does not replace working functionality.
 
 ## Learning & Technical Decisions
@@ -223,7 +301,7 @@ Using familiar technologies does not prevent a strong score, and using unfamilia
 
 AI-assisted development is fully compatible with a high score.
 
-# Judging Principles
+## Judging Principles
 
 **Depth matters more than breadth.** A team does not earn additional points merely for adding more screens, dashboards, integrations, or features.
 
@@ -235,7 +313,7 @@ AI-assisted development is fully compatible with a high score.
 
 **This is not only a pitch competition.** A strong presentation helps communicate a good project but cannot substitute for implementation.
 
-# Judge Scoring Guidance
+## Judge Scoring Guidance
 
 Judges should use the full scoring range and evaluate projects as **36-hour hackathon projects**, not as production software.
 
