@@ -69,8 +69,7 @@ void test("review and preparation use Admission status, not the highlighted sele
 });
 
 void test("RSVP preparation releases the Sheet-wide lock during Tracker API calls", () => {
-	let sheet: ReturnType<typeof createResponseHarness>;
-	sheet = createResponseHarness({
+	const sheet = createResponseHarness({
 		applications: [applicant("accepted", "Accepted")],
 		fetch: request => {
 			assert.equal(sheet.locked(), false, "Bulk network work must not block pass activation");
