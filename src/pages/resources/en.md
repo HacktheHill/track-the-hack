@@ -189,9 +189,13 @@ The General Challenge is open to any eligible software, hardware, data, AI, game
 
 There is no required theme. The goal is to recognize the strongest overall projects developed during the weekend.
 
+**Additional ElevenLabs award:** Each member of the first-place General Challenge team receives **three months of the Pro tier**, a $297 value per person, with 600,000 credits per month.
+
 # Mini-Challenges
 
-Mini-challenges are separate from the three main tracks. A team may enter **any number of mini-challenges** for which its project qualifies, regardless of whether its selected main track is General, CGI, or Civic Technology. Each mini-challenge selects **one winning team**.
+Mini-challenges are separate from the three main tracks. A team may enter **any number of mini-challenges** for which its project qualifies, regardless of whether its selected main track is General, CGI, or Civic Technology.
+
+**Shared prize:** Each Hack the Hill mini-challenge selects one winning team and awards **$200 total to that team**. Any additional sponsor awards are noted below.
 
 Teams must select every mini-challenge they want to enter on their final Devpost submission.
 
@@ -199,7 +203,26 @@ Teams must select every mini-challenge they want to enter on their final Devpost
 
 Build a project that makes meaningful use of ElevenLabs.
 
-**Prize:** Each eligible member of the winning team receives **three months of ElevenLabs Pro**.
+### ElevenLabs Access and Awards
+
+| Recipient                                     | ElevenLabs benefit                                                                                          |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| **All participants**                          | One free month of the Creator tier—normally $22/month—with 131,000 credits                                  |
+| **First-place General Challenge team**        | Three months of the Pro tier for each team member—a $297 value per person—with 600,000 credits/month        |
+| **Best Project Built with ElevenLabs winner** | Three months of the Scale tier for each team member—an $897 value per person—with 1.8 million credits/month |
+
+The winning ElevenLabs mini-challenge team also receives the shared **$200 team prize**.
+
+Use the [ElevenLabs Hacker Guide](https://docs.google.com/document/d/1mCh5MtOzBw0aJpurQVUmIVFfPMAHW3MjNemE-LNiMto/edit?usp=sharing) for the documentation and resources needed to start building.
+
+### Claiming the Free Creator Tier
+
+1. Join the [ElevenLabs Discord server](https://discord.com/invite/VnBvbbcdEC).
+2. Open the `#🎟️│coupon-codes` channel and select **Start Redemption**.
+3. Select Hack the Hill III and enter the same email address used for event registration.
+4. The Discord bot will send a unique coupon code.
+
+See the [redemption video tutorial](https://youtu.be/S143_JtCtV8) for a walkthrough.
 
 This Hack the Hill mini-challenge is separate from MLH's **Best Use of ElevenLabs** prize category. Teams may enter both if they meet both sets of requirements.
 
@@ -217,8 +240,6 @@ Awarded to the strongest project that meaningfully incorporates hardware.
 
 ## MathemaTech — Education for Everyone
 
-**Prize: $200 total for the winning team**
-
 MathemaTech’s mission is to make world-class education accessible to everyone.
 
 Build something that empowers education for the better. Your project could:
@@ -229,7 +250,7 @@ Build something that empowers education for the better. Your project could:
 
 ## MLH Prize Categories
 
-The MLH categories are also mini-challenges. Teams may enter as many as their project qualifies for, without changing their selected main track or building a separate project.
+MLH also offers separate sponsor prize categories. Teams may enter as many as their project qualifies for, without changing their selected main track or building a separate project.
 
 The current MLH categories are:
 
