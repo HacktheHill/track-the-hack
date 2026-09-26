@@ -149,20 +149,16 @@ void test("organizer management includes hidden events and all editable scanner 
 	]);
 });
 
-void test("scanner list includes only explicitly enabled current events", async t => {
+void test("scanner list keeps every explicitly enabled event available after it ends", async t => {
 	const { caller, eventFindMany } = await setup(t, "organizer");
-	const before = Date.now();
 	await caller.scannable();
-	const after = Date.now();
 	const request = z
 		.object({
-			where: z.object({ scannerEnabled: z.boolean(), end: z.object({ gt: z.date() }) }),
+			where: z.object({ scannerEnabled: z.boolean() }).strict(),
 			select: z.record(z.boolean()),
 		})
 		.parse(eventFindMany.mock.calls[0]?.arguments[0]);
 	assert.equal(request?.where.scannerEnabled, true);
-	assert.ok(request?.where.end.gt.getTime() >= before - 30 * 60 * 1000);
-	assert.ok(request?.where.end.gt.getTime() <= after - 30 * 60 * 1000);
 	assert.deepEqual(request?.select, {
 		id: true,
 		name: true,
