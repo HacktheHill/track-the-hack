@@ -221,7 +221,6 @@ All times are Ottawa time. Deadlines are firm; the suggested working pace is gui
 | **Friday, 9:00 PM**                | Team-formation milestone. Discuss the evidence and agree on an initial hypothesis.                                                                             |
 | **Friday, 10:00 PM**               | Official hacking period begins. Diagnose the problem and write the hypothesis in one sentence.                                                                 |
 | **Saturday morning**               | Test the hypothesis against the data. Discard it if the evidence does not support it, then scope the build.                                                    |
-| **Saturday, 3:00 PM**              | A client update will be posted on Discord. It changes part of the situation, and how the team adapts is scored.                                                |
 | **Saturday afternoon and evening** | Build the solution and register the team on Devpost if needed.                                                                                                 |
 | **Sunday, 12:00 AM**               | Devpost team registration and draft submission deadline—midnight Saturday night.                                                                               |
 | **Sunday morning**                 | Finish the build, prepare the value case, and rehearse the timed pitch out loud at least twice.                                                                |
