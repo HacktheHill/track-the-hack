@@ -4,13 +4,10 @@ import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import { useRef } from "react";
 import type { Components } from "react-markdown";
 import ReactMarkdown from "react-markdown";
-
-import type { PluggableList } from "unified";
-import rehypeAutolinkHeadings from "rehype-autolink-headings";
-import rehypeSlug from "rehype-slug";
-import remarkToc from "remark-toc";
+import remarkGfm from "remark-gfm";
 
 import { sponsorsData, SponsorTier } from "@/client/sponsors";
 import App from "@/components/App";
@@ -93,7 +90,7 @@ const components = {
 	p: ({ children, node, ...props }) => {
 		void node;
 		return (
-			<p className="my-2 text-base" {...props}>
+			<p className="my-3 text-base leading-7" {...props}>
 				{children}
 			</p>
 		);
@@ -101,7 +98,7 @@ const components = {
 	a: ({ children, node, ...props }) => {
 		void node;
 		return (
-			<a className="text-highlight-color hover:underline" {...props}>
+			<a className="font-medium text-highlight-color underline decoration-2 underline-offset-2" {...props}>
 				{children}
 			</a>
 		);
@@ -109,7 +106,7 @@ const components = {
 	ul: ({ children, node, className, ...props }) => {
 		void node;
 		return (
-			<ul className={`list-disc ${className ?? ""}`} {...props}>
+			<ul className={`my-3 list-disc space-y-1 ${className ?? ""}`} {...props}>
 				{children}
 			</ul>
 		);
@@ -117,7 +114,7 @@ const components = {
 	ol: ({ children, node, className, ...props }) => {
 		void node;
 		return (
-			<ol className={`list-decimal ${className ?? ""}`} {...props}>
+			<ol className={`my-3 list-decimal space-y-2 ${className ?? ""}`} {...props}>
 				{children}
 			</ol>
 		);
@@ -125,7 +122,7 @@ const components = {
 	li: ({ children, node, className, ...props }) => {
 		void node;
 		return (
-			<li className={`ml-4 ${className ?? ""}`} {...props}>
+			<li className={`ml-5 pl-1 leading-7 ${className ?? ""}`} {...props}>
 				{children}
 			</li>
 		);
@@ -133,7 +130,10 @@ const components = {
 	blockquote: ({ children, node, ...props }) => {
 		void node;
 		return (
-			<blockquote className="border-l-4 border-dark-primary-color pl-4" {...props}>
+			<blockquote
+				className="my-5 rounded-r-xl border-l-4 border-dark-primary-color bg-white/40 px-5 py-3"
+				{...props}
+			>
 				{children}
 			</blockquote>
 		);
@@ -141,15 +141,17 @@ const components = {
 	table: ({ children, node, ...props }) => {
 		void node;
 		return (
-			<table className="table-auto border-collapse border border-gray-300" {...props}>
-				{children}
-			</table>
+			<div className="my-5 overflow-x-auto rounded-xl border border-dark-primary-color/30">
+				<table className="w-full min-w-[34rem] table-auto border-collapse text-left" {...props}>
+					{children}
+				</table>
+			</div>
 		);
 	},
 	thead: ({ children, node, ...props }) => {
 		void node;
 		return (
-			<thead className="border-collapse border border-gray-300" {...props}>
+			<thead className="bg-dark-primary-color/10" {...props}>
 				{children}
 			</thead>
 		);
@@ -157,7 +159,7 @@ const components = {
 	tbody: ({ children, node, ...props }) => {
 		void node;
 		return (
-			<tbody className="border-collapse border border-gray-300" {...props}>
+			<tbody className="divide-y divide-dark-primary-color/20" {...props}>
 				{children}
 			</tbody>
 		);
@@ -165,7 +167,7 @@ const components = {
 	tr: ({ children, node, ...props }) => {
 		void node;
 		return (
-			<tr className="border-collapse border border-gray-300" {...props}>
+			<tr className="even:bg-white/25" {...props}>
 				{children}
 			</tr>
 		);
@@ -173,7 +175,7 @@ const components = {
 	th: ({ children, node, ...props }) => {
 		void node;
 		return (
-			<th className="border-collapse border border-gray-300" {...props}>
+			<th className="border-r border-dark-primary-color/20 px-4 py-3 last:border-r-0" {...props}>
 				{children}
 			</th>
 		);
@@ -181,7 +183,7 @@ const components = {
 	td: ({ children, node, ...props }) => {
 		void node;
 		return (
-			<td className="border-collapse border border-gray-300" {...props}>
+			<td className="border-r border-dark-primary-color/20 px-4 py-3 align-top last:border-r-0" {...props}>
 				{children}
 			</td>
 		);
@@ -228,21 +230,79 @@ const components = {
 	},
 } satisfies Components;
 
-const plugins = [
-	[
-		remarkToc,
-		{
-			heading: "📖 Table of contents",
-		},
-	],
-] satisfies PluggableList;
+type GuideSection = {
+	id: string;
+	title: string;
+	content: string;
+};
+
+type ParsedGuide = {
+	title: string;
+	introduction: string;
+	sections: GuideSection[];
+};
+
+const slugify = (value: string) =>
+	value
+		.toLowerCase()
+		.normalize("NFKD")
+		.replace(/[\u0300-\u036f]/g, "")
+		.replace(/[^a-z0-9]+/g, "-")
+		.replace(/(^-|-$)/g, "");
+
+const parseGuide = (source: string): ParsedGuide => {
+	const headings = [...source.matchAll(/^# (.+)$/gm)];
+	const firstHeading = headings[0];
+
+	if (!firstHeading || firstHeading.index === undefined) {
+		return { title: "Resources", introduction: source, sections: [] };
+	}
+
+	const title = firstHeading[1]?.trim() ?? "Resources";
+	const introductionStart = firstHeading.index + firstHeading[0].length;
+	const introductionEnd = headings[1]?.index ?? source.length;
+	const introduction = source
+		.slice(introductionStart, introductionEnd)
+		.replace(/\n---\s*$/, "")
+		.trim();
+	const sections = headings.slice(1).map((heading, index) => {
+		const headingIndex = heading.index ?? 0;
+		const contentStart = headingIndex + heading[0].length;
+		const contentEnd = headings[index + 2]?.index ?? source.length;
+		const sectionTitle = heading[1]?.trim() ?? "Section";
+
+		return {
+			id: slugify(sectionTitle),
+			title: sectionTitle,
+			content: source
+				.slice(contentStart, contentEnd)
+				.replace(/\n---\s*$/, "")
+				.trim(),
+		};
+	});
+
+	return { title, introduction, sections };
+};
+
+const Markdown = ({ children }: { children: string }) => (
+	<ReactMarkdown components={components} remarkPlugins={[remarkGfm]}>
+		{children}
+	</ReactMarkdown>
+);
 
 const Resources: NextPage = () => {
 	const { t } = useTranslation("resources");
 	const { t: sponsorsT } = useTranslation("sponsors");
 	const router = useRouter();
 	const { locale } = router;
+	const guide = parseGuide(locale === "fr" ? fr : en);
+	const guideRef = useRef<HTMLDivElement>(null);
 	const sponsorsByTier = (tier: SponsorTier) => sponsorsData.filter(sponsor => sponsor.tier === tier);
+	const setAllSectionsOpen = (open: boolean) => {
+		guideRef.current?.querySelectorAll("details").forEach(section => {
+			section.open = open;
+		});
+	};
 
 	return (
 		<App
@@ -250,22 +310,50 @@ const Resources: NextPage = () => {
 			noIndex
 			title={t("title")}
 		>
-			<ReactMarkdown
-				components={components}
-				remarkPlugins={plugins}
-				rehypePlugins={[
-					rehypeSlug,
-					[
-						rehypeAutolinkHeadings,
-						{
-							behavior: "wrap",
-						},
-					],
-				]}
-				className="mx-auto w-full max-w-2xl px-4 sm:px-16"
-			>
-				{locale === "fr" ? fr : en}
-			</ReactMarkdown>
+			<article className="mx-auto w-full max-w-5xl px-4 sm:px-8">
+				<header className="mx-auto mb-8 max-w-3xl text-center">
+					<h1 className="ui-page-title mb-5">{guide.title}</h1>
+					<div className="text-lg leading-8">
+						<Markdown>{guide.introduction}</Markdown>
+					</div>
+				</header>
+
+				{guide.sections.length > 0 ? (
+					<>
+						<div className="mb-4 flex flex-wrap justify-end gap-2" aria-label="Guide section controls">
+							<button className="ui-button" type="button" onClick={() => setAllSectionsOpen(true)}>
+								{locale === "fr" ? "Tout développer" : "Expand all"}
+							</button>
+							<button className="ui-button" type="button" onClick={() => setAllSectionsOpen(false)}>
+								{locale === "fr" ? "Tout réduire" : "Collapse all"}
+							</button>
+						</div>
+						<div ref={guideRef} className="space-y-4">
+							{guide.sections.map((section, index) => (
+								<details
+									key={section.id}
+									id={section.id}
+									open={index === 0}
+									className="group scroll-mt-24 overflow-hidden rounded-2xl border border-dark-primary-color/40 bg-white/35 shadow-sm open:bg-white/50"
+								>
+									<summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-left font-coolvetica text-xl font-bold text-dark-color transition-colors marker:hidden hover:bg-white/35 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-highlight-color sm:px-6 [&::-webkit-details-marker]:hidden">
+										<span>{section.title}</span>
+										<span
+											aria-hidden="true"
+											className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-dark-primary-color text-2xl leading-none transition-transform group-open:rotate-45"
+										>
+											+
+										</span>
+									</summary>
+									<div className="border-t border-dark-primary-color/20 px-5 pb-6 pt-2 sm:px-6">
+										<Markdown>{section.content}</Markdown>
+									</div>
+								</details>
+							))}
+						</div>
+					</>
+				) : null}
+			</article>
 			<section
 				id="sponsors"
 				aria-labelledby="sponsors-title"
