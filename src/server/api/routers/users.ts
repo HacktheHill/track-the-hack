@@ -25,7 +25,11 @@ export const userRouter = createTRPCRouter({
 
 	addOrganizerAccess: adminProcedure.input(z.object({ email: emailSchema })).mutation(async ({ ctx, input }) => {
 		if (hasOrganizerEmailDomain(input.email)) {
-			throw new TRPCError({ code: "BAD_REQUEST", message: "CTN Google accounts already have organiser access" });
+			throw new TRPCError({
+				code: "BAD_REQUEST",
+				message:
+					"CTN addresses cannot be added here; organiser accounts must use firstname.lastname@ctn-rtc.org",
+			});
 		}
 
 		const { access, auditEvent } = await ctx.prisma.$transaction(

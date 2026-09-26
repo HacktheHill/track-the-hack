@@ -20,7 +20,7 @@ const organizerPrisma = {
 			Promise.resolve({
 				id: "organizer-1",
 				name: "Organizer",
-				email: "organizer@ctn-rtc.org",
+				email: "test.organizer@ctn-rtc.org",
 				isAdmin: false,
 				disabledAt: null,
 			}),

@@ -5,6 +5,7 @@ import {
 	canUseGoogleOrganizerAuth,
 	DEVELOPMENT_AUTH_PROVIDER_ID,
 	DEVELOPMENT_ORGANIZER_EMAIL,
+	isNamedCtnOrganizerEmail,
 	isDevelopmentOrganizerAuthEnabled,
 	parseGoogleOrganizerProfile,
 } from "@/server/lib/organizer-auth";
@@ -141,7 +142,16 @@ void test("development organizer auth stays disabled without both safeguards", (
 
 void test("development organizer auth uses fixed non-production identity constants", () => {
 	assert.equal(DEVELOPMENT_AUTH_PROVIDER_ID, "development");
-	assert.equal(DEVELOPMENT_ORGANIZER_EMAIL, "dev-organizer@ctn-rtc.org");
+	assert.equal(DEVELOPMENT_ORGANIZER_EMAIL, "dev.organizer@ctn-rtc.org");
+});
+
+void test("automatic CTN access requires exactly a firstname.lastname account", () => {
+	assert.equal(isNamedCtnOrganizerEmail("Daniel.Thorp@ctn-rtc.org"), true);
+	assert.equal(isNamedCtnOrganizerEmail("mary-jane.watson-parker@ctn-rtc.org"), true);
+	assert.equal(isNamedCtnOrganizerEmail("logistics@ctn-rtc.org"), false);
+	assert.equal(isNamedCtnOrganizerEmail("logistics.team.shared@ctn-rtc.org"), false);
+	assert.equal(isNamedCtnOrganizerEmail("first.last+alias@ctn-rtc.org"), false);
+	assert.equal(isNamedCtnOrganizerEmail("first.last@example.com"), false);
 });
 
 void test("Google organizer profiles accept only valid, explicitly verified fields", () => {
@@ -183,6 +193,14 @@ void test("Google organizer auth requires a verified CTN hosted-domain identity"
 	assert.equal(canUseGoogleOrganizerAuth({ ...valid, hostedDomain: "example.com" }), false);
 	assert.equal(canUseGoogleOrganizerAuth({ ...valid, profileEmail: "person@example.com" }), false);
 	assert.equal(canUseGoogleOrganizerAuth({ ...valid, userEmail: "other@ctn-rtc.org" }), false);
+	assert.equal(
+		canUseGoogleOrganizerAuth({
+			...valid,
+			profileEmail: "logistics@ctn-rtc.org",
+			userEmail: "logistics@ctn-rtc.org",
+		}),
+		false,
+	);
 });
 
 void test("development organizer sign-in accepts only the fixed user without account switching", () => {

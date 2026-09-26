@@ -3,7 +3,7 @@ import { z } from "zod";
 
 export const ORGANIZER_EMAIL_DOMAIN = "ctn-rtc.org";
 export const DEVELOPMENT_AUTH_PROVIDER_ID = "development";
-export const DEVELOPMENT_ORGANIZER_EMAIL = "dev-organizer@ctn-rtc.org";
+export const DEVELOPMENT_ORGANIZER_EMAIL = "dev.organizer@ctn-rtc.org";
 
 type DevelopmentAuthEnvironment = {
 	DEV_AUTH_ENABLED?: string;
@@ -78,6 +78,15 @@ export const hasOrganizerEmailDomain = (email: string) => {
 	return !!localPart && domain === ORGANIZER_EMAIL_DOMAIN && extra === undefined;
 };
 
+// CTN role and shared mailboxes use non-personal local parts. Automatic access
+// is limited to the Workspace naming convention for an individual organiser.
+export const isNamedCtnOrganizerEmail = (email: string) => {
+	const normalized = normalizeOrganizerEmail(email);
+	if (!hasOrganizerEmailDomain(normalized)) return false;
+	const [localPart] = normalized.split("@");
+	return /^[a-z]+(?:-[a-z]+)*\.[a-z]+(?:-[a-z]+)*$/.test(localPart ?? "");
+};
+
 export const canUseGoogleOrganizerAuth = (input: {
 	provider: string | null | undefined;
 	profileEmail: string | null | undefined;
@@ -90,7 +99,7 @@ export const canUseGoogleOrganizerAuth = (input: {
 	!!input.userEmail &&
 	input.emailVerified &&
 	input.hostedDomain === ORGANIZER_EMAIL_DOMAIN &&
-	hasOrganizerEmailDomain(input.profileEmail) &&
+	isNamedCtnOrganizerEmail(input.profileEmail) &&
 	normalizeOrganizerEmail(input.profileEmail) === normalizeOrganizerEmail(input.userEmail);
 
 export const canUseDevelopmentOrganizerAuth = (
@@ -119,7 +128,7 @@ export type OrganizerAccessContext = {
 
 export const isOrganizerEmailAllowed = async (prisma: OrganizerAllowlistPrisma, rawEmail: string) => {
 	const email = normalizeOrganizerEmail(rawEmail);
-	if (hasOrganizerEmailDomain(email)) return true;
+	if (hasOrganizerEmailDomain(email)) return isNamedCtnOrganizerEmail(email);
 	return (await prisma.organizerAccess.findUnique({ where: { email }, select: { id: true } })) !== null;
 };
 

@@ -8,10 +8,10 @@ const prisma = new PrismaClient();
 async function main() {
 	console.info("Upserting development organizer...");
 	await prisma.user.upsert({
-		where: { email: "dev-organizer@ctn-rtc.org" },
+		where: { email: "dev.organizer@ctn-rtc.org" },
 		create: {
 			name: "Dev Organizer",
-			email: "dev-organizer@ctn-rtc.org",
+			email: "dev.organizer@ctn-rtc.org",
 			emailVerified: new Date("2026-01-01T00:00:00.000Z"),
 			isAdmin: true,
 		},

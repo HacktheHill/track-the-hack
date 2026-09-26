@@ -8,7 +8,7 @@
 	"latte-lab": "Latte Lab",
 	"access": {
 		"title": "Organiser access",
-		"ctn-help": "Verified CTN Google Workspace accounts already have organiser access. Add another email here before its owner requests a sign-in link.",
+		"ctn-help": "Verified firstname.lastname@ctn-rtc.org Google Workspace accounts already have organiser access. Shared CTN mailboxes cannot sign in. Add an external email here before its owner requests a sign-in link.",
 		"email": "Email address",
 		"add": "Allow email",
 		"remove": "Remove",

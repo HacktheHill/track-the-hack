@@ -58,7 +58,7 @@ void test("organizer scans write separate presence without participant profile f
 	assert.equal(repeated.value, 1);
 });
 
-void test("disabled or removed external organizers cannot be scanned", async () => {
+void test("disabled, removed, or shared-mailbox organizers cannot be scanned", async () => {
 	const base = {
 		event: {
 			findUnique: () => ({
@@ -79,7 +79,7 @@ void test("disabled or removed external organizers cannot be scanned", async () 
 			findUnique: () => ({
 				id: "organizer-1",
 				name: "Organizer",
-				email: "organizer@ctn-rtc.org",
+				email: "test.organizer@ctn-rtc.org",
 				isAdmin: false,
 				disabledAt: new Date(),
 			}),
@@ -102,4 +102,20 @@ void test("disabled or removed external organizers cannot be scanned", async () 
 		organizerAccess: { findUnique: () => null },
 	} as unknown as PrismaClient;
 	await assert.rejects(scanOrganizerForEvent(removed, "lunch", "organizer-2"), /PARTICIPANT_NOT_FOUND/);
+
+	const sharedMailbox = {
+		...base,
+		user: {
+			findUnique: () => ({
+				id: "organizer-3",
+				name: "Logistics",
+				email: "logistics@ctn-rtc.org",
+				isAdmin: false,
+				disabledAt: null,
+			}),
+		},
+		// A stale or manually inserted allowlist row must not bypass the CTN rule.
+		organizerAccess: { findUnique: () => ({ id: "stale-access" }) },
+	} as unknown as PrismaClient;
+	await assert.rejects(scanOrganizerForEvent(sharedMailbox, "lunch", "organizer-3"), /PARTICIPANT_NOT_FOUND/);
 });
