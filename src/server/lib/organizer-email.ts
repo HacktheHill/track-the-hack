@@ -6,6 +6,11 @@ import { isOrganizerEmailAllowed, normalizeOrganizerEmail } from "@/server/lib/o
 const escapeHtml = (value: string) =>
 	value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
 
+export const failedOrganizerEmailRecipients = (result: {
+	rejected?: readonly unknown[];
+	pending?: readonly unknown[];
+}) => [...(result.rejected ?? []), ...(result.pending ?? [])].filter(Boolean);
+
 export const sendOrganizerVerificationRequest = async ({
 	identifier,
 	url,
@@ -27,6 +32,6 @@ export const sendOrganizerVerificationRequest = async ({
 			<p><a href="${escapeHtml(url)}" style="display:inline-block;padding:12px 18px;border-radius:8px;background:#e67300;color:#fff;text-decoration:none;font-weight:bold">Sign in</a></p>
 			<p>This link expires shortly and can be used only once. If you did not request it, you can ignore this email.</p>`,
 	});
-	const failed = [...result.rejected, ...result.pending].filter(Boolean);
+	const failed = failedOrganizerEmailRecipients(result);
 	if (failed.length > 0) throw new Error("Organizer sign-in email could not be sent");
 };
