@@ -8,8 +8,11 @@ Participants must follow the [**Hack the Hill Participant & Event Policy**](http
 
 # Competition Schedule
 
+**All competition times are Eastern Time (ET).**
+
 | Competition milestone                        | Time                                              |
 | -------------------------------------------- | ------------------------------------------------- |
+| Opening Ceremony & challenge release         | Friday at 7:00 PM                                 |
 | Team Formation                               | Friday, September 25 at 9:00 PM                   |
 | **Hacking begins**                           | **Friday at 10:00 PM**                            |
 | Draft Devpost submission                     | **Sunday at 12:00 AM** — midnight Saturday night  |
@@ -31,13 +34,15 @@ Organizers, volunteers, judges, sponsor representatives, and others with privile
 
 A competitor may be a member of **one competing team only**. Everyone materially contributing to the project as a competitor must be an eligible member of that team and must appear on its final Devpost submission.
 
-Participants are expected to participate in person. They may temporarily leave the venue, but leaving does not change competition deadlines or requirements.
+The team roster listed on the final Devpost submission at 10:00 AM is considered the team's final competition roster. Changes after the deadline require organizer approval.
+
+**Competitors must check in and participate in person.** Competitors may temporarily leave the venue, but leaving does not change competition deadlines or requirements.
 
 Teams may receive advice, mentorship, debugging assistance, technical guidance, and feedback from people outside the team. Outside assistance must not amount to someone else substantially doing the team's project for them.
 
 Each team must choose **exactly one** of the three main tracks: General, CGI, or Civic Technology. A team cannot compete in more than one main track.
 
-The same project may also be entered into **as many mini-challenges as it qualifies for**, including the MLH prize categories. Each mini-challenge has one winning team. Entering mini-challenges does not require a separate project and does not affect the team's choice of main track.
+The same project may also be entered into **as many Hack the Hill mini-challenges and MLH prize categories as it qualifies for**. Each Hack the Hill mini-challenge has one winning team. Entering these categories does not require a separate project and does not affect the team's choice of main track.
 
 ## Project Development
 
@@ -75,7 +80,9 @@ Teams must create a [**draft Devpost submission**](https://hack-the-hill-iii.dev
 
 The **final deadline is 10:00 AM Sunday**, which is also the end of the hacking period. Teams are responsible for allowing enough time to finish their submission.
 
-The final Devpost project must include all competing team members and all challenge or prize categories the team wants to enter. Challenge-specific deliverables must also be included where required.
+The final Devpost project must include all competing team members, the team's selected main track, and every mini-challenge or MLH prize category the team wants to enter. Teams will only be considered for categories selected by the final submission deadline. Main-track or prize-specific deliverables must also be included where required.
+
+[**Submit your project on Devpost →**](https://hack-the-hill-iii.devpost.com/)
 
 Late submissions will not normally be accepted. Organizers may make reasonable accommodations for an event-wide technical failure, Devpost outage, or another circumstance clearly outside the team's control.
 
@@ -83,7 +90,7 @@ Late submissions will not normally be accepted. Organizers may make reasonable a
 
 Hack the Hill III has three main tracks. **Each team may compete in only one.**
 
-| Challenge                            |  1st |  2nd |  3rd |
+| Main track                           |  1st |  2nd |  3rd |
 | ------------------------------------ | ---: | ---: | ---: |
 | **CGI — The Northwind Brief**        | $500 | $300 | $200 |
 | **Civic Technology**                 | $500 | $300 | $200 |
@@ -211,7 +218,7 @@ Estimated figures are acceptable because Northwind is fictional, and `northwind_
 
 ## CGI Timeline
 
-All times are Ottawa time. Deadlines are firm; the suggested working pace is guidance. The official competition schedule above remains authoritative.
+Deadlines are firm; the suggested working pace is guidance. The official competition schedule above remains authoritative.
 
 | Time                               | CGI milestone and suggested focus                                                                                                                              |
 | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -222,7 +229,7 @@ All times are Ottawa time. Deadlines are firm; the suggested working pace is gui
 | **Saturday afternoon and evening** | Build the solution and register the team on Devpost if needed.                                                                                                 |
 | **Sunday, 12:00 AM**               | Devpost team registration and draft submission deadline—midnight Saturday night.                                                                               |
 | **Sunday morning**                 | Finish the build, prepare the value case, and rehearse the timed pitch out loud at least twice.                                                                |
-| **Sunday, 10:00 AM sharp**         | Final Devpost submissions close. Late submissions are not accepted.                                                                                            |
+| **Sunday, 10:00 AM sharp**         | Final Devpost submissions close. The general Submission Rules regarding technical or event-wide submission failures apply.                                    |
 | **Sunday, 10:30 AM–5:00 PM**       | Pitches and judging. Exact times and rooms will be posted on Discord.                                                                                          |
 | **Sunday, 5:00 PM**                | Closing Ceremony in C140 and winner announcements.                                                                                                             |
 
@@ -231,7 +238,7 @@ Teams often spend the entire weekend building and leave too little time to rehea
 ## CGI Rules and Submission Checklist
 
 1. Every team member must speak for at least 30 seconds during the pitch.
-2. Project-specific work must be produced during the official hacking period. Pre-existing libraries, frameworks, public datasets, and AI tools are allowed; a pre-built solution is not.
+2. Substantive implementation work must take place during the official hacking period. Research, analysis, planning, and discussion before 10:00 PM are permitted under the general Competition Rules.
 3. Register the team on Devpost and submit a draft by 12:00 AM Sunday—midnight Saturday night.
 4. Submit the final project by 10:00 AM Sunday with a repository or folder link, the one-page value case, and any slides used.
 5. The pitch stops at five minutes and is followed by three minutes of questions.
@@ -252,7 +259,17 @@ The CGI Challenge uses its own 100-point rubric:
 | **Pitch**                    |      15 | Was it clear, confident, on time, and supported by strong answers to the judges' questions?     |
 | **Total**                    | **100** |                                                                                                 |
 
-### What Wins Points
+## Asking the Client Questions
+
+Northwind's fictional Chief Operating Officer will take questions at times announced on Discord. Asking focused questions is part of the consulting challenge, and judges will hear about the questions teams asked.
+
+The COO will answer honestly when asked directly but will not volunteer information. Use the opportunity to test assumptions and close important evidence gaps.
+
+CGI has been doing this work for fifty years. Show what the next fifty could look like.
+
+# CGI Challenge Tips
+
+## What Wins Points
 
 - a diagnosis that challenges the client's brief and proves the conclusion with Northwind's data;
 - honest scope, including what should happen in the first 90 days and what should wait;
@@ -261,7 +278,7 @@ The CGI Challenge uses its own 100-point rubric:
 - visible and defensible financial assumptions; and
 - a candid answer about the proposal's biggest risk.
 
-### What Loses Points
+## What Loses Points
 
 - accepting the client's requested solution without testing the underlying assumptions;
 - proposing technology that is not connected to the diagnosed problem;
@@ -280,14 +297,6 @@ The CGI Challenge uses its own 100-point rubric:
 6. Rehearse the complete pitch out loud and against a timer at least twice.
 
 Suggested roles include someone responsible for the diagnosis, someone for the build, someone for the numbers, and someone for the story. Team members may rotate roles, but ensure that each responsibility has an owner by Saturday lunchtime.
-
-## Asking the Client Questions
-
-Northwind's fictional Chief Operating Officer will take questions at times announced on Discord. Asking focused questions is part of the consulting challenge, and judges will hear about the questions teams asked.
-
-The COO will answer honestly when asked directly but will not volunteer information. Use the opportunity to test assumptions and close important evidence gaps.
-
-CGI has been doing this work for fifty years. Show what the next fifty could look like.
 
 # Civic Technology Challenge
 
@@ -330,13 +339,19 @@ The following Hack the Hill mini-challenges each select one winning team and awa
 - Best Hardware Hack; and
 - MathemaTech — Education for Everyone.
 
+Each $200 Hack the Hill mini-challenge prize is divided equally among the eligible members of the winning team. A team may win more than one mini-challenge and may win a mini-challenge in addition to its selected main track.
+
 The combined ElevenLabs challenge and the MLH prize categories have their own sponsor-provided awards described below. They do **not** include the $200 Hack the Hill mini-challenge prize.
 
 Teams must select every mini-challenge they want to enter on their final Devpost submission.
 
+Mini-challenges are judged as part of the team's normal main-track judging session. Teams do not receive a separate presentation or demo for mini-challenges. Judges will consider each mini-challenge selected on the team's final Devpost submission while evaluating the same project demonstration.
+
+Mini-challenge assessments from the different judging panels will be compared after judging to determine the winner of each category.
+
 ## Best Project Built with ElevenLabs — Combined Challenge
 
-Hack the Hill's **Best Project Built with ElevenLabs** and MLH's **Best Use of ElevenLabs** are one combined challenge. One winning team will receive both the Hack the Hill ElevenLabs award and the MLH ElevenLabs award described below.
+Hack the Hill's **Best Project Built with ElevenLabs** and MLH's **Best Use of ElevenLabs** are one combined challenge with one winning team. The winner receives both components of the combined award: the ElevenLabs Scale benefit provided through Hack the Hill and ElevenLabs, and the wireless-earbuds prize provided through MLH.
 
 Build a project that makes meaningful, functional use of ElevenLabs to create natural, expressive, or dynamic audio. This could include an interactive AI companion, narrated experience, voice-enabled application, autonomous audio experience, or another project in which ElevenLabs contributes substantially to the result.
 
@@ -359,29 +374,39 @@ Use the [ElevenLabs Hacker Guide](https://docs.google.com/document/d/1mCh5MtOzBw
 
 See the [redemption video tutorial](https://youtu.be/S143_JtCtV8) for a walkthrough.
 
-There is no separate MLH ElevenLabs winner: the team selected for this combined challenge wins both ElevenLabs awards.
+## Best FOSS Project — $200
 
-## Best FOSS Project
+Build the strongest project whose core implementation uses **only open-source technologies**.
 
-Build the strongest project using **only open-source technology**.
+To qualify, the technologies that provide the project's core functionality—including its principal frameworks, libraries, databases, models, and software dependencies—must be open source. A proprietary API, platform, or service that provides part of the project's core functionality makes the project ineligible for this category.
 
-## Best UI/UX
+Judges will consider the quality of the project, its technical execution, and how effectively the team has built the solution using an open-source technology stack.
 
-Awarded to the project with the strongest user interface and overall user experience.
+## Best UI/UX — $200
 
-## Best Hardware Hack
+Awarded to the project with the strongest overall user experience.
 
-Awarded to the strongest project that meaningfully incorporates hardware.
+Judges will consider usability, interaction design, visual or physical coherence, clarity, and basic accessibility. The design should make the project's core functionality easier to understand and use rather than simply adding visual polish.
 
-## MathemaTech — Education for Everyone
+Projects without a traditional graphical interface may still qualify where they provide a meaningful user experience.
 
-MathemaTech’s mission is to make world-class education accessible to everyone.
+## Best Hardware Hack — $200
 
-Build something that empowers education for the better. Your project could:
+Awarded to the strongest project that **meaningfully incorporates hardware into its core functionality**.
 
-- remove an existing barrier to education;
-- explore a new way of learning; or
-- serve an overlooked or underserved niche in a way no one has tried before.
+Judges will consider how important the hardware is to the project, the quality of the hardware/software integration, technical execution, creativity, and whether the demonstrated system works.
+
+Simply connecting a peripheral to an otherwise software-only project is not enough; the hardware should be a meaningful part of the hack.
+
+## MathemaTech — Education for Everyone — $200
+
+MathemaTech's mission is to make world-class education accessible to everyone.
+
+Build something that meaningfully improves **learning or access to education**.
+
+Projects may address barriers to education, improve how something is taught or learned, or serve learners whose needs are not adequately addressed by existing tools.
+
+Judges will consider educational value, accessibility and reach, creativity, and the quality of the implemented solution.
 
 ## Other MLH Prize Categories
 
@@ -422,7 +447,7 @@ Projects do not need to be production-ready or fully feature-complete. A focused
 
 # General Judging Criteria, Principles & Scoring Guidance
 
-General and Civic Technology projects receive **40 core points plus up to 5 bonus points for presentation**.
+**Projects are scored out of 45 points: 40 points across the four project criteria and 5 points for presentation.**
 
 | Criterion                          |       Points | What judges consider                                                                                                                                                                                       |
 | ---------------------------------- | -----------: | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -430,7 +455,7 @@ General and Civic Technology projects receive **40 core points plus up to 5 bonu
 | **Idea & Impact**                  |       **10** | Whether the idea is clear, interesting, useful, creative or compelling, and whether the implementation meaningfully delivers on that idea.                                                                 |
 | **Design & Usability**             |       **10** | Whether the project is understandable and usable, whether its interface or physical design supports its purpose, and whether basic accessibility and inclusive design have been considered where relevant. |
 | **Learning & Technical Decisions** |        **5** | What the team learned, difficult problems it encountered, and important decisions or trade-offs made during the hackathon.                                                                                 |
-| **Presentation**                   | **+5 bonus** | Clarity, use of the five-minute presentation, effectiveness of the demo, and ability to answer questions.                                                                                                  |
+| **Presentation**                   |        **5** | Clarity, use of the five-minute presentation, effectiveness of the demo, and ability to answer questions.                                                                                                  |
 
 ## Technical Execution
 
@@ -447,6 +472,10 @@ A game, creative project, technical experiment, or developer tool may have stron
 Judges should consider whether someone can reasonably understand and use the project's core functionality.
 
 Visual polish can strengthen a project but does not replace working functionality.
+
+This is not a formal accessibility or WCAG compliance audit. Judges should consider obvious accessibility and usability issues at a level appropriate for a 36-hour prototype.
+
+For projects without a traditional graphical interface, usability may instead include areas such as API or CLI design, developer experience, physical interaction, or the clarity of the intended workflow.
 
 ## Learning & Technical Decisions
 
