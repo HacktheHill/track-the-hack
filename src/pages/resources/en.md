@@ -100,12 +100,6 @@ Only eligible, registered, checked-in competitors listed on the winning team's f
 
 You are the CGI consulting team. Northwind Utilities is the client. You have the weekend to diagnose the problem, build something that works, and explain what it is worth.
 
-| Challenge format | Requirement                                                                                        |
-| ---------------- | -------------------------------------------------------------------------------------------------- |
-| **Deliver**      | A five-minute client pitch, three minutes of questions, a working build, and a one-page value case |
-| **Judged by**    | A CGI panel evaluating the proposal as a real client would                                         |
-| **Total**        | 100 points                                                                                         |
-
 You do not need consulting experience to win. Strong technical work without a credible commercial case is incomplete; the challenge rewards teams that balance both.
 
 ## The Client
@@ -167,6 +161,8 @@ The archive contains six synthetic CSV files that are safe to publish, share, an
 
 Read all six files. The challenge's central insight is not visible in one file alone; it requires connecting two files that may not appear related.
 
+Use only synthetic data. Do not use real customer data from any source.
+
 You may use outside data, including public regulatory benchmarks and industry cost figures, but cite every outside source.
 
 ## Required Deliverables
@@ -200,8 +196,6 @@ Build a real, working artefact and demonstrate it live. It does not need to be p
 | **Service or process design**   | A redesigned and clickable journey supported by a clear operating model and role changes                                                                  |
 | **Another approach**            | The smallest working artefact that proves the evidence-supported recommendation                                                                           |
 
-AI development tools are allowed. Teams must be able to explain and defend everything they present, including model behaviour, accuracy, costs, limitations, and failure modes. “The model wrote it” is not an explanation.
-
 ### 3. One-Page Value Case
 
 Submit one page containing numbers that a finance director could evaluate:
@@ -214,20 +208,11 @@ Submit one page containing numbers that a finance director could evaluate:
 
 Estimated figures are acceptable because Northwind is fictional, and `northwind_unit_costs.csv` provides a starting point. Undeclared estimates are not. Show the working: a defensible estimate with visible assumptions is stronger than an unsupported confident number.
 
-## CGI Rules and Submission Checklist
-
-1. Every team member must speak for at least 30 seconds during the pitch.
-2. Substantive implementation work must take place during the official hacking period. Research, analysis, planning, and discussion before 10:00 PM are permitted under the general Competition Rules.
-3. Register the team on Devpost and submit a draft by 12:00 AM Sunday—midnight Saturday night.
-4. Submit the final project by 10:00 AM Sunday with a repository or folder link, the one-page value case, and any slides used.
-5. The pitch stops at five minutes and is followed by three minutes of questions.
-6. Use only synthetic data. Do not use real customer data from any source.
-7. Cite anything brought in from outside the provided data pack.
-8. Be able to explain everything presented, including material produced with AI tools.
+**CGI submission:** Include a repository or folder link, the one-page value case, and any slides used in the final Devpost submission.
 
 ## CGI Judging
 
-The CGI Challenge uses its own 100-point rubric:
+A CGI panel evaluates the proposal as a real client would, using the following 100-point rubric:
 
 | Criterion                    |  Points | Question behind the score                                                                       |
 | ---------------------------- | ------: | ----------------------------------------------------------------------------------------------- |
@@ -262,9 +247,7 @@ CGI has been doing this work for fifty years. Show what the next fifty could loo
 - accepting the client's requested solution without testing the underlying assumptions;
 - proposing technology that is not connected to the diagnosed problem;
 - showing slides that describe a build instead of demonstrating one;
-- presenting benefits without the assumptions behind them;
-- running over the five-minute limit; and
-- leaving the presentation to one person while the rest of the team stands behind them.
+- presenting benefits without the assumptions behind them.
 
 ## A Workable Approach for First-Time Teams
 
