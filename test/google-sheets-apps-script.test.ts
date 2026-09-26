@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { runInNewContext } from "node:vm";
 import { z } from "zod";
@@ -115,6 +116,12 @@ const adapter = sheetAdapterSchema.parse(
 		},
 	),
 );
+
+void test("the pass sidebar opens a neutral reusable window instead of an Apps Script page", () => {
+	const sidebar = readFileSync(new URL("../integrations/google-sheets/Sidebar.html", import.meta.url), "utf8");
+	assert.match(sidebar, /window\.open\("about:blank",\s*"trackTheHackPass"/);
+	assert.doesNotMatch(sidebar, /window\.open\("",\s*"trackTheHackPass"/);
+});
 
 void test("the real Sheet adapter maps the live English headers to an allow-listed record", () => {
 	const headers = [

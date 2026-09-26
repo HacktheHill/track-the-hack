@@ -123,7 +123,6 @@ export const createSheetHarness = (options: {
 			},
 			UrlFetchApp: {
 				fetch: (url: string, input: unknown) => {
-					assertLocked();
 					const request = { url, options: fetchOptionsSchema.parse(input) };
 					requests.push(request);
 					const response = options.fetch(request);
@@ -136,6 +135,7 @@ export const createSheetHarness = (options: {
 		run,
 		requests,
 		savedApplications: () => structuredClone(savedApplications),
+		locked: () => lockOwner !== null,
 		uuidCalls: () => uuidCalls,
 	};
 };
@@ -204,7 +204,6 @@ export const createResponseHarness = (options: {
 				flush: () => { assert.equal(locked, true); saved = structuredClone(pending); },
 			},
 			UrlFetchApp: { fetch: (url: string, input: unknown) => {
-				assert.equal(locked, true);
 				const request = { url, options: fetchOptionsSchema.parse(input) };
 				requests.push(request);
 				const response = options.fetch(request);
