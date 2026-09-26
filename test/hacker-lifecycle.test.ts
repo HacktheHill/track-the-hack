@@ -423,10 +423,14 @@ void test("participant sign-out revokes server state and clears both browser coo
 	);
 
 	let revokedVerifier = "";
-	const signOut = createParticipantSignOutApiHandler(verifier => {
-		revokedVerifier = verifier;
-		return Promise.resolve();
-	}, sessionSecret, "https://track.example");
+	const signOut = createParticipantSignOutApiHandler(
+		verifier => {
+			revokedVerifier = verifier;
+			return Promise.resolve();
+		},
+		sessionSecret,
+		"https://track.example",
+	);
 	const result = responseMock();
 	await signOut(
 		requestMock({
@@ -452,10 +456,14 @@ void test("participant sign-out revokes server state and clears both browser coo
 
 void test("participant sign-out rejects cross-site requests without revoking the session", async () => {
 	let revoked = false;
-	const signOut = createParticipantSignOutApiHandler(() => {
-		revoked = true;
-		return Promise.resolve();
-	}, "s".repeat(32), "https://track.example");
+	const signOut = createParticipantSignOutApiHandler(
+		() => {
+			revoked = true;
+			return Promise.resolve();
+		},
+		"s".repeat(32),
+		"https://track.example",
+	);
 	const result = responseMock();
 	await signOut(
 		requestMock({
@@ -474,8 +482,8 @@ void test("organizer Google auth enforces provider, verification, hosted domain,
 	assert.equal(
 		canUseGoogleOrganizerAuth({
 			provider: "google",
-			profileEmail: "organizer@ctn-rtc.org",
-			userEmail: "organizer@ctn-rtc.org",
+			profileEmail: "test.organizer@ctn-rtc.org",
+			userEmail: "test.organizer@ctn-rtc.org",
 			emailVerified: true,
 			hostedDomain: "ctn-rtc.org",
 		}),
@@ -484,8 +492,8 @@ void test("organizer Google auth enforces provider, verification, hosted domain,
 	assert.equal(
 		canUseGoogleOrganizerAuth({
 			provider: "credentials",
-			profileEmail: "organizer@ctn-rtc.org",
-			userEmail: "organizer@ctn-rtc.org",
+			profileEmail: "test.organizer@ctn-rtc.org",
+			userEmail: "test.organizer@ctn-rtc.org",
 			emailVerified: true,
 			hostedDomain: "ctn-rtc.org",
 		}),
@@ -504,8 +512,8 @@ void test("organizer Google auth enforces provider, verification, hosted domain,
 	assert.equal(
 		canUseGoogleOrganizerAuth({
 			provider: "google",
-			profileEmail: "organizer@ctn-rtc.org",
-			userEmail: "organizer@ctn-rtc.org",
+			profileEmail: "test.organizer@ctn-rtc.org",
+			userEmail: "test.organizer@ctn-rtc.org",
 			emailVerified: false,
 			hostedDomain: "ctn-rtc.org",
 		}),
@@ -514,8 +522,8 @@ void test("organizer Google auth enforces provider, verification, hosted domain,
 	assert.equal(
 		canUseGoogleOrganizerAuth({
 			provider: "google",
-			profileEmail: "missing@ctn-rtc.org",
-			userEmail: "missing@ctn-rtc.org",
+			profileEmail: "second.organizer@ctn-rtc.org",
+			userEmail: "second.organizer@ctn-rtc.org",
 			emailVerified: true,
 			hostedDomain: "ctn-rtc.org",
 		}),
@@ -524,8 +532,8 @@ void test("organizer Google auth enforces provider, verification, hosted domain,
 	assert.equal(
 		canUseGoogleOrganizerAuth({
 			provider: "google",
-			profileEmail: "replacement@ctn-rtc.org",
-			userEmail: "organizer@ctn-rtc.org",
+			profileEmail: "replacement.organizer@ctn-rtc.org",
+			userEmail: "test.organizer@ctn-rtc.org",
 			emailVerified: true,
 			hostedDomain: "ctn-rtc.org",
 		}),

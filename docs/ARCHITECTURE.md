@@ -54,10 +54,12 @@ current participant choice.
 
 These credentials are deliberately not interchangeable:
 
-- A verified `@ctn-rtc.org` Google Workspace identity automatically has organiser
-  access. Other organiser email addresses must first be added to the access list and
-  then sign in through a single-use, 15-minute email link. The sign-in response does
-  not reveal whether an address is on the list. Local organiser auth is loopback-only.
+- A verified Google Workspace identity matching `firstname.lastname@ctn-rtc.org`
+  automatically has organiser access. CTN role and shared mailboxes are denied. Other
+  organiser email addresses must first be added to the access list and then sign in
+  through a single-use, 15-minute email link. CTN addresses cannot be added to that
+  list. The sign-in response does not reveal whether an address is on the list. Local
+  organiser auth is loopback-only.
 - `User.isAdmin` protects the external-email access list. It is deliberately not a
   general role hierarchy: all organisers can scan, manage events, and read metrics.
 - The bound Apps Script uses `Authorization: Bearer <SHEETS_INTEGRATION_API_KEY>` on

@@ -17,7 +17,7 @@ const session = (isAdmin: boolean): Session => ({
 const organizerUser = (isAdmin: boolean) => ({
 	id: "organizer-1",
 	name: "Organizer",
-	email: "organizer@ctn-rtc.org",
+	email: "test.organizer@ctn-rtc.org",
 	isAdmin,
 	disabledAt: null,
 });
@@ -54,7 +54,7 @@ void test("admins can add an external email to the organizer allowlist", async t
 	assert.equal(persistAudit.mock.callCount(), 1);
 });
 
-void test("CTN accounts are implicit and cannot be added to the allowlist", async () => {
+void test("CTN addresses cannot be added to the external allowlist", async () => {
 	const prisma = {
 		user: { findUnique: () => Promise.resolve(organizerUser(true)) },
 	} as unknown as PrismaClient;

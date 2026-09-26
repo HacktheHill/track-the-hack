@@ -74,8 +74,8 @@ export const getAuthOptions = (req?: NextApiRequest) =>
 			GoogleProvider({
 				clientId: env.GOOGLE_CLIENT_ID,
 				clientSecret: env.GOOGLE_CLIENT_SECRET,
-				// Linking is safe here because signIn first requires a verified CTN
-				// Workspace identity with a matching provider and account email.
+				// Linking is safe here because signIn first requires a verified,
+				// individually named CTN Workspace identity with matching emails.
 				allowDangerousEmailAccountLinking: true,
 			}),
 			EmailProvider({

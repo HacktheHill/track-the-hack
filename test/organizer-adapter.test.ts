@@ -23,7 +23,7 @@ void test("unknown magic-link addresses create no verification token", async t =
 	assert.equal(createVerificationToken.mock.callCount(), 0);
 });
 
-void test("allowed external and CTN addresses retain single-use verification tokens", async t => {
+void test("allowed external and named CTN addresses retain single-use verification tokens", async t => {
 	const createVerificationToken = t.mock.fn((value: VerificationToken) => Promise.resolve(value));
 	const prisma = {
 		organizerAccess: {
@@ -38,8 +38,21 @@ void test("allowed external and CTN addresses retain single-use verification tok
 		token("allowed@example.com"),
 	);
 	assert.deepEqual(
-		await adapter.createVerificationToken?.(token("organizer@ctn-rtc.org")),
-		token("organizer@ctn-rtc.org"),
+		await adapter.createVerificationToken?.(token("test.organizer@ctn-rtc.org")),
+		token("test.organizer@ctn-rtc.org"),
 	);
 	assert.equal(createVerificationToken.mock.callCount(), 2);
+});
+
+void test("CTN role mailboxes create no verification token", async t => {
+	const createVerificationToken = t.mock.fn((value: VerificationToken) => Promise.resolve(value));
+	const adapter = restrictOrganizerVerificationTokens(
+		{ createVerificationToken } as Adapter,
+		{
+			organizerAccess: { findUnique: () => Promise.resolve({ id: "should-not-bypass" }) },
+		} as unknown as PrismaClient,
+	);
+
+	assert.equal(await adapter.createVerificationToken?.(token("logistics@ctn-rtc.org")), null);
+	assert.equal(createVerificationToken.mock.callCount(), 0);
 });

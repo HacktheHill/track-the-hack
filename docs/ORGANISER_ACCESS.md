@@ -5,7 +5,8 @@ can also manage external organiser addresses at `/internal/access`.
 
 ## Access model
 
-- A verified Google identity in `ctn-rtc.org` may sign in as an organiser.
+- A verified Google identity matching `firstname.lastname@ctn-rtc.org` may sign in as
+  an organiser. Role and shared CTN mailboxes such as `logistics@ctn-rtc.org` are denied.
 - A named CTN organiser with `User.isAdmin = true` is an administrator.
 - An external address must be in `OrganizerAccess` and uses a single-use email link
   that expires after 15 minutes.
@@ -36,10 +37,12 @@ npm run organizer:provision -- person@ctn-rtc.org --admin
 npm run organizer:provision -- organiser@example.com
 ```
 
-The command is idempotent and verifies the stored state. `--admin` accepts only CTN
-addresses. The `/internal/access` page adds or removes external addresses; it does not
-change administrator status. Removing an address invalidates its next protected
-request and any outstanding email sign-in link.
+The command is idempotent and verifies the stored state. CTN addresses, including
+administrator accounts, must match `firstname.lastname@ctn-rtc.org`. The
+`/internal/access` page adds or removes external addresses; CTN role or shared mailboxes
+cannot bypass the naming rule through that list. It does not change administrator
+status. Removing an address invalidates its next protected request and any outstanding
+email sign-in link.
 
 SMTP sign-in requires `EMAIL_SERVER_HOST`, `EMAIL_SERVER_PORT`, `EMAIL_SERVER_USER`,
 `EMAIL_SERVER_PASSWORD`, and `EMAIL_FROM` as secret-backed runtime values.

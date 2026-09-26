@@ -64,7 +64,7 @@ const setup = async (
 				? {
 						id: "editor-1",
 						name: "Editor",
-						email: access === "organizer" ? "editor@ctn-rtc.org" : "editor@example.com",
+						email: access === "organizer" ? "event.editor@ctn-rtc.org" : "editor@example.com",
 						isAdmin: false,
 						disabledAt: null,
 					}

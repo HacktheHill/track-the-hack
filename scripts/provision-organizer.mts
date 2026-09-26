@@ -1,12 +1,15 @@
 import { PrismaClient } from "@prisma/client";
 // This standalone production-image entrypoint cannot resolve the application's TypeScript alias.
 // eslint-disable-next-line no-restricted-imports
-import { hasOrganizerEmailDomain } from "../src/server/lib/organizer-auth.ts";
+import { hasOrganizerEmailDomain, isNamedCtnOrganizerEmail } from "../src/server/lib/organizer-auth.ts";
 // eslint-disable-next-line no-restricted-imports
 import { parseOrganizerProvisionInput } from "../src/server/lib/organizer-provision.ts";
 
 const prisma = new PrismaClient();
 const { email, admin } = parseOrganizerProvisionInput(process.argv.slice(2), process.env);
+if (hasOrganizerEmailDomain(email) && !isNamedCtnOrganizerEmail(email)) {
+	throw new Error("CTN organiser accounts must use firstname.lastname@ctn-rtc.org");
+}
 if (admin && !hasOrganizerEmailDomain(email)) {
 	throw new Error("Administrators must use a CTN email address");
 }
