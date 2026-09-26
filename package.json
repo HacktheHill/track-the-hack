@@ -66,6 +66,7 @@
 		"recharts": "^2.12.7",
 		"rehype-autolink-headings": "^7.1.0",
 		"rehype-slug": "^6.0.0",
+		"remark-gfm": "^4.0.1",
 		"remark-toc": "^9.0.0",
 		"superjson": "2.2.1",
 		"unified": "^11.0.5",
