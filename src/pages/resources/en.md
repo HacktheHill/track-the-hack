@@ -171,7 +171,7 @@ All three deliverables are scored.
 
 ### 1. Client Pitch
 
-Pitch to the judges as though they are Northwind's executive committee. They are busy, sceptical, and have already heard three other firms. You have **five minutes**, followed by **three minutes of questions**. Five minutes is a hard limit.
+Pitch to the judges as though they are Northwind's executive committee. They are busy, sceptical, and have already heard three other firms.
 
 Cover, in whatever order works best:
 
@@ -181,11 +181,11 @@ Cover, in whatever order works best:
 - the value—cost, benefit, payback, and assumptions; and
 - the delivery approach—phases, team, risks, and what could go wrong.
 
-Every team member must speak for at least **30 seconds**. Slides are optional; a live demo is required.
+Every team member must speak for at least **30 seconds**. Slides are optional.
 
 ### 2. Working Build
 
-Build a real, working artefact and demonstrate it live. It does not need to be production-grade, but it must run. Choose or combine whichever approaches fit the evidence:
+Build a real, working artefact. Choose or combine whichever approaches fit the evidence:
 
 | Approach                        | What a strong build could demonstrate                                                                                                                     |
 | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -206,9 +206,9 @@ Submit one page containing numbers that a finance director could evaluate:
 - every material assumption; and
 - what happens if those assumptions are wrong.
 
-Estimated figures are acceptable because Northwind is fictional, and `northwind_unit_costs.csv` provides a starting point. Undeclared estimates are not. Show the working: a defensible estimate with visible assumptions is stronger than an unsupported confident number.
+Estimated figures are acceptable because Northwind is fictional, and `northwind_unit_costs.csv` provides a starting point. Undeclared estimates are not. A defensible estimate with visible assumptions is stronger than an unsupported confident number.
 
-**CGI submission:** Include a repository or folder link, the one-page value case, and any slides used in the final Devpost submission.
+**CGI submission:** Add a repository or folder link to the final Devpost submission.
 
 ## CGI Judging
 
@@ -292,16 +292,7 @@ There is no required theme. The goal is to recognize the strongest overall proje
 
 # Mini-Challenges
 
-Mini-challenges are separate from the three main tracks. A team may enter **any number of mini-challenges** for which its project qualifies, regardless of whether its selected main track is General, CGI, or Civic Technology.
-
-The following Hack the Hill mini-challenges each select one winning team and award **$200 total to that team**:
-
-- Best FOSS Project;
-- Best UI/UX;
-- Best Hardware Hack; and
-- MathemaTech — Education for Everyone.
-
-Each $200 Hack the Hill mini-challenge prize is divided equally among the eligible members of the winning team. A team may win more than one mini-challenge and may win a mini-challenge in addition to its selected main track.
+Mini-challenges are separate from the three main tracks. A team may enter **any number of mini-challenges** for which its project qualifies, regardless of whether its selected main track is General, CGI, or Civic Technology. Awards vary by category and are listed below.
 
 Teams must select every mini-challenge they want to enter on their final Devpost submission.
 
@@ -309,7 +300,18 @@ Mini-challenges are judged as part of the team's normal main-track judging sessi
 
 Mini-challenge assessments from the different judging panels will be compared after judging to determine the winner of each category.
 
-## Best Project Built with ElevenLabs
+## $200 Hack the Hill Mini-Challenges
+
+Each of the following selects one winning team and awards **$200 total to that team**:
+
+- Best FOSS Project;
+- Best UI/UX;
+- Best Hardware Hack; and
+- MathemaTech — Education for Everyone.
+
+Each prize is divided equally among the eligible members of the winning team. A team may win more than one mini-challenge and may win a mini-challenge in addition to its selected main track.
+
+## Sponsor-Awarded Mini-Challenge: Best Project Built with ElevenLabs
 
 Hack the Hill's **Best Project Built with ElevenLabs** and MLH's **Best Use of ElevenLabs** are one combined challenge with one winning team. The winner receives both components of the combined award: the ElevenLabs Scale benefit provided through Hack the Hill and ElevenLabs, and the wireless-earbuds prize provided through MLH.
 
@@ -388,7 +390,7 @@ These summaries reflect the prizes currently published by MLH. See the [official
 
 # Judging Format
 
-General and Civic Technology judging takes place **in person**.
+Main-track judging takes place **in person**.
 
 Each team receives:
 
@@ -427,13 +429,9 @@ A game, creative project, technical experiment, or developer tool may have stron
 
 ## Design & Usability
 
-Judges should consider whether someone can reasonably understand and use the project's core functionality.
+Judges should consider whether someone can reasonably understand and use the project's core functionality. Depending on the project, this may include a graphical interface, API or CLI design, developer experience, physical interaction, or the clarity of the intended workflow.
 
 Visual polish can strengthen a project but does not replace working functionality.
-
-This is not a formal accessibility or WCAG compliance audit. Judges should consider obvious accessibility and usability issues at a level appropriate for a 36-hour prototype.
-
-For projects without a traditional graphical interface, usability may instead include areas such as API or CLI design, developer experience, physical interaction, or the clarity of the intended workflow.
 
 ## Learning & Technical Decisions
 
