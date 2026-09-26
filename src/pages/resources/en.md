@@ -420,7 +420,7 @@ Judges evaluate what the team actually built and demonstrated. Mockups, slides, 
 
 Projects do not need to be production-ready or fully feature-complete. A focused project that executes its core idea well may score more highly than a broader project containing many incomplete features.
 
-# General Judging Criteria, Principles & Scoring Guidance
+# Judging Criteria & Scoring
 
 **Projects are scored out of 45 points: 40 points across the four project criteria and 5 points for presentation.**
 
