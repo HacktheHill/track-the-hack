@@ -15,6 +15,7 @@ void test("one selected response row issues a pass with a saved reusable ID", ()
 	const sheet = createSheetHarness({
 		applications: [response],
 		fetch: request => {
+			assert.equal(sheet.locked(), false, "Pass API calls must not hold the Sheet-wide lock");
 			requests.push(request.url);
 			const saved = sheet.savedApplications()[1];
 			assert.ok(saved?.[firstNewColumn], "Participant ID must be flushed before API calls");

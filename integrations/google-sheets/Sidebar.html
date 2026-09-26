@@ -21,7 +21,9 @@
 			button.addEventListener("click", () => {
 				// Open synchronously from the click so the browser can reuse one named window.
 				// The organiser may move and maximise it on a second display.
-				const display = window.open("", "trackTheHackPass", "popup=yes,width=900,height=900");
+				// An empty URL inherits the sandboxed Apps Script document URL and can
+				// open the Apps Script project list instead of the reusable QR window.
+				const display = window.open("about:blank", "trackTheHackPass", "popup=yes,width=900,height=900");
 				if (display) {
 					try { display.document.body.textContent = "Preparing pass…"; } catch (_) { /* Existing Tracker window is cross-origin. */ }
 					display.focus();

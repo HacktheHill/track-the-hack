@@ -68,6 +68,18 @@ void test("review and preparation use Admission status, not the highlighted sele
 	assert.equal(sheet.locked(), false);
 });
 
+void test("RSVP preparation releases the Sheet-wide lock during Tracker API calls", () => {
+	let sheet: ReturnType<typeof createResponseHarness>;
+	sheet = createResponseHarness({
+		applications: [applicant("accepted", "Accepted")],
+		fetch: request => {
+			assert.equal(sheet.locked(), false, "Bulk network work must not block pass activation");
+			return api(request);
+		},
+	});
+	assert.deepEqual(sheet.run("prepareAcceptedRowsForRsvp"), { accepted: 1, processed: 1, batches: 1 });
+});
+
 void test("preflight rejects duplicate and invalid Accepted rows before any write", () => {
 	const sheet = createResponseHarness({ applications: [
 		applicant("same", "Accepted"), applicant("same", "Accepté"),

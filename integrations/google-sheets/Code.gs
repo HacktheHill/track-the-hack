@@ -69,7 +69,7 @@ function applyResponseColumnWidths_(sheet, firstColumn) {
  */
 function issuePassForSelectedRow() {
 	const config = trackConfig_();
-	return withDocumentLock_(() => {
+	const prepared = withDocumentLock_(() => {
 		const selected = selectedResponseRows_(1);
 		const source = selected.sheet;
 		const rowNumber = selected.firstRow;
@@ -86,12 +86,17 @@ function issuePassForSelectedRow() {
 			config.deadline,
 			booleanCell_(row[layout.start + TRACK_RESPONSE_HEADERS.indexOf("Walk-In")]),
 		);
-		SpreadsheetApp.flush();
-		const claim = claimResponse_(apiPost_(config, "/api/integrations/sheets/claim", record));
-		source.getRange(rowNumber, layout.start + TRACK_RESPONSE_HEADERS.indexOf("Pass Expires") + 1).setValue(new Date(claim.expiresAt));
-		source.getRange(rowNumber, layout.start + TRACK_RESPONSE_HEADERS.indexOf("Last Sync") + 1).setValue(new Date());
-		return { displayUrl: claimDisplayUrl_(claim.claimUrl), expiresAt: claim.expiresAt };
+		return { source, rowNumber, layout, record };
 	});
+	// Never hold the Sheet-wide lock across a network request. Bulk RSVP work can
+	// take minutes, while pass activation must remain available to other users.
+	const claim = claimResponse_(apiPost_(config, "/api/integrations/sheets/claim", prepared.record));
+	withDocumentLock_(() => {
+		assertResponseParticipantId_(prepared.source, prepared.layout, prepared.rowNumber, prepared.record.id);
+		prepared.source.getRange(prepared.rowNumber, prepared.layout.start + TRACK_RESPONSE_HEADERS.indexOf("Pass Expires") + 1).setValue(new Date(claim.expiresAt));
+		prepared.source.getRange(prepared.rowNumber, prepared.layout.start + TRACK_RESPONSE_HEADERS.indexOf("Last Sync") + 1).setValue(new Date());
+	});
+	return { displayUrl: claimDisplayUrl_(claim.claimUrl), expiresAt: claim.expiresAt };
 }
 
 /** Review the entire accepted audience without reserving IDs or calling Tracker. */
@@ -130,55 +135,60 @@ function prepareTestSubmissionForRsvp() {
 /** @param {string | null} targetSubmissionId */
 function prepareRsvpRows_(targetSubmissionId) {
 	const config = trackConfig_();
-	return withDocumentLock_(() => {
+	const prepared = withDocumentLock_(() => {
 		const source = SpreadsheetApp.getActiveSheet();
 		const layout = ensureResponseColumns_(source);
 		const accepted = acceptedRsvpRows_(source, layout, config.deadline, targetSubmissionId);
 		if (!accepted.length) throw new Error(targetSubmissionId ? "No Accepted row matches the designated test submission." : "No Accepted response rows were found.");
-		let processed = 0;
-		// Each participant requires multiple DB writes; use a smaller batch than
-		// the API's 500-record ceiling to stay within its transaction timeout.
-		const batchSize = 100;
-		for (let offset = 0; offset < accepted.length; offset += batchSize) {
-			const batch = accepted.slice(offset, offset + batchSize);
-			const records = batch.map(item => item.record);
-			const firstRow = batch[0]?.rowNumber || 0;
-			const lastRow = batch[batch.length - 1]?.rowNumber || 0;
-			try {
-				batch.forEach(item => writeResponseRecord_(source, layout, item.rowNumber, item.record));
-				// The Sheet-owned IDs must be durable before any server write.
-				SpreadsheetApp.flush();
-				const result = processedResponse_(apiPost_(config, "/api/integrations/sheets/hackers", { hackers: records }));
-				if (result.processed !== records.length) throw new Error("Tracker did not confirm every participant.");
-				const reconciliation = rsvpReconciliationResponse_(
-					apiPost_(config, "/api/integrations/sheets/rsvp-reconciliation", { ids: records.map(record => record.id) }),
-				);
-				if (reconciliation.missingIds.length) throw new Error("Tracker could not find every provisioned participant.");
-				const byId = new Map(reconciliation.records.map(record => [record.id, record]));
-				const checked = batch.map(item => {
-					const value = byId.get(item.record.id);
-					if (!value?.status || !value.rsvpLink) throw new Error(`No complete RSVP result for response row ${item.rowNumber}.`);
-					assertRsvpManagementLink_(value.rsvpLink, config.baseUrl);
-					return value;
-				});
-				const now = new Date();
+		// Make every Sheet-owned ID durable before releasing the lock. Pass
+		// activation and campaign preparation then share the same stable identity.
+		accepted.forEach(item => writeResponseRecord_(source, layout, item.rowNumber, item.record));
+		return { source, layout, accepted };
+	});
+	let processed = 0;
+	// Each participant requires multiple DB writes; use a smaller batch than
+	// the API's 500-record ceiling to stay within its transaction timeout.
+	const batchSize = 100;
+	for (let offset = 0; offset < prepared.accepted.length; offset += batchSize) {
+		const batch = prepared.accepted.slice(offset, offset + batchSize);
+		const records = batch.map(item => item.record);
+		const firstRow = batch[0]?.rowNumber || 0;
+		const lastRow = batch[batch.length - 1]?.rowNumber || 0;
+		try {
+			// Network work intentionally runs outside the Sheet-wide lock.
+			const result = processedResponse_(apiPost_(config, "/api/integrations/sheets/hackers", { hackers: records }));
+			if (result.processed !== records.length) throw new Error("Tracker did not confirm every participant.");
+			const reconciliation = rsvpReconciliationResponse_(
+				apiPost_(config, "/api/integrations/sheets/rsvp-reconciliation", { ids: records.map(record => record.id) }),
+			);
+			if (reconciliation.missingIds.length) throw new Error("Tracker could not find every provisioned participant.");
+			const byId = new Map(reconciliation.records.map(record => [record.id, record]));
+			const checked = batch.map(item => {
+				const value = byId.get(item.record.id);
+				if (!value?.status || !value.rsvpLink) throw new Error(`No complete RSVP result for response row ${item.rowNumber}.`);
+				assertRsvpManagementLink_(value.rsvpLink, config.baseUrl);
+				return value;
+			});
+			const now = new Date();
+			withDocumentLock_(() => {
 				batch.forEach((item, index) => {
 					const result = checked[index];
-					const values = source.getRange(item.rowNumber, layout.start + 1, 1, TRACK_RESPONSE_HEADERS.length).getValues()[0];
+					assertResponseParticipantId_(prepared.source, prepared.layout, item.rowNumber, item.record.id);
+					const values = prepared.source.getRange(item.rowNumber, prepared.layout.start + 1, 1, TRACK_RESPONSE_HEADERS.length).getValues()[0];
 					if (!result || !values) throw new Error(`Could not save RSVP result for response row ${item.rowNumber}.`);
 					values[4] = result.rsvpLink;
 					values[5] = result.status;
 					values[8] = now;
 					values[10] = now;
-					source.getRange(item.rowNumber, layout.start + 1, 1, TRACK_RESPONSE_HEADERS.length).setValues([values]);
+					prepared.source.getRange(item.rowNumber, prepared.layout.start + 1, 1, TRACK_RESPONSE_HEADERS.length).setValues([values]);
 				});
-				processed += batch.length;
-			} catch (error) {
-				throw new Error(`RSVP batch for response rows ${firstRow}-${lastRow} failed after ${processed} completed row(s). Retry the same action. ${error instanceof Error ? error.message : String(error)}`);
-			}
+			});
+			processed += batch.length;
+		} catch (error) {
+			throw new Error(`RSVP batch for response rows ${firstRow}-${lastRow} failed after ${processed} completed row(s). Retry the same action. ${error instanceof Error ? error.message : String(error)}`);
 		}
-		return { accepted: accepted.length, processed, batches: Math.ceil(accepted.length / batchSize) };
-	});
+	}
+	return { accepted: prepared.accepted.length, processed, batches: Math.ceil(prepared.accepted.length / batchSize) };
 }
 
 /** @param {GoogleAppsScript.Spreadsheet.Sheet} source @param {{headers: string[], start: number}} layout @param {string} deadline @param {string | null} targetSubmissionId */
@@ -407,6 +417,13 @@ function responseParticipantId_(sheet, layout, rowNumber, row, persist = true) {
 	const id = current || createParticipantId_();
 	if (!current && persist) sheet.getRange(rowNumber, idColumn).setValue(id);
 	return id;
+}
+
+/** @param {GoogleAppsScript.Spreadsheet.Sheet} sheet @param {{start: number}} layout @param {number} rowNumber @param {string} expectedId */
+function assertResponseParticipantId_(sheet, layout, rowNumber, expectedId) {
+	const idColumn = layout.start + TRACK_RESPONSE_HEADERS.indexOf("Participant ID") + 1;
+	const current = String(sheet.getRange(rowNumber, idColumn).getValues()[0]?.[0] || "").trim();
+	if (current !== expectedId) throw new Error(`Participant ID changed for response row ${rowNumber}. Retry the operation.`);
 }
 
 /** @param {GoogleAppsScript.Spreadsheet.Sheet} sheet @param {{start: number}} layout @param {number} rowNumber @param {OperationalRecord} record */
