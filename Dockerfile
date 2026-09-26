@@ -41,7 +41,7 @@ COPY src/server/services/hardware-reconciliation.ts ./src/server/services/
 COPY src/server/services/mlh-hardware.ts ./src/server/services/
 COPY src/utils/toronto-time.ts ./src/utils/
 RUN npm ci --include=dev && npm cache clean --force
-RUN ORGANIZER_PROVISION_EMAIL=container-smoke@ctn-rtc.org \
+RUN ORGANIZER_PROVISION_EMAIL=container.smoke@ctn-rtc.org \
 	ORGANIZER_PROVISION_ADMINISTRATOR=false \
 	./node_modules/.bin/tsx scripts/provision-organizer.mts
 USER app
