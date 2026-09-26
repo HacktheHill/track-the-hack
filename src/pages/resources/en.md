@@ -1,12 +1,10 @@
-# Hack the Hill III
+# Hack the Hill III Competition Guide
 
-## Competition Rules, Challenges, Prizes & Judging
+**September 25–27, 2026 · University of Ottawa**
 
-**September 25–27, 2026**
+Competition rules, challenge briefs, prizes, submission requirements, and judging criteria.
 
-**University of Ottawa**
-
-These rules govern the Hack the Hill III competition. All participants must also follow the [**Hack the Hill Participant & Event Policy**](https://docs.google.com/document/d/1mEmObs9W3Q_YJWZ26kinqstjbGlp90BIG_QOxKLwW5Q/edit), the [**MLH Code of Conduct**](https://github.com/MLH/mlh-policies/blob/main/code-of-conduct.md), applicable uOttawa requirements, and any additional rules published for a specific challenge or prize. The Participant & Event Policy already governs venue use, safety, safeguarding, conduct, and organizer enforcement powers, so those requirements are not repeated here.
+Participants must follow the [**Hack the Hill Participant & Event Policy**](https://docs.google.com/document/d/1mEmObs9W3Q_YJWZ26kinqstjbGlp90BIG_QOxKLwW5Q/edit) and [**MLH Code of Conduct**](https://github.com/MLH/mlh-policies/blob/main/code-of-conduct.md).
 
 # Competition Schedule
 
