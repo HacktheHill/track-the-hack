@@ -150,8 +150,6 @@ Northwind previously ran a nine-month AI assistant pilot in 2025 and paused it. 
 
 [Download the Northwind challenge brief (Word)](/assets/resources/cgi/Northwind_Challenge_Brief.docx)
 
-The downloadable brief provides the challenge background. Where it differs from this competition guide, follow this guide's event rules, AI guidance, submission deadlines, and judging format.
-
 **AI data restriction:** Using AI to analyze, interpret, or process the challenge data is strongly discouraged because this challenge is designed to assess how well your team understands the dataset's underlying structure and relationships. You may still use AI tools to write, explain, or debug code that processes the CSV files locally. Your team will be evaluated on its understanding of the data and must be able to explain its analysis and conclusions.
 
 The data archive contains seven synthetic CSV files:
