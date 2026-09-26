@@ -159,10 +159,8 @@ export const eventsRouter = createTRPCRouter({
 	// The scanner gets only its server-owned action contract. Schedule content
 	// and arbitrary participant fields do not need to cross this boundary.
 	scannable: organizerProcedure.query(async ({ ctx }) => {
-		const gracePeriodMs = 30 * 60 * 1000;
-		const cutoff = new Date(Date.now() - gracePeriodMs);
 		return ctx.prisma.event.findMany({
-			where: { end: { gt: cutoff }, scannerEnabled: true },
+			where: { scannerEnabled: true },
 			select: {
 				id: true,
 				name: true,
