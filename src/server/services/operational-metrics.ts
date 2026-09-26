@@ -19,12 +19,16 @@ export const createPrismaOperationalMetricsRepository = (
 	// type; Prisma validates each query, and the repository exposes its result.
 	const groupAttendanceByEvent = () => prisma.presence.groupBy({ by: ["eventId"], _sum: { value: true } });
 	const countCheckedIn = async () =>
-		(
-			await prisma.presence.groupBy({
-				by: ["hackerId"],
-				where: { event: { scannerWorkflow: ScannerWorkflow.CHECK_IN }, value: { gt: 0 } },
-			})
-		).length;
+		await prisma.hacker.count({
+			where: {
+				presences: {
+					some: {
+						event: { scannerWorkflow: ScannerWorkflow.CHECK_IN },
+						value: { gt: 0 },
+					},
+				},
+			},
+		});
 	const groupMealCategories = () => prisma.hacker.groupBy({ by: ["mealCategory"], _count: { mealCategory: true } });
 	const groupTShirtSizes = () => prisma.hacker.groupBy({ by: ["tShirtSize"], _count: { tShirtSize: true } });
 
