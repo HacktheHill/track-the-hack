@@ -18,7 +18,9 @@ void test("completed project buttons expose a prominent synchronized completion 
 	);
 
 	assert.match(markup, /All fields complete/);
-	assert.match(markup, /bg-green-50/);
+	assert.match(markup, /data-completion-state="synced"/);
+	assert.match(markup, /border-green-500 bg-green-50/);
+	assert.match(markup, /ring-2 ring-highlight-color ring-offset-2/);
 	assert.match(markup, /aria-pressed="true"/);
 	assert.match(markup, /aria-label="Table 42: Example project\. All fields complete\. Complete — synced"/);
 });
@@ -49,8 +51,11 @@ void test("local-only completion is amber and partial projects show scoring-scop
 		/>,
 	);
 
-	assert.match(localMarkup, /bg-amber-50/);
+	assert.match(localMarkup, /data-completion-state="local"/);
+	assert.match(localMarkup, /border-amber-400 bg-amber-50/);
 	assert.doesNotMatch(localMarkup, /bg-green-50/);
+	assert.match(partialMarkup, /data-completion-state="needs-attention"/);
+	assert.match(partialMarkup, /border-orange-400 bg-orange-50/);
 	assert.match(partialMarkup, /2\/3 done/);
 	assert.match(partialMarkup, />○</);
 });
