@@ -9,6 +9,7 @@ import {
 	clearOfflineJudgingData,
 	listJudgingOutbox,
 	loadJudgingSnapshot,
+	markRankingAccessVerified,
 	queueAssignmentPatch,
 	queueRankingPatch,
 	removeJudgingOutboxEntries,
@@ -16,7 +17,7 @@ import {
 	type JudgingManifest,
 	type OfflineJudgingPatch,
 } from "@/client/judging-offline";
-import { chunkJudgingOutbox as createSyncBatches } from "@/client/judging-offline-state";
+import { chunkJudgingOutbox as createSyncBatches, isRankingAccessCurrent } from "@/client/judging-offline-state";
 import {
 	JUDGING_CATEGORY_CATALOG,
 	MAIN_RUBRIC,
@@ -144,6 +145,11 @@ export default function JudgingWorkspace() {
 	>("synced");
 	const [draggedProjectId, setDraggedProjectId] = useState<string | null>(null);
 	const [rankingOrders, setRankingOrders] = useState<Record<string, string[]>>({});
+	const [workspaceStep, setWorkspaceStep] = useState<"scoring" | "ranking">("scoring");
+	const [rankingAccessVersion, setRankingAccessVersion] = useState<number | null>(null);
+	const [rankingGateState, setRankingGateState] = useState<"idle" | "checking" | "offline" | "failed" | "incomplete">(
+		"idle",
+	);
 	const syncInFlight = useRef<Promise<void> | null>(null);
 	const syncRequestedWhileBusy = useRef(false);
 
@@ -158,8 +164,12 @@ export default function JudgingWorkspace() {
 
 	const applyManifest = useCallback(
 		async (next: JudgingManifest) => {
-			setPreparedAt(new Date().toISOString());
-			await saveJudgingSnapshot(next);
+			const snapshot = await saveJudgingSnapshot(next);
+			setPreparedAt(snapshot.preparedAt);
+			const verifiedVersion = snapshot.rankingVerifiedAssignmentVersion ?? null;
+			setRankingAccessVersion(verifiedVersion);
+			if (!isRankingAccessCurrent(verifiedVersion, next.judge.round.assignmentVersion))
+				setWorkspaceStep("scoring");
 			const entries = await refreshOutbox();
 			const hydrated = hydrateManifestWithOutbox(next, entries);
 			if (next.judge.round.state === "LOCKED" && entries.length === 0) await clearOfflineJudgingData();
@@ -264,6 +274,13 @@ export default function JudgingWorkspace() {
 				const hydrated = hydrateManifestWithOutbox(snapshot.manifest, entries);
 				setPreparedAt(snapshot.preparedAt);
 				setManifest(hydrated);
+				const verifiedVersion = snapshot.rankingVerifiedAssignmentVersion ?? null;
+				setRankingAccessVersion(verifiedVersion);
+				if (
+					isRankingAccessCurrent(verifiedVersion, hydrated.judge.round.assignmentVersion) &&
+					hydrated.judge.assignments.every(assignmentComplete)
+				)
+					setWorkspaceStep("ranking");
 				setRankingOrders({
 					...rankingsFromManifest(hydrated),
 					...Object.fromEntries(
@@ -278,6 +295,18 @@ export default function JudgingWorkspace() {
 		});
 		void refreshOutbox();
 	}, [isOnline, manifest, refreshOutbox]);
+
+	useEffect(() => {
+		if (
+			manifest &&
+			rankingAccessVersion !== null &&
+			!isRankingAccessCurrent(rankingAccessVersion, manifest.judge.round.assignmentVersion)
+		) {
+			setRankingAccessVersion(null);
+			setWorkspaceStep("scoring");
+			setRankingGateState("incomplete");
+		}
+	}, [manifest, rankingAccessVersion]);
 
 	useEffect(() => {
 		setIsOnline(navigator.onLine);
@@ -371,14 +400,48 @@ export default function JudgingWorkspace() {
 
 	const saveRanking = useCallback(
 		async (categoryCode: string, order: string[]) => {
+			if (!manifest || !isRankingAccessCurrent(rankingAccessVersion, manifest.judge.round.assignmentVersion))
+				return;
 			setRankingOrders(current => ({ ...current, [categoryCode]: order }));
 			await queueRankingPatch(categoryCode, order);
 			await refreshOutbox();
 			setSyncState(navigator.onLine ? "syncing" : "offline");
 			if (navigator.onLine) window.setTimeout(() => void sync(), 0);
 		},
-		[refreshOutbox, sync],
+		[manifest, rankingAccessVersion, refreshOutbox, sync],
 	);
+
+	const checkAssignmentsAndContinue = useCallback(async () => {
+		if (!navigator.onLine) {
+			setRankingGateState("offline");
+			return;
+		}
+		setRankingGateState("checking");
+		try {
+			await sync();
+			if ((await listJudgingOutbox()).length > 0) {
+				setRankingGateState("failed");
+				return;
+			}
+			const refreshed = await manifestQuery.refetch();
+			if (!refreshed.data) {
+				setRankingGateState("failed");
+				return;
+			}
+			await applyManifest(refreshed.data);
+			if (!refreshed.data.judge.assignments.every(assignmentComplete)) {
+				setRankingAccessVersion(null);
+				setRankingGateState("incomplete");
+				return;
+			}
+			await markRankingAccessVerified(refreshed.data);
+			setRankingAccessVersion(refreshed.data.judge.round.assignmentVersion);
+			setRankingGateState("idle");
+			setWorkspaceStep("ranking");
+		} catch {
+			setRankingGateState("failed");
+		}
+	}, [applyManifest, manifestQuery, sync]);
 
 	if (!manifest) {
 		return (
@@ -446,7 +509,10 @@ export default function JudgingWorkspace() {
 				)}
 				<p className="ui-panel p-3 text-sm">{t("shared-device")}</p>
 
-				<div className="flex gap-2 overflow-x-auto pb-2" aria-label={t("title")}>
+				<div
+					className={`${workspaceStep === "scoring" ? "flex" : "hidden"} gap-2 overflow-x-auto pb-2`}
+					aria-label={t("title")}
+				>
 					{projects.map(project => {
 						const projectAssignments = assignments.filter(
 							assignment => assignment.project.id === project.id,
@@ -493,7 +559,7 @@ export default function JudgingWorkspace() {
 					})}
 				</div>
 
-				{selectedProject && (
+				{workspaceStep === "scoring" && selectedProject && (
 					<section className="ui-panel flex flex-col gap-5 p-5">
 						<div>
 							<p className="font-rubik text-sm font-bold uppercase tracking-wide">
@@ -680,7 +746,9 @@ export default function JudgingWorkspace() {
 											type="checkbox"
 											checked={assignment.rulesConcern}
 											onChange={event =>
-												void queueChange(assignment.id, { rulesConcern: event.target.checked })
+												void queueChange(assignment.id, {
+													rulesConcern: event.target.checked,
+												})
 											}
 										/>
 										{t("rules-concern")}
@@ -703,7 +771,7 @@ export default function JudgingWorkspace() {
 						})}
 					</section>
 				)}
-				{selectedProject && (
+				{workspaceStep === "scoring" && selectedProject && (
 					<div className="flex justify-between gap-3">
 						<button
 							type="button"
@@ -732,92 +800,122 @@ export default function JudgingWorkspace() {
 					</div>
 				)}
 
-				{allComplete && (
-					<section className="ui-panel flex flex-col gap-5 p-5">
-						<h2 className="text-2xl font-bold">{t("rankings")}</h2>
-						<p>{t("rank-help")}</p>
-						{Object.entries(rankingOrders).map(
-							([categoryCode, order]) =>
-								order.length > 1 && (
-									<div key={categoryCode}>
-										<h3 className="text-lg font-bold">
-											{categoryDefinition(categoryCode)?.[locale] ?? categoryCode}
-										</h3>
-										<ol className="mt-2 flex flex-col gap-2">
-											{order.map((projectId, index) => {
-												const project = projects.find(item => item.id === projectId);
-												if (!project) return null;
-												const move = (offset: number) => {
-													const next = [...order];
-													const target = index + offset;
-													if (target < 0 || target >= next.length) return;
-													const current = next[index];
-													const replacement = next[target];
-													if (current === undefined || replacement === undefined) return;
-													next[index] = replacement;
-													next[target] = current;
-													void saveRanking(categoryCode, next);
-												};
-												return (
-													<li
-														key={projectId}
-														draggable
-														onDragStart={() => setDraggedProjectId(projectId)}
-														onDragOver={event => event.preventDefault()}
-														onDrop={() => {
-															if (!draggedProjectId || draggedProjectId === projectId)
-																return;
-															const next = order.filter(id => id !== draggedProjectId);
-															next.splice(index, 0, draggedProjectId);
-															setDraggedProjectId(null);
-															void saveRanking(categoryCode, next);
-														}}
-														className="flex items-center gap-2 rounded-xl border bg-white p-3"
-													>
-														<span className="w-7 font-bold">{index + 1}</span>
-														<span className="flex-1">
-															{t("table", { number: project.tableNumber })} ·{" "}
-															{project.name}
-														</span>
-														<button
-															type="button"
-															className="ui-button"
-															disabled={index === 0}
-															onClick={() => move(-1)}
-														>
-															{t("move-up")}
-														</button>
-														<button
-															type="button"
-															className="ui-button"
-															disabled={index === order.length - 1}
-															onClick={() => move(1)}
-														>
-															{t("move-down")}
-														</button>
-													</li>
-												);
-											})}
-										</ol>
-										<button
-											type="button"
-											className="ui-button mt-3"
-											onClick={() => void saveRanking(categoryCode, order)}
-										>
-											{t("confirm-ranking")}
-										</button>
-									</div>
-								),
+				{workspaceStep === "scoring" && allComplete && (
+					<section className="ui-panel flex flex-col gap-3 p-5">
+						<h2 className="text-2xl font-bold">{t("ranking-gate-title")}</h2>
+						<p>{t("ranking-gate-help")}</p>
+						{rankingGateState !== "idle" && rankingGateState !== "checking" && (
+							<p className="font-bold text-amber-800">{t(`ranking-gate-${rankingGateState}`)}</p>
 						)}
-						{outboxCount > 0 ? (
-							<p className="font-bold text-amber-800">{t("ready-local")}</p>
-						) : !rankingsComplete ? (
-							<p className="font-bold text-amber-800">{t("ranking-stale")}</p>
-						) : (
-							<p className="font-bold text-green-800">{t("complete")}</p>
-						)}
+						{rankingGateState === "checking" && <p role="status">{t("ranking-gate-checking")}</p>}
+						<button
+							type="button"
+							className="ui-button ui-button-primary self-start"
+							disabled={rankingGateState === "checking"}
+							onClick={() => void checkAssignmentsAndContinue()}
+						>
+							{t("ranking-gate-action")}
+						</button>
 					</section>
 				)}
+
+				{workspaceStep === "ranking" &&
+					isRankingAccessCurrent(rankingAccessVersion, manifest.judge.round.assignmentVersion) && (
+						<section className="ui-panel flex flex-col gap-5 p-5">
+							<div className="flex flex-wrap items-center justify-between gap-3">
+								<button type="button" className="ui-button" onClick={() => setWorkspaceStep("scoring")}>
+									{t("back-to-scoring")}
+								</button>
+								<p className="text-sm font-bold text-green-800">
+									{t("ranking-version", { version: rankingAccessVersion })}
+								</p>
+							</div>
+							<h2 className="text-2xl font-bold">{t("rankings")}</h2>
+							<p>{t("rank-help")}</p>
+							{Object.entries(rankingOrders).map(
+								([categoryCode, order]) =>
+									order.length > 1 && (
+										<div key={categoryCode}>
+											<h3 className="text-lg font-bold">
+												{categoryDefinition(categoryCode)?.[locale] ?? categoryCode}
+											</h3>
+											<ol className="mt-2 flex flex-col gap-2">
+												{order.map((projectId, index) => {
+													const project = projects.find(item => item.id === projectId);
+													if (!project) return null;
+													const move = (offset: number) => {
+														const next = [...order];
+														const target = index + offset;
+														if (target < 0 || target >= next.length) return;
+														const current = next[index];
+														const replacement = next[target];
+														if (current === undefined || replacement === undefined) return;
+														next[index] = replacement;
+														next[target] = current;
+														void saveRanking(categoryCode, next);
+													};
+													return (
+														<li
+															key={projectId}
+															draggable
+															onDragStart={() => setDraggedProjectId(projectId)}
+															onDragOver={event => event.preventDefault()}
+															onDrop={() => {
+																if (!draggedProjectId || draggedProjectId === projectId)
+																	return;
+																const next = order.filter(
+																	id => id !== draggedProjectId,
+																);
+																next.splice(index, 0, draggedProjectId);
+																setDraggedProjectId(null);
+																void saveRanking(categoryCode, next);
+															}}
+															className="flex items-center gap-2 rounded-xl border bg-white p-3"
+														>
+															<span className="w-7 font-bold">{index + 1}</span>
+															<span className="flex-1">
+																{t("table", { number: project.tableNumber })} ·{" "}
+																{project.name}
+															</span>
+															<button
+																type="button"
+																className="ui-button"
+																disabled={index === 0}
+																onClick={() => move(-1)}
+															>
+																{t("move-up")}
+															</button>
+															<button
+																type="button"
+																className="ui-button"
+																disabled={index === order.length - 1}
+																onClick={() => move(1)}
+															>
+																{t("move-down")}
+															</button>
+														</li>
+													);
+												})}
+											</ol>
+											<button
+												type="button"
+												className="ui-button mt-3"
+												onClick={() => void saveRanking(categoryCode, order)}
+											>
+												{t("confirm-ranking")}
+											</button>
+										</div>
+									),
+							)}
+							{outboxCount > 0 ? (
+								<p className="font-bold text-amber-800">{t("ready-local")}</p>
+							) : !rankingsComplete ? (
+								<p className="font-bold text-amber-800">{t("ranking-stale")}</p>
+							) : (
+								<p className="font-bold text-green-800">{t("complete")}</p>
+							)}
+						</section>
+					)}
 			</div>
 		</App>
 	);

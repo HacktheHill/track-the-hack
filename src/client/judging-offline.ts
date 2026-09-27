@@ -23,6 +23,7 @@ type OfflineSnapshot = {
 	manifest: JudgingManifest;
 	preparedAt: string;
 	serverOffsetMs: number;
+	rankingVerifiedAssignmentVersion?: number;
 };
 
 const DATABASE_NAME = "track-the-hack-judging";
@@ -86,12 +87,38 @@ export const saveJudgingSnapshot = async (manifest: JudgingManifest) =>
 			transaction.objectStore(OUTBOX_STORE).clear();
 		}
 		const serverOffsetMs = new Date(manifest.serverTime).getTime() - Date.now();
-		snapshotStore.put({
+		const snapshot = {
 			key: "active",
 			namespace: manifestNamespace(manifest),
 			manifest,
 			preparedAt: new Date().toISOString(),
 			serverOffsetMs,
+			...(current?.namespace === manifestNamespace(manifest) &&
+			current.rankingVerifiedAssignmentVersion === manifest.judge.round.assignmentVersion
+				? { rankingVerifiedAssignmentVersion: current.rankingVerifiedAssignmentVersion }
+				: {}),
+		} satisfies OfflineSnapshot;
+		snapshotStore.put(snapshot);
+		await transactionDone(transaction);
+		return snapshot;
+	});
+
+export const markRankingAccessVerified = async (manifest: JudgingManifest) =>
+	withDatabase(async database => {
+		const transaction = database.transaction(SNAPSHOT_STORE, "readwrite");
+		const store = transaction.objectStore(SNAPSHOT_STORE);
+		const snapshot = await requestResult<OfflineSnapshot | undefined>(store.get("active"));
+		if (
+			!snapshot ||
+			snapshot.namespace !== manifestNamespace(manifest) ||
+			snapshot.manifest.judge.round.assignmentVersion !== manifest.judge.round.assignmentVersion
+		) {
+			transaction.abort();
+			throw new Error("The offline judging snapshot changed before ranking access was verified");
+		}
+		store.put({
+			...snapshot,
+			rankingVerifiedAssignmentVersion: manifest.judge.round.assignmentVersion,
 		} satisfies OfflineSnapshot);
 		await transactionDone(transaction);
 	});

@@ -41,6 +41,11 @@ export const chunkJudgingOutbox = (entries: JudgingOutboxPatch[], assignmentLimi
 export const judgingOfflineNamespace = (roundId: string, judgeId: string, schemaVersion = 1) =>
 	`v${schemaVersion}:${roundId}:${judgeId}`;
 
+export const isRankingAccessCurrent = (
+	verifiedAssignmentVersion: number | null | undefined,
+	currentAssignmentVersion: number,
+) => verifiedAssignmentVersion === currentAssignmentVersion;
+
 export const nextEffectiveJudgingEditTime = (candidateMs: number, previousMs?: number) => {
 	const effectiveMs = Math.max(candidateMs, previousMs === undefined ? candidateMs : previousMs + 1);
 	return { effectiveMs, editedAt: new Date(effectiveMs).toISOString() };
