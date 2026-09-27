@@ -125,6 +125,18 @@ export default function JudgingAdminPage() {
 		acceptRecusal.error ??
 		resolveEligibility.error;
 	const round = overview.data;
+	const synchronizedProgress = round
+		? round.judgeLoads.reduce(
+				(progress, judge) => ({
+					complete: progress.complete + judge.complete,
+					total: progress.total + judge.scopes,
+				}),
+				{ complete: 0, total: 0 },
+			)
+		: { complete: 0, total: 0 };
+	const synchronizedProgressPercent = synchronizedProgress.total
+		? Math.round((synchronizedProgress.complete / synchronizedProgress.total) * 100)
+		: 0;
 	const previewCohorts = preview?.generation
 		? [...new Set(preview.generation.assignments.map(assignment => assignment.categoryCode))]
 				.sort()
@@ -291,6 +303,18 @@ export default function JudgingAdminPage() {
 							<p>{t("judging.assignments", { count: round.assignments.length })}</p>
 						</div>
 						<p>{t("judging.limit", { count: round.effectiveProjectLimit })}</p>
+						<div className="rounded-xl border-2 border-dark-primary-color/20 bg-white p-4">
+							<h3 className="font-bold">{t("judging.progress-heading")}</h3>
+							<p className="mt-1">
+								{t("judging.progress-summary", {
+									complete: synchronizedProgress.complete,
+									total: synchronizedProgress.total,
+									remaining: synchronizedProgress.total - synchronizedProgress.complete,
+									percent: synchronizedProgressPercent,
+								})}
+							</p>
+							<p className="mt-1 text-sm">{t("judging.progress-sync-note")}</p>
+						</div>
 						<div className="flex flex-wrap gap-3">
 							{round.effectiveProjectLimit > 15 && !round.overloadApprovedAt && (
 								<button
@@ -437,7 +461,14 @@ export default function JudgingAdminPage() {
 													.map(visit => `${visit.room} #${visit.tableNumber}`)
 													.join(" → ") || "—"}
 											</td>
-											<td>{judge.complete}</td>
+										<td>
+											{t("judging.judge-progress", {
+												complete: judge.complete,
+												total: judge.scopes,
+												remaining: judge.scopes - judge.complete,
+												percent: judge.scopes ? Math.round((judge.complete / judge.scopes) * 100) : 0,
+											})}
+										</td>
 											<td>
 												{judge.lastSyncAt ? new Date(judge.lastSyncAt).toLocaleString() : "—"}
 											</td>
