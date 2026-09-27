@@ -44,6 +44,7 @@ export default function JudgingAdminPage() {
 	const [firstSwapAssignmentId, setFirstSwapAssignmentId] = useState("");
 	const [secondSwapAssignmentId, setSecondSwapAssignmentId] = useState("");
 	const [disqualifyTables, setDisqualifyTables] = useState("");
+	const [retiringMlhJudgeId, setRetiringMlhJudgeId] = useState("");
 	const [preview, setPreview] = useState<RouterOutputs["judging"]["previewImport"] | null>(null);
 	const utils = trpc.useContext();
 	const overview = trpc.judging.adminOverview.useQuery();
@@ -108,6 +109,10 @@ export default function JudgingAdminPage() {
 		onSuccess: async () => utils.judging.adminOverview.invalidate(),
 		onError: async () => utils.judging.adminOverview.invalidate(),
 	});
+	const retireMlhJudging = trpc.judging.retireMlhJudging.useMutation({
+		onSuccess: async () => utils.judging.adminOverview.invalidate(),
+		onError: async () => utils.judging.adminOverview.invalidate(),
+	});
 	const acceptRecusal = trpc.judging.acceptRecusal.useMutation({
 		onSuccess: async () => utils.judging.adminOverview.invalidate(),
 	});
@@ -133,6 +138,7 @@ export default function JudgingAdminPage() {
 		removeOptional.error ??
 		disqualifyUnjudged.error ??
 		closeSufficientlyCovered.error ??
+		retireMlhJudging.error ??
 		acceptRecusal.error ??
 		resolveEligibility.error;
 	const round = overview.data;
@@ -441,6 +447,60 @@ export default function JudgingAdminPage() {
 								{t("judging.export-schedule")}
 							</button>
 						</div>
+						{round.state === "OPEN" && (
+							<div className="rounded-xl border-2 border-red-400 bg-red-50 p-4">
+								<h3 className="font-bold text-red-950">{t("judging.retire-mlh-heading")}</h3>
+								<p className="mt-1 text-sm text-red-950">{t("judging.retire-mlh-description")}</p>
+								<div className="mt-3 flex flex-wrap items-end gap-3">
+									<label className="font-bold">
+										{t("judging.retire-mlh-judge")}
+										<select
+											className="ui-field mt-1 block"
+											value={retiringMlhJudgeId}
+											onChange={event => setRetiringMlhJudgeId(event.target.value)}
+										>
+											<option value="">{t("judging.select-judge")}</option>
+											{round.judgeLoads
+												.filter(judge => judge.expertise.includes("MLH"))
+												.map(judge => (
+													<option key={judge.id} value={judge.id}>
+														{judge.name}
+													</option>
+												))}
+										</select>
+									</label>
+									<button
+										type="button"
+										className="ui-button"
+										disabled={!retiringMlhJudgeId || retireMlhJudging.isLoading}
+										onClick={() => {
+											const judge = round.judgeLoads.find(item => item.id === retiringMlhJudgeId);
+											if (
+												judge &&
+												confirm(t("judging.retire-mlh-confirm", { judge: judge.name }))
+											)
+												retireMlhJudging.mutate({
+													roundId: round.id,
+													judgeId: judge.id,
+													expectedAssignmentVersion: round.assignmentVersion,
+													confirmDiscardJudgeWorkAndCloseMlh: true,
+												});
+										}}
+									>
+										{t("judging.retire-mlh-action")}
+									</button>
+								</div>
+								{retireMlhJudging.data && (
+									<p className="mt-3 text-sm font-bold text-red-950">
+										{t("judging.retire-mlh-result", {
+											assignments: retireMlhJudging.data.assignmentsRemoved,
+											categories: retireMlhJudging.data.categoriesRemoved,
+											rankings: retireMlhJudging.data.rankingsRemoved,
+										})}
+									</p>
+								)}
+							</div>
+						)}
 						{round.state === "OPEN" && (
 							<div className="rounded-xl border-2 border-dark-primary-color/20 bg-white p-4">
 								<h3 className="font-bold">{t("judging.close-coverage-heading")}</h3>

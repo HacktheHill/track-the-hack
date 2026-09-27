@@ -472,3 +472,90 @@ void test("MLH category reconciliation adds only missing categories and assignme
 		assignmentVersionChanged: true,
 	});
 });
+
+void test("retiring MLH removes the selected judge's work and every MLH scope", async t => {
+	const roundUpdate = t.mock.fn(() => Promise.resolve({ count: 1 }));
+	const rankingDelete = t.mock.fn((input: unknown) => {
+		void input;
+		return Promise.resolve({ count: 9 });
+	});
+	const assignmentDelete = t.mock.fn((input: unknown) => {
+		void input;
+		return Promise.resolve({ count: 14 });
+	});
+	const categoryDelete = t.mock.fn((input: unknown) => {
+		void input;
+		return Promise.resolve({ count: 11 });
+	});
+	const auditCreate = t.mock.fn(() => Promise.resolve({}));
+	const transaction = t.mock.fn(async (operation: (client: object) => Promise<unknown>, options: object) => {
+		assert.deepEqual(options, {
+			isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+			maxWait: 10_000,
+			timeout: 30_000,
+		});
+		return operation({
+			judgingRound: {
+				findUnique: () => Promise.resolve({ id: "round-1", state: "OPEN", assignmentVersion: 21 }),
+				updateMany: roundUpdate,
+			},
+			judgingJudge: {
+				findFirst: () => Promise.resolve({ id: "judge-farhan" }),
+			},
+			judgingRanking: { deleteMany: rankingDelete },
+			judgingAssignment: { deleteMany: assignmentDelete },
+			judgingProjectCategory: { deleteMany: categoryDelete },
+			auditEvent: { create: auditCreate },
+		});
+	});
+	const prisma = {
+		user: {
+			findUnique: () =>
+				Promise.resolve({
+					id: "organizer-1",
+					name: "Test Organizer",
+					email: "test.organizer@ctn-rtc.org",
+					isAdmin: true,
+					disabledAt: null,
+				}),
+		},
+		$transaction: transaction,
+	} as unknown as PrismaClient;
+	const { judgingRouter } = await routerModule;
+
+	const result = await judgingRouter.createCaller({ prisma, session }).retireMlhJudging({
+		roundId: "round-1",
+		judgeId: "judge-farhan",
+		expectedAssignmentVersion: 21,
+		confirmDiscardJudgeWorkAndCloseMlh: true,
+	});
+
+	assert.deepEqual(result, {
+		assignmentVersion: 22,
+		assignmentsRemoved: 14,
+		categoriesRemoved: 11,
+		rankingsRemoved: 9,
+	});
+	assert.deepEqual(assignmentDelete.mock.calls[0]?.arguments[0], {
+		where: {
+			roundId: "round-1",
+			OR: [
+				{ judgeId: "judge-farhan" },
+				{
+					categoryCode: {
+						in: ["ELEVENLABS", "GEMINI", "SOLANA", "TIGER_DATA", "PRESAGE", "VULTR", "AUTH0", "GODADDY"],
+					},
+				},
+			],
+		},
+	});
+	assert.deepEqual(categoryDelete.mock.calls[0]?.arguments[0], {
+		where: {
+			roundId: "round-1",
+			code: {
+				in: ["ELEVENLABS", "GEMINI", "SOLANA", "TIGER_DATA", "PRESAGE", "VULTR", "AUTH0", "GODADDY"],
+			},
+		},
+	});
+	assert.equal(auditCreate.mock.callCount(), 1);
+});

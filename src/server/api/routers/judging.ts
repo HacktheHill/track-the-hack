@@ -2795,6 +2795,73 @@ export const judgingRouter = createTRPCRouter({
 			),
 		),
 
+	retireMlhJudging: adminProcedure
+		.input(
+			z.object({
+				roundId: z.string().min(1).max(191),
+				judgeId: z.string().min(1).max(191),
+				expectedAssignmentVersion: z.number().int().nonnegative(),
+				confirmDiscardJudgeWorkAndCloseMlh: z.literal(true),
+			}),
+		)
+		.mutation(async ({ ctx, input }) =>
+			ctx.prisma.$transaction(
+				async transaction => {
+					const [round, judge] = await Promise.all([
+						transaction.judgingRound.findUnique({ where: { id: input.roundId } }),
+						transaction.judgingJudge.findFirst({
+							where: { id: input.judgeId, roundId: input.roundId },
+							select: { id: true },
+						}),
+					]);
+					if (!round || !judge) throw new TRPCError({ code: "NOT_FOUND" });
+					requireMutableAssignments(round);
+					await claimAssignmentVersion(transaction, round.id, input.expectedAssignmentVersion);
+
+					const rankingsRemoved = await transaction.judgingRanking.deleteMany({
+						where: {
+							roundId: round.id,
+							OR: [{ judgeId: judge.id }, { categoryCode: { in: [...MLH_CATEGORY_CODES] } }],
+						},
+					});
+					const assignmentsRemoved = await transaction.judgingAssignment.deleteMany({
+						where: {
+							roundId: round.id,
+							OR: [{ judgeId: judge.id }, { categoryCode: { in: [...MLH_CATEGORY_CODES] } }],
+						},
+					});
+					const categoriesRemoved = await transaction.judgingProjectCategory.deleteMany({
+						where: { roundId: round.id, code: { in: [...MLH_CATEGORY_CODES] } },
+					});
+
+					await persistAuditEvent(
+						transaction,
+						createAuditEvent({
+							name: "judging.mlh.retired",
+							outcome: "retired",
+							actor: { type: "organizer", id: ctx.organizer.id },
+							subject: { type: "judging_judge", id: judge.id },
+							resource: { type: "judging_round", id: round.id },
+							data: {
+								assignmentCount: assignmentsRemoved.count,
+								categoryCount: categoriesRemoved.count,
+								rankingCount: rankingsRemoved.count,
+								assignmentVersionChanged: true,
+							},
+						}),
+					);
+
+					return {
+						assignmentVersion: round.assignmentVersion + 1,
+						assignmentsRemoved: assignmentsRemoved.count,
+						categoriesRemoved: categoriesRemoved.count,
+						rankingsRemoved: rankingsRemoved.count,
+					};
+				},
+				{ isolationLevel: Prisma.TransactionIsolationLevel.Serializable, maxWait: 10_000, timeout: 30_000 },
+			),
+		),
+
 	manifest: judgeProcedure.query(async ({ ctx }) => buildManifest(ctx.prisma, ctx.judge.id)),
 
 	sync: judgeProcedure.input(syncInput).mutation(async ({ ctx, input }) => {
