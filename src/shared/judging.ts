@@ -14,6 +14,17 @@ export const MINI_CATEGORY_CODES = [
 	"GODADDY",
 ] as const;
 
+export const MLH_CATEGORY_CODES = [
+	"ELEVENLABS",
+	"GEMINI",
+	"SOLANA",
+	"TIGER_DATA",
+	"PRESAGE",
+	"VULTR",
+	"AUTH0",
+	"GODADDY",
+] as const satisfies readonly (typeof MINI_CATEGORY_CODES)[number][];
+
 export type MainCategoryCode = (typeof MAIN_CATEGORY_CODES)[number];
 export type MiniCategoryCode = (typeof MINI_CATEGORY_CODES)[number];
 export type JudgingCategoryCode = MainCategoryCode | MiniCategoryCode;

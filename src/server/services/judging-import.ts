@@ -4,6 +4,7 @@ import {
 	ALL_JUDGING_CATEGORY_CODES,
 	isJudgingCategoryCode,
 	isMiniCategoryCode,
+	MLH_CATEGORY_CODES,
 	parseCategoryLabel,
 	type JudgingCategoryCode,
 	type JudgingMainTrackCode,
@@ -25,6 +26,7 @@ export type ImportedJudge = {
 	name: string;
 	email: string;
 	expertise: MiniCategoryCode[];
+	requiredExpertise?: MiniCategoryCode[];
 	exclusions: JudgingCategoryCode[];
 };
 
@@ -185,9 +187,15 @@ export const parseJudgeCsv = async (source: string): Promise<ImportResult<Import
 		emails.add(email);
 
 		const expertise: MiniCategoryCode[] = [];
+		const requiredExpertise: MiniCategoryCode[] = [];
 		for (const value of splitList(input.expertise)) {
 			const code = value.toUpperCase();
-			if (!isMiniCategoryCode(code))
+			if (code === "MLH") {
+				for (const category of MLH_CATEGORY_CODES) {
+					if (!expertise.includes(category)) expertise.push(category);
+					if (!requiredExpertise.includes(category)) requiredExpertise.push(category);
+				}
+			} else if (!isMiniCategoryCode(code))
 				errors.push(`Judge row ${rowNumber}: expertise “${value}” is not a mini/sponsor category code.`);
 			else if (!expertise.includes(code)) expertise.push(code);
 		}
@@ -202,7 +210,7 @@ export const parseJudgeCsv = async (source: string): Promise<ImportResult<Import
 			if (exclusions.includes(code))
 				errors.push(`Judge row ${rowNumber}: ${code} appears in both expertise and exclusion.`);
 		}
-		if (name) rows.push({ name, email, expertise, exclusions });
+		if (name) rows.push({ name, email, expertise, requiredExpertise, exclusions });
 	}
 	return { rows, errors, warnings };
 };

@@ -108,6 +108,57 @@ void test("judge import normalizes identity and enforces expertise/exclusion con
 	assert.ok(result.errors.some(message => message.includes("not a mini/sponsor category")));
 });
 
+void test("MLH expertise requires coverage of every entered MLH sponsor scope", async () => {
+	const parsed = await parseJudgeCsv(
+		["judge_name,judge_email,expertise,exclusion", "Farhan,farhan@example.com,MLH,"].join("\n"),
+	);
+	assert.deepEqual(parsed.errors, []);
+	assert.deepEqual(parsed.rows[0]?.expertise, [
+		"ELEVENLABS",
+		"GEMINI",
+		"SOLANA",
+		"TIGER_DATA",
+		"PRESAGE",
+		"VULTR",
+		"AUTH0",
+		"GODADDY",
+	]);
+	assert.deepEqual(parsed.rows[0]?.requiredExpertise, parsed.rows[0]?.expertise);
+	const farhan = parsed.rows[0];
+	assert.ok(farhan);
+
+	const projects = Array.from({ length: 20 }, (_, index) =>
+		project(index + 1, { categories: index % 2 === 0 ? ["ELEVENLABS"] : ["FOSS"] }),
+	);
+	const result = generateJudgingAssignments(
+		projects,
+		[farhan, judge(2), judge(3), judge(4), judge(5)],
+		5,
+	);
+	assert.deepEqual(result.errors, []);
+	assert.equal(result.effectiveProjectLimit, 10);
+	assert.equal(result.requiresOverloadApproval, true);
+	assert.equal(
+		projects
+			.filter(item => item.categories.includes("ELEVENLABS"))
+			.every(item =>
+				result.assignments.some(
+					assignment =>
+						assignment.judgeEmail === "farhan@example.com" &&
+						assignment.projectExternalId === item.externalId &&
+						assignment.categoryCode === "ELEVENLABS",
+				),
+			),
+		true,
+	);
+	assert.equal(
+		result.assignments.some(
+			assignment => assignment.judgeEmail === "farhan@example.com" && assignment.categoryCode === "FOSS",
+		),
+		false,
+	);
+});
+
 void test("generation finds the smallest balanced limit above 15 for baseline coverage", () => {
 	const result = generateJudgingAssignments(
 		Array.from({ length: 31 }, (_, index) => project(index + 1)),

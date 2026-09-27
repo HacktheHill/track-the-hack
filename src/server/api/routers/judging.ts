@@ -16,6 +16,7 @@ import {
 	isJudgingCategoryCode,
 	isMiniAssessmentEligibleForRanking,
 	isMiniCategoryCode,
+	MLH_CATEGORY_CODES,
 	mainScoreTotal,
 	pointsForLevel,
 	rubricSnapshot,
@@ -393,7 +394,7 @@ export const judgingRouter = createTRPCRouter({
 							roundId: round.id,
 							name: judge.name,
 							email: judge.email,
-							expertise: judge.expertise,
+							expertise: judge.requiredExpertise?.length ? [...judge.expertise, "MLH"] : judge.expertise,
 							exclusions: judge.exclusions,
 						})),
 					});
@@ -571,12 +572,19 @@ export const judgingRouter = createTRPCRouter({
 			mainTrack: project.mainTrack,
 			categories: project.categories.map(category => category.code).filter(isMiniCategoryCode),
 		}));
-		const judges: ImportedJudge[] = round.judges.map(judge => ({
-			name: judge.name,
-			email: judge.email,
-			expertise: jsonStringArray(judge.expertise).filter(isMiniCategoryCode),
-			exclusions: jsonStringArray(judge.exclusions).filter(isJudgingCategoryCode),
-		}));
+		const judges: ImportedJudge[] = round.judges.map(judge => {
+			const storedExpertise = jsonStringArray(judge.expertise);
+			const expertise = storedExpertise.filter(isMiniCategoryCode);
+			return {
+				name: judge.name,
+				email: judge.email,
+				expertise,
+				requiredExpertise: storedExpertise.includes("MLH")
+					? expertise.filter(code => MLH_CATEGORY_CODES.some(mlhCode => mlhCode === code))
+					: [],
+				exclusions: jsonStringArray(judge.exclusions).filter(isJudgingCategoryCode),
+			};
+		});
 		const generation = generateJudgingAssignments(projects, judges, round.preferredProjectLimit);
 		if (generation.errors.length)
 			throw new TRPCError({ code: "PRECONDITION_FAILED", message: generation.errors.join("\n") });

@@ -63,6 +63,7 @@ const compareNumberTuples = (left: number[], right: number[]) => {
 const candidatePriority = (state: State, judge: ImportedJudge, scope: Scope, projectLimit: number) => {
 	const projects = state.projectsByJudge.get(judge.email) ?? new Set<string>();
 	const alreadyVisits = projects.has(scope.project.externalId);
+	if (projects.size > projectLimit) return null;
 	if (!alreadyVisits && projects.size >= projectLimit) return null;
 	if (!eligible(judge, scope) || hasAssignment(state, judge.email, scope)) return null;
 	const expertisePriority = scope.isMain
@@ -139,13 +140,30 @@ const generateBaseline = (projects: ImportedJudgingProject[], judges: ImportedJu
 		if (a.isMain !== b.isMain) return a.isMain ? -1 : 1;
 		return a.project.tableNumber - b.project.tableNumber || a.categoryCode.localeCompare(b.categoryCode);
 	});
+	for (const scope of scopes) {
+		if (scope.isMain || !isMiniCategoryCode(scope.categoryCode)) continue;
+		for (const judge of judges) {
+			if (!(judge.requiredExpertise ?? []).includes(scope.categoryCode)) continue;
+			if (!eligible(judge, scope)) continue;
+			assign(state, judge, scope, "required all-project expertise coverage");
+		}
+	}
+	const hasRequiredCoverage = state.assignments.length > 0;
 	const uncovered: Scope[] = [];
 	for (const scope of scopes) {
+		if (
+			state.assignments.some(
+				assignment =>
+					assignment.projectExternalId === scope.project.externalId &&
+					assignment.categoryCode === scope.categoryCode,
+			)
+		)
+			continue;
 		const judge = chooseJudge(state, judges, scope, projectLimit);
 		if (!judge) uncovered.push(scope);
 		else assign(state, judge, scope, scope.isMain ? "baseline main-track coverage" : "baseline category coverage");
 	}
-	if (uncovered.length > 0) {
+	if (uncovered.length > 0 && !hasRequiredCoverage) {
 		const exact = generateWholeProjectBaseline(scopes, judges, projectLimit);
 		if (exact) return { state: exact, scopes, uncovered: [] };
 	}
@@ -302,6 +320,24 @@ export const generateJudgingAssignments = (
 			judgeLoads: [],
 			coverage: [],
 		};
+	for (const scope of buildScopes(projects)) {
+		const categoryCode = scope.categoryCode;
+		const requiredJudges = !scope.isMain && isMiniCategoryCode(categoryCode)
+			? judges.filter(judge => (judge.requiredExpertise ?? []).includes(categoryCode))
+			: [];
+		if (requiredJudges.length > 3)
+			return {
+				assignments: [],
+				effectiveProjectLimit: preferredProjectLimit,
+				requiresOverloadApproval: false,
+				warnings: [],
+				errors: [
+					`More than three judges require all-project coverage for ${scope.categoryCode}; the assessment maximum is three.`,
+				],
+				judgeLoads: [],
+				coverage: [],
+			};
+	}
 
 	let effectiveProjectLimit = preferredProjectLimit;
 	let generated = generateBaseline(projects, judges, effectiveProjectLimit);
@@ -313,6 +349,10 @@ export const generateJudgingAssignments = (
 		scope => `No eligible judge can cover table ${scope.project.tableNumber} for ${scope.categoryCode}.`,
 	);
 	if (errors.length === 0) addRedundancy(generated.state, generated.scopes, judges, preferredProjectLimit);
+	effectiveProjectLimit = Math.max(
+		effectiveProjectLimit,
+		...judges.map(judge => generated.state.projectsByJudge.get(judge.email)?.size ?? 0),
+	);
 
 	const warnings: string[] = [];
 	if (effectiveProjectLimit > preferredProjectLimit)
