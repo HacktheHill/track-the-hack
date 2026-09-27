@@ -3,6 +3,7 @@ import test from "node:test";
 import {
 	getJudgingProjectStatus,
 	isJudgingAssignmentStarted,
+	shouldShowJudgingAssignment,
 	shouldShowJudgingSyncButton,
 } from "@/client/judging-status";
 
@@ -13,6 +14,13 @@ void test("manual sync appears only when an online judge can usefully synchroniz
 	assert.equal(shouldShowJudgingSyncButton({ isOnline: true, outboxCount: 0, syncState: "failed" }), true);
 	assert.equal(shouldShowJudgingSyncButton({ isOnline: true, outboxCount: 0, syncState: "outdated" }), true);
 	assert.equal(shouldShowJudgingSyncButton({ isOnline: true, outboxCount: 0, syncState: "syncing" }), true);
+});
+
+void test("completed synchronized judging is hidden while actionable or local-only work remains visible", () => {
+	assert.equal(shouldShowJudgingAssignment({ complete: false, localOnly: false }), true);
+	assert.equal(shouldShowJudgingAssignment({ complete: false, localOnly: true }), true);
+	assert.equal(shouldShowJudgingAssignment({ complete: true, localOnly: true }), true);
+	assert.equal(shouldShowJudgingAssignment({ complete: true, localOnly: false }), false);
 });
 
 const baseState = {

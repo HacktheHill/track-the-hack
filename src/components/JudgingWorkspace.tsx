@@ -10,18 +10,17 @@ import {
 	clearOfflineJudgingData,
 	listJudgingOutbox,
 	loadJudgingSnapshot,
-	markRankingAccessVerified,
 	queueAssignmentPatch,
-	queueRankingPatch,
 	removeJudgingOutboxEntries,
 	saveJudgingSnapshot,
 	type JudgingManifest,
 	type OfflineJudgingPatch,
 } from "@/client/judging-offline";
-import { chunkJudgingOutbox as createSyncBatches, isRankingAccessCurrent } from "@/client/judging-offline-state";
+import { chunkJudgingOutbox as createSyncBatches } from "@/client/judging-offline-state";
 import {
 	getJudgingProjectStatus,
 	isJudgingAssignmentStarted,
+	shouldShowJudgingAssignment,
 	shouldShowJudgingSyncButton,
 } from "@/client/judging-status";
 import {
@@ -80,38 +79,6 @@ const assignmentComplete = (assignment: Assignment) => {
 const localDate = (value: string | Date, locale: string) =>
 	new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 
-const rankingsFromManifest = (manifest: JudgingManifest) =>
-	Object.fromEntries(
-		[...new Set(manifest.judge.assignments.map(assignment => assignment.categoryCode))].map(categoryCode => {
-			const saved = manifest.judge.rankings
-				.filter(ranking => ranking.categoryCode === categoryCode)
-				.sort((a, b) => a.rank - b.rank)
-				.map(ranking => ranking.projectId);
-			const eligible = manifest.judge.assignments
-				.filter(
-					assignment =>
-						assignment.categoryCode === categoryCode &&
-						!assignment.recusedAt &&
-						assignment.project.categories.find(category => category.code === categoryCode)
-							?.eligibilityResolution !== "INELIGIBLE" &&
-						(assignment.isMain ||
-							assignment.miniEligibility === "ELIGIBLE" ||
-							assignmentResolution(assignment) === "ELIGIBLE") &&
-						assignmentComplete(assignment),
-				)
-				.map(assignment => assignment.project.id);
-			const eligibleIds = [...new Set(eligible)];
-			const eligibleSet = new Set(eligibleIds);
-			return [
-				categoryCode,
-				[
-					...saved.filter(projectId => eligibleSet.has(projectId)),
-					...eligibleIds.filter(projectId => !saved.includes(projectId)),
-				],
-			];
-		}),
-	);
-
 const hydrateManifestWithOutbox = (manifest: JudgingManifest, entries: OfflineJudgingPatch[]) => {
 	const assignmentById = new Map(manifest.judge.assignments.map(assignment => [assignment.id, assignment]));
 	type AssignmentEntry = Extract<OfflineJudgingPatch, { kind: "assignment" }>;
@@ -169,14 +136,7 @@ export default function JudgingWorkspace() {
 	const [syncState, setSyncState] = useState<
 		"synced" | "offline" | "syncing" | "failed" | "locked" | "discarded" | "outdated" | "updated"
 	>("synced");
-	const [draggedProjectId, setDraggedProjectId] = useState<string | null>(null);
 	const [recusalDrafts, setRecusalDrafts] = useState<Record<string, string>>({});
-	const [rankingOrders, setRankingOrders] = useState<Record<string, string[]>>({});
-	const [workspaceStep, setWorkspaceStep] = useState<"scoring" | "ranking">("scoring");
-	const [rankingAccessVersion, setRankingAccessVersion] = useState<number | null>(null);
-	const [rankingGateState, setRankingGateState] = useState<"idle" | "checking" | "offline" | "failed" | "incomplete">(
-		"idle",
-	);
 	const syncInFlight = useRef<Promise<void> | null>(null);
 	const syncRequestedWhileBusy = useRef(false);
 
@@ -193,22 +153,10 @@ export default function JudgingWorkspace() {
 		async (next: JudgingManifest) => {
 			const snapshot = await saveJudgingSnapshot(next);
 			setPreparedAt(snapshot.preparedAt);
-			const verifiedVersion = snapshot.rankingVerifiedAssignmentVersion ?? null;
-			setRankingAccessVersion(verifiedVersion);
-			if (!isRankingAccessCurrent(verifiedVersion, next.judge.round.assignmentVersion))
-				setWorkspaceStep("scoring");
 			const entries = await refreshOutbox();
 			const hydrated = hydrateManifestWithOutbox(next, entries);
 			if (next.judge.round.state === "LOCKED" && entries.length === 0) await clearOfflineJudgingData();
 			setManifest(hydrated);
-			setRankingOrders({
-				...rankingsFromManifest(hydrated),
-				...Object.fromEntries(
-					entries
-						.filter(entry => entry.kind === "ranking")
-						.map(entry => [entry.categoryCode, entry.projectIds]),
-				),
-			});
 			if (!selectedProjectId) setSelectedProjectId(hydrated.judge.assignments[0]?.project.id ?? null);
 		},
 		[refreshOutbox, selectedProjectId],
@@ -311,39 +259,12 @@ export default function JudgingWorkspace() {
 				const hydrated = hydrateManifestWithOutbox(snapshot.manifest, entries);
 				setPreparedAt(snapshot.preparedAt);
 				setManifest(hydrated);
-				const verifiedVersion = snapshot.rankingVerifiedAssignmentVersion ?? null;
-				setRankingAccessVersion(verifiedVersion);
-				if (
-					isRankingAccessCurrent(verifiedVersion, hydrated.judge.round.assignmentVersion) &&
-					hydrated.judge.assignments.every(assignmentComplete)
-				)
-					setWorkspaceStep("ranking");
-				setRankingOrders({
-					...rankingsFromManifest(hydrated),
-					...Object.fromEntries(
-						entries
-							.filter(entry => entry.kind === "ranking")
-							.map(entry => [entry.categoryCode, entry.projectIds]),
-					),
-				});
 				setSelectedProjectId(hydrated.judge.assignments[0]?.project.id ?? null);
 				setSyncState(typeof navigator !== "undefined" && navigator.onLine ? "failed" : "offline");
 			});
 		});
 		void refreshOutbox();
 	}, [isOnline, manifest, refreshOutbox]);
-
-	useEffect(() => {
-		if (
-			manifest &&
-			rankingAccessVersion !== null &&
-			!isRankingAccessCurrent(rankingAccessVersion, manifest.judge.round.assignmentVersion)
-		) {
-			setRankingAccessVersion(null);
-			setWorkspaceStep("scoring");
-			setRankingGateState("incomplete");
-		}
-	}, [manifest, rankingAccessVersion]);
 
 	useEffect(() => {
 		setIsOnline(navigator.onLine);
@@ -373,33 +294,26 @@ export default function JudgingWorkspace() {
 		return () => window.clearInterval(retry);
 	}, [sync]);
 
-	useEffect(() => {
-		if (!manifest) return;
-		const eligibleOrders = rankingsFromManifest(manifest);
-		setRankingOrders(current =>
-			Object.fromEntries(
-				Object.entries(eligibleOrders).map(([categoryCode, eligibleOrder]) => {
-					const currentOrder = current[categoryCode] ?? [];
-					return [
-						categoryCode,
-						[
-							...currentOrder.filter(projectId => eligibleOrder.includes(projectId)),
-							...eligibleOrder.filter(projectId => !currentOrder.includes(projectId)),
-						],
-					];
+	const assignments = useMemo(() => manifest?.judge.assignments ?? [], [manifest]);
+	const visibleAssignments = useMemo(
+		() =>
+			assignments.filter(assignment =>
+				shouldShowJudgingAssignment({
+					complete: assignmentComplete(assignment),
+					localOnly: localAssignmentIds.has(assignment.id),
 				}),
 			),
-		);
-	}, [manifest]);
-
-	const assignments = useMemo(() => manifest?.judge.assignments ?? [], [manifest]);
+		[assignments, localAssignmentIds],
+	);
 	const projects = useMemo(() => {
 		const unique = new Map<string, Assignment["project"]>();
-		for (const assignment of assignments) unique.set(assignment.project.id, assignment.project);
+		for (const assignment of visibleAssignments) unique.set(assignment.project.id, assignment.project);
 		return [...unique.values()].sort((a, b) => a.room.localeCompare(b.room) || a.tableNumber - b.tableNumber);
-	}, [assignments]);
+	}, [visibleAssignments]);
 	const selectedProject = projects.find(project => project.id === selectedProjectId) ?? projects[0];
-	const selectedAssignments = assignments.filter(assignment => assignment.project.id === selectedProject?.id);
+	const selectedAssignments = visibleAssignments.filter(
+		assignment => assignment.project.id === selectedProject?.id,
+	);
 	const selectedRecusal = selectedAssignments.find(assignment => assignment.recusedAt);
 	const selectedRecusalAnchor = selectedAssignments[0];
 
@@ -450,51 +364,6 @@ export default function JudgingWorkspace() {
 		await queueChange(selectedRecusalAnchor.id, { recusalReason: reason });
 	}, [queueChange, recusalDrafts, selectedProject, selectedRecusalAnchor]);
 
-	const saveRanking = useCallback(
-		async (categoryCode: string, order: string[]) => {
-			if (!manifest || !isRankingAccessCurrent(rankingAccessVersion, manifest.judge.round.assignmentVersion))
-				return;
-			setRankingOrders(current => ({ ...current, [categoryCode]: order }));
-			await queueRankingPatch(categoryCode, order);
-			await refreshOutbox();
-			setSyncState(navigator.onLine ? "syncing" : "offline");
-			if (navigator.onLine) window.setTimeout(() => void sync(), 0);
-		},
-		[manifest, rankingAccessVersion, refreshOutbox, sync],
-	);
-
-	const checkAssignmentsAndContinue = useCallback(async () => {
-		if (!navigator.onLine) {
-			setRankingGateState("offline");
-			return;
-		}
-		setRankingGateState("checking");
-		try {
-			await sync();
-			if ((await listJudgingOutbox()).length > 0) {
-				setRankingGateState("failed");
-				return;
-			}
-			const refreshed = await manifestQuery.refetch();
-			if (!refreshed.data) {
-				setRankingGateState("failed");
-				return;
-			}
-			await applyManifest(refreshed.data);
-			if (!refreshed.data.judge.assignments.every(assignmentComplete)) {
-				setRankingAccessVersion(null);
-				setRankingGateState("incomplete");
-				return;
-			}
-			await markRankingAccessVerified(refreshed.data);
-			setRankingAccessVersion(refreshed.data.judge.round.assignmentVersion);
-			setRankingGateState("idle");
-			setWorkspaceStep("ranking");
-		} catch {
-			setRankingGateState("failed");
-		}
-	}, [applyManifest, manifestQuery, sync]);
-
 	if (!manifest) {
 		return (
 			<App className="overflow-y-auto bg-default-gradient" integrated title={t("title")}>
@@ -520,14 +389,6 @@ export default function JudgingWorkspace() {
 		);
 	}
 
-	const allComplete = assignments.every(assignmentComplete);
-	const rankingsComplete = Object.entries(rankingOrders).every(([categoryCode, order]) => {
-		if (order.length <= 1) return true;
-		const saved = manifest.judge.rankings.filter(
-			ranking => ranking.categoryCode === categoryCode && ranking.confirmedAt,
-		);
-		return saved.length === order.length && saved.every(ranking => order.includes(ranking.projectId));
-	});
 	const bannerKey = syncState === "synced" && outboxCount ? "failed" : syncState;
 	const showSyncButton = shouldShowJudgingSyncButton({ isOnline, outboxCount, syncState: bannerKey });
 	return (
@@ -564,12 +425,9 @@ export default function JudgingWorkspace() {
 				)}
 				<p className="ui-panel p-3 text-sm">{t("shared-device")}</p>
 
-				<div
-					className={`${workspaceStep === "scoring" ? "flex" : "hidden"} gap-2 overflow-x-auto pb-2`}
-					aria-label={t("title")}
-				>
+				<div className="flex gap-2 overflow-x-auto pb-2" aria-label={t("title")}>
 					{projects.map(project => {
-						const projectAssignments = assignments.filter(
+						const projectAssignments = visibleAssignments.filter(
 							assignment => assignment.project.id === project.id,
 						);
 						const complete = projectAssignments.every(assignmentComplete);
@@ -618,7 +476,7 @@ export default function JudgingWorkspace() {
 					})}
 				</div>
 
-				{workspaceStep === "scoring" && selectedProject && (
+				{selectedProject && (
 					<section className="ui-panel flex flex-col gap-5 p-5">
 						<div>
 							<p className="font-rubik text-sm font-bold uppercase tracking-wide">
@@ -863,7 +721,7 @@ export default function JudgingWorkspace() {
 							})}
 					</section>
 				)}
-				{workspaceStep === "scoring" && selectedProject && (
+				{selectedProject && (
 					<div className="flex justify-between gap-3">
 						<button
 							type="button"
@@ -892,122 +750,11 @@ export default function JudgingWorkspace() {
 					</div>
 				)}
 
-				{workspaceStep === "scoring" && allComplete && (
-					<section className="ui-panel flex flex-col gap-3 p-5">
-						<h2 className="text-2xl font-bold">{t("ranking-gate-title")}</h2>
-						<p>{t("ranking-gate-help")}</p>
-						{rankingGateState !== "idle" && rankingGateState !== "checking" && (
-							<p className="font-bold text-amber-800">{t(`ranking-gate-${rankingGateState}`)}</p>
-						)}
-						{rankingGateState === "checking" && <p role="status">{t("ranking-gate-checking")}</p>}
-						<button
-							type="button"
-							className="ui-button ui-button-primary self-start"
-							disabled={rankingGateState === "checking"}
-							onClick={() => void checkAssignmentsAndContinue()}
-						>
-							{t("ranking-gate-action")}
-						</button>
+				{projects.length === 0 && (
+					<section className="ui-panel p-5 text-center">
+						<p className="text-lg font-bold text-green-800">{t("complete")}</p>
 					</section>
 				)}
-
-				{workspaceStep === "ranking" &&
-					isRankingAccessCurrent(rankingAccessVersion, manifest.judge.round.assignmentVersion) && (
-						<section className="ui-panel flex flex-col gap-5 p-5">
-							<div className="flex flex-wrap items-center justify-between gap-3">
-								<button type="button" className="ui-button" onClick={() => setWorkspaceStep("scoring")}>
-									{t("back-to-scoring")}
-								</button>
-								<p className="text-sm font-bold text-green-800">
-									{t("ranking-version", { version: rankingAccessVersion })}
-								</p>
-							</div>
-							<h2 className="text-2xl font-bold">{t("rankings")}</h2>
-							<p>{t("rank-help")}</p>
-							{Object.entries(rankingOrders).map(
-								([categoryCode, order]) =>
-									order.length > 1 && (
-										<div key={categoryCode}>
-											<h3 className="text-lg font-bold">
-												{categoryDefinition(categoryCode)?.[locale] ?? categoryCode}
-											</h3>
-											<ol className="mt-2 flex flex-col gap-2">
-												{order.map((projectId, index) => {
-													const project = projects.find(item => item.id === projectId);
-													if (!project) return null;
-													const move = (offset: number) => {
-														const next = [...order];
-														const target = index + offset;
-														if (target < 0 || target >= next.length) return;
-														const current = next[index];
-														const replacement = next[target];
-														if (current === undefined || replacement === undefined) return;
-														next[index] = replacement;
-														next[target] = current;
-														void saveRanking(categoryCode, next);
-													};
-													return (
-														<li
-															key={projectId}
-															draggable
-															onDragStart={() => setDraggedProjectId(projectId)}
-															onDragOver={event => event.preventDefault()}
-															onDrop={() => {
-																if (!draggedProjectId || draggedProjectId === projectId)
-																	return;
-																const next = order.filter(
-																	id => id !== draggedProjectId,
-																);
-																next.splice(index, 0, draggedProjectId);
-																setDraggedProjectId(null);
-																void saveRanking(categoryCode, next);
-															}}
-															className="flex items-center gap-2 rounded-xl border bg-white p-3"
-														>
-															<span className="w-7 font-bold">{index + 1}</span>
-															<span className="flex-1">
-																{t("table", { number: project.tableNumber })} ·{" "}
-																{project.name}
-															</span>
-															<button
-																type="button"
-																className="ui-button"
-																disabled={index === 0}
-																onClick={() => move(-1)}
-															>
-																{t("move-up")}
-															</button>
-															<button
-																type="button"
-																className="ui-button"
-																disabled={index === order.length - 1}
-																onClick={() => move(1)}
-															>
-																{t("move-down")}
-															</button>
-														</li>
-													);
-												})}
-											</ol>
-											<button
-												type="button"
-												className="ui-button mt-3"
-												onClick={() => void saveRanking(categoryCode, order)}
-											>
-												{t("confirm-ranking")}
-											</button>
-										</div>
-									),
-							)}
-							{outboxCount > 0 ? (
-								<p className="font-bold text-amber-800">{t("ready-local")}</p>
-							) : !rankingsComplete ? (
-								<p className="font-bold text-amber-800">{t("ranking-stale")}</p>
-							) : (
-								<p className="font-bold text-green-800">{t("complete")}</p>
-							)}
-						</section>
-					)}
 			</div>
 		</App>
 	);

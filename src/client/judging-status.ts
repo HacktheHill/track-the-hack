@@ -48,6 +48,14 @@ export const shouldShowJudgingSyncButton = ({
 	syncState: string;
 }) => isOnline && (outboxCount > 0 || syncState === "syncing" || syncState === "failed" || syncState === "outdated");
 
+export const shouldShowJudgingAssignment = ({
+	complete,
+	localOnly,
+}: {
+	complete: boolean;
+	localOnly: boolean;
+}) => !complete || localOnly;
+
 export const getJudgingProjectStatus = ({
 	localOnly,
 	complete,

@@ -681,7 +681,6 @@ export const judgingRouter = createTRPCRouter({
 					include: { judge: true, project: true },
 					orderBy: [{ judge: { name: "asc" } }, { project: { tableNumber: "asc" } }],
 				},
-				rankings: { orderBy: [{ judgeId: "asc" }, { categoryCode: "asc" }, { rank: "asc" }] },
 			},
 		});
 		if (!round) return null;
@@ -767,63 +766,11 @@ export const judgingRouter = createTRPCRouter({
 					new Set(assignments.map(assignment => assignment.judgeId)).size > 1 && sharedProjects.size === 0,
 			};
 		});
-		const rankingStatuses = round.judges.flatMap(judge => {
-			const judgeAssignments = round.assignments.filter(assignment => assignment.judgeId === judge.id);
-			return [...new Set(judgeAssignments.map(assignment => assignment.categoryCode))]
-				.sort()
-				.map(categoryCode => {
-					const categoryAssignments = judgeAssignments.filter(
-						assignment => assignment.categoryCode === categoryCode,
-					);
-					const projectResolution = (projectId: string) =>
-						round.projects
-							.find(project => project.id === projectId)
-							?.categories.find(category => category.code === categoryCode)?.eligibilityResolution;
-					const scoringComplete = categoryAssignments.every(assignment =>
-						isAssignmentComplete(assignment, projectResolution(assignment.projectId)),
-					);
-					const eligibleProjectIds = categoryAssignments
-						.filter(
-							assignment =>
-								!assignment.recusedAt &&
-								assignment.completedAt &&
-								(assignment.isMain ||
-									((assignment.miniEligibility === "ELIGIBLE" ||
-										projectResolution(assignment.projectId) === "ELIGIBLE") &&
-										assignment.miniScore !== null &&
-										projectResolution(assignment.projectId) !== "INELIGIBLE")),
-						)
-						.map(assignment => assignment.projectId);
-					const ranking = round.rankings.filter(
-						item => item.judgeId === judge.id && item.categoryCode === categoryCode,
-					);
-					const confirmedRanking = ranking.filter(item => item.confirmedAt);
-					const exactConfirmedRanking =
-						confirmedRanking.length === eligibleProjectIds.length &&
-						confirmedRanking.every(item => eligibleProjectIds.includes(item.projectId));
-					const status = !scoringComplete
-						? "BLOCKED"
-						: eligibleProjectIds.length <= 1
-							? "AUTOMATIC"
-							: exactConfirmedRanking
-								? "COMPLETE"
-								: ranking.length
-									? "STALE"
-									: "NOT_STARTED";
-					return {
-						judgeId: judge.id,
-						categoryCode,
-						eligibleProjectCount: eligibleProjectIds.length,
-						status,
-					};
-				});
-		});
 		return {
 			...round,
 			judgeLoads,
 			coverage,
 			categoryCohorts,
-			rankingStatuses,
 			generationWarningList: jsonStringArray(round.generationWarnings),
 		};
 	}),
@@ -1866,8 +1813,6 @@ export const judgingRouter = createTRPCRouter({
 				where: { id: input.roundId },
 				include: {
 					assignments: true,
-					rankings: true,
-					judges: true,
 					projects: { include: { categories: true } },
 				},
 			});
@@ -1907,43 +1852,6 @@ export const judgingRouter = createTRPCRouter({
 					code: "PRECONDITION_FAILED",
 					message: `${unresolvedEligibility} eligibility decisions still require administrator resolution.`,
 				});
-			let incompleteRankings = 0;
-			for (const judge of round.judges) {
-				const assignments = round.assignments.filter(assignment => assignment.judgeId === judge.id);
-				for (const categoryCode of new Set(assignments.map(assignment => assignment.categoryCode))) {
-					const projectResolution = (projectId: string) =>
-						round.projects
-							.find(project => project.id === projectId)
-							?.categories.find(category => category.code === categoryCode)?.eligibilityResolution;
-					const eligibleProjects = assignments
-						.filter(
-							assignment =>
-								assignment.categoryCode === categoryCode &&
-								!assignment.recusedAt &&
-								assignment.completedAt &&
-								(assignment.isMain ||
-									((assignment.miniEligibility === "ELIGIBLE" ||
-										projectResolution(assignment.projectId) === "ELIGIBLE") &&
-										assignment.miniScore !== null &&
-										projectResolution(assignment.projectId) !== "INELIGIBLE")),
-						)
-						.map(assignment => assignment.projectId);
-					if (eligibleProjects.length <= 1) continue;
-					const ranking = round.rankings.filter(
-						item => item.judgeId === judge.id && item.categoryCode === categoryCode && item.confirmedAt,
-					);
-					if (
-						ranking.length !== eligibleProjects.length ||
-						ranking.some(item => !eligibleProjects.includes(item.projectId))
-					)
-						incompleteRankings += 1;
-				}
-			}
-			if (incompleteRankings && !input.force)
-				throw new TRPCError({
-					code: "PRECONDITION_FAILED",
-					message: `${incompleteRankings} synchronized category rankings are incomplete or stale.`,
-				});
 			return ctx.prisma.$transaction(async transaction => {
 				const locked = await transaction.judgingRound.updateMany({
 					where: {
@@ -1967,7 +1875,7 @@ export const judgingRouter = createTRPCRouter({
 						outcome: input.force ? "force_locked" : "locked",
 						actor: { type: "organizer", id: ctx.organizer.id },
 						resource: { type: "judging_round", id: round.id },
-						data: { incompleteAssessments: incomplete, incompleteRankings, unresolvedEligibility },
+						data: { incompleteAssessments: incomplete, unresolvedEligibility },
 					}),
 				);
 				return updated;
@@ -3222,13 +3130,12 @@ export const judgingRouter = createTRPCRouter({
 	}),
 
 	results: adminProcedure.input(roundIdInput).query(async ({ ctx, input }) => {
-		const [assignments, projects, rankings] = await Promise.all([
+		const [assignments, projects] = await Promise.all([
 			ctx.prisma.judgingAssignment.findMany({
 				where: { roundId: input.roundId, recusedAt: null },
 				include: { project: true, judge: true },
 			}),
 			ctx.prisma.judgingProject.findMany({ where: { roundId: input.roundId }, include: { categories: true } }),
-			ctx.prisma.judgingRanking.findMany({ where: { roundId: input.roundId, confirmedAt: { not: null } } }),
 		]);
 		const resolutionFor = (assignment: (typeof assignments)[number]) =>
 			projects
@@ -3271,17 +3178,6 @@ export const judgingRouter = createTRPCRouter({
 				? assignment.miniScore
 				: null;
 		};
-		const percentileByProject = new Map<string, number[]>();
-		for (const grouped of Map.groupBy(rankings, ranking => `${ranking.judgeId}:${ranking.categoryCode}`).values()) {
-			if (grouped.length <= 1) continue;
-			const ordered = grouped.sort((a, b) => a.rank - b.rank);
-			for (const [index, ranking] of ordered.entries()) {
-				const key = `${ranking.projectId}:${ranking.categoryCode}`;
-				const values = percentileByProject.get(key) ?? [];
-				values.push(index / (ordered.length - 1));
-				percentileByProject.set(key, values);
-			}
-		}
 		const aggregates = projects.flatMap(project => {
 			const categoryCodes = [
 				...(project.mainTrack === "CGI" ? [] : [project.mainTrack]),
@@ -3323,7 +3219,6 @@ export const judgingRouter = createTRPCRouter({
 					)
 					.filter((value): value is number => value !== null);
 				const average = (values: number[]) => values.reduce((sum, value) => sum + value, 0) / values.length;
-				const percentiles = percentileByProject.get(`${project.id}:${categoryCode}`) ?? [];
 				const criterionMeans =
 					isMain && included.length
 						? {
@@ -3349,7 +3244,6 @@ export const judgingRouter = createTRPCRouter({
 					mainTrack: project.mainTrack,
 					categoryCode,
 					numericAggregate: numericValues.length ? Number(average(numericValues).toFixed(2)) : null,
-					ordinalPercentile: percentiles.length ? Number(average(percentiles).toFixed(4)) : null,
 					includedAssessments: included.length,
 					needsReview,
 					criterionMeans,
@@ -3373,10 +3267,6 @@ export const judgingRouter = createTRPCRouter({
 				.sort((a, b) => {
 					const numericDifference = (b.numericAggregate ?? 0) - (a.numericAggregate ?? 0);
 					if (numericDifference !== 0) return numericDifference;
-					if (a.ordinalPercentile !== null && b.ordinalPercentile !== null) {
-						const ordinalDifference = b.ordinalPercentile - a.ordinalPercentile;
-						if (ordinalDifference !== 0) return ordinalDifference;
-					}
 					return a.tableNumber - b.tableNumber || a.projectId.localeCompare(b.projectId);
 				});
 			return items.map(item => {
@@ -3384,10 +3274,7 @@ export const judgingRouter = createTRPCRouter({
 				const tied = scored.some(
 					candidate =>
 						candidate.projectId !== item.projectId &&
-						candidate.numericAggregate === item.numericAggregate &&
-						(candidate.ordinalPercentile === null ||
-							item.ordinalPercentile === null ||
-							candidate.ordinalPercentile === item.ordinalPercentile),
+						candidate.numericAggregate === item.numericAggregate,
 				);
 				return {
 					...item,
@@ -3425,36 +3312,6 @@ export const judgingRouter = createTRPCRouter({
 					values.length
 						? Number((values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(2))
 						: null;
-				const rankingAgreements: number[] = [];
-				const ownRankings = rankings.filter(ranking => ranking.judgeId === judge.id);
-				for (const otherJudgeId of new Set(
-					rankings.map(ranking => ranking.judgeId).filter(id => id !== judge.id),
-				)) {
-					for (const categoryCode of new Set(ownRankings.map(ranking => ranking.categoryCode))) {
-						const own = ownRankings
-							.filter(ranking => ranking.categoryCode === categoryCode)
-							.sort((a, b) => a.rank - b.rank);
-						const other = rankings
-							.filter(
-								ranking => ranking.judgeId === otherJudgeId && ranking.categoryCode === categoryCode,
-							)
-							.sort((a, b) => a.rank - b.rank);
-						const common = own.filter(item =>
-							other.some(candidate => candidate.projectId === item.projectId),
-						);
-						if (common.length < 3) continue;
-						const differences = common.map(item => {
-							const ownIndex = own.findIndex(candidate => candidate.projectId === item.projectId);
-							const otherIndex = other.findIndex(candidate => candidate.projectId === item.projectId);
-							return Math.abs(
-								ownIndex / Math.max(own.length - 1, 1) - otherIndex / Math.max(other.length - 1, 1),
-							);
-						});
-						rankingAgreements.push(
-							1 - differences.reduce((sum, value) => sum + value, 0) / differences.length,
-						);
-					}
-				}
 				return {
 					judgeId: judge.id,
 					judgeName: judge.name,
@@ -3473,12 +3330,11 @@ export const judgingRouter = createTRPCRouter({
 						learning: mean(main.map(item => pointsForLevel(completedLevel(item.learningLevel), 5))),
 						presentation: mean(main.map(item => pointsForLevel(completedLevel(item.presentationLevel), 5))),
 					},
-					rankAgreement: mean(rankingAgreements),
 					expertiseMatches: judgeAssignments.filter(assignment => assignment.expertiseMatch).length,
 					fallbacks: judgeAssignments.filter(assignment => !assignment.isMain && !assignment.expertiseMatch)
 						.length,
 					sharedAssessments: sharedDifferences.length,
-					insufficientOverlap: sharedDifferences.length === 0 && rankingAgreements.length === 0,
+					insufficientOverlap: sharedDifferences.length === 0,
 				};
 			},
 		);

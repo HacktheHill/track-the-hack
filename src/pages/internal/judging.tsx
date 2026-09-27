@@ -668,44 +668,6 @@ export default function JudgingAdminPage() {
 								</tbody>
 							</table>
 						</div>
-						<h3 className="text-xl font-bold">{t("judging.ranking-readiness")}</h3>
-						<p>{t("judging.ranking-readiness-note")}</p>
-						<div className="max-h-72 overflow-auto">
-							<table className="w-full text-left">
-								<thead>
-									<tr>
-										<th>{t("judging.judge")}</th>
-										<th>{t("judging.category")}</th>
-										<th>{t("judging.eligible-ranked-projects")}</th>
-										<th>{t("judging.ranking-status")}</th>
-									</tr>
-								</thead>
-								<tbody>
-									{round.rankingStatuses.map(status => (
-										<tr
-											key={`${status.judgeId}:${status.categoryCode}`}
-											className={
-												status.status === "COMPLETE" || status.status === "AUTOMATIC"
-													? "border-t"
-													: "border-t bg-amber-50"
-											}
-										>
-											<td>
-												{round.judges.find(judge => judge.id === status.judgeId)?.name ??
-													status.judgeId}
-											</td>
-											<td>{status.categoryCode}</td>
-											<td>{status.eligibleProjectCount}</td>
-											<td>
-												{t(
-													`judging.ranking-status-${status.status.toLowerCase().replace("_", "-")}`,
-												)}
-											</td>
-										</tr>
-									))}
-								</tbody>
-							</table>
-						</div>
 						<h3 className="text-xl font-bold">{t("judging.move-visit")}</h3>
 						<div className="grid gap-2 sm:grid-cols-[1fr_1fr_1fr_auto]">
 							<select
@@ -1028,7 +990,6 @@ export default function JudgingAdminPage() {
 											category: item.categoryCode,
 											numeric_aggregate: item.numericAggregate,
 											included_assessments: item.includedAssessments,
-											ordinal_percentile: item.ordinalPercentile,
 											needs_review: item.needsReview,
 											official_position: item.officialPosition,
 											unresolved_tie: item.unresolvedTie,
@@ -1075,8 +1036,7 @@ export default function JudgingAdminPage() {
 												<th>{t("judging.average")}</th>
 												<th>{t("judging.spread")}</th>
 												<th>{t("judging.co-judge-difference")}</th>
-												<th>{t("judging.rank-agreement")}</th>
-												<th>{t("judging.overlap")}</th>
+										<th>{t("judging.overlap")}</th>
 											</tr>
 										</thead>
 										<tbody>
@@ -1090,8 +1050,7 @@ export default function JudgingAdminPage() {
 													<td>{item.averageScore ?? "—"}</td>
 													<td>{item.scoreSpread ?? "—"}</td>
 													<td>{item.meanDifferenceFromCoJudges ?? "—"}</td>
-													<td>{item.rankAgreement ?? "—"}</td>
-													<td>
+											<td>
 														{item.insufficientOverlap
 															? t("judging.insufficient-overlap")
 															: item.sharedAssessments}
