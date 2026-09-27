@@ -18,6 +18,7 @@ import {
 	judgingFieldWriteWins,
 } from "@/server/services/judging-sync";
 import {
+	ALL_JUDGING_CATEGORY_CODES,
 	canonicalProjectCategoryCodes,
 	isJudgingCategoryCode,
 	isMiniAssessmentEligibleForRanking,
@@ -1247,6 +1248,121 @@ export const judgingRouter = createTRPCRouter({
 					};
 				},
 				{ isolationLevel: Prisma.TransactionIsolationLevel.Serializable, maxWait: 10_000, timeout: 30_000 },
+			);
+		}),
+
+	restrictJudgesToCategories: adminProcedure
+		.input(
+			z.object({
+				roundId: z.string().min(1).max(191),
+				expectedAssignmentVersion: z.number().int().nonnegative(),
+				previewOnly: z.boolean().default(true),
+				confirmRestrictions: z.literal(true),
+				judges: z
+					.array(
+						z.object({
+							judgeId: z.string().min(1).max(191),
+							allowedCategoryCodes: z.array(z.string().refine(isJudgingCategoryCode)).max(14),
+						}),
+					)
+					.min(1)
+					.max(20),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const requestedIds = input.judges.map(judge => judge.judgeId);
+			if (new Set(requestedIds).size !== requestedIds.length)
+				throw new TRPCError({ code: "BAD_REQUEST", message: "Judge restrictions must be unique." });
+			return ctx.prisma.$transaction(
+				async transaction => {
+					const [round, judges, assignments] = await Promise.all([
+						transaction.judgingRound.findUnique({ where: { id: input.roundId } }),
+						transaction.judgingJudge.findMany({
+							where: { roundId: input.roundId, id: { in: requestedIds } },
+						}),
+						transaction.judgingAssignment.findMany({
+							where: { roundId: input.roundId, judgeId: { in: requestedIds }, recusedAt: null },
+							select: { judgeId: true, categoryCode: true },
+						}),
+					]);
+					if (!round || judges.length !== requestedIds.length) throw new TRPCError({ code: "NOT_FOUND" });
+					requireRoundState(round, "OPEN");
+					if (round.assignmentVersion !== input.expectedAssignmentVersion)
+						throw new TRPCError({
+							code: "CONFLICT",
+							message: "Assignments changed. Refresh the restriction preview before applying it.",
+						});
+					const requestById = new Map(input.judges.map(judge => [judge.judgeId, judge]));
+					const results = judges.map(judge => {
+						const request = requestById.get(judge.id);
+						if (!request) throw new Error("Validated judge restriction is missing");
+						const allowed = new Set<string>(request.allowedCategoryCodes);
+						const currentCategories = [
+							...new Set(
+								assignments
+									.filter(assignment => assignment.judgeId === judge.id)
+									.map(assignment => assignment.categoryCode),
+							),
+						].sort();
+						const disallowedCurrent = currentCategories.filter(category => !allowed.has(category));
+						if (disallowedCurrent.length)
+							throw new TRPCError({
+								code: "PRECONDITION_FAILED",
+								message: `${judge.name} still has assignments outside the requested categories: ${disallowedCurrent.join(", ")}.`,
+							});
+						const excludedCategoryCodes = ALL_JUDGING_CATEGORY_CODES.filter(code => !allowed.has(code));
+						const existingExclusions = jsonStringArray(judge.exclusions);
+						const conflictingAllowed = request.allowedCategoryCodes.filter(code => existingExclusions.includes(code));
+						if (conflictingAllowed.length)
+							throw new TRPCError({
+								code: "PRECONDITION_FAILED",
+								message: `${judge.name} is already excluded from an allowed category: ${conflictingAllowed.join(", ")}.`,
+							});
+						return {
+							judgeId: judge.id,
+							judgeName: judge.name,
+							allowedCategoryCodes: [...allowed].sort(),
+							excludedCategoryCodes,
+							currentCategories,
+						};
+					});
+					if (input.previewOnly)
+						return {
+							previewOnly: true,
+							assignmentVersion: round.assignmentVersion,
+							proposedAssignmentVersion: round.assignmentVersion + 1,
+							judges: results,
+						};
+					await claimAssignmentVersion(transaction, round.id, input.expectedAssignmentVersion);
+					for (const result of results) {
+						await transaction.judgingJudge.update({
+							where: { id: result.judgeId },
+							data: { exclusions: result.excludedCategoryCodes },
+						});
+						await persistAuditEvent(
+							transaction,
+							createAuditEvent({
+								name: "judging.assignment.changed",
+								outcome: "judge_restricted",
+								actor: { type: "organizer", id: ctx.organizer.id },
+								subject: { type: "judging_judge", id: result.judgeId },
+								resource: { type: "judging_round", id: round.id },
+								data: {
+									allowedCategoryCodes: result.allowedCategoryCodes.join(";"),
+									excludedCategoryCount: result.excludedCategoryCodes.length,
+									assignmentVersionChanged: true,
+								},
+							}),
+						);
+					}
+					return {
+						previewOnly: false,
+						assignmentVersion: round.assignmentVersion + 1,
+						proposedAssignmentVersion: round.assignmentVersion + 1,
+						judges: results,
+					};
+				},
+				{ isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
 			);
 		}),
 
