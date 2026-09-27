@@ -25,6 +25,57 @@ void test("checked-in count uses distinct participant IDs across check-in events
 	]);
 });
 
+void test("attendance integrity counts only evidence missing a positive check-in", async t => {
+	const hackerCount = t.mock.fn(() => Promise.resolve(0));
+	const eventCount = t.mock.fn(() => Promise.resolve(1));
+	// Partial database mock exposes only the operations exercised by these repository methods.
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+	const prisma = {
+		hacker: { count: hackerCount },
+		event: { count: eventCount },
+	} as unknown as Pick<PrismaClient, "event" | "hacker" | "presence">;
+
+	const repository = createPrismaOperationalMetricsRepository(prisma);
+	assert.equal(await repository.countIssuedPassesWithoutCheckIn(), 0);
+	assert.equal(await repository.countPositivePresenceWithoutCheckIn(), 0);
+	assert.equal(await repository.countVisibleCheckInEvents(), 1);
+
+	assert.deepEqual(hackerCount.mock.calls[0]?.arguments, [
+		{
+			where: {
+				claimToken: { isNot: null },
+				presences: {
+					none: { value: { gt: 0 }, event: { scannerWorkflow: ScannerWorkflow.CHECK_IN } },
+				},
+			},
+		},
+	]);
+	assert.deepEqual(hackerCount.mock.calls[1]?.arguments, [
+		{
+			where: {
+				AND: [
+					{
+						presences: {
+							some: {
+								value: { gt: 0 },
+								event: { scannerWorkflow: { not: ScannerWorkflow.CHECK_IN } },
+							},
+						},
+					},
+					{
+						presences: {
+							none: { value: { gt: 0 }, event: { scannerWorkflow: ScannerWorkflow.CHECK_IN } },
+						},
+					},
+				],
+			},
+		},
+	]);
+	assert.deepEqual(eventCount.mock.calls[0]?.arguments, [
+		{ where: { hidden: false, scannerWorkflow: ScannerWorkflow.CHECK_IN } },
+	]);
+});
+
 void test("operational metrics expose only aggregate database-derived values", async () => {
 	const hackerGroupings: string[][] = [];
 	let summedPresences = false;
@@ -37,10 +88,16 @@ void test("operational metrics expose only aggregate database-derived values", a
 			summedPresences = true;
 			return Promise.resolve(5);
 		},
-		groupAttendanceByEvent: () =>
+		groupRecordedUnitsByEvent: () =>
 			Promise.resolve([
 				{ eventId: "event-1", _sum: { value: 3 } },
 				{ eventId: "event-2", _sum: { value: 2 } },
+			]),
+		groupPositiveParticipantsByEvent: () =>
+			Promise.resolve([
+				{ eventId: "event-1", hackerId: "participant-1" },
+				{ eventId: "event-1", hackerId: "participant-2" },
+				{ eventId: "event-2", hackerId: "participant-1" },
 			]),
 		groupMealCategories: () => {
 			hackerGroupings.push(["mealCategory"]);
@@ -57,6 +114,9 @@ void test("operational metrics expose only aggregate database-derived values", a
 				{ id: "event-2", name: "Lunch" },
 			]);
 		},
+		countIssuedPassesWithoutCheckIn: () => Promise.resolve(0),
+		countPositivePresenceWithoutCheckIn: () => Promise.resolve(1),
+		countVisibleCheckInEvents: () => Promise.resolve(1),
 	};
 
 	const metrics = await getOperationalMetrics(repository);
@@ -68,11 +128,16 @@ void test("operational metrics expose only aggregate database-derived values", a
 		checkedIn: 7,
 		presences: 5,
 		attendanceData: [
-			{ eventId: "event-1", label: "Lunch", _sum: { value: 3 } },
-			{ eventId: "event-2", label: "Lunch", _sum: { value: 2 } },
+			{ eventId: "event-1", label: "Lunch", uniqueParticipants: 2, recordedUnits: 3 },
+			{ eventId: "event-2", label: "Lunch", uniqueParticipants: 1, recordedUnits: 2 },
 		],
 		mealCategoryData: [{ mealCategory: MealCategory.HALAL, _count: { mealCategory: 4 } }],
 		tShirtSizeData: [{ tShirtSize: TShirtSize.M, _count: { tShirtSize: 3 } }],
+		attendanceIntegrity: {
+			issuedPassesWithoutCheckIn: 0,
+			positivePresenceWithoutCheckIn: 1,
+			visibleCheckInEvents: 1,
+		},
 	});
 	assert.deepEqual(hackerGroupings, [["mealCategory"], ["tShirtSize"]]);
 	assert.equal(summedPresences, true);
