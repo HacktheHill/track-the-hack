@@ -106,29 +106,49 @@ const rankingsFromManifest = (manifest: JudgingManifest) =>
 		}),
 	);
 
-const hydrateManifestWithOutbox = (manifest: JudgingManifest, entries: OfflineJudgingPatch[]) => ({
-	...manifest,
-	judge: {
-		...manifest.judge,
-		assignments: manifest.judge.assignments.map(assignment => {
-			const patch = entries.find(entry => entry.kind === "assignment" && entry.assignmentId === assignment.id);
-			return patch?.kind === "assignment"
-				? // IndexedDB values were produced only by the typed assignment controls.
-					// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-					({
-						...assignment,
-						...patch.values,
-						recusedAt:
-							"recusalReason" in patch.values
-								? patch.values.recusalReason
-									? new Date(patch.editedAt)
-									: null
-								: assignment.recusedAt,
-					} as Assignment)
-				: assignment;
-		}),
-	},
-});
+const hydrateManifestWithOutbox = (manifest: JudgingManifest, entries: OfflineJudgingPatch[]) => {
+	const assignmentById = new Map(manifest.judge.assignments.map(assignment => [assignment.id, assignment]));
+	type AssignmentEntry = Extract<OfflineJudgingPatch, { kind: "assignment" }>;
+	const projectRecusals = new Map<string, AssignmentEntry>();
+	for (const entry of entries) {
+		if (entry.kind !== "assignment" || !("recusalReason" in entry.values)) continue;
+		const projectId = assignmentById.get(entry.assignmentId)?.project.id;
+		if (!projectId) continue;
+		const existing = projectRecusals.get(projectId);
+		if (!existing || entry.editedAt > existing.editedAt) projectRecusals.set(projectId, entry);
+	}
+	return {
+		...manifest,
+		judge: {
+			...manifest.judge,
+			assignments: manifest.judge.assignments.map(assignment => {
+				const direct = entries.find(
+					(entry): entry is AssignmentEntry =>
+						entry.kind === "assignment" && entry.assignmentId === assignment.id,
+				);
+				const projectRecusal = projectRecusals.get(assignment.project.id);
+				const values = {
+					...(direct?.values ?? {}),
+					...(projectRecusal ? { recusalReason: projectRecusal.values.recusalReason } : {}),
+				};
+				if (!direct && !projectRecusal) return assignment;
+				// IndexedDB values were produced only by the typed assignment controls.
+				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+				return {
+					...assignment,
+					...values,
+					recusedAt:
+						"recusalReason" in values
+							? values.recusalReason
+								? new Date(projectRecusal?.editedAt ?? direct?.editedAt ?? new Date())
+								: null
+							: assignment.recusedAt,
+					recusalAcceptedAt: "recusalReason" in values ? null : assignment.recusalAcceptedAt,
+				} as Assignment;
+			}),
+		},
+	};
+};
 
 export default function JudgingWorkspace() {
 	const { t, i18n } = useTranslation("judging");
@@ -144,6 +164,7 @@ export default function JudgingWorkspace() {
 		"synced" | "offline" | "syncing" | "failed" | "locked" | "discarded" | "outdated" | "updated"
 	>("synced");
 	const [draggedProjectId, setDraggedProjectId] = useState<string | null>(null);
+	const [recusalDrafts, setRecusalDrafts] = useState<Record<string, string>>({});
 	const [rankingOrders, setRankingOrders] = useState<Record<string, string[]>>({});
 	const [workspaceStep, setWorkspaceStep] = useState<"scoring" | "ranking">("scoring");
 	const [rankingAccessVersion, setRankingAccessVersion] = useState<number | null>(null);
@@ -373,6 +394,8 @@ export default function JudgingWorkspace() {
 	}, [assignments]);
 	const selectedProject = projects.find(project => project.id === selectedProjectId) ?? projects[0];
 	const selectedAssignments = assignments.filter(assignment => assignment.project.id === selectedProject?.id);
+	const selectedRecusal = selectedAssignments.find(assignment => assignment.recusedAt);
+	const selectedRecusalAnchor = selectedAssignments[0];
 
 	const queueChange = useCallback(
 		async (assignmentId: string, values: AssignmentPatch) => {
@@ -383,20 +406,29 @@ export default function JudgingWorkspace() {
 							...current,
 							judge: {
 								...current.judge,
-								assignments: current.judge.assignments.map(assignment =>
-									assignment.id === assignmentId
+								assignments: current.judge.assignments.map(assignment => {
+									const source = current.judge.assignments.find(item => item.id === assignmentId);
+									const projectWideRecusal =
+										"recusalReason" in values && assignment.project.id === source?.project.id;
+									return assignment.id === assignmentId || projectWideRecusal
 										? {
 												...assignment,
-												...values,
+												...(assignment.id === assignmentId ? values : {}),
+												...(projectWideRecusal
+													? { recusalReason: values.recusalReason }
+													: {}),
 												recusedAt:
-													"recusalReason" in values
+													projectWideRecusal
 														? values.recusalReason
 															? new Date()
 															: null
 														: assignment.recusedAt,
+												recusalAcceptedAt: projectWideRecusal
+													? null
+													: assignment.recusalAcceptedAt,
 											}
-										: assignment,
-								),
+										: assignment;
+								}),
 							},
 						}
 					: current,
@@ -407,6 +439,13 @@ export default function JudgingWorkspace() {
 		},
 		[refreshOutbox, sync],
 	);
+
+	const queueProjectRecusal = useCallback(async () => {
+		if (!selectedProject || !selectedRecusalAnchor) return;
+		const reason = recusalDrafts[selectedProject.id]?.trim();
+		if (!reason) return;
+		await queueChange(selectedRecusalAnchor.id, { recusalReason: reason });
+	}, [queueChange, recusalDrafts, selectedProject, selectedRecusalAnchor]);
 
 	const saveRanking = useCallback(
 		async (categoryCode: string, order: string[]) => {
@@ -594,7 +633,56 @@ export default function JudgingWorkspace() {
 								<p className="mt-1 text-sm">{t("cgi-main-track-notice")}</p>
 							</div>
 						)}
-						{selectedAssignments.map(assignment => {
+						<div className="rounded-xl border-2 border-dark-primary-color/20 bg-white p-4">
+							{selectedRecusal ? (
+								<div className="flex flex-wrap items-center justify-between gap-3">
+									<div>
+										<strong>{t("status.recused")}</strong>
+										<p className="mt-1 text-sm">{selectedRecusal.recusalReason}</p>
+									</div>
+									{selectedRecusalAnchor && localAssignmentIds.has(selectedRecusalAnchor.id) && (
+										<button
+											type="button"
+											className="ui-button"
+											onClick={() =>
+												void queueChange(selectedRecusalAnchor.id, { recusalReason: null })
+											}
+										>
+											{t("undo-recusal")}
+										</button>
+									)}
+								</div>
+							) : (
+								<div className="flex flex-col gap-3">
+									<div>
+										<strong>{t("recusal")}</strong>
+										<p className="mt-1 text-sm">{t("recusal-project-help")}</p>
+									</div>
+									<label className="block font-bold">
+										{t("recusal-reason")}
+										<input
+											className="ui-field mt-2 w-full"
+											value={recusalDrafts[selectedProject.id] ?? ""}
+											onChange={event =>
+												setRecusalDrafts(current => ({
+													...current,
+													[selectedProject.id]: event.target.value,
+												}))
+											}
+										/>
+									</label>
+									<button
+										type="button"
+										className="ui-button self-start"
+										disabled={!recusalDrafts[selectedProject.id]?.trim()}
+										onClick={() => void queueProjectRecusal()}
+									>
+										{t("recusal")}
+									</button>
+								</div>
+							)}
+						</div>
+						{!selectedRecusal && selectedAssignments.map(assignment => {
 							const category = categoryDefinition(assignment.categoryCode);
 							const eligibilityResolution = assignmentResolution(assignment);
 							const requiresResolvedEligibleScore =
@@ -617,18 +705,6 @@ export default function JudgingWorkspace() {
 										{category?.[locale] ?? assignment.categoryCode}
 									</legend>
 									<p className="mb-4 text-sm">{category?.guidance[locale]}</p>
-									{assignment.recusedAt && (
-										<div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-amber-50 p-3">
-											<strong>{t("status.recused")}</strong>
-											<button
-												type="button"
-												className="ui-button"
-												onClick={() => void queueChange(assignment.id, { recusalReason: null })}
-											>
-												{t("undo-recusal")}
-											</button>
-										</div>
-									)}
 									{assignment.isMain ? (
 										<div className="flex flex-col gap-5">
 											{MAIN_RUBRIC.map(criterion => (
@@ -762,19 +838,6 @@ export default function JudgingWorkspace() {
 											}
 										/>
 										{t("rules-concern")}
-									</label>
-									<label className="mt-3 block font-bold">
-										{t("recusal-reason")}
-										<input
-											className="ui-field mt-2 w-full"
-											value={assignment.recusalReason ?? ""}
-											onChange={event =>
-												void queueChange(assignment.id, {
-													recusalReason: event.target.value || null,
-												})
-											}
-											placeholder={t("recusal")}
-										/>
 									</label>
 								</fieldset>
 							);

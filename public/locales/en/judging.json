@@ -47,6 +47,7 @@
 	"rules-concern": "Report a rules concern to organisers",
 	"recusal": "Recuse from this project",
 	"recusal-reason": "Reason for recusal",
+	"recusal-project-help": "This applies to the entire team visit, including every challenge assigned to you. Eligible replacement judges are assigned automatically after synchronization.",
 	"undo-recusal": "Undo recusal",
 	"ranking-gate-title": "Check assignments before ranking",
 	"ranking-gate-help": "Connect to verify that your project list is current and synchronize every saved score before leaving the scoring step.",

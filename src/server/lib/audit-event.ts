@@ -80,6 +80,7 @@ const allowedOutcomes: Record<(typeof auditNames)[number], readonly string[]> = 
 		"moved",
 		"project_visit_moved",
 		"attribution_corrected",
+		"recusal_auto_reassigned",
 		"swapped",
 		"added",
 		"removed",

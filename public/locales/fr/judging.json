@@ -47,6 +47,7 @@
 	"rules-concern": "Signaler un problème de règlement aux organisateurs",
 	"recusal": "Se récuser de ce projet",
 	"recusal-reason": "Motif de la récusation",
+	"recusal-project-help": "Cette action s’applique à toute la visite de l’équipe, y compris chaque défi qui vous est attribué. Des juges de remplacement admissibles sont affectés automatiquement après la synchronisation.",
 	"undo-recusal": "Annuler la récusation",
 	"ranking-gate-title": "Vérifier les affectations avant le classement",
 	"ranking-gate-help": "Connectez-vous pour vérifier que votre liste de projets est à jour et synchroniser toutes les notes enregistrées avant de quitter l’étape de notation.",
