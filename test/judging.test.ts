@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+	chunkJudgingOutbox,
 	coalesceAssignmentOutboxPatch,
 	createRankingOutboxPatch,
 	judgingOfflineNamespace,
@@ -14,7 +15,13 @@ import {
 	type ImportedJudgingProject,
 } from "@/server/services/judging-import";
 import { clampJudgingEditTime, judgingFieldWriteWins } from "@/server/services/judging-sync";
-import { MAIN_RUBRIC, canonicalProjectCategoryCodes, mainScoreTotal, pointsForLevel } from "@/shared/judging";
+import {
+	MAIN_RUBRIC,
+	canonicalProjectCategoryCodes,
+	isMiniAssessmentEligibleForRanking,
+	mainScoreTotal,
+	pointsForLevel,
+} from "@/shared/judging";
 
 const project = (number: number, overrides: Partial<ImportedJudgingProject> = {}): ImportedJudgingProject => ({
 	externalId: `project-${number}`,
@@ -70,6 +77,18 @@ void test("project import applies Civic precedence, CGI isolation, and General d
 	assert.ok(result.warnings.some(message => message.includes("Civic takes precedence")));
 	assert.ok(result.warnings.some(message => message.includes("defaulted to General")));
 	assert.ok(result.errors.some(message => message.includes("CGI cannot be combined")));
+});
+
+void test("project import rejects lookalike Devpost hosts and names projects with unknown categories", async () => {
+	const result = await parseProjectCsv(
+		[
+			"project_name,table_number,room,category_opt_ins,eligible_category_count,devpost_url,devpost_project_id",
+			"Suspicious,1,C140,NOT_A_TRACK,1,https://evildevpost.com/software/suspicious,suspicious",
+		].join("\n"),
+	);
+
+	assert.ok(result.errors.some(message => message.includes("HTTPS Devpost URL")));
+	assert.ok(result.errors.some(message => message.includes("Project row 2 (Suspicious)")));
 });
 
 void test("judge import normalizes identity and enforces expertise/exclusion contracts", async () => {
@@ -155,6 +174,15 @@ void test("generation prefers expertise, respects exclusions, caps duplicate cov
 	);
 });
 
+void test("mini-category expertise remains ahead of workload balancing", () => {
+	const projects = Array.from({ length: 12 }, (_, index) => project(index + 1, { categories: ["FOSS"] }));
+	const result = generateJudgingAssignments(projects, [judge(1, { expertise: ["FOSS"] }), judge(2)]);
+	const fossAssignments = result.assignments.filter(assignment => assignment.categoryCode === "FOSS");
+
+	assert.equal(fossAssignments.length > 0, true);
+	assert.equal(fossAssignments.filter(assignment => assignment.expertiseMatch).length, projects.length);
+});
+
 void test("increasing workload never bypasses a hard exclusion", () => {
 	const result = generateJudgingAssignments([project(1)], [judge(1, { exclusions: ["GENERAL"] })]);
 
@@ -208,7 +236,30 @@ void test("offline assignment edits coalesce by entity while retaining per-field
 		technicalLevel: "2026-09-27T14:01:00.000Z",
 		note: "2026-09-27T14:00:00.000Z",
 	});
+	assert.deepEqual(second.fieldOperationIds, {
+		technicalLevel: "00000000-0000-4000-8000-000000000002",
+		note: "00000000-0000-4000-8000-000000000001",
+	});
 	assert.equal(second.operationId, "00000000-0000-4000-8000-000000000002");
+});
+
+void test("an administrator eligibility resolution permits a scored unsure assessment in ranking", () => {
+	assert.equal(
+		isMiniAssessmentEligibleForRanking({
+			eligibility: "UNSURE",
+			score: 4,
+			resolution: "ELIGIBLE",
+		}),
+		true,
+	);
+	assert.equal(
+		isMiniAssessmentEligibleForRanking({
+			eligibility: "ELIGIBLE",
+			score: 4,
+			resolution: "INELIGIBLE",
+		}),
+		false,
+	);
 });
 
 void test("offline rankings replace one atomic category list", () => {
@@ -222,6 +273,38 @@ void test("offline rankings replace one atomic category list", () => {
 
 	assert.equal(patch.key, "v1:round-1:judge-1:ranking:FOSS");
 	assert.deepEqual(patch.projectIds, ["weak", "middle", "strong"]);
+});
+
+void test("offline synchronization partitions work within the server batch limits", () => {
+	const namespace = judgingOfflineNamespace("round-1", "judge-1");
+	const assignments = Array.from({ length: 205 }, (_, index) =>
+		coalesceAssignmentOutboxPatch({
+			namespace,
+			assignmentId: `assignment-${index}`,
+			values: { note: `Note ${index}` },
+			editedAt: new Date(1_800_000_000_000 + index).toISOString(),
+			operationId: `00000000-0000-4000-8000-${index.toString().padStart(12, "0")}`,
+		}),
+	);
+	const rankings = Array.from({ length: 41 }, (_, index) =>
+		createRankingOutboxPatch({
+			namespace,
+			categoryCode: `CATEGORY_${index}`,
+			projectIds: [],
+			editedAt: new Date(1_800_000_001_000 + index).toISOString(),
+			operationId: `10000000-0000-4000-8000-${index.toString().padStart(12, "0")}`,
+		}),
+	);
+	const batches = chunkJudgingOutbox([...assignments, ...rankings]);
+
+	assert.deepEqual(
+		batches.map(batch => [batch.assignments.length, batch.rankings.length]),
+		[
+			[100, 20],
+			[100, 20],
+			[5, 1],
+		],
+	);
 });
 
 void test("offline effective edit times remain strictly ordered when the device clock stalls or moves backward", () => {

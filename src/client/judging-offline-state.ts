@@ -6,6 +6,8 @@ export type AssignmentOutboxPatch = {
 	assignmentId: string;
 	editedAt: string;
 	fieldEditedAt: Record<string, string>;
+	fieldOperationIds: Record<string, string>;
+	assignmentVersion?: number;
 	values: Record<string, unknown>;
 };
 
@@ -17,6 +19,23 @@ export type RankingOutboxPatch = {
 	categoryCode: string;
 	projectIds: string[];
 	editedAt: string;
+	assignmentVersion?: number;
+};
+
+export type JudgingOutboxPatch = AssignmentOutboxPatch | RankingOutboxPatch;
+
+export const chunkJudgingOutbox = (entries: JudgingOutboxPatch[], assignmentLimit = 100, rankingLimit = 20) => {
+	if (assignmentLimit < 1 || rankingLimit < 1) throw new Error("Judging outbox limits must be positive");
+	const assignments = entries.filter((entry): entry is AssignmentOutboxPatch => entry.kind === "assignment");
+	const rankings = entries.filter((entry): entry is RankingOutboxPatch => entry.kind === "ranking");
+	const batches: Array<{ assignments: AssignmentOutboxPatch[]; rankings: RankingOutboxPatch[] }> = [];
+	while (assignments.length || rankings.length) {
+		batches.push({
+			assignments: assignments.splice(0, assignmentLimit),
+			rankings: rankings.splice(0, rankingLimit),
+		});
+	}
+	return batches;
 };
 
 export const judgingOfflineNamespace = (roundId: string, judgeId: string, schemaVersion = 1) =>
@@ -34,6 +53,7 @@ export const coalesceAssignmentOutboxPatch = ({
 	values,
 	editedAt,
 	operationId,
+	assignmentVersion,
 }: {
 	existing?: AssignmentOutboxPatch;
 	namespace: string;
@@ -41,9 +61,14 @@ export const coalesceAssignmentOutboxPatch = ({
 	values: Record<string, unknown>;
 	editedAt: string;
 	operationId: string;
+	assignmentVersion?: number;
 }): AssignmentOutboxPatch => {
 	const fieldEditedAt = { ...(existing?.fieldEditedAt ?? {}) };
-	for (const field of Object.keys(values)) fieldEditedAt[field] = editedAt;
+	const fieldOperationIds = { ...(existing?.fieldOperationIds ?? {}) };
+	for (const field of Object.keys(values)) {
+		fieldEditedAt[field] = editedAt;
+		fieldOperationIds[field] = operationId;
+	}
 	return {
 		kind: "assignment",
 		key: `${namespace}:assignment:${assignmentId}`,
@@ -52,6 +77,8 @@ export const coalesceAssignmentOutboxPatch = ({
 		assignmentId,
 		editedAt,
 		fieldEditedAt,
+		fieldOperationIds,
+		assignmentVersion,
 		values: { ...(existing?.values ?? {}), ...values },
 	};
 };
@@ -62,12 +89,14 @@ export const createRankingOutboxPatch = ({
 	projectIds,
 	editedAt,
 	operationId,
+	assignmentVersion,
 }: {
 	namespace: string;
 	categoryCode: string;
 	projectIds: string[];
 	editedAt: string;
 	operationId: string;
+	assignmentVersion?: number;
 }): RankingOutboxPatch => ({
 	kind: "ranking",
 	key: `${namespace}:ranking:${categoryCode}`,
@@ -76,4 +105,5 @@ export const createRankingOutboxPatch = ({
 	categoryCode,
 	projectIds,
 	editedAt,
+	assignmentVersion,
 });

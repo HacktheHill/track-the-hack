@@ -32,6 +32,7 @@ type State = {
 	projectsByJudge: Map<string, Set<string>>;
 	scopesByJudge: Map<string, number>;
 	roomsByJudge: Map<string, Set<string>>;
+	projectMetadata: Map<string, { room: string; tableNumber: number }>;
 };
 
 const buildScopes = (projects: ImportedJudgingProject[]): Scope[] =>
@@ -51,27 +52,42 @@ const hasAssignment = (state: State, judgeEmail: string, scope: Scope) =>
 			assignment.categoryCode === scope.categoryCode,
 	);
 
-const candidateCost = (state: State, judge: ImportedJudge, scope: Scope, projectLimit: number) => {
+const compareNumberTuples = (left: number[], right: number[]) => {
+	for (let index = 0; index < Math.max(left.length, right.length); index += 1) {
+		const difference = (left[index] ?? 0) - (right[index] ?? 0);
+		if (difference !== 0) return difference;
+	}
+	return 0;
+};
+
+const candidatePriority = (state: State, judge: ImportedJudge, scope: Scope, projectLimit: number) => {
 	const projects = state.projectsByJudge.get(judge.email) ?? new Set<string>();
 	const alreadyVisits = projects.has(scope.project.externalId);
-	if (!alreadyVisits && projects.size >= projectLimit) return Number.POSITIVE_INFINITY;
-	if (!eligible(judge, scope) || hasAssignment(state, judge.email, scope)) return Number.POSITIVE_INFINITY;
-	const expertiseCost = scope.isMain
+	if (!alreadyVisits && projects.size >= projectLimit) return null;
+	if (!eligible(judge, scope) || hasAssignment(state, judge.email, scope)) return null;
+	const expertisePriority = scope.isMain
 		? 0
 		: isMiniCategoryCode(scope.categoryCode) && judge.expertise.includes(scope.categoryCode)
-			? -1000
+			? 0
 			: judge.expertise.length === 0
-				? 0
-				: 500;
+				? 1
+				: 2;
 	const rooms = state.roomsByJudge.get(judge.email) ?? new Set<string>();
-	const roomCost = rooms.size === 0 || rooms.has(scope.project.room) ? 0 : 20;
-	return (
-		expertiseCost +
-		(alreadyVisits ? -180 : 0) +
-		projects.size * 100 +
-		(state.scopesByJudge.get(judge.email) ?? 0) * 5 +
-		roomCost
-	);
+	const assignedTablesInRoom = [...projects]
+		.map(projectId => state.projectMetadata.get(projectId))
+		.filter((metadata): metadata is { room: string; tableNumber: number } => metadata?.room === scope.project.room)
+		.map(metadata => metadata.tableNumber);
+	const nearestTableDistance = assignedTablesInRoom.length
+		? Math.min(...assignedTablesInRoom.map(tableNumber => Math.abs(tableNumber - scope.project.tableNumber)))
+		: 0;
+	return [
+		expertisePriority,
+		projects.size + (alreadyVisits ? 0 : 1),
+		(state.scopesByJudge.get(judge.email) ?? 0) + 1,
+		alreadyVisits ? 0 : 1,
+		rooms.size === 0 || rooms.has(scope.project.room) ? 0 : 1,
+		nearestTableDistance,
+	];
 };
 
 const assign = (state: State, judge: ImportedJudge, scope: Scope, reason: string, calibrationAnchor = false) => {
@@ -92,6 +108,10 @@ const assign = (state: State, judge: ImportedJudge, scope: Scope, reason: string
 	const rooms = state.roomsByJudge.get(judge.email) ?? new Set<string>();
 	rooms.add(scope.project.room);
 	state.roomsByJudge.set(judge.email, rooms);
+	state.projectMetadata.set(scope.project.externalId, {
+		room: scope.project.room,
+		tableNumber: scope.project.tableNumber,
+	});
 };
 
 const emptyState = (judges: ImportedJudge[]): State => ({
@@ -99,13 +119,15 @@ const emptyState = (judges: ImportedJudge[]): State => ({
 	projectsByJudge: new Map(judges.map(judge => [judge.email, new Set<string>()])),
 	scopesByJudge: new Map(judges.map(judge => [judge.email, 0])),
 	roomsByJudge: new Map(judges.map(judge => [judge.email, new Set<string>()])),
+	projectMetadata: new Map(),
 });
 
 const chooseJudge = (state: State, judges: ImportedJudge[], scope: Scope, projectLimit: number) =>
 	judges
-		.map(judge => ({ judge, cost: candidateCost(state, judge, scope, projectLimit) }))
-		.filter(candidate => Number.isFinite(candidate.cost))
-		.sort((a, b) => a.cost - b.cost || a.judge.email.localeCompare(b.judge.email))[0]?.judge;
+		.map(judge => ({ judge, priority: candidatePriority(state, judge, scope, projectLimit) }))
+		.filter((candidate): candidate is { judge: ImportedJudge; priority: number[] } => candidate.priority !== null)
+		.sort((a, b) => compareNumberTuples(a.priority, b.priority) || a.judge.email.localeCompare(b.judge.email))[0]
+		?.judge;
 
 const candidateCount = (judges: ImportedJudge[], scope: Scope) => judges.filter(judge => eligible(judge, scope)).length;
 
@@ -211,10 +233,17 @@ const generateWholeProjectBaseline = (scopes: Scope[], judges: ImportedJudge[], 
 
 const addRedundancy = (state: State, scopes: Scope[], judges: ImportedJudge[], preferredLimit: number) => {
 	const anchorCounts = new Map<JudgingCategoryCode, number>();
+	const categorySizes = new Map<JudgingCategoryCode, number>();
+	for (const scope of scopes) categorySizes.set(scope.categoryCode, (categorySizes.get(scope.categoryCode) ?? 0) + 1);
 	for (const targetCount of [2, 3]) {
 		for (const scope of [...scopes].sort((a, b) => {
 			if (a.isMain !== b.isMain) return a.isMain ? -1 : 1;
-			return a.categoryCode.localeCompare(b.categoryCode) || a.project.tableNumber - b.project.tableNumber;
+			const categorySize = (categorySizes.get(b.categoryCode) ?? 0) - (categorySizes.get(a.categoryCode) ?? 0);
+			return (
+				categorySize ||
+				a.categoryCode.localeCompare(b.categoryCode) ||
+				a.project.tableNumber - b.project.tableNumber
+			);
 		})) {
 			const currentCount = state.assignments.filter(
 				assignment =>
@@ -224,8 +253,17 @@ const addRedundancy = (state: State, scopes: Scope[], judges: ImportedJudge[], p
 			if (currentCount >= targetCount) continue;
 			const judge = chooseJudge(state, judges, scope, preferredLimit);
 			if (!judge) continue;
+			const categoryJudges = new Set(
+				state.assignments
+					.filter(assignment => assignment.categoryCode === scope.categoryCode)
+					.map(assignment => assignment.judgeEmail),
+			);
+			categoryJudges.add(judge.email);
 			const calibrationAnchor =
-				!scope.isMain && targetCount === 2 && (anchorCounts.get(scope.categoryCode) ?? 0) < 3;
+				!scope.isMain &&
+				targetCount === 2 &&
+				categoryJudges.size > 1 &&
+				(anchorCounts.get(scope.categoryCode) ?? 0) < 3;
 			assign(
 				state,
 				judge,

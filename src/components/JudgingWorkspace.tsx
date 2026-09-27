@@ -16,6 +16,7 @@ import {
 	type JudgingManifest,
 	type OfflineJudgingPatch,
 } from "@/client/judging-offline";
+import { chunkJudgingOutbox as createSyncBatches } from "@/client/judging-offline-state";
 import {
 	JUDGING_CATEGORY_CATALOG,
 	MAIN_RUBRIC,
@@ -199,37 +200,46 @@ export default function JudgingWorkspace() {
 			}
 			setSyncState("syncing");
 			try {
-				const result = await syncMutation.mutateAsync({
-					roundId: manifest.judge.round.id,
-					assignmentVersion: manifest.judge.round.assignmentVersion,
-					assignments: entries
-						.filter(entry => entry.kind === "assignment")
-						.map(entry => ({
+				let discardedCount = 0;
+				let supersededFieldCount = 0;
+				let authoritativeManifest = manifest;
+				for (const { assignments: assignmentBatch, rankings: rankingBatch } of createSyncBatches(entries)) {
+					const result = await syncMutation.mutateAsync({
+						roundId: manifest.judge.round.id,
+						assignmentVersion: Math.min(
+							...[
+								...assignmentBatch.map(entry => entry.assignmentVersion),
+								...rankingBatch.map(entry => entry.assignmentVersion),
+							].filter((value): value is number => value !== undefined),
+							manifest.judge.round.assignmentVersion,
+						),
+						assignments: assignmentBatch.map(entry => ({
 							operationId: entry.operationId,
 							assignmentId: entry.assignmentId,
 							editedAt: entry.editedAt,
 							fieldEditedAt: entry.fieldEditedAt,
+							fieldOperationIds: entry.fieldOperationIds,
 							values: entry.values,
 						})),
-					rankings: entries
-						.filter(entry => entry.kind === "ranking")
-						.map(entry => ({
+						rankings: rankingBatch.map(entry => ({
 							operationId: entry.operationId,
 							categoryCode: entry.categoryCode,
 							projectIds: entry.projectIds,
 							editedAt: entry.editedAt,
 						})),
-				});
-				if (result.locked) {
-					setSyncState("locked");
-					return;
+					});
+					if (result.locked) {
+						setSyncState("locked");
+						return;
+					}
+					await removeJudgingOutboxEntries([...result.applied, ...result.discarded]);
+					discardedCount += result.discarded.length;
+					supersededFieldCount += result.supersededFields.length;
+					authoritativeManifest = result.manifest;
 				}
-				await removeJudgingOutboxEntries([...result.applied, ...result.discarded]);
-				await applyManifest(result.manifest);
+				await applyManifest(authoritativeManifest);
 				await refreshOutbox();
-				setSyncState(
-					result.discarded.length ? "discarded" : result.supersededFields.length ? "updated" : "synced",
-				);
+				setSyncState(discardedCount ? "discarded" : supersededFieldCount ? "updated" : "synced");
 			} catch {
 				setSyncState("failed");
 			}

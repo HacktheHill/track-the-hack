@@ -14,6 +14,7 @@ import { clampJudgingEditTime, judgingFieldWriteWins } from "@/server/services/j
 import {
 	canonicalProjectCategoryCodes,
 	isJudgingCategoryCode,
+	isMiniAssessmentEligibleForRanking,
 	isMiniCategoryCode,
 	mainScoreTotal,
 	pointsForLevel,
@@ -65,6 +66,7 @@ const syncInput = z
 					assignmentId: z.string().min(1).max(191),
 					editedAt: z.string().datetime(),
 					fieldEditedAt: z.record(z.string().datetime()).default({}),
+					fieldOperationIds: z.record(z.string().uuid()).default({}),
 					values: assignmentValueSchema,
 				}),
 			)
@@ -1415,12 +1417,18 @@ export const judgingRouter = createTRPCRouter({
 					const data: Record<string, unknown> = {};
 					for (const [field, value] of Object.entries(patch.values)) {
 						const incomingAt = clampJudgingEditTime(patch.fieldEditedAt[field] ?? patch.editedAt, now);
+						const incomingOperationId = patch.fieldOperationIds[field] ?? patch.operationId;
 						if (
-							judgingFieldWriteWins(incomingAt, patch.operationId, timestamps[field], operationIds[field])
+							judgingFieldWriteWins(
+								incomingAt,
+								incomingOperationId,
+								timestamps[field],
+								operationIds[field],
+							)
 						) {
 							data[field] = value;
 							timestamps[field] = incomingAt.toISOString();
-							operationIds[field] = patch.operationId;
+							operationIds[field] = incomingOperationId;
 						} else supersededFields.push({ assignmentId: assignment.id, field });
 					}
 					if ("recusalReason" in data)
@@ -1508,7 +1516,11 @@ export const judgingRouter = createTRPCRouter({
 										item.completedAt &&
 										item.project.categories[0]?.eligibilityResolution !== "INELIGIBLE" &&
 										(item.isMain ||
-											(item.miniEligibility === "ELIGIBLE" && item.miniScore !== null)),
+											isMiniAssessmentEligibleForRanking({
+												eligibility: item.miniEligibility,
+												score: item.miniScore,
+												resolution: item.project.categories[0]?.eligibilityResolution,
+											})),
 								)
 								.map(item => item.projectId),
 						);
