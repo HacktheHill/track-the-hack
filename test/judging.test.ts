@@ -4,6 +4,7 @@ import {
 	chunkJudgingOutbox,
 	coalesceAssignmentOutboxPatch,
 	createRankingOutboxPatch,
+	isRankingAccessCurrent,
 	judgingOfflineNamespace,
 	nextEffectiveJudgingEditTime,
 } from "@/client/judging-offline-state";
@@ -56,6 +57,13 @@ void test("the 0–5 main selectors map exactly to the published 45-point rubric
 		[0, 1, 2, 3, 4, 5],
 	);
 	assert.equal(mainScoreTotal(Object.fromEntries(MAIN_RUBRIC.map(item => [item.key, 5]))), 45);
+});
+
+void test("ranking access is valid only for the exact verified assignment version", () => {
+	assert.equal(isRankingAccessCurrent(7, 7), true);
+	assert.equal(isRankingAccessCurrent(6, 7), false);
+	assert.equal(isRankingAccessCurrent(null, 7), false);
+	assert.equal(isRankingAccessCurrent(undefined, 7), false);
 });
 
 void test("canonical project exports retain CGI alongside entered prize categories", () => {
@@ -130,11 +138,7 @@ void test("MLH expertise requires coverage of every entered MLH sponsor scope", 
 	const projects = Array.from({ length: 20 }, (_, index) =>
 		project(index + 1, { categories: index % 2 === 0 ? ["ELEVENLABS"] : ["FOSS"] }),
 	);
-	const result = generateJudgingAssignments(
-		projects,
-		[farhan, judge(2), judge(3), judge(4), judge(5)],
-		5,
-	);
+	const result = generateJudgingAssignments(projects, [farhan, judge(2), judge(3), judge(4), judge(5)], 5);
 	assert.deepEqual(result.errors, []);
 	assert.equal(result.effectiveProjectLimit, 10);
 	assert.equal(result.requiresOverloadApproval, true);

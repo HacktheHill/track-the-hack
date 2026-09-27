@@ -551,41 +551,56 @@ try {
 		await fossGroup.getByRole("button", { name: "Eligible", exact: true }).click();
 		await fossGroup.getByRole("button", { name: "4", exact: true }).click();
 	}
-	await judgePage.getByRole("heading", { name: "Final category rankings" }).waitFor();
-	const confirmRankingButtons = await judgePage.getByRole("button", { name: "Confirm this ranking" }).all();
-	assert.equal(confirmRankingButtons.length, 2);
-	for (const button of confirmRankingButtons) {
-		await button.click();
-	}
-	await judgePage.getByText(/Offline — 6 changes are saved only on this device/).waitFor();
-	const beforeSync = await prisma.judgingAssignment.findMany({
+	await judgePage.getByRole("heading", { name: "Check assignments before ranking" }).waitFor();
+	await judgePage.getByRole("button", { name: "Check assignments and continue" }).click();
+	await judgePage.getByText("Connect to the internet before continuing to ranking.").waitFor();
+	const beforeGateSync = await prisma.judgingAssignment.findMany({
 		where: { id: { in: judgeAssignments.map(assignment => assignment.id) } },
 	});
 	assert.equal(
-		beforeSync.every(assignment => assignment.completedAt === null),
+		beforeGateSync.every(assignment => assignment.completedAt === null),
 		true,
 		"Administrators must see local-only judging as incomplete",
 	);
 	assert.equal(
 		await prisma.judgingRanking.count({ where: { roundId: judgingRoundId } }),
 		0,
-		"Offline rankings must not appear on the server before sync",
+		"Ranking must stay locked and absent from the server until the assignment check succeeds",
 	);
 
 	await judgeContext.setOffline(false);
 	await judgePage.bringToFront();
 	await judgePage.getByText("All changes synced").waitFor({ timeout: 20_000 });
-	const afterSync = await prisma.judgingAssignment.findMany({
+	await judgePage.getByRole("button", { name: "Check assignments and continue" }).click();
+	await judgePage.getByRole("heading", { name: "Final category rankings" }).waitFor();
+	const afterGateSync = await prisma.judgingAssignment.findMany({
 		where: { id: { in: judgeAssignments.map(assignment => assignment.id) } },
 	});
-	assert.equal(afterSync.length, 4);
+	assert.equal(afterGateSync.length, 4);
 	assert.equal(
-		afterSync.every(assignment => assignment.completedAt !== null),
+		afterGateSync.every(assignment => assignment.completedAt !== null),
 		true,
-		"Every synchronized assignment must be server-complete",
+		"The ranking gate must synchronize every assignment before opening",
 	);
+
+	await judgeContext.setOffline(true);
+	const confirmRankingButtons = await judgePage.getByRole("button", { name: "Confirm this ranking" }).all();
+	assert.equal(confirmRankingButtons.length, 2);
+	for (const button of confirmRankingButtons) {
+		await button.click();
+	}
+	await judgePage.getByText(/Offline — 2 changes are saved only on this device/).waitFor();
 	assert.equal(
-		afterSync
+		await prisma.judgingRanking.count({ where: { roundId: judgingRoundId } }),
+		0,
+		"Offline rankings must not appear on the server before their final sync",
+	);
+
+	await judgeContext.setOffline(false);
+	await judgePage.bringToFront();
+	await judgePage.getByText("All changes synced").waitFor({ timeout: 20_000 });
+	assert.equal(
+		afterGateSync
 			.filter(assignment => assignment.isMain)
 			.every(
 				assignment =>
@@ -598,7 +613,7 @@ try {
 		true,
 	);
 	assert.equal(
-		afterSync
+		afterGateSync
 			.filter(assignment => !assignment.isMain)
 			.every(assignment => assignment.miniEligibility === "ELIGIBLE" && assignment.miniScore === 4),
 		true,
