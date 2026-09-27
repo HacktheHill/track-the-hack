@@ -11,6 +11,7 @@
 		"failed": "{{count}} changes have not synced",
 		"locked": "Sync is blocked because judging is locked",
 		"discarded": "Some local work was removed because you are no longer assigned to it",
+		"outdated": "Your assignments changed before this ranking synced. Review the latest scoring list, then rank again.",
 		"updated": "Updated from your newer work on another device",
 		"now": "Sync now",
 		"prepared": "Available offline — updated {{date}}",

@@ -10,7 +10,11 @@ import {
 	type ImportedJudge,
 	type ImportedJudgingProject,
 } from "@/server/services/judging-import";
-import { clampJudgingEditTime, judgingFieldWriteWins } from "@/server/services/judging-sync";
+import {
+	clampJudgingEditTime,
+	isJudgingRankingVersionCurrent,
+	judgingFieldWriteWins,
+} from "@/server/services/judging-sync";
 import {
 	canonicalProjectCategoryCodes,
 	isJudgingCategoryCode,
@@ -1484,11 +1488,13 @@ export const judgingRouter = createTRPCRouter({
 						discarded: [],
 						applied: [],
 						supersededFields: [],
+						outdatedRankings: [],
 					};
 				}
 				const discarded: string[] = [];
 				const applied: string[] = [];
 				const supersededFields: Array<{ assignmentId: string; field: string }> = [];
+				const outdatedRankings: string[] = [];
 				let newlyProcessedCount = 0;
 
 				for (const patch of input.assignments) {
@@ -1625,6 +1631,21 @@ export const judgingRouter = createTRPCRouter({
 						(receipt.discarded ? discarded : applied).push(ranking.operationId);
 						continue;
 					}
+					if (!isJudgingRankingVersionCurrent(input.assignmentVersion, round.assignmentVersion)) {
+						discarded.push(ranking.operationId);
+						outdatedRankings.push(ranking.operationId);
+						await transaction.judgingSyncReceipt.create({
+							data: {
+								operationId: ranking.operationId,
+								roundId: input.roundId,
+								judgeId: ctx.judge.id,
+								discarded: true,
+								clientTimestamps,
+							},
+						});
+						newlyProcessedCount += 1;
+						continue;
+					}
 					const editedAt = clampJudgingEditTime(ranking.editedAt, now);
 					const current = await transaction.judgingRanking.findFirst({
 						where: { judgeId: ctx.judge.id, categoryCode: ranking.categoryCode },
@@ -1728,11 +1749,12 @@ export const judgingRouter = createTRPCRouter({
 							data: {
 								appliedCount: applied.length,
 								discardedCount: discarded.length,
+								outdatedRankingCount: outdatedRankings.length,
 								supersededFieldCount: supersededFields.length,
 							},
 						}),
 					);
-				return { locked: false, discarded, applied, supersededFields };
+				return { locked: false, discarded, applied, supersededFields, outdatedRankings };
 			},
 			{ isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
 		);

@@ -16,3 +16,8 @@ export const judgingFieldWriteWins = (
 		(incomingAt.getTime() === existingTime && incomingOperationId.localeCompare(existingOperationId ?? "") > 0)
 	);
 };
+
+export const isJudgingRankingVersionCurrent = (
+	submittedAssignmentVersion: number,
+	currentAssignmentVersion: number,
+) => submittedAssignmentVersion === currentAssignmentVersion;
