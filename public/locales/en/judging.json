@@ -28,6 +28,8 @@
 	"previous": "Previous table",
 	"next": "Next table",
 	"open-devpost": "Open Devpost submission",
+	"cgi-main-track-title": "CGI main track — judged separately",
+	"cgi-main-track-notice": "CGI judges are evaluating this project outside Tracker. You are seeing it only because you are assigned to one of its mini or sponsor challenges. Do not evaluate it for the General or Civic main track.",
 	"main-total": "Main score: {{score}} / 45",
 	"guidance-low": "Low (1–2)",
 	"guidance-competent": "Competent (3)",
