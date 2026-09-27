@@ -51,15 +51,18 @@ Nous vous recommandons d'utiliser [GitHub](http://github.com/) pour le contrôle
 
 ### Critères de jugement
 
-Pour être admissible à l'évaluation, créez et soumettez une version préliminaire de votre projet sur Devpost avant **minuit, au début du dimanche 27 septembre**. Vous pourrez continuer à la modifier jusqu'à l'échéance finale de **10 h**.
+Pour être admissible à l'évaluation, créez une version préliminaire de votre projet sur Devpost avant **minuit, au début du dimanche 27 septembre**. À cette échéance, vous devez seulement indiquer les **membres définitifs de l'équipe**, choisir **exactement une piste principale** — générale, CGI ou technologie civique — et sélectionner tous les mini-défis et prix MLH auxquels l'équipe souhaite participer.
+
+**Aucun code ni aucune description de projet n'est requis avant minuit.** Le lien vers le dépôt, les captures d'écran, la vidéo et les autres éléments du projet peuvent être ajoutés ou modifiés jusqu'à l'échéance finale de **10 h**. Toute modification de la composition de l'équipe ou des catégories sélectionnées après minuit doit être approuvée par les organisateurs.
 
 ### Soumission du projet
 
 Soumettez votre projet sur **Devpost** pour être pris en compte lors du jugement.
 
-- **Échéance obligatoire pour la version préliminaire**: minuit, au début du dimanche 27 septembre. Le projet doit être sur Devpost à ce moment pour être admissible à l'évaluation.
+- **Échéance obligatoire pour la version préliminaire**: minuit, au début du dimanche 27 septembre. Indiquez les membres définitifs de l'équipe, choisissez exactement une piste principale et sélectionnez tous les mini-défis et prix MLH souhaités.
 - **Date limite de soumission**: 10 h, le dimanche 27 septembre.
-- **Modifications**: Vous pouvez modifier votre version préliminaire jusqu'à l'échéance finale.
+- **Contenu requis à minuit**: Aucun code, aucune description de projet, aucun lien vers un dépôt, aucune capture d'écran et aucune vidéo ne sont requis.
+- **Modifications**: Vous pouvez compléter et modifier les éléments du projet jusqu'à l'échéance finale. Toute modification de l'équipe ou des catégories après minuit doit être approuvée par les organisateurs.
 - **Comment soumettre**: [Guide de soumission sur Devpost](https://help.devpost.com/hc/en-us/articles/360054999651-How-to-enter-a-submission)
 - **Vidéo explicative**: [Comment soumettre sur Devpost](https://www.youtube.com/watch?v=vCa7QFFthfU)
 
