@@ -2,7 +2,7 @@
 	"title": "Operational metrics",
 	"provisioned": "Provisioned participants",
 	"confirmed": "Confirmed participants",
-	"checkedIn": "Check-in records",
+	"checkedIn": "Known attendees",
 	"walkIn": "Walk-ins",
 	"presences": "Presence count",
 	"attendance": "Attendance by event",
