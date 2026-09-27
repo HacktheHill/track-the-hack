@@ -7,9 +7,11 @@ import { access, rm } from "node:fs/promises";
 import { createServer } from "node:net";
 import { join } from "node:path";
 import { EventType, PrismaClient, ScannerWorkflow } from "@prisma/client";
-import { chromium, type Browser, type Page } from "playwright-core";
+import { encode } from "next-auth/jwt";
+import { chromium, type Browser, type Locator, type Page } from "playwright-core";
 import { z } from "zod";
 import { publicPrecacheUrls } from "@root/pwa-runtime-caching";
+import { rubricSnapshot } from "@/shared/judging";
 
 const participantSchema = z
 	.object({
@@ -115,6 +117,13 @@ const eventId = `pwa-${randomBytes(8).toString("hex")}`;
 const checkInEventId = `pwa-check-in-${randomBytes(8).toString("hex")}`;
 const eventName = `PWA offline event ${eventId.slice(-6)}`;
 const eventNameFr = `Événement hors ligne PWA ${eventId.slice(-6)}`;
+const judgeSuffix = randomBytes(8).toString("hex");
+const judgeEmail = `pwa-judge-${judgeSuffix}@example.com`;
+const judgingRoundId = `pwa-round-${judgeSuffix}`;
+const judgingProjectId = `pwa-project-${judgeSuffix}`;
+const judgingProjectName = `PWA judging project ${judgeSuffix.slice(-6)}`;
+const secondJudgingProjectId = `pwa-project-2-${judgeSuffix}`;
+const secondJudgingProjectName = `PWA judging project two ${judgeSuffix.slice(-6)}`;
 const participant = participantSchema.parse({
 	id: participantId,
 	tShirtSize: "M",
@@ -138,6 +147,8 @@ const closeBrowser = async () => {
 const cleanUp = async () => {
 	const presences = await prisma.presence.findMany({ where: { hackerId: participantId }, select: { id: true } });
 	await prisma.$transaction([
+		prisma.judgingRound.deleteMany({ where: { id: judgingRoundId } }),
+		prisma.user.deleteMany({ where: { email: judgeEmail } }),
 		prisma.log.deleteMany({
 			where: {
 				OR: [
@@ -155,8 +166,91 @@ const cleanUp = async () => {
 	]);
 };
 
+const prepareSyntheticJudge = async () => {
+	const user = await prisma.user.create({
+		data: { email: judgeEmail, name: "PWA Synthetic Judge", emailVerified: new Date() },
+	});
+	const round = await prisma.judgingRound.create({
+		data: {
+			id: judgingRoundId,
+			name: "PWA synthetic judging round",
+			state: "OPEN",
+			rubricSnapshot: { en: rubricSnapshot("en"), fr: rubricSnapshot("fr") },
+			generationWarnings: [],
+			assignmentsPublishedAt: new Date(),
+			openedAt: new Date(),
+			createdById: "pwa-e2e",
+		},
+	});
+	const judge = await prisma.judgingJudge.create({
+		data: {
+			roundId: round.id,
+			name: "PWA Synthetic Judge",
+			email: judgeEmail,
+			expertise: [],
+			exclusions: [],
+		},
+	});
+	const assignments = [];
+	for (const [index, projectInput] of [
+		{ id: judgingProjectId, name: judgingProjectName, tableNumber: 999 },
+		{ id: secondJudgingProjectId, name: secondJudgingProjectName, tableNumber: 1000 },
+	].entries()) {
+		const project = await prisma.judgingProject.create({
+			data: {
+				...projectInput,
+				roundId: round.id,
+				externalId: `devpost-${index + 1}-${judgeSuffix}`,
+				room: "PWA Room",
+				devpostUrl: `https://${judgeSuffix}-${index + 1}.devpost.com`,
+				mainTrack: "GENERAL",
+				categories: { create: { roundId: round.id, code: "FOSS" } },
+			},
+		});
+		for (const scope of [
+			{ categoryCode: "GENERAL", isMain: true },
+			{ categoryCode: "FOSS", isMain: false },
+		]) {
+			assignments.push(
+				await prisma.judgingAssignment.create({
+					data: {
+						roundId: round.id,
+						projectId: project.id,
+						judgeId: judge.id,
+						...scope,
+						assignmentReason: "PWA acceptance baseline",
+						fieldTimestamps: {},
+						fieldOperationIds: {},
+					},
+				}),
+			);
+		}
+	}
+	return { user, assignments };
+};
+
 const visit = async (page: Page, path: string) => {
 	await page.goto(`${baseUrl}${path}`, { waitUntil: "domcontentloaded" });
+};
+
+const waitForOfflineContent = async (page: Page, path: string, locator: Locator) => {
+	try {
+		await locator.waitFor({ timeout: 10_000 });
+	} catch {
+		await visit(page, path);
+		try {
+			await locator.waitFor({ timeout: 30_000 });
+		} catch (error) {
+			console.error(
+				JSON.stringify({
+					url: page.url(),
+					body: (await page.locator("body").innerText()).slice(0, 2000),
+					controlled: await page.evaluate(() => Boolean(navigator.serviceWorker.controller)),
+				}),
+			);
+			throw error;
+		}
+	}
 };
 
 const waitForCachedSchedule = async (page: Page, expectedEventNames: readonly string[]) => {
@@ -308,6 +402,7 @@ try {
 		]);
 	}
 	await waitForCachedSchedule(page, [eventName, eventNameFr]);
+	await page.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
 
 	await context.setOffline(true);
 	for (const locale of [
@@ -328,8 +423,9 @@ try {
 			qrAlt: "Votre code QR pour l’événement",
 		},
 	] as const) {
-		await visit(page, `${locale.prefix}/schedule`);
-		await page.getByText(locale.event, { exact: true }).waitFor();
+		const schedulePath = `${locale.prefix}/schedule`;
+		await visit(page, schedulePath);
+		await waitForOfflineContent(page, schedulePath, page.getByText(locale.event, { exact: true }));
 
 		await visit(page, `${locale.prefix}/schedule/event?id=${eventId}`);
 		await page.getByRole("heading", { name: locale.event }).waitFor();
@@ -361,8 +457,13 @@ try {
 		await visit(page, `${locale.prefix}/sponsors/cgi`);
 		await page.getByRole("heading", { name: "CGI", exact: true }).waitFor();
 
-		await visit(page, `${locale.prefix}/profile`);
-		await page.getByRole("heading", { name: locale.passHeading }).waitFor();
+		const profilePath = `${locale.prefix}/profile`;
+		await visit(page, profilePath);
+		await waitForOfflineContent(
+			page,
+			profilePath,
+			page.getByRole("heading", { name: locale.passHeading }),
+		);
 		const offlineQr = page.getByAltText(locale.qrAlt);
 		await offlineQr.waitFor();
 		assert.equal(
@@ -390,8 +491,196 @@ try {
 	}
 
 	await context.setOffline(false);
+
+	const { user: judgeUser, assignments: judgeAssignments } = await prepareSyntheticJudge();
+	const nextAuthSecret = process.env.NEXTAUTH_SECRET;
+	if (!nextAuthSecret) throw new Error("NEXTAUTH_SECRET is required for the PWA E2E test.");
+	const judgeToken = await encode({
+		secret: nextAuthSecret,
+		maxAge: 60 * 60,
+		token: { sub: judgeUser.id, email: judgeEmail, name: judgeUser.name },
+	});
+	const judgeContext = await browser.newContext();
+	await judgeContext.addCookies([
+		{
+			name: "next-auth.session-token",
+			value: judgeToken,
+			url: baseUrl,
+			httpOnly: true,
+			sameSite: "Lax",
+		},
+	]);
+	const judgePage = await judgeContext.newPage();
+	await visit(judgePage, "/judging");
+	await judgePage.getByRole("heading", { name: judgingProjectName }).waitFor();
+	await judgePage.getByText(/Available offline — updated/).waitFor();
+	await judgePage.waitForFunction(
+		async () => (await navigator.serviceWorker.getRegistration())?.active?.state === "activated",
+		undefined,
+		{ timeout: 20_000 },
+	);
+	if (!(await judgePage.evaluate(() => Boolean(navigator.serviceWorker.controller)))) await judgePage.reload();
+	await judgePage.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
+
+	await judgeContext.setOffline(true);
+	await judgePage.reload({ waitUntil: "domcontentloaded" });
+	await judgePage.getByRole("heading", { name: judgingProjectName }).waitFor();
+	for (const tableNumber of [999, 1000]) {
+		await judgePage.getByRole("button", { name: new RegExp(`Table ${tableNumber}`) }).click();
+		const mainGroup = judgePage.getByRole("group", { name: "General Challenge — Best Overall" });
+		for (const criterion of [
+			"Technical Execution",
+			"Idea & Impact",
+			"Design & Usability",
+			"Learning & Technical Decisions",
+			"Presentation",
+		]) {
+			await mainGroup
+				.getByText(new RegExp(`^${criterion}`))
+				.locator("..")
+				.getByRole("button", { name: /^3\b/ })
+				.click();
+		}
+		const fossGroup = judgePage.getByRole("group", { name: "Best FOSS Project" });
+		await fossGroup.getByRole("button", { name: "Eligible", exact: true }).click();
+		await fossGroup.getByRole("button", { name: "4", exact: true }).click();
+	}
+	await judgePage.getByRole("heading", { name: "Final category rankings" }).waitFor();
+	const confirmRankingButtons = await judgePage.getByRole("button", { name: "Confirm this ranking" }).all();
+	assert.equal(confirmRankingButtons.length, 2);
+	for (const button of confirmRankingButtons) {
+		await button.click();
+	}
+	await judgePage.getByText(/Offline — 6 changes are saved only on this device/).waitFor();
+	const beforeSync = await prisma.judgingAssignment.findMany({
+		where: { id: { in: judgeAssignments.map(assignment => assignment.id) } },
+	});
+	assert.equal(
+		beforeSync.every(assignment => assignment.completedAt === null),
+		true,
+		"Administrators must see local-only judging as incomplete",
+	);
+	assert.equal(
+		await prisma.judgingRanking.count({ where: { roundId: judgingRoundId } }),
+		0,
+		"Offline rankings must not appear on the server before sync",
+	);
+
+	await judgeContext.setOffline(false);
+	await judgePage.bringToFront();
+	await judgePage.getByText("All changes synced").waitFor({ timeout: 20_000 });
+	const afterSync = await prisma.judgingAssignment.findMany({
+		where: { id: { in: judgeAssignments.map(assignment => assignment.id) } },
+	});
+	assert.equal(afterSync.length, 4);
+	assert.equal(
+		afterSync.every(assignment => assignment.completedAt !== null),
+		true,
+		"Every synchronized assignment must be server-complete",
+	);
+	assert.equal(
+		afterSync
+			.filter(assignment => assignment.isMain)
+			.every(
+				assignment =>
+					assignment.technicalLevel === 3 &&
+					assignment.ideaLevel === 3 &&
+					assignment.designLevel === 3 &&
+					assignment.learningLevel === 3 &&
+					assignment.presentationLevel === 3,
+			),
+		true,
+	);
+	assert.equal(
+		afterSync
+			.filter(assignment => !assignment.isMain)
+			.every(assignment => assignment.miniEligibility === "ELIGIBLE" && assignment.miniScore === 4),
+		true,
+	);
+	assert.equal(
+		await prisma.judgingRanking.count({ where: { roundId: judgingRoundId, confirmedAt: { not: null } } }),
+		4,
+		"Both two-project category rankings must synchronize atomically",
+	);
+
+	const cacheEvidence = await judgePage.evaluate(
+		async secretValues => {
+			const urls: string[] = [];
+			const bodies: string[] = [];
+			for (const cacheName of await caches.keys()) {
+				const cache = await caches.open(cacheName);
+				for (const request of await cache.keys()) {
+					urls.push(request.url);
+					const response = await cache.match(request);
+					if (response) bodies.push(await response.clone().text());
+				}
+			}
+			return {
+				privateUrls: urls.filter(url => /^\/api\/|^\/internal(?:\/|$)/.test(new URL(url).pathname)),
+				hasPrivateBody: bodies.some(body => secretValues.some(value => body.includes(value))),
+			};
+		},
+		[judgeEmail, judgingProjectName, secondJudgingProjectName],
+	);
+	assert.deepEqual(
+		cacheEvidence.privateUrls,
+		[],
+		`Private and API routes must remain absent from Cache Storage: ${cacheEvidence.privateUrls.join(", ")}`,
+	);
+	assert.equal(
+		cacheEvidence.hasPrivateBody,
+		false,
+		"Personalized judging data must remain absent from Cache Storage",
+	);
+
+	await judgePage.getByRole("button", { name: "Sign Out" }).click();
+	await judgePage.waitForURL(url => !url.pathname.startsWith("/api/auth/signout"));
+	const localJudgingCleared = await judgePage.evaluate(async () => {
+		const database = await new Promise<IDBDatabase>((resolve, reject) => {
+			const request = indexedDB.open("track-the-hack-judging", 1);
+			request.onsuccess = () => resolve(request.result);
+			request.onerror = () => reject(request.error);
+		});
+		const transaction = database.transaction(["snapshot", "outbox"], "readonly");
+		const counts = await Promise.all(
+			["snapshot", "outbox"].map(
+				storeName =>
+					new Promise<number>((resolve, reject) => {
+						const request = transaction.objectStore(storeName).count();
+						request.onsuccess = () => resolve(request.result);
+						request.onerror = () => reject(request.error);
+					}),
+			),
+		);
+		database.close();
+		return counts.every(count => count === 0);
+	});
+	assert.equal(localJudgingCleared, true, "Judge sign-out must clear local judging data");
+
+	await judgePage.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
+	const frenchJudgingShellReady = await judgePage.evaluate(async () => {
+		for (const cacheName of await caches.keys()) {
+			const cache = await caches.open(cacheName);
+			for (const request of await cache.keys()) {
+				if (new URL(request.url).pathname !== "/fr/judging/offline") continue;
+				const response = await cache.match(request);
+				if (response && (await response.clone().text()).includes("Évaluation des projets")) return true;
+			}
+		}
+		return false;
+	});
+	assert.equal(frenchJudgingShellReady, true, "The precached French judging shell must be available");
+	await judgeContext.setOffline(true);
+	await visit(judgePage, "/fr/judging");
+	await waitForOfflineContent(
+		judgePage,
+		"/fr/judging",
+		judgePage.getByRole("heading", { name: "Évaluation des projets" }),
+	);
+	await judgePage.getByText(/L’évaluation hors ligne n’est pas encore disponible/).waitFor();
+	await judgeContext.close();
 	console.info(
-		"PWA E2E passed: public EN/FR routes and the QR-only participant pass survived offline reloads while private routes used the offline fallback.",
+		"PWA E2E passed: public EN/FR routes and the QR-only participant pass survived offline reloads; judging stayed private in Cache Storage, accepted offline scoring, synchronized on reconnect, and cleared local data on sign-out.",
 	);
 } catch (error) {
 	console.error(serverOutput.join(""));
