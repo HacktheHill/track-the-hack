@@ -100,7 +100,11 @@ export const parseProjectCsv = async (source: string): Promise<ImportResult<Impo
 			errors.push(`Project row ${rowNumber}: table_number must be a positive integer.`);
 		if (!Number.isInteger(expectedCount) || expectedCount < 0)
 			errors.push(`Project row ${rowNumber}: eligible_category_count must be a non-negative integer.`);
-		if (!devpostUrl || devpostUrl.protocol !== "https:" || !devpostUrl.hostname.endsWith("devpost.com")) {
+		if (
+			!devpostUrl ||
+			devpostUrl.protocol !== "https:" ||
+			(devpostUrl.hostname !== "devpost.com" && !devpostUrl.hostname.endsWith(".devpost.com"))
+		) {
 			errors.push(`Project row ${rowNumber}: devpost_url must be an HTTPS Devpost URL.`);
 		}
 
@@ -113,7 +117,8 @@ export const parseProjectCsv = async (source: string): Promise<ImportResult<Impo
 		const parsedCategories: Array<JudgingCategoryCode | "CGI"> = [];
 		for (const label of rawCategories) {
 			const category = parseCategoryLabel(label);
-			if (!category) errors.push(`Project row ${rowNumber}: unknown category “${label}”.`);
+			if (!category)
+				errors.push(`Project row ${rowNumber}${name ? ` (${name})` : ""}: unknown category “${label}”.`);
 			else parsedCategories.push(category);
 		}
 		const uniqueCategories = new Set(parsedCategories);

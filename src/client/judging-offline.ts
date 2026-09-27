@@ -134,11 +134,12 @@ const offlineContext = async () => {
 	return {
 		namespace: snapshot.namespace,
 		editedAt,
+		assignmentVersion: snapshot.manifest.judge.round.assignmentVersion,
 	};
 };
 
 export const queueAssignmentPatch = async (assignmentId: string, values: Record<string, unknown>) => {
-	const { editedAt, namespace } = await offlineContext();
+	const { assignmentVersion, editedAt, namespace } = await offlineContext();
 	return withDatabase(async database => {
 		const key = `${namespace}:assignment:${assignmentId}`;
 		const transaction = database.transaction(OUTBOX_STORE, "readwrite");
@@ -152,6 +153,7 @@ export const queueAssignmentPatch = async (assignmentId: string, values: Record<
 				values,
 				editedAt,
 				operationId: crypto.randomUUID(),
+				assignmentVersion,
 			}),
 		);
 		await transactionDone(transaction);
@@ -159,7 +161,7 @@ export const queueAssignmentPatch = async (assignmentId: string, values: Record<
 };
 
 export const queueRankingPatch = async (categoryCode: string, projectIds: string[]) => {
-	const { editedAt, namespace } = await offlineContext();
+	const { assignmentVersion, editedAt, namespace } = await offlineContext();
 	return withDatabase(async database => {
 		const transaction = database.transaction(OUTBOX_STORE, "readwrite");
 		const store = transaction.objectStore(OUTBOX_STORE);
@@ -170,6 +172,7 @@ export const queueRankingPatch = async (categoryCode: string, projectIds: string
 				projectIds,
 				editedAt,
 				operationId: crypto.randomUUID(),
+				assignmentVersion,
 			}),
 		);
 		await transactionDone(transaction);

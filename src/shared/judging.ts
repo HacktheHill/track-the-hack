@@ -19,6 +19,16 @@ export type MiniCategoryCode = (typeof MINI_CATEGORY_CODES)[number];
 export type JudgingCategoryCode = MainCategoryCode | MiniCategoryCode;
 export type JudgingMainTrackCode = MainCategoryCode | "CGI";
 
+export const isMiniAssessmentEligibleForRanking = ({
+	eligibility,
+	score,
+	resolution,
+}: {
+	eligibility: "ELIGIBLE" | "UNSURE" | "INELIGIBLE" | null;
+	score: number | null;
+	resolution?: "ELIGIBLE" | "UNSURE" | "INELIGIBLE" | null;
+}) => score !== null && resolution !== "INELIGIBLE" && (eligibility === "ELIGIBLE" || resolution === "ELIGIBLE");
+
 export const ALL_JUDGING_CATEGORY_CODES = [...MAIN_CATEGORY_CODES, ...MINI_CATEGORY_CODES] as const;
 
 export const canonicalProjectCategoryCodes = (

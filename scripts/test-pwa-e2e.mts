@@ -400,8 +400,9 @@ try {
 		await visit(page, `${locale.prefix}/resources`);
 		await page.getByRole("link", { name: "CGI" }).waitFor();
 
-		await visit(page, `${locale.prefix}/sponsors/cgi`);
-		await page.getByRole("heading", { name: "CGI", exact: true }).waitFor();
+		const sponsorPath = `${locale.prefix}/sponsors/cgi`;
+		await visit(page, sponsorPath);
+		await waitForOfflineContent(page, sponsorPath, page.getByRole("heading", { name: "CGI", exact: true }));
 		await waitForCachedRoutes(page, locale.prefix ? "public-pages-fr" : "public-pages-en", [
 			`${locale.prefix}/schedule`,
 			`${locale.prefix}/schedule/event?id=${eventId}`,
