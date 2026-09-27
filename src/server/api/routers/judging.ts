@@ -681,6 +681,7 @@ export const judgingRouter = createTRPCRouter({
 					include: { judge: true, project: true },
 					orderBy: [{ judge: { name: "asc" } }, { project: { tableNumber: "asc" } }],
 				},
+				rankings: { orderBy: [{ judgeId: "asc" }, { categoryCode: "asc" }, { rank: "asc" }] },
 			},
 		});
 		if (!round) return null;
@@ -733,19 +734,24 @@ export const judgingRouter = createTRPCRouter({
 				const assignments = round.assignments.filter(
 					assignment => assignment.projectId === project.id && assignment.categoryCode === categoryCode,
 				);
+				const activeAssignments = assignments.filter(assignment => !assignment.recusedAt);
 				return {
 					projectId: project.id,
 					projectName: project.name,
 					tableNumber: project.tableNumber,
 					room: project.room,
 					categoryCode,
-					count: assignments.length,
-					judgeIds: assignments.map(assignment => assignment.judgeId),
+					count: activeAssignments.length,
+					totalCount: assignments.length,
+					recusedCount: assignments.length - activeAssignments.length,
+					judgeIds: activeAssignments.map(assignment => assignment.judgeId),
 				};
 			});
 		});
 		const categoryCohorts = [...new Set(coverage.map(item => item.categoryCode))].sort().map(categoryCode => {
-			const assignments = round.assignments.filter(assignment => assignment.categoryCode === categoryCode);
+			const assignments = round.assignments.filter(
+				assignment => assignment.categoryCode === categoryCode && !assignment.recusedAt,
+			);
 			const sharedProjects = new Set(
 				coverage
 					.filter(item => item.categoryCode === categoryCode && item.count > 1)
@@ -761,11 +767,63 @@ export const judgingRouter = createTRPCRouter({
 					new Set(assignments.map(assignment => assignment.judgeId)).size > 1 && sharedProjects.size === 0,
 			};
 		});
+		const rankingStatuses = round.judges.flatMap(judge => {
+			const judgeAssignments = round.assignments.filter(assignment => assignment.judgeId === judge.id);
+			return [...new Set(judgeAssignments.map(assignment => assignment.categoryCode))]
+				.sort()
+				.map(categoryCode => {
+					const categoryAssignments = judgeAssignments.filter(
+						assignment => assignment.categoryCode === categoryCode,
+					);
+					const projectResolution = (projectId: string) =>
+						round.projects
+							.find(project => project.id === projectId)
+							?.categories.find(category => category.code === categoryCode)?.eligibilityResolution;
+					const scoringComplete = categoryAssignments.every(assignment =>
+						isAssignmentComplete(assignment, projectResolution(assignment.projectId)),
+					);
+					const eligibleProjectIds = categoryAssignments
+						.filter(
+							assignment =>
+								!assignment.recusedAt &&
+								assignment.completedAt &&
+								(assignment.isMain ||
+									((assignment.miniEligibility === "ELIGIBLE" ||
+										projectResolution(assignment.projectId) === "ELIGIBLE") &&
+										assignment.miniScore !== null &&
+										projectResolution(assignment.projectId) !== "INELIGIBLE")),
+						)
+						.map(assignment => assignment.projectId);
+					const ranking = round.rankings.filter(
+						item => item.judgeId === judge.id && item.categoryCode === categoryCode,
+					);
+					const confirmedRanking = ranking.filter(item => item.confirmedAt);
+					const exactConfirmedRanking =
+						confirmedRanking.length === eligibleProjectIds.length &&
+						confirmedRanking.every(item => eligibleProjectIds.includes(item.projectId));
+					const status = !scoringComplete
+						? "BLOCKED"
+						: eligibleProjectIds.length <= 1
+							? "AUTOMATIC"
+							: exactConfirmedRanking
+								? "COMPLETE"
+								: ranking.length
+									? "STALE"
+									: "NOT_STARTED";
+					return {
+						judgeId: judge.id,
+						categoryCode,
+						eligibleProjectCount: eligibleProjectIds.length,
+						status,
+					};
+				});
+		});
 		return {
 			...round,
 			judgeLoads,
 			coverage,
 			categoryCohorts,
+			rankingStatuses,
 			generationWarningList: jsonStringArray(round.generationWarnings),
 		};
 	}),
