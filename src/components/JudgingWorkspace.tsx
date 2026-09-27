@@ -47,8 +47,7 @@ type AssignmentPatch = Partial<
 const categoryDefinition = (code: string) => (isJudgingCategoryCode(code) ? JUDGING_CATEGORY_CATALOG[code] : undefined);
 
 const assignmentResolution = (assignment: Assignment) =>
-	assignment.project.categories.find(category => category.code === assignment.categoryCode)
-		?.eligibilityResolution;
+	assignment.project.categories.find(category => category.code === assignment.categoryCode)?.eligibilityResolution;
 
 const assignmentComplete = (assignment: Assignment) => {
 	if (assignment.recusedAt) return Boolean(assignment.recusalAcceptedAt);

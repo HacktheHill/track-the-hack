@@ -7,6 +7,7 @@ import { notificationsRouter } from "./routers/notifications";
 import { createTRPCRouter } from "./trpc";
 import { hardwareRouter } from "./routers/hardware";
 import { latteLabRouter } from "./routers/latte-lab";
+import { judgingRouter } from "./routers/judging";
 
 /**
  * This is the primary router for your server.
@@ -22,6 +23,7 @@ export const appRouter = createTRPCRouter({
 	hardware: hardwareRouter,
 	latteLab: latteLabRouter,
 	notifications: notificationsRouter,
+	judging: judgingRouter,
 });
 
 // export type definition of API

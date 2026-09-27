@@ -741,8 +741,7 @@ export const judgingRouter = createTRPCRouter({
 			const resolutionFor = (assignment: (typeof round.assignments)[number]) =>
 				round.projects
 					.find(project => project.id === assignment.projectId)
-					?.categories.find(category => category.code === assignment.categoryCode)
-					?.eligibilityResolution;
+					?.categories.find(category => category.code === assignment.categoryCode)?.eligibilityResolution;
 			const incomplete = round.assignments.filter(
 				assignment => !isAssignmentComplete(assignment, resolutionFor(assignment)),
 			).length;
@@ -924,9 +923,7 @@ export const judgingRouter = createTRPCRouter({
 						transaction.judgingAssignment.update({
 							where: { id: assignment.id },
 							data: {
-								completedAt: isAssignmentComplete(assignment, input.resolution)
-									? new Date()
-									: null,
+								completedAt: isAssignmentComplete(assignment, input.resolution) ? new Date() : null,
 							},
 						}),
 					),
@@ -1597,8 +1594,7 @@ export const judgingRouter = createTRPCRouter({
 		const resolutionFor = (assignment: (typeof assignments)[number]) =>
 			projects
 				.find(project => project.id === assignment.projectId)
-				?.categories.find(category => category.code === assignment.categoryCode)
-				?.eligibilityResolution;
+				?.categories.find(category => category.code === assignment.categoryCode)?.eligibilityResolution;
 		const assessments = assignments.map(assignment => ({
 			projectId: assignment.projectId,
 			projectName: assignment.project.name,

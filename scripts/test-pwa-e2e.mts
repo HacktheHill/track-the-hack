@@ -139,6 +139,7 @@ const integrationHeaders = {
 };
 const prisma = new PrismaClient();
 let browser: Browser | undefined;
+let createdCheckInEvent = false;
 
 const closeBrowser = async () => {
 	if (browser) await browser.close();
@@ -162,7 +163,9 @@ const cleanUp = async () => {
 		prisma.claimToken.deleteMany({ where: { hackerId: participantId } }),
 		prisma.cancellationCapability.deleteMany({ where: { hackerId: participantId } }),
 		prisma.hacker.deleteMany({ where: { id: participantId } }),
-		prisma.event.deleteMany({ where: { id: { in: [eventId, checkInEventId] } } }),
+		prisma.event.deleteMany({
+			where: { id: { in: createdCheckInEvent ? [eventId, checkInEventId] : [eventId] } },
+		}),
 	]);
 };
 
@@ -312,25 +315,31 @@ try {
 			scannerWorkflow: ScannerWorkflow.ATTENDANCE,
 		},
 	});
-	await prisma.event.create({
-		data: {
-			id: checkInEventId,
-			name: "Check-Ins",
-			nameFr: "Enregistrements",
-			room: "PWA test check-in",
-			roomFr: "Enregistrement de test PWA",
-			start: new Date(eventStart.getTime() - 60 * 60 * 1000),
-			end: eventStart,
-			description: "Canonical check-in fixture for participant access issuance.",
-			descriptionFr: "Enregistrement canonique pour l’émission d’un accès participant.",
-			hidden: false,
-			type: EventType.GENERAL,
-			scannerEnabled: true,
-			scannerWorkflow: ScannerWorkflow.CHECK_IN,
-			maxCheckIns: 1,
-		},
+	const visibleCheckInCount = await prisma.event.count({
+		where: { hidden: false, scannerWorkflow: ScannerWorkflow.CHECK_IN },
 	});
-
+	assert.ok(visibleCheckInCount <= 1, "PWA acceptance requires at most one existing visible check-in event");
+	if (visibleCheckInCount === 0) {
+		await prisma.event.create({
+			data: {
+				id: checkInEventId,
+				name: "Check-Ins",
+				nameFr: "Enregistrements",
+				room: "PWA test check-in",
+				roomFr: "Enregistrement de test PWA",
+				start: new Date(eventStart.getTime() - 60 * 60 * 1000),
+				end: eventStart,
+				description: "Canonical check-in fixture for participant access issuance.",
+				descriptionFr: "Enregistrement canonique pour l’émission d’un accès participant.",
+				hidden: false,
+				type: EventType.GENERAL,
+				scannerEnabled: true,
+				scannerWorkflow: ScannerWorkflow.CHECK_IN,
+				maxCheckIns: 1,
+			},
+		});
+		createdCheckInEvent = true;
+	}
 	const provision = await fetch(`${baseUrl}/api/integrations/sheets/hackers`, {
 		method: "POST",
 		headers: integrationHeaders,
@@ -459,11 +468,7 @@ try {
 
 		const profilePath = `${locale.prefix}/profile`;
 		await visit(page, profilePath);
-		await waitForOfflineContent(
-			page,
-			profilePath,
-			page.getByRole("heading", { name: locale.passHeading }),
-		);
+		await waitForOfflineContent(page, profilePath, page.getByRole("heading", { name: locale.passHeading }));
 		const offlineQr = page.getByAltText(locale.qrAlt);
 		await offlineQr.waitFor();
 		assert.equal(
@@ -633,8 +638,12 @@ try {
 		"Personalized judging data must remain absent from Cache Storage",
 	);
 
-	await judgePage.getByRole("button", { name: "Sign Out" }).click();
-	await judgePage.waitForURL(url => !url.pathname.startsWith("/api/auth/signout"));
+	await Promise.all([
+		judgePage.waitForEvent("framenavigated", frame => frame === judgePage.mainFrame()),
+		judgePage.getByRole("button", { name: "Sign Out" }).click(),
+	]);
+	await judgePage.getByRole("button", { name: "Organiser Sign In" }).waitFor();
+	await judgePage.waitForLoadState("networkidle");
 	const localJudgingCleared = await judgePage.evaluate(async () => {
 		const database = await new Promise<IDBDatabase>((resolve, reject) => {
 			const request = indexedDB.open("track-the-hack-judging", 1);

@@ -15,6 +15,8 @@ const publicPrecacheUrls = [
 	"/fr/resources",
 	"/pass",
 	"/fr/pass",
+	"/judging/offline",
+	"/fr/judging/offline",
 	"/fr/_offline",
 	"/assets/maps/floor0.svg",
 	"/assets/maps/floor1.svg",
@@ -69,23 +71,29 @@ const isEnglishPublicNavigation = ({ request, url }) =>
 	self.origin === url.origin &&
 	/^\/(?:schedule(?:\/event)?|maps|resources|sponsors\/[^/]+|pass)?\/?$/.test(url.pathname);
 /** @param {{ request: Request; url: URL }} context */
+const isFrenchJudgingNavigation = ({ request, url }) =>
+	request.mode === "navigate" && self.origin === url.origin && /^\/fr\/judging\/?$/.test(url.pathname);
+/** @param {{ request: Request; url: URL }} context */
+const isEnglishJudgingNavigation = ({ request, url }) =>
+	request.mode === "navigate" && self.origin === url.origin && /^\/judging\/?$/.test(url.pathname);
+/** @param {{ request: Request; url: URL }} context */
 const isFrenchPrivateNavigation = ({ request, url }) =>
 	request.mode === "navigate" &&
 	self.origin === url.origin &&
-	/^\/fr\/(?:auth\/(?:error|sign-in)|cancel|claim(?:\/qr)?|discord|hardware|internal(?:\/(?:events|roles|hardware|latte-lab))?|latte-lab|metrics|profile|qr|rsvp\/(?:manage|[^/]+)|services)\/?$/.test(
+	/^\/fr\/(?:auth\/(?:error|sign-in)|cancel|claim(?:\/qr)?|discord|hardware|internal(?:\/(?:access|events|judging|notifications|roles|hardware|latte-lab))?|latte-lab|metrics|profile|qr|rsvp\/(?:manage|[^/]+)|services)\/?$/.test(
 		url.pathname,
 	);
 /** @param {{ request: Request; url: URL }} context */
 const isEnglishPrivateNavigation = ({ request, url }) =>
 	request.mode === "navigate" &&
 	self.origin === url.origin &&
-	/^\/(?:auth\/(?:error|sign-in)|cancel|claim(?:\/qr)?|discord|hardware|internal(?:\/(?:events|roles|hardware|latte-lab))?|latte-lab|metrics|profile|qr|rsvp\/(?:manage|[^/]+)|services)\/?$/.test(
+	/^\/(?:auth\/(?:error|sign-in)|cancel|claim(?:\/qr)?|discord|hardware|internal(?:\/(?:access|events|judging|notifications|roles|hardware|latte-lab))?|latte-lab|metrics|profile|qr|rsvp\/(?:manage|[^/]+)|services)\/?$/.test(
 		url.pathname,
 	);
 /** @param {{ url: URL }} context */
 const isPrivateNextDataRequest = ({ url }) =>
 	self.origin === url.origin &&
-	/^\/_next\/data\/[^/]+\/(?:(?:en|fr)\/)?(?:auth\/(?:error|sign-in)|cancel|claim(?:\/qr)?|discord|hardware|internal(?:\/(?:events|roles|hardware|latte-lab))?|latte-lab|metrics|profile|qr|rsvp\/(?:manage|[^/]+)|services)\.json$/.test(
+	/^\/_next\/data\/[^/]+\/(?:(?:en|fr)\/)?(?:auth\/(?:error|sign-in)|cancel|claim(?:\/qr)?|discord|hardware|internal(?:\/(?:access|events|judging|notifications|roles|hardware|latte-lab))?|judging|latte-lab|metrics|profile|qr|rsvp\/(?:manage|[^/]+)|services)\.json$/.test(
 		url.pathname,
 	);
 
@@ -95,7 +103,9 @@ module.exports = {
 	publicScheduleData,
 	isEnglishPrivateNavigation,
 	isEnglishPublicNavigation,
+	isEnglishJudgingNavigation,
 	isFrenchPrivateNavigation,
 	isFrenchPublicNavigation,
+	isFrenchJudgingNavigation,
 	isPrivateNextDataRequest,
 };

@@ -14,12 +14,12 @@ import {
 	DEVELOPMENT_ORGANIZER_EMAIL,
 	getOrganizerAccess,
 	isDevelopmentOrganizerAuthEnabled,
-	isOrganizerEmailAllowed,
 	normalizeOrganizerEmail,
 	parseGoogleOrganizerProfile,
 } from "@/server/lib/organizer-auth";
 import { sendOrganizerVerificationRequest } from "@/server/lib/organizer-email";
-import { restrictOrganizerVerificationTokens } from "@/server/lib/organizer-adapter";
+import { isSignInEmailAllowed, restrictOrganizerVerificationTokens } from "@/server/lib/organizer-adapter";
+import { getJudgeAccess } from "@/server/lib/judge-auth";
 
 export const getAuthOptions = (req?: NextApiRequest) =>
 	({
@@ -44,7 +44,7 @@ export const getAuthOptions = (req?: NextApiRequest) =>
 					// The custom sender silently withholds mail for unknown addresses.
 					// Redemption is checked again in case access changed after issuance.
 					if (email?.verificationRequest) return true;
-					return !!user.email && (await isOrganizerEmailAllowed(prisma, user.email));
+					return !!user.email && (await isSignInEmailAllowed(prisma, user.email));
 				}
 				const googleProfile = parseGoogleOrganizerProfile(profile);
 				return canUseGoogleOrganizerAuth({
@@ -58,6 +58,7 @@ export const getAuthOptions = (req?: NextApiRequest) =>
 			async session({ session, token }) {
 				if (!token.sub) return { ...session, user: undefined };
 				const organizer = await getOrganizerAccess(prisma, token.sub);
+				const judge = await getJudgeAccess(prisma, token.sub);
 
 				return {
 					...session,
@@ -66,6 +67,7 @@ export const getAuthOptions = (req?: NextApiRequest) =>
 						id: organizer?.id ?? token.sub,
 						isOrganizer: organizer !== null,
 						isAdmin: organizer?.isAdmin ?? false,
+						isJudge: judge !== null,
 					},
 				};
 			},

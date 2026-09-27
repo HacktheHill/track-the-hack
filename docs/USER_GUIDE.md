@@ -26,10 +26,12 @@ organiser, or administrator context.
 | `/latte-lab`                        | Build and place a drink order when the lab is open and the selected ingredients are available.                     |
 | `/discord#…`                        | Link the active, checked-in participant pass to the Discord account represented by the bot-issued fragment.        |
 | `/_offline`                         | Explain unsupported offline navigation and provide a route back to the cached schedule.                            |
+| `/judging`                          | Score assigned projects, save work offline after one online load, synchronize, and rank eligible projects.         |
 
-The pass and schedule are the deliberately supported offline journeys. Personalized
-profile data, services, organiser screens, APIs, claim, RSVP, and Discord verification
-remain network-only.
+The pass, public content, and prepared judge workspace are the deliberately supported
+offline journeys. Personalized profile data, services, organiser screens, APIs, claim,
+RSVP, and Discord verification remain network-only. Judge work saved only on the device
+is not submitted and is not visible to organisers until synchronization succeeds.
 
 ## Organiser screens
 
@@ -45,6 +47,23 @@ remain network-only.
 | `/internal/notifications` | Prepare food-service cohorts (or leave the maximum size blank for one all-participants cohort), review delivery totals, confirm announcements, inspect safe outcomes, and retry eligible failures. |
 | `/internal/access`        | Administrators allow or remove external organiser email addresses. Named CTN Workspace access is implicit; CTN shared mailboxes are denied.                                                        |
 | `/internal/roles`         | Compatibility route for older role-management links; current authorisation is defined in `ARCHITECTURE.md`.                                                                                        |
+| `/internal/judging`       | Administrators import projects and judges, generate and adjust assignments, publish, monitor synchronized work, resolve eligibility, lock or reopen, and export results.                           |
+
+## Judge workflow
+
+Open `/judging` online once before leaving reliable connectivity. The page confirms when
+the current assignment set is available offline. Select a table, complete only the
+rubrics shown, and watch both the project state and persistent synchronization banner.
+For General and Civic, choose 0 through 5 for each criterion; the page shows the awarded
+weighted points and running total out of 45. For mini and sponsor categories, first
+record eligibility, add the required private explanation for unsure or ineligible work,
+then score eligible projects from 1 through 5.
+
+Recusal requires a reason and remains incomplete until an administrator accepts it or
+reassigns the visit. Once every scope is scored or resolved, order each eligible category
+from weakest at the top to strongest at the bottom. Offline completion reads “ready on
+this device”, never submitted. Use **Sync now** after reconnecting and do not hand a
+shared device to another person until signing out or clearing offline judging data.
 
 The scanner station selector determines whether a scan shows participant details or
 records check-in, merchandise, food, or event attendance. Camera scans suppress only

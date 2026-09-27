@@ -266,6 +266,14 @@ failure may fall back to the static `/pass` shell. That shell reads only the val
 opaque participant ID previously stored by a successful online profile load and uses it
 to render the QR. Participant sign-out clears that value.
 
+The judge workspace is a separate, narrowly scoped exception for application-managed
+offline data. `/judging` itself remains network-only and falls back to a generic,
+pre-cached English or French judging shell. After a successful authenticated load, that
+shell reads only the current judge's published assignment snapshot and pending work from
+IndexedDB. Authenticated HTML, tRPC responses, sessions, `/internal`, and all other
+private data remain absent from Cache Storage. Judge sign-out and the explicit clear
+control remove the local snapshot and outbox.
+
 The custom push worker is independent of the route cache. Scanning and all
 state-changing workflows remain online-only; there is no offline write queue or locally
 cached operational roster. The personalized saved-events view is also online-only,
@@ -320,6 +328,29 @@ identity.
 The privacy redesign established the current schema from a reviewed clean baseline.
 Legacy data retention or deletion from older deployments belongs to the relevant data
 owner and infrastructure operator, not application startup code.
+
+## Judging subsystem
+
+Judging uses versioned `JudgingRound`, project, category, judge, assignment, ranking,
+and idempotent sync-receipt records. Project imports use the Devpost project ID as the
+stable key. Judge identity is normalized email, but authorization is re-read from the
+database for every online judge operation. Administrators and judges are independent
+roles: appearing in the judge roster never grants organiser access, and an administrator
+receives no scoring scope unless also imported as a judge.
+
+Assignment generation covers every required project/category once before adding second
+or third assessments. It starts at 15 unique projects per judge, raises that limit only
+to the smallest value its baseline pass requires, and blocks publication until an
+administrator approves any increase. Exclusions are hard constraints; expertise,
+balanced loads, existing project visits, overlap, room locality, and deterministic IDs
+are ordered preferences.
+
+Offline edits are coalesced into one desired entity state per assignment or category
+ranking. Each field carries an effective timestamp corrected with the latest observed
+server offset; the server clamps implausibly future values. Newer field timestamps win,
+with operation UUID as the deterministic exact-tie breaker. Operation receipts make
+timed-out retries idempotent. Reassignment discards and discloses no-longer-authorized
+local operations; locking retains authorized pending work and reports it as blocked.
 
 Once the current baseline exists, preserve the database and apply versioned Prisma
 migrations before starting the corresponding application revision. A normal release

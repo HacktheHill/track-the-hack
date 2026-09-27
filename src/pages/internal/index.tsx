@@ -19,9 +19,14 @@ const Internal: NextPage = () => {
 					<h1 className="ui-page-title text-center">{t("title")}</h1>
 					<div className="flex w-full max-w-md flex-col items-stretch gap-4 text-center">
 						<Access admin silent>
-							<Link href="/internal/access" className="ui-button ui-button-primary">
-								{t("access.title")}
-							</Link>
+							<>
+								<Link href="/internal/access" className="ui-button ui-button-primary">
+									{t("access.title")}
+								</Link>
+								<Link href="/internal/judging" className="ui-button ui-button-primary">
+									{t("judging.title")}
+								</Link>
+							</>
 						</Access>
 						<Link href="/internal/events" className="ui-button ui-button-primary">
 							{t("events.title")}
