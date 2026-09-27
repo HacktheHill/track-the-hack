@@ -71,7 +71,7 @@ const allowedOutcomes: Record<(typeof auditNames)[number], readonly string[]> = 
 	"judging.round.locked": ["locked", "force_locked"],
 	"judging.round.reopened": ["reopened"],
 	"judging.workload.approved": ["approved"],
-	"judging.projects.main_track_corrected": ["cgi"],
+	"judging.projects.main_track_corrected": ["cgi", "general", "civic"],
 	"judging.assignment.changed": ["moved", "project_visit_moved", "swapped", "added", "removed", "recusal_accepted"],
 	"judging.eligibility.resolved": ["eligible", "ineligible"],
 	"judging.sync.applied": ["applied", "discarded", "blocked"],

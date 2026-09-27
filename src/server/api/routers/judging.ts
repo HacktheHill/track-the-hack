@@ -684,6 +684,172 @@ export const judgingRouter = createTRPCRouter({
 			);
 		}),
 
+	correctProjectMainTrack: adminProcedure
+		.input(
+			z.object({
+				roundId: z.string().min(1).max(191),
+				projectId: z.string().min(1).max(191),
+				mainTrack: z.enum(["GENERAL", "CIVIC"]),
+				judgeIds: z.array(z.string().min(1).max(191)).min(1).max(3),
+				expectedAssignmentVersion: z.number().int().nonnegative(),
+				confirmDiscardMainScoring: z.literal(true),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			if (new Set(input.judgeIds).size !== input.judgeIds.length)
+				throw new TRPCError({ code: "BAD_REQUEST", message: "Main-track judges must be unique." });
+
+			return ctx.prisma.$transaction(
+				async transaction => {
+					const [round, project, judges, currentAssignments] = await Promise.all([
+						transaction.judgingRound.findUnique({ where: { id: input.roundId } }),
+						transaction.judgingProject.findFirst({
+							where: { id: input.projectId, roundId: input.roundId },
+							select: { id: true, tableNumber: true, mainTrack: true },
+						}),
+						transaction.judgingJudge.findMany({
+							where: { id: { in: input.judgeIds }, roundId: input.roundId },
+							select: { id: true, exclusions: true },
+						}),
+						transaction.judgingAssignment.findMany({
+							where: { roundId: input.roundId, projectId: input.projectId, isMain: true },
+							select: {
+								id: true,
+								judgeId: true,
+								categoryCode: true,
+								technicalLevel: true,
+								ideaLevel: true,
+								designLevel: true,
+								learningLevel: true,
+								presentationLevel: true,
+								note: true,
+								rulesConcern: true,
+								recusedAt: true,
+							},
+						}),
+					]);
+					if (!round || !project) throw new TRPCError({ code: "NOT_FOUND" });
+					requireMutableAssignments(round);
+					if (judges.length !== input.judgeIds.length)
+						throw new TRPCError({ code: "BAD_REQUEST", message: "A selected judge is not in this round." });
+					if (judges.some(judge => jsonStringArray(judge.exclusions).includes(input.mainTrack)))
+						throw new TRPCError({ code: "BAD_REQUEST", message: "A selected judge is excluded from this track." });
+
+					const currentJudgeIds = currentAssignments.map(assignment => assignment.judgeId).sort();
+					const requestedJudgeIds = [...input.judgeIds].sort();
+					const alreadyCorrected =
+						project.mainTrack === input.mainTrack &&
+						currentAssignments.every(assignment => assignment.categoryCode === input.mainTrack) &&
+						currentJudgeIds.length === requestedJudgeIds.length &&
+						currentJudgeIds.every((judgeId, index) => judgeId === requestedJudgeIds[index]);
+					if (alreadyCorrected)
+						return {
+							alreadyCorrected: true,
+							assignmentVersion: round.assignmentVersion,
+							assignmentsRemoved: 0,
+							synchronizedWorkRemoved: 0,
+							assignmentsCreated: 0,
+							rankingRowsRemoved: 0,
+						};
+
+					const judgeVisits = await transaction.judgingAssignment.findMany({
+						where: { judgeId: { in: input.judgeIds } },
+						select: { judgeId: true, projectId: true },
+					});
+					for (const judgeId of input.judgeIds) {
+						const projectIds = new Set(
+							judgeVisits.filter(assignment => assignment.judgeId === judgeId).map(assignment => assignment.projectId),
+						);
+						if (!projectIds.has(project.id) && projectIds.size >= round.effectiveProjectLimit)
+							throw new TRPCError({
+								code: "PRECONDITION_FAILED",
+								message: "This correction would exceed the approved project limit.",
+							});
+					}
+
+					await claimAssignmentVersion(transaction, round.id, input.expectedAssignmentVersion);
+					const affectedRankingPairs = [
+						...currentAssignments.map(assignment => ({
+							judgeId: assignment.judgeId,
+							categoryCode: assignment.categoryCode,
+						})),
+						...input.judgeIds.map(judgeId => ({ judgeId, categoryCode: input.mainTrack })),
+					];
+					const rankingRowsRemoved = await transaction.judgingRanking.deleteMany({
+						where: {
+							OR: [
+								...new Map(
+									affectedRankingPairs.map(pair => [`${pair.judgeId}:${pair.categoryCode}`, pair]),
+								).values(),
+							],
+						},
+					});
+					await transaction.judgingAssignment.deleteMany({
+						where: { id: { in: currentAssignments.map(assignment => assignment.id) } },
+					});
+					await transaction.judgingProject.update({
+						where: { id: project.id },
+						data: { mainTrack: input.mainTrack },
+					});
+					await transaction.judgingAssignment.createMany({
+						data: input.judgeIds.map(judgeId => ({
+							roundId: round.id,
+							projectId: project.id,
+							judgeId,
+							categoryCode: input.mainTrack,
+							isMain: true,
+							expertiseMatch: false,
+							calibrationAnchor: false,
+							assignmentReason: "administrator main-track correction",
+							fieldTimestamps: {},
+							fieldOperationIds: {},
+						})),
+					});
+
+					const synchronizedWorkRemoved = currentAssignments.filter(
+						assignment =>
+							[
+								assignment.technicalLevel,
+								assignment.ideaLevel,
+								assignment.designLevel,
+								assignment.learningLevel,
+								assignment.presentationLevel,
+								assignment.note,
+								assignment.recusedAt,
+							].some(value => value !== null) || assignment.rulesConcern,
+					).length;
+					await persistAuditEvent(
+						transaction,
+						createAuditEvent({
+							name: "judging.projects.main_track_corrected",
+							outcome: input.mainTrack.toLowerCase(),
+							actor: { type: "organizer", id: ctx.organizer.id },
+							resource: { type: "judging_project", id: project.id },
+							data: {
+								tableNumber: project.tableNumber,
+								previousMainTrack: project.mainTrack,
+								mainTrack: input.mainTrack,
+								assignmentsRemoved: currentAssignments.length,
+								synchronizedWorkRemoved,
+								assignmentsCreated: input.judgeIds.length,
+								rankingRowsRemoved: rankingRowsRemoved.count,
+								assignmentVersionChanged: true,
+							},
+						}),
+					);
+					return {
+						alreadyCorrected: false,
+						assignmentVersion: round.assignmentVersion + 1,
+						assignmentsRemoved: currentAssignments.length,
+						synchronizedWorkRemoved,
+						assignmentsCreated: input.judgeIds.length,
+						rankingRowsRemoved: rankingRowsRemoved.count,
+					};
+				},
+				{ isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+			);
+		}),
+
 	regenerateDraft: adminProcedure.input(versionedRoundIdInput).mutation(async ({ ctx, input }) => {
 		const round = await ctx.prisma.judgingRound.findUnique({
 			where: { id: input.roundId },
