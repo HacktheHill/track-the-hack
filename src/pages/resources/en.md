@@ -15,7 +15,7 @@ Participants must follow the [**Hack the Hill Participant & Event Policy**](http
 | Opening Ceremony & challenge release         | Friday at 7:00 PM                                 |
 | Team Formation                               | Friday, September 25 at 9:00 PM                   |
 | **Hacking begins**                           | **Friday at 10:00 PM**                            |
-| Draft Devpost submission                     | **Sunday at 12:00 AM** — midnight Saturday night  |
+| Draft Devpost submission: final team roster and category selections | **Sunday at 12:00 AM** — midnight Saturday night |
 | **Hacking ends / final submission deadline** | **Sunday at 10:00 AM**                            |
 | Judging                                      | 10:30 AM–12:00 PM, 1:00–3:00 PM, and 3:30–5:00 PM |
 | Closing Ceremony                             | 5:00 PM in C140                                   |
@@ -34,7 +34,7 @@ Organizers, volunteers, judges, sponsor representatives, and others with privile
 
 A competitor may be a member of **one competing team only**. Everyone materially contributing to the project as a competitor must be an eligible member of that team and must appear on its final Devpost submission.
 
-The team roster listed on the final Devpost submission at 10:00 AM is considered the team's final competition roster. Changes after the deadline require organizer approval.
+The team roster and category selections listed on the draft Devpost submission at 12:00 AM Sunday are considered final. Changes after midnight require organizer approval.
 
 **Competitors must check in and participate in person.** Competitors may temporarily leave the venue, but leaving does not change competition deadlines or requirements.
 
@@ -74,11 +74,13 @@ Borrowed hardware must be signed out and returned when required.
 
 # Submission Rules
 
-Teams must create a [**draft Devpost submission**](https://hack-the-hill-iii.devpost.com/) by 12:00 AM Sunday so organizers can prepare the judging schedule. The project may continue to be updated afterward.
+Teams must create a [**draft Devpost submission**](https://hack-the-hill-iii.devpost.com/) by **12:00 AM Sunday—midnight Saturday night** so organizers can prepare the judging schedule. The draft must include the team's **final team members**, **exactly one main track**—General, CGI, or Civic Technology—and every mini-challenge or MLH prize category the team intends to enter.
+
+**No code or project description is required by the draft deadline.** The draft does not need a repository link, screenshots, video, or other project materials at midnight. Teams may complete and update those parts of the submission until the final deadline. Roster or category changes after midnight require organizer approval.
 
 The **final deadline is 10:00 AM Sunday**, which is also the end of the hacking period. Teams are responsible for allowing enough time to finish their submission.
 
-The final Devpost project must include all competing team members, the team's selected main track, and every mini-challenge or MLH prize category the team wants to enter. Teams will only be considered for categories selected by the final submission deadline. Main-track or prize-specific deliverables must also be included where required.
+By the final deadline, the Devpost project must include all required project information and any main-track or prize-specific deliverables. Teams will only be considered for the main track and prize categories recorded at the draft deadline unless organizers approve a change.
 
 [**Submit your project on Devpost →**](https://hack-the-hill-iii.devpost.com/)
 
@@ -311,7 +313,7 @@ There is no required theme. The goal is to recognize the strongest overall proje
 
 Mini-challenges are separate from the three main tracks. A team may enter **any number of mini-challenges** for which its project qualifies, regardless of whether its selected main track is General, CGI, or Civic Technology. Awards are summarized in the Prize Overview.
 
-Teams must select every mini-challenge they want to enter on their final Devpost submission.
+Teams must select every mini-challenge they want to enter on their draft Devpost submission by the midnight deadline.
 
 Mini-challenges are judged as part of the team's normal main-track judging session. Teams do not receive a separate presentation or demo for mini-challenges. Judges will consider each mini-challenge selected on the team's final Devpost submission while evaluating the same project demonstration.
 
