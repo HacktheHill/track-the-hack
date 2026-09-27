@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import { MealCategory, Prisma, type PrismaClient } from "@prisma/client";
 import type { DietaryUpdate } from "@/server/services/dietary-reconciliation";
 import { persistAuditEvent, type AuditEventV1 } from "@/server/lib/audit-event";
+import { ensureParticipantCheckedIn } from "@/server/services/participant-check-in";
 import type {
 	HackerLifecycleRepository,
 	NewParticipantSession,
@@ -206,6 +207,11 @@ export class PrismaHackerLifecycleRepository implements HackerLifecycleRepositor
 				update: { id: claimId, expiresAt, consumedAt: null },
 			});
 			await transaction.participantSession.deleteMany({ where: { hackerId: record.id } });
+			await ensureParticipantCheckedIn(transaction, record.id, {
+				actor: auditEvent?.actor ?? { type: "integration", id: "participant-access" },
+				correlationId: auditEvent?.correlationId,
+				evidenceSource: "participant_pass_issued",
+			});
 			if (auditEvent) await persistAuditEvent(transaction, auditEvent);
 		});
 	}

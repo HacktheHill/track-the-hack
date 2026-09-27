@@ -205,14 +205,15 @@ void test("scanner API reports fresh, incremented, applied, stale, and bounded n
 		user: {
 			findUnique: () => organizerUser,
 		},
-		event: { findUnique: () => event },
+		event: { findUnique: () => event, findMany: () => [event] },
 		hacker: {
 			findUnique: () => ({ id: hackerId, confirmed: true, tShirtSize: "NONE" }),
 		},
 		$executeRaw: (query: TemplateStringsArray, ...values: unknown[]) => {
 			const statement = query.join("");
 			if (statement.includes("INSERT INTO")) {
-				presence ??= { id: String(values[0]), value: 1 };
+				if (presence) return 0;
+				presence = { id: String(values[0]), value: 1 };
 				return 1;
 			}
 			if (!statement.includes("AND `value` =") && statement.includes("+ 1")) {
@@ -231,6 +232,10 @@ void test("scanner API reports fresh, incremented, applied, stale, and bounded n
 		},
 		presence: {
 			findUnique: () => presence,
+			findUniqueOrThrow: () => {
+				if (!presence) throw new Error("Presence not found");
+				return presence;
+			},
 		},
 		log: {
 			create: ({ data }: { data: { action: string } }) => {
