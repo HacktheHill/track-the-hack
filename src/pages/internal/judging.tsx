@@ -45,6 +45,7 @@ export default function JudgingAdminPage() {
 	const [secondSwapAssignmentId, setSecondSwapAssignmentId] = useState("");
 	const [disqualifyTables, setDisqualifyTables] = useState("");
 	const [retiringMlhJudgeId, setRetiringMlhJudgeId] = useState("");
+	const [mlhRetirementArmed, setMlhRetirementArmed] = useState(false);
 	const [preview, setPreview] = useState<RouterOutputs["judging"]["previewImport"] | null>(null);
 	const utils = trpc.useContext();
 	const overview = trpc.judging.adminOverview.useQuery();
@@ -110,7 +111,10 @@ export default function JudgingAdminPage() {
 		onError: async () => utils.judging.adminOverview.invalidate(),
 	});
 	const retireMlhJudging = trpc.judging.retireMlhJudging.useMutation({
-		onSuccess: async () => utils.judging.adminOverview.invalidate(),
+		onSuccess: async () => {
+			setMlhRetirementArmed(false);
+			await utils.judging.adminOverview.invalidate();
+		},
 		onError: async () => utils.judging.adminOverview.invalidate(),
 	});
 	const acceptRecusal = trpc.judging.acceptRecusal.useMutation({
@@ -457,7 +461,10 @@ export default function JudgingAdminPage() {
 										<select
 											className="ui-field mt-1 block"
 											value={retiringMlhJudgeId}
-											onChange={event => setRetiringMlhJudgeId(event.target.value)}
+											onChange={event => {
+												setRetiringMlhJudgeId(event.target.value);
+												setMlhRetirementArmed(false);
+											}}
 										>
 											<option value="">{t("judging.select-judge")}</option>
 											{round.judgeLoads
@@ -475,21 +482,31 @@ export default function JudgingAdminPage() {
 										disabled={!retiringMlhJudgeId || retireMlhJudging.isLoading}
 										onClick={() => {
 											const judge = round.judgeLoads.find(item => item.id === retiringMlhJudgeId);
-											if (
-												judge &&
-												confirm(t("judging.retire-mlh-confirm", { judge: judge.name }))
-											)
-												retireMlhJudging.mutate({
-													roundId: round.id,
-													judgeId: judge.id,
-													expectedAssignmentVersion: round.assignmentVersion,
-													confirmDiscardJudgeWorkAndCloseMlh: true,
-												});
+											if (!judge) return;
+											if (!mlhRetirementArmed) {
+												setMlhRetirementArmed(true);
+												return;
+											}
+											retireMlhJudging.mutate({
+												roundId: round.id,
+												judgeId: judge.id,
+												expectedAssignmentVersion: round.assignmentVersion,
+												confirmDiscardJudgeWorkAndCloseMlh: true,
+											});
 										}}
 									>
-										{t("judging.retire-mlh-action")}
+										{mlhRetirementArmed
+											? t("judging.retire-mlh-confirm-action")
+											: t("judging.retire-mlh-action")}
 									</button>
 								</div>
+								{mlhRetirementArmed && (
+									<p className="mt-3 text-sm font-bold text-red-950">
+										{t("judging.retire-mlh-confirm", {
+											judge: round.judgeLoads.find(item => item.id === retiringMlhJudgeId)?.name,
+										})}
+									</p>
+								)}
 								{retireMlhJudging.data && (
 									<p className="mt-3 text-sm font-bold text-red-950">
 										{t("judging.retire-mlh-result", {
@@ -537,8 +554,12 @@ export default function JudgingAdminPage() {
 												<ul className="list-disc pl-5">
 													{closeSufficientlyCovered.data.insufficient.map(project => (
 														<li key={project.tableNumber}>
-															Table {project.tableNumber} · {project.name}: {project.missing
-																.map(item => `${item.categoryCode} ${item.completed}/${item.required}`)
+															Table {project.tableNumber} · {project.name}:{" "}
+															{project.missing
+																.map(
+																	item =>
+																		`${item.categoryCode} ${item.completed}/${item.required}`,
+																)
 																.join(", ")}
 														</li>
 													))}
@@ -588,15 +609,17 @@ export default function JudgingAdminPage() {
 										<p>
 											{t("judging.disqualify-removed", {
 												tables:
-													disqualifyUnjudged.data.removed.map(project => project.tableNumber).join(", ") ||
-													t("judging.none"),
+													disqualifyUnjudged.data.removed
+														.map(project => project.tableNumber)
+														.join(", ") || t("judging.none"),
 											})}
 										</p>
 										<p>
 											{t("judging.disqualify-kept", {
 												tables:
-													disqualifyUnjudged.data.kept.map(project => project.tableNumber).join(", ") ||
-													t("judging.none"),
+													disqualifyUnjudged.data.kept
+														.map(project => project.tableNumber)
+														.join(", ") || t("judging.none"),
 											})}
 										</p>
 									</div>
@@ -642,14 +665,16 @@ export default function JudgingAdminPage() {
 													.map(visit => `${visit.room} #${visit.tableNumber}`)
 													.join(" → ") || "—"}
 											</td>
-										<td>
-											{t("judging.judge-progress", {
-												complete: judge.complete,
-												total: judge.scopes,
-												remaining: judge.scopes - judge.complete,
-												percent: judge.scopes ? Math.round((judge.complete / judge.scopes) * 100) : 0,
-											})}
-										</td>
+											<td>
+												{t("judging.judge-progress", {
+													complete: judge.complete,
+													total: judge.scopes,
+													remaining: judge.scopes - judge.complete,
+													percent: judge.scopes
+														? Math.round((judge.complete / judge.scopes) * 100)
+														: 0,
+												})}
+											</td>
 											<td>
 												{judge.lastSyncAt ? new Date(judge.lastSyncAt).toLocaleString() : "—"}
 											</td>
@@ -1096,7 +1121,7 @@ export default function JudgingAdminPage() {
 												<th>{t("judging.average")}</th>
 												<th>{t("judging.spread")}</th>
 												<th>{t("judging.co-judge-difference")}</th>
-										<th>{t("judging.overlap")}</th>
+												<th>{t("judging.overlap")}</th>
 											</tr>
 										</thead>
 										<tbody>
@@ -1110,7 +1135,7 @@ export default function JudgingAdminPage() {
 													<td>{item.averageScore ?? "—"}</td>
 													<td>{item.scoreSpread ?? "—"}</td>
 													<td>{item.meanDifferenceFromCoJudges ?? "—"}</td>
-											<td>
+													<td>
 														{item.insufficientOverlap
 															? t("judging.insufficient-overlap")
 															: item.sharedAssessments}

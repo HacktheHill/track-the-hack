@@ -81,6 +81,7 @@
 		"retire-mlh-description": "Supprime définitivement chaque catégorie MLH, ses affectations et ses classements, ainsi que toutes les affectations et tous les classements du juge MLH sélectionné. Les évaluations des pistes principales et des défis non-MLH effectuées par les autres juges sont conservées.",
 		"retire-mlh-judge": "Juge MLH dont le travail sera supprimé",
 		"retire-mlh-action": "Supprimer le travail et clore MLH",
+		"retire-mlh-confirm-action": "Confirmer la suppression définitive",
 		"retire-mlh-confirm": "Supprimer définitivement toutes les évaluations de {{judge}} et clore tous les défis MLH dans Tracker? Cette action est irréversible.",
 		"retire-mlh-result": "Évaluation MLH close : {{assignments}} affectations, {{categories}} catégories de projet et {{rankings}} classements supprimés.",
 		"none": "Aucune",

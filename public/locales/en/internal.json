@@ -81,6 +81,7 @@
 		"retire-mlh-description": "Permanently removes every MLH category, its assignments and rankings, plus every assignment and ranking belonging to the selected MLH judge. Main-track and non-MLH challenge work from other judges is preserved.",
 		"retire-mlh-judge": "MLH judge whose work will be removed",
 		"retire-mlh-action": "Remove judge work and close MLH",
+		"retire-mlh-confirm-action": "Confirm permanent removal",
 		"retire-mlh-confirm": "Permanently remove all judging work by {{judge}} and close every MLH challenge in Tracker? This cannot be undone.",
 		"retire-mlh-result": "MLH judging closed: {{assignments}} assignments, {{categories}} project categories, and {{rankings}} ranking records removed.",
 		"none": "None",
