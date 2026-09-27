@@ -112,6 +112,7 @@ const waitForReady = async () => {
 
 const participantId = randomBytes(16).toString("base64url");
 const eventId = `pwa-${randomBytes(8).toString("hex")}`;
+const checkInEventId = `pwa-check-in-${randomBytes(8).toString("hex")}`;
 const eventName = `PWA offline event ${eventId.slice(-6)}`;
 const eventNameFr = `Événement hors ligne PWA ${eventId.slice(-6)}`;
 const participant = participantSchema.parse({
@@ -150,7 +151,7 @@ const cleanUp = async () => {
 		prisma.claimToken.deleteMany({ where: { hackerId: participantId } }),
 		prisma.cancellationCapability.deleteMany({ where: { hackerId: participantId } }),
 		prisma.hacker.deleteMany({ where: { id: participantId } }),
-		prisma.event.deleteMany({ where: { id: eventId } }),
+		prisma.event.deleteMany({ where: { id: { in: [eventId, checkInEventId] } } }),
 	]);
 };
 
@@ -215,6 +216,24 @@ try {
 			type: EventType.GENERAL,
 			scannerEnabled: false,
 			scannerWorkflow: ScannerWorkflow.ATTENDANCE,
+		},
+	});
+	await prisma.event.create({
+		data: {
+			id: checkInEventId,
+			name: "Check-Ins",
+			nameFr: "Enregistrements",
+			room: "PWA test check-in",
+			roomFr: "Enregistrement de test PWA",
+			start: new Date(eventStart.getTime() - 60 * 60 * 1000),
+			end: eventStart,
+			description: "Canonical check-in fixture for participant access issuance.",
+			descriptionFr: "Enregistrement canonique pour l’émission d’un accès participant.",
+			hidden: false,
+			type: EventType.GENERAL,
+			scannerEnabled: true,
+			scannerWorkflow: ScannerWorkflow.CHECK_IN,
+			maxCheckIns: 1,
 		},
 	});
 

@@ -6,6 +6,7 @@ import { log } from "@/server/lib/log";
 import { createAuditEvent, emitAuditEvent, persistAuditEvent } from "@/server/lib/audit-event";
 import { parseOrganizerPass } from "@/server/lib/organizer-pass";
 import { participantIdSchema } from "@/server/services/hacker-lifecycle";
+import { ensureParticipantCheckedIn } from "@/server/services/participant-check-in";
 import { adjustOrganizerPresenceForEvent, scanOrganizerForEvent } from "@/server/services/organizer-scanner";
 import {
 	adjustPresenceForEvent,
@@ -106,6 +107,14 @@ export const presenceRouter = createTRPCRouter({
 					},
 				});
 				await persistAuditEvent(transaction, auditEvent);
+				if (!scannedOrganizerId && result.value > 0) {
+					await ensureParticipantCheckedIn(transaction, input.hackerId, {
+						actor: { type: "organizer", id: organizer.id },
+						correlationId: auditEvent.correlationId,
+						evidenceSource: "participant_presence",
+						sourceEventId: input.eventId,
+					});
+				}
 				return { presenceId, result, auditEvent };
 			});
 			await log(ctx, {
@@ -185,6 +194,14 @@ export const presenceRouter = createTRPCRouter({
 						},
 					});
 					await persistAuditEvent(transaction, auditEvent);
+					if (!scannedOrganizerId && result.value > 0) {
+						await ensureParticipantCheckedIn(transaction, input.hackerId, {
+							actor: { type: "organizer", id: organizer.id },
+							correlationId: auditEvent.correlationId,
+							evidenceSource: "participant_presence",
+							sourceEventId: input.eventId,
+						});
+					}
 					return { presenceId, result, auditEvent };
 				});
 				await log(ctx, {
