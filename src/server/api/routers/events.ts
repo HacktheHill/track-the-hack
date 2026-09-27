@@ -236,4 +236,20 @@ export const eventsRouter = createTRPCRouter({
 			});
 		});
 	}),
+	delete: organizerProcedure.input(z.object({ id: varchar }).strict()).mutation(async ({ ctx, input }) => {
+		return ctx.prisma.$transaction(async transaction => {
+			const event = await transaction.event.findUnique({
+				where: { id: input.id },
+				select: { id: true, name: true, nameFr: true, start: true, end: true },
+			});
+			if (!event) throw new TRPCError({ code: "NOT_FOUND", message: "Event not found" });
+
+			// PushSubscription predates the relational event reminder models, so it
+			// must be removed explicitly. Prisma applies the Event relation cascades
+			// for attendance, interests, and participant reminders.
+			await transaction.pushSubscription.deleteMany({ where: { eventId: event.id } });
+			await transaction.event.delete({ where: { id: event.id } });
+			return event;
+		});
+	}),
 });

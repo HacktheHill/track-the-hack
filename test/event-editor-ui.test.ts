@@ -206,6 +206,81 @@ void test("editor renders translated scanner controls and responsive shared styl
 	assert.ok(renderer.root.findAllByProps({ className: "grid grid-cols-1 gap-4 sm:grid-cols-2" }).length >= 4);
 });
 
+void test("existing events require confirmation before deletion and recover from a failed request", async t => {
+	const { requests, queryClient, wrap } = await setup(t);
+	queryClient.setQueryData(getQueryKey(trpc.events.manage, undefined, "query"), [event]);
+	queryClient.setQueryData(getQueryKey(trpc.events.all, undefined, "query"), [event]);
+	queryClient.setQueryData(getQueryKey(trpc.events.savedIds, undefined, "query"), [event.id]);
+	queryClient.setQueryData(getQueryKey(trpc.events.get, { id: event.id }, "query"), event);
+	const previousDocument = Object.getOwnPropertyDescriptor(globalThis, "document");
+	const previousConfirm = Object.getOwnPropertyDescriptor(globalThis, "confirm");
+	Object.defineProperty(globalThis, "document", { configurable: true, value: { getElementById: () => ({}) } });
+	const confirmations: string[] = [];
+	let confirmed = false;
+	Object.defineProperty(globalThis, "confirm", {
+		configurable: true,
+		value: (message: string) => {
+			confirmations.push(message);
+			return confirmed;
+		},
+	});
+	t.after(() => {
+		if (previousDocument) Object.defineProperty(globalThis, "document", previousDocument);
+		else Reflect.deleteProperty(globalThis, "document");
+		if (previousConfirm) Object.defineProperty(globalThis, "confirm", previousConfirm);
+		else Reflect.deleteProperty(globalThis, "confirm");
+	});
+	t.mock.method(ReactDOM, "createPortal", (children: ReactNode) => ({
+		...createElement(Fragment, null, children),
+		children,
+	}));
+	let closed = false;
+	let renderer!: ReactTestRenderer;
+	await act(() => {
+		renderer = create(wrap(createElement(EventEditor, { event, onClose: () => (closed = true) })));
+	});
+	t.after(() => renderer.unmount());
+
+	await flush(clickHandler(button(renderer, "Delete event")));
+	assert.equal(requests.length, 0);
+	assert.deepEqual(confirmations, [`Delete ${event.name}? This cannot be undone.`]);
+
+	confirmed = true;
+	await flush(clickHandler(button(renderer, "Delete event")));
+	assert.equal(requests.length, 1);
+	assert.equal(requests[0]?.path, "events.delete");
+	assert.deepEqual(requests[0]?.input, { id: event.id });
+	assert.equal(button(renderer, "Delete event").props.disabled, true);
+	assert.equal(button(renderer, "Save").props.disabled, true);
+	assert.equal(button(renderer, "Cancel").props.disabled, true);
+
+	await flush(() => requests[0]?.fail());
+	assert.equal(button(renderer, "Delete event").props.disabled, false);
+	assert.ok(
+		renderer.root
+			.findAllByType("p")
+			.some(node => node.children.includes("The event could not be deleted. Please try again.")),
+	);
+
+	await flush(clickHandler(button(renderer, "Delete event")));
+	assert.equal(requests.length, 2);
+	await flush(() => requests[1]?.succeed());
+	assert.equal(closed, true);
+	assert.equal(
+		queryClient.getQueryState(getQueryKey(trpc.events.manage, undefined, "query"))?.isInvalidated,
+		true,
+	);
+	assert.equal(queryClient.getQueryState(getQueryKey(trpc.events.all, undefined, "query"))?.isInvalidated, true);
+	assert.equal(
+		queryClient.getQueryState(getQueryKey(trpc.events.savedIds, undefined, "query"))?.isInvalidated,
+		true,
+	);
+	assert.equal(
+		queryClient.getQueryState(getQueryKey(trpc.events.get, { id: event.id }, "query"))?.isInvalidated,
+		true,
+	);
+});
+
 void test("native dialog cancel closes the editor through its cancel callback", async t => {
 	const { wrap } = await setup(t);
 	const previousDocument = Object.getOwnPropertyDescriptor(globalThis, "document");

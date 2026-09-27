@@ -105,6 +105,9 @@
 		"cancel": "Cancel",
 		"save": "Save",
 		"save-failed": "The event could not be saved. Please try again.",
+		"delete": "Delete event",
+		"delete-confirm": "Delete {{name}}? This cannot be undone.",
+		"delete-failed": "The event could not be deleted. Please try again.",
 
 		"name-en-required": "English event name is required.",
 		"name-fr-required": "French event name is required.",
