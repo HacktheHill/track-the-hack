@@ -79,6 +79,7 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 	const dialogRef = useRef<HTMLDialogElement>(null);
 	const openerRef = useRef<{ focus: () => void; isConnected: boolean } | null>(null);
 	const saveInFlight = useRef(false);
+	const deleteInFlight = useRef(false);
 	const { t } = useTranslation("internal");
 
 	const utils = trpc.useUtils();
@@ -128,7 +129,27 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 			saveInFlight.current = false;
 		},
 	});
+	const deleteEvent = trpc.events.delete.useMutation({
+		onSuccess: async () => {
+			if (!event) return;
+			await Promise.all([
+				utils.events.manage.invalidate(),
+				utils.events.all.invalidate(),
+				utils.events.savedIds.invalidate(),
+				utils.events.get.invalidate({ id: event.id }),
+			]);
+			onClose();
+		},
+		onError: () => {
+			setError(t("events.delete-failed"));
+		},
+		onSettled: () => {
+			deleteInFlight.current = false;
+		},
+	});
 	const isSaving = createEvent.isLoading || updateEvent.isLoading;
+	const isDeleting = deleteEvent.isLoading;
+	const isMutating = isSaving || isDeleting;
 
 	const addLink = () => {
 		if (links.length === 0) setLinks([{ title: "", titleFr: "", url: "" }]);
@@ -136,7 +157,7 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 
 	const handleSave = (submitEvent?: FormEvent<HTMLFormElement>) => {
 		submitEvent?.preventDefault();
-		if (saveInFlight.current || isSaving) return;
+		if (saveInFlight.current || deleteInFlight.current || isMutating) return;
 
 		setError(null);
 
@@ -239,6 +260,15 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 		}
 	};
 
+	const handleDelete = () => {
+		if (!event || saveInFlight.current || deleteInFlight.current || isMutating) return;
+		if (!globalThis.confirm(t("events.delete-confirm", { name: event.name }))) return;
+
+		setError(null);
+		deleteInFlight.current = true;
+		deleteEvent.mutate({ id: event.id });
+	};
+
 	const updateLink = (index: number, field: keyof EventLink, value: string) => {
 		setLinks(
 			links.map((link, currentIndex) =>
@@ -272,10 +302,15 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 			aria-labelledby="event-editor-title"
 			onCancel={cancelEvent => {
 				cancelEvent.preventDefault();
-				if (!saveInFlight.current) onClose();
+				if (!saveInFlight.current && !deleteInFlight.current) onClose();
 			}}
 			onClick={clickEvent => {
-				if (clickEvent.target === clickEvent.currentTarget && !saveInFlight.current) onClose();
+				if (
+					clickEvent.target === clickEvent.currentTarget &&
+					!saveInFlight.current &&
+					!deleteInFlight.current
+				)
+					onClose();
 			}}
 		>
 			<h2 id="event-editor-title" className="ui-page-title mb-4">
@@ -582,26 +617,39 @@ const EventEditor = ({ event, onClose }: EventEditorProps) => {
 
 					<label htmlFor="event-visible">{t("events.show")}</label>
 				</div>
-				<div className="flex flex-col-reverse justify-center gap-3 pt-2 sm:flex-row">
-					<button
-						type="button"
-						className="ui-button"
-						onClick={() => {
-							if (!saveInFlight.current) onClose();
-						}}
-						disabled={isSaving}
-					>
-						{t("events.cancel")}
-					</button>
+				<div className="flex flex-col-reverse justify-between gap-3 pt-2 sm:flex-row">
+					{event && (
+						<button
+							type="button"
+							className="ui-button border-red-700 text-red-700"
+							onClick={handleDelete}
+							disabled={isMutating}
+							aria-busy={isDeleting}
+						>
+							{t("events.delete")}
+						</button>
+					)}
+					<div className="flex flex-col-reverse gap-3 sm:ml-auto sm:flex-row">
+						<button
+							type="button"
+							className="ui-button"
+							onClick={() => {
+								if (!saveInFlight.current && !deleteInFlight.current) onClose();
+							}}
+							disabled={isMutating}
+						>
+							{t("events.cancel")}
+						</button>
 
-					<button
-						type="submit"
-						className="ui-button ui-button-primary"
-						disabled={isSaving}
-						aria-busy={isSaving}
-					>
-						{t("events.save")}
-					</button>
+						<button
+							type="submit"
+							className="ui-button ui-button-primary"
+							disabled={isMutating}
+							aria-busy={isSaving}
+						>
+							{t("events.save")}
+						</button>
+					</div>
 				</div>
 			</form>
 		</dialog>,

@@ -79,6 +79,7 @@ const setup = async (
 	});
 	const create = t.mock.fn(() => Promise.resolve(existingEvent));
 	const update = t.mock.fn(() => Promise.resolve(existingEvent));
+	const deleteEvent = t.mock.fn(() => Promise.resolve(existingEvent));
 	const eventRow = foundEvent
 		? {
 				id: foundEvent.id,
@@ -98,6 +99,7 @@ const setup = async (
 		findMany: eventFindMany,
 		create,
 		update,
+		delete: deleteEvent,
 	});
 	Object.assign(prisma.pushSubscription, { deleteMany: deleteSubscriptions });
 	Object.assign(prisma, { $queryRaw: queryRaw, $transaction: transaction });
@@ -118,6 +120,7 @@ const setup = async (
 		eventFindMany,
 		create,
 		update,
+		deleteEvent,
 		queryRaw,
 		transaction,
 		deleteSubscriptions,
@@ -184,6 +187,21 @@ void test("removing the event link preserves the existing photo", async t => {
 	const input = { ...eventInput, link: null, linkText: null, linkTextFr: null };
 	await caller.update({ id: existingEvent.id, ...input });
 	assert.deepEqual(update.mock.calls[0]?.arguments, [{ where: { id: existingEvent.id }, data: input }]);
+});
+
+void test("organizers can delete an event and its legacy push subscriptions transactionally", async t => {
+	const { caller, eventLookup, deleteEvent, deleteSubscriptions, transaction } = await setup(t, "organizer");
+	const deleted = await caller.delete({ id: existingEvent.id });
+	assert.equal(transaction.mock.callCount(), 1);
+	assert.deepEqual(eventLookup.mock.calls[0]?.arguments, [
+		{
+			where: { id: existingEvent.id },
+			select: { id: true, name: true, nameFr: true, start: true, end: true },
+		},
+	]);
+	assert.deepEqual(deleteSubscriptions.mock.calls[0]?.arguments, [{ where: { eventId: existingEvent.id } }]);
+	assert.deepEqual(deleteEvent.mock.calls[0]?.arguments, [{ where: { id: existingEvent.id } }]);
+	assert.equal(deleted.id, existingEvent.id);
 });
 
 void test("moving an event to a new future start reopens completion while preserving an active lease", async t => {
@@ -261,31 +279,36 @@ for (const [name, invalidInput] of [
 	});
 }
 
-void test("signed-in users without organizer access cannot create, update, or manage events", async t => {
-	const { caller, eventLookup, eventFindMany, create, update } = await setup(t, "denied");
+void test("signed-in users without organizer access cannot create, update, delete, or manage events", async t => {
+	const { caller, eventLookup, eventFindMany, create, update, deleteEvent } = await setup(t, "denied");
 	await assert.rejects(caller.create(eventInput), { code: "FORBIDDEN" });
 	await assert.rejects(caller.update({ id: existingEvent.id, ...eventInput }), { code: "FORBIDDEN" });
+	await assert.rejects(caller.delete({ id: existingEvent.id }), { code: "FORBIDDEN" });
 	await assert.rejects(caller.manage(), { code: "FORBIDDEN" });
 	assert.equal(eventLookup.mock.callCount(), 0);
 	assert.equal(eventFindMany.mock.callCount(), 0);
 	assert.equal(create.mock.callCount(), 0);
 	assert.equal(update.mock.callCount(), 0);
+	assert.equal(deleteEvent.mock.callCount(), 0);
 });
 
 void test("missing public and editable events return NOT_FOUND", async t => {
 	const { caller } = await setup(t, "organizer", null);
 	await assert.rejects(caller.get({ id: "missing" }), { code: "NOT_FOUND" });
 	await assert.rejects(caller.update({ id: "missing", ...eventInput }), { code: "NOT_FOUND" });
+	await assert.rejects(caller.delete({ id: "missing" }), { code: "NOT_FOUND" });
 });
 
 void test("anonymous callers cannot reach protected event operations", async t => {
-	const { caller, userLookup, eventLookup, eventFindMany, create, update } = await setup(t, null);
+	const { caller, userLookup, eventLookup, eventFindMany, create, update, deleteEvent } = await setup(t, null);
 	await assert.rejects(caller.create(eventInput), { code: "UNAUTHORIZED" });
 	await assert.rejects(caller.update({ id: existingEvent.id, ...eventInput }), { code: "UNAUTHORIZED" });
+	await assert.rejects(caller.delete({ id: existingEvent.id }), { code: "UNAUTHORIZED" });
 	await assert.rejects(caller.manage(), { code: "UNAUTHORIZED" });
 	assert.equal(userLookup.mock.callCount(), 0);
 	assert.equal(eventLookup.mock.callCount(), 0);
 	assert.equal(eventFindMany.mock.callCount(), 0);
 	assert.equal(create.mock.callCount(), 0);
 	assert.equal(update.mock.callCount(), 0);
+	assert.equal(deleteEvent.mock.callCount(), 0);
 });

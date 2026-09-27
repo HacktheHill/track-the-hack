@@ -105,6 +105,9 @@
 		"cancel": "Annuler",
 		"save": "Enregistrer",
 		"save-failed": "L'événement n'a pas pu être enregistré. Veuillez réessayer.",
+		"delete": "Supprimer l'événement",
+		"delete-confirm": "Supprimer {{name}}? Cette action est irréversible.",
+		"delete-failed": "L'événement n'a pas pu être supprimé. Veuillez réessayer.",
 
 		"name-en-required": "Le nom de l'événement en anglais est requis.",
 		"name-fr-required": "Le nom de l'événement en français est requis.",
