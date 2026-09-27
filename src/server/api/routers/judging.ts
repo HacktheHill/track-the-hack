@@ -364,59 +364,64 @@ export const judgingRouter = createTRPCRouter({
 							generationWarnings: generation.warnings,
 						},
 					});
-					const projectIds = new Map<string, string>();
-					for (const project of projects.rows) {
-						const created = await transaction.judgingProject.create({
-							data: {
-								roundId: round.id,
-								externalId: project.externalId,
-								name: project.name,
-								tableNumber: project.tableNumber,
-								room: project.room,
-								devpostUrl: project.devpostUrl,
-								mainTrack: project.mainTrack,
-							},
-						});
-						projectIds.set(project.externalId, created.id);
-						for (const code of project.categories) {
-							await transaction.judgingProjectCategory.create({
-								data: { roundId: round.id, projectId: created.id, code },
-							});
-						}
-					}
-					const judgeIds = new Map<string, string>();
-					for (const judge of judges.rows) {
-						const created = await transaction.judgingJudge.create({
-							data: {
-								roundId: round.id,
-								name: judge.name,
-								email: judge.email,
-								expertise: judge.expertise,
-								exclusions: judge.exclusions,
-							},
-						});
-						judgeIds.set(judge.email, created.id);
-					}
-					for (const assignment of generation.assignments) {
+					await transaction.judgingProject.createMany({
+						data: projects.rows.map(project => ({
+							roundId: round.id,
+							externalId: project.externalId,
+							name: project.name,
+							tableNumber: project.tableNumber,
+							room: project.room,
+							devpostUrl: project.devpostUrl,
+							mainTrack: project.mainTrack,
+						})),
+					});
+					const persistedProjects = await transaction.judgingProject.findMany({
+						where: { roundId: round.id },
+						select: { id: true, externalId: true },
+					});
+					const projectIds = new Map(persistedProjects.map(project => [project.externalId, project.id]));
+					const categoryRows = projects.rows.flatMap(project => {
+						const projectId = projectIds.get(project.externalId);
+						if (!projectId) throw new Error("Persisted project could not be resolved");
+						return project.categories.map(code => ({ roundId: round.id, projectId, code }));
+					});
+					if (categoryRows.length)
+						await transaction.judgingProjectCategory.createMany({ data: categoryRows });
+
+					await transaction.judgingJudge.createMany({
+						data: judges.rows.map(judge => ({
+							roundId: round.id,
+							name: judge.name,
+							email: judge.email,
+							expertise: judge.expertise,
+							exclusions: judge.exclusions,
+						})),
+					});
+					const persistedJudges = await transaction.judgingJudge.findMany({
+						where: { roundId: round.id },
+						select: { id: true, email: true },
+					});
+					const judgeIds = new Map(persistedJudges.map(judge => [judge.email, judge.id]));
+					const assignmentRows = generation.assignments.map(assignment => {
 						const judgeId = judgeIds.get(assignment.judgeEmail);
 						const projectId = projectIds.get(assignment.projectExternalId);
 						if (!judgeId || !projectId)
 							throw new Error("Generated assignment references an unknown import row");
-						await transaction.judgingAssignment.create({
-							data: {
-								roundId: round.id,
-								judgeId,
-								projectId,
-								categoryCode: assignment.categoryCode,
-								isMain: assignment.isMain,
-								expertiseMatch: assignment.expertiseMatch,
-								calibrationAnchor: assignment.calibrationAnchor,
-								assignmentReason: assignment.reason,
-								fieldTimestamps: {},
-								fieldOperationIds: {},
-							},
-						});
-					}
+						return {
+							roundId: round.id,
+							judgeId,
+							projectId,
+							categoryCode: assignment.categoryCode,
+							isMain: assignment.isMain,
+							expertiseMatch: assignment.expertiseMatch,
+							calibrationAnchor: assignment.calibrationAnchor,
+							assignmentReason: assignment.reason,
+							fieldTimestamps: {},
+							fieldOperationIds: {},
+						};
+					});
+					if (assignmentRows.length)
+						await transaction.judgingAssignment.createMany({ data: assignmentRows });
 					await persistAuditEvent(
 						transaction,
 						createAuditEvent({
@@ -439,7 +444,11 @@ export const judgingRouter = createTRPCRouter({
 						judgeWarnings: judges.warnings,
 					};
 				},
-				{ isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+				{
+					isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+					maxWait: 10_000,
+					timeout: 30_000,
+				},
 			);
 		}),
 
