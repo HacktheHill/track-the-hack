@@ -11,6 +11,7 @@
 		"failed": "{{count}} modifications ne sont pas synchronisées",
 		"locked": "La synchronisation est bloquée parce que l’évaluation est verrouillée",
 		"discarded": "Du travail local a été supprimé parce que ce projet ne vous est plus attribué",
+		"outdated": "Vos affectations ont changé avant la synchronisation de ce classement. Vérifiez la liste d’évaluation à jour, puis recommencez le classement.",
 		"updated": "Mise à jour à partir de votre travail plus récent sur un autre appareil",
 		"now": "Synchroniser maintenant",
 		"prepared": "Disponible hors ligne — mise à jour {{date}}",

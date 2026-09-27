@@ -141,7 +141,7 @@ export default function JudgingWorkspace() {
 	const [localAssignmentIds, setLocalAssignmentIds] = useState<Set<string>>(new Set());
 	const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
 	const [syncState, setSyncState] = useState<
-		"synced" | "offline" | "syncing" | "failed" | "locked" | "discarded" | "updated"
+		"synced" | "offline" | "syncing" | "failed" | "locked" | "discarded" | "outdated" | "updated"
 	>("synced");
 	const [draggedProjectId, setDraggedProjectId] = useState<string | null>(null);
 	const [rankingOrders, setRankingOrders] = useState<Record<string, string[]>>({});
@@ -211,6 +211,7 @@ export default function JudgingWorkspace() {
 			setSyncState("syncing");
 			try {
 				let discardedCount = 0;
+				let outdatedRankingCount = 0;
 				let supersededFieldCount = 0;
 				let authoritativeManifest = manifest;
 				for (const { assignments: assignmentBatch, rankings: rankingBatch } of createSyncBatches(entries)) {
@@ -244,12 +245,21 @@ export default function JudgingWorkspace() {
 					}
 					await removeJudgingOutboxEntries([...result.applied, ...result.discarded]);
 					discardedCount += result.discarded.length;
+					outdatedRankingCount += result.outdatedRankings.length;
 					supersededFieldCount += result.supersededFields.length;
 					authoritativeManifest = result.manifest;
 				}
 				await applyManifest(authoritativeManifest);
 				await refreshOutbox();
-				setSyncState(discardedCount ? "discarded" : supersededFieldCount ? "updated" : "synced");
+				setSyncState(
+					outdatedRankingCount
+						? "outdated"
+						: discardedCount
+							? "discarded"
+							: supersededFieldCount
+								? "updated"
+								: "synced",
+				);
 			} catch {
 				setSyncState("failed");
 			}

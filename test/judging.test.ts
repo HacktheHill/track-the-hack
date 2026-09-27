@@ -15,7 +15,11 @@ import {
 	type ImportedJudge,
 	type ImportedJudgingProject,
 } from "@/server/services/judging-import";
-import { clampJudgingEditTime, judgingFieldWriteWins } from "@/server/services/judging-sync";
+import {
+	clampJudgingEditTime,
+	isJudgingRankingVersionCurrent,
+	judgingFieldWriteWins,
+} from "@/server/services/judging-sync";
 import {
 	MAIN_RUBRIC,
 	canonicalProjectCategoryCodes,
@@ -64,6 +68,11 @@ void test("ranking access is valid only for the exact verified assignment versio
 	assert.equal(isRankingAccessCurrent(6, 7), false);
 	assert.equal(isRankingAccessCurrent(null, 7), false);
 	assert.equal(isRankingAccessCurrent(undefined, 7), false);
+});
+
+void test("ranking synchronization accepts only the current assignment version", () => {
+	assert.equal(isJudgingRankingVersionCurrent(17, 17), true);
+	assert.equal(isJudgingRankingVersionCurrent(16, 17), false);
 });
 
 void test("canonical project exports retain CGI alongside entered prize categories", () => {
