@@ -26,6 +26,11 @@
 		"recusal-requested": "Recusal requested",
 		"recusal-accepted": "Recusal accepted"
 	},
+	"progress": {
+		"complete": "All fields complete",
+		"complete-local": "Complete locally",
+		"count": "{{complete}}/{{total}} done"
+	},
 	"table": "Table {{number}}",
 	"previous": "Previous table",
 	"next": "Next table",

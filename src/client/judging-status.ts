@@ -25,18 +25,28 @@ type StartedAssignment = {
 export const isJudgingAssignmentStarted = (assignment: StartedAssignment) =>
 	Boolean(
 		assignment.completedAt ||
-			assignment.note?.trim() ||
-			assignment.rulesConcern ||
-			assignment.recusalReason?.trim() ||
-			assignment.recusedAt ||
-			assignment.miniEligibility ||
-			assignment.miniScore !== null ||
-			assignment.technicalLevel !== null ||
-			assignment.ideaLevel !== null ||
-			assignment.designLevel !== null ||
-			assignment.learningLevel !== null ||
-			assignment.presentationLevel !== null,
+		assignment.note?.trim() ||
+		assignment.rulesConcern ||
+		assignment.recusalReason?.trim() ||
+		assignment.recusedAt ||
+		assignment.miniEligibility ||
+		assignment.miniScore !== null ||
+		assignment.technicalLevel !== null ||
+		assignment.ideaLevel !== null ||
+		assignment.designLevel !== null ||
+		assignment.learningLevel !== null ||
+		assignment.presentationLevel !== null,
 	);
+
+export const shouldShowJudgingSyncButton = ({
+	isOnline,
+	outboxCount,
+	syncState,
+}: {
+	isOnline: boolean;
+	outboxCount: number;
+	syncState: string;
+}) => isOnline && (outboxCount > 0 || syncState === "syncing" || syncState === "failed" || syncState === "outdated");
 
 export const getJudgingProjectStatus = ({
 	localOnly,

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "next-i18next";
 import App from "@/components/App";
 import Error from "@/components/Error";
+import JudgingProjectSwitchButton from "@/components/JudgingProjectSwitchButton";
 import Loading from "@/components/Loading";
 import {
 	clearOfflineJudgingData,
@@ -18,7 +19,11 @@ import {
 	type OfflineJudgingPatch,
 } from "@/client/judging-offline";
 import { chunkJudgingOutbox as createSyncBatches, isRankingAccessCurrent } from "@/client/judging-offline-state";
-import { getJudgingProjectStatus, isJudgingAssignmentStarted } from "@/client/judging-status";
+import {
+	getJudgingProjectStatus,
+	isJudgingAssignmentStarted,
+	shouldShowJudgingSyncButton,
+} from "@/client/judging-status";
 import {
 	JUDGING_CATEGORY_CATALOG,
 	MAIN_RUBRIC,
@@ -415,15 +420,12 @@ export default function JudgingWorkspace() {
 										? {
 												...assignment,
 												...(assignment.id === assignmentId ? values : {}),
-												...(projectWideRecusal
-													? { recusalReason: values.recusalReason }
-													: {}),
-												recusedAt:
-													projectWideRecusal
-														? values.recusalReason
-															? new Date()
-															: null
-														: assignment.recusedAt,
+												...(projectWideRecusal ? { recusalReason: values.recusalReason } : {}),
+												recusedAt: projectWideRecusal
+													? values.recusalReason
+														? new Date()
+														: null
+													: assignment.recusedAt,
 												recusalAcceptedAt: projectWideRecusal
 													? null
 													: assignment.recusalAcceptedAt,
@@ -527,6 +529,7 @@ export default function JudgingWorkspace() {
 		return saved.length === order.length && saved.every(ranking => order.includes(ranking.projectId));
 	});
 	const bannerKey = syncState === "synced" && outboxCount ? "failed" : syncState;
+	const showSyncButton = shouldShowJudgingSyncButton({ isOnline, outboxCount, syncState: bannerKey });
 	return (
 		<App className="overflow-y-auto bg-default-gradient" integrated title={t("title")}>
 			<div className="mx-auto flex w-full max-w-6xl flex-col gap-5 p-4 pb-24 sm:p-6">
@@ -538,14 +541,16 @@ export default function JudgingWorkspace() {
 					<span className="flex-1 font-rubik font-medium">
 						{t(`sync.${bannerKey}`, { count: outboxCount })}
 					</span>
-					<button
-						type="button"
-						className="ui-button"
-						disabled={syncState === "syncing"}
-						onClick={() => void sync()}
-					>
-						{t("sync.now")}
-					</button>
+					{showSyncButton && (
+						<button
+							type="button"
+							className="ui-button"
+							disabled={syncState === "syncing"}
+							onClick={() => void sync()}
+						>
+							{t("sync.now")}
+						</button>
+					)}
 					<button
 						type="button"
 						className="ui-button"
@@ -568,6 +573,7 @@ export default function JudgingWorkspace() {
 							assignment => assignment.project.id === project.id,
 						);
 						const complete = projectAssignments.every(assignmentComplete);
+						const completedAssignments = projectAssignments.filter(assignmentComplete).length;
 						const localOnly = projectAssignments.some(assignment => localAssignmentIds.has(assignment.id));
 						const allRecused = projectAssignments.every(assignment => assignment.recusedAt);
 						const allRecusalsAccepted = projectAssignments.every(
@@ -577,8 +583,7 @@ export default function JudgingWorkspace() {
 							assignment => assignment.recusedAt && !assignment.recusalAcceptedAt,
 						);
 						const hasUnresolvedEligibility = projectAssignments.some(
-							assignment =>
-								assignment.miniEligibility === "UNSURE" && !assignmentResolution(assignment),
+							assignment => assignment.miniEligibility === "UNSURE" && !assignmentResolution(assignment),
 						);
 						const status = getJudgingProjectStatus({
 							localOnly,
@@ -589,17 +594,26 @@ export default function JudgingWorkspace() {
 							hasUnresolvedEligibility,
 							started: projectAssignments.some(isJudgingAssignmentStarted),
 						});
+						const completionLabel = allRecused
+							? t(`status.${status}`)
+							: complete
+								? t(localOnly ? "progress.complete-local" : "progress.complete")
+							: t("progress.count", {
+									complete: completedAssignments,
+									total: projectAssignments.length,
+								});
 						return (
-							<button
+							<JudgingProjectSwitchButton
 								key={project.id}
-								type="button"
-								onClick={() => setSelectedProjectId(project.id)}
-								className={`min-w-36 rounded-xl border-2 p-3 text-left ${project.id === selectedProject?.id ? "border-highlight-color bg-white" : "border-dark-primary-color/20 bg-white/60"}`}
-							>
-								<strong>{t("table", { number: project.tableNumber })}</strong>
-								<span className="block truncate text-sm">{project.name}</span>
-								<span className="block text-xs">{t(`status.${status}`)}</span>
-							</button>
+								completionLabel={completionLabel}
+								isComplete={complete}
+								isLocalOnly={localOnly}
+								isSelected={project.id === selectedProject?.id}
+								onSelect={() => setSelectedProjectId(project.id)}
+								projectName={project.name}
+								statusLabel={t(`status.${status}`)}
+								tableLabel={t("table", { number: project.tableNumber })}
+							/>
 						);
 					})}
 				</div>
@@ -684,166 +698,169 @@ export default function JudgingWorkspace() {
 								</div>
 							)}
 						</div>
-						{!selectedRecusal && selectedAssignments.map(assignment => {
-							const category = categoryDefinition(assignment.categoryCode);
-							const eligibilityResolution = assignmentResolution(assignment);
-							const requiresResolvedEligibleScore =
-								!assignment.isMain &&
-								eligibilityResolution === "ELIGIBLE" &&
-								assignment.miniEligibility !== "ELIGIBLE";
-							const levels: Partial<Record<MainRubricKey, number>> = {
-								technicalLevel: assignment.technicalLevel ?? undefined,
-								ideaLevel: assignment.ideaLevel ?? undefined,
-								designLevel: assignment.designLevel ?? undefined,
-								learningLevel: assignment.learningLevel ?? undefined,
-								presentationLevel: assignment.presentationLevel ?? undefined,
-							};
-							return (
-								<fieldset
-									key={assignment.id}
-									className="rounded-2xl border border-dark-primary-color/25 p-4"
-								>
-									<legend className="px-2 text-xl font-bold">
-										{category?.[locale] ?? assignment.categoryCode}
-									</legend>
-									<p className="mb-4 text-sm">{category?.guidance[locale]}</p>
-									{assignment.isMain ? (
-										<div className="flex flex-col gap-5">
-											{MAIN_RUBRIC.map(criterion => (
-												<div key={criterion.key}>
-													<p className="font-bold">
-														{criterion.label[locale]} · {criterion.maximum}
-													</p>
-													<div className="mt-1 grid gap-1 text-xs text-dark-primary-color/80 sm:grid-cols-3">
-														<span>
-															<strong>{t("guidance-low")}:</strong>{" "}
-															{criterion.guidance[locale].low}
-														</span>
-														<span>
-															<strong>{t("guidance-competent")}:</strong>{" "}
-															{criterion.guidance[locale].competent}
-														</span>
-														<span>
-															<strong>{t("guidance-standout")}:</strong>{" "}
-															{criterion.guidance[locale].standout}
-														</span>
+						{!selectedRecusal &&
+							selectedAssignments.map(assignment => {
+								const category = categoryDefinition(assignment.categoryCode);
+								const eligibilityResolution = assignmentResolution(assignment);
+								const requiresResolvedEligibleScore =
+									!assignment.isMain &&
+									eligibilityResolution === "ELIGIBLE" &&
+									assignment.miniEligibility !== "ELIGIBLE";
+								const levels: Partial<Record<MainRubricKey, number>> = {
+									technicalLevel: assignment.technicalLevel ?? undefined,
+									ideaLevel: assignment.ideaLevel ?? undefined,
+									designLevel: assignment.designLevel ?? undefined,
+									learningLevel: assignment.learningLevel ?? undefined,
+									presentationLevel: assignment.presentationLevel ?? undefined,
+								};
+								return (
+									<fieldset
+										key={assignment.id}
+										className="rounded-2xl border border-dark-primary-color/25 p-4"
+									>
+										<legend className="px-2 text-xl font-bold">
+											{category?.[locale] ?? assignment.categoryCode}
+										</legend>
+										<p className="mb-4 text-sm">{category?.guidance[locale]}</p>
+										{assignment.isMain ? (
+											<div className="flex flex-col gap-5">
+												{MAIN_RUBRIC.map(criterion => (
+													<div key={criterion.key}>
+														<p className="font-bold">
+															{criterion.label[locale]} · {criterion.maximum}
+														</p>
+														<div className="mt-1 grid gap-1 text-xs text-dark-primary-color/80 sm:grid-cols-3">
+															<span>
+																<strong>{t("guidance-low")}:</strong>{" "}
+																{criterion.guidance[locale].low}
+															</span>
+															<span>
+																<strong>{t("guidance-competent")}:</strong>{" "}
+																{criterion.guidance[locale].competent}
+															</span>
+															<span>
+																<strong>{t("guidance-standout")}:</strong>{" "}
+																{criterion.guidance[locale].standout}
+															</span>
+														</div>
+														<div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-6">
+															{[0, 1, 2, 3, 4, 5].map(level => (
+																<button
+																	key={level}
+																	type="button"
+																	aria-pressed={assignment[criterion.key] === level}
+																	className={`rounded-lg border p-2 ${assignment[criterion.key] === level ? "border-highlight-color bg-highlight-color text-white" : "bg-white"}`}
+																	onClick={() =>
+																		void queueChange(assignment.id, {
+																			[criterion.key]: level,
+																		})
+																	}
+																>
+																	<strong>{level}</strong>
+																	<span className="block text-xs">
+																		{SCORE_LEVEL_LABELS[level]?.[locale] ?? level}
+																	</span>
+																	<span className="block text-xs">
+																		{pointsForLevel(level, criterion.maximum)} /{" "}
+																		{criterion.maximum}
+																	</span>
+																</button>
+															))}
+														</div>
 													</div>
-													<div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-6">
-														{[0, 1, 2, 3, 4, 5].map(level => (
+												))}
+												<p className="text-lg font-bold">
+													{t("main-total", { score: mainScoreTotal(levels) })}
+												</p>
+											</div>
+										) : (
+											<div className="flex flex-col gap-4">
+												<div>
+													<p className="font-bold">{t("mini-eligibility")}</p>
+													<div className="mt-2 flex flex-wrap gap-2">
+														{(["ELIGIBLE", "UNSURE", "INELIGIBLE"] as const).map(value => (
 															<button
-																key={level}
+																key={value}
 																type="button"
-																aria-pressed={assignment[criterion.key] === level}
-																className={`rounded-lg border p-2 ${assignment[criterion.key] === level ? "border-highlight-color bg-highlight-color text-white" : "bg-white"}`}
+																aria-pressed={assignment.miniEligibility === value}
+																className={`ui-button ${assignment.miniEligibility === value ? "ui-button-primary" : ""}`}
 																onClick={() =>
 																	void queueChange(assignment.id, {
-																		[criterion.key]: level,
+																		miniEligibility: value,
+																		...(value !== "ELIGIBLE"
+																			? { miniScore: null }
+																			: {}),
 																	})
 																}
 															>
-																<strong>{level}</strong>
-																<span className="block text-xs">
-																	{SCORE_LEVEL_LABELS[level]?.[locale] ?? level}
-																</span>
-																<span className="block text-xs">
-																	{pointsForLevel(level, criterion.maximum)} /{" "}
-																	{criterion.maximum}
-																</span>
+																{t(value.toLowerCase())}
 															</button>
 														))}
 													</div>
 												</div>
-											))}
-											<p className="text-lg font-bold">
-												{t("main-total", { score: mainScoreTotal(levels) })}
-											</p>
-										</div>
-									) : (
-										<div className="flex flex-col gap-4">
-											<div>
-												<p className="font-bold">{t("mini-eligibility")}</p>
-												<div className="mt-2 flex flex-wrap gap-2">
-													{(["ELIGIBLE", "UNSURE", "INELIGIBLE"] as const).map(value => (
-														<button
-															key={value}
-															type="button"
-															aria-pressed={assignment.miniEligibility === value}
-															className={`ui-button ${assignment.miniEligibility === value ? "ui-button-primary" : ""}`}
-															onClick={() =>
-																void queueChange(assignment.id, {
-																	miniEligibility: value,
-																	...(value !== "ELIGIBLE"
-																		? { miniScore: null }
-																		: {}),
-																})
-															}
-														>
-															{t(value.toLowerCase())}
-														</button>
-													))}
-												</div>
+												{requiresResolvedEligibleScore && (
+													<p className="rounded-lg bg-amber-50 p-3 text-sm font-bold">
+														{t("eligibility-resolved-eligible")}
+													</p>
+												)}
+												{(assignment.miniEligibility === "ELIGIBLE" ||
+													requiresResolvedEligibleScore) && (
+													<div>
+														<p className="font-bold">{t("mini-score")}</p>
+														<div className="mt-2 flex gap-2">
+															{[1, 2, 3, 4, 5].map(score => (
+																<button
+																	key={score}
+																	type="button"
+																	aria-pressed={assignment.miniScore === score}
+																	className={`h-12 w-12 rounded-lg border text-lg font-bold ${assignment.miniScore === score ? "border-highlight-color bg-highlight-color text-white" : "bg-white"}`}
+																	onClick={() =>
+																		void queueChange(assignment.id, {
+																			miniScore: score,
+																		})
+																	}
+																>
+																	{score}
+																</button>
+															))}
+														</div>
+													</div>
+												)}
 											</div>
-											{requiresResolvedEligibleScore && (
-												<p className="rounded-lg bg-amber-50 p-3 text-sm font-bold">
-													{t("eligibility-resolved-eligible")}
+										)}
+										<label className="mt-5 block font-bold">
+											{t("note")}
+											<textarea
+												className="ui-field mt-2 min-h-24 w-full"
+												value={assignment.note ?? ""}
+												onChange={event =>
+													void queueChange(assignment.id, { note: event.target.value })
+												}
+											/>
+										</label>
+										{!assignment.isMain &&
+											(assignment.miniEligibility === "UNSURE" ||
+												assignment.miniEligibility === "INELIGIBLE") &&
+											!assignment.note?.trim() && (
+												<p className="mt-2 text-sm font-bold text-red-700">
+													{t("note-required")}
 												</p>
 											)}
-											{(assignment.miniEligibility === "ELIGIBLE" ||
-												requiresResolvedEligibleScore) && (
-												<div>
-													<p className="font-bold">{t("mini-score")}</p>
-													<div className="mt-2 flex gap-2">
-														{[1, 2, 3, 4, 5].map(score => (
-															<button
-																key={score}
-																type="button"
-																aria-pressed={assignment.miniScore === score}
-																className={`h-12 w-12 rounded-lg border text-lg font-bold ${assignment.miniScore === score ? "border-highlight-color bg-highlight-color text-white" : "bg-white"}`}
-																onClick={() =>
-																	void queueChange(assignment.id, {
-																		miniScore: score,
-																	})
-																}
-															>
-																{score}
-															</button>
-														))}
-													</div>
-												</div>
-											)}
-										</div>
-									)}
-									<label className="mt-5 block font-bold">
-										{t("note")}
-										<textarea
-											className="ui-field mt-2 min-h-24 w-full"
-											value={assignment.note ?? ""}
-											onChange={event =>
-												void queueChange(assignment.id, { note: event.target.value })
-											}
-										/>
-									</label>
-									{!assignment.isMain &&
-										(assignment.miniEligibility === "UNSURE" ||
-											assignment.miniEligibility === "INELIGIBLE") &&
-										!assignment.note?.trim() && (
-											<p className="mt-2 text-sm font-bold text-red-700">{t("note-required")}</p>
-										)}
-									<label className="mt-3 flex items-center gap-2">
-										<input
-											type="checkbox"
-											checked={assignment.rulesConcern}
-											onChange={event =>
-												void queueChange(assignment.id, {
-													rulesConcern: event.target.checked,
-												})
-											}
-										/>
-										{t("rules-concern")}
-									</label>
-								</fieldset>
-							);
-						})}
+										<label className="mt-3 flex items-center gap-2">
+											<input
+												type="checkbox"
+												checked={assignment.rulesConcern}
+												onChange={event =>
+													void queueChange(assignment.id, {
+														rulesConcern: event.target.checked,
+													})
+												}
+											/>
+											{t("rules-concern")}
+										</label>
+									</fieldset>
+								);
+							})}
 					</section>
 				)}
 				{workspaceStep === "scoring" && selectedProject && (

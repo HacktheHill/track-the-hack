@@ -26,6 +26,11 @@
 		"recusal-requested": "Récusation demandée",
 		"recusal-accepted": "Récusation acceptée"
 	},
+	"progress": {
+		"complete": "Tous les champs sont remplis",
+		"complete-local": "Terminé localement",
+		"count": "{{complete}}/{{total}} terminées"
+	},
 	"table": "Table {{number}}",
 	"previous": "Table précédente",
 	"next": "Table suivante",

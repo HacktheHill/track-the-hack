@@ -1,6 +1,19 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { getJudgingProjectStatus, isJudgingAssignmentStarted } from "@/client/judging-status";
+import {
+	getJudgingProjectStatus,
+	isJudgingAssignmentStarted,
+	shouldShowJudgingSyncButton,
+} from "@/client/judging-status";
+
+void test("manual sync appears only when an online judge can usefully synchronize", () => {
+	assert.equal(shouldShowJudgingSyncButton({ isOnline: true, outboxCount: 0, syncState: "synced" }), false);
+	assert.equal(shouldShowJudgingSyncButton({ isOnline: false, outboxCount: 3, syncState: "offline" }), false);
+	assert.equal(shouldShowJudgingSyncButton({ isOnline: true, outboxCount: 3, syncState: "synced" }), true);
+	assert.equal(shouldShowJudgingSyncButton({ isOnline: true, outboxCount: 0, syncState: "failed" }), true);
+	assert.equal(shouldShowJudgingSyncButton({ isOnline: true, outboxCount: 0, syncState: "outdated" }), true);
+	assert.equal(shouldShowJudgingSyncButton({ isOnline: true, outboxCount: 0, syncState: "syncing" }), true);
+});
 
 const baseState = {
 	localOnly: false,
@@ -15,10 +28,7 @@ const baseState = {
 void test("judging project statuses distinguish synced progress, completion, and organiser review", () => {
 	assert.equal(getJudgingProjectStatus(baseState), "not-started");
 	assert.equal(getJudgingProjectStatus({ ...baseState, started: true }), "in-progress-synced");
-	assert.equal(
-		getJudgingProjectStatus({ ...baseState, complete: true, started: true }),
-		"complete-synced",
-	);
+	assert.equal(getJudgingProjectStatus({ ...baseState, complete: true, started: true }), "complete-synced");
 	assert.equal(
 		getJudgingProjectStatus({ ...baseState, hasUnresolvedEligibility: true, started: true }),
 		"waiting-organiser",
