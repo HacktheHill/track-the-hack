@@ -170,3 +170,155 @@ void test("CGI correction removes only main assignments and invalidates their co
 		assignmentVersionChanged: true,
 	});
 });
+
+void test("main-track correction discards old scores and creates fresh assignments for replacement judges", async t => {
+	const assignmentDelete = t.mock.fn((input: unknown) => {
+		void input;
+		return Promise.resolve({ count: 2 });
+	});
+	const assignmentCreate = t.mock.fn((input: unknown) => {
+		void input;
+		return Promise.resolve({ count: 2 });
+	});
+	const projectUpdate = t.mock.fn((input: unknown) => {
+		void input;
+		return Promise.resolve({ id: "project-58", mainTrack: "CIVIC" });
+	});
+	const rankingDelete = t.mock.fn((input: unknown) => {
+		void input;
+		return Promise.resolve({ count: 3 });
+	});
+	const auditCreate = t.mock.fn(() => Promise.resolve({}));
+	const roundUpdate = t.mock.fn(() => Promise.resolve({ count: 1 }));
+	const currentAssignments = [
+		{
+			id: "general-michael",
+			judgeId: "judge-michael",
+			categoryCode: "GENERAL",
+			technicalLevel: null,
+			ideaLevel: null,
+			designLevel: null,
+			learningLevel: null,
+			presentationLevel: null,
+			note: null,
+			rulesConcern: false,
+			recusedAt: null,
+		},
+		{
+			id: "general-rayyan",
+			judgeId: "judge-rayyan",
+			categoryCode: "GENERAL",
+			technicalLevel: 4,
+			ideaLevel: 4,
+			designLevel: 4,
+			learningLevel: 2,
+			presentationLevel: 3,
+			note: null,
+			rulesConcern: false,
+			recusedAt: null,
+		},
+	];
+	const transaction = t.mock.fn(async (operation: (client: object) => Promise<unknown>, options: object) => {
+		assert.deepEqual(options, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+		return operation({
+			judgingRound: {
+				findUnique: () =>
+					Promise.resolve({ id: "round-1", state: "OPEN", assignmentVersion: 17, effectiveProjectLimit: 44 }),
+				updateMany: roundUpdate,
+			},
+			judgingProject: {
+				findFirst: () =>
+					Promise.resolve({ id: "project-58", tableNumber: 58, mainTrack: "GENERAL" }),
+				update: projectUpdate,
+			},
+			judgingJudge: {
+				findMany: () =>
+					Promise.resolve([
+						{ id: "judge-hashem", exclusions: ["HARDWARE"] },
+						{ id: "judge-luis", exclusions: [] },
+					]),
+			},
+			judgingAssignment: {
+				findMany: (input: { where: { isMain?: boolean } }) =>
+					input.where.isMain
+						? Promise.resolve(currentAssignments)
+						: Promise.resolve([
+								{ judgeId: "judge-hashem", projectId: "project-56" },
+								{ judgeId: "judge-luis", projectId: "project-69" },
+							]),
+				deleteMany: assignmentDelete,
+				createMany: assignmentCreate,
+			},
+			judgingRanking: { deleteMany: rankingDelete },
+			auditEvent: { create: auditCreate },
+		});
+	});
+	const prisma = {
+		user: {
+			findUnique: () =>
+				Promise.resolve({
+					id: "organizer-1",
+					name: "Test Organizer",
+					email: "test.organizer@ctn-rtc.org",
+					isAdmin: true,
+					disabledAt: null,
+				}),
+		},
+		$transaction: transaction,
+	} as unknown as PrismaClient;
+	const { judgingRouter } = await routerModule;
+
+	const result = await judgingRouter.createCaller({ prisma, session }).correctProjectMainTrack({
+		roundId: "round-1",
+		projectId: "project-58",
+		mainTrack: "CIVIC",
+		judgeIds: ["judge-hashem", "judge-luis"],
+		expectedAssignmentVersion: 17,
+		confirmDiscardMainScoring: true,
+	});
+
+	assert.deepEqual(result, {
+		alreadyCorrected: false,
+		assignmentVersion: 18,
+		assignmentsRemoved: 2,
+		synchronizedWorkRemoved: 1,
+		assignmentsCreated: 2,
+		rankingRowsRemoved: 3,
+	});
+	assert.deepEqual(projectUpdate.mock.calls[0]?.arguments[0], {
+		where: { id: "project-58" },
+		data: { mainTrack: "CIVIC" },
+	});
+	assert.deepEqual(assignmentDelete.mock.calls[0]?.arguments[0], {
+		where: { id: { in: ["general-michael", "general-rayyan"] } },
+	});
+	assert.deepEqual(assignmentCreate.mock.calls[0]?.arguments[0], {
+		data: [
+			{
+				roundId: "round-1",
+				projectId: "project-58",
+				judgeId: "judge-hashem",
+				categoryCode: "CIVIC",
+				isMain: true,
+				expertiseMatch: false,
+				calibrationAnchor: false,
+				assignmentReason: "administrator main-track correction",
+				fieldTimestamps: {},
+				fieldOperationIds: {},
+			},
+			{
+				roundId: "round-1",
+				projectId: "project-58",
+				judgeId: "judge-luis",
+				categoryCode: "CIVIC",
+				isMain: true,
+				expertiseMatch: false,
+				calibrationAnchor: false,
+				assignmentReason: "administrator main-track correction",
+				fieldTimestamps: {},
+				fieldOperationIds: {},
+			},
+		],
+	});
+	assert.equal(auditCreate.mock.callCount(), 1);
+});
