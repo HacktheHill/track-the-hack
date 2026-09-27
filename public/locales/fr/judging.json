@@ -28,6 +28,8 @@
 	"previous": "Table précédente",
 	"next": "Table suivante",
 	"open-devpost": "Ouvrir la soumission Devpost",
+	"cgi-main-track-title": "Volet principal CGI — évalué séparément",
+	"cgi-main-track-notice": "Les juges de CGI évaluent ce projet à l’extérieur de Tracker. Vous le voyez uniquement parce que vous devez évaluer l’un de ses défis secondaires ou commandités. Ne l’évaluez pas pour le volet principal Général ou Technologie civique.",
 	"main-total": "Note principale : {{score}} / 45",
 	"guidance-low": "Faible (1–2)",
 	"guidance-competent": "Compétent (3)",

@@ -509,6 +509,15 @@ export default function JudgingWorkspace() {
 								{t("open-devpost")}
 							</a>
 						</div>
+						{selectedProject.mainTrack === "CGI" && (
+							<div
+								className="rounded-xl border-2 border-amber-500 bg-amber-50 p-4 text-amber-950"
+								role="status"
+							>
+								<p className="font-bold">{t("cgi-main-track-title")}</p>
+								<p className="mt-1 text-sm">{t("cgi-main-track-notice")}</p>
+							</div>
+						)}
 						{selectedAssignments.map(assignment => {
 							const category = categoryDefinition(assignment.categoryCode);
 							const eligibilityResolution = assignmentResolution(assignment);
