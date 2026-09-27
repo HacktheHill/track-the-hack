@@ -32,6 +32,7 @@ const csvInput = z.string().max(2_000_000);
 const roundIdInput = z.object({ roundId: z.string().min(1).max(191) });
 const expectedAssignmentVersionInput = { expectedAssignmentVersion: z.number().int().nonnegative() };
 const versionedRoundIdInput = roundIdInput.extend(expectedAssignmentVersionInput);
+const mlhCategoryCodeSchema = z.enum(MLH_CATEGORY_CODES);
 
 const assignmentValueSchema = z
 	.object({
@@ -853,6 +854,187 @@ export const judgingRouter = createTRPCRouter({
 					};
 				},
 				{ isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+			);
+		}),
+
+	reconcileMlhProjectCategories: adminProcedure
+		.input(
+			z.object({
+				roundId: z.string().min(1).max(191),
+				judgeId: z.string().min(1).max(191),
+				projects: z
+					.array(
+						z.object({
+							projectId: z.string().min(1).max(191),
+							categoryCodes: z.array(mlhCategoryCodeSchema).min(1).max(MLH_CATEGORY_CODES.length),
+						}),
+					)
+					.min(1)
+					.max(100),
+				expectedAssignmentVersion: z.number().int().nonnegative(),
+				confirmAddOnly: z.literal(true),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const projectIds = input.projects.map(project => project.projectId);
+			if (new Set(projectIds).size !== projectIds.length)
+				throw new TRPCError({ code: "BAD_REQUEST", message: "Project rows must be unique." });
+			for (const project of input.projects) {
+				if (new Set(project.categoryCodes).size !== project.categoryCodes.length)
+					throw new TRPCError({
+						code: "BAD_REQUEST",
+						message: "Categories within each project row must be unique.",
+					});
+			}
+
+			return ctx.prisma.$transaction(
+				async transaction => {
+					const [round, judge, projects, currentAssignments] = await Promise.all([
+						transaction.judgingRound.findUnique({ where: { id: input.roundId } }),
+						transaction.judgingJudge.findFirst({
+							where: { id: input.judgeId, roundId: input.roundId },
+							select: { id: true, expertise: true, exclusions: true },
+						}),
+						transaction.judgingProject.findMany({
+							where: { roundId: input.roundId, id: { in: projectIds } },
+							select: { id: true, tableNumber: true, categories: { select: { code: true } } },
+						}),
+						transaction.judgingAssignment.findMany({
+							where: {
+								roundId: input.roundId,
+								projectId: { in: projectIds },
+								categoryCode: { in: [...MLH_CATEGORY_CODES] },
+							},
+							select: { id: true, projectId: true, judgeId: true, categoryCode: true },
+						}),
+					]);
+					if (!round || !judge) throw new TRPCError({ code: "NOT_FOUND" });
+					requireMutableAssignments(round);
+					if (projects.length !== projectIds.length)
+						throw new TRPCError({
+							code: "BAD_REQUEST",
+							message: "A project is not in this judging round.",
+						});
+
+					const expertise = jsonStringArray(judge.expertise);
+					if (!expertise.includes("MLH"))
+						throw new TRPCError({
+							code: "PRECONDITION_FAILED",
+							message: "The selected judge is not configured for required all-project MLH coverage.",
+						});
+					const exclusions = jsonStringArray(judge.exclusions);
+					const requestedPairs = input.projects.flatMap(project =>
+						project.categoryCodes.map(categoryCode => ({ projectId: project.projectId, categoryCode })),
+					);
+					if (requestedPairs.some(pair => exclusions.includes(pair.categoryCode)))
+						throw new TRPCError({
+							code: "BAD_REQUEST",
+							message: "The MLH judge is excluded from a requested category.",
+						});
+
+					const projectById = new Map(projects.map(project => [project.id, project]));
+					const categoryRows = requestedPairs.filter(
+						pair =>
+							!projectById
+								.get(pair.projectId)
+								?.categories.some(category => category.code === pair.categoryCode),
+					);
+					const assignmentRows = requestedPairs.filter(
+						pair =>
+							!currentAssignments.some(
+								assignment =>
+									assignment.projectId === pair.projectId &&
+									assignment.judgeId === judge.id &&
+									assignment.categoryCode === pair.categoryCode,
+							),
+					);
+					for (const pair of assignmentRows) {
+						const assessmentCount = currentAssignments.filter(
+							assignment =>
+								assignment.projectId === pair.projectId &&
+								assignment.categoryCode === pair.categoryCode,
+						).length;
+						if (assessmentCount >= 3)
+							throw new TRPCError({
+								code: "PRECONDITION_FAILED",
+								message: `Table ${projectById.get(pair.projectId)?.tableNumber ?? "unknown"} already has three assessments for ${pair.categoryCode}.`,
+							});
+					}
+
+					if (categoryRows.length === 0 && assignmentRows.length === 0)
+						return {
+							alreadyApplied: true,
+							assignmentVersion: round.assignmentVersion,
+							projectCount: input.projects.length,
+							categoriesCreated: 0,
+							assignmentsCreated: 0,
+							rankingRowsRemoved: 0,
+						};
+
+					await claimAssignmentVersion(transaction, round.id, input.expectedAssignmentVersion);
+					if (categoryRows.length)
+						await transaction.judgingProjectCategory.createMany({
+							data: categoryRows.map(row => ({
+								roundId: round.id,
+								projectId: row.projectId,
+								code: row.categoryCode,
+							})),
+						});
+					if (assignmentRows.length)
+						await transaction.judgingAssignment.createMany({
+							data: assignmentRows.map(row => ({
+								roundId: round.id,
+								projectId: row.projectId,
+								judgeId: judge.id,
+								categoryCode: row.categoryCode,
+								isMain: false,
+								expertiseMatch: expertise.includes(row.categoryCode),
+								calibrationAnchor: false,
+								assignmentReason: "Devpost MLH category reconciliation",
+								fieldTimestamps: {},
+								fieldOperationIds: {},
+							})),
+						});
+					const rankingPairs = [
+						...new Map(
+							assignmentRows.map(row => [
+								`${judge.id}:${row.categoryCode}`,
+								{ judgeId: judge.id, categoryCode: row.categoryCode },
+							]),
+						).values(),
+					];
+					const rankingRowsRemoved = rankingPairs.length
+						? await transaction.judgingRanking.deleteMany({
+								where: { roundId: round.id, OR: rankingPairs },
+							})
+						: { count: 0 };
+					await persistAuditEvent(
+						transaction,
+						createAuditEvent({
+							name: "judging.categories.reconciled",
+							outcome: "applied",
+							actor: { type: "organizer", id: ctx.organizer.id },
+							subject: { type: "judging_judge", id: judge.id },
+							resource: { type: "judging_round", id: round.id },
+							data: {
+								projectCount: input.projects.length,
+								categoriesCreated: categoryRows.length,
+								assignmentsCreated: assignmentRows.length,
+								rankingRowsRemoved: rankingRowsRemoved.count,
+								assignmentVersionChanged: true,
+							},
+						}),
+					);
+					return {
+						alreadyApplied: false,
+						assignmentVersion: round.assignmentVersion + 1,
+						projectCount: input.projects.length,
+						categoriesCreated: categoryRows.length,
+						assignmentsCreated: assignmentRows.length,
+						rankingRowsRemoved: rankingRowsRemoved.count,
+					};
+				},
+				{ isolationLevel: Prisma.TransactionIsolationLevel.Serializable, maxWait: 10_000, timeout: 30_000 },
 			);
 		}),
 
@@ -1744,7 +1926,11 @@ export const judgingRouter = createTRPCRouter({
 					const rankingRowsInvalidated = await transaction.judgingRanking.count({
 						where: {
 							confirmedAt: { not: null },
-							OR: [...new Map(rankingPairs.map(pair => [`${pair.judgeId}:${pair.categoryCode}`, pair])).values()],
+							OR: [
+								...new Map(
+									rankingPairs.map(pair => [`${pair.judgeId}:${pair.categoryCode}`, pair]),
+								).values(),
+							],
 						},
 					});
 					const result = {
@@ -1755,7 +1941,8 @@ export const judgingRouter = createTRPCRouter({
 						sourceJudge: { id: sourceJudge.id, name: sourceJudge.name },
 						targetJudge: { id: targetJudge.id, name: targetJudge.name },
 						scopeCount: sourceAssignments.length,
-						completedScopeCount: sourceAssignments.filter(assignment => assignment.completedAt !== null).length,
+						completedScopeCount: sourceAssignments.filter(assignment => assignment.completedAt !== null)
+							.length,
 						categories: sourceAssignments.map(assignment => assignment.categoryCode),
 						rankingRowsInvalidated,
 					};
@@ -1767,7 +1954,8 @@ export const judgingRouter = createTRPCRouter({
 							data: {
 								judgeId: targetJudge.id,
 								expertiseMatch:
-									!assignment.isMain && jsonStringArray(targetJudge.expertise).includes(assignment.categoryCode),
+									!assignment.isMain &&
+									jsonStringArray(targetJudge.expertise).includes(assignment.categoryCode),
 								assignmentReason: "administrator judge attribution correction",
 							},
 						});

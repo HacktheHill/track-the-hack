@@ -34,6 +34,7 @@ const auditNames = [
 	"judging.round.reopened",
 	"judging.workload.approved",
 	"judging.projects.main_track_corrected",
+	"judging.categories.reconciled",
 	"judging.category.dedicated",
 	"judging.assignment.changed",
 	"judging.eligibility.resolved",
@@ -73,6 +74,7 @@ const allowedOutcomes: Record<(typeof auditNames)[number], readonly string[]> = 
 	"judging.round.reopened": ["reopened"],
 	"judging.workload.approved": ["approved"],
 	"judging.projects.main_track_corrected": ["cgi", "general", "civic"],
+	"judging.categories.reconciled": ["applied"],
 	"judging.category.dedicated": ["applied"],
 	"judging.assignment.changed": [
 		"moved",

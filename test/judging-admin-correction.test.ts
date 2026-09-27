@@ -227,8 +227,7 @@ void test("main-track correction discards old scores and creates fresh assignmen
 				updateMany: roundUpdate,
 			},
 			judgingProject: {
-				findFirst: () =>
-					Promise.resolve({ id: "project-58", tableNumber: 58, mainTrack: "GENERAL" }),
+				findFirst: () => Promise.resolve({ id: "project-58", tableNumber: 58, mainTrack: "GENERAL" }),
 				update: projectUpdate,
 			},
 			judgingJudge: {
@@ -321,4 +320,155 @@ void test("main-track correction discards old scores and creates fresh assignmen
 		],
 	});
 	assert.equal(auditCreate.mock.callCount(), 1);
+});
+
+void test("MLH category reconciliation adds only missing categories and assignments", async t => {
+	const categoryCreate = t.mock.fn((input: unknown) => {
+		void input;
+		return Promise.resolve({ count: 2 });
+	});
+	const assignmentCreate = t.mock.fn((input: unknown) => {
+		void input;
+		return Promise.resolve({ count: 2 });
+	});
+	const rankingDelete = t.mock.fn((input: unknown) => {
+		void input;
+		return Promise.resolve({ count: 1 });
+	});
+	const auditCreate = t.mock.fn((input: unknown) => {
+		void input;
+		return Promise.resolve({});
+	});
+	const roundUpdate = t.mock.fn(() => Promise.resolve({ count: 1 }));
+	const transaction = t.mock.fn(async (operation: (client: object) => Promise<unknown>, options: object) => {
+		assert.deepEqual(options, {
+			isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+			maxWait: 10_000,
+			timeout: 30_000,
+		});
+		return operation({
+			judgingRound: {
+				findUnique: () => Promise.resolve({ id: "round-1", state: "OPEN", assignmentVersion: 18 }),
+				updateMany: roundUpdate,
+			},
+			judgingJudge: {
+				findFirst: () =>
+					Promise.resolve({
+						id: "judge-mlh",
+						expertise: ["MLH", "GEMINI", "GODADDY", "SOLANA"],
+						exclusions: [],
+					}),
+			},
+			judgingProject: {
+				findMany: () =>
+					Promise.resolve([
+						{ id: "project-1", tableNumber: 1, categories: [{ code: "GEMINI" }] },
+						{ id: "project-84", tableNumber: 84, categories: [{ code: "UI_UX" }] },
+					]),
+			},
+			judgingProjectCategory: { createMany: categoryCreate },
+			judgingAssignment: {
+				findMany: () =>
+					Promise.resolve([
+						{
+							id: "existing-gemini",
+							projectId: "project-1",
+							judgeId: "judge-mlh",
+							categoryCode: "GEMINI",
+						},
+					]),
+				createMany: assignmentCreate,
+			},
+			judgingRanking: { deleteMany: rankingDelete },
+			auditEvent: { create: auditCreate },
+		});
+	});
+	const prisma = {
+		user: {
+			findUnique: () =>
+				Promise.resolve({
+					id: "organizer-1",
+					name: "Test Organizer",
+					email: "test.organizer@ctn-rtc.org",
+					isAdmin: true,
+					disabledAt: null,
+				}),
+		},
+		$transaction: transaction,
+	} as unknown as PrismaClient;
+	const { judgingRouter } = await routerModule;
+
+	const result = await judgingRouter.createCaller({ prisma, session }).reconcileMlhProjectCategories({
+		roundId: "round-1",
+		judgeId: "judge-mlh",
+		projects: [
+			{ projectId: "project-1", categoryCodes: ["GEMINI"] },
+			{ projectId: "project-84", categoryCodes: ["SOLANA", "GODADDY"] },
+		],
+		expectedAssignmentVersion: 18,
+		confirmAddOnly: true,
+	});
+
+	assert.deepEqual(result, {
+		alreadyApplied: false,
+		assignmentVersion: 19,
+		projectCount: 2,
+		categoriesCreated: 2,
+		assignmentsCreated: 2,
+		rankingRowsRemoved: 1,
+	});
+	assert.deepEqual(categoryCreate.mock.calls[0]?.arguments[0], {
+		data: [
+			{ roundId: "round-1", projectId: "project-84", code: "SOLANA" },
+			{ roundId: "round-1", projectId: "project-84", code: "GODADDY" },
+		],
+	});
+	assert.deepEqual(assignmentCreate.mock.calls[0]?.arguments[0], {
+		data: [
+			{
+				roundId: "round-1",
+				projectId: "project-84",
+				judgeId: "judge-mlh",
+				categoryCode: "SOLANA",
+				isMain: false,
+				expertiseMatch: true,
+				calibrationAnchor: false,
+				assignmentReason: "Devpost MLH category reconciliation",
+				fieldTimestamps: {},
+				fieldOperationIds: {},
+			},
+			{
+				roundId: "round-1",
+				projectId: "project-84",
+				judgeId: "judge-mlh",
+				categoryCode: "GODADDY",
+				isMain: false,
+				expertiseMatch: true,
+				calibrationAnchor: false,
+				assignmentReason: "Devpost MLH category reconciliation",
+				fieldTimestamps: {},
+				fieldOperationIds: {},
+			},
+		],
+	});
+	assert.deepEqual(rankingDelete.mock.calls[0]?.arguments[0], {
+		where: {
+			roundId: "round-1",
+			OR: [
+				{ judgeId: "judge-mlh", categoryCode: "SOLANA" },
+				{ judgeId: "judge-mlh", categoryCode: "GODADDY" },
+			],
+		},
+	});
+	assert.equal(auditCreate.mock.callCount(), 1);
+	const audit = auditCreate.mock.calls[0]?.arguments[0] as { data: { name: string; outcome: string; data: object } };
+	assert.equal(audit.data.name, "judging.categories.reconciled");
+	assert.equal(audit.data.outcome, "applied");
+	assert.deepEqual(audit.data.data, {
+		projectCount: 2,
+		categoriesCreated: 2,
+		assignmentsCreated: 2,
+		rankingRowsRemoved: 1,
+		assignmentVersionChanged: true,
+	});
 });
