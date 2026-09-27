@@ -4,6 +4,7 @@ import { z } from "zod";
 import { adminProcedure, createTRPCRouter, judgeProcedure } from "@/server/api/trpc";
 import { createAuditEvent, persistAuditEvent } from "@/server/lib/audit-event";
 import { generateJudgingAssignments } from "@/server/services/judging-assignments";
+import { planDedicatedCategoryAssignments } from "@/server/services/judging-dedication";
 import {
 	parseJudgeCsv,
 	parseProjectCsv,
@@ -733,7 +734,10 @@ export const judgingRouter = createTRPCRouter({
 					if (judges.length !== input.judgeIds.length)
 						throw new TRPCError({ code: "BAD_REQUEST", message: "A selected judge is not in this round." });
 					if (judges.some(judge => jsonStringArray(judge.exclusions).includes(input.mainTrack)))
-						throw new TRPCError({ code: "BAD_REQUEST", message: "A selected judge is excluded from this track." });
+						throw new TRPCError({
+							code: "BAD_REQUEST",
+							message: "A selected judge is excluded from this track.",
+						});
 
 					const currentJudgeIds = currentAssignments.map(assignment => assignment.judgeId).sort();
 					const requestedJudgeIds = [...input.judgeIds].sort();
@@ -758,7 +762,9 @@ export const judgingRouter = createTRPCRouter({
 					});
 					for (const judgeId of input.judgeIds) {
 						const projectIds = new Set(
-							judgeVisits.filter(assignment => assignment.judgeId === judgeId).map(assignment => assignment.projectId),
+							judgeVisits
+								.filter(assignment => assignment.judgeId === judgeId)
+								.map(assignment => assignment.projectId),
 						);
 						if (!projectIds.has(project.id) && projectIds.size >= round.effectiveProjectLimit)
 							throw new TRPCError({
@@ -843,6 +849,250 @@ export const judgingRouter = createTRPCRouter({
 						assignmentsRemoved: currentAssignments.length,
 						synchronizedWorkRemoved,
 						assignmentsCreated: input.judgeIds.length,
+						rankingRowsRemoved: rankingRowsRemoved.count,
+					};
+				},
+				{ isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+			);
+		}),
+
+	dedicateJudgeToCategory: adminProcedure
+		.input(
+			z.object({
+				roundId: z.string().min(1).max(191),
+				judgeId: z.string().min(1).max(191),
+				categoryCode: z.string().refine(isMiniCategoryCode),
+				replacementJudgeIds: z.array(z.string().min(1).max(191)).min(1),
+				expectedAssignmentVersion: z.number().int().nonnegative(),
+				previewOnly: z.boolean().default(false),
+				confirmDiscardOtherJudgeCategoryWork: z.literal(true),
+				confirmDiscardDedicatedJudgeOtherWork: z.literal(true),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			if (input.replacementJudgeIds.includes(input.judgeId))
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "The dedicated judge cannot replace their own work.",
+				});
+			if (new Set(input.replacementJudgeIds).size !== input.replacementJudgeIds.length)
+				throw new TRPCError({ code: "BAD_REQUEST", message: "Replacement judges must be unique." });
+
+			return ctx.prisma.$transaction(
+				async transaction => {
+					const [round, dedicatedJudge, projects, candidateJudges, assignments] = await Promise.all([
+						transaction.judgingRound.findUnique({ where: { id: input.roundId } }),
+						transaction.judgingJudge.findFirst({
+							where: { id: input.judgeId, roundId: input.roundId },
+						}),
+						transaction.judgingProject.findMany({
+							where: { roundId: input.roundId },
+							select: {
+								id: true,
+								room: true,
+								tableNumber: true,
+								categories: { select: { code: true } },
+							},
+						}),
+						transaction.judgingJudge.findMany({
+							where: { id: { in: input.replacementJudgeIds }, roundId: input.roundId },
+						}),
+						transaction.judgingAssignment.findMany({ where: { roundId: input.roundId } }),
+					]);
+					if (!round || !dedicatedJudge) throw new TRPCError({ code: "NOT_FOUND" });
+					requireMutableAssignments(round);
+					if (candidateJudges.length !== input.replacementJudgeIds.length)
+						throw new TRPCError({
+							code: "BAD_REQUEST",
+							message: "A replacement judge is not in this round.",
+						});
+					if (jsonStringArray(dedicatedJudge.exclusions).includes(input.categoryCode))
+						throw new TRPCError({
+							code: "BAD_REQUEST",
+							message: "The dedicated judge is excluded from this category.",
+						});
+
+					const categoryProjectIds = projects
+						.filter(project => project.categories.some(category => category.code === input.categoryCode))
+						.map(project => project.id);
+					if (categoryProjectIds.length === 0)
+						throw new TRPCError({ code: "PRECONDITION_FAILED", message: "This category has no projects." });
+					if (categoryProjectIds.length > round.effectiveProjectLimit)
+						throw new TRPCError({
+							code: "PRECONDITION_FAILED",
+							message: "The approved project limit must cover every project in the dedicated category.",
+						});
+
+					const plan = planDedicatedCategoryAssignments({
+						dedicatedJudgeId: dedicatedJudge.id,
+						categoryCode: input.categoryCode,
+						categoryProjectIds,
+						projectLimit: round.effectiveProjectLimit,
+						projects: projects.map(project => ({
+							id: project.id,
+							room: project.room,
+							tableNumber: project.tableNumber,
+						})),
+						judges: candidateJudges.map(judge => ({
+							id: judge.id,
+							email: judge.email,
+							expertise: jsonStringArray(judge.expertise).filter(isMiniCategoryCode),
+							exclusions: jsonStringArray(judge.exclusions),
+						})),
+						assignments: assignments.map(assignment => ({
+							id: assignment.id,
+							projectId: assignment.projectId,
+							judgeId: assignment.judgeId,
+							categoryCode: assignment.categoryCode,
+							isMain: assignment.isMain,
+						})),
+					});
+					if (plan.errors.length)
+						throw new TRPCError({ code: "PRECONDITION_FAILED", message: plan.errors.join("\n") });
+
+					const dedicatedOtherAssignments = assignments.filter(
+						assignment =>
+							assignment.judgeId === dedicatedJudge.id && assignment.categoryCode !== input.categoryCode,
+					);
+					const otherJudgeCategoryAssignments = assignments.filter(assignment =>
+						plan.removeCategoryAssignmentIds.includes(assignment.id),
+					);
+					const alreadyApplied =
+						plan.missingDedicatedProjectIds.length === 0 &&
+						plan.removeCategoryAssignmentIds.length === 0 &&
+						dedicatedOtherAssignments.length === 0;
+					if (alreadyApplied)
+						return {
+							alreadyApplied: true,
+							assignmentVersion: round.assignmentVersion,
+							categoryProjects: categoryProjectIds.length,
+							categoryAssignmentsRemoved: 0,
+							categoryWorkRemoved: 0,
+							dedicatedAssignmentsCreated: 0,
+							otherScopesReassigned: 0,
+							dedicatedOtherWorkRemoved: 0,
+							rankingRowsRemoved: 0,
+						};
+
+					const hasWork = (assignment: (typeof assignments)[number]) =>
+						[
+							assignment.technicalLevel,
+							assignment.ideaLevel,
+							assignment.designLevel,
+							assignment.learningLevel,
+							assignment.presentationLevel,
+							assignment.miniEligibility,
+							assignment.miniScore,
+							assignment.note,
+							assignment.recusedAt,
+						].some(value => value !== null) || assignment.rulesConcern;
+					const categoryWorkRemoved = otherJudgeCategoryAssignments.filter(hasWork).length;
+					const dedicatedOtherWorkRemoved = dedicatedOtherAssignments.filter(hasWork).length;
+					if (input.previewOnly)
+						return {
+							previewOnly: true,
+							alreadyApplied: false,
+							assignmentVersion: round.assignmentVersion,
+							proposedAssignmentVersion: round.assignmentVersion + 1,
+							categoryProjects: categoryProjectIds.length,
+							categoryAssignmentsRemoved: otherJudgeCategoryAssignments.length,
+							categoryWorkRemoved,
+							dedicatedAssignmentsCreated: plan.missingDedicatedProjectIds.length,
+							otherScopesReassigned: plan.reassignments.length,
+							dedicatedOtherWorkRemoved,
+							rankingRowsRemoved: null,
+							reassignmentPlan: plan.reassignments,
+						};
+
+					await claimAssignmentVersion(transaction, round.id, input.expectedAssignmentVersion);
+					const candidateById = new Map(candidateJudges.map(judge => [judge.id, judge]));
+					const assignmentById = new Map(assignments.map(assignment => [assignment.id, assignment]));
+					for (const reassignment of plan.reassignments) {
+						const assignment = assignmentById.get(reassignment.assignmentId);
+						const judge = candidateById.get(reassignment.targetJudgeId);
+						if (!assignment || !judge)
+							throw new Error("The validated dedication plan could not be applied");
+						await transaction.judgingAssignment.update({
+							where: { id: assignment.id },
+							data: resetAssignmentForJudge(
+								judge,
+								assignment,
+								"specialist category dedication reassignment",
+							),
+						});
+					}
+					if (plan.removeCategoryAssignmentIds.length)
+						await transaction.judgingAssignment.deleteMany({
+							where: { id: { in: plan.removeCategoryAssignmentIds } },
+						});
+					if (plan.missingDedicatedProjectIds.length)
+						await transaction.judgingAssignment.createMany({
+							data: plan.missingDedicatedProjectIds.map(projectId => ({
+								roundId: round.id,
+								projectId,
+								judgeId: dedicatedJudge.id,
+								categoryCode: input.categoryCode,
+								isMain: false,
+								expertiseMatch: jsonStringArray(dedicatedJudge.expertise).includes(input.categoryCode),
+								calibrationAnchor: false,
+								assignmentReason: "required all-project specialist coverage",
+								fieldTimestamps: {},
+								fieldOperationIds: {},
+							})),
+						});
+
+					const affectedRankingPairs = dedicatedOtherAssignments.flatMap(assignment => {
+						const targetJudgeId = plan.reassignments.find(
+							item => item.assignmentId === assignment.id,
+						)?.targetJudgeId;
+						return [
+							{ judgeId: dedicatedJudge.id, categoryCode: assignment.categoryCode },
+							...(targetJudgeId
+								? [{ judgeId: targetJudgeId, categoryCode: assignment.categoryCode }]
+								: []),
+						];
+					});
+					const rankingRowsRemoved = await transaction.judgingRanking.deleteMany({
+						where: {
+							roundId: round.id,
+							OR: [
+								{ categoryCode: input.categoryCode },
+								...new Map(
+									affectedRankingPairs.map(pair => [`${pair.judgeId}:${pair.categoryCode}`, pair]),
+								).values(),
+							],
+						},
+					});
+					await persistAuditEvent(
+						transaction,
+						createAuditEvent({
+							name: "judging.category.dedicated",
+							outcome: "applied",
+							actor: { type: "organizer", id: ctx.organizer.id },
+							subject: { type: "judging_judge", id: dedicatedJudge.id },
+							resource: { type: "judging_round", id: round.id },
+							data: {
+								categoryCode: input.categoryCode,
+								categoryProjects: categoryProjectIds.length,
+								categoryAssignmentsRemoved: otherJudgeCategoryAssignments.length,
+								categoryWorkRemoved,
+								dedicatedAssignmentsCreated: plan.missingDedicatedProjectIds.length,
+								otherScopesReassigned: plan.reassignments.length,
+								dedicatedOtherWorkRemoved,
+								rankingRowsRemoved: rankingRowsRemoved.count,
+								assignmentVersionChanged: true,
+							},
+						}),
+					);
+					return {
+						alreadyApplied: false,
+						assignmentVersion: round.assignmentVersion + 1,
+						categoryProjects: categoryProjectIds.length,
+						categoryAssignmentsRemoved: otherJudgeCategoryAssignments.length,
+						categoryWorkRemoved,
+						dedicatedAssignmentsCreated: plan.missingDedicatedProjectIds.length,
+						otherScopesReassigned: plan.reassignments.length,
+						dedicatedOtherWorkRemoved,
 						rankingRowsRemoved: rankingRowsRemoved.count,
 					};
 				},
