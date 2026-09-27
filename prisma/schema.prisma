@@ -561,11 +561,181 @@ model LatteOrderTransition {
   @@index([organizerId])
 }
 
+model JudgingRound {
+  id                     String               @id @default(cuid())
+  name                   String
+  state                  JudgingRoundState    @default(DRAFT)
+  rubricVersion          Int                  @default(1)
+  rubricSnapshot         Json
+  assignmentVersion      Int                  @default(0)
+  preferredProjectLimit  Int                  @default(15)
+  effectiveProjectLimit  Int                  @default(15)
+  generationWarnings     Json
+  overloadApprovedAt     DateTime?
+  assignmentsPublishedAt DateTime?
+  openedAt               DateTime?
+  lockedAt               DateTime?
+  createdById            String
+  projects               JudgingProject[]
+  judges                 JudgingJudge[]
+  assignments            JudgingAssignment[]
+  rankings               JudgingRanking[]
+  syncReceipts           JudgingSyncReceipt[]
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @default(now()) @updatedAt
+
+  @@index([state, createdAt])
+}
+
+model JudgingProject {
+  id          String                   @id @default(cuid())
+  roundId     String
+  round       JudgingRound             @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  externalId  String
+  name        String
+  tableNumber Int
+  room        String
+  devpostUrl  String                   @db.VarChar(512)
+  mainTrack   JudgingMainTrack
+  categories  JudgingProjectCategory[]
+  assignments JudgingAssignment[]
+  rankings    JudgingRanking[]
+  createdAt   DateTime                 @default(now())
+  updatedAt   DateTime                 @default(now()) @updatedAt
+
+  @@unique([roundId, externalId])
+  @@unique([roundId, tableNumber])
+  @@index([roundId, room, tableNumber])
+}
+
+model JudgingProjectCategory {
+  id                      String              @id @default(cuid())
+  roundId                 String
+  projectId               String
+  project                 JudgingProject      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  code                    String
+  eligibilityResolution   JudgingEligibility?
+  eligibilityResolvedById String?
+  eligibilityResolvedAt   DateTime?
+  createdAt               DateTime            @default(now())
+  updatedAt               DateTime            @default(now()) @updatedAt
+
+  @@unique([projectId, code])
+  @@index([roundId, code])
+}
+
+model JudgingJudge {
+  id          String              @id @default(cuid())
+  roundId     String
+  round       JudgingRound        @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  name        String
+  email       String
+  expertise   Json
+  exclusions  Json
+  lastSyncAt  DateTime?
+  assignments JudgingAssignment[]
+  rankings    JudgingRanking[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @default(now()) @updatedAt
+
+  @@unique([roundId, email])
+  @@index([email, roundId])
+}
+
+model JudgingAssignment {
+  id                String              @id @default(cuid())
+  roundId           String
+  round             JudgingRound        @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  judgeId           String
+  judge             JudgingJudge        @relation(fields: [judgeId], references: [id], onDelete: Cascade)
+  projectId         String
+  project           JudgingProject      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  categoryCode      String
+  isMain            Boolean             @default(false)
+  expertiseMatch    Boolean             @default(false)
+  calibrationAnchor Boolean             @default(false)
+  assignmentReason  String
+  technicalLevel    Int?
+  ideaLevel         Int?
+  designLevel       Int?
+  learningLevel     Int?
+  presentationLevel Int?
+  miniEligibility   JudgingEligibility?
+  miniScore         Int?
+  note              String?             @db.Text
+  rulesConcern      Boolean             @default(false)
+  recusedAt         DateTime?
+  recusalReason     String?             @db.Text
+  recusalAcceptedAt DateTime?
+  fieldTimestamps   Json
+  fieldOperationIds Json
+  completedAt       DateTime?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @default(now()) @updatedAt
+
+  @@unique([judgeId, projectId, categoryCode])
+  @@index([roundId, categoryCode])
+  @@index([projectId, categoryCode])
+}
+
+model JudgingRanking {
+  id           String         @id @default(cuid())
+  roundId      String
+  round        JudgingRound   @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  judgeId      String
+  judge        JudgingJudge   @relation(fields: [judgeId], references: [id], onDelete: Cascade)
+  projectId    String
+  project      JudgingProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  categoryCode String
+  rank         Int
+  editedAt     DateTime
+  operationId  String
+  confirmedAt  DateTime?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @default(now()) @updatedAt
+
+  @@unique([judgeId, categoryCode, projectId])
+  @@unique([judgeId, categoryCode, rank])
+  @@index([roundId, categoryCode])
+  @@index([projectId, categoryCode])
+}
+
+model JudgingSyncReceipt {
+  operationId      String       @id
+  roundId          String
+  round            JudgingRound @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  judgeId          String
+  discarded        Boolean      @default(false)
+  clientTimestamps Json
+  createdAt        DateTime     @default(now())
+
+  @@index([judgeId, createdAt])
+  @@index([roundId, createdAt])
+}
+
 enum HardwareCategory {
   INPUTS
   OUTPUTS
   MICROCONTROLLERS
   MISCELLANEOUS
+}
+
+enum JudgingRoundState {
+  DRAFT
+  OPEN
+  LOCKED
+}
+
+enum JudgingMainTrack {
+  GENERAL
+  CIVIC
+  CGI
+}
+
+enum JudgingEligibility {
+  ELIGIBLE
+  UNSURE
+  INELIGIBLE
 }
 
 enum HardwareOwner {

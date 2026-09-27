@@ -16,7 +16,10 @@ void test("unknown magic-link addresses create no verification token", async t =
 	const createVerificationToken = t.mock.fn((value: VerificationToken) => Promise.resolve(value));
 	const adapter = restrictOrganizerVerificationTokens(
 		{ createVerificationToken } as Adapter,
-		{ organizerAccess: { findUnique: () => Promise.resolve(null) } } as unknown as PrismaClient,
+		{
+			organizerAccess: { findUnique: () => Promise.resolve(null) },
+			judgingJudge: { findFirst: () => Promise.resolve(null) },
+		} as unknown as PrismaClient,
 	);
 
 	assert.equal(await adapter.createVerificationToken?.(token("unknown@example.com")), null);
@@ -30,6 +33,7 @@ void test("allowed external and named CTN addresses retain single-use verificati
 			findUnique: ({ where }: { where: { email: string } }) =>
 				Promise.resolve(where.email === "allowed@example.com" ? { id: "access-1" } : null),
 		},
+		judgingJudge: { findFirst: () => Promise.resolve(null) },
 	} as unknown as PrismaClient;
 	const adapter = restrictOrganizerVerificationTokens({ createVerificationToken } as Adapter, prisma);
 
@@ -50,9 +54,24 @@ void test("CTN role mailboxes create no verification token", async t => {
 		{ createVerificationToken } as Adapter,
 		{
 			organizerAccess: { findUnique: () => Promise.resolve({ id: "should-not-bypass" }) },
+			judgingJudge: { findFirst: () => Promise.resolve(null) },
 		} as unknown as PrismaClient,
 	);
 
 	assert.equal(await adapter.createVerificationToken?.(token("logistics@ctn-rtc.org")), null);
 	assert.equal(createVerificationToken.mock.callCount(), 0);
+});
+
+void test("active judges retain verification tokens without organizer access", async t => {
+	const createVerificationToken = t.mock.fn((value: VerificationToken) => Promise.resolve(value));
+	const adapter = restrictOrganizerVerificationTokens(
+		{ createVerificationToken } as Adapter,
+		{
+			organizerAccess: { findUnique: () => Promise.resolve(null) },
+			judgingJudge: { findFirst: () => Promise.resolve({ id: "judge-1" }) },
+		} as unknown as PrismaClient,
+	);
+
+	assert.deepEqual(await adapter.createVerificationToken?.(token("judge@example.com")), token("judge@example.com"));
+	assert.equal(createVerificationToken.mock.callCount(), 1);
 });

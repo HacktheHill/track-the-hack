@@ -16,6 +16,11 @@ can also manage external organiser addresses at `/internal/access`.
 - Protected procedures reload current database access. Session claims are display
   hints, not mutation authority.
 - Participant sessions never authorise organiser pages or procedures.
+- An active published judge email may use a single-use email link. Judge authorization
+  is independent of organiser access, grants only assigned judging scopes, and is
+  re-read from the current round for every online operation.
+- Only administrators can manage `/internal/judging`, imports, assignments, workload
+  approval, eligibility resolutions, locking, reopening, and result exports.
 
 An organiser pass contains `organizer:<user-id>`. It is an identifier, not a session
 credential. The scanner displays the organiser's name for visual confirmation.

@@ -5,8 +5,10 @@ import {
 	apiNetworkOnly,
 	isEnglishPrivateNavigation,
 	isEnglishPublicNavigation,
+	isEnglishJudgingNavigation,
 	isFrenchPrivateNavigation,
 	isFrenchPublicNavigation,
+	isFrenchJudgingNavigation,
 	isPrivateNextDataRequest,
 	publicPrecacheUrls,
 	publicScheduleData,
@@ -55,6 +57,14 @@ void test("PWA configuration keeps participant routes deployment-safe", () => {
 			isEnglishPrivateNavigation({ request: navigationRequest, url: new URL("https://track.example/qr") }),
 			true,
 		);
+		assert.equal(
+			isEnglishJudgingNavigation({ request: navigationRequest, url: new URL("https://track.example/judging") }),
+			true,
+		);
+		assert.equal(
+			isFrenchJudgingNavigation({ request: navigationRequest, url: new URL("https://track.example/fr/judging") }),
+			true,
+		);
 		for (const path of ["/services", "/hardware", "/latte-lab", "/internal/hardware", "/internal/latte-lab"]) {
 			assert.equal(
 				isEnglishPrivateNavigation({
@@ -83,6 +93,12 @@ void test("PWA configuration keeps participant routes deployment-safe", () => {
 				url: new URL("https://track.example/_next/data/build/fr/schedule.json"),
 			}),
 			false,
+		);
+		assert.equal(
+			isPrivateNextDataRequest({
+				url: new URL("https://track.example/_next/data/build/fr/judging.json"),
+			}),
+			true,
 		);
 		for (const matcher of [
 			isEnglishPrivateNavigation,
@@ -132,10 +148,14 @@ void test("PWA configuration keeps participant routes deployment-safe", () => {
 	assert.doesNotMatch(config, /revision: null/);
 	assert.ok(publicPrecacheUrls.includes("/schedule/event"));
 	assert.ok(publicPrecacheUrls.includes("/assets/maps/floor4-current.svg"));
+	assert.ok(publicPrecacheUrls.includes("/judging/offline"));
+	assert.ok(publicPrecacheUrls.includes("/fr/judging/offline"));
 	assert.equal(publicPrecacheUrls.includes("/sponsors"), false);
 	assert.equal(publicPrecacheUrls.includes("/fr/sponsors"), false);
 	assert.match(config, /precacheFallback: \{ fallbackURL: "\/fr\/_offline" \}/);
 	assert.match(config, /precacheFallback: \{ fallbackURL: "\/_offline" \}/);
+	assert.match(config, /precacheFallback: \{ fallbackURL: "\/fr\/judging\/offline" \}/);
+	assert.match(config, /precacheFallback: \{ fallbackURL: "\/judging\/offline" \}/);
 
 	const trpcClient = readFileSync("src/server/api/api.ts", "utf8");
 	assert.match(trpcClient, /condition: operation => operation\.path === "events\.all"/);

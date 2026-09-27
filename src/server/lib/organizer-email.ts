@@ -1,7 +1,8 @@
 import nodemailer from "nodemailer";
 import type { SendVerificationRequestParams } from "next-auth/providers/email";
 import { prisma } from "@/server/db";
-import { isOrganizerEmailAllowed, normalizeOrganizerEmail } from "@/server/lib/organizer-auth";
+import { normalizeOrganizerEmail } from "@/server/lib/organizer-auth";
+import { isSignInEmailAllowed } from "@/server/lib/organizer-adapter";
 import { createOrganizerEmailConfirmationUrl } from "@/server/lib/organizer-email-confirmation";
 
 const escapeHtml = (value: string) =>
@@ -20,7 +21,7 @@ export const sendOrganizerVerificationRequest = async ({
 	const email = normalizeOrganizerEmail(identifier);
 	// Silently do nothing for unknown addresses so the sign-in page cannot be
 	// used to enumerate the organiser allowlist.
-	if (!(await isOrganizerEmailAllowed(prisma, email))) return;
+	if (!(await isSignInEmailAllowed(prisma, email))) return;
 
 	const host = new URL(url).host;
 	const confirmationUrl = createOrganizerEmailConfirmationUrl(url);

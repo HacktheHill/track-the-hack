@@ -10,8 +10,10 @@ const {
 	publicScheduleData,
 	isEnglishPrivateNavigation,
 	isEnglishPublicNavigation,
+	isEnglishJudgingNavigation,
 	isFrenchPrivateNavigation,
 	isFrenchPublicNavigation,
+	isFrenchJudgingNavigation,
 	isPrivateNextDataRequest,
 	publicPrecacheUrls,
 } = pwaRuntimeCaching;
@@ -118,6 +120,24 @@ const privateNavigationNetworkOnly = [
 	},
 ];
 
+// Judging is the sole personalized workflow with an offline application shell.
+// The actual page remains NetworkOnly and falls back to a generic, statically
+// generated shell that reads judge-owned data from IndexedDB. API responses and
+// Next data are never cached.
+/** @satisfies {import("workbox-build").RuntimeCaching[]} */
+const judgingNavigationNetworkOnly = [
+	{
+		urlPattern: isFrenchJudgingNavigation,
+		handler: "NetworkOnly",
+		options: { precacheFallback: { fallbackURL: "/fr/judging/offline" } },
+	},
+	{
+		urlPattern: isEnglishJudgingNavigation,
+		handler: "NetworkOnly",
+		options: { precacheFallback: { fallbackURL: "/judging/offline" } },
+	},
+];
+
 // Validate during Next config loading; src/env/server.mjs also validates any
 // importing server route at build or request time. There is no validation bypass.
 import("./src/env/server.mjs");
@@ -135,6 +155,7 @@ const withPWA = require("next-pwa")({
 		publicScheduleData,
 		apiNetworkOnly,
 		...participantProfileNetworkOnly,
+		...judgingNavigationNetworkOnly,
 		...privateNavigationNetworkOnly,
 		...publicNavigationCaching,
 		...defaultRuntimeCaching,
@@ -150,8 +171,7 @@ module.exports = withPWA({
 	turbopack: {},
 	// Match the raw path once. Letting Next add an i18n prefix would miss `/`
 	// and other default-locale document routes.
-	headers: () =>
-		Promise.resolve([{ source: "/:path*", locale: false, headers: securityHeaders }]),
+	headers: () => Promise.resolve([{ source: "/:path*", locale: false, headers: securityHeaders }]),
 	/**
 	 * @template {import("webpack").Configuration & {
 	 *   module: import("webpack").ModuleOptions & { rules: import("webpack").RuleSetRule[] }

@@ -27,6 +27,15 @@ const auditNames = [
 	"notification.announcement.queued",
 	"notification.announcement.completed",
 	"notification.delivery.retried",
+	"judging.round.imported",
+	"judging.assignments.regenerated",
+	"judging.round.published",
+	"judging.round.locked",
+	"judging.round.reopened",
+	"judging.workload.approved",
+	"judging.assignment.changed",
+	"judging.eligibility.resolved",
+	"judging.sync.applied",
 	"legacy.migrated",
 ] as const;
 
@@ -55,6 +64,15 @@ const allowedOutcomes: Record<(typeof auditNames)[number], readonly string[]> = 
 	"notification.announcement.queued": ["queued"],
 	"notification.announcement.completed": ["completed"],
 	"notification.delivery.retried": ["queued"],
+	"judging.round.imported": ["created"],
+	"judging.assignments.regenerated": ["regenerated"],
+	"judging.round.published": ["opened"],
+	"judging.round.locked": ["locked", "force_locked"],
+	"judging.round.reopened": ["reopened"],
+	"judging.workload.approved": ["approved"],
+	"judging.assignment.changed": ["moved", "project_visit_moved", "swapped", "added", "removed", "recusal_accepted"],
+	"judging.eligibility.resolved": ["eligible", "ineligible"],
+	"judging.sync.applied": ["applied", "discarded", "blocked"],
 	"legacy.migrated": ["migrated"],
 };
 
@@ -72,6 +90,10 @@ const entitySchema = z
 			"latte_order",
 			"notification_campaign",
 			"notification_announcement",
+			"judging_round",
+			"judging_judge",
+			"judging_assignment",
+			"judging_project",
 		]),
 		id: z.string().min(1).max(191),
 	})
@@ -107,7 +129,7 @@ export const auditEventV1Schema = z
 		outcome: z.string().min(1).max(64),
 		actor: z
 			.object({
-				type: z.enum(["organizer", "participant", "integration", "system"]),
+				type: z.enum(["organizer", "judge", "participant", "integration", "system"]),
 				id: z.string().min(1).max(191),
 			})
 			.strict(),

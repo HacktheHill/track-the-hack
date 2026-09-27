@@ -33,12 +33,13 @@ const router: NextRouter = {
 	events: { on: () => undefined, off: () => undefined, emit: () => undefined },
 };
 
-const session = (isOrganizer: boolean): Session => ({
+const session = (isOrganizer: boolean, isJudge = false): Session => ({
 	expires: "2099-01-01T00:00:00.000Z",
 	user: {
 		id: "user-1",
 		isOrganizer,
 		isAdmin: false,
+		isJudge,
 		name: "Test User",
 		email: "test@example.test",
 	},
@@ -67,4 +68,17 @@ void test("organisers can open the internal tools page from navigation", async (
 void test("the internal tools navigation item is hidden from non-organisers", async () => {
 	assert.doesNotMatch(await render(session(false)), /href="\/internal"/);
 	assert.doesNotMatch(await render(null), /href="\/internal"/);
+});
+
+void test("judges can open judging without seeing organiser tools", async () => {
+	const html = await render(session(false, true));
+	assert.match(html, /href="\/judging"/);
+	assert.match(html, /aria-label="Judging"/);
+	assert.doesNotMatch(html, /href="\/internal"/);
+});
+
+void test("judging navigation is hidden from non-judges", async () => {
+	assert.doesNotMatch(await render(session(true)), /href="\/judging"/);
+	assert.doesNotMatch(await render(session(false)), /href="\/judging"/);
+	assert.doesNotMatch(await render(null), /href="\/judging"/);
 });

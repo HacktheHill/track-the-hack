@@ -6,6 +6,7 @@ declare module "next-auth" {
 			id: string;
 			isOrganizer: boolean;
 			isAdmin: boolean;
+			isJudge?: boolean;
 		} & DefaultSession["user"];
 	}
 }

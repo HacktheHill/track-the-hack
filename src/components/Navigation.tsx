@@ -3,6 +3,7 @@ import { useTranslation } from "next-i18next";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import { clearOfflineJudgingData } from "@/client/judging-offline";
 import { useHasParticipantPass } from "@/utils/participant-pass";
 import Access from "./Access";
 
@@ -56,6 +57,15 @@ const Links = ({ bottom }: LinkProps) => {
 				src="/assets/schedule.svg"
 				alt={t("schedule")}
 			/>
+			{sessionData?.user?.isJudge && (
+				<LinkItem
+					href="/judging"
+					bottom={bottom}
+					text={t("judging")}
+					src="/assets/judging.svg"
+					alt={t("judging")}
+				/>
+			)}
 			<LinkItem href="/maps" bottom={bottom} text={t("maps")} src="/assets/maps.svg" alt={t("maps")} />
 			<LinkItem
 				href="/resources"
@@ -151,7 +161,15 @@ const Navbar = ({ integrated }: NavbarProps) => {
 			</select>
 
 			{sessionData ? (
-				<button className="ui-button" onClick={() => void signOut()}>
+				<button
+					className="ui-button"
+					onClick={() =>
+						void (async () => {
+							if (sessionData.user?.isJudge) await clearOfflineJudgingData().catch(() => undefined);
+							await signOut();
+						})()
+					}
+				>
 					{t("sign-out")}
 				</button>
 			) : (
