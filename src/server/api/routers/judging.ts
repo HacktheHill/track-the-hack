@@ -274,6 +274,8 @@ const synchronizeProjectRecusal = async (
 		editedAt: Date;
 		operationId: string;
 		now: Date;
+		previewOnly?: boolean;
+		actor?: { type: "judge" | "organizer"; id: string };
 	},
 ) => {
 	const sourceAssignments = await transaction.judgingAssignment.findMany({
@@ -295,7 +297,7 @@ const synchronizeProjectRecusal = async (
 		.map(assignment => ({ assignmentId: assignment.id, field: "recusalReason" }));
 	if (superseded.length) {
 		const warnings: string[] = [];
-		return { superseded, assignmentVersionChanged: false, warnings };
+		return { superseded, assignmentVersionChanged: false, replacementCount: 0, warnings };
 	}
 	const alreadyRecused = sourceAssignments.some(assignment => assignment.recusedAt !== null);
 	if (!input.reason && alreadyRecused)
@@ -379,6 +381,13 @@ const synchronizeProjectRecusal = async (
 		replacements = plan.replacements;
 		warnings = plan.errors;
 	}
+	if (input.previewOnly)
+		return {
+			superseded: [],
+			assignmentVersionChanged: replacements.length > 0,
+			replacementCount: replacements.length,
+			warnings,
+		};
 
 	const acceptedAt =
 		input.reason && warnings.length === 0
@@ -448,7 +457,7 @@ const synchronizeProjectRecusal = async (
 			createAuditEvent({
 				name: "judging.assignment.changed",
 				outcome: "recusal_auto_reassigned",
-				actor: { type: "judge", id: input.judgeId },
+				actor: input.actor ?? { type: "judge", id: input.judgeId },
 				resource: { type: "judging_project", id: input.projectId },
 				data: {
 					scopeCount: sourceAssignments.length,
@@ -458,7 +467,12 @@ const synchronizeProjectRecusal = async (
 				},
 			}),
 		);
-	return { superseded: [], assignmentVersionChanged: replacements.length > 0, warnings };
+	return {
+		superseded: [],
+		assignmentVersionChanged: replacements.length > 0,
+		replacementCount: replacements.length,
+		warnings,
+	};
 };
 
 type JudgingManifestClient = Pick<Prisma.TransactionClient, "judgingJudge">;
@@ -1808,6 +1822,106 @@ export const judgingRouter = createTRPCRouter({
 			return round;
 		}),
 	),
+
+	reconcilePendingRecusals: adminProcedure
+		.input(
+			z.object({
+				roundId: z.string().min(1).max(191),
+				expectedAssignmentVersion: z.number().int().nonnegative(),
+				previewOnly: z.boolean().default(true),
+				confirmProjectWideReassignment: z.literal(true),
+			}),
+		)
+		.mutation(async ({ ctx, input }) =>
+			ctx.prisma.$transaction(
+				async transaction => {
+					const [round, pending] = await Promise.all([
+						transaction.judgingRound.findUnique({ where: { id: input.roundId } }),
+						transaction.judgingAssignment.findMany({
+							where: {
+								roundId: input.roundId,
+								recusedAt: { not: null },
+								recusalAcceptedAt: null,
+							},
+							include: {
+								judge: { select: { id: true, name: true } },
+								project: { select: { id: true, name: true, tableNumber: true } },
+							},
+							orderBy: [
+								{ project: { tableNumber: "asc" } },
+								{ judge: { email: "asc" } },
+								{ categoryCode: "asc" },
+							],
+						}),
+					]);
+					if (!round) throw new TRPCError({ code: "NOT_FOUND" });
+					requireRoundState(round, "OPEN");
+					if (round.assignmentVersion !== input.expectedAssignmentVersion)
+						throw new TRPCError({
+							code: "CONFLICT",
+							message: "Assignments changed. Refresh the recusal preview before applying it.",
+						});
+
+					const groups = new Map<string, typeof pending>();
+					for (const assignment of pending) {
+						const key = `${assignment.judgeId}:${assignment.projectId}`;
+						const group = groups.get(key) ?? [];
+						group.push(assignment);
+						groups.set(key, group);
+					}
+					const now = new Date();
+					const reconciled = [];
+					let versionIncrements = 0;
+					for (const assignments of groups.values()) {
+						const first = assignments[0];
+						if (!first) continue;
+						const reason = assignments.find(assignment => assignment.recusalReason?.trim())?.recusalReason?.trim();
+						if (!reason)
+							throw new TRPCError({
+								code: "PRECONDITION_FAILED",
+								message: `Table ${first.project.tableNumber} has a recusal without a reason.`,
+							});
+						const result = await synchronizeProjectRecusal(transaction, {
+							round,
+							judgeId: first.judgeId,
+							projectId: first.projectId,
+							reason,
+							editedAt: now,
+							operationId: crypto.randomUUID(),
+							now,
+							previewOnly: input.previewOnly,
+							actor: { type: "organizer", id: ctx.organizer.id },
+						});
+						if (result.superseded.length)
+							throw new TRPCError({
+								code: "CONFLICT",
+								message: "A newer recusal edit exists. Refresh before reconciling.",
+							});
+						if (result.assignmentVersionChanged) versionIncrements += 1;
+						reconciled.push({
+							judgeId: first.judgeId,
+							judgeName: first.judge.name,
+							projectId: first.projectId,
+							projectName: first.project.name,
+							tableNumber: first.project.tableNumber,
+							previouslyRecusedScopeCount: assignments.length,
+							replacementCount: result.replacementCount,
+							warnings: result.warnings,
+						});
+					}
+					return {
+						previewOnly: input.previewOnly,
+						assignmentVersion: round.assignmentVersion,
+						proposedAssignmentVersion: round.assignmentVersion + versionIncrements,
+						groupCount: reconciled.length,
+						replacementCount: reconciled.reduce((total, group) => total + group.replacementCount, 0),
+						warningCount: reconciled.reduce((total, group) => total + group.warnings.length, 0),
+						groups: reconciled,
+					};
+				},
+				{ isolationLevel: Prisma.TransactionIsolationLevel.Serializable, maxWait: 10_000, timeout: 30_000 },
+			),
+		),
 
 	acceptRecusal: adminProcedure
 		.input(z.object({ assignmentId: z.string().min(1).max(191) }))
