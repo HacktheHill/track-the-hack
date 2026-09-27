@@ -1669,6 +1669,135 @@ export const judgingRouter = createTRPCRouter({
 			});
 		}),
 
+	correctProjectVisitAttribution: adminProcedure
+		.input(
+			z.object({
+				roundId: z.string().min(1).max(191),
+				projectId: z.string().min(1).max(191),
+				sourceJudgeId: z.string().min(1).max(191),
+				targetJudgeId: z.string().min(1).max(191),
+				expectedAssignmentVersion: z.number().int().nonnegative(),
+				previewOnly: z.boolean().default(false),
+				confirmPreserveSubmittedWork: z.literal(true),
+			}),
+		)
+		.mutation(async ({ ctx, input }) =>
+			ctx.prisma.$transaction(
+				async transaction => {
+					if (input.sourceJudgeId === input.targetJudgeId)
+						throw new TRPCError({ code: "BAD_REQUEST", message: "Choose a different target judge." });
+					const [round, project, sourceJudge, targetJudge, sourceAssignments, targetAssignments] =
+						await Promise.all([
+							transaction.judgingRound.findUnique({ where: { id: input.roundId } }),
+							transaction.judgingProject.findFirst({
+								where: { id: input.projectId, roundId: input.roundId },
+								select: { id: true, tableNumber: true, name: true },
+							}),
+							transaction.judgingJudge.findFirst({
+								where: { id: input.sourceJudgeId, roundId: input.roundId },
+							}),
+							transaction.judgingJudge.findFirst({
+								where: { id: input.targetJudgeId, roundId: input.roundId },
+							}),
+							transaction.judgingAssignment.findMany({
+								where: {
+									roundId: input.roundId,
+									projectId: input.projectId,
+									judgeId: input.sourceJudgeId,
+								},
+								orderBy: { categoryCode: "asc" },
+							}),
+							transaction.judgingAssignment.findMany({
+								where: { judgeId: input.targetJudgeId },
+								select: { projectId: true, categoryCode: true },
+							}),
+						]);
+					if (!round || !project || !sourceJudge || !targetJudge || sourceAssignments.length === 0)
+						throw new TRPCError({ code: "NOT_FOUND" });
+					requireMutableAssignments(round);
+					const exclusions = jsonStringArray(targetJudge.exclusions);
+					if (sourceAssignments.some(assignment => exclusions.includes(assignment.categoryCode)))
+						throw new TRPCError({
+							code: "BAD_REQUEST",
+							message: "The target judge is excluded from at least one scope in this project visit.",
+						});
+					const targetCategories = new Set(
+						targetAssignments
+							.filter(assignment => assignment.projectId === input.projectId)
+							.map(assignment => assignment.categoryCode),
+					);
+					if (sourceAssignments.some(assignment => targetCategories.has(assignment.categoryCode)))
+						throw new TRPCError({
+							code: "CONFLICT",
+							message: "The target judge already has one of this visit's scoring scopes.",
+						});
+					const targetProjects = new Set(targetAssignments.map(assignment => assignment.projectId));
+					if (!targetProjects.has(input.projectId) && targetProjects.size >= round.effectiveProjectLimit)
+						throw new TRPCError({
+							code: "PRECONDITION_FAILED",
+							message: "This correction would exceed the approved project limit.",
+						});
+					const rankingPairs = sourceAssignments.flatMap(assignment => [
+						{ judgeId: sourceJudge.id, categoryCode: assignment.categoryCode },
+						{ judgeId: targetJudge.id, categoryCode: assignment.categoryCode },
+					]);
+					const rankingRowsInvalidated = await transaction.judgingRanking.count({
+						where: {
+							confirmedAt: { not: null },
+							OR: [...new Map(rankingPairs.map(pair => [`${pair.judgeId}:${pair.categoryCode}`, pair])).values()],
+						},
+					});
+					const result = {
+						previewOnly: input.previewOnly,
+						assignmentVersion: round.assignmentVersion,
+						proposedAssignmentVersion: round.assignmentVersion + 1,
+						project: { id: project.id, tableNumber: project.tableNumber, name: project.name },
+						sourceJudge: { id: sourceJudge.id, name: sourceJudge.name },
+						targetJudge: { id: targetJudge.id, name: targetJudge.name },
+						scopeCount: sourceAssignments.length,
+						completedScopeCount: sourceAssignments.filter(assignment => assignment.completedAt !== null).length,
+						categories: sourceAssignments.map(assignment => assignment.categoryCode),
+						rankingRowsInvalidated,
+					};
+					if (input.previewOnly) return result;
+					await claimAssignmentVersion(transaction, round.id, input.expectedAssignmentVersion);
+					for (const assignment of sourceAssignments) {
+						await transaction.judgingAssignment.update({
+							where: { id: assignment.id },
+							data: {
+								judgeId: targetJudge.id,
+								expertiseMatch:
+									!assignment.isMain && jsonStringArray(targetJudge.expertise).includes(assignment.categoryCode),
+								assignmentReason: "administrator judge attribution correction",
+							},
+						});
+					}
+					await invalidateRankings(transaction, rankingPairs);
+					await persistAuditEvent(
+						transaction,
+						createAuditEvent({
+							name: "judging.assignment.changed",
+							outcome: "attribution_corrected",
+							actor: { type: "organizer", id: ctx.organizer.id },
+							resource: { type: "judging_project", id: project.id },
+							data: {
+								tableNumber: project.tableNumber,
+								sourceJudgeId: sourceJudge.id,
+								targetJudgeId: targetJudge.id,
+								scopeCount: sourceAssignments.length,
+								completedScopeCount: result.completedScopeCount,
+								rankingRowsInvalidated,
+								preservedSubmittedWork: true,
+								assignmentVersionChanged: true,
+							},
+						}),
+					);
+					return { ...result, previewOnly: false };
+				},
+				{ isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+			),
+		),
+
 	swapAssignments: adminProcedure
 		.input(
 			z.object({
