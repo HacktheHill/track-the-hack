@@ -43,6 +43,7 @@ export default function JudgingAdminPage() {
 	const [visitTargetJudgeId, setVisitTargetJudgeId] = useState("");
 	const [firstSwapAssignmentId, setFirstSwapAssignmentId] = useState("");
 	const [secondSwapAssignmentId, setSecondSwapAssignmentId] = useState("");
+	const [disqualifyTables, setDisqualifyTables] = useState("");
 	const [preview, setPreview] = useState<RouterOutputs["judging"]["previewImport"] | null>(null);
 	const utils = trpc.useContext();
 	const overview = trpc.judging.adminOverview.useQuery();
@@ -99,6 +100,14 @@ export default function JudgingAdminPage() {
 		onSuccess: async () => utils.judging.adminOverview.invalidate(),
 		onError: async () => utils.judging.adminOverview.invalidate(),
 	});
+	const disqualifyUnjudged = trpc.judging.disqualifyUnjudgedProjects.useMutation({
+		onSuccess: async () => utils.judging.adminOverview.invalidate(),
+		onError: async () => utils.judging.adminOverview.invalidate(),
+	});
+	const closeSufficientlyCovered = trpc.judging.closeSufficientlyCoveredProjects.useMutation({
+		onSuccess: async () => utils.judging.adminOverview.invalidate(),
+		onError: async () => utils.judging.adminOverview.invalidate(),
+	});
 	const acceptRecusal = trpc.judging.acceptRecusal.useMutation({
 		onSuccess: async () => utils.judging.adminOverview.invalidate(),
 	});
@@ -122,6 +131,8 @@ export default function JudgingAdminPage() {
 		swapAssignments.error ??
 		addOptional.error ??
 		removeOptional.error ??
+		disqualifyUnjudged.error ??
+		closeSufficientlyCovered.error ??
 		acceptRecusal.error ??
 		resolveEligibility.error;
 	const round = overview.data;
@@ -137,6 +148,14 @@ export default function JudgingAdminPage() {
 	const synchronizedProgressPercent = synchronizedProgress.total
 		? Math.round((synchronizedProgress.complete / synchronizedProgress.total) * 100)
 		: 0;
+	const disqualificationTableNumbers = [
+		...new Set(
+			disqualifyTables
+				.split(/[\s,;]+/)
+				.map(value => Number(value))
+				.filter(value => Number.isInteger(value) && value > 0),
+		),
+	].sort((a, b) => a - b);
 	const previewCohorts = preview?.generation
 		? [...new Set(preview.generation.assignments.map(assignment => assignment.categoryCode))]
 				.sort()
@@ -422,6 +441,108 @@ export default function JudgingAdminPage() {
 								{t("judging.export-schedule")}
 							</button>
 						</div>
+						{round.state === "OPEN" && (
+							<div className="rounded-xl border-2 border-dark-primary-color/20 bg-white p-4">
+								<h3 className="font-bold">{t("judging.close-coverage-heading")}</h3>
+								<p className="mt-1 text-sm">{t("judging.close-coverage-description")}</p>
+								<button
+									type="button"
+									className="ui-button mt-3"
+									disabled={closeSufficientlyCovered.isLoading}
+									onClick={() =>
+										confirm(t("judging.close-coverage-confirm")) &&
+										closeSufficientlyCovered.mutate({
+											roundId: round.id,
+											expectedAssignmentVersion: round.assignmentVersion,
+											confirmCoverageRule: true,
+										})
+									}
+								>
+									{t("judging.close-coverage-action")}
+								</button>
+								{closeSufficientlyCovered.data && (
+									<div className="mt-3 text-sm">
+										<p>
+											{t("judging.close-coverage-result", {
+												projects: closeSufficientlyCovered.data.closed.length,
+												assignments: closeSufficientlyCovered.data.removedAssignmentCount,
+												insufficient: closeSufficientlyCovered.data.insufficient.length,
+											})}
+										</p>
+										{closeSufficientlyCovered.data.insufficient.length > 0 && (
+											<details className="mt-2">
+												<summary className="cursor-pointer font-bold">
+													{t("judging.close-coverage-insufficient")}
+												</summary>
+												<ul className="list-disc pl-5">
+													{closeSufficientlyCovered.data.insufficient.map(project => (
+														<li key={project.tableNumber}>
+															Table {project.tableNumber} · {project.name}: {project.missing
+																.map(item => `${item.categoryCode} ${item.completed}/${item.required}`)
+																.join(", ")}
+														</li>
+													))}
+												</ul>
+											</details>
+										)}
+									</div>
+								)}
+							</div>
+						)}
+						{round.state !== "LOCKED" && (
+							<div className="rounded-xl border-2 border-red-300 bg-red-50 p-4">
+								<h3 className="font-bold text-red-950">{t("judging.disqualify-heading")}</h3>
+								<p className="mt-1 text-sm text-red-950">{t("judging.disqualify-description")}</p>
+								<div className="mt-3 flex flex-wrap items-end gap-3">
+									<label className="font-bold">
+										{t("judging.disqualify-tables")}
+										<input
+											className="ui-field mt-1 block"
+											value={disqualifyTables}
+											onChange={event => setDisqualifyTables(event.target.value)}
+											placeholder="1, 52, 54"
+										/>
+									</label>
+									<button
+										type="button"
+										className="ui-button"
+										disabled={!disqualificationTableNumbers.length || disqualifyUnjudged.isLoading}
+										onClick={() =>
+											confirm(
+												t("judging.disqualify-confirm", {
+													tables: disqualificationTableNumbers.join(", "),
+												}),
+											) &&
+											disqualifyUnjudged.mutate({
+												roundId: round.id,
+												tableNumbers: disqualificationTableNumbers,
+												expectedAssignmentVersion: round.assignmentVersion,
+											})
+										}
+									>
+										{t("judging.disqualify-action")}
+									</button>
+								</div>
+								{disqualifyUnjudged.data && (
+									<div className="mt-3 text-sm text-red-950">
+										<p>
+											{t("judging.disqualify-removed", {
+												tables:
+													disqualifyUnjudged.data.removed.map(project => project.tableNumber).join(", ") ||
+													t("judging.none"),
+											})}
+										</p>
+										<p>
+											{t("judging.disqualify-kept", {
+												tables:
+													disqualifyUnjudged.data.kept.map(project => project.tableNumber).join(", ") ||
+													t("judging.none"),
+											})}
+										</p>
+									</div>
+								)}
+							</div>
+						)}
 						{round.generationWarningList.length > 0 && (
 							<div className="rounded border border-amber-400 bg-amber-50 p-3 text-amber-950">
 								<h3 className="font-bold">{t("judging.generation-warnings")}</h3>

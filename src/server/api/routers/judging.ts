@@ -2697,6 +2697,196 @@ export const judgingRouter = createTRPCRouter({
 			});
 		}),
 
+	disqualifyUnjudgedProjects: adminProcedure
+		.input(
+			z.object({
+				roundId: z.string().min(1).max(191),
+				tableNumbers: z.array(z.number().int().positive()).min(1).max(100),
+				expectedAssignmentVersion: z.number().int().nonnegative(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) =>
+			ctx.prisma.$transaction(
+				async transaction => {
+					const round = await transaction.judgingRound.findUnique({ where: { id: input.roundId } });
+					if (!round) throw new TRPCError({ code: "NOT_FOUND" });
+					requireMutableAssignments(round);
+
+					const tableNumbers = [...new Set(input.tableNumbers)].sort((a, b) => a - b);
+					const projects = await transaction.judgingProject.findMany({
+						where: { roundId: round.id, tableNumber: { in: tableNumbers } },
+						include: { assignments: { select: { id: true, completedAt: true, recusedAt: true } } },
+					});
+					const foundTables = new Set(projects.map(project => project.tableNumber));
+					const missing = tableNumbers.filter(tableNumber => !foundTables.has(tableNumber));
+					if (missing.length)
+						throw new TRPCError({
+							code: "NOT_FOUND",
+							message: `Unknown judging table${missing.length === 1 ? "" : "s"}: ${missing.join(", ")}.`,
+						});
+
+					const kept = projects
+						.filter(project =>
+							project.assignments.some(assignment => assignment.completedAt && !assignment.recusedAt),
+						)
+						.map(project => ({ tableNumber: project.tableNumber, name: project.name }))
+						.sort((a, b) => a.tableNumber - b.tableNumber);
+					const removed = projects
+						.filter(project =>
+							project.assignments.every(assignment => !assignment.completedAt || assignment.recusedAt),
+						)
+						.sort((a, b) => a.tableNumber - b.tableNumber);
+
+					if (removed.length) {
+						await claimAssignmentVersion(transaction, round.id, input.expectedAssignmentVersion);
+						for (const project of removed) {
+							await transaction.judgingProject.delete({ where: { id: project.id } });
+							await persistAuditEvent(
+								transaction,
+								createAuditEvent({
+									name: "judging.project.disqualified",
+									outcome: "disqualified",
+									actor: { type: "organizer", id: ctx.organizer.id },
+									resource: { type: "judging_project", id: project.id },
+									data: {
+										tableNumber: project.tableNumber,
+										removedAssignmentCount: project.assignments.length,
+									},
+								}),
+							);
+						}
+					} else if (round.assignmentVersion !== input.expectedAssignmentVersion) {
+						throw new TRPCError({
+							code: "CONFLICT",
+							message: "Assignments changed in another administrator session. Refresh and try again.",
+						});
+					}
+
+					return {
+						removed: removed.map(project => ({
+							tableNumber: project.tableNumber,
+							name: project.name,
+							assignmentCount: project.assignments.length,
+						})),
+						kept,
+					};
+				},
+				{ isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+			),
+		),
+
+	closeSufficientlyCoveredProjects: adminProcedure
+		.input(
+			z.object({
+				roundId: z.string().min(1).max(191),
+				expectedAssignmentVersion: z.number().int().nonnegative(),
+				confirmCoverageRule: z.literal(true),
+			}),
+		)
+		.mutation(async ({ ctx, input }) =>
+			ctx.prisma.$transaction(
+				async transaction => {
+					const round = await transaction.judgingRound.findUnique({
+						where: { id: input.roundId },
+						include: {
+							projects: { include: { categories: true, assignments: true } },
+						},
+					});
+					if (!round) throw new TRPCError({ code: "NOT_FOUND" });
+					requireRoundState(round, "OPEN");
+
+					const coverage = round.projects.map(project => {
+						const categoryCodes = [
+							...(project.mainTrack === "CGI" ? [] : [project.mainTrack]),
+							...project.categories.map(category => category.code),
+						];
+						const uniqueCategoryCodes = [...new Set(categoryCodes)];
+						const missing = uniqueCategoryCodes
+							.map(categoryCode => {
+								const required = categoryCode === "GENERAL" || categoryCode === "CIVIC" ? 2 : 1;
+								const completed = project.assignments.filter(
+									assignment =>
+										assignment.categoryCode === categoryCode &&
+										assignment.completedAt &&
+										!assignment.recusedAt,
+								).length;
+								return { categoryCode, completed, required };
+							})
+							.filter(item => item.completed < item.required);
+						return { project, missing };
+					});
+
+					const sufficient = coverage.filter(item => item.missing.length === 0);
+					const insufficient = coverage
+						.filter(item => item.missing.length > 0)
+						.map(item => ({
+							tableNumber: item.project.tableNumber,
+							name: item.project.name,
+							missing: item.missing,
+						}))
+						.sort((a, b) => a.tableNumber - b.tableNumber);
+					const pendingAssignments = sufficient.flatMap(item =>
+						item.project.assignments.filter(assignment => !assignment.completedAt),
+					);
+
+					await claimAssignmentVersion(transaction, round.id, input.expectedAssignmentVersion);
+					if (pendingAssignments.length) {
+						await transaction.judgingRanking.deleteMany({
+							where: {
+								roundId: round.id,
+								OR: pendingAssignments.map(assignment => ({
+									judgeId: assignment.judgeId,
+									projectId: assignment.projectId,
+									categoryCode: assignment.categoryCode,
+								})),
+							},
+						});
+						await transaction.judgingAssignment.deleteMany({
+							where: { id: { in: pendingAssignments.map(assignment => assignment.id) } },
+						});
+						await invalidateRankings(
+							transaction,
+							pendingAssignments.map(assignment => ({
+								judgeId: assignment.judgeId,
+								categoryCode: assignment.categoryCode,
+							})),
+						);
+					}
+
+					await persistAuditEvent(
+						transaction,
+						createAuditEvent({
+							name: "judging.projects.coverage_closed",
+							outcome: "closed",
+							actor: { type: "organizer", id: ctx.organizer.id },
+							resource: { type: "judging_round", id: round.id },
+							data: {
+								closedProjectCount: sufficient.length,
+								removedAssignmentCount: pendingAssignments.length,
+								insufficientProjectCount: insufficient.length,
+								mainTrackRequired: 2,
+								miniCategoryRequired: 1,
+							},
+						}),
+					);
+
+					return {
+						closed: sufficient
+							.map(item => ({
+								tableNumber: item.project.tableNumber,
+								name: item.project.name,
+								removedAssignments: item.project.assignments.filter(assignment => !assignment.completedAt)
+									.length,
+							}))
+							.sort((a, b) => a.tableNumber - b.tableNumber),
+						insufficient,
+						removedAssignmentCount: pendingAssignments.length,
+					};
+				},
+				{ isolationLevel: Prisma.TransactionIsolationLevel.Serializable, maxWait: 10_000, timeout: 30_000 },
+			),
+		),
+
 	manifest: judgeProcedure.query(async ({ ctx }) => buildManifest(ctx.prisma, ctx.judge.id)),
 
 	sync: judgeProcedure.input(syncInput).mutation(async ({ ctx, input }) => {
