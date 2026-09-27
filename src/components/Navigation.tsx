@@ -74,6 +74,13 @@ const Links = ({ bottom }: LinkProps) => {
 				src="/assets/resources.svg"
 				alt={t("resources")}
 			/>
+			<LinkItem
+				href="/winners"
+				bottom={bottom}
+				text={t("winners")}
+				src="/assets/winners.svg"
+				alt={t("winners")}
+			/>
 			{sessionData?.user && (
 				<Access silent>
 					<LinkItem
