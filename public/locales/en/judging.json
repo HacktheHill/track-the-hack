@@ -19,11 +19,12 @@
 	},
 	"status": {
 		"not-started": "Not started",
-		"in-progress": "In progress",
-		"stored-locally": "Stored locally",
-		"synced": "Synced",
-		"needs-review": "Needs review",
-		"recused": "Recused"
+		"in-progress-synced": "Partially completed — synced",
+		"stored-locally": "Unsynced changes on this device",
+		"complete-synced": "Complete — synced",
+		"waiting-organiser": "Waiting for organiser",
+		"recusal-requested": "Recusal requested",
+		"recusal-accepted": "Recusal accepted"
 	},
 	"table": "Table {{number}}",
 	"previous": "Previous table",

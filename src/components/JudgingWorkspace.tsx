@@ -18,6 +18,7 @@ import {
 	type OfflineJudgingPatch,
 } from "@/client/judging-offline";
 import { chunkJudgingOutbox as createSyncBatches, isRankingAccessCurrent } from "@/client/judging-offline-state";
+import { getJudgingProjectStatus, isJudgingAssignmentStarted } from "@/client/judging-status";
 import {
 	JUDGING_CATEGORY_CATALOG,
 	MAIN_RUBRIC,
@@ -567,32 +568,27 @@ export default function JudgingWorkspace() {
 							assignment => assignment.project.id === project.id,
 						);
 						const complete = projectAssignments.every(assignmentComplete);
-						const recused = projectAssignments.every(assignment => assignment.recusedAt);
 						const localOnly = projectAssignments.some(assignment => localAssignmentIds.has(assignment.id));
-						const needsReview = projectAssignments.some(
-							assignment =>
-								(assignment.miniEligibility === "UNSURE" && !assignmentResolution(assignment)) ||
-								(assignment.recusedAt && !assignment.recusalAcceptedAt),
+						const allRecused = projectAssignments.every(assignment => assignment.recusedAt);
+						const allRecusalsAccepted = projectAssignments.every(
+							assignment => assignment.recusalAcceptedAt,
 						);
-						const started = projectAssignments.some(
-							assignment =>
-								assignment.completedAt ||
-								assignment.note ||
-								assignment.miniEligibility ||
-								assignment.technicalLevel !== null ||
-								assignment.recusedAt,
+						const hasPendingRecusal = projectAssignments.some(
+							assignment => assignment.recusedAt && !assignment.recusalAcceptedAt,
 						);
-						const status = localOnly
-							? "stored-locally"
-							: recused
-								? "recused"
-								: needsReview
-									? "needs-review"
-									: complete
-										? "synced"
-										: started
-											? "in-progress"
-											: "not-started";
+						const hasUnresolvedEligibility = projectAssignments.some(
+							assignment =>
+								assignment.miniEligibility === "UNSURE" && !assignmentResolution(assignment),
+						);
+						const status = getJudgingProjectStatus({
+							localOnly,
+							complete,
+							allRecused,
+							allRecusalsAccepted,
+							hasPendingRecusal,
+							hasUnresolvedEligibility,
+							started: projectAssignments.some(isJudgingAssignmentStarted),
+						});
 						return (
 							<button
 								key={project.id}
@@ -637,7 +633,13 @@ export default function JudgingWorkspace() {
 							{selectedRecusal ? (
 								<div className="flex flex-wrap items-center justify-between gap-3">
 									<div>
-										<strong>{t("status.recused")}</strong>
+										<strong>
+											{t(
+												selectedRecusal.recusalAcceptedAt
+													? "status.recusal-accepted"
+													: "status.recusal-requested",
+											)}
+										</strong>
 										<p className="mt-1 text-sm">{selectedRecusal.recusalReason}</p>
 									</div>
 									{selectedRecusalAnchor && localAssignmentIds.has(selectedRecusalAnchor.id) && (
