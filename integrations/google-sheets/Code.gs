@@ -14,6 +14,8 @@
 /** @typedef {{rowNumber: number, record: OperationalRecord}} PreparedRsvpRow */
 /** @typedef {{id: string, attended: boolean}} AttendanceRecord */
 /** @typedef {{records: AttendanceRecord[], missingIds: string[]}} AttendanceReconciliation */
+/** @typedef {{applicants: boolean, accepted: boolean, confirmed: boolean, attended: boolean}} MetricsCohortFlags */
+/** @typedef {{label: string, applicants: number, accepted: number, confirmed: number, attended: number}} MetricsBreakdown */
 /** @typedef {OperationalRecord | {hackers: OperationalRecord[]} | {ids: string[]} | {participants: {id: string, mealCategory: MealCategory}[]} | {source: string, capturedAt: string, payload: object}} ApiPayload */
 
 const TRACK_RESPONSES_SHEET = "Responses";
@@ -390,7 +392,9 @@ function refreshAttendanceAndMetrics() {
 		const lastRow = source.getLastRow();
 		if (lastRow < 2) return { source, layout, ids: [], rowNumbers: [] };
 		const values = source.getRange(2, layout.start + 1, lastRow - 1, TRACK_RESPONSE_HEADERS.length).getDisplayValues();
+		/** @type {string[]} */
 		const ids = [];
+		/** @type {number[]} */
 		const rowNumbers = [];
 		values.forEach((row, index) => {
 			const id = String(row[0] || "").trim();
@@ -459,6 +463,7 @@ function buildAggregateMetrics_(headers, rows, operationalStart) {
 	const rsvpColumn = operationalStart + TRACK_RESPONSE_HEADERS.indexOf("RSVP Status");
 	const attendedColumn = operationalStart + TRACK_RESPONSE_HEADERS.indexOf("Attended");
 	const sourceRows = rows.filter(row => String(row[submissionColumn] || "").trim());
+	/** @param {string[]} row @returns {MetricsCohortFlags} */
 	const cohort = row => ({
 		applicants: true,
 		accepted: isAccepted_(row[statusColumn]),
@@ -467,9 +472,13 @@ function buildAggregateMetrics_(headers, rows, operationalStart) {
 	});
 	const cohorts = sourceRows.reduce((totals, row) => {
 		const flags = cohort(row);
-		Object.keys(totals).forEach(key => { if (flags[key]) totals[key] += 1; });
+		if (flags.applicants) totals.applicants += 1;
+		if (flags.accepted) totals.accepted += 1;
+		if (flags.confirmed) totals.confirmed += 1;
+		if (flags.attended) totals.attended += 1;
 		return totals;
 	}, { applicants: 0, accepted: 0, confirmed: 0, attended: 0 });
+	/** @type {Record<string, MetricsBreakdown[]>} */
 	const dimensions = {};
 	METRIC_DIMENSIONS.forEach(dimension => {
 		dimensions[dimension.key] = metricDimension_(headers, sourceRows, dimension.headers, cohort);
@@ -490,26 +499,35 @@ function buildAggregateMetrics_(headers, rows, operationalStart) {
 	};
 }
 
-/** @param {string[]} headers @param {string[][]} rows @param {string[]} candidateHeaders @param {(row: string[]) => object} cohort @param {(value: string) => string} [transform] */
+/** @param {string[]} headers @param {string[][]} rows @param {string[]} candidateHeaders @param {(row: string[]) => MetricsCohortFlags} cohort @param {(value: string) => string} [transform] @returns {MetricsBreakdown[]} */
 function metricDimension_(headers, rows, candidateHeaders, cohort, transform = value => value) {
 	const indexes = candidateHeaders.map(header => headers.indexOf(header)).filter(index => index >= 0);
 	if (!indexes.length) return [];
+	/** @type {Map<string, MetricsBreakdown>} */
 	const counts = new Map();
 	rows.forEach(row => {
 		const raw = indexes.map(index => String(row[index] || "").trim()).find(Boolean) || "Not provided";
 		const label = String(transform(raw) || "Not provided").trim().slice(0, 120);
 		const current = counts.get(label) || { label, applicants: 0, accepted: 0, confirmed: 0, attended: 0 };
 		const flags = cohort(row);
-		Object.keys(flags).forEach(key => { if (flags[key]) current[key] += 1; });
+		if (flags.applicants) current.applicants += 1;
+		if (flags.accepted) current.accepted += 1;
+		if (flags.confirmed) current.confirmed += 1;
+		if (flags.attended) current.attended += 1;
 		counts.set(label, current);
 	});
+	/** @type {MetricsBreakdown[]} */
 	const visible = [];
+	/** @type {MetricsBreakdown | null} */
 	let suppressed = null;
 	counts.forEach(value => {
 		if (value.applicants >= METRICS_MINIMUM_CATEGORY_SIZE) visible.push(value);
 		else {
 			suppressed ||= { label: "Other / suppressed", applicants: 0, accepted: 0, confirmed: 0, attended: 0 };
-			["applicants", "accepted", "confirmed", "attended"].forEach(key => (suppressed[key] += value[key]));
+			suppressed.applicants += value.applicants;
+			suppressed.accepted += value.accepted;
+			suppressed.confirmed += value.confirmed;
+			suppressed.attended += value.attended;
 		}
 	});
 	if (suppressed) visible.push(suppressed);
@@ -562,7 +580,7 @@ function ensureResponseColumns_(sheet, initializeBlank = false) {
 		// Preserve the existing derived Full Name column by moving it right.
 		sheet.insertColumnBefore(start + TRACK_RESPONSE_HEADERS.length);
 		sheet.getRange(1, start + TRACK_RESPONSE_HEADERS.length).setValue("Attended");
-		sheet.setColumnWidth(start + TRACK_RESPONSE_HEADERS.length, TRACK_RESPONSE_COLUMN_WIDTHS[TRACK_RESPONSE_COLUMN_WIDTHS.length - 1]);
+		sheet.setColumnWidth(start + TRACK_RESPONSE_HEADERS.length, TRACK_RESPONSE_COLUMN_WIDTHS[TRACK_RESPONSE_COLUMN_WIDTHS.length - 1] ?? 90);
 	} else if (
 		current.slice(0, TRACK_RESPONSE_HEADERS.length - 1).join("\n") ===
 			TRACK_RESPONSE_HEADERS.slice(0, TRACK_RESPONSE_HEADERS.length - 1).join("\n") &&
@@ -570,7 +588,7 @@ function ensureResponseColumns_(sheet, initializeBlank = false) {
 	) {
 		// Forward-only migration from the established eleven-column layout.
 		sheet.getRange(1, start + TRACK_RESPONSE_HEADERS.length).setValue("Attended");
-		sheet.setColumnWidth(start + TRACK_RESPONSE_HEADERS.length, TRACK_RESPONSE_COLUMN_WIDTHS[TRACK_RESPONSE_COLUMN_WIDTHS.length - 1]);
+		sheet.setColumnWidth(start + TRACK_RESPONSE_HEADERS.length, TRACK_RESPONSE_COLUMN_WIDTHS[TRACK_RESPONSE_COLUMN_WIDTHS.length - 1] ?? 90);
 	} else if (current.join("\n") !== TRACK_RESPONSE_HEADERS.join("\n")) {
 		throw new Error("Columns after Review reasoning do not match Tracker's response-row fields. No values were changed.");
 	}
@@ -851,13 +869,17 @@ function attendanceReconciliationResponse_(body) {
 	if (value === null || Array.isArray(value) || typeof value !== "object" || !Array.isArray(value.records) || !Array.isArray(value.missingIds)) {
 		throw new Error("Tracker API returned an invalid attendance reconciliation response.");
 	}
-	const records = value.records.map(record => {
-		if (record === null || Array.isArray(record) || typeof record !== "object" || typeof record.id !== "string" || typeof record.attended !== "boolean") {
+	const records = value.records.map(/** @param {unknown} record */ record => {
+		if (record === null || Array.isArray(record) || typeof record !== "object") {
 			throw new Error("Tracker API returned an invalid attendance reconciliation record.");
 		}
-		return { id: record.id, attended: record.attended };
+		const item = /** @type {{id?: unknown, attended?: unknown}} */ (record);
+		if (typeof item.id !== "string" || typeof item.attended !== "boolean") {
+			throw new Error("Tracker API returned an invalid attendance reconciliation record.");
+		}
+		return { id: item.id, attended: item.attended };
 	});
-	if (!value.missingIds.every(id => typeof id === "string")) {
+	if (!value.missingIds.every(/** @param {unknown} id */ id => typeof id === "string")) {
 		throw new Error("Tracker API returned an invalid attendance reconciliation response.");
 	}
 	return { records, missingIds: value.missingIds };
