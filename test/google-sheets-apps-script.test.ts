@@ -340,3 +340,48 @@ void test("the Sheet adapter rejects malformed API response bodies at its bounda
 		/invalid claim response/,
 	);
 });
+
+void test("attendance refresh writes the Sheet flag and sends aggregate-only demographics", () => {
+	const participantId = "participant_012345678901234567890123";
+	const applications = [
+		applicationRow({
+			"Submission ID": "private-submission-id",
+			"First name": "Private",
+			"Email address": "private@example.test",
+			"Preferred Language / Langue préférée": "English",
+			"Country of residence": "Canada",
+			"Age at the start of Hack the Hill III": "19",
+			"Gender identity": "Woman",
+			"Racial or ethnic background": "White",
+			"What is your current or most recently completed level of study?": "Undergraduate",
+			"Which school do you currently attend, or which school did you most recently attend?": "University of Ottawa",
+			"What is or was your primary area of study?": "Computer Science",
+			"Have you participated in a hackathon before?": "Yes",
+			"Admission status": "Accepted",
+		}),
+	];
+	let snapshot: unknown;
+	const sheet = createResponseHarness({
+		applications,
+		operational: [[participantId, "M", "STANDARD", "2030-09-30T03:59:59.000Z", "", "CONFIRMED"]],
+		fetch: ({ url, options }) => {
+			if (url.endsWith("/attendance-reconciliation")) {
+				assert.deepEqual(JSON.parse(options.payload), { ids: [participantId] });
+				return { status: 200, body: JSON.stringify({ records: [{ id: participantId, attended: true }], missingIds: [] }) };
+			}
+			if (url.endsWith("/metrics-snapshot")) {
+				snapshot = JSON.parse(options.payload);
+				return { status: 200, body: JSON.stringify({ source: "google-sheets", capturedAt: "2026-09-29T12:00:00.000Z" }) };
+			}
+			throw new Error(`Unexpected request ${url}`);
+		},
+	});
+
+	const result = sheet.run("refreshAttendanceAndMetrics") as { refreshed: number; cohorts: object };
+	assert.equal(result.refreshed, 1);
+	assert.deepEqual(result.cohorts, { applicants: 1, accepted: 1, confirmed: 1, attended: 1 });
+	assert.equal(sheet.rows()[1]?.at(-1), true);
+	const serialized = JSON.stringify(snapshot);
+	assert.doesNotMatch(serialized, /Private|private@example|private-submission-id|participant_0123/);
+	assert.match(serialized, /Other \/ suppressed/);
+});

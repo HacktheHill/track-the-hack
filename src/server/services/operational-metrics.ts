@@ -1,4 +1,11 @@
-import { ScannerWorkflow, type MealCategory, type PrismaClient, type TShirtSize } from "@prisma/client";
+import {
+	JudgingRoundState,
+	ScannerWorkflow,
+	type MealCategory,
+	type PrismaClient,
+	type TShirtSize,
+} from "@prisma/client";
+import { parseMetricsSnapshots } from "@/server/services/external-metrics";
 
 export type OperationalMetricsRepository = {
 	countProvisioned(): Promise<number>;
@@ -14,6 +21,8 @@ export type OperationalMetricsRepository = {
 	countIssuedPassesWithoutCheckIn(): Promise<number>;
 	countPositivePresenceWithoutCheckIn(): Promise<number>;
 	countVisibleCheckInEvents(): Promise<number>;
+	countLatestJudgingProjects(): Promise<number>;
+	findMetricsSnapshots(): Promise<Array<{ source: string; payload: unknown; capturedAt: Date }>>;
 };
 
 const positiveCheckInPresence = {
@@ -22,7 +31,7 @@ const positiveCheckInPresence = {
 } as const;
 
 export const createPrismaOperationalMetricsRepository = (
-	prisma: Pick<PrismaClient, "event" | "hacker" | "presence">,
+	prisma: Pick<PrismaClient, "event" | "hacker" | "presence" | "judgingRound" | "metricsSnapshot">,
 ): OperationalMetricsRepository => {
 	// Keep Prisma's groupBy inference outside the contextual repository return
 	// type; Prisma validates each query, and the repository exposes its result.
@@ -80,6 +89,19 @@ export const createPrismaOperationalMetricsRepository = (
 			}),
 		countVisibleCheckInEvents: () =>
 			prisma.event.count({ where: { hidden: false, scannerWorkflow: ScannerWorkflow.CHECK_IN } }),
+		countLatestJudgingProjects: async () =>
+			(
+				await prisma.judgingRound.findFirst({
+					where: { state: { in: [JudgingRoundState.OPEN, JudgingRoundState.LOCKED] } },
+					orderBy: { createdAt: "desc" },
+					select: { _count: { select: { projects: true } } },
+				})
+			)?._count.projects ?? 0,
+		findMetricsSnapshots: () =>
+			prisma.metricsSnapshot.findMany({
+				where: { source: { in: ["google-sheets", "communications"] } },
+				select: { source: true, payload: true, capturedAt: true },
+			}),
 	};
 };
 
@@ -97,6 +119,8 @@ export const getOperationalMetrics = async (repository: OperationalMetricsReposi
 		issuedPassesWithoutCheckIn,
 		positivePresenceWithoutCheckIn,
 		visibleCheckInEvents,
+		devpostProjects,
+		metricsSnapshotRows,
 	] = await Promise.all([
 		repository.countProvisioned(),
 		repository.countConfirmed(),
@@ -110,7 +134,10 @@ export const getOperationalMetrics = async (repository: OperationalMetricsReposi
 		repository.countIssuedPassesWithoutCheckIn(),
 		repository.countPositivePresenceWithoutCheckIn(),
 		repository.countVisibleCheckInEvents(),
+		repository.countLatestJudgingProjects(),
+		repository.findMetricsSnapshots(),
 	]);
+	const external = parseMetricsSnapshots(metricsSnapshotRows);
 	const eventIds = [
 		...new Set([
 			...recordedUnitsByEvent.map(({ eventId }) => eventId),
@@ -157,5 +184,15 @@ export const getOperationalMetrics = async (repository: OperationalMetricsReposi
 			positivePresenceWithoutCheckIn,
 			visibleCheckInEvents,
 		},
+		funnel: {
+			applications: external.sheet?.payload.cohorts.applicants ?? null,
+			accepted: external.sheet?.payload.cohorts.accepted ?? null,
+			acceptanceEmailsSesAccepted:
+				external.communications?.payload.acceptanceEmailsSesAccepted ?? null,
+			confirmed,
+			checkedIn,
+			devpostProjects,
+		},
+		externalMetrics: external,
 	};
 };

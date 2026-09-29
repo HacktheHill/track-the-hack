@@ -12,7 +12,9 @@
 /** @typedef {{processed: number}} ProcessedResponse */
 /** @typedef {{refreshed: number, pending: number, confirmed: number, declined: number}} RsvpRefreshSummary */
 /** @typedef {{rowNumber: number, record: OperationalRecord}} PreparedRsvpRow */
-/** @typedef {OperationalRecord | {hackers: OperationalRecord[]} | {ids: string[]} | {participants: {id: string, mealCategory: MealCategory}[]}} ApiPayload */
+/** @typedef {{id: string, attended: boolean}} AttendanceRecord */
+/** @typedef {{records: AttendanceRecord[], missingIds: string[]}} AttendanceReconciliation */
+/** @typedef {OperationalRecord | {hackers: OperationalRecord[]} | {ids: string[]} | {participants: {id: string, mealCategory: MealCategory}[]} | {source: string, capturedAt: string, payload: object}} ApiPayload */
 
 const TRACK_RESPONSES_SHEET = "Responses";
 const TRACK_PROPERTIES = {
@@ -37,11 +39,24 @@ const TRACK_RESPONSE_HEADERS = [
 	"Last Sync",
 	"Walk-In",
 	"RSVP Refreshed At",
+	"Attended",
 ];
 
 // Keep operational columns readable without inheriting the unusually wide
 // legacy link-column width from the final Tally response column.
-const TRACK_RESPONSE_COLUMN_WIDTHS = [260, 110, 130, 175, 300, 120, 300, 175, 175, 90, 175];
+const TRACK_RESPONSE_COLUMN_WIDTHS = [260, 110, 130, 175, 300, 120, 300, 175, 175, 90, 175, 90];
+
+const METRICS_MINIMUM_CATEGORY_SIZE = 5;
+const METRIC_DIMENSIONS = [
+	{ key: "preferredLanguage", headers: ["Preferred Language / Langue préférée"] },
+	{ key: "country", headers: ["Country of residence", "Pays de résidence"] },
+	{ key: "gender", headers: ["Gender identity", "Identité de genre"] },
+	{ key: "racialOrEthnicBackground", headers: ["Racial or ethnic background", "Origine raciale ou ethnique"] },
+	{ key: "studyLevel", headers: ["What is your current or most recently completed level of study?", "Quel est votre niveau d’études actuel ou le dernier niveau que vous avez terminé?"] },
+	{ key: "school", headers: ["Which school do you currently attend, or which school did you most recently attend?", "Quel établissement d’enseignement fréquentez-vous actuellement ou avez-vous fréquenté le plus récemment?"] },
+	{ key: "areaOfStudy", headers: ["What is or was your primary area of study?", "Si vous suivez ou avez suivi un programme d’études postsecondaires, quel est ou était votre principal domaine d’études?"] },
+	{ key: "priorHackathon", headers: ["Have you participated in a hackathon before?", "Avez-vous déjà participé à un hackathon?"] },
+];
 
 function onOpen() {
 	SpreadsheetApp.getUi()
@@ -49,6 +64,7 @@ function onOpen() {
 		.addItem("Pass activation", "openPassSidebar")
 		.addItem("Prepare accepted RSVP invitations", "prepareAcceptedRowsForRsvpFromMenu")
 		.addItem("Refresh RSVP responses", "refreshResponseRsvpStatusFromMenu")
+		.addItem("Refresh attendance and metrics", "refreshAttendanceAndMetricsFromMenu")
 		.addToUi();
 }
 
@@ -365,6 +381,151 @@ function refreshResponseRsvpStatusFromMenu() {
 	return result;
 }
 
+/** Refresh the per-row attendance flag, then publish aggregate-only application metrics. */
+function refreshAttendanceAndMetrics() {
+	const config = trackConfig_();
+	const prepared = withDocumentLock_(() => {
+		const source = SpreadsheetApp.getActiveSheet();
+		const layout = ensureResponseColumns_(source);
+		const lastRow = source.getLastRow();
+		if (lastRow < 2) return { source, layout, ids: [], rowNumbers: [] };
+		const values = source.getRange(2, layout.start + 1, lastRow - 1, TRACK_RESPONSE_HEADERS.length).getDisplayValues();
+		const ids = [];
+		const rowNumbers = [];
+		values.forEach((row, index) => {
+			const id = String(row[0] || "").trim();
+			if (!id) return;
+			if (!/^[A-Za-z0-9_-]{22,128}$/.test(id) || /^\d+$/.test(id)) throw new Error(`Invalid Participant ID in response row ${index + 2}.`);
+			ids.push(id);
+			rowNumbers.push(index + 2);
+		});
+		if (new Set(ids).size !== ids.length) throw new Error("Resolve duplicate Participant IDs before refreshing attendance.");
+		return { source, layout, ids, rowNumbers };
+	});
+
+	/** @type {Record<string, boolean>} */
+	const attendanceById = {};
+	for (let offset = 0; offset < prepared.ids.length; offset += 500) {
+		const result = attendanceReconciliationResponse_(
+			apiPost_(config, "/api/integrations/sheets/attendance-reconciliation", { ids: prepared.ids.slice(offset, offset + 500) }),
+		);
+		if (result.missingIds.length) {
+			throw new Error(`Tracker could not find ${result.missingIds.length} linked participant${result.missingIds.length === 1 ? "" : "s"}. No attendance fields or metrics were changed.`);
+		}
+		result.records.forEach(record => (attendanceById[record.id] = record.attended));
+	}
+
+	const payload = withDocumentLock_(() => {
+		const attendedOffset = TRACK_RESPONSE_HEADERS.indexOf("Attended");
+		prepared.rowNumbers.forEach((rowNumber, index) => {
+			const id = prepared.ids[index];
+			if (!id || !(id in attendanceById)) throw new Error("Tracker returned an incomplete attendance response.");
+			assertResponseParticipantId_(prepared.source, prepared.layout, rowNumber, id);
+			prepared.source.getRange(rowNumber, prepared.layout.start + attendedOffset + 1).setValue(attendanceById[id]);
+		});
+		const dataRowCount = Math.max(0, prepared.source.getLastRow() - 1);
+		const rows = dataRowCount
+			? prepared.source.getRange(2, 1, dataRowCount, prepared.source.getLastColumn()).getDisplayValues()
+			: [];
+		return buildAggregateMetrics_(prepared.layout.headers, rows, prepared.layout.start);
+	});
+
+	const capturedAt = new Date().toISOString();
+	metricsSnapshotResponse_(apiPost_(config, "/api/integrations/sheets/metrics-snapshot", {
+		source: "google-sheets",
+		capturedAt,
+		payload,
+	}));
+	return { refreshed: prepared.ids.length, capturedAt, cohorts: payload.cohorts };
+}
+
+/** Visible menu wrapper with an operator-readable summary. */
+function refreshAttendanceAndMetricsFromMenu() {
+	const result = refreshAttendanceAndMetrics();
+	SpreadsheetApp.getActive().toast(
+		`Refreshed ${result.refreshed} linked attendance row${result.refreshed === 1 ? "" : "s"} and published aggregate metrics.`,
+		"Attendance and metrics refreshed",
+		10,
+	);
+	return result;
+}
+
+/** @param {string[]} headers @param {string[][]} rows @param {number} operationalStart */
+function buildAggregateMetrics_(headers, rows, operationalStart) {
+	const submissionColumn = headers.indexOf("Submission ID");
+	const statusColumn = headers.indexOf("Admission status");
+	if (submissionColumn < 0 || statusColumn < 0) throw new Error("The response sheet is missing required metrics columns.");
+	const idColumn = operationalStart + TRACK_RESPONSE_HEADERS.indexOf("Participant ID");
+	const rsvpColumn = operationalStart + TRACK_RESPONSE_HEADERS.indexOf("RSVP Status");
+	const attendedColumn = operationalStart + TRACK_RESPONSE_HEADERS.indexOf("Attended");
+	const sourceRows = rows.filter(row => String(row[submissionColumn] || "").trim());
+	const cohort = row => ({
+		applicants: true,
+		accepted: isAccepted_(row[statusColumn]),
+		confirmed: isAccepted_(row[statusColumn]) && String(row[rsvpColumn] || "").trim() === "CONFIRMED",
+		attended: isAccepted_(row[statusColumn]) && booleanCell_(row[attendedColumn]),
+	});
+	const cohorts = sourceRows.reduce((totals, row) => {
+		const flags = cohort(row);
+		Object.keys(totals).forEach(key => { if (flags[key]) totals[key] += 1; });
+		return totals;
+	}, { applicants: 0, accepted: 0, confirmed: 0, attended: 0 });
+	const dimensions = {};
+	METRIC_DIMENSIONS.forEach(dimension => {
+		dimensions[dimension.key] = metricDimension_(headers, sourceRows, dimension.headers, cohort);
+	});
+	dimensions.age = metricDimension_(
+		headers,
+		sourceRows,
+		["Age at the start of Hack the Hill III", "Âge au début de Hack the Hill III"],
+		cohort,
+		ageBucket_,
+	);
+	return {
+		kind: "google-sheets",
+		rows: sourceRows.length,
+		linkedRows: sourceRows.filter(row => String(row[idColumn] || "").trim()).length,
+		cohorts,
+		dimensions,
+	};
+}
+
+/** @param {string[]} headers @param {string[][]} rows @param {string[]} candidateHeaders @param {(row: string[]) => object} cohort @param {(value: string) => string} [transform] */
+function metricDimension_(headers, rows, candidateHeaders, cohort, transform = value => value) {
+	const indexes = candidateHeaders.map(header => headers.indexOf(header)).filter(index => index >= 0);
+	if (!indexes.length) return [];
+	const counts = new Map();
+	rows.forEach(row => {
+		const raw = indexes.map(index => String(row[index] || "").trim()).find(Boolean) || "Not provided";
+		const label = String(transform(raw) || "Not provided").trim().slice(0, 120);
+		const current = counts.get(label) || { label, applicants: 0, accepted: 0, confirmed: 0, attended: 0 };
+		const flags = cohort(row);
+		Object.keys(flags).forEach(key => { if (flags[key]) current[key] += 1; });
+		counts.set(label, current);
+	});
+	const visible = [];
+	let suppressed = null;
+	counts.forEach(value => {
+		if (value.applicants >= METRICS_MINIMUM_CATEGORY_SIZE) visible.push(value);
+		else {
+			suppressed ||= { label: "Other / suppressed", applicants: 0, accepted: 0, confirmed: 0, attended: 0 };
+			["applicants", "accepted", "confirmed", "attended"].forEach(key => (suppressed[key] += value[key]));
+		}
+	});
+	if (suppressed) visible.push(suppressed);
+	return visible.sort((left, right) => right.applicants - left.applicants || left.label.localeCompare(right.label)).slice(0, 100);
+}
+
+/** @param {string} value */
+function ageBucket_(value) {
+	const age = Number.parseInt(value, 10);
+	if (!Number.isFinite(age)) return "Not provided";
+	if (age < 18) return "Under 18";
+	if (age <= 20) return "18–20";
+	if (age <= 24) return "21–24";
+	return "25+";
+}
+
 /** @param {number} maxRows */
 function selectedResponseRows_(maxRows) {
 	const sheet = SpreadsheetApp.getActiveSheet();
@@ -393,6 +554,23 @@ function ensureResponseColumns_(sheet, initializeBlank = false) {
 	if (current.every(value => !value) && initializeBlank) {
 		sheet.getRange(1, start + 1, 1, TRACK_RESPONSE_HEADERS.length).setValues([TRACK_RESPONSE_HEADERS]);
 		applyResponseColumnWidths_(sheet, start + 1);
+	} else if (
+		current.slice(0, TRACK_RESPONSE_HEADERS.length - 1).join("\n") ===
+			TRACK_RESPONSE_HEADERS.slice(0, TRACK_RESPONSE_HEADERS.length - 1).join("\n") &&
+		current[TRACK_RESPONSE_HEADERS.length - 1] === "Full Name"
+	) {
+		// Preserve the existing derived Full Name column by moving it right.
+		sheet.insertColumnBefore(start + TRACK_RESPONSE_HEADERS.length);
+		sheet.getRange(1, start + TRACK_RESPONSE_HEADERS.length).setValue("Attended");
+		sheet.setColumnWidth(start + TRACK_RESPONSE_HEADERS.length, TRACK_RESPONSE_COLUMN_WIDTHS[TRACK_RESPONSE_COLUMN_WIDTHS.length - 1]);
+	} else if (
+		current.slice(0, TRACK_RESPONSE_HEADERS.length - 1).join("\n") ===
+			TRACK_RESPONSE_HEADERS.slice(0, TRACK_RESPONSE_HEADERS.length - 1).join("\n") &&
+		!current[TRACK_RESPONSE_HEADERS.length - 1]
+	) {
+		// Forward-only migration from the established eleven-column layout.
+		sheet.getRange(1, start + TRACK_RESPONSE_HEADERS.length).setValue("Attended");
+		sheet.setColumnWidth(start + TRACK_RESPONSE_HEADERS.length, TRACK_RESPONSE_COLUMN_WIDTHS[TRACK_RESPONSE_COLUMN_WIDTHS.length - 1]);
 	} else if (current.join("\n") !== TRACK_RESPONSE_HEADERS.join("\n")) {
 		throw new Error("Columns after Review reasoning do not match Tracker's response-row fields. No values were changed.");
 	}
@@ -665,6 +843,33 @@ function rsvpReconciliationResponse_(body) {
 		};
 	});
 	return { records: parsedRecords, missingIds };
+}
+
+/** @param {string} body @returns {AttendanceReconciliation} */
+function attendanceReconciliationResponse_(body) {
+	const value = JSON.parse(body);
+	if (value === null || Array.isArray(value) || typeof value !== "object" || !Array.isArray(value.records) || !Array.isArray(value.missingIds)) {
+		throw new Error("Tracker API returned an invalid attendance reconciliation response.");
+	}
+	const records = value.records.map(record => {
+		if (record === null || Array.isArray(record) || typeof record !== "object" || typeof record.id !== "string" || typeof record.attended !== "boolean") {
+			throw new Error("Tracker API returned an invalid attendance reconciliation record.");
+		}
+		return { id: record.id, attended: record.attended };
+	});
+	if (!value.missingIds.every(id => typeof id === "string")) {
+		throw new Error("Tracker API returned an invalid attendance reconciliation response.");
+	}
+	return { records, missingIds: value.missingIds };
+}
+
+/** @param {string} body */
+function metricsSnapshotResponse_(body) {
+	const value = JSON.parse(body);
+	if (value === null || Array.isArray(value) || typeof value !== "object" || value.source !== "google-sheets" || typeof value.capturedAt !== "string") {
+		throw new Error("Tracker API returned an invalid metrics snapshot response.");
+	}
+	return value;
 }
 
 /** @param {string} link @param {string} baseUrl */

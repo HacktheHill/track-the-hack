@@ -13,7 +13,7 @@ void test("checked-in count uses distinct participant IDs across check-in events
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 	const prisma = {
 		presence: { groupBy },
-	} as unknown as Pick<PrismaClient, "event" | "hacker" | "presence">;
+	} as unknown as Pick<PrismaClient, "event" | "hacker" | "presence" | "judgingRound" | "metricsSnapshot">;
 
 	const repository = createPrismaOperationalMetricsRepository(prisma);
 	assert.equal(await repository.countCheckedIn(), 2);
@@ -33,7 +33,7 @@ void test("attendance integrity counts only evidence missing a positive check-in
 	const prisma = {
 		hacker: { count: hackerCount },
 		event: { count: eventCount },
-	} as unknown as Pick<PrismaClient, "event" | "hacker" | "presence">;
+	} as unknown as Pick<PrismaClient, "event" | "hacker" | "presence" | "judgingRound" | "metricsSnapshot">;
 
 	const repository = createPrismaOperationalMetricsRepository(prisma);
 	assert.equal(await repository.countIssuedPassesWithoutCheckIn(), 0);
@@ -117,6 +117,30 @@ void test("operational metrics expose only aggregate database-derived values", a
 		countIssuedPassesWithoutCheckIn: () => Promise.resolve(0),
 		countPositivePresenceWithoutCheckIn: () => Promise.resolve(1),
 		countVisibleCheckInEvents: () => Promise.resolve(1),
+		countLatestJudgingProjects: () => Promise.resolve(4),
+		findMetricsSnapshots: () =>
+			Promise.resolve([
+				{
+					source: "google-sheets",
+					capturedAt: new Date("2026-09-29T12:00:00.000Z"),
+					payload: {
+						kind: "google-sheets",
+						rows: 12,
+						linkedRows: 10,
+						cohorts: { applicants: 12, accepted: 10, confirmed: 8, attended: 7 },
+						dimensions: {
+							preferredLanguage: [
+								{ label: "English", applicants: 9, accepted: 8, confirmed: 7, attended: 6 },
+							],
+						},
+					},
+				},
+				{
+					source: "communications",
+					capturedAt: new Date("2026-09-29T13:00:00.000Z"),
+					payload: { kind: "communications", acceptanceEmailsSesAccepted: 11 },
+				},
+			]),
 	};
 
 	const metrics = await getOperationalMetrics(repository);
@@ -137,6 +161,34 @@ void test("operational metrics expose only aggregate database-derived values", a
 			issuedPassesWithoutCheckIn: 0,
 			positivePresenceWithoutCheckIn: 1,
 			visibleCheckInEvents: 1,
+		},
+		funnel: {
+			applications: 12,
+			accepted: 10,
+			acceptanceEmailsSesAccepted: 11,
+			confirmed: 8,
+			checkedIn: 7,
+			devpostProjects: 4,
+		},
+		externalMetrics: {
+			sheet: {
+				capturedAt: new Date("2026-09-29T12:00:00.000Z"),
+				payload: {
+					kind: "google-sheets",
+					rows: 12,
+					linkedRows: 10,
+					cohorts: { applicants: 12, accepted: 10, confirmed: 8, attended: 7 },
+					dimensions: {
+						preferredLanguage: [
+							{ label: "English", applicants: 9, accepted: 8, confirmed: 7, attended: 6 },
+						],
+					},
+				},
+			},
+			communications: {
+				capturedAt: new Date("2026-09-29T13:00:00.000Z"),
+				payload: { kind: "communications", acceptanceEmailsSesAccepted: 11 },
+			},
 		},
 	});
 	assert.deepEqual(hackerGroupings, [["mealCategory"], ["tShirtSize"]]);
