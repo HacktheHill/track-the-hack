@@ -377,7 +377,8 @@ void test("attendance refresh writes the Sheet flag and sends aggregate-only dem
 		},
 	});
 
-	const result = sheet.run("refreshAttendanceAndMetrics") as { refreshed: number; cohorts: object };
+	const result = sheet.run("refreshAttendanceAndMetrics");
+	assert.ok(result && typeof result === "object" && "refreshed" in result && "cohorts" in result);
 	assert.equal(result.refreshed, 1);
 	assert.deepEqual(result.cohorts, { applicants: 1, accepted: 1, confirmed: 1, attended: 1 });
 	assert.equal(sheet.rows()[1]?.at(-1), true);

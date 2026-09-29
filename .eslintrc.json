@@ -29,13 +29,13 @@
 				"@typescript-eslint/no-unused-vars": [
 					"warn",
 					{
-						"varsIgnorePattern": "^(onOpen|openPassSidebar|issuePassForSelectedRow|prepareAcceptedRowsForRsvp|prepareAcceptedRowsForRsvpFromMenu|prepareTestSubmissionForRsvp|reviewAcceptedRowsForRsvp|reviewExistingDietaryCategories|reconcileExistingDietaryCategories|refreshResponseRsvpStatus|refreshResponseRsvpStatusFromMenu)$"
+						"varsIgnorePattern": "^(onOpen|openPassSidebar|issuePassForSelectedRow|prepareAcceptedRowsForRsvp|prepareAcceptedRowsForRsvpFromMenu|prepareTestSubmissionForRsvp|reviewAcceptedRowsForRsvp|reviewExistingDietaryCategories|reconcileExistingDietaryCategories|refreshResponseRsvpStatus|refreshResponseRsvpStatusFromMenu|refreshAttendanceAndMetricsFromMenu)$"
 					}
 				],
 				"no-unused-vars": [
 					"error",
 					{
-						"varsIgnorePattern": "^(onOpen|openPassSidebar|issuePassForSelectedRow|prepareAcceptedRowsForRsvp|prepareAcceptedRowsForRsvpFromMenu|prepareTestSubmissionForRsvp|reviewAcceptedRowsForRsvp|reviewExistingDietaryCategories|reconcileExistingDietaryCategories|refreshResponseRsvpStatus|refreshResponseRsvpStatusFromMenu)$"
+						"varsIgnorePattern": "^(onOpen|openPassSidebar|issuePassForSelectedRow|prepareAcceptedRowsForRsvp|prepareAcceptedRowsForRsvpFromMenu|prepareTestSubmissionForRsvp|reviewAcceptedRowsForRsvp|reviewExistingDietaryCategories|reconcileExistingDietaryCategories|refreshResponseRsvpStatus|refreshResponseRsvpStatusFromMenu|refreshAttendanceAndMetricsFromMenu)$"
 					}
 				]
 			}
