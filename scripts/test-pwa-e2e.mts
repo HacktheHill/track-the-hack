@@ -564,7 +564,8 @@ try {
 	await judgeContext.setOffline(false);
 	await judgePage.bringToFront();
 	await judgePage.getByText("All changes synced").waitFor({ timeout: 20_000 });
-	await judgePage.getByText("All assigned judging is complete and synchronized.").waitFor();
+	await judgePage.getByRole("heading", { name: judgingProjectName }).waitFor({ state: "hidden" });
+	await judgePage.getByRole("heading", { name: secondJudgingProjectName }).waitFor({ state: "hidden" });
 	const afterSync = await prisma.judgingAssignment.findMany({
 		where: { id: { in: judgeAssignments.map(assignment => assignment.id) } },
 	});
