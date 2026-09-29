@@ -143,6 +143,7 @@ export const createSheetHarness = (options: {
 export const responseHeaders = [
 	"Participant ID", "T-Shirt Size", "Meal Category", "RSVP Deadline", "RSVP Link",
 	"RSVP Status", "Cancellation Link", "Pass Expires", "Last Sync", "Walk-In", "RSVP Refreshed At",
+	"Attended",
 ];
 
 export const createResponseHarness = (options: {
@@ -183,7 +184,7 @@ export const createResponseHarness = (options: {
 			return { getValues: read, getDisplayValues: () => read().map(cells => cells.map(String)), setValues: write, setValue: (value: SheetCell) => write([[value]]) };
 		},
 	};
-	const run = (action: "reviewAcceptedRowsForRsvp" | "prepareAcceptedRowsForRsvp" | "prepareAcceptedRowsForRsvpFromMenu" | "prepareTestSubmissionForRsvp" | "reviewExistingDietaryCategories" | "reconcileExistingDietaryCategories" | "refreshResponseRsvpStatus" | "refreshResponseRsvpStatusFromMenu") => {
+	const run = (action: "reviewAcceptedRowsForRsvp" | "prepareAcceptedRowsForRsvp" | "prepareAcceptedRowsForRsvpFromMenu" | "prepareTestSubmissionForRsvp" | "reviewExistingDietaryCategories" | "reconcileExistingDietaryCategories" | "refreshResponseRsvpStatus" | "refreshResponseRsvpStatusFromMenu" | "refreshAttendanceAndMetrics" | "refreshAttendanceAndMetricsFromMenu") => {
 		pending = structuredClone(saved);
 		const properties: Record<string, string | undefined> = {
 			TRACK_BASE_URL: options.baseUrl ?? "https://track.example",

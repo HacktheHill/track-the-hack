@@ -132,6 +132,19 @@ model Hacker {
   updatedAt DateTime @default(now()) @updatedAt
 }
 
+// Privacy-preserving aggregates imported from operational systems that must not
+// expose their participant-level source data to Tracker. Each source owns one
+// replaceable snapshot; payload validation happens at the integration boundary.
+model MetricsSnapshot {
+  source     String   @id
+  payload    Json
+  capturedAt DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  @@index([capturedAt])
+}
+
 // The raw cancellation token is never persisted. A token contains this random
 // capability id plus an HMAC generated from the server-only cancellation key.
 model CancellationCapability {
