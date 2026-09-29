@@ -43,7 +43,7 @@ const Links = ({ bottom }: LinkProps) => {
 					href="/services"
 					bottom={bottom}
 					text={t("services")}
-					src="/assets/resources.svg"
+					src="/assets/services.svg"
 					alt={t("services")}
 				/>
 			)}
