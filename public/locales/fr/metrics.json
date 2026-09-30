@@ -16,7 +16,7 @@
 	"notUpdated": "En attente des statistiques actuelles…",
 	"unavailable": "Non synchronisé",
 	"funnelTitle": "Entonnoir de participation",
-	"funnelDescription": "Le parcours des personnes repose sur des instantanés agrégés des candidatures et sur les totaux actuels de Tracker. Chaque étape indique le taux de conversion et le nombre de personnes qui n’ont pas atteint l’étape suivante.",
+	"funnelDescription": "Chaque étape indique le taux de conversion et le nombre de personnes qui n’ont pas atteint l’étape suivante.",
 	"conversionRate": "{{rate}} % de conversion",
 	"conversionDetail": "{{from}} au départ · {{to}} à l’étape suivante · baisse de {{dropOff}}",
 	"conversionUnavailable": "L’instantané source nécessaire à cette conversion n’a pas été synchronisé.",

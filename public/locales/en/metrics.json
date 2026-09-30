@@ -16,7 +16,7 @@
 	"notUpdated": "Waiting for current metrics…",
 	"unavailable": "Not synced",
 	"funnelTitle": "Participation funnel",
-	"funnelDescription": "The people pipeline uses aggregate application snapshots and live Tracker totals. Each step shows its conversion rate and the number of people who did not reach the next stage.",
+	"funnelDescription": "Each step shows its conversion rate and the number of people who did not reach the next stage.",
 	"conversionRate": "{{rate}}% conversion",
 	"conversionDetail": "{{from}} started · {{to}} reached the next stage · {{dropOff}} drop-off",
 	"conversionUnavailable": "The source snapshot for this conversion has not been synced.",
