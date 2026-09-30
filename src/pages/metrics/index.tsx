@@ -7,7 +7,7 @@ import { Bar, BarChart, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } fro
 import App from "@/components/App";
 import Error from "@/components/Error";
 import Loading from "@/components/Loading";
-import { trpc } from "@/server/api/api";
+import { trpc, type RouterOutputs } from "@/server/api/api";
 import { organizerRedirect } from "@/server/lib/redirects";
 import { getAuthOptions } from "@/pages/api/auth/[...nextauth]";
 
@@ -34,12 +34,11 @@ const Metrics = () => {
 		([
 			["applications", data.funnel.applications, "applicationsDescription"],
 			["accepted", data.funnel.accepted, "acceptedDescription"],
-			["acceptanceEmails", data.funnel.acceptanceEmailsSesAccepted, "acceptanceEmailsDescription"],
 			["confirmed", data.funnel.confirmed, "confirmedDescription"],
 			["checkedIn", data.funnel.checkedIn, "checkedInDescription"],
-			["devpostProjects", data.funnel.devpostProjects, "devpostProjectsDescription"],
 		] as const);
 	const sheetSnapshot = data?.externalMetrics.sheet;
+	const devpostSnapshot = data?.externalMetrics.devpost;
 
 	return (
 		<App className="overflow-y-auto bg-default-gradient" integrated title={t("title")}>
@@ -82,7 +81,38 @@ const Metrics = () => {
 									/>
 								))}
 							</div>
+							<div className="mt-4 grid gap-4 lg:grid-cols-3">
+								<ConversionCard
+									title={t("applicationToAccepted")}
+									conversion={data.conversions.participation.applicationToAccepted}
+									t={t}
+								/>
+								<ConversionCard
+									title={t("acceptedToConfirmed")}
+									conversion={data.conversions.participation.acceptedToConfirmed}
+									t={t}
+								/>
+								<ConversionCard
+									title={t("confirmedToAttended")}
+									conversion={data.conversions.participation.confirmedToAttended}
+									t={t}
+								/>
+							</div>
 						</section>
+						<section>
+							<h2 className="font-coolvetica text-2xl">{t("communicationsTitle")}</h2>
+							<div className="mt-4 grid gap-4 sm:grid-cols-2">
+								<MetricCard
+									title={t("acceptanceEmails")}
+									value={data.funnel.acceptanceEmailsSesAccepted ?? t("unavailable")}
+									description={t("acceptanceEmailsDescription")}
+								/>
+							</div>
+						</section>
+						{devpostSnapshot && (
+							<DevpostSection data={data} capturedAt={devpostSnapshot.capturedAt} t={t} i18n={i18n} />
+						)}
+						<DataQuality quality={data.dataQuality} t={t} />
 						<AttendanceIntegrity integrity={data.attendanceIntegrity} t={t} />
 						<div className="grid gap-8 lg:grid-cols-2">
 							<OperationalChart
@@ -91,6 +121,16 @@ const Metrics = () => {
 								data={data.attendanceData}
 								x="label"
 								y="uniqueParticipants"
+							/>
+							<OperationalChart
+								title={t("eventEngagement")}
+								description={t("eventEngagementDescription")}
+								data={data.engagementData.map(entry => ({
+									label: t(`engagement.${entry.key}`),
+									participants: entry.participants,
+								}))}
+								x="label"
+								y="participants"
 							/>
 							<OperationalChart
 								title={t("recordedUnits")}
@@ -151,6 +191,181 @@ const MetricCard = ({ title, value, description }: { title: string; value: numbe
 		<p className="font-coolvetica text-3xl">{value}</p>
 		<p className="mt-2 font-rubik text-sm text-dark-color">{description}</p>
 	</section>
+);
+
+type Conversion = { from: number | null; to: number | null; dropOff: number | null; rate: number | null };
+
+const ConversionCard = ({
+	title,
+	conversion,
+	t,
+}: {
+	title: string;
+	conversion: Conversion;
+	t: ReturnType<typeof useTranslation>["t"];
+}) => (
+	<section className="ui-panel p-5">
+		<h3 className="font-rubik text-lg">{title}</h3>
+		<p className="font-coolvetica text-3xl">
+			{conversion.rate === null ? t("unavailable") : t("conversionRate", { rate: conversion.rate })}
+		</p>
+		<p className="mt-2 font-rubik text-sm text-dark-color">
+			{conversion.dropOff === null
+				? t("conversionUnavailable")
+				: t("conversionDetail", {
+						from: conversion.from,
+						to: conversion.to,
+						dropOff: conversion.dropOff,
+					})}
+		</p>
+	</section>
+);
+
+const DevpostSection = ({
+	data,
+	capturedAt,
+	t,
+	i18n,
+}: {
+	data: RouterOutputs["metrics"]["getMetrics"];
+	capturedAt: Date;
+	t: ReturnType<typeof useTranslation>["t"];
+	i18n: ReturnType<typeof useTranslation>["i18n"];
+}) => (
+	<section>
+		<h2 className="font-coolvetica text-2xl">{t("devpostTitle")}</h2>
+		<p className="mt-1 font-rubik text-sm text-dark-color">
+			{t("devpostDescription", {
+				time: new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium", timeStyle: "short" }).format(
+					new Date(capturedAt),
+				),
+			})}
+		</p>
+		<div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+			<MetricCard
+				title={t("devpostRegistrants")}
+				value={data.funnel.devpostRegistrants ?? 0}
+				description={t("devpostRegistrantsDescription")}
+			/>
+			<MetricCard
+				title={t("devpostActiveRegistrants")}
+				value={data.funnel.devpostActiveRegistrants ?? 0}
+				description={t("devpostActiveRegistrantsDescription")}
+			/>
+			<MetricCard
+				title={t("devpostSubmitters")}
+				value={data.funnel.devpostSubmitters ?? 0}
+				description={t("devpostSubmittersDescription")}
+			/>
+			<MetricCard
+				title={t("devpostSubmittedProjects")}
+				value={data.funnel.devpostSubmittedProjects ?? 0}
+				description={t("devpostSubmittedProjectsDescription")}
+			/>
+			<MetricCard
+				title={t("devpostProjects")}
+				value={data.funnel.devpostProjects}
+				description={t("devpostProjectsDescription")}
+			/>
+		</div>
+		<div className="mt-4 grid gap-4 lg:grid-cols-4">
+			<ConversionCard
+				title={t("registrantToActive")}
+				conversion={data.conversions.devpost.registrantToActive}
+				t={t}
+			/>
+			<ConversionCard
+				title={t("activeToSubmitter")}
+				conversion={data.conversions.devpost.activeToSubmitter}
+				t={t}
+			/>
+			<ConversionCard
+				title={t("submittedToPublicProject")}
+				conversion={data.conversions.devpost.submittedToPublicProject}
+				t={t}
+			/>
+			<ConversionCard
+				title={t("publicToJudgingProject")}
+				conversion={data.conversions.devpost.publicToJudgingProject}
+				t={t}
+			/>
+		</div>
+	</section>
+);
+
+const DataQuality = ({
+	quality,
+	t,
+}: {
+	quality: {
+		sheetRows: number | null;
+		sheetLinkedRows: number | null;
+		sheetUnlinkedRows: number | null;
+		duplicateApplicationRows: number | null;
+		devpostMatchedRegistrants: number | null;
+		devpostUnmatchedRegistrants: number | null;
+		devpostMatchedSubmitters: number | null;
+		devpostProjectImportGap: number | null;
+	};
+	t: ReturnType<typeof useTranslation>["t"];
+}) => (
+	<section className="ui-panel p-5">
+		<h2 className="font-coolvetica text-xl">{t("dataQualityTitle")}</h2>
+		<p className="mt-1 font-rubik text-sm text-dark-color">{t("dataQualityDescription")}</p>
+		<dl className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+			<QualityMetric
+				label={t("sheetLinkageCoverage")}
+				value={
+					quality.sheetLinkedRows === null || quality.sheetRows === null
+						? null
+						: t("coverageDetail", {
+								matched: quality.sheetLinkedRows,
+								total: quality.sheetRows,
+								rate: quality.sheetRows
+									? Math.round((quality.sheetLinkedRows / quality.sheetRows) * 1000) / 10
+									: 0,
+							})
+				}
+			/>
+			<QualityMetric
+				label={t("sheetUnlinkedRows")}
+				value={quality.sheetUnlinkedRows}
+				attention={Boolean(quality.sheetUnlinkedRows)}
+			/>
+			<QualityMetric
+				label={t("duplicateApplicationRows")}
+				value={quality.duplicateApplicationRows}
+				attention={Boolean(quality.duplicateApplicationRows)}
+			/>
+			<QualityMetric label={t("devpostApplicationMatches")} value={quality.devpostMatchedRegistrants} />
+			<QualityMetric
+				label={t("devpostUnmatchedRegistrants")}
+				value={quality.devpostUnmatchedRegistrants}
+				attention={Boolean(quality.devpostUnmatchedRegistrants)}
+			/>
+			<QualityMetric label={t("devpostMatchedSubmitters")} value={quality.devpostMatchedSubmitters} />
+			<QualityMetric
+				label={t("devpostProjectImportGap")}
+				value={quality.devpostProjectImportGap}
+				attention={Boolean(quality.devpostProjectImportGap)}
+			/>
+		</dl>
+	</section>
+);
+
+const QualityMetric = ({
+	label,
+	value,
+	attention = false,
+}: {
+	label: string;
+	value: number | string | null;
+	attention?: boolean;
+}) => (
+	<div>
+		<dt className="font-rubik text-sm text-dark-color">{label}</dt>
+		<dd className={`font-coolvetica text-2xl ${attention ? "text-red-800" : "text-green-800"}`}>{value ?? "—"}</dd>
+	</div>
 );
 
 const CohortChart = ({
