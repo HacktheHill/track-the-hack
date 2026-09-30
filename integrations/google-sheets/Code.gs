@@ -564,7 +564,7 @@ function suppressMetricCategories_(counts) {
 	counts.forEach(value => {
 		if (value.applicants >= METRICS_MINIMUM_CATEGORY_SIZE) visible.push(value);
 		else {
-			suppressed ||= { label: "Other / suppressed", applicants: 0, accepted: 0, confirmed: 0, attended: 0 };
+			if (!suppressed) suppressed = { label: "Other / suppressed", applicants: 0, accepted: 0, confirmed: 0, attended: 0 };
 			suppressed.applicants += value.applicants;
 			suppressed.accepted += value.accepted;
 			suppressed.confirmed += value.confirmed;
