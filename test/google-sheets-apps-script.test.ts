@@ -357,6 +357,9 @@ void test("attendance refresh writes the Sheet flag and sends aggregate-only dem
 			"Which school do you currently attend, or which school did you most recently attend?": "University of Ottawa",
 			"What is or was your primary area of study?": "Computer Science",
 			"Have you participated in a hackathon before?": "Yes",
+			"If accepted, where would you travel from to attend Hack the Hill? Please provide your city, province/state/region, and country.":
+				"Ottawa, Ontario, Canada",
+			"How did you hear about Hack the Hill? Select all that apply. (Instagram)": "Instagram",
 			"Admission status": "Accepted",
 		}),
 	];
@@ -385,4 +388,6 @@ void test("attendance refresh writes the Sheet flag and sends aggregate-only dem
 	const serialized = JSON.stringify(snapshot);
 	assert.doesNotMatch(serialized, /Private|private@example|private-submission-id|participant_0123/);
 	assert.match(serialized, /Other \/ suppressed/);
+	assert.match(serialized, /acquisitionChannel/);
+	assert.match(serialized, /travelOrigin/);
 });

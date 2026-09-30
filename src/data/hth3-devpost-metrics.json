@@ -1,0 +1,26 @@
+{
+	"capturedAt": "2026-09-30T07:36:31.000Z",
+	"payload": {
+		"kind": "devpost",
+		"registrants": 314,
+		"activeRegistrants": 308,
+		"submitters": 294,
+		"submittedProjects": 100,
+		"publicProjects": 99,
+		"hiddenProjects": 1,
+		"draftProjects": 14,
+		"teamUpRequests": 4,
+		"linkage": {
+			"applicationRows": 822,
+			"uniqueApplicationEmails": 810,
+			"duplicateApplicationRows": 11,
+			"matchedRegistrants": 181,
+			"matchedAccepted": 180,
+			"matchedConfirmed": 162,
+			"matchedSubmitters": 175,
+			"matchedAcceptedSubmitters": 174,
+			"matchedConfirmedSubmitters": 157,
+			"unmatchedRegistrants": 133
+		}
+	}
+}

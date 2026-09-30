@@ -58,6 +58,12 @@ const METRIC_DIMENSIONS = [
 	{ key: "school", headers: ["Which school do you currently attend, or which school did you most recently attend?", "Quel établissement d’enseignement fréquentez-vous actuellement ou avez-vous fréquenté le plus récemment?"] },
 	{ key: "areaOfStudy", headers: ["What is or was your primary area of study?", "Si vous suivez ou avez suivi un programme d’études postsecondaires, quel est ou était votre principal domaine d’études?"] },
 	{ key: "priorHackathon", headers: ["Have you participated in a hackathon before?", "Avez-vous déjà participé à un hackathon?"] },
+	{ key: "travelOrigin", headers: ["If accepted, where would you travel from to attend Hack the Hill? Please provide your city, province/state/region, and country.", "Si votre candidature est retenue, d’où viendriez-vous pour participer à Hack the Hill? Indiquez votre ville, votre province, votre État ou région, ainsi que votre pays."] },
+];
+
+const ACQUISITION_HEADER_PREFIXES = [
+	"How did you hear about Hack the Hill? Select all that apply. (",
+	"Comment avez-vous entendu parler de Hack the Hill? Sélectionnez toutes les réponses qui s’appliquent. (",
 ];
 
 function onOpen() {
@@ -483,6 +489,7 @@ function buildAggregateMetrics_(headers, rows, operationalStart) {
 	METRIC_DIMENSIONS.forEach(dimension => {
 		dimensions[dimension.key] = metricDimension_(headers, sourceRows, dimension.headers, cohort);
 	});
+	dimensions.acquisitionChannel = metricMultiSelectDimension_(headers, sourceRows, ACQUISITION_HEADER_PREFIXES, cohort);
 	dimensions.age = metricDimension_(
 		headers,
 		sourceRows,
@@ -497,6 +504,35 @@ function buildAggregateMetrics_(headers, rows, operationalStart) {
 		cohorts,
 		dimensions,
 	};
+}
+
+/** @param {string[]} headers @param {string[][]} rows @param {string[]} prefixes @param {(row: string[]) => MetricsCohortFlags} cohort @returns {MetricsBreakdown[]} */
+function metricMultiSelectDimension_(headers, rows, prefixes, cohort) {
+	const options = headers.flatMap((header, index) => {
+		const prefix = prefixes.find(candidate => header.indexOf(candidate) === 0);
+		if (!prefix || header.slice(-1) !== ")") return [];
+		return [{ index, label: header.slice(prefix.length, -1).trim().slice(0, 120) }];
+	});
+	if (!options.length) return [];
+	/** @type {Map<string, MetricsBreakdown>} */
+	const counts = new Map();
+	rows.forEach(row => {
+		const selected = options.filter(option => {
+			const value = String(row[option.index] || "").trim();
+			return value && !/^(false|no|0)$/i.test(value);
+		});
+		const rowOptions = selected.length ? selected : [{ label: "Not provided" }];
+		rowOptions.forEach(option => {
+			const current = counts.get(option.label) || { label: option.label, applicants: 0, accepted: 0, confirmed: 0, attended: 0 };
+			const flags = cohort(row);
+			if (flags.applicants) current.applicants += 1;
+			if (flags.accepted) current.accepted += 1;
+			if (flags.confirmed) current.confirmed += 1;
+			if (flags.attended) current.attended += 1;
+			counts.set(option.label, current);
+		});
+	});
+	return suppressMetricCategories_(counts);
 }
 
 /** @param {string[]} headers @param {string[][]} rows @param {string[]} candidateHeaders @param {(row: string[]) => MetricsCohortFlags} cohort @param {(value: string) => string} [transform] @returns {MetricsBreakdown[]} */
@@ -516,6 +552,11 @@ function metricDimension_(headers, rows, candidateHeaders, cohort, transform = v
 		if (flags.attended) current.attended += 1;
 		counts.set(label, current);
 	});
+	return suppressMetricCategories_(counts);
+}
+
+/** @param {Map<string, MetricsBreakdown>} counts @returns {MetricsBreakdown[]} */
+function suppressMetricCategories_(counts) {
 	/** @type {MetricsBreakdown[]} */
 	const visible = [];
 	/** @type {MetricsBreakdown | null} */

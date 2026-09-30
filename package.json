@@ -33,6 +33,7 @@
 		"hardware:import-mlh": "node --env-file-if-exists=.env --import tsx scripts/import-mlh-hardware.mts",
 		"hardware:reconcile": "node --env-file-if-exists=.env --import tsx scripts/reconcile-hardware-inventory.mts",
 		"metrics:import-communications": "node --env-file-if-exists=.env --import tsx scripts/import-communications-metrics.mts",
+		"metrics:import-devpost": "node --env-file-if-exists=.env --import tsx scripts/import-devpost-metrics.mts",
 		"postinstall": "prisma generate",
 		"lint": "eslint src prisma scripts test integrations/google-sheets/Code.gs next.config.js next-i18next.config.js tailwind.config.mjs --ext .gs,.js,.mjs,.ts,.tsx,.mts",
 		"start": "next start",
