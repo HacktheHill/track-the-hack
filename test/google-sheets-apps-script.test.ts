@@ -10,7 +10,7 @@ import {
 	createResponseHarness,
 } from "@root/test/helpers/google-sheets-harness";
 
-test("the bound script avoids logical assignment unsupported by Apps Script", () => {
+void test("the bound script avoids logical assignment unsupported by Apps Script", () => {
 	assert.doesNotMatch(source, /\|\|=|&&=|\?\?=/);
 });
 
