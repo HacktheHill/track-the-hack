@@ -109,9 +109,7 @@ const Metrics = () => {
 								/>
 							</div>
 						</section>
-						{devpostSnapshot && (
-							<DevpostSection data={data} capturedAt={devpostSnapshot.capturedAt} t={t} i18n={i18n} />
-						)}
+						{devpostSnapshot && <DevpostSection data={data} t={t} />}
 						<DataQuality quality={data.dataQuality} t={t} />
 						<AttendanceIntegrity integrity={data.attendanceIntegrity} t={t} />
 						<div className="grid gap-8 lg:grid-cols-2">
@@ -164,12 +162,7 @@ const Metrics = () => {
 							<section>
 								<h2 className="font-coolvetica text-2xl">{t("demographicsTitle")}</h2>
 								<p className="mt-1 font-rubik text-sm text-dark-color">
-									{t("demographicsDescription", {
-										time: new Intl.DateTimeFormat(i18n.language, {
-											dateStyle: "medium",
-											timeStyle: "short",
-										}).format(new Date(sheetSnapshot.capturedAt)),
-									})}
+									{t("demographicsDescription")}
 								</p>
 								<div className="mt-4 grid gap-8 lg:grid-cols-2">
 									{Object.entries(sheetSnapshot.payload.dimensions).map(([key, entries]) => (
@@ -223,24 +216,13 @@ const ConversionCard = ({
 
 const DevpostSection = ({
 	data,
-	capturedAt,
 	t,
-	i18n,
 }: {
 	data: RouterOutputs["metrics"]["getMetrics"];
-	capturedAt: Date;
 	t: ReturnType<typeof useTranslation>["t"];
-	i18n: ReturnType<typeof useTranslation>["i18n"];
 }) => (
 	<section>
 		<h2 className="font-coolvetica text-2xl">{t("devpostTitle")}</h2>
-		<p className="mt-1 font-rubik text-sm text-dark-color">
-			{t("devpostDescription", {
-				time: new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium", timeStyle: "short" }).format(
-					new Date(capturedAt),
-				),
-			})}
-		</p>
 		<div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
 			<MetricCard
 				title={t("devpostRegistrants")}
