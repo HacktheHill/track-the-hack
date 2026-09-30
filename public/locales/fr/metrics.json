@@ -33,7 +33,6 @@
 	"devpostProjects": "Projets Devpost",
 	"devpostProjectsDescription": "Projets de la plus récente liste de jugement importée de Devpost.",
 	"devpostTitle": "Participation et projets sur Devpost",
-	"devpostDescription": "Instantané agrégé de l’espace d’organisation Devpost datant du {{time}}. Les renseignements personnels servent uniquement au rapprochement local et ne sont pas conservés dans Tracker.",
 	"devpostRegistrants": "Personnes inscrites sur Devpost",
 	"devpostRegistrantsDescription": "Personnes inscrites à l’événement sur Devpost.",
 	"devpostActiveRegistrants": "Personnes inscrites actives",
@@ -47,7 +46,7 @@
 	"submittedToPublicProject": "Projet soumis → projet public",
 	"publicToJudgingProject": "Projet public → liste de jugement",
 	"demographicsTitle": "Données démographiques et conversion des candidatures",
-	"demographicsDescription": "Instantané agrégé de la feuille datant du {{time}}. Les catégories comptant moins de cinq candidatures sont regroupées sous Autres / supprimées; aucune candidature ni donnée personnelle n’est conservée dans Tracker.",
+	"demographicsDescription": "Les catégories comptant moins de cinq candidatures sont regroupées sous Autres / supprimées.",
 	"dimension": {
 		"preferredLanguage": "Langue préférée",
 		"country": "Pays de résidence",
