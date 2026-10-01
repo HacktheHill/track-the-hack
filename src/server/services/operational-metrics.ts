@@ -18,6 +18,9 @@ export type OperationalMetricsRepository = {
 	countConfirmed(): Promise<number>;
 	countWalkIns(): Promise<number>;
 	countCheckedIn(): Promise<number>;
+	countConfirmedCheckedIn(): Promise<number>;
+	countAttendedWalkIns(): Promise<number>;
+	countDeclined(): Promise<number>;
 	sumPresences(): Promise<number>;
 	groupRecordedUnitsByEvent(): Promise<Array<{ eventId: string; _sum: { value: number | null } }>>;
 	groupPositiveParticipantsByEvent(): Promise<Array<{ eventId: string; hackerId: string }>>;
@@ -60,6 +63,11 @@ export const createPrismaOperationalMetricsRepository = (
 		countConfirmed: () => prisma.hacker.count({ where: { confirmed: true } }),
 		countWalkIns: () => prisma.hacker.count({ where: { walkIn: true } }),
 		countCheckedIn,
+		countConfirmedCheckedIn: () =>
+			prisma.hacker.count({ where: { confirmed: true, presences: { some: positiveCheckInPresence } } }),
+		countAttendedWalkIns: () =>
+			prisma.hacker.count({ where: { walkIn: true, presences: { some: positiveCheckInPresence } } }),
+		countDeclined: () => prisma.hacker.count({ where: { confirmed: false, rsvpRespondedAt: { not: null } } }),
 		sumPresences: async () => (await prisma.presence.aggregate({ _sum: { value: true } }))._sum.value ?? 0,
 		groupRecordedUnitsByEvent,
 		groupPositiveParticipantsByEvent,
@@ -117,6 +125,9 @@ export const getOperationalMetrics = async (repository: OperationalMetricsReposi
 		confirmed,
 		walkIn,
 		checkedIn,
+		confirmedCheckedIn,
+		attendedWalkIns,
+		declined,
 		presenceTotal,
 		recordedUnitsByEvent,
 		positiveParticipantsByEvent,
@@ -132,6 +143,9 @@ export const getOperationalMetrics = async (repository: OperationalMetricsReposi
 		repository.countConfirmed(),
 		repository.countWalkIns(),
 		repository.countCheckedIn(),
+		repository.countConfirmedCheckedIn(),
+		repository.countAttendedWalkIns(),
+		repository.countDeclined(),
 		repository.sumPresences(),
 		repository.groupRecordedUnitsByEvent(),
 		repository.groupPositiveParticipantsByEvent(),
@@ -220,6 +234,13 @@ export const getOperationalMetrics = async (repository: OperationalMetricsReposi
 		walkIn,
 		checkedIn,
 		presences: presenceTotal,
+		attendanceOutcomes: {
+			confirmedAttended: confirmedCheckedIn,
+			confirmedAbsent: confirmed - confirmedCheckedIn,
+			attendedWithoutConfirmation: checkedIn - confirmedCheckedIn,
+			attendedWalkIns,
+		},
+		rsvp: { confirmed, declined, pending: provisioned - confirmed - declined },
 		attendanceData,
 		engagementData,
 		mealCategoryData,
@@ -245,8 +266,8 @@ export const getOperationalMetrics = async (repository: OperationalMetricsReposi
 		conversions: {
 			participation: {
 				applicationToAccepted: conversion(applications, accepted),
-				acceptedToConfirmed: conversion(accepted, confirmed),
-				confirmedToAttended: conversion(confirmed, checkedIn),
+				acceptedToConfirmed: conversion(accepted, external.sheet?.payload.cohorts.confirmed ?? null),
+				confirmedToAttended: conversion(confirmed, confirmedCheckedIn),
 			},
 			devpost: {
 				registrantToActive: conversion(devpost?.registrants ?? null, devpost?.activeRegistrants ?? null),

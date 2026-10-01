@@ -487,7 +487,7 @@ function buildAggregateMetrics_(headers, rows, operationalStart) {
 	/** @type {Record<string, MetricsBreakdown[]>} */
 	const dimensions = {};
 	METRIC_DIMENSIONS.forEach(dimension => {
-		dimensions[dimension.key] = metricDimension_(headers, sourceRows, dimension.headers, cohort);
+		dimensions[dimension.key] = metricDimension_(headers, sourceRows, dimension.headers, cohort, value => normalizeMetricLabel_(dimension.key, value));
 	});
 	dimensions.acquisitionChannel = metricMultiSelectDimension_(headers, sourceRows, ACQUISITION_HEADER_PREFIXES, cohort);
 	dimensions.age = metricDimension_(
@@ -544,15 +544,31 @@ function metricDimension_(headers, rows, candidateHeaders, cohort, transform = v
 	rows.forEach(row => {
 		const raw = indexes.map(index => String(row[index] || "").trim()).find(Boolean) || "Not provided";
 		const label = String(transform(raw) || "Not provided").trim().slice(0, 120);
-		const current = counts.get(label) || { label, applicants: 0, accepted: 0, confirmed: 0, attended: 0 };
+		const categoryKey = label.toLowerCase();
+		const current = counts.get(categoryKey) || { label, applicants: 0, accepted: 0, confirmed: 0, attended: 0 };
 		const flags = cohort(row);
 		if (flags.applicants) current.applicants += 1;
 		if (flags.accepted) current.accepted += 1;
 		if (flags.confirmed) current.confirmed += 1;
 		if (flags.attended) current.attended += 1;
-		counts.set(label, current);
+		counts.set(categoryKey, current);
 	});
 	return suppressMetricCategories_(counts);
+}
+
+/** Normalize only known equivalents, before small-category suppression. Original answers are never rewritten.
+ * @param {string} dimension @param {string} value @returns {string} */
+function normalizeMetricLabel_(dimension, value) {
+	const label = String(value).trim().replace(/\s+/g, " ");
+	const key = label.toLowerCase();
+	if (dimension === "priorHackathon") {
+		if (/^(yes|oui)$/.test(key)) return "Yes";
+		if (/^(no|non)$/.test(key)) return "No";
+	}
+	if (dimension === "school" && /^(university of ottawa|université d['’]ottawa|universite d['’]ottawa|uottawa)$/.test(key)) return "University of Ottawa / Université d’Ottawa";
+	if (dimension === "areaOfStudy" && /^(computer science|informatique)$/.test(key)) return "Computer Science / Informatique";
+	if (dimension === "travelOrigin" && /^gatineau,? (quebec|québec|qc)$/.test(key)) return "Gatineau, Québec";
+	return label;
 }
 
 /** @param {Map<string, MetricsBreakdown>} counts @returns {MetricsBreakdown[]} */

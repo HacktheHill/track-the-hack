@@ -14,6 +14,24 @@ void test("the bound script avoids logical assignment unsupported by Apps Script
 	assert.doesNotMatch(source, /\|\|=|&&=|\?\?=/);
 });
 
+void test("known bilingual categories merge before suppression without editing source answers", () => {
+	const aggregate: unknown = runInNewContext(
+		`${source}\nmetricDimension_(["answer"], [["Yes"], ["oui"], ["YES"], ["Oui"], ["yes"]], ["answer"], () => ({ applicants: true, accepted: true, confirmed: false, attended: false }), value => normalizeMetricLabel_("priorHackathon", value))`,
+	);
+	assert.equal(
+		JSON.stringify(aggregate),
+		JSON.stringify([{ label: "Yes", applicants: 5, accepted: 5, confirmed: 0, attended: 0 }]),
+	);
+	const normalize = z
+		.function()
+		.args(z.string(), z.string())
+		.returns(z.string())
+		.parse(runInNewContext(`${source}\nnormalizeMetricLabel_`));
+	assert.equal(normalize("school", "Université d’Ottawa"), normalize("school", "University of Ottawa"));
+	assert.equal(normalize("travelOrigin", "Gatineau Quebec"), normalize("travelOrigin", "Gatineau Québec"));
+	assert.equal(normalize("school", "Ottawa College"), "Ottawa College");
+});
+
 const operationalRecordSchema = z
 	.object({
 		id: z.string(),
@@ -80,11 +98,13 @@ const sheetFetchOptionsSchema = z
 	.object({
 		method: z.literal("post"),
 		contentType: z.literal("application/json"),
-		headers: z.object({
-			Authorization: z.string().startsWith("Bearer "),
-			"CF-Access-Client-Id": z.string().optional(),
-			"CF-Access-Client-Secret": z.string().optional(),
-		}).strict(),
+		headers: z
+			.object({
+				Authorization: z.string().startsWith("Bearer "),
+				"CF-Access-Client-Id": z.string().optional(),
+				"CF-Access-Client-Secret": z.string().optional(),
+			})
+			.strict(),
 		payload: z.string(),
 		muteHttpExceptions: z.literal(true),
 	})
@@ -177,15 +197,40 @@ void test("the real Sheet adapter maps the live French headers and detailed rest
 void test("additional dietary needs take precedence over simple meal categories", () => {
 	const shirt = "What unisex T-shirt size would you prefer?";
 	const cases = [
-		{ headers: ["Select all that apply.", "Select all that apply. (Egg allergy)"], values: ["Vegetarian", "TRUE"], expected: "OTHER" },
-		{ headers: ["Select all that apply.", "Please specify your allergy or restriction."], values: ["Halal", "Tree-nut allergy"], expected: "OTHER" },
-		{ headers: ["Si vous avez des restrictions alimentaires ou des allergies, sélectionnez-les ci-dessous: (Régime végétalien)", "Si vous avez des restrictions alimentaires ou des allergies, sélectionnez-les ci-dessous: (Allergie au lait)"], values: ["TRUE", "TRUE"], expected: "OTHER" },
-		{ headers: ["Select all that apply.", "Select all that apply. (Vegetarian)"], values: ["Vegetarian", "TRUE"], expected: "VEGETARIAN" },
+		{
+			headers: ["Select all that apply.", "Select all that apply. (Egg allergy)"],
+			values: ["Vegetarian", "TRUE"],
+			expected: "OTHER",
+		},
+		{
+			headers: ["Select all that apply.", "Please specify your allergy or restriction."],
+			values: ["Halal", "Tree-nut allergy"],
+			expected: "OTHER",
+		},
+		{
+			headers: [
+				"Si vous avez des restrictions alimentaires ou des allergies, sélectionnez-les ci-dessous: (Régime végétalien)",
+				"Si vous avez des restrictions alimentaires ou des allergies, sélectionnez-les ci-dessous: (Allergie au lait)",
+			],
+			values: ["TRUE", "TRUE"],
+			expected: "OTHER",
+		},
+		{
+			headers: ["Select all that apply.", "Select all that apply. (Vegetarian)"],
+			values: ["Vegetarian", "TRUE"],
+			expected: "VEGETARIAN",
+		},
 		{ headers: ["Select all that apply."], values: ["Vegetarian, Halal"], expected: "OTHER" },
 		{ headers: ["Do you have any dietary restrictions or food allergies?"], values: ["No"], expected: "STANDARD" },
 	];
 	for (const { headers, values, expected } of cases) {
-		const record = adapter.applicationRowToOperationalRecord_([shirt, ...headers], ["M", ...values], "test-id", "2030-09-30T03:59:59.000Z", false);
+		const record = adapter.applicationRowToOperationalRecord_(
+			[shirt, ...headers],
+			["M", ...values],
+			"test-id",
+			"2030-09-30T03:59:59.000Z",
+			false,
+		);
 		assert.equal(record.mealCategory, expected, `${headers.join(" / ")} -> ${values.join(" / ")}`);
 	}
 });
@@ -215,7 +260,18 @@ for (const [language, header, answer] of [
 					return { status: 200, body: JSON.stringify({ processed: batch.hackers.length }) };
 				}
 				const ids = z.object({ ids: z.array(z.string()) }).parse(JSON.parse(options.payload)).ids;
-				return { status: 200, body: JSON.stringify({ records: ids.map(id => ({ id, confirmed: false, status: "PENDING", rsvpLink: `https://track.example/rsvp/manage#${"a".repeat(43)}.${"b".repeat(43)}` })), missingIds: [] }) };
+				return {
+					status: 200,
+					body: JSON.stringify({
+						records: ids.map(id => ({
+							id,
+							confirmed: false,
+							status: "PENDING",
+							rsvpLink: `https://track.example/rsvp/manage#${"a".repeat(43)}.${"b".repeat(43)}`,
+						})),
+						missingIds: [],
+					}),
+				};
 			},
 		});
 		sheet.run("prepareAcceptedRowsForRsvp");
@@ -358,7 +414,8 @@ void test("attendance refresh writes the Sheet flag and sends aggregate-only dem
 			"Gender identity": "Woman",
 			"Racial or ethnic background": "White",
 			"What is your current or most recently completed level of study?": "Undergraduate",
-			"Which school do you currently attend, or which school did you most recently attend?": "University of Ottawa",
+			"Which school do you currently attend, or which school did you most recently attend?":
+				"University of Ottawa",
 			"What is or was your primary area of study?": "Computer Science",
 			"Have you participated in a hackathon before?": "Yes",
 			"If accepted, where would you travel from to attend Hack the Hill? Please provide your city, province/state/region, and country.":
@@ -374,11 +431,17 @@ void test("attendance refresh writes the Sheet flag and sends aggregate-only dem
 		fetch: ({ url, options }) => {
 			if (url.endsWith("/attendance-reconciliation")) {
 				assert.deepEqual(JSON.parse(options.payload), { ids: [participantId] });
-				return { status: 200, body: JSON.stringify({ records: [{ id: participantId, attended: true }], missingIds: [] }) };
+				return {
+					status: 200,
+					body: JSON.stringify({ records: [{ id: participantId, attended: true }], missingIds: [] }),
+				};
 			}
 			if (url.endsWith("/metrics-snapshot")) {
 				snapshot = JSON.parse(options.payload);
-				return { status: 200, body: JSON.stringify({ source: "google-sheets", capturedAt: "2026-09-29T12:00:00.000Z" }) };
+				return {
+					status: 200,
+					body: JSON.stringify({ source: "google-sheets", capturedAt: "2026-09-29T12:00:00.000Z" }),
+				};
 			}
 			throw new Error(`Unexpected request ${url}`);
 		},
