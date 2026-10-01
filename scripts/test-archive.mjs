@@ -216,6 +216,28 @@ try {
 						5,
 						"Reuse all five original SVG assets",
 					);
+					const scene = await page.locator('main img[src="/assets/hero/leaves.svg"]').evaluate(image => {
+						const leaves = image.parentElement?.getBoundingClientRect();
+						const intro = document.querySelector("main section p")?.getBoundingClientRect();
+						return {
+							leavesLeft: leaves?.left,
+							leavesBottom: leaves?.bottom,
+							introRight: intro?.right,
+							introTop: intro?.top,
+						};
+					});
+					assert.ok(
+						typeof scene.leavesLeft === "number" &&
+							typeof scene.leavesBottom === "number" &&
+							typeof scene.introRight === "number" &&
+							typeof scene.introTop === "number",
+					);
+					assert.ok(
+						viewport.width >= 768
+							? scene.leavesLeft >= scene.introRight
+							: scene.leavesBottom <= scene.introTop,
+						"Decorative leaves must not overlap the introduction or its actions",
+					);
 					await page.screenshot({
 						path: `/tmp/track-archive-home-${viewport.width}-${prefix ? "fr" : "en"}.png`,
 						fullPage: true,
