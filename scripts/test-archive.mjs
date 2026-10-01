@@ -140,6 +140,11 @@ try {
 					);
 					await bottomNav.getByRole("link").last().click();
 					await page.waitForURL(`${origin}${prefix}/metrics/`);
+					await page.waitForFunction(
+						() =>
+							document.querySelector(".ui-bottom-nav a:last-child")?.getAttribute("aria-current") ===
+							"page",
+					);
 					assert.equal(await bottomNav.getByRole("link").last().getAttribute("aria-current"), "page");
 					await page.goto(`${origin}${prefix}${view}/`, { waitUntil: "networkidle" });
 				} else {
