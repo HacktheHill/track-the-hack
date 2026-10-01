@@ -78,6 +78,7 @@ try {
 	for (const viewport of [
 		{ width: 1440, height: 900 },
 		{ width: 768, height: 1024 },
+		{ width: 844, height: 390 },
 		{ width: 390, height: 844 },
 		{ width: 320, height: 720 },
 	]) {
@@ -161,14 +162,16 @@ try {
 						false,
 						"No clipped labels",
 					);
-					await page.locator("footer").scrollIntoViewIfNeeded();
-					await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-					const footerBounds = await page.locator("footer").boundingBox();
-					assert.ok(footerBounds);
-					assert.ok(
-						footerBounds.y + footerBounds.height <= bottomBounds.y,
-						"The bottom bar must not cover the footer",
-					);
+					if (view !== "") {
+						await page.locator("footer").scrollIntoViewIfNeeded();
+						await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+						const footerBounds = await page.locator("footer").boundingBox();
+						assert.ok(footerBounds);
+						assert.ok(
+							footerBounds.y + footerBounds.height <= bottomBounds.y,
+							"The bottom bar must not cover the footer",
+						);
+					}
 					await bottomNav
 						.getByRole("link")
 						.last()
@@ -204,6 +207,51 @@ try {
 					return elements.filter(image => image.naturalWidth === 0).map(image => image.src);
 				});
 				assert.deepEqual(brokenImages, [], `${prefix}${view}/ must have local, working images`);
+				if (view === "") {
+					assert.equal(
+						await page.getByRole("heading", { name: "Hack the Hill III", level: 1, exact: true }).count(),
+						1,
+						"The illustrated wordmark keeps an accessible heading",
+					);
+					assert.equal(
+						await page.locator('main img[src^="/assets/hero/"]').count(),
+						5,
+						"Reuse all five original SVG assets",
+					);
+					const scene = await page.locator('main img[src="/assets/hero/leaves.svg"]').evaluate(image => {
+						const leaves = image.getBoundingClientRect();
+						const tower = document
+							.querySelector('main img[src="/assets/hero/building.svg"]')
+							?.getBoundingClientRect();
+						const hero = image.parentElement?.getBoundingClientRect();
+						return {
+							leavesWidth: leaves.width,
+							towerHeight: tower?.height,
+							heroHeight: hero?.height,
+						};
+					});
+					assert.equal(scene.leavesWidth, viewport.width, "Leaves span the original full-width scene");
+					assert.ok(
+						typeof scene.towerHeight === "number" &&
+							typeof scene.heroHeight === "number" &&
+							scene.towerHeight >= scene.heroHeight * 0.85,
+						"The tower retains the original immersive scale",
+					);
+					assert.equal(await page.locator("footer, [role=note]").count(), 0, "No extra homepage chrome");
+					const winnerAction = page.locator('main [data-archive-action="winners"]');
+					await winnerAction.click({ trial: true });
+					await page.screenshot({
+						path: `/tmp/track-archive-home-${viewport.width}-${prefix ? "fr" : "en"}.png`,
+						fullPage: true,
+					});
+					for (const destination of ["winners"]) {
+						const action = page.locator(`main [data-archive-action="${destination}"]`);
+						assert.equal(await action.getAttribute("href"), `${prefix}/${destination}/`);
+						await action.click();
+						await page.waitForURL(`${origin}${prefix}/${destination}/`);
+						await page.goto(`${origin}${prefix}/`, { waitUntil: "networkidle" });
+					}
+				}
 				if (view === "/resources" && (await page.locator("details").count())) {
 					await page.getByRole("button", { name: prefix ? "Tout développer" : "Expand all" }).click();
 					assert.equal(await page.locator("details:not([open])").count(), 0);

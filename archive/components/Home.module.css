@@ -1,0 +1,100 @@
+.main {
+	display: flex;
+}
+.hero {
+	position: relative;
+	isolation: isolate;
+	display: flex;
+	width: 100%;
+	min-height: calc(100svh - 8.375rem - env(safe-area-inset-bottom));
+	overflow: hidden;
+	padding: 1.5rem 2rem;
+	align-items: center;
+}
+.content {
+	position: relative;
+	z-index: 2;
+	width: 100%;
+}
+.dates {
+	color: var(--color-ink);
+	width: 50%;
+	margin-bottom: 1rem;
+	font-family: coolvetica, sans-serif;
+	font-size: 1.125rem;
+	line-height: 1.3;
+}
+.wordmark {
+	display: flex;
+	width: 50%;
+	flex-wrap: wrap;
+	gap: 1rem;
+	align-items: flex-end;
+}
+.wordmark img {
+	width: auto;
+	max-width: 100%;
+	height: auto;
+	max-height: 7.5rem;
+}
+.wordmark img:last-child {
+	max-height: 8.75rem;
+}
+.building {
+	position: absolute;
+	bottom: 0;
+	left: 25%;
+	z-index: 1;
+	width: auto;
+	max-width: none;
+	height: 90%;
+	max-height: 56rem;
+	pointer-events: none;
+}
+.leaves {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	z-index: 0;
+	width: 100%;
+	height: auto;
+	pointer-events: none;
+}
+.actions {
+	margin-top: 1.5rem;
+}
+@media (min-width: 640px) {
+	.dates {
+		font-size: 2.25rem;
+	}
+	.building {
+		left: 50%;
+	}
+}
+@media (min-width: 768px) {
+	.hero {
+		min-height: calc(100svh - 4.375rem);
+	}
+}
+@media (min-width: 900px) {
+	.building {
+		left: 66.6667%;
+	}
+}
+@media (min-width: 1024px) {
+	.dates,
+	.wordmark {
+		width: 100%;
+	}
+}
+@media (min-height: 700px) {
+	.dates {
+		margin-bottom: 2rem;
+	}
+}
+@media (max-height: 500px) {
+	.hero {
+		min-height: 28rem;
+	}
+}

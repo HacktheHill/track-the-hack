@@ -18,6 +18,7 @@ for (const asset of [
 	"assets/winners.svg",
 	"assets/resources.svg",
 	"assets/metrics.svg",
+	"assets/hero",
 	"assets/winners",
 	"assets/resources",
 	"assets/sponsors",
