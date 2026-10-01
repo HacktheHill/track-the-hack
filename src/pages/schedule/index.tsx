@@ -110,22 +110,53 @@ const Schedule: NextPage = () => {
 			)
 			.sort((a, b) => a.start.getTime() - b.start.getTime() || a.end.getTime() - b.end.getTime());
 	}, [query.data, saved.data, view, now, todayKey]);
-	const displayed = visible.filter(event => tab === EventType.ALL || event.type === tab);
+	const displayed = useMemo(
+		() => visible.filter(event => tab === EventType.ALL || event.type === tab),
+		[visible, tab],
+	);
+	const active = useMemo(
+		() => displayed.filter(event => event.start.getTime() <= now && event.end.getTime() > now),
+		[displayed, now],
+	);
+	const next = useMemo(() => displayed.find(event => event.start.getTime() > now), [displayed, now]);
 	const days = useMemo(() => {
 		const keys = [...new Set(displayed.flatMap(event => scheduleDayKeys(event.start, event.end)))]
 			.filter(key => view === "mine" || key >= todayKey)
 			.sort();
-		return keys.map(key => ({
-			key,
-			date: new Date(`${key}T12:00:00Z`),
-			events: displayed.filter(event => scheduleDayKey(event.start) === key),
-			ongoing: displayed.filter(
+		return keys.map(key => {
+			const events = displayed.filter(event => scheduleDayKey(event.start) === key);
+			const ongoing = displayed.filter(
 				event => scheduleDayKey(event.start) < key && scheduleDayKeys(event.start, event.end).includes(key),
-			),
-		}));
-	}, [displayed, view, todayKey]);
-	const active = displayed.filter(event => event.start.getTime() <= now && event.end.getTime() > now);
-	const next = displayed.find(event => event.start.getTime() > now);
+			);
+
+			const earlier: ScheduleEvent[] =
+				view === "all" && key === todayKey
+					? [...ongoing, ...events]
+							.filter(event => event.end.getTime() <= now)
+							.sort((a, b) => a.start.getTime() - b.start.getTime())
+					: [];
+			const currentEvents = events.filter(
+				event => view === "mine" || key !== todayKey || event.end.getTime() > now,
+			);
+			const groups = groupScheduleEvents(currentEvents);
+			const markerIndex =
+				key === todayKey && next && scheduleDayKey(next.start) === key
+					? groups.findIndex(group => group.events.some(event => event.id === next.id))
+					: -1;
+			const ongoingRemaining = ongoing.filter(event => !earlier.some(item => item.id === event.id));
+
+			return {
+				key,
+				date: new Date(`${key}T12:00:00Z`),
+				events,
+				ongoing,
+				earlier,
+				groups,
+				markerIndex,
+				ongoingRemaining,
+			};
+		});
+	}, [displayed, view, todayKey, now, next]);
 	const jumpToNow = () => {
 		const current = active.find(event => scheduleDayKey(event.start) === todayKey) ?? active[0];
 		if (current) {
@@ -304,20 +335,6 @@ const Schedule: NextPage = () => {
 								</p>
 							)}
 							{days.map(day => {
-								const earlier: ScheduleEvent[] =
-									view === "all" && day.key === todayKey
-										? [...day.ongoing, ...day.events]
-												.filter(event => event.end.getTime() <= now)
-												.sort((a, b) => a.start.getTime() - b.start.getTime())
-										: [];
-								const currentEvents = day.events.filter(
-									event => view === "mine" || day.key !== todayKey || event.end.getTime() > now,
-								);
-								const groups = groupScheduleEvents(currentEvents);
-								const markerIndex =
-									day.key === todayKey && next && scheduleDayKey(next.start) === day.key
-										? groups.findIndex(group => group.events.some(event => event.id === next.id))
-										: -1;
 								return (
 									<section key={day.key} data-day={day.key} className="min-w-0">
 										<h2 className="mb-3 font-coolvetica text-2xl text-dark-color">
@@ -327,8 +344,7 @@ const Schedule: NextPage = () => {
 												day: "numeric",
 											})}
 										</h2>
-										{day.ongoing
-											.filter(event => !earlier.some(item => item.id === event.id))
+										{day.ongoingRemaining
 											.map(event => (
 												<button
 													key={event.id}
@@ -352,13 +368,13 @@ const Schedule: NextPage = () => {
 													</span>
 												</button>
 											))}
-										{earlier.length > 0 && (
+										{day.earlier.length > 0 && (
 											<details className="mb-3 rounded-lg bg-white/20 p-3">
 												<summary className="cursor-pointer font-coolvetica text-dark-color">
-													{t("earlier-today")} ({earlier.length})
+													{t("earlier-today")} ({day.earlier.length})
 												</summary>
 												<div className="mt-3 flex flex-col gap-2">
-													{earlier.map(event => (
+													{day.earlier.map(event => (
 														<button
 															key={event.id}
 															type="button"
@@ -381,9 +397,9 @@ const Schedule: NextPage = () => {
 											</details>
 										)}
 										<div className="flex flex-col gap-3">
-											{groups.map((group, index) => (
+											{day.groups.map((group, index) => (
 												<Fragment key={group.events[0]?.id}>
-													{index === markerIndex && currentMarker()}
+													{index === day.markerIndex && currentMarker()}
 													<div
 														className={`${group.overlapsPrevious ? "relative -mt-5" : ""} ${group.events.length > 1 ? "rounded-xl bg-white/20 p-2" : ""}`}
 													>
