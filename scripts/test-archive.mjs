@@ -78,6 +78,7 @@ try {
 	for (const viewport of [
 		{ width: 1440, height: 900 },
 		{ width: 768, height: 1024 },
+		{ width: 844, height: 390 },
 		{ width: 390, height: 844 },
 		{ width: 320, height: 720 },
 	]) {
@@ -204,6 +205,29 @@ try {
 					return elements.filter(image => image.naturalWidth === 0).map(image => image.src);
 				});
 				assert.deepEqual(brokenImages, [], `${prefix}${view}/ must have local, working images`);
+				if (view === "") {
+					assert.equal(
+						await page.getByRole("heading", { name: "Hack the Hill III", level: 1, exact: true }).count(),
+						1,
+						"The illustrated wordmark keeps an accessible heading",
+					);
+					assert.equal(
+						await page.locator('main img[src^="/assets/hero/"]').count(),
+						5,
+						"Reuse all five original SVG assets",
+					);
+					await page.screenshot({
+						path: `/tmp/track-archive-home-${viewport.width}-${prefix ? "fr" : "en"}.png`,
+						fullPage: true,
+					});
+					for (const destination of ["winners", "resources", "metrics"]) {
+						const action = page.locator(`main [data-archive-action="${destination}"]`);
+						assert.equal(await action.getAttribute("href"), `${prefix}/${destination}/`);
+						await action.click();
+						await page.waitForURL(`${origin}${prefix}/${destination}/`);
+						await page.goto(`${origin}${prefix}/`, { waitUntil: "networkidle" });
+					}
+				}
 				if (view === "/resources" && (await page.locator("details").count())) {
 					await page.getByRole("button", { name: prefix ? "Tout développer" : "Expand all" }).click();
 					assert.equal(await page.locator("details:not([open])").count(), 0);

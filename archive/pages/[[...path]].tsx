@@ -2,12 +2,12 @@ import fs from "node:fs";
 import path from "node:path";
 import type { GetStaticPaths, GetStaticProps } from "next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
-import Link from "next/link";
 import Winners from "@/components/WinnersPage";
 import Resources from "@/components/ResourcesPage";
 import Sponsor from "@/components/SponsorPage";
 import { sponsorsData, type SponsorData } from "@/client/sponsors";
 import App from "@root/archive/components/App";
+import ArchiveHome from "@root/archive/components/Home";
 import { archiveI18n } from "@root/archive/i18n";
 import { publicMetricsSchema, type PublicMetrics } from "@root/archive/metrics";
 
@@ -50,11 +50,6 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
 export default function ArchivePage({ archiveLocale, view, sponsor, metrics }: Props) {
 	const fr = archiveLocale === "fr";
 	const prefix = fr ? "/fr" : "";
-	const destinations: [string, string][] = [
-		["winners", fr ? "Gagnants" : "Winners"],
-		["resources", fr ? "Ressources" : "Resources"],
-		["metrics", fr ? "Statistiques" : "Statistics"],
-	];
 	if (view === "winners") return <Winners />;
 	if (view === "resources") return <Resources contentLocale={archiveLocale} linkPrefix={prefix} />;
 	if (sponsor) return <Sponsor {...sponsor} />;
@@ -101,23 +96,5 @@ export default function ArchivePage({ archiveLocale, view, sponsor, metrics }: P
 			</App>
 		);
 	}
-	return (
-		<App title={fr ? "Archives" : "Archive"} className="p-6 sm:p-12">
-			<section className="mx-auto max-w-4xl">
-				<h1 className="ui-page-title">Hack the Hill III</h1>
-				<p className="my-6 text-xl">
-					{fr
-						? "Découvrez les projets gagnants, les ressources de l’événement et les statistiques du hackathon."
-						: "Explore the winning projects, event resources, and hackathon statistics."}
-				</p>
-				<div className="grid gap-4 sm:grid-cols-3">
-					{destinations.map(([slug, label]) => (
-						<Link key={slug} className="ui-button p-6 text-center text-xl" href={`${prefix}/${slug}/`}>
-							{label}
-						</Link>
-					))}
-				</div>
-			</section>
-		</App>
-	);
+	return <ArchiveHome locale={archiveLocale} />;
 }
