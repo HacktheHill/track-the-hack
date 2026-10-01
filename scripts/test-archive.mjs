@@ -77,7 +77,9 @@ try {
 	});
 	for (const viewport of [
 		{ width: 1440, height: 900 },
+		{ width: 768, height: 1024 },
 		{ width: 390, height: 844 },
+		{ width: 320, height: 720 },
 	]) {
 		await page.setViewportSize(viewport);
 		for (const prefix of ["", "/fr"]) {
@@ -90,6 +92,29 @@ try {
 					await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth),
 					false,
 				);
+				const nav = page.getByRole("navigation");
+				const toggle = nav.locator('button[aria-controls="archive-nav-links"]');
+				const links = nav.locator("#archive-nav-links");
+				assert.ok((await nav.boundingBox()).height <= 80, "The navbar must remain a single compact row");
+				if (viewport.width < 768) {
+					assert.equal(await links.isVisible(), false, "Mobile links start collapsed");
+					await toggle.click();
+					assert.equal(await toggle.getAttribute("aria-expanded"), "true");
+					assert.equal(await links.isVisible(), true);
+					assert.equal(await links.getByRole("link").count(), 4);
+					await links.getByRole("link").first().focus();
+					await page.keyboard.press("Escape");
+					assert.equal(await links.isVisible(), false);
+					assert.equal(await toggle.evaluate(button => button === document.activeElement), true);
+					await toggle.click();
+					await links.getByRole("link").last().click();
+					await page.waitForURL(`${origin}${prefix}/metrics/`);
+					assert.equal(await links.isVisible(), false, "Choosing a page closes the mobile menu");
+					await page.goto(`${origin}${prefix}${view}/`, { waitUntil: "networkidle" });
+				} else {
+					assert.equal(await toggle.isVisible(), false);
+					assert.equal(await links.isVisible(), true, "Desktop links stay visible");
+				}
 				const brokenImages = await page.locator("img").evaluateAll(async images => {
 					const elements = images.filter(image => image instanceof HTMLImageElement);
 					await Promise.all(
@@ -113,6 +138,11 @@ try {
 			}
 		}
 	}
+	await page.setViewportSize({ width: 390, height: 844 });
+	await page.goto(`${origin}/winners/`, { waitUntil: "networkidle" });
+	await page.screenshot({ path: "/tmp/track-archive-navbar-mobile.png" });
+	await page.getByRole("button", { name: "Open navigation" }).click();
+	await page.screenshot({ path: "/tmp/track-archive-navbar-mobile-open.png" });
 	await page.goto(`${origin}/resources/`);
 	await page.getByRole("link", { name: "FR", exact: true }).click();
 	await page.waitForURL("**/fr/resources/");
