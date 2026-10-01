@@ -104,6 +104,47 @@ calculating misleading cross-event changes or merging their pipelines.
 The HTH III snapshot still has no exact ages, team sizes or post-event survey data.
 No time-series is added. Synthetic CI fixtures contain no real historical data.
 
+### Historical Devpost projects
+
+In each Devpost organizer area, export **Projects data**, choose **Do not include**
+personal information, and leave **Exclude unsubmitted (draft) projects** unchecked.
+Record the lifetime registrant, submitter, submitted-project and team-up totals;
+do not use a recent date range's activity totals. Add both exports to a new snapshot:
+
+```sh
+npm run metrics:import-history-devpost -- \
+  --snapshot /absolute/path/to/snapshot-with-history.json \
+  --output /absolute/path/to/new-snapshot-with-projects.json \
+  --captured-at ISO_8601_CAPTURE_TIME \
+  --i-projects /absolute/path/to/hth-i-without-pii.csv \
+  --i-registrants COUNT --i-submitters COUNT --i-team-up COUNT --i-submitted COUNT \
+  --ii-projects /absolute/path/to/hth-ii-without-pii.csv \
+  --ii-registrants COUNT --ii-submitters COUNT --ii-team-up COUNT --ii-submitted COUNT
+```
+
+The importer checks submitted totals, rejects missing columns or unknown statuses,
+deduplicates identical project rows, and refuses conflicting duplicates or an
+existing output. The previous snapshot remains unchanged; the new file is mode 600.
+Keep source exports and generated snapshots outside Git and CI artifacts.
+At least one edition's export is required. Omit the other edition's arguments
+for an incremental import; its existing history is preserved unchanged.
+
+Historical **Project insights** adds registration-to-submitted-team conversion,
+public/hidden/draft totals, submitted-project technology tags, team sizes,
+prize-track interest and field completeness. Technologies are case-normalized,
+deduplicated per project, but spelling aliases are not merged. Multi-select
+technology/prize labels with fewer than five projects are omitted; rare team
+sizes are pooled. Prize interest is not an award or eligibility result. Coverage
+counts nonblank fields, not validated links. Drafts never enter these charts.
+
+Team size is one creator plus the additional-member count. Summed memberships
+are not unique people and can differ from Devpost's submitter total. No project
+titles, narratives, links, identities or project-level records enter the archive;
+school names from the export are not used as participant demographics. These
+non-PII exports cannot establish attendee-to-project linkage. Organizer totals
+remain separate from SQL application and check-in populations. The comparison
+view adds Devpost participation across all available editions.
+
 ## Corrected-report coverage checklist
 
 This is an aggregate analysis view, not a verbatim reproduction of the reports.

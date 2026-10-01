@@ -22,9 +22,21 @@
 
 .tabs {
 	display: flex;
+	min-width: 0;
 	flex-wrap: wrap;
 	gap: 0.25rem;
 	border-bottom: 1px solid #d5cec7;
+}
+
+@media (max-width: 639px) {
+	.tabs {
+		flex-wrap: nowrap;
+		overflow-x: auto;
+	}
+	.tabs button {
+		flex: 0 0 auto;
+		white-space: nowrap;
+	}
 }
 
 .tabs button {

@@ -35,6 +35,30 @@ export const privateMetricsFixture: ArchiveDashboard = {
 			stats: [],
 			quality: [],
 			mealBounds: [],
+			devpost: {
+				kind: "devpost-project-insights" as const,
+				capturedAt: "2026-10-01T12:00:00.000Z",
+				sourceDigest: "0".repeat(64),
+				registrants: 20,
+				submitters: 15,
+				teamUpRequests: 3,
+				submittedProjects: 10,
+				publicProjects: 9,
+				hiddenProjects: 1,
+				draftProjects: 2,
+				teamMemberships: 25,
+				teamSizeAnsweredProjects: 10,
+				teamSizes: [
+					{ label: "2", value: 5 },
+					{ label: "3", value: 5 },
+				],
+				technologies: { answeredProjects: 10, suppressedLabels: 2, rows: [{ label: "typescript", value: 7 }] },
+				prizes: { answeredProjects: 8, suppressedLabels: 1, rows: [{ label: "Fixture track", value: 6 }] },
+				coverage: (
+					["description", "tryItOut", "video", "images", "builtWith", "prizeOptIn", "teamSchools"] as const
+				).map(key => ({ key, answeredProjects: key === "prizeOptIn" ? 8 : key === "builtWith" ? 10 : 7 })),
+				duplicateExportRows: 0,
+			},
 		})),
 	},
 	metrics: {

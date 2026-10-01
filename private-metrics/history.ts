@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { projectInsightsSchema } from "./project-insights";
 
 const count = z.number().int().nonnegative();
 const label = z
@@ -14,6 +15,7 @@ export const historicalArchiveSchema = z
 				z
 					.object({
 						id: z.enum(["i", "ii"]),
+						devpost: projectInsightsSchema.optional(),
 						year: z.number().int(),
 						sourceDigest: z.string().regex(/^[a-f0-9]{64}$/),
 						populations: z
