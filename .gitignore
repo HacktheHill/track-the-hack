@@ -20,6 +20,9 @@
 /.next-discord-e2e/
 /artifacts/discord-verification/
 /out/
+/archive/.next/
+/archive/out/
+/archive/public/
 next-env.d.ts
 
 # production
@@ -50,6 +53,7 @@ prisma/*.csv
 
 # generated pwa files
 sw.js
+!/archive/hosting-assets/sw.js
 sw.js.map
 workbox-*.js
 workbox-*.js.map

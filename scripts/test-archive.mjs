@@ -1,0 +1,178 @@
+import assert from "node:assert/strict";
+import { createServer } from "node:http";
+import { readFile, stat, readdir } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { chromium } from "playwright-core";
+
+const root = path.resolve(fileURLToPath(new URL("../archive/out/", import.meta.url)));
+/** @type {Record<string, string>} */
+const types = {
+	".html": "text/html",
+	".js": "text/javascript",
+	".css": "text/css",
+	".json": "application/json",
+	".svg": "image/svg+xml",
+	".png": "image/png",
+	".jpg": "image/jpeg",
+	".jpeg": "image/jpeg",
+	".ttf": "font/ttf",
+	".otf": "font/otf",
+	".zip": "application/zip",
+};
+let oldWorker = false;
+const server = createServer((req, res) => {
+	void serve(req, res);
+});
+/** @param {import('node:http').IncomingMessage} req @param {import('node:http').ServerResponse} res */
+async function serve(req, res) {
+	try {
+		const url = new URL(req.url ?? "/", "http://localhost");
+		if (url.pathname === "/sw.js" && oldWorker) {
+			res.setHeader("Content-Type", "text/javascript");
+			res.end(
+				'self.addEventListener("install",()=>self.skipWaiting());self.addEventListener("activate",e=>e.waitUntil(self.clients.claim()));self.addEventListener("fetch",e=>{if(new URL(e.request.url).pathname==="/winners/")e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});',
+			);
+			return;
+		}
+		let file = path.resolve(root, `.${decodeURIComponent(url.pathname)}`);
+		if (!file.startsWith(`${root}${path.sep}`) && file !== root) throw new Error("Invalid path");
+		if ((await stat(file)).isDirectory()) file = path.join(file, "index.html");
+		res.setHeader("Content-Type", types[path.extname(file)] ?? "application/octet-stream");
+		res.setHeader("Cache-Control", "no-store");
+		res.end(await readFile(file));
+	} catch {
+		res.statusCode = 404;
+		res.setHeader("Content-Type", "text/html");
+		res.end(await readFile(path.join(root, "404.html")));
+	}
+}
+
+await new Promise(resolve => server.listen(0, "127.0.0.1", () => resolve(undefined)));
+const address = server.address();
+if (!address || typeof address === "string") throw new Error("Static test server did not start");
+const origin = `http://127.0.0.1:${address.port}`;
+const browser = await chromium.launch();
+try {
+	const context = await browser.newContext();
+	const page = await context.newPage();
+	/** @type {string[]} */
+	const failures = [];
+	/** @type {string[]} */
+	const backend = [];
+	page.on("pageerror", error => failures.push(error.message));
+	page.on("response", response => {
+		if (response.status() >= 400) failures.push(`${response.status()} ${response.url()}`);
+	});
+	await context.route("**/*", route => {
+		const url = new URL(route.request().url());
+		if (url.origin !== origin || url.pathname.startsWith("/api/") || url.pathname.startsWith("/_next/image")) {
+			backend.push(url.pathname);
+			return route.abort();
+		}
+		return route.continue();
+	});
+	for (const viewport of [
+		{ width: 1440, height: 900 },
+		{ width: 390, height: 844 },
+	]) {
+		await page.setViewportSize(viewport);
+		for (const prefix of ["", "/fr"]) {
+			for (const view of ["", "/winners", "/resources", "/metrics", "/sponsors/cgi"]) {
+				const response = await page.goto(`${origin}${prefix}${view}/`, { waitUntil: "networkidle" });
+				assert.equal(response?.status(), 200, `${prefix}${view}/ must be exported`);
+				assert.ok(await page.locator("h1").isVisible());
+				assert.equal(await page.locator("html").getAttribute("lang"), prefix ? "fr" : "en");
+				assert.equal(
+					await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth),
+					false,
+				);
+				const brokenImages = await page.locator("img").evaluateAll(async images => {
+					const elements = images.filter(image => image instanceof HTMLImageElement);
+					await Promise.all(
+						elements.map(async image => {
+							image.loading = "eager";
+							await image.decode().catch(() => undefined);
+						}),
+					);
+					return elements.filter(image => image.naturalWidth === 0).map(image => image.src);
+				});
+				assert.deepEqual(brokenImages, [], `${prefix}${view}/ must have local, working images`);
+				if (view === "/resources" && (await page.locator("details").count())) {
+					await page.getByRole("button", { name: prefix ? "Tout développer" : "Expand all" }).click();
+					assert.equal(await page.locator("details:not([open])").count(), 0);
+				}
+				if (view === "/winners")
+					assert.equal(
+						await page.locator("h1").textContent(),
+						prefix ? "Gagnants de Hack the Hill III" : "Hack the Hill III winners",
+					);
+			}
+		}
+	}
+	await page.goto(`${origin}/resources/`);
+	await page.getByRole("link", { name: "FR", exact: true }).click();
+	await page.waitForURL("**/fr/resources/");
+	assert.equal(await page.locator("h1").textContent(), "Ressources pour Hack the Hill III");
+	await page.getByRole("link", { name: "CGI", exact: true }).click();
+	await page.waitForURL("**/fr/sponsors/cgi/");
+	assert.ok((await page.locator("nav").textContent())?.includes("Gagnants"));
+	const download = await context.request.get(`${origin}/assets/resources/cgi/Northwind_Challenge_Data.zip`);
+	assert.equal(download.status(), 200);
+	assert.ok((await download.body()).length > 100);
+	assert.deepEqual(backend, [], "The archive must work with every external and backend request blocked");
+	assert.deepEqual(failures, [], "No missing assets, broken routes, or hydration errors");
+	await page.screenshot({ path: "/tmp/track-archive-mobile.png", fullPage: true });
+	for (const route of ["/api/auth/session", "/internal/", "/profile/", "/pass/", "/judging/"]) {
+		assert.equal((await context.request.get(`${origin}${route}`)).status(), 404);
+	}
+	await context.close();
+
+	// Exercise replacing an existing live PWA worker, not just a fresh visit.
+	oldWorker = true;
+	const legacyContext = await browser.newContext();
+	const legacy = await legacyContext.newPage();
+	await legacy.goto(`${origin}/`);
+	await legacy.evaluate(async () => {
+		await navigator.serviceWorker.register("/sw.js");
+		await navigator.serviceWorker.ready;
+		const cache = await caches.open("live-app-stale-pages");
+		await cache.put(
+			"/winners/",
+			new Response("<h1>Stale live app</h1>", { headers: { "Content-Type": "text/html" } }),
+		);
+	});
+	await legacy.goto(`${origin}/winners/`);
+	assert.equal(await legacy.locator("h1").textContent(), "Stale live app");
+	oldWorker = false;
+	await legacy.evaluate(async () => {
+		await (await navigator.serviceWorker.getRegistration())?.update();
+	});
+	await legacy.waitForFunction(
+		async () =>
+			(await caches.keys()).length === 0 && (await navigator.serviceWorker.getRegistrations()).length === 0,
+	);
+	await legacy.goto(`${origin}/winners/`, { waitUntil: "networkidle" });
+	assert.equal(await legacy.locator("h1").textContent(), "Hack the Hill III winners");
+	await legacy.setViewportSize({ width: 1440, height: 900 });
+	await legacy.locator("img").evaluateAll(async images => {
+		await Promise.all(
+			images.map(async image => {
+				if (image instanceof HTMLImageElement) {
+					image.loading = "eager";
+					await image.decode();
+				}
+			}),
+		);
+	});
+	await legacy.screenshot({ path: "/tmp/track-archive-winners.png", fullPage: true });
+	await legacyContext.close();
+	const files = await readdir(root, { recursive: true });
+	assert.ok(!files.some(file => file.startsWith("api/") || file.includes("workbox-")));
+	console.log(
+		"Archive browser checks passed: EN/FR, desktop/mobile, sponsor navigation, downloads, backend isolation, private-route exclusion, and live PWA cache retirement.",
+	);
+} finally {
+	await browser.close();
+	await new Promise(resolve => server.close(resolve));
+}
