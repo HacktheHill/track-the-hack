@@ -57,6 +57,7 @@ export default function HardwareDesk() {
 					<h2 className="mb-3 font-coolvetica text-2xl">{t("inventory")}</h2>
 					<input
 						className="ui-field mb-3 w-full"
+						type="search"
 						aria-label={t("search")}
 						placeholder={t("search")}
 						value={search}
@@ -244,6 +245,7 @@ export default function HardwareDesk() {
 					)}
 					<input
 						className="ui-field mb-3 w-full"
+						type="search"
 						placeholder={t("find-loan")}
 						aria-label={t("find-loan")}
 						value={loanSearch}
