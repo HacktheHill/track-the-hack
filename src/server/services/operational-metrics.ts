@@ -4,6 +4,7 @@ import {
 	type MealCategory,
 	type PrismaClient,
 	type TShirtSize,
+	type EventType,
 } from "@prisma/client";
 import bundledDevpostMetrics from "@/data/hth3-devpost-metrics.json";
 import { devpostMetricsSnapshotSchema, parseMetricsSnapshots } from "@/server/services/external-metrics";
@@ -26,7 +27,16 @@ export type OperationalMetricsRepository = {
 	groupPositiveParticipantsByEvent(): Promise<Array<{ eventId: string; hackerId: string }>>;
 	groupMealCategories(): Promise<Array<{ mealCategory: MealCategory; _count: { mealCategory: number } }>>;
 	groupTShirtSizes(): Promise<Array<{ tShirtSize: TShirtSize; _count: { tShirtSize: number } }>>;
-	findEventNames(ids: string[]): Promise<Array<{ id: string; name: string; scannerWorkflow: ScannerWorkflow }>>;
+	findEventNames(ids: string[]): Promise<
+		Array<{
+			id: string;
+			name: string;
+			scannerWorkflow: ScannerWorkflow;
+			nameFr?: string;
+			start?: Date;
+			type?: EventType;
+		}>
+	>;
 	countIssuedPassesWithoutCheckIn(): Promise<number>;
 	countPositivePresenceWithoutCheckIn(): Promise<number>;
 	countVisibleCheckInEvents(): Promise<number>;
@@ -76,7 +86,7 @@ export const createPrismaOperationalMetricsRepository = (
 		findEventNames: ids =>
 			prisma.event.findMany({
 				where: { id: { in: ids } },
-				select: { id: true, name: true, scannerWorkflow: true },
+				select: { id: true, name: true, nameFr: true, start: true, type: true, scannerWorkflow: true },
 			}),
 		countIssuedPassesWithoutCheckIn: () =>
 			prisma.hacker.count({
@@ -170,6 +180,7 @@ export const getOperationalMetrics = async (repository: OperationalMetricsReposi
 	];
 	const events = await repository.findEventNames(eventIds);
 	const eventNames = new Map(events.map(({ id, name }) => [id, name]));
+	const eventMetadata = new Map(events.map(event => [event.id, event]));
 	const eventWorkflows = new Map(events.map(({ id, scannerWorkflow }) => [id, scannerWorkflow]));
 	const recordedUnits = new Map(recordedUnitsByEvent.map(({ eventId, _sum }) => [eventId, _sum.value ?? 0]));
 	const uniqueParticipants = new Map<string, number>();
@@ -179,12 +190,16 @@ export const getOperationalMetrics = async (repository: OperationalMetricsReposi
 	const attendanceData = eventIds
 		.flatMap(eventId => {
 			const label = eventNames.get(eventId);
+			const metadata = eventMetadata.get(eventId);
 			return label === undefined
 				? []
 				: [
 						{
 							eventId,
 							label,
+							...(metadata?.nameFr ? { labelFr: metadata.nameFr } : {}),
+							...(metadata?.start ? { start: metadata.start.toISOString() } : {}),
+							...(metadata?.type ? { group: metadata.type } : {}),
 							uniqueParticipants: uniqueParticipants.get(eventId) ?? 0,
 							recordedUnits: recordedUnits.get(eventId) ?? 0,
 						},

@@ -67,3 +67,13 @@
 .dashboard summary {
 	color: #542c32;
 }
+
+.dashboard :global(thead) {
+	background: #f6f4f1;
+}
+.dashboard :global(tbody tr:nth-child(even)) {
+	background: #faf9f7;
+}
+.dashboard :global(td) {
+	font-variant-numeric: tabular-nums;
+}
