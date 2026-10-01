@@ -92,29 +92,58 @@ try {
 					await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth),
 					false,
 				);
-				const nav = page.getByRole("navigation");
-				const toggle = nav.locator('button[aria-controls="archive-nav-links"]');
+				const nav = page.getByRole("navigation", {
+					name: prefix ? "Navigation des archives" : "Archive navigation",
+					exact: true,
+				});
+				const bottomNav = page.getByRole("navigation", {
+					name: prefix ? "Navigation inférieure" : "Bottom navigation",
+					exact: true,
+				});
 				const links = nav.locator("#archive-nav-links");
 				const navBounds = await nav.boundingBox();
 				assert.ok(navBounds, "The navbar must be visible");
 				assert.ok(navBounds.height <= 80, "The navbar must remain a single compact row");
 				if (viewport.width < 768) {
-					assert.equal(await links.isVisible(), false, "Mobile links start collapsed");
-					await toggle.click();
-					assert.equal(await toggle.getAttribute("aria-expanded"), "true");
-					assert.equal(await links.isVisible(), true);
-					assert.equal(await links.getByRole("link").count(), 4);
-					await links.getByRole("link").first().focus();
-					await page.keyboard.press("Escape");
-					assert.equal(await links.isVisible(), false);
-					assert.equal(await toggle.evaluate(button => button === document.activeElement), true);
-					await toggle.click();
-					await links.getByRole("link").last().click();
+					assert.equal(await links.isVisible(), false, "Mobile top bar contains only logo and language");
+					assert.equal(await bottomNav.isVisible(), true);
+					assert.equal(await bottomNav.getByRole("link").count(), 4);
+					const bottomBounds = await bottomNav.boundingBox();
+					assert.ok(bottomBounds);
+					assert.equal(
+						Math.round(bottomBounds.y + bottomBounds.height),
+						viewport.height,
+						"Navigation stays at the viewport bottom",
+					);
+					assert.ok(bottomBounds.height <= 85, "Bottom links fit in one compact row");
+					assert.equal(
+						await bottomNav.evaluate(element => element.scrollWidth > element.clientWidth),
+						false,
+						"No sideways scrolling, including French labels",
+					);
+					assert.equal(
+						await bottomNav
+							.locator("a")
+							.evaluateAll(elements =>
+								elements.some(element => element.scrollWidth > element.clientWidth),
+							),
+						false,
+						"No clipped labels",
+					);
+					await page.locator("footer").scrollIntoViewIfNeeded();
+					await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+					const footerBounds = await page.locator("footer").boundingBox();
+					assert.ok(footerBounds);
+					assert.ok(
+						footerBounds.y + footerBounds.height <= bottomBounds.y,
+						"The bottom bar must not cover the footer",
+					);
+					await bottomNav.getByRole("link").last().click();
 					await page.waitForURL(`${origin}${prefix}/metrics/`);
-					assert.equal(await links.isVisible(), false, "Choosing a page closes the mobile menu");
+					assert.equal(await bottomNav.getByRole("link").last().getAttribute("aria-current"), "page");
 					await page.goto(`${origin}${prefix}${view}/`, { waitUntil: "networkidle" });
 				} else {
-					assert.equal(await toggle.isVisible(), false);
+					assert.equal(await bottomNav.isVisible(), false);
 					assert.equal(await links.isVisible(), true, "Desktop links stay visible");
 				}
 				const brokenImages = await page.locator("img").evaluateAll(async images => {
@@ -143,15 +172,16 @@ try {
 	await page.setViewportSize({ width: 390, height: 844 });
 	await page.goto(`${origin}/winners/`, { waitUntil: "networkidle" });
 	await page.screenshot({ path: "/tmp/track-archive-navbar-mobile.png" });
-	await page.getByRole("button", { name: "Open navigation" }).click();
-	await page.screenshot({ path: "/tmp/track-archive-navbar-mobile-open.png" });
+	await page.setViewportSize({ width: 320, height: 720 });
+	await page.goto(`${origin}/fr/winners/`, { waitUntil: "networkidle" });
+	await page.screenshot({ path: "/tmp/track-archive-navbar-mobile-fr.png" });
 	await page.goto(`${origin}/resources/`);
 	await page.getByRole("link", { name: "FR", exact: true }).click();
 	await page.waitForURL("**/fr/resources/");
 	assert.equal(await page.locator("h1").textContent(), "Ressources pour Hack the Hill III");
 	await page.getByRole("link", { name: "CGI", exact: true }).click();
 	await page.waitForURL("**/fr/sponsors/cgi/");
-	assert.ok((await page.locator("nav").textContent())?.includes("Gagnants"));
+	assert.ok((await page.locator("#archive-nav-links").textContent())?.includes("Gagnants"));
 	const download = await context.request.get(`${origin}/assets/resources/cgi/Northwind_Challenge_Data.zip`);
 	assert.equal(download.status(), 200);
 	assert.ok((await download.body()).length > 100);
