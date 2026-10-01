@@ -131,6 +131,7 @@ const main = async () => {
 		"captured-at",
 		...["i", "ii"].flatMap(id => [
 			`${id}-projects`,
+			`${id}-aggregate`,
 			`${id}-registrants`,
 			`${id}-submitters`,
 			`${id}-team-up`,
@@ -157,12 +158,22 @@ const main = async () => {
 		throw new Error("Choose a new output file; preserve the original snapshot");
 	const snapshot = archiveDashboardSchema.parse(JSON.parse(readFileSync(snapshotFile, "utf8")));
 	if (!snapshot.history) throw new Error("Historical editions are required");
-	if (!values["i-projects"] && !values["ii-projects"])
-		throw new Error("At least one historical project export is required");
+	if (!values["i-projects"] && !values["ii-projects"] && !values["i-aggregate"] && !values["ii-aggregate"])
+		throw new Error("At least one historical project export or reviewed page aggregate is required");
 	for (const id of ["i", "ii"] as const) {
-		if (!values[`${id}-projects`]) continue;
+		if (!values[`${id}-projects`] && !values[`${id}-aggregate`]) continue;
 		const edition = snapshot.history.editions.find(edition => edition.id === id);
 		if (!edition) throw new Error(`Missing historical edition ${id}`);
+		if (values[`${id}-aggregate`]) {
+			if (values[`${id}-projects`]) throw new Error(`Choose one project source for edition ${id}`);
+			const aggregate = projectInsightsSchema.parse(
+				JSON.parse(readFileSync(required(`${id}-aggregate`), "utf8")),
+			);
+			if (aggregate.sourceMethod !== "organizer-pages")
+				throw new Error("Page aggregates must identify their counting method");
+			edition.devpost = aggregate;
+			continue;
+		}
 		const file = required(`${id}-projects`);
 		const raw = readFileSync(file);
 		const parsed: unknown = await csv({ checkType: false, checkColumn: true }).fromString(raw.toString("utf8"));

@@ -17,6 +17,10 @@
 	"attendanceLinkageUnavailable": "The retained Devpost snapshot has no attendee-matching aggregate. It cannot establish which checked-in people submitted projects.",
 	"history": {
 		"project": {
+			"notAvailable": "Unavailable from this source",
+			"pageCoverageNote": "Visible fields on every submitted project’s organizer page, not validated links. Team-school information is unavailable from this source.",
+			"pageTeamNote": "{{memberships}} visible team memberships across {{answered}} submitted projects; Devpost reports {{people}} submitters. Memberships are not unique people. Team size counts the member cards shown under Created by.",
+			"pageSource": "Organizer totals and all submitted-project pages reviewed {{date}} · {{requests}} team-up requests. Draft totals come from the submission filter; draft project details are excluded.",
 			"sourceLabel": "Devpost snapshot · {{date}}",
 			"conversion": "Devpost registration → submitted team",
 			"conversionCounts": "{{to}} of {{from}} registrants were on submitted teams · {{gap}} did not submit",

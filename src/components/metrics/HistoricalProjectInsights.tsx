@@ -121,14 +121,26 @@ export const HistoricalProjectInsights = ({
 			</section>
 			<section className="ui-panel p-5 font-rubik">
 				<h2 className="font-coolvetica text-xl">{t("history.project.completeness")}</h2>
-				<p className="mt-2 text-sm">{t("history.project.completenessNote")}</p>
+				<p className="mt-2 text-sm">
+					{t(
+						data.sourceMethod === "organizer-pages"
+							? "history.project.pageCoverageNote"
+							: "history.project.completenessNote",
+					)}
+				</p>
 				<dl className="mt-4 grid gap-4 sm:grid-cols-2">
 					{data.coverage.map(row => (
 						<div key={row.key}>
 							<dt className="text-sm">{t(`history.project.coverage.${row.key}`)}</dt>
 							<dd className="mt-1 text-xl tabular-nums">
-								{row.answeredProjects}/{data.submittedProjects} ·{" "}
-								{percentage(row.answeredProjects, data.submittedProjects, locale)}
+								{row.answeredProjects === null ? (
+									<span className="text-sm">{t("history.project.notAvailable")}</span>
+								) : (
+									<>
+										{row.answeredProjects}/{data.submittedProjects} ·{" "}
+										{percentage(row.answeredProjects, data.submittedProjects, locale)}
+									</>
+								)}
 							</dd>
 						</div>
 					))}
@@ -137,23 +149,33 @@ export const HistoricalProjectInsights = ({
 			<details className="ui-panel p-5 font-rubik text-sm">
 				<summary className="cursor-pointer">{t("history.project.definitions")}</summary>
 				<p className="mt-3">
-					{t("history.project.teamNote", {
-						memberships: data.teamMemberships,
-						people: data.submitters,
-						answered: data.teamSizeAnsweredProjects,
-					})}
+					{t(
+						data.sourceMethod === "organizer-pages"
+							? "history.project.pageTeamNote"
+							: "history.project.teamNote",
+						{
+							memberships: data.teamMemberships,
+							people: data.submitters,
+							answered: data.teamSizeAnsweredProjects,
+						},
+					)}
 				</p>
 				<p className="mt-3">{t("history.project.method")}</p>
 				<p className="mt-3">
-					{t("history.project.source", {
-						date: new Intl.DateTimeFormat(locale, {
-							dateStyle: "medium",
-							timeStyle: "short",
-							timeZone: "America/Toronto",
-						}).format(new Date(data.capturedAt)),
-						requests: data.teamUpRequests,
-						duplicates: data.duplicateExportRows,
-					})}
+					{t(
+						data.sourceMethod === "organizer-pages"
+							? "history.project.pageSource"
+							: "history.project.source",
+						{
+							date: new Intl.DateTimeFormat(locale, {
+								dateStyle: "medium",
+								timeStyle: "short",
+								timeZone: "America/Toronto",
+							}).format(new Date(data.capturedAt)),
+							requests: data.teamUpRequests,
+							duplicates: data.duplicateExportRows,
+						},
+					)}
 				</p>
 			</details>
 		</div>

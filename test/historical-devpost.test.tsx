@@ -159,6 +159,27 @@ void test("project snapshot schema rejects personal fields, small categories and
 	);
 });
 
+void test("organizer-page aggregates distinguish unavailable school coverage from zero answers", () => {
+	const data = fixture();
+	data.sourceMethod = "organizer-pages";
+	data.coverage = data.coverage.map(row => ({
+		...row,
+		answeredProjects: row.key === "teamSchools" ? null : row.answeredProjects,
+	}));
+	assert.ok(projectInsightsSchema.safeParse(data).success);
+	assert.equal(projectInsightsSchema.safeParse({ ...data, sourceMethod: "project-export" }).success, false);
+	assert.equal(
+		projectInsightsSchema.safeParse({
+			...data,
+			coverage: data.coverage.map(row => ({
+				...row,
+				answeredProjects: row.key === "video" ? null : row.answeredProjects,
+			})),
+		}).success,
+		false,
+	);
+});
+
 void test("historical Devpost CLI preserves its sources and refuses to overwrite mode-600 aggregate outputs", () => {
 	const directory = mkdtempSync(path.join(tmpdir(), "hth-historical-devpost-"));
 	try {
@@ -239,6 +260,35 @@ void test("historical Devpost CLI preserves its sources and refuses to overwrite
 			fixture(),
 			"an omitted edition's snapshot is unchanged",
 		);
+		const pageAggregate = {
+			...fixture(),
+			sourceMethod: "organizer-pages" as const,
+			coverage: fixture().coverage.map(row => ({
+				...row,
+				answeredProjects: row.key === "teamSchools" ? null : row.answeredProjects,
+			})),
+		};
+		const pageFile = path.join(directory, "page-aggregate.json");
+		writeFileSync(pageFile, JSON.stringify(pageAggregate), { mode: 0o600 });
+		const pageOutput = path.join(directory, "with-page-aggregate.json");
+		const pageResult = spawnSync(
+			process.execPath,
+			[
+				"--import",
+				"tsx",
+				"scripts/import-historical-devpost.mts",
+				"--snapshot",
+				source,
+				"--output",
+				pageOutput,
+				"--i-aggregate",
+				pageFile,
+			],
+			{ encoding: "utf8" },
+		);
+		assert.equal(pageResult.status, 0, pageResult.stderr);
+		assert.equal(statSync(pageOutput).mode & 0o777, 0o600);
+		assert.match(readFileSync(pageOutput, "utf8"), /"sourceMethod": "organizer-pages"/);
 	} finally {
 		rmSync(directory, { recursive: true, force: true });
 	}
@@ -255,6 +305,11 @@ void test("historical project filters and expanded categories survive a data-onl
 			resources: { [locale]: { translation: z.record(z.unknown()).parse(translation) } },
 		});
 		const data = fixture();
+		data.sourceMethod = "organizer-pages";
+		data.coverage = data.coverage.map(row => ({
+			...row,
+			answeredProjects: row.key === "teamSchools" ? null : row.answeredProjects,
+		}));
 		data.technologies.rows = Array.from({ length: 12 }, (_, index) => ({ label: `Technology ${index}`, value: 5 }));
 		let renderer: ReactTestRenderer | undefined;
 		await act(() => {
@@ -275,6 +330,7 @@ void test("historical project filters and expanded categories survive a data-onl
 		);
 		assert.equal(rendered.root.findAllByType("li").length, 12);
 		assert.doesNotMatch(JSON.stringify(rendered.toJSON()), /history\.project\.|\{\{count\}\}/);
+		assert.ok(JSON.stringify(rendered.toJSON()).includes(i18n.t("history.project.notAvailable")));
 		await act(() =>
 			z
 				.function()

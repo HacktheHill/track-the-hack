@@ -145,6 +145,26 @@ non-PII exports cannot establish attendee-to-project linkage. Organizer totals
 remain separate from SQL application and check-in populations. The comparison
 view adds Devpost participation across all available editions.
 
+When an export is unavailable, organizer project pages may be reviewed through
+the normal authenticated Devpost interface. Reconcile the entire paginated roster
+to public/hidden submitted totals, count visible `Created by` member cards, use
+the displayed technology/prize tags and field presence, and read the draft total
+from the submission filter. Do not treat missing source fields as zero answers.
+For this method, `sourceMethod` is `organizer-pages`, `teamSchools` coverage is
+explicitly null, and the digest identifies the canonical non-identifying page
+observations. Retain only the suppressed, strict-schema aggregate, never names,
+URLs, descriptions or project-level observations. Attach it with:
+
+```sh
+npm run metrics:import-history-devpost -- \
+  --snapshot /absolute/path/to/existing-snapshot.json \
+  --output /absolute/path/to/new-snapshot.json \
+  --i-aggregate /absolute/path/to/reviewed-page-aggregate.json
+```
+
+An aggregate and CSV cannot be supplied for the same edition. The dashboard
+labels page-based team counts and field coverage separately from export counts.
+
 ## Corrected-report coverage checklist
 
 This is an aggregate analysis view, not a verbatim reproduction of the reports.

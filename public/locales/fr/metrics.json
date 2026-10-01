@@ -17,6 +17,10 @@
 	"attendanceLinkageUnavailable": "L’instantané Devpost ne contient aucun agrégat de correspondance avec la présence. Il ne permet pas d’identifier les participants enregistrés qui ont soumis un projet.",
 	"history": {
 		"project": {
+			"notAvailable": "Indisponible dans cette source",
+			"pageCoverageNote": "Champs visibles sur la page d’organisation de chaque projet soumis, sans validation des liens. Les établissements des membres ne sont pas disponibles dans cette source.",
+			"pageTeamNote": "{{memberships}} appartenances visibles pour {{answered}} projets soumis; Devpost indique {{people}} membres d’équipes ayant soumis. Les appartenances ne sont pas des personnes uniques. La taille compte les fiches de membres de la section Created by.",
+			"pageSource": "Totaux d’organisation et pages de tous les projets soumis vérifiés le {{date}} · {{requests}} demandes de formation d’équipe. Le total des brouillons vient du filtre des soumissions; leurs détails sont exclus.",
 			"sourceLabel": "Instantané Devpost · {{date}}",
 			"conversion": "Inscription Devpost → équipe ayant soumis",
 			"conversionCounts": "{{to}} des {{from}} personnes inscrites faisaient partie d’une équipe ayant soumis · {{gap}} sans soumission",

@@ -20,6 +20,7 @@ export const projectCoverageKeys = [
 export const projectInsightsSchema = z
 	.object({
 		kind: z.literal("devpost-project-insights"),
+		sourceMethod: z.enum(["project-export", "organizer-pages"]).optional(),
 		capturedAt: z.string().datetime(),
 		sourceDigest: z.string().regex(/^[a-f0-9]{64}$/),
 		registrants: count,
@@ -38,7 +39,7 @@ export const projectInsightsSchema = z
 			z
 				.object({
 					key: z.enum(projectCoverageKeys),
-					answeredProjects: count,
+					answeredProjects: count.nullable(),
 				})
 				.strict(),
 		),
@@ -77,7 +78,14 @@ export const projectInsightsSchema = z
 		if (
 			value.coverage.length !== projectCoverageKeys.length ||
 			new Set(value.coverage.map(row => row.key)).size !== value.coverage.length ||
-			value.coverage.some(row => row.answeredProjects > value.submittedProjects) ||
+			value.coverage.some(
+				row => row.answeredProjects !== null && row.answeredProjects > value.submittedProjects,
+			) ||
+			value.coverage.some(
+				row =>
+					row.answeredProjects === null &&
+					(value.sourceMethod !== "organizer-pages" || row.key !== "teamSchools"),
+			) ||
 			value.coverage.find(row => row.key === "builtWith")?.answeredProjects !==
 				value.technologies.answeredProjects ||
 			value.coverage.find(row => row.key === "prizeOptIn")?.answeredProjects !== value.prizes.answeredProjects
