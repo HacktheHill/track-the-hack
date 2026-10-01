@@ -1,0 +1,10 @@
+{
+	"$schema": "../node_modules/wrangler/config-schema.json",
+	"name": "hth-iii-private-metrics",
+	"account_id": "9cff4e4fc6be8b966eeae47806117336",
+	"compatibility_date": "2026-10-01",
+	"workers_dev": false,
+	"preview_urls": false,
+	"routes": [{ "pattern": "metrics.hackthehill.com", "custom_domain": true }],
+	"assets": { "directory": "./out", "html_handling": "auto-trailing-slash", "not_found_handling": "404-page" },
+}

@@ -26,6 +26,10 @@
 	},
 	"include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.cjs", "**/*.mjs", "**/*.mts", "**/*.cts", "**/*.js"],
 	"exclude": [
+		"private-metrics/.next",
+		"private-metrics/out",
+		"private-metrics/public",
+		"private-metrics/data",
 		"node_modules",
 		"archive/.next",
 		"archive/out",

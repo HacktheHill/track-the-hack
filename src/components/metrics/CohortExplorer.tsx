@@ -13,7 +13,7 @@ const groups = {
 
 // Native bars keep long labels readable on small screens and avoid chart
 // animations or remounts during background data refreshes.
-export const CountBars = ({ rows }: { rows: Array<{ label: string; value: number }> }) => {
+export const CountBars = ({ rows, total }: { rows: Array<{ label: string; value: number }>; total?: number }) => {
 	const maximum = Math.max(1, ...rows.map(row => row.value));
 	return (
 		<ul className="mt-4 space-y-3 font-rubik">
@@ -21,7 +21,12 @@ export const CountBars = ({ rows }: { rows: Array<{ label: string; value: number
 				<li key={row.label}>
 					<div className="mb-1 flex items-start justify-between gap-4 text-sm">
 						<span className="min-w-0 break-words">{row.label}</span>
-						<span className="shrink-0 tabular-nums">{row.value}</span>
+						<span className="shrink-0 tabular-nums">
+							{row.value}
+							{total !== undefined && total > 0
+								? ` · ${Math.round((row.value / total) * 1000) / 10}%`
+								: ""}
+						</span>
 					</div>
 					<div aria-hidden="true" className="h-2 overflow-hidden rounded bg-gray-200">
 						<div
@@ -118,7 +123,14 @@ export const CohortExplorer = ({ dimensions, t }: { dimensions: Record<string, B
 			</h2>
 			{selected === "acquisitionChannel" && <p className="mt-2 font-rubik text-sm">{t("multiSelectNote")}</p>}
 			{mode === "counts" && (
-				<CountBars rows={visible.map(entry => ({ label: entry.label, value: entry[cohort] }))} />
+				<CountBars
+					rows={visible.map(entry => ({ label: entry.label, value: entry[cohort] }))}
+					total={
+						selected === "acquisitionChannel"
+							? undefined
+							: entries.reduce((sum, entry) => sum + entry[cohort], 0)
+					}
+				/>
 			)}
 			{mode === "counts" && ranked.length === 0 && (
 				<p className="mt-3 font-rubik text-sm">{t("noCategoryCounts")}</p>

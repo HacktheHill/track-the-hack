@@ -28,6 +28,8 @@ jobs:
             - run: node node_modules/playwright-core/cli.js install --with-deps chromium
             - run: npm run build:archive
             - run: npm run test:archive
+            # Build private routes using synthetic data only; never upload them.
+            - run: node --import tsx scripts/check-private-metrics-build.mts
             - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
               with:
                   name: static-event-archive

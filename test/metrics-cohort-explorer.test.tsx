@@ -54,9 +54,9 @@ void test("cohort selection, expanded categories and display survive a data-only
 
 void test("metrics refresh requests data without navigation or replacing the loaded dashboard", () => {
 	const source = readFileSync(new URL("../src/pages/metrics/index.tsx", import.meta.url), "utf8");
-	assert.match(source, /onClick=\{\(\) => void query\.refetch\(\)\}/);
+	assert.match(source, /onRefresh=\{\(\) => void query\.refetch\(\)\}/);
 	assert.match(source, /refetchInterval: 30_000/);
-	assert.match(source, /!data && query\.isLoading/);
+	assert.match(source, /!query\.data && query\.isLoading/);
 	assert.doesNotMatch(source, /location\.|router\.(reload|replace|push)|key=\{query\.dataUpdatedAt/);
 });
 

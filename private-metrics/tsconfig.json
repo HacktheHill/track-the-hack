@@ -1,0 +1,9 @@
+{
+	"extends": "../tsconfig.json",
+	"compilerOptions": {
+		"baseUrl": "..",
+		"paths": { "@/components/App": ["private-metrics/components/App.tsx"], "@/*": ["src/*"], "@root/*": ["*"] }
+	},
+	"include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "next.config.js"],
+	"exclude": ["node_modules", "public", "out", ".next", "data"]
+}

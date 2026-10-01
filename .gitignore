@@ -72,3 +72,10 @@ private-rsvp/
 
 # Event schedules are private operational data, not public source fixtures.
 private-schedule/
+
+# Private analytics snapshots and generated exports must never enter Git.
+private-metrics/data/
+private-metrics/public/
+private-metrics/out/
+private-metrics/.next/
+private-metrics/next-env.d.ts
