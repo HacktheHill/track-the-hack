@@ -37,7 +37,7 @@ export default function ArchiveShell({ children, title, noIndex, integrated, ...
 				<link rel="icon" href="/icons/favicon.svg" />
 				{noIndex && <meta name="robots" content="noindex" />}
 			</NextHead>
-			<div className="flex min-h-screen flex-col bg-default-gradient pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0">
+			<div className="flex min-h-screen flex-col bg-default-gradient pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
 				<nav
 					aria-label={fr ? "Navigation des archives" : "Archive navigation"}
 					className="sticky top-0 z-10 flex items-center gap-3 border-b border-dark-primary-color bg-light-quaternary-color px-4 py-3 shadow-navbar"
@@ -81,12 +81,13 @@ export default function ArchiveShell({ children, title, noIndex, integrated, ...
 				</footer>
 				<nav
 					aria-label={fr ? "Navigation inférieure" : "Bottom navigation"}
-					className="ui-bottom-nav fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 border-t border-dark-primary-color bg-light-quaternary-color md:hidden"
+					className="ui-bottom-nav fixed inset-x-0 bottom-0 z-20 w-full items-center whitespace-nowrap border-t border-dark-primary-color bg-light-quaternary-color md:hidden"
 				>
 					{items.map(([slug, label, icon]) => (
 						<Link
 							key={slug}
-							className="ui-nav-link min-w-0 flex-col gap-1 whitespace-nowrap px-1 text-[11px] text-dark-primary-color sm:text-xs"
+							className="ui-nav-link"
+							aria-label={label}
 							href={`${prefix}/${slug}/`.replace(/\/+/g, "/")}
 							aria-current={
 								unprefixed.replace(/\/$/, "") === (slug ? `/${slug}` : "") ? "page" : undefined
@@ -95,7 +96,6 @@ export default function ArchiveShell({ children, title, noIndex, integrated, ...
 							{/* Reuse the live app's local icons without its image server or auth dependencies. */}
 							{/* eslint-disable-next-line @next/next/no-img-element */}
 							<img src={`/assets/${icon}.svg`} alt="" width="24" height="24" aria-hidden="true" />
-							<span>{label}</span>
 						</Link>
 					))}
 				</nav>

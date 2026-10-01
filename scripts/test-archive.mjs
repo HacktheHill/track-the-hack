@@ -115,7 +115,7 @@ try {
 						viewport.height,
 						"Navigation stays at the viewport bottom",
 					);
-					assert.ok(bottomBounds.height <= 85, "Bottom links fit in one compact row");
+					assert.ok(bottomBounds.height <= 65, "Icon-only navigation matches the compact app bar");
 					assert.equal(
 						await bottomNav.evaluate(element => element.scrollWidth > element.clientWidth),
 						false,
@@ -146,6 +146,14 @@ try {
 							"page",
 					);
 					assert.equal(await bottomNav.getByRole("link").last().getAttribute("aria-current"), "page");
+					assert.equal((await bottomNav.textContent())?.trim(), "", "Match the app's icon-only navigation");
+					assert.equal(
+						await bottomNav
+							.getByRole("link", { name: prefix ? "Statistiques" : "Statistics", exact: true })
+							.count(),
+						1,
+						"Icons retain translated accessible names",
+					);
 					await page.goto(`${origin}${prefix}${view}/`, { waitUntil: "networkidle" });
 				} else {
 					assert.equal(await bottomNav.isVisible(), false);
