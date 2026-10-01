@@ -104,10 +104,41 @@ try {
 				const navBounds = await nav.boundingBox();
 				assert.ok(navBounds, "The navbar must be visible");
 				assert.ok(navBounds.height <= 80, "The navbar must remain a single compact row");
+				if (view === "/sponsors/cgi") {
+					const resourceLink = (viewport.width < 768 ? bottomNav : links).getByRole("link", {
+						name: prefix ? "Ressources" : "Resources",
+						exact: true,
+					});
+					assert.equal(
+						await resourceLink.getAttribute("aria-current"),
+						"page",
+						"Sponsor details belong to Resources",
+					);
+				}
 				if (viewport.width < 768) {
 					assert.equal(await links.isVisible(), false, "Mobile top bar contains only logo and language");
 					assert.equal(await bottomNav.isVisible(), true);
 					assert.equal(await bottomNav.getByRole("link").count(), 4);
+					const tapAreas = await bottomNav.getByRole("link").evaluateAll(elements =>
+						elements.map(element => {
+							const area = element.getBoundingClientRect();
+							const icon = element.querySelector("span")?.getBoundingClientRect();
+							return {
+								width: area.width,
+								height: area.height,
+								iconWidth: icon?.width,
+								iconHeight: icon?.height,
+							};
+						}),
+					);
+					assert.ok(
+						tapAreas.every(area => area.width >= viewport.width / 4 - 4 && area.height >= 44),
+						"Each link fills a quarter of the padded bottom bar",
+					);
+					assert.ok(
+						tapAreas.every(area => area.iconWidth === 44 && area.iconHeight === 44),
+						"Keep the original 44px visual highlight",
+					);
 					const bottomBounds = await bottomNav.boundingBox();
 					assert.ok(bottomBounds);
 					assert.equal(
@@ -138,7 +169,10 @@ try {
 						footerBounds.y + footerBounds.height <= bottomBounds.y,
 						"The bottom bar must not cover the footer",
 					);
-					await bottomNav.getByRole("link").last().click();
+					await bottomNav
+						.getByRole("link")
+						.last()
+						.click({ position: { x: 2, y: 22 } });
 					await page.waitForURL(`${origin}${prefix}/metrics/`);
 					await page.waitForFunction(
 						() =>
@@ -174,11 +208,27 @@ try {
 					await page.getByRole("button", { name: prefix ? "Tout développer" : "Expand all" }).click();
 					assert.equal(await page.locator("details:not([open])").count(), 0);
 				}
-				if (view === "/winners")
+				if (view === "/winners") {
+					assert.equal(
+						await page
+							.getByText(prefix ? "Résultats officiels" : "Official results", { exact: true })
+							.count(),
+						0,
+					);
 					assert.equal(
 						await page.locator("h1").textContent(),
 						prefix ? "Gagnants de Hack the Hill III" : "Hack the Hill III winners",
 					);
+					if (viewport.width < 640) {
+						const heading = await page.locator("h1").boundingBox();
+						const note = await page.getByRole("note").boundingBox();
+						assert.ok(heading && note);
+						assert.ok(
+							heading.y - (note.y + note.height) <= 25,
+							"The compact mobile introduction starts closer to the date strip",
+						);
+					}
+				}
 			}
 		}
 	}

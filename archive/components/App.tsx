@@ -3,6 +3,7 @@ import { useTranslation } from "next-i18next";
 import NextHead from "next/head";
 import { useRouter } from "next/router";
 import Link from "next/link";
+import styles from "./Navigation.module.css";
 
 type Props = HTMLAttributes<HTMLDivElement> & { title?: string; noIndex?: boolean; integrated?: boolean };
 
@@ -21,6 +22,10 @@ export default function ArchiveShell({ children, title, noIndex, integrated, ...
 		["resources", fr ? "Ressources" : "Resources", "resources"],
 		["metrics", fr ? "Statistiques" : "Statistics", "metrics"],
 	];
+	const isCurrent = (slug: string) => {
+		const path = unprefixed.replace(/\/$/, "");
+		return path === (slug ? `/${slug}` : "") || (slug === "resources" && path.startsWith("/sponsors/"));
+	};
 	return (
 		<>
 			<NextHead>
@@ -53,9 +58,7 @@ export default function ArchiveShell({ children, title, noIndex, integrated, ...
 								key={slug}
 								className="ui-nav-link"
 								href={`${prefix}/${slug}/`.replace(/\/+/g, "/")}
-								aria-current={
-									unprefixed.replace(/\/$/, "") === (slug ? `/${slug}` : "") ? "page" : undefined
-								}
+								aria-current={isCurrent(slug) ? "page" : undefined}
 							>
 								{label}
 							</Link>
@@ -86,16 +89,16 @@ export default function ArchiveShell({ children, title, noIndex, integrated, ...
 					{items.map(([slug, label, icon]) => (
 						<Link
 							key={slug}
-							className="ui-nav-link"
+							className={styles.link}
 							aria-label={label}
 							href={`${prefix}/${slug}/`.replace(/\/+/g, "/")}
-							aria-current={
-								unprefixed.replace(/\/$/, "") === (slug ? `/${slug}` : "") ? "page" : undefined
-							}
+							aria-current={isCurrent(slug) ? "page" : undefined}
 						>
 							{/* Reuse the live app's local icons without its image server or auth dependencies. */}
-							{/* eslint-disable-next-line @next/next/no-img-element */}
-							<img src={`/assets/${icon}.svg`} alt="" width="24" height="24" aria-hidden="true" />
+							<span className={styles.icon}>
+								{/* eslint-disable-next-line @next/next/no-img-element */}
+								<img src={`/assets/${icon}.svg`} alt="" width="24" height="24" aria-hidden="true" />
+							</span>
 						</Link>
 					))}
 				</nav>

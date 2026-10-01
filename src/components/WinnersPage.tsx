@@ -239,12 +239,11 @@ const AwardCards = ({ winners }: { winners: AwardWinner[] }) => {
 const Winners: NextPage = () => {
 	const { t } = useTranslation("winners");
 	return (
-		<App title={t("title")} className="overflow-y-auto bg-default-gradient px-4 py-8 sm:px-8">
+		<App title={t("title")} className="overflow-y-auto bg-default-gradient px-4 py-6 sm:px-8 sm:py-8">
 			<div className="mx-auto max-w-7xl">
-				<header className="mb-8 text-center">
-					<p className="mb-2 font-bold tracking-wide text-dark-primary-color">{t("eyebrow")}</p>
+				<header className="mb-6 text-center sm:mb-8">
 					<h1 className="font-coolvetica text-4xl text-highlight-color sm:text-6xl">{t("title")}</h1>
-					<p className="mx-auto mt-4 max-w-2xl text-lg text-dark-color">{t("intro")}</p>
+					<p className="mx-auto mt-3 max-w-2xl text-lg text-dark-color sm:mt-4">{t("intro")}</p>
 				</header>
 				<h2 className="mb-4 text-2xl font-bold text-highlight-color">{t("main-challenges")}</h2>
 				<div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
