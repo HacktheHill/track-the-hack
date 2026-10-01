@@ -137,6 +137,10 @@
 		height: clamp(24rem, 64svh, 39rem);
 	}
 
+	.leaves {
+		left: 35%;
+	}
+
 	.intro {
 		margin-top: 1.5rem;
 		font-size: 1.25rem;
