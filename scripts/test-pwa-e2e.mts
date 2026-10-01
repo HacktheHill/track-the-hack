@@ -27,6 +27,12 @@ const claimResponseSchema = z.object({ claimUrl: z.string().url(), expiresAt: z.
 
 const wait = (milliseconds: number) => new Promise<void>(resolve => setTimeout(resolve, milliseconds));
 
+// Activation precedes clients.claim(). Reloading in that interval replaces the
+// client being claimed and can leave this test waiting on the wrong document.
+const waitForServiceWorkerControl = async (page: Page) => {
+	await page.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
+};
+
 const getOpenPort = () =>
 	new Promise<number>((resolve, reject) => {
 		const server = createServer();
@@ -379,8 +385,7 @@ try {
 		undefined,
 		{ timeout: 20_000 },
 	);
-	if (!(await page.evaluate(() => Boolean(navigator.serviceWorker.controller)))) await page.reload();
-	await page.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
+	await waitForServiceWorkerControl(page);
 
 	for (const locale of [
 		{ prefix: "", event: eventName, floor: /^Floor / },
@@ -525,8 +530,7 @@ try {
 		undefined,
 		{ timeout: 20_000 },
 	);
-	if (!(await judgePage.evaluate(() => Boolean(navigator.serviceWorker.controller)))) await judgePage.reload();
-	await judgePage.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
+	await waitForServiceWorkerControl(judgePage);
 
 	await judgeContext.setOffline(true);
 	await judgePage.reload({ waitUntil: "domcontentloaded" });
@@ -541,17 +545,24 @@ try {
 			"Learning & Technical Decisions",
 			"Presentation",
 		]) {
-			await mainGroup
-				.getByText(new RegExp(`^${criterion}`))
-				.locator("..")
-				.getByRole("button", { name: /^3\b/ })
-				.click();
+			const criterionGroup = mainGroup.getByText(new RegExp(`^${criterion}`)).locator("..");
+			await criterionGroup.getByRole("button", { name: /^3\b/ }).click();
+			// Selection is reflected only after the IndexedDB write completes.
+			await criterionGroup.getByRole("button", { name: /^3\b/, pressed: true }).waitFor();
 		}
 		const fossGroup = judgePage.getByRole("group", { name: "Best FOSS Project" });
 		await fossGroup.getByRole("button", { name: "Eligible", exact: true }).click();
+		await fossGroup.getByRole("button", { name: "Eligible", exact: true, pressed: true }).waitFor();
 		await fossGroup.getByRole("button", { name: "4", exact: true }).click();
+		await fossGroup.getByRole("button", { name: "4", exact: true, pressed: true }).waitFor();
+		await judgePage.getByRole("button", { name: new RegExp(`Table ${tableNumber}.*Complete locally`) }).waitFor();
 	}
-	await judgePage.getByText("Complete locally").first().waitFor();
+	// Reconnecting triggers next-pwa's online reload. Prove both projects have
+	// durable local scores first, rather than waiting for only the first project.
+	await judgePage.reload({ waitUntil: "domcontentloaded" });
+	for (const tableNumber of [999, 1000]) {
+		await judgePage.getByRole("button", { name: new RegExp(`Table ${tableNumber}.*Complete locally`) }).waitFor();
+	}
 	const beforeSync = await prisma.judgingAssignment.findMany({
 		where: { id: { in: judgeAssignments.map(assignment => assignment.id) } },
 	});
