@@ -27,6 +27,10 @@
 	"include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.cjs", "**/*.mjs", "**/*.mts", "**/*.cts", "**/*.js"],
 	"exclude": [
 		"node_modules",
+		"archive/.next",
+		"archive/out",
+		"archive/public",
+		"archive/hosting-assets/sw.js",
 		"private-rsvp",
 		"public/sw.js",
 		"public/sw.js.map",
