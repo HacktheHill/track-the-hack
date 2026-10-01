@@ -95,7 +95,9 @@ try {
 				const nav = page.getByRole("navigation");
 				const toggle = nav.locator('button[aria-controls="archive-nav-links"]');
 				const links = nav.locator("#archive-nav-links");
-				assert.ok((await nav.boundingBox()).height <= 80, "The navbar must remain a single compact row");
+				const navBounds = await nav.boundingBox();
+				assert.ok(navBounds, "The navbar must be visible");
+				assert.ok(navBounds.height <= 80, "The navbar must remain a single compact row");
 				if (viewport.width < 768) {
 					assert.equal(await links.isVisible(), false, "Mobile links start collapsed");
 					await toggle.click();
