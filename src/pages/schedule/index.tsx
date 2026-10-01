@@ -126,6 +126,35 @@ const Schedule: NextPage = () => {
 	}, [displayed, view, todayKey]);
 	const active = displayed.filter(event => event.start.getTime() <= now && event.end.getTime() > now);
 	const next = displayed.find(event => event.start.getTime() > now);
+
+	// ⚡ Bolt: Memoize expensive array operations to prevent O(n) recalculations on every re-render.
+	// This reduces rendering lag, especially since sorting and grouping logic is non-trivial.
+	const processedDays = useMemo(() => {
+		return days.map(day => {
+			const earlier: ScheduleEvent[] =
+				view === "all" && day.key === todayKey
+					? [...day.ongoing, ...day.events]
+							.filter(event => event.end.getTime() <= now)
+							.sort((a, b) => a.start.getTime() - b.start.getTime())
+					: [];
+			const currentEvents = day.events.filter(
+				event => view === "mine" || day.key !== todayKey || event.end.getTime() > now,
+			);
+			const groups = groupScheduleEvents(currentEvents);
+			const markerIndex =
+				day.key === todayKey && next && scheduleDayKey(next.start) === day.key
+					? groups.findIndex(group => group.events.some(event => event.id === next.id))
+					: -1;
+
+			return {
+				...day,
+				earlier,
+				groups,
+				markerIndex
+			};
+		});
+	}, [days, view, todayKey, now, next]);
+
 	const jumpToNow = () => {
 		const current = active.find(event => scheduleDayKey(event.start) === todayKey) ?? active[0];
 		if (current) {
@@ -303,21 +332,8 @@ const Schedule: NextPage = () => {
 									)}
 								</p>
 							)}
-							{days.map(day => {
-								const earlier: ScheduleEvent[] =
-									view === "all" && day.key === todayKey
-										? [...day.ongoing, ...day.events]
-												.filter(event => event.end.getTime() <= now)
-												.sort((a, b) => a.start.getTime() - b.start.getTime())
-										: [];
-								const currentEvents = day.events.filter(
-									event => view === "mine" || day.key !== todayKey || event.end.getTime() > now,
-								);
-								const groups = groupScheduleEvents(currentEvents);
-								const markerIndex =
-									day.key === todayKey && next && scheduleDayKey(next.start) === day.key
-										? groups.findIndex(group => group.events.some(event => event.id === next.id))
-										: -1;
+							{processedDays.map(day => {
+								const { earlier, groups, markerIndex } = day;
 								return (
 									<section key={day.key} data-day={day.key} className="min-w-0">
 										<h2 className="mb-3 font-coolvetica text-2xl text-dark-color">
