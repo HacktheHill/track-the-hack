@@ -5,6 +5,7 @@ import type { DashboardData } from "@root/private-metrics/snapshot";
 import { CountBars } from "./CohortExplorer";
 import styles from "@/pages/metrics/Metrics.module.css";
 import { shirtSizeOrder } from "@root/private-metrics/operations";
+import { ProjectEditionComparison } from "./HistoricalProjectInsights";
 
 type Translate = ReturnType<typeof useTranslation>["t"];
 const source = "https://github.com/HacktheHill/prev-hackathon-analysis/tree/main/corrected_version";
@@ -429,5 +430,18 @@ export const EditionComparison = ({
 				<p className="mt-4 font-rubik text-sm">{t("history.iii.turnoutNote")}</p>
 			</section>
 		</div>
+		{history.editions.some(edition => edition.devpost) && (
+			<ProjectEditionComparison
+				t={t}
+				editions={[
+					...history.editions.flatMap(edition =>
+						edition.devpost ? [{ label: `HTH ${edition.id.toUpperCase()}`, data: edition.devpost }] : [],
+					),
+					...(current.externalMetrics.devpost
+						? [{ label: "HTH III", data: current.externalMetrics.devpost.payload }]
+						: []),
+				]}
+			/>
+		)}
 	</section>
 );

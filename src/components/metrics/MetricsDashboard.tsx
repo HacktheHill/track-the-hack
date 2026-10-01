@@ -7,6 +7,7 @@ import Loading from "@/components/Loading";
 import { CohortExplorer, CountBars } from "@/components/metrics/CohortExplorer";
 import { AnswerCoverage } from "@/components/metrics/AnswerCoverage";
 import { HistoricalMetrics, EditionComparison } from "@/components/metrics/HistoricalMetrics";
+import { HistoricalProjectInsights } from "@/components/metrics/HistoricalProjectInsights";
 import type { HistoricalArchive } from "@root/private-metrics/history";
 import { operationalEvents, shirtSizeOrder } from "@root/private-metrics/operations";
 import type { DashboardData } from "@root/private-metrics/snapshot";
@@ -63,7 +64,14 @@ export const MetricsDashboard = ({
 						<h1 className="ui-page-title">{t("title")}</h1>
 						<p className="mt-2 font-rubik text-sm text-dark-color">
 							{selectedEdition
-								? t(`history.${selectedEdition.id}.sourceLabel`)
+								? view === "projects" && selectedEdition.devpost
+									? t("history.project.sourceLabel", {
+											date: new Intl.DateTimeFormat(i18n.language, {
+												dateStyle: "medium",
+												timeZone: "America/Toronto",
+											}).format(new Date(selectedEdition.devpost.capturedAt)),
+										})
+									: t(`history.${selectedEdition.id}.sourceLabel`)
 								: archived
 									? t("archivedSnapshot", {
 											date: new Intl.DateTimeFormat(i18n.language, {
@@ -86,7 +94,14 @@ export const MetricsDashboard = ({
 							<select
 								className="rounded border border-gray-400 bg-white p-2"
 								value={edition}
-								onChange={event => setEdition(event.target.value)}
+								onChange={event => {
+									setEdition(event.target.value);
+									if (
+										view === "projects" &&
+										!history.editions.find(item => item.id === event.target.value)?.devpost
+									)
+										setView("insights");
+								}}
 							>
 								<option value="iii">Hack the Hill III</option>
 								{history.editions.map(item => (
@@ -107,13 +122,34 @@ export const MetricsDashboard = ({
 					hidden={edition === "comparison"}
 					style={edition === "comparison" ? { display: "none" } : undefined}
 				>
-					{["overview", "cohorts", "operations", "quality", ...(archived ? ["insights"] : [])].map(key => (
+					{[
+						"overview",
+						"cohorts",
+						"operations",
+						"quality",
+						...(archived ? ["insights"] : []),
+						...(selectedEdition?.devpost ? ["projects"] : []),
+					].map(key => (
 						<button key={key} type="button" aria-pressed={view === key} onClick={() => setView(key)}>
-							{t(selectedEdition && key === "insights" ? "history.insightsLabel" : `view.${key}`)}
+							{t(
+								key === "projects"
+									? "view.insights"
+									: selectedEdition && key === "insights"
+										? "history.insightsLabel"
+										: `view.${key}`,
+							)}
 						</button>
 					))}
 				</nav>
 				{selectedEdition && <HistoricalMetrics edition={selectedEdition} view={view} t={t} />}
+				{selectedEdition?.devpost && view === "projects" && (
+					<HistoricalProjectInsights
+						key={selectedEdition.id}
+						data={selectedEdition.devpost}
+						t={t}
+						locale={i18n.language}
+					/>
+				)}
 				{edition === "comparison" && history && data && (
 					<EditionComparison history={history} current={data} t={t} />
 				)}
