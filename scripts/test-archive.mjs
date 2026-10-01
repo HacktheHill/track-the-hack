@@ -77,7 +77,9 @@ try {
 	});
 	for (const viewport of [
 		{ width: 1440, height: 900 },
+		{ width: 768, height: 1024 },
 		{ width: 390, height: 844 },
+		{ width: 320, height: 720 },
 	]) {
 		await page.setViewportSize(viewport);
 		for (const prefix of ["", "/fr"]) {
@@ -90,6 +92,107 @@ try {
 					await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth),
 					false,
 				);
+				const nav = page.getByRole("navigation", {
+					name: prefix ? "Navigation des archives" : "Archive navigation",
+					exact: true,
+				});
+				const bottomNav = page.getByRole("navigation", {
+					name: prefix ? "Navigation inférieure" : "Bottom navigation",
+					exact: true,
+				});
+				const links = nav.locator("#archive-nav-links");
+				const navBounds = await nav.boundingBox();
+				assert.ok(navBounds, "The navbar must be visible");
+				assert.ok(navBounds.height <= 80, "The navbar must remain a single compact row");
+				if (view === "/sponsors/cgi") {
+					const resourceLink = (viewport.width < 768 ? bottomNav : links).getByRole("link", {
+						name: prefix ? "Ressources" : "Resources",
+						exact: true,
+					});
+					assert.equal(
+						await resourceLink.getAttribute("aria-current"),
+						"page",
+						"Sponsor details belong to Resources",
+					);
+				}
+				if (viewport.width < 768) {
+					assert.equal(await links.isVisible(), false, "Mobile top bar contains only logo and language");
+					assert.equal(await bottomNav.isVisible(), true);
+					assert.equal(await bottomNav.getByRole("link").count(), 4);
+					const tapAreas = await bottomNav.getByRole("link").evaluateAll(elements =>
+						elements.map(element => {
+							const area = element.getBoundingClientRect();
+							const icon = element.querySelector("span")?.getBoundingClientRect();
+							return {
+								width: area.width,
+								height: area.height,
+								iconWidth: icon?.width,
+								iconHeight: icon?.height,
+							};
+						}),
+					);
+					assert.ok(
+						tapAreas.every(area => area.width >= viewport.width / 4 - 4 && area.height >= 44),
+						"Each link fills a quarter of the padded bottom bar",
+					);
+					assert.ok(
+						tapAreas.every(area => area.iconWidth === 44 && area.iconHeight === 44),
+						"Keep the original 44px visual highlight",
+					);
+					const bottomBounds = await bottomNav.boundingBox();
+					assert.ok(bottomBounds);
+					assert.equal(
+						Math.round(bottomBounds.y + bottomBounds.height),
+						viewport.height,
+						"Navigation stays at the viewport bottom",
+					);
+					assert.ok(bottomBounds.height <= 65, "Icon-only navigation matches the compact app bar");
+					assert.equal(
+						await bottomNav.evaluate(element => element.scrollWidth > element.clientWidth),
+						false,
+						"No sideways scrolling, including French labels",
+					);
+					assert.equal(
+						await bottomNav
+							.locator("a")
+							.evaluateAll(elements =>
+								elements.some(element => element.scrollWidth > element.clientWidth),
+							),
+						false,
+						"No clipped labels",
+					);
+					await page.locator("footer").scrollIntoViewIfNeeded();
+					await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+					const footerBounds = await page.locator("footer").boundingBox();
+					assert.ok(footerBounds);
+					assert.ok(
+						footerBounds.y + footerBounds.height <= bottomBounds.y,
+						"The bottom bar must not cover the footer",
+					);
+					await bottomNav
+						.getByRole("link")
+						.last()
+						.click({ position: { x: 2, y: 22 } });
+					await page.waitForURL(`${origin}${prefix}/metrics/`);
+					await page.waitForFunction(
+						() =>
+							document.querySelector(".ui-bottom-nav a:last-child")?.getAttribute("aria-current") ===
+							"page",
+					);
+					assert.equal(await bottomNav.getByRole("link").last().getAttribute("aria-current"), "page");
+					assert.equal((await bottomNav.textContent())?.trim(), "", "Match the app's icon-only navigation");
+					assert.equal(
+						await bottomNav
+							.getByRole("link", { name: prefix ? "Statistiques" : "Statistics", exact: true })
+							.count(),
+						1,
+						"Icons retain translated accessible names",
+					);
+					await page.goto(`${origin}${prefix}${view}/`, { waitUntil: "networkidle" });
+				} else {
+					assert.equal(await bottomNav.isVisible(), false);
+					assert.equal(await links.isVisible(), true, "Desktop links stay visible");
+				}
 				const brokenImages = await page.locator("img").evaluateAll(async images => {
 					const elements = images.filter(image => image instanceof HTMLImageElement);
 					await Promise.all(
@@ -105,21 +208,43 @@ try {
 					await page.getByRole("button", { name: prefix ? "Tout développer" : "Expand all" }).click();
 					assert.equal(await page.locator("details:not([open])").count(), 0);
 				}
-				if (view === "/winners")
+				if (view === "/winners") {
+					assert.equal(
+						await page
+							.getByText(prefix ? "Résultats officiels" : "Official results", { exact: true })
+							.count(),
+						0,
+					);
 					assert.equal(
 						await page.locator("h1").textContent(),
 						prefix ? "Gagnants de Hack the Hill III" : "Hack the Hill III winners",
 					);
+					if (viewport.width < 640) {
+						const heading = await page.locator("h1").boundingBox();
+						const note = await page.getByRole("note").boundingBox();
+						assert.ok(heading && note);
+						assert.ok(
+							heading.y - (note.y + note.height) <= 25,
+							"The compact mobile introduction starts closer to the date strip",
+						);
+					}
+				}
 			}
 		}
 	}
+	await page.setViewportSize({ width: 390, height: 844 });
+	await page.goto(`${origin}/winners/`, { waitUntil: "networkidle" });
+	await page.screenshot({ path: "/tmp/track-archive-navbar-mobile.png" });
+	await page.setViewportSize({ width: 320, height: 720 });
+	await page.goto(`${origin}/fr/winners/`, { waitUntil: "networkidle" });
+	await page.screenshot({ path: "/tmp/track-archive-navbar-mobile-fr.png" });
 	await page.goto(`${origin}/resources/`);
 	await page.getByRole("link", { name: "FR", exact: true }).click();
 	await page.waitForURL("**/fr/resources/");
 	assert.equal(await page.locator("h1").textContent(), "Ressources pour Hack the Hill III");
 	await page.getByRole("link", { name: "CGI", exact: true }).click();
 	await page.waitForURL("**/fr/sponsors/cgi/");
-	assert.ok((await page.locator("nav").textContent())?.includes("Gagnants"));
+	assert.ok((await page.locator("#archive-nav-links").textContent())?.includes("Gagnants"));
 	const download = await context.request.get(`${origin}/assets/resources/cgi/Northwind_Challenge_Data.zip`);
 	assert.equal(download.status(), 200);
 	assert.ok((await download.body()).length > 100);
