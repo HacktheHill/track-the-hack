@@ -47,6 +47,15 @@ Keep detailed demographic/cohort/operational analysis in a separately reviewed r
 
 For Cloudflare Pages, use `npm run build:archive` and output directory `archive/out`. The output contains `_headers` with a static-compatible security policy. Other hosts need equivalent headers. Serve directory indexes and an actual 404 for missing paths. Verify downloads and both language routes with direct navigation as well as client navigation.
 
+The separate `track-the-hack-archive` Pages project is a Direct Upload project, with `main` reserved as its production branch. Deploy a review build to a non-production branch without attaching the tracker hostname:
+
+```sh
+npx wrangler pages deploy archive/out --project-name track-the-hack-archive --branch archive-preview
+ARCHIVE_TEST_ORIGIN=https://deployment-id.track-the-hack-archive.pages.dev node scripts/test-archive.mjs
+```
+
+Use the actual deployment URL printed by Wrangler, with no trailing slash. Hosted checks cover the same public pages, languages, mobile/desktop layouts, local assets, downloads and private-route 404s, plus persisted security headers and the cache-retirement worker. The old-worker migration simulation remains a local test because it requires replacing server responses. Direct Upload is deliberate: it does not alter the live Azure deployment workflow and does not imply automatic deployment on a Git push.
+
 No automatic production cutover or Azure shutdown is part of this build:
 
 1. Deploy to a separate static preview and run the browser checks/visual review before changing the existing tracker route.

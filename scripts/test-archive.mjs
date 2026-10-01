@@ -6,6 +6,9 @@ import { fileURLToPath } from "node:url";
 import { chromium } from "playwright-core";
 
 const root = path.resolve(fileURLToPath(new URL("../archive/out/", import.meta.url)));
+const remoteOrigin = process.env.ARCHIVE_TEST_ORIGIN;
+if (remoteOrigin && (new URL(remoteOrigin).origin !== remoteOrigin || !remoteOrigin.startsWith("https://")))
+	throw new Error("ARCHIVE_TEST_ORIGIN must be an HTTPS origin without a trailing slash or path");
 /** @type {Record<string, string>} */
 const types = {
 	".html": "text/html",
@@ -48,10 +51,10 @@ async function serve(req, res) {
 	}
 }
 
-await new Promise(resolve => server.listen(0, "127.0.0.1", () => resolve(undefined)));
+if (!remoteOrigin) await new Promise(resolve => server.listen(0, "127.0.0.1", () => resolve(undefined)));
 const address = server.address();
-if (!address || typeof address === "string") throw new Error("Static test server did not start");
-const origin = `http://127.0.0.1:${address.port}`;
+if (!remoteOrigin && (!address || typeof address === "string")) throw new Error("Static test server did not start");
+const origin = remoteOrigin ?? `http://127.0.0.1:${typeof address === "object" ? address?.port : 0}`;
 const browser = await chromium.launch();
 try {
 	const context = await browser.newContext();
@@ -126,53 +129,66 @@ try {
 	for (const route of ["/api/auth/session", "/internal/", "/profile/", "/pass/", "/judging/"]) {
 		assert.equal((await context.request.get(`${origin}${route}`)).status(), 404);
 	}
+	if (remoteOrigin) {
+		const document = await context.request.get(`${origin}/winners/`);
+		assert.match(document.headers()["content-security-policy"] ?? "", /default-src 'self'/);
+		assert.equal(document.headers()["x-content-type-options"], "nosniff");
+		assert.equal(document.headers()["x-frame-options"], "DENY");
+		const worker = await context.request.get(`${origin}/sw.js`);
+		assert.equal(worker.status(), 200);
+		assert.match(worker.headers()["cache-control"] ?? "", /no-store/);
+		assert.match(await worker.text(), /unregister/);
+	}
 	await context.close();
 
 	// Exercise replacing an existing live PWA worker, not just a fresh visit.
-	oldWorker = true;
-	const legacyContext = await browser.newContext();
-	const legacy = await legacyContext.newPage();
-	await legacy.goto(`${origin}/`);
-	await legacy.evaluate(async () => {
-		await navigator.serviceWorker.register("/sw.js");
-		await navigator.serviceWorker.ready;
-		const cache = await caches.open("live-app-stale-pages");
-		await cache.put(
-			"/winners/",
-			new Response("<h1>Stale live app</h1>", { headers: { "Content-Type": "text/html" } }),
+	// This needs a mutable local server; never substitute a worker on a real host.
+	if (!remoteOrigin) {
+		oldWorker = true;
+		const legacyContext = await browser.newContext();
+		const legacy = await legacyContext.newPage();
+		await legacy.goto(`${origin}/`);
+		await legacy.evaluate(async () => {
+			await navigator.serviceWorker.register("/sw.js");
+			await navigator.serviceWorker.ready;
+			const cache = await caches.open("live-app-stale-pages");
+			await cache.put(
+				"/winners/",
+				new Response("<h1>Stale live app</h1>", { headers: { "Content-Type": "text/html" } }),
+			);
+		});
+		await legacy.goto(`${origin}/winners/`);
+		assert.equal(await legacy.locator("h1").textContent(), "Stale live app");
+		oldWorker = false;
+		await legacy.evaluate(async () => {
+			await (await navigator.serviceWorker.getRegistration())?.update();
+		});
+		await legacy.waitForFunction(
+			async () =>
+				(await caches.keys()).length === 0 && (await navigator.serviceWorker.getRegistrations()).length === 0,
 		);
-	});
-	await legacy.goto(`${origin}/winners/`);
-	assert.equal(await legacy.locator("h1").textContent(), "Stale live app");
-	oldWorker = false;
-	await legacy.evaluate(async () => {
-		await (await navigator.serviceWorker.getRegistration())?.update();
-	});
-	await legacy.waitForFunction(
-		async () =>
-			(await caches.keys()).length === 0 && (await navigator.serviceWorker.getRegistrations()).length === 0,
-	);
-	await legacy.goto(`${origin}/winners/`, { waitUntil: "networkidle" });
-	assert.equal(await legacy.locator("h1").textContent(), "Hack the Hill III winners");
-	await legacy.setViewportSize({ width: 1440, height: 900 });
-	await legacy.locator("img").evaluateAll(async images => {
-		await Promise.all(
-			images.map(async image => {
-				if (image instanceof HTMLImageElement) {
-					image.loading = "eager";
-					await image.decode();
-				}
-			}),
-		);
-	});
-	await legacy.screenshot({ path: "/tmp/track-archive-winners.png", fullPage: true });
-	await legacyContext.close();
+		await legacy.goto(`${origin}/winners/`, { waitUntil: "networkidle" });
+		assert.equal(await legacy.locator("h1").textContent(), "Hack the Hill III winners");
+		await legacy.setViewportSize({ width: 1440, height: 900 });
+		await legacy.locator("img").evaluateAll(async images => {
+			await Promise.all(
+				images.map(async image => {
+					if (image instanceof HTMLImageElement) {
+						image.loading = "eager";
+						await image.decode();
+					}
+				}),
+			);
+		});
+		await legacy.screenshot({ path: "/tmp/track-archive-winners.png", fullPage: true });
+		await legacyContext.close();
+	}
 	const files = await readdir(root, { recursive: true });
 	assert.ok(!files.some(file => file.startsWith("api/") || file.includes("workbox-")));
 	console.log(
-		"Archive browser checks passed: EN/FR, desktop/mobile, sponsor navigation, downloads, backend isolation, private-route exclusion, and live PWA cache retirement.",
+		`Archive browser checks passed at ${origin}: EN/FR, desktop/mobile, sponsor navigation, downloads, backend isolation, private-route exclusion, ${remoteOrigin ? "host security headers and replacement worker" : "and live PWA cache retirement"}.`,
 	);
 } finally {
 	await browser.close();
-	await new Promise(resolve => server.close(resolve));
+	if (!remoteOrigin) await new Promise(resolve => server.close(resolve));
 }
