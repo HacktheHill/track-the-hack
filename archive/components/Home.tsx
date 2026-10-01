@@ -13,8 +13,8 @@ function Artwork({
 	height: number;
 	className?: string;
 }) {
-	// Static local SVGs: no image service or backend is needed by the archive.
 	return (
+		// Static local SVGs need no image server or backend.
 		// eslint-disable-next-line @next/next/no-img-element
 		<img
 			src={`/assets/hero/${name}.svg`}
@@ -30,49 +30,31 @@ function Artwork({
 
 export default function ArchiveHome({ locale }: { locale: "en" | "fr" }) {
 	const fr = locale === "fr";
-	const prefix = fr ? "/fr" : "";
 	return (
-		<App title="Hack the Hill III" className={styles.main}>
+		<App title="Hack the Hill III" className={styles.main} home>
 			<section className={styles.hero} aria-labelledby="archive-home-title">
 				<div className={styles.content}>
-					<div className={styles.brand}>
-						<div className={styles.leaves} aria-hidden="true">
-							<Artwork name="leaves" width={1440} height={913} />
-						</div>
-						<h1 id="archive-home-title" className={styles.wordmark}>
-							<span className="sr-only">Hack the Hill III</span>
-							<Artwork name="hack" width={521} height={207} />
-							<span className={styles.secondLine}>
-								<Artwork name="the" width={412} height={201} />
-								<Artwork name="hill" width={290} height={228} />
-							</span>
-						</h1>
-						<Artwork name="building" width={359} height={896} className={styles.building} />
-					</div>
-					<p className={styles.intro}>
-						{fr
-							? "Découvrez les projets et les moments forts de "
-							: "Explore the projects and highlights from "}
-						<span className="whitespace-nowrap">Hack the Hill III.</span>
+					<p className={styles.dates}>
+						{fr ? "Du 25 au 27 septembre 2026 à Ottawa, Canada" : "Sept. 25–27, 2026 in Ottawa, Canada"}
 					</p>
+					<h1 id="archive-home-title" className={styles.wordmark}>
+						<span className="sr-only">Hack the Hill III</span>
+						<Artwork name="hack" width={521} height={207} />
+						<Artwork name="the" width={412} height={201} />
+						<Artwork name="hill" width={290} height={228} />
+					</h1>
 					<div className={styles.actions}>
 						<Link
-							href={`${prefix}/winners/`}
+							href={`${fr ? "/fr" : ""}/winners/`}
 							className="ui-button ui-button-primary px-6 py-3 text-lg"
 							data-archive-action="winners"
 						>
 							{fr ? "Voir les gagnants" : "View winners"}
 						</Link>
-						<div className={styles.secondary}>
-							<Link href={`${prefix}/resources/`} data-archive-action="resources">
-								{fr ? "Ressources" : "Resources"}
-							</Link>
-							<Link href={`${prefix}/metrics/`} data-archive-action="metrics">
-								{fr ? "Statistiques" : "Statistics"}
-							</Link>
-						</div>
 					</div>
 				</div>
+				<Artwork name="leaves" width={1440} height={913} className={styles.leaves} />
+				<Artwork name="building" width={359} height={896} className={styles.building} />
 			</section>
 		</App>
 	);

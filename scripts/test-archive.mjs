@@ -162,14 +162,16 @@ try {
 						false,
 						"No clipped labels",
 					);
-					await page.locator("footer").scrollIntoViewIfNeeded();
-					await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-					const footerBounds = await page.locator("footer").boundingBox();
-					assert.ok(footerBounds);
-					assert.ok(
-						footerBounds.y + footerBounds.height <= bottomBounds.y,
-						"The bottom bar must not cover the footer",
-					);
+					if (view !== "") {
+						await page.locator("footer").scrollIntoViewIfNeeded();
+						await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+						const footerBounds = await page.locator("footer").boundingBox();
+						assert.ok(footerBounds);
+						assert.ok(
+							footerBounds.y + footerBounds.height <= bottomBounds.y,
+							"The bottom bar must not cover the footer",
+						);
+					}
 					await bottomNav
 						.getByRole("link")
 						.last()
@@ -217,32 +219,32 @@ try {
 						"Reuse all five original SVG assets",
 					);
 					const scene = await page.locator('main img[src="/assets/hero/leaves.svg"]').evaluate(image => {
-						const leaves = image.parentElement?.getBoundingClientRect();
-						const intro = document.querySelector("main section p")?.getBoundingClientRect();
+						const leaves = image.getBoundingClientRect();
+						const tower = document
+							.querySelector('main img[src="/assets/hero/building.svg"]')
+							?.getBoundingClientRect();
+						const hero = image.parentElement?.getBoundingClientRect();
 						return {
-							leavesLeft: leaves?.left,
-							leavesBottom: leaves?.bottom,
-							introRight: intro?.right,
-							introTop: intro?.top,
+							leavesWidth: leaves.width,
+							towerHeight: tower?.height,
+							heroHeight: hero?.height,
 						};
 					});
+					assert.equal(scene.leavesWidth, viewport.width, "Leaves span the original full-width scene");
 					assert.ok(
-						typeof scene.leavesLeft === "number" &&
-							typeof scene.leavesBottom === "number" &&
-							typeof scene.introRight === "number" &&
-							typeof scene.introTop === "number",
+						typeof scene.towerHeight === "number" &&
+							typeof scene.heroHeight === "number" &&
+							scene.towerHeight >= scene.heroHeight * 0.85,
+						"The tower retains the original immersive scale",
 					);
-					assert.ok(
-						viewport.width >= 768
-							? scene.leavesLeft >= scene.introRight
-							: scene.leavesBottom <= scene.introTop,
-						"Decorative leaves must not overlap the introduction or its actions",
-					);
+					assert.equal(await page.locator("footer, [role=note]").count(), 0, "No extra homepage chrome");
+					const winnerAction = page.locator('main [data-archive-action="winners"]');
+					await winnerAction.click({ trial: true });
 					await page.screenshot({
 						path: `/tmp/track-archive-home-${viewport.width}-${prefix ? "fr" : "en"}.png`,
 						fullPage: true,
 					});
-					for (const destination of ["winners", "resources", "metrics"]) {
+					for (const destination of ["winners"]) {
 						const action = page.locator(`main [data-archive-action="${destination}"]`);
 						assert.equal(await action.getAttribute("href"), `${prefix}/${destination}/`);
 						await action.click();

@@ -5,9 +5,14 @@ import { useRouter } from "next/router";
 import Link from "next/link";
 import styles from "./Navigation.module.css";
 
-type Props = HTMLAttributes<HTMLDivElement> & { title?: string; noIndex?: boolean; integrated?: boolean };
+type Props = HTMLAttributes<HTMLDivElement> & {
+	title?: string;
+	noIndex?: boolean;
+	integrated?: boolean;
+	home?: boolean;
+};
 
-export default function ArchiveShell({ children, title, noIndex, integrated, ...rest }: Props) {
+export default function ArchiveShell({ children, title, noIndex, integrated, home, ...rest }: Props) {
 	void integrated;
 	const { i18n } = useTranslation();
 	const fr = i18n.language === "fr";
@@ -68,20 +73,24 @@ export default function ArchiveShell({ children, title, noIndex, integrated, ...
 						{fr ? "EN" : "FR"}
 					</a>
 				</nav>
-				<p
-					role="note"
-					className="border-b border-dark-primary-color/20 bg-white/30 px-4 py-3 text-center text-sm"
-				>
-					{fr ? "Hack the Hill III · 25–27 septembre 2026" : "Hack the Hill III · September 25–27, 2026"}
-				</p>
+				{!home && (
+					<p
+						role="note"
+						className="border-b border-dark-primary-color/20 bg-white/30 px-4 py-3 text-center text-sm"
+					>
+						{fr ? "Hack the Hill III · 25–27 septembre 2026" : "Hack the Hill III · September 25–27, 2026"}
+					</p>
+				)}
 				<main {...rest} className={`min-w-0 flex-1 ${rest.className ?? ""}`}>
 					{children}
 				</main>
-				<footer className="p-6 text-center">
-					<a className="underline" href="https://hackthehill.com">
-						hackthehill.com
-					</a>
-				</footer>
+				{!home && (
+					<footer className="p-6 text-center">
+						<a className="underline" href="https://hackthehill.com">
+							hackthehill.com
+						</a>
+					</footer>
+				)}
 				<nav
 					aria-label={fr ? "Navigation inférieure" : "Bottom navigation"}
 					className="ui-bottom-nav fixed inset-x-0 bottom-0 z-20 w-full items-center whitespace-nowrap border-t border-dark-primary-color bg-light-quaternary-color md:hidden"
