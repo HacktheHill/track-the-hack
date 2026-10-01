@@ -56,6 +56,7 @@ export default function HardwareDesk() {
 				<section>
 					<h2 className="mb-3 font-coolvetica text-2xl">{t("inventory")}</h2>
 					<input
+						type="search"
 						className="ui-field mb-3 w-full"
 						aria-label={t("search")}
 						placeholder={t("search")}

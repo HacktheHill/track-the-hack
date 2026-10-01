@@ -470,7 +470,7 @@ try {
 		await page.getByRole("link", { name: "CGI" }).waitFor();
 
 		await visit(page, `${locale.prefix}/sponsors/cgi`);
-		await page.getByRole("heading", { name: "CGI", exact: true }).waitFor();
+		await waitForOfflineContent(page, `${locale.prefix}/sponsors/cgi`, page.getByRole("heading", { name: "CGI", exact: true }));
 
 		const profilePath = `${locale.prefix}/profile`;
 		await visit(page, profilePath);
