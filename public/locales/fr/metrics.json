@@ -149,7 +149,7 @@
 	"devpostApplicationMatches": "Personnes inscrites sur Devpost liées à une candidature",
 	"devpostUnmatchedRegistrants": "Personnes inscrites sur Devpost sans correspondance exacte de courriel",
 	"devpostMatchedSubmitters": "Candidatures rapprochées associées à une équipe ayant soumis",
-	"devpostProjectImportGap": "Projets Devpost publics absents de la liste de jugement",
+	"devpostProjectImportGap": "Écart entre les nombres de projets Devpost et du jury",
 	"uniqueAttendance": "Participants uniques par événement",
 	"uniqueAttendanceDescription": "Chaque personne est comptée au plus une fois par événement.",
 	"recordedUnits": "Unités enregistrées par événement",

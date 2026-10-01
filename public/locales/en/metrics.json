@@ -149,7 +149,7 @@
 	"devpostApplicationMatches": "Devpost registrants matched to an application",
 	"devpostUnmatchedRegistrants": "Devpost registrants without an exact application email match",
 	"devpostMatchedSubmitters": "Matched application identities on a submitted team",
-	"devpostProjectImportGap": "Public Devpost projects missing from the judging roster",
+	"devpostProjectImportGap": "Devpost–judging project count difference",
 	"uniqueAttendance": "Unique participants by event",
 	"uniqueAttendanceDescription": "Each participant is counted at most once per event.",
 	"recordedUnits": "Recorded units by event",
