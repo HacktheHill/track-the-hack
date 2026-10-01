@@ -13,16 +13,25 @@ const groups = {
 
 // Native bars keep long labels readable on small screens and avoid chart
 // animations or remounts during background data refreshes.
-export const CountBars = ({ rows, total }: { rows: Array<{ label: string; value: number }>; total?: number }) => {
+export const CountBars = ({
+	rows,
+	total,
+	suffix = "",
+}: {
+	rows: Array<{ label: string; value: number }>;
+	total?: number;
+	suffix?: string;
+}) => {
 	const maximum = Math.max(1, ...rows.map(row => row.value));
 	return (
 		<ul className="mt-4 space-y-3 font-rubik">
-			{rows.map(row => (
-				<li key={row.label}>
+			{rows.map((row, index) => (
+				<li key={`${row.label}-${index}`}>
 					<div className="mb-1 flex items-start justify-between gap-4 text-sm">
 						<span className="min-w-0 break-words">{row.label}</span>
 						<span className="shrink-0 tabular-nums">
 							{row.value}
+							{suffix}
 							{total !== undefined && total > 0
 								? ` · ${Math.round((row.value / total) * 1000) / 10}%`
 								: ""}
@@ -51,7 +60,9 @@ export const CohortExplorer = ({ dimensions, t }: { dimensions: Record<string, B
 		(a, b) => b[cohort] - a[cohort] || a.label.localeCompare(b.label),
 	);
 	const coverage = entries.filter(entry => ["Not provided", "Other / suppressed"].includes(entry.label));
-	const ranked = entries.filter(entry => !coverage.includes(entry) && entry[cohort] > 0);
+	const ranked = entries.filter(
+		entry => !coverage.includes(entry) && (mode === "comparison" ? entry.applicants > 0 : entry[cohort] > 0),
+	);
 	const visible = showAll ? ranked : ranked.slice(0, 10);
 	const rate = (from: number, to: number, label: string) =>
 		from < 5 || label === "Other / suppressed" ? "—" : `${Math.round((to / from) * 1000) / 10}% (${to}/${from})`;
@@ -65,6 +76,7 @@ export const CohortExplorer = ({ dimensions, t }: { dimensions: Record<string, B
 						value={selected}
 						onChange={event => {
 							setDimension(event.target.value);
+							if (event.target.value === "acquisitionChannel" && mode === "comparison") setMode("counts");
 							setShowAll(false);
 						}}
 					>
@@ -93,6 +105,7 @@ export const CohortExplorer = ({ dimensions, t }: { dimensions: Record<string, B
 					<select
 						className="rounded border border-gray-400 bg-white p-2"
 						value={cohort}
+						disabled={mode === "comparison"}
 						onChange={event => {
 							const value = event.target.value;
 							const selectedCohort = cohorts.find(key => key === value);
@@ -115,11 +128,12 @@ export const CohortExplorer = ({ dimensions, t }: { dimensions: Record<string, B
 					>
 						<option value="counts">{t("countView")}</option>
 						<option value="conversion">{t("conversionView")}</option>
+						{selected !== "acquisitionChannel" && <option value="comparison">{t("comparisonView")}</option>}
 					</select>
 				</label>
 			</div>
 			<h2 className="mt-5 font-coolvetica text-xl">
-				{t(`dimension.${selected}`)} · {t(`cohort.${cohort}`)}
+				{t(`dimension.${selected}`)} · {t(mode === "comparison" ? "comparisonView" : `cohort.${cohort}`)}
 			</h2>
 			{selected === "acquisitionChannel" && <p className="mt-2 font-rubik text-sm">{t("multiSelectNote")}</p>}
 			{mode === "counts" && (
@@ -132,6 +146,16 @@ export const CohortExplorer = ({ dimensions, t }: { dimensions: Record<string, B
 					}
 				/>
 			)}
+			{mode === "comparison" && selected !== "acquisitionChannel" && (
+				<ComparisonBars
+					rows={visible}
+					totals={{
+						applicants: entries.reduce((sum, row) => sum + row.applicants, 0),
+						attended: entries.reduce((sum, row) => sum + row.attended, 0),
+					}}
+					t={t}
+				/>
+			)}
 			{mode === "counts" && ranked.length === 0 && (
 				<p className="mt-3 font-rubik text-sm">{t("noCategoryCounts")}</p>
 			)}
@@ -140,18 +164,22 @@ export const CohortExplorer = ({ dimensions, t }: { dimensions: Record<string, B
 					<h3 className="font-medium">{t("answerCoverage")}</h3>
 					<dl className="mt-2 flex flex-wrap gap-x-6 gap-y-2">
 						{coverage.map(entry => (
-							<div key={entry.label} className="flex gap-2">
+							<div key={entry.label} className="flex flex-wrap gap-x-2">
 								<dt>
 									{t(entry.label === "Not provided" ? "notProvidedCategory" : "suppressedCategory")}
 								</dt>
-								<dd className="tabular-nums">{entry[cohort]}</dd>
+								<dd className="tabular-nums">
+									{mode === "comparison"
+										? `${t("cohort.applicants")}: ${entry.applicants} · ${t("cohort.attended")}: ${entry.attended}`
+										: entry[cohort]}
+								</dd>
 							</div>
 						))}
 					</dl>
 				</aside>
 			)}
 			{mode === "conversion" && <p className="mt-3 font-rubik text-sm">{t("cohortConversionNote")}</p>}
-			{mode === "counts" && ranked.length > 10 && (
+			{mode !== "conversion" && ranked.length > 10 && (
 				<button type="button" className="ui-button mt-4" onClick={() => setShowAll(!showAll)}>
 					{t(showAll ? "showTop" : "showAll", { count: ranked.length })}
 				</button>
@@ -166,7 +194,7 @@ export const CohortExplorer = ({ dimensions, t }: { dimensions: Record<string, B
 						<thead>
 							<tr>
 								<th className="p-3">{t("categoryLabel")}</th>
-								{(mode === "counts"
+								{(mode !== "conversion"
 									? cohorts.map(key => t(`cohort.${key}`))
 									: [t("applicationToAccepted"), t("acceptedToConfirmed"), t("acceptedToAttended")]
 								).map(label => (
@@ -182,7 +210,7 @@ export const CohortExplorer = ({ dimensions, t }: { dimensions: Record<string, B
 									<th scope="row" className="min-w-[12rem] p-3 font-normal">
 										{entry.label}
 									</th>
-									{(mode === "counts"
+									{(mode !== "conversion"
 										? cohorts.map(key => entry[key])
 										: [
 												rate(entry.applicants, entry.accepted, entry.label),
@@ -203,3 +231,50 @@ export const CohortExplorer = ({ dimensions, t }: { dimensions: Record<string, B
 		</section>
 	);
 };
+
+export const ComparisonBars = ({
+	rows,
+	totals,
+	t,
+}: {
+	rows: Breakdown[];
+	totals: { applicants: number; attended: number };
+	t: Translate;
+}) => (
+	<div className="mt-4 font-rubik text-sm">
+		<p>{t("comparisonNote")}</p>
+		<div className="mt-2 flex flex-wrap gap-4">
+			<span className="text-orange-800">
+				{t("cohort.applicants")} · n={totals.applicants}
+			</span>
+			<span className="text-teal-800">
+				{t("cohort.attended")} · n={totals.attended}
+			</span>
+		</div>
+		<ul className="mt-4 space-y-5">
+			{rows.map(row => (
+				<li key={row.label}>
+					<p className="mb-2 break-words font-medium">{row.label}</p>
+					{(["applicants", "attended"] as const).map(cohort => {
+						const share =
+							totals[cohort] > 0 ? Math.round((row[cohort] / totals[cohort]) * 1000) / 10 : null;
+						return (
+							<div key={cohort} className="mb-1 flex items-center gap-3">
+								<span className="w-28 shrink-0 text-xs">{t(`cohort.${cohort}`)}</span>
+								<div aria-hidden className="h-2 flex-1 rounded bg-gray-200">
+									<div
+										className={`h-full rounded ${cohort === "applicants" ? "bg-orange-600" : "bg-teal-700"}`}
+										style={{ width: `${share ?? 0}%` }}
+									/>
+								</div>
+								<span className="w-24 shrink-0 text-right tabular-nums">
+									{row[cohort]} · {share === null ? "—" : `${share}%`}
+								</span>
+							</div>
+						);
+					})}
+				</li>
+			))}
+		</ul>
+	</div>
+);

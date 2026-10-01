@@ -2,6 +2,41 @@ import type { ArchiveDashboard } from "@root/private-metrics/snapshot";
 export const privateMetricsFixture: ArchiveDashboard = {
 	formatVersion: 1,
 	capturedAt: "2026-10-01T12:00:00.000Z",
+	history: {
+		formatVersion: 1,
+		editions: (["i", "ii"] as const).map(id => ({
+			id,
+			year: id === "i" ? 2023 : 2024,
+			sourceDigest: "0".repeat(64),
+			populations: {
+				registrations: 20,
+				preEvent: 18,
+				walkIns: 2,
+				identities: id === "i" ? 19 : null,
+				checkIn: 7,
+				anyScan: 8,
+			},
+			funnel: [{ key: "applications" as const, value: 18, unit: "rows" as const }],
+			turnout: { from: 8, to: 5, reconstructed: id === "i" },
+			dimensions: [
+				{
+					key: "school",
+					section: "cohorts" as const,
+					total: 20,
+					missing: 0,
+					multiSelect: false,
+					rows: [
+						{ label: "Fixture school", value: 10 },
+						{ label: "Other / suppressed", value: 10 },
+					],
+				},
+			],
+			events: [],
+			stats: [],
+			quality: [],
+			mealBounds: [],
+		})),
+	},
 	metrics: {
 		provisioned: 10,
 		confirmed: 8,

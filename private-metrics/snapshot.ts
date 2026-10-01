@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { MealCategory, TShirtSize } from "@prisma/client";
+import { historicalArchiveSchema } from "./history";
 import {
 	sheetMetricsSnapshotSchema,
 	communicationsMetricsSnapshotSchema,
@@ -24,6 +25,7 @@ export const archiveDashboardSchema = z
 	.object({
 		formatVersion: z.literal(1),
 		capturedAt: z.string().datetime(),
+		history: historicalArchiveSchema.optional(),
 		metrics: z
 			.object({
 				provisioned: count,
@@ -45,6 +47,9 @@ export const archiveDashboardSchema = z
 						.object({
 							eventId: z.string(),
 							label: z.string(),
+							labelFr: z.string().optional(),
+							start: z.string().datetime().optional(),
+							group: z.string().optional(),
 							uniqueParticipants: count,
 							recordedUnits: count,
 						})

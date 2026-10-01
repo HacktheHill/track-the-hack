@@ -40,5 +40,7 @@ export default function PrivateMetricsPage({ snapshot }: { snapshot: ArchiveDash
 				: null,
 		},
 	};
-	return <MetricsDashboard data={data} updatedAt={Date.parse(snapshot.capturedAt)} archived />;
+	return (
+		<MetricsDashboard data={data} updatedAt={Date.parse(snapshot.capturedAt)} history={snapshot.history} archived />
+	);
 }

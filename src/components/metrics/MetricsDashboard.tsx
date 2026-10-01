@@ -5,8 +5,11 @@ import App from "@/components/App";
 import Error from "@/components/Error";
 import Loading from "@/components/Loading";
 import { CohortExplorer, CountBars } from "@/components/metrics/CohortExplorer";
+import { AnswerCoverage } from "@/components/metrics/AnswerCoverage";
+import { HistoricalMetrics, EditionComparison } from "@/components/metrics/HistoricalMetrics";
+import type { HistoricalArchive } from "@root/private-metrics/history";
+import { operationalEvents, shirtSizeOrder } from "@root/private-metrics/operations";
 import type { DashboardData } from "@root/private-metrics/snapshot";
-import { answerCoverage } from "@root/private-metrics/coverage";
 import styles from "@/pages/metrics/Metrics.module.css";
 
 export const MetricsDashboard = ({
@@ -17,6 +20,7 @@ export const MetricsDashboard = ({
 	failed = false,
 	onRefresh,
 	archived = false,
+	history,
 }: {
 	data?: DashboardData;
 	updatedAt: number;
@@ -25,9 +29,12 @@ export const MetricsDashboard = ({
 	failed?: boolean;
 	onRefresh?: () => void;
 	archived?: boolean;
+	history?: HistoricalArchive;
 }) => {
 	const { t, i18n } = useTranslation("metrics");
 	const [view, setView] = useState("overview");
+	const [edition, setEdition] = useState("iii");
+	const selectedEdition = history?.editions.find(item => item.id === edition);
 	const lastUpdated = updatedAt
 		? new Intl.DateTimeFormat(i18n.language, { hour: "numeric", minute: "2-digit" }).format(new Date(updatedAt))
 		: null;
@@ -55,15 +62,17 @@ export const MetricsDashboard = ({
 					<div>
 						<h1 className="ui-page-title">{t("title")}</h1>
 						<p className="mt-2 font-rubik text-sm text-dark-color">
-							{archived
-								? t("archivedSnapshot", {
-										date: new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium" }).format(
-											new Date(updatedAt),
-										),
-									})
-								: lastUpdated
-									? t("lastUpdated", { time: lastUpdated })
-									: t("notUpdated")}
+							{selectedEdition
+								? t(`history.${selectedEdition.id}.sourceLabel`)
+								: archived
+									? t("archivedSnapshot", {
+											date: new Intl.DateTimeFormat(i18n.language, {
+												dateStyle: "medium",
+											}).format(new Date(updatedAt)),
+										})
+									: lastUpdated
+										? t("lastUpdated", { time: lastUpdated })
+										: t("notUpdated")}
 						</p>
 					</div>
 					{onRefresh && (
@@ -71,17 +80,44 @@ export const MetricsDashboard = ({
 							{fetching ? t("refreshing") : t("refresh")}
 						</button>
 					)}
+					{archived && history && (
+						<label className="flex flex-col gap-1 font-rubik text-sm">
+							{t("history.editionLabel")}
+							<select
+								className="rounded border border-gray-400 bg-white p-2"
+								value={edition}
+								onChange={event => setEdition(event.target.value)}
+							>
+								<option value="iii">Hack the Hill III</option>
+								{history.editions.map(item => (
+									<option key={item.id} value={item.id}>
+										Hack the Hill {item.id.toUpperCase()} · {item.year}
+									</option>
+								))}
+								<option value="comparison">{t("history.comparison")}</option>
+							</select>
+						</label>
+					)}
 				</div>
 				{!data && loading && <Loading />}
 				{failed && <Error message={t(data ? "refreshFailed" : "common:temporarily-unavailable")} />}
-				<nav className={styles.tabs} aria-label={t("viewsLabel")}>
+				<nav
+					className={styles.tabs}
+					aria-label={t("viewsLabel")}
+					hidden={edition === "comparison"}
+					style={edition === "comparison" ? { display: "none" } : undefined}
+				>
 					{["overview", "cohorts", "operations", "quality", ...(archived ? ["insights"] : [])].map(key => (
 						<button key={key} type="button" aria-pressed={view === key} onClick={() => setView(key)}>
-							{t(`view.${key}`)}
+							{t(selectedEdition && key === "insights" ? "history.insightsLabel" : `view.${key}`)}
 						</button>
 					))}
 				</nav>
-				{data && (
+				{selectedEdition && <HistoricalMetrics edition={selectedEdition} view={view} t={t} />}
+				{edition === "comparison" && history && data && (
+					<EditionComparison history={history} current={data} t={t} />
+				)}
+				{data && edition === "iii" && (
 					<>
 						<div
 							hidden={view !== "overview"}
@@ -157,53 +193,27 @@ export const MetricsDashboard = ({
 							style={view !== "quality" ? { display: "none" } : undefined}
 							className="flex flex-col gap-8"
 						>
-							<DataQuality quality={data.dataQuality} t={t} />
+							<DataQuality
+								quality={data.dataQuality}
+								uniqueApplicationEmails={devpostSnapshot?.payload.linkage?.uniqueApplicationEmails}
+								t={t}
+							/>
 							{archived && sheetSnapshot && (
+								<AnswerCoverage
+									dimensions={sheetSnapshot.payload.dimensions}
+									total={sheetSnapshot.payload.cohorts.applicants}
+									t={t}
+								/>
+							)}
+							{!archived && (
 								<section className="ui-panel p-5">
-									<h2 className="font-coolvetica text-xl">{t("coverageByDimension")}</h2>
-									<p className="mt-2 font-rubik text-sm">{t("coverageByDimensionNote")}</p>
-									<div className="mt-4 overflow-x-auto">
-										<table className="w-full text-left font-rubik text-sm">
-											<thead>
-												<tr>
-													{[
-														"dimensionLabel",
-														"notProvidedCategory",
-														"suppressedCategory",
-														"answerRate",
-													].map(key => (
-														<th key={key} className="p-3">
-															{t(key)}
-														</th>
-													))}
-												</tr>
-											</thead>
-											<tbody>
-												{Object.entries(sheetSnapshot.payload.dimensions).map(([key, rows]) => {
-													const { missing, suppressed, rate } = answerCoverage(
-														rows,
-														sheetSnapshot.payload.cohorts.applicants,
-													);
-													return (
-														<tr key={key} className="border-t border-gray-200">
-															<th className="p-3 font-normal" scope="row">
-																{t(`dimension.${key}`)}
-															</th>
-															<td className="p-3">{missing ?? "—"}</td>
-															<td className="p-3">{suppressed}</td>
-															<td className="p-3">{rate}</td>
-														</tr>
-													);
-												})}
-											</tbody>
-										</table>
-									</div>
+									<QualityMetric
+										label={t("judgingRosterProjects")}
+										value={data.funnel.devpostProjects}
+									/>
+									<p className="mt-2 font-rubik text-sm">{t("devpostProjectsDescription")}</p>
 								</section>
 							)}
-							<section className="ui-panel p-5">
-								<QualityMetric label={t("judgingRosterProjects")} value={data.funnel.devpostProjects} />
-								<p className="mt-2 font-rubik text-sm">{t("devpostProjectsDescription")}</p>
-							</section>
 							<AttendanceIntegrity integrity={data.attendanceIntegrity} t={t} />
 							<section className="ui-panel p-5">
 								<h2 className="font-coolvetica text-xl">{t("sourceFreshness")}</h2>
@@ -240,14 +250,8 @@ export const MetricsDashboard = ({
 									/>
 								))}
 							</div>
-							<div className="grid gap-8 lg:grid-cols-2">
-								<OperationalChart
-									title={t("uniqueAttendance")}
-									description={t("uniqueAttendanceDescription")}
-									data={data.attendanceData}
-									x="label"
-									y="uniqueParticipants"
-								/>
+							<EventOperations data={data} locale={i18n.language} t={t} />
+							<div className="grid items-start gap-6 lg:grid-cols-2">
 								<OperationalChart
 									title={t("eventEngagement")}
 									description={t("eventEngagementDescription")}
@@ -257,6 +261,8 @@ export const MetricsDashboard = ({
 									}))}
 									x="label"
 									y="participants"
+									total={data.checkedIn}
+									population={t("checkedIn")}
 								/>
 								<OperationalChart
 									title={t("mealCategory")}
@@ -264,19 +270,25 @@ export const MetricsDashboard = ({
 									data={data.mealCategoryData}
 									x="mealCategory"
 									y="_count.mealCategory"
+									total={data.provisioned}
+									population={t("provisioned")}
 								/>
 								<OperationalChart
 									title={t("tShirtSize")}
 									description={t("tShirtSizeDescription")}
-									data={data.tShirtSizeData.map(entry => ({
-										...entry,
-										tShirtSize:
-											entry.tShirtSize === TShirtSize.NONE
-												? t("common:no-t-shirt")
-												: entry.tShirtSize,
-									}))}
+									data={[...data.tShirtSizeData]
+										.sort((a, b) => shirtSizeOrder(a.tShirtSize) - shirtSizeOrder(b.tShirtSize))
+										.map(entry => ({
+											...entry,
+											tShirtSize:
+												entry.tShirtSize === TShirtSize.NONE
+													? t("common:no-t-shirt")
+													: entry.tShirtSize,
+										}))}
 									x="tShirtSize"
 									y="_count.tShirtSize"
+									total={data.provisioned}
+									population={t("provisioned")}
 								/>
 							</div>
 							<details className="ui-panel p-5">
@@ -287,8 +299,8 @@ export const MetricsDashboard = ({
 								<OperationalChart
 									title={t("recordedUnits")}
 									description={t("recordedUnitsDescription")}
-									data={data.attendanceData}
-									x="label"
+									data={operationalEvents(data.attendanceData, i18n.language)}
+									x="displayLabel"
 									y="recordedUnits"
 								/>
 							</details>
@@ -319,6 +331,24 @@ const ArchiveInsights = ({ data, t }: { data: DashboardData; t: ReturnType<typeo
 	return (
 		<div className="flex flex-col gap-6">
 			<section className="ui-panel p-5">
+				<h2 className="font-coolvetica text-xl">{t("keyFindings")}</h2>
+				<ul className="mt-3 list-disc space-y-2 pl-5 font-rubik text-sm">
+					<li>
+						{t("findingConfirmed", {
+							count: data.attendanceOutcomes.confirmedAttended,
+							total: data.confirmed,
+							unmatched: data.attendanceOutcomes.attendedWithoutConfirmation,
+						})}
+					</li>
+					<li>
+						{t("findingLinkage", {
+							count: data.dataQuality.sheetUnlinkedRows ?? "—",
+							total: data.dataQuality.sheetRows ?? "—",
+						})}
+					</li>
+				</ul>
+			</section>
+			<section className="ui-panel p-5">
 				<h2 className="font-coolvetica text-2xl">{t("projectLinkageTitle")}</h2>
 				<p className="mt-2 font-rubik text-sm">{t("projectLinkageNote")}</p>
 				{linkage && (
@@ -341,15 +371,17 @@ const ArchiveInsights = ({ data, t }: { data: DashboardData; t: ReturnType<typeo
 										linkage.matchedAttended ?? "—",
 										linkage.matchedAttendedSubmitters ?? "—",
 									],
-								].map(([label, registered, submitted]) => (
-									<tr key={label} className="border-t border-gray-200">
-										<th scope="row" className="p-3 font-normal">
-											{label}
-										</th>
-										<td className="p-3 tabular-nums">{registered}</td>
-										<td className="p-3 tabular-nums">{submitted}</td>
-									</tr>
-								))}
+								]
+									.filter(([, registered, submitted]) => registered !== "—" || submitted !== "—")
+									.map(([label, registered, submitted]) => (
+										<tr key={label} className="border-t border-gray-200">
+											<th scope="row" className="p-3 font-normal">
+												{label}
+											</th>
+											<td className="p-3 tabular-nums">{registered}</td>
+											<td className="p-3 tabular-nums">{submitted}</td>
+										</tr>
+									))}
 							</tbody>
 						</table>
 					</div>
@@ -359,18 +391,6 @@ const ArchiveInsights = ({ data, t }: { data: DashboardData; t: ReturnType<typeo
 			<section>
 				<h2 className="font-coolvetica text-2xl">{t("projectPipeline")}</h2>
 				<div className="mt-4 grid gap-4 sm:grid-cols-2">
-					<MetricCard
-						title={t("submittedToPublicProject")}
-						value={
-							data.conversions.devpost.submittedToPublicProject.rate === null
-								? "—"
-								: `${Math.round(data.conversions.devpost.submittedToPublicProject.rate * 1000) / 10}%`
-						}
-						description={t("publicProjectShare", {
-							public: data.funnel.devpostPublicProjects,
-							submitted: data.funnel.devpostSubmittedProjects,
-						})}
-					/>
 					<MetricCard
 						title={t("judgingRosterProjects")}
 						value={data.funnel.devpostProjects}
@@ -383,23 +403,22 @@ const ArchiveInsights = ({ data, t }: { data: DashboardData; t: ReturnType<typeo
 				<p className="mt-3 font-rubik text-sm">{t("projectPipelineNote")}</p>
 				<dl className="mt-4 grid gap-4 sm:grid-cols-2">
 					<QualityMetric label={t("teamUpRequests")} value={devpost?.teamUpRequests ?? null} />
-					<QualityMetric
-						label={t("uniqueApplicationEmails")}
-						value={linkage?.uniqueApplicationEmails ?? null}
-					/>
 				</dl>
 			</section>
-			<section className="ui-panel p-5">
-				<h2 className="font-coolvetica text-xl">{t("analysisGuide")}</h2>
+			<details className="ui-panel p-5">
+				<summary className="cursor-pointer font-rubik">{t("analysisGuide")}</summary>
 				<p className="mt-3 font-rubik text-sm">{t("analysisGuideNote")}</p>
 				<p className="mt-3 font-rubik text-sm">{t("analysisUnavailable")}</p>
+				{linkage?.matchedAttended === undefined && (
+					<p className="mt-3 font-rubik text-sm">{t("attendanceLinkageUnavailable")}</p>
+				)}
 				<a
 					className="mt-3 inline-block font-rubik text-sm underline"
 					href="https://github.com/HacktheHill/prev-hackathon-analysis/tree/main/corrected_version"
 				>
 					{t("correctedAnalysis")}
 				</a>
-			</section>
+			</details>
 		</div>
 	);
 };
@@ -491,6 +510,7 @@ const DevpostSection = ({ data, t }: { data: DashboardData; t: ReturnType<typeof
 
 const DataQuality = ({
 	quality,
+	uniqueApplicationEmails,
 	t,
 }: {
 	quality: {
@@ -503,6 +523,7 @@ const DataQuality = ({
 		devpostMatchedSubmitters: number | null;
 		devpostProjectImportGap: number | null;
 	};
+	uniqueApplicationEmails?: number;
 	t: ReturnType<typeof useTranslation>["t"];
 }) => (
 	<section className="ui-panel p-5">
@@ -524,6 +545,9 @@ const DataQuality = ({
 				}
 			/>
 			<QualityMetric label={t("sheetUnlinkedRows")} value={quality.sheetUnlinkedRows} />
+			{uniqueApplicationEmails !== undefined && (
+				<QualityMetric label={t("uniqueApplicationEmails")} value={uniqueApplicationEmails} />
+			)}
 			<QualityMetric
 				label={t("duplicateApplicationRows")}
 				value={quality.duplicateApplicationRows}
@@ -622,24 +646,101 @@ const OperationalChart = ({
 	data,
 	x,
 	y,
+	total,
+	population,
 }: {
 	title: string;
 	description: string;
 	data: object[];
 	x: string;
 	y: string;
+	total?: number;
+	population?: string;
 }) => (
 	<section className="ui-panel p-4">
 		<h2 className="font-coolvetica text-xl">{title}</h2>
 		<p className="mt-1 font-rubik text-sm text-dark-color">{description}</p>
+		{total !== undefined && (
+			<p className="mt-2 font-rubik text-sm font-medium">
+				{population} · n={total}
+			</p>
+		)}
 		<CountBars
 			rows={data.map(entry => ({
 				label: String(readChartValue(entry, x)),
 				value: Number(readChartValue(entry, y)),
 			}))}
+			total={total}
 		/>
 	</section>
 );
+
+const EventOperations = ({
+	data,
+	locale,
+	t,
+}: {
+	data: DashboardData;
+	locale: string;
+	t: ReturnType<typeof useTranslation>["t"];
+}) => {
+	const events = operationalEvents(data.attendanceData, locale);
+	return (
+		<section className="flex flex-col gap-5">
+			<h2 className="font-coolvetica text-2xl">{t("uniqueAttendance")}</h2>
+			{events.some(event => event.missingSessionDate) && (
+				<p className="font-rubik text-sm">{t("sessionLabelsNote")}</p>
+			)}
+			{["food", "workshops", "activities"].map(group => {
+				const rows = events.filter(event => event.displayGroup === group);
+				return rows.length ? (
+					<section className="ui-panel p-5" key={group}>
+						<h3 className="font-coolvetica text-xl">{t(`operationsGroup.${group}`)}</h3>
+						<p className="mt-2 font-rubik text-sm">{t("eventPopulationNote")}</p>
+						<div className="mt-3 overflow-x-auto">
+							<table className="w-full text-left font-rubik text-sm">
+								<thead>
+									<tr>
+										{(group === "food"
+											? ["eventLabel", "history.people", "recordedUnits", "history.perPerson"]
+											: ["eventLabel", "history.people"]
+										).map(key => (
+											<th className="p-3" key={key}>
+												{t(key)}
+											</th>
+										))}
+									</tr>
+								</thead>
+								<tbody>
+									{rows.map(event => (
+										<tr key={event.eventId} className="border-t border-gray-200">
+											<th scope="row" className="min-w-48 p-3 font-normal">
+												{event.displayLabel}
+											</th>
+											<td className="p-3 tabular-nums">{event.uniqueParticipants}</td>
+											{group === "food" && (
+												<>
+													<td className="p-3 tabular-nums">{event.recordedUnits}</td>
+													<td className="p-3 tabular-nums">
+														{event.uniqueParticipants
+															? (event.recordedUnits / event.uniqueParticipants).toFixed(
+																	2,
+																)
+															: "—"}
+													</td>
+												</>
+											)}
+										</tr>
+									))}
+								</tbody>
+							</table>
+						</div>
+					</section>
+				) : null;
+			})}
+		</section>
+	);
+};
 
 const readChartValue = (entry: object, path: string): unknown =>
 	path

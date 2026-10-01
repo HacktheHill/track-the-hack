@@ -60,6 +60,41 @@ void test("metrics refresh requests data without navigation or replacing the loa
 	assert.doesNotMatch(source, /location\.|router\.(reload|replace|push)|key=\{query\.dataUpdatedAt/);
 });
 
+void test("paired cohort comparison keeps separate population denominators and falls back for overlapping channels", async t => {
+	const i18n = i18next.createInstance();
+	await i18n.init({ lng: "en", resources: { en: { translation: {} } } });
+	const dimensions = {
+		school: [
+			{ label: "School A", applicants: 20, accepted: 10, confirmed: 5, attended: 5 },
+			{ label: "School B", applicants: 80, accepted: 30, confirmed: 10, attended: 5 },
+		],
+		acquisitionChannel: [{ label: "Friends", applicants: 70, accepted: 40, confirmed: 20, attended: 10 }],
+	};
+	let renderer: ReactTestRenderer | undefined;
+	await act(() => {
+		renderer = create(createElement(CohortExplorer, { dimensions, t: i18n.t }));
+	});
+	assert.ok(renderer);
+	const rendered = renderer;
+	t.after(() => rendered.unmount());
+	const change = (index: number, value: string) =>
+		z
+			.function()
+			.args(z.object({ target: z.object({ value: z.string() }) }))
+			.returns(z.void())
+			.parse(rendered.root.findAllByType("select")[index]?.props.onChange)({ target: { value } });
+	await act(() => change(2, "comparison"));
+	assert.ok(rendered.root.findByType("h2").children.includes("comparisonView"));
+	assert.ok(JSON.stringify(rendered.toJSON()).includes("20%"));
+	assert.ok(JSON.stringify(rendered.toJSON()).includes("50%"));
+	await act(() =>
+		rendered.update(createElement(CohortExplorer, { dimensions: structuredClone(dimensions), t: i18n.t })),
+	);
+	assert.equal(rendered.root.findAllByType("select")[2]?.props.value, "comparison");
+	await act(() => change(0, "acquisitionChannel"));
+	assert.equal(rendered.root.findAllByType("select")[2]?.props.value, "counts");
+});
+
 void test("cohort charts separate answer coverage and omit zeros without losing exact counts", async t => {
 	const i18n = i18next.createInstance();
 	await i18n.init({ lng: "en", resources: { en: { translation: {} } } });
