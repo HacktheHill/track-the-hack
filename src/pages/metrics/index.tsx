@@ -3,16 +3,18 @@ import type { GetServerSideProps } from "next";
 import { getServerSession } from "next-auth";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
-import { Bar, BarChart, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { useState } from "react";
 import App from "@/components/App";
 import Error from "@/components/Error";
 import Loading from "@/components/Loading";
+import { CohortExplorer, CountBars } from "@/components/metrics/CohortExplorer";
 import { trpc, type RouterOutputs } from "@/server/api/api";
 import { organizerRedirect } from "@/server/lib/redirects";
 import { getAuthOptions } from "@/pages/api/auth/[...nextauth]";
 
 const Metrics = () => {
 	const { t, i18n } = useTranslation("metrics");
+	const [view, setView] = useState("overview");
 	const query = trpc.metrics.getMetrics.useQuery(undefined, { refetchInterval: 30_000 });
 	const { data } = query;
 	const lastUpdated = query.dataUpdatedAt
@@ -24,10 +26,7 @@ const Metrics = () => {
 		data &&
 		([
 			["provisioned", data.provisioned, "provisionedDescription"],
-			["confirmed", data.confirmed, "confirmedDescription"],
-			["checkedIn", data.checkedIn, "checkedInDescription"],
 			["walkIn", data.walkIn, "walkInDescription"],
-			["presences", data.presences, "presencesDescription"],
 		] as const);
 	const funnel =
 		data &&
@@ -59,118 +58,190 @@ const Metrics = () => {
 						{query.isFetching ? t("refreshing") : t("refresh")}
 					</button>
 				</div>
-				{query.isLoading && <Loading />}
-				{query.isError && <Error message={t("common:temporarily-unavailable")} />}
-				<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-					{totals?.map(([key, value, descriptionKey]) => (
-						<MetricCard key={key} title={t(key)} value={value} description={t(descriptionKey)} />
+				{!data && query.isLoading && <Loading />}
+				{query.isError && <Error message={t(data ? "refreshFailed" : "common:temporarily-unavailable")} />}
+				<nav className="flex flex-wrap gap-2" aria-label={t("viewsLabel")}>
+					{["overview", "cohorts", "operations", "quality"].map(key => (
+						<button
+							key={key}
+							type="button"
+							className={`ui-button ${view === key ? "ring-2 ring-orange-700" : ""}`}
+							aria-pressed={view === key}
+							onClick={() => setView(key)}
+						>
+							{t(`view.${key}`)}
+						</button>
 					))}
-				</div>
+				</nav>
 				{data && (
 					<>
-						<section>
-							<h2 className="font-coolvetica text-2xl">{t("funnelTitle")}</h2>
-							<p className="mt-1 font-rubik text-sm text-dark-color">{t("funnelDescription")}</p>
-							<div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-								{funnel?.map(([key, value, descriptionKey]) => (
+						<div
+							hidden={view !== "overview"}
+							style={view !== "overview" ? { display: "none" } : undefined}
+							className="flex flex-col gap-8"
+						>
+							<section>
+								<h2 className="font-coolvetica text-2xl">{t("funnelTitle")}</h2>
+								<p className="mt-1 font-rubik text-sm text-dark-color">{t("funnelDescription")}</p>
+								<div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+									{funnel?.map(([key, value, descriptionKey]) => (
+										<MetricCard
+											key={key}
+											title={t(key)}
+											value={value ?? t("unavailable")}
+											description={t(descriptionKey)}
+										/>
+									))}
+								</div>
+								<div className="mt-4 grid gap-4 lg:grid-cols-3">
+									<ConversionCard
+										title={t("applicationToAccepted")}
+										conversion={data.conversions.participation.applicationToAccepted}
+										t={t}
+									/>
+									<ConversionCard
+										title={t("acceptedToConfirmed")}
+										conversion={data.conversions.participation.acceptedToConfirmed}
+										t={t}
+									/>
+									<ConversionCard
+										title={t("confirmedToAttended")}
+										conversion={data.conversions.participation.confirmedToAttended}
+										t={t}
+									/>
+								</div>
+							</section>
+							<section className="ui-panel p-5">
+								<h2 className="font-coolvetica text-2xl">{t("attendanceOutcomesTitle")}</h2>
+								<p className="mt-1 font-rubik text-sm text-dark-color">
+									{t("attendanceOutcomesDescription")}
+								</p>
+								<dl className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+									{Object.entries(data.attendanceOutcomes).map(([key, value]) => (
+										<QualityMetric key={key} label={t(`outcome.${key}`)} value={value} />
+									))}
+								</dl>
+								<p className="mt-4 font-rubik text-sm">{t("rsvpBreakdown", data.rsvp)}</p>
+							</section>
+							<section>
+								<h2 className="font-coolvetica text-2xl">{t("communicationsTitle")}</h2>
+								<div className="mt-4 grid gap-4 sm:grid-cols-2">
+									<MetricCard
+										title={t("acceptanceEmails")}
+										value={data.funnel.acceptanceEmailsSesAccepted ?? t("unavailable")}
+										description={t("acceptanceEmailsDescription")}
+									/>
+								</div>
+							</section>
+							{devpostSnapshot && <DevpostSection data={data} t={t} />}
+						</div>
+						<div
+							hidden={view !== "quality"}
+							style={view !== "quality" ? { display: "none" } : undefined}
+							className="flex flex-col gap-8"
+						>
+							<DataQuality quality={data.dataQuality} t={t} />
+							<AttendanceIntegrity integrity={data.attendanceIntegrity} t={t} />
+							<section className="ui-panel p-5">
+								<h2 className="font-coolvetica text-xl">{t("sourceFreshness")}</h2>
+								<dl className="mt-4 grid gap-4 sm:grid-cols-3">
+									{Object.entries(data.externalMetrics).map(([key, snapshot]) => (
+										<QualityMetric
+											key={key}
+											label={t(`source.${key}`)}
+											value={
+												snapshot
+													? new Intl.DateTimeFormat(i18n.language, {
+															dateStyle: "medium",
+															timeStyle: "short",
+														}).format(new Date(snapshot.capturedAt))
+													: t("unavailable")
+											}
+										/>
+									))}
+								</dl>
+							</section>
+						</div>
+						<div
+							hidden={view !== "operations"}
+							style={view !== "operations" ? { display: "none" } : undefined}
+							className="flex flex-col gap-8"
+						>
+							<div className="grid gap-4 sm:grid-cols-2">
+								{totals?.map(([key, value, descriptionKey]) => (
 									<MetricCard
 										key={key}
 										title={t(key)}
-										value={value ?? t("unavailable")}
+										value={value}
 										description={t(descriptionKey)}
 									/>
 								))}
 							</div>
-							<div className="mt-4 grid gap-4 lg:grid-cols-3">
-								<ConversionCard
-									title={t("applicationToAccepted")}
-									conversion={data.conversions.participation.applicationToAccepted}
-									t={t}
+							<div className="grid gap-8 lg:grid-cols-2">
+								<OperationalChart
+									title={t("uniqueAttendance")}
+									description={t("uniqueAttendanceDescription")}
+									data={data.attendanceData}
+									x="label"
+									y="uniqueParticipants"
 								/>
-								<ConversionCard
-									title={t("acceptedToConfirmed")}
-									conversion={data.conversions.participation.acceptedToConfirmed}
-									t={t}
+								<OperationalChart
+									title={t("eventEngagement")}
+									description={t("eventEngagementDescription")}
+									data={data.engagementData.map(entry => ({
+										label: t(`engagement.${entry.key}`),
+										participants: entry.participants,
+									}))}
+									x="label"
+									y="participants"
 								/>
-								<ConversionCard
-									title={t("confirmedToAttended")}
-									conversion={data.conversions.participation.confirmedToAttended}
-									t={t}
+								<OperationalChart
+									title={t("mealCategory")}
+									description={t("mealCategoryDescription")}
+									data={data.mealCategoryData}
+									x="mealCategory"
+									y="_count.mealCategory"
+								/>
+								<OperationalChart
+									title={t("tShirtSize")}
+									description={t("tShirtSizeDescription")}
+									data={data.tShirtSizeData.map(entry => ({
+										...entry,
+										tShirtSize:
+											entry.tShirtSize === TShirtSize.NONE
+												? t("common:no-t-shirt")
+												: entry.tShirtSize,
+									}))}
+									x="tShirtSize"
+									y="_count.tShirtSize"
 								/>
 							</div>
-						</section>
-						<section>
-							<h2 className="font-coolvetica text-2xl">{t("communicationsTitle")}</h2>
-							<div className="mt-4 grid gap-4 sm:grid-cols-2">
-								<MetricCard
-									title={t("acceptanceEmails")}
-									value={data.funnel.acceptanceEmailsSesAccepted ?? t("unavailable")}
-									description={t("acceptanceEmailsDescription")}
-								/>
-							</div>
-						</section>
-						{devpostSnapshot && <DevpostSection data={data} t={t} />}
-						<DataQuality quality={data.dataQuality} t={t} />
-						<AttendanceIntegrity integrity={data.attendanceIntegrity} t={t} />
-						<div className="grid gap-8 lg:grid-cols-2">
-							<OperationalChart
-								title={t("uniqueAttendance")}
-								description={t("uniqueAttendanceDescription")}
-								data={data.attendanceData}
-								x="label"
-								y="uniqueParticipants"
-							/>
-							<OperationalChart
-								title={t("eventEngagement")}
-								description={t("eventEngagementDescription")}
-								data={data.engagementData.map(entry => ({
-									label: t(`engagement.${entry.key}`),
-									participants: entry.participants,
-								}))}
-								x="label"
-								y="participants"
-							/>
-							<OperationalChart
-								title={t("recordedUnits")}
-								description={t("recordedUnitsDescription")}
-								data={data.attendanceData}
-								x="label"
-								y="recordedUnits"
-							/>
-							<OperationalChart
-								title={t("mealCategory")}
-								description={t("mealCategoryDescription")}
-								data={data.mealCategoryData}
-								x="mealCategory"
-								y="_count.mealCategory"
-							/>
-							<OperationalChart
-								title={t("tShirtSize")}
-								description={t("tShirtSizeDescription")}
-								data={data.tShirtSizeData.map(entry => ({
-									...entry,
-									tShirtSize:
-										entry.tShirtSize === TShirtSize.NONE
-											? t("common:no-t-shirt")
-											: entry.tShirtSize,
-								}))}
-								x="tShirtSize"
-								y="_count.tShirtSize"
-							/>
-						</div>
-						{sheetSnapshot && (
-							<section>
-								<h2 className="font-coolvetica text-2xl">{t("demographicsTitle")}</h2>
-								<p className="mt-1 font-rubik text-sm text-dark-color">
-									{t("demographicsDescription")}
+							<details className="ui-panel p-5">
+								<summary className="cursor-pointer font-rubik">{t("serviceQuantities")}</summary>
+								<p className="my-4 font-rubik text-sm">
+									{t("presences")}: {data.presences}. {t("presencesDescription")}
 								</p>
-								<div className="mt-4 grid gap-8 lg:grid-cols-2">
-									{Object.entries(sheetSnapshot.payload.dimensions).map(([key, entries]) => (
-										<CohortChart key={key} title={t(`dimension.${key}`)} data={entries} t={t} />
-									))}
-								</div>
-							</section>
-						)}
+								<OperationalChart
+									title={t("recordedUnits")}
+									description={t("recordedUnitsDescription")}
+									data={data.attendanceData}
+									x="label"
+									y="recordedUnits"
+								/>
+							</details>
+						</div>
+						<div hidden={view !== "cohorts"}>
+							{sheetSnapshot && (
+								<section>
+									<h2 className="font-coolvetica text-2xl">{t("demographicsTitle")}</h2>
+									<p className="mt-1 font-rubik text-sm text-dark-color">
+										{t("demographicsDescription")}
+									</p>
+									<CohortExplorer dimensions={sheetSnapshot.payload.dimensions} t={t} />
+								</section>
+							)}
+							{!sheetSnapshot && <p>{t("unavailable")}</p>}
+						</div>
 					</>
 				)}
 			</div>
@@ -223,7 +294,7 @@ const DevpostSection = ({
 }) => (
 	<section>
 		<h2 className="font-coolvetica text-2xl">{t("devpostTitle")}</h2>
-		<div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+		<div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 			<MetricCard
 				title={t("devpostRegistrants")}
 				value={data.funnel.devpostRegistrants ?? 0}
@@ -250,7 +321,7 @@ const DevpostSection = ({
 				description={t("devpostProjectsDescription")}
 			/>
 		</div>
-		<div className="mt-4 grid gap-4 lg:grid-cols-4">
+		<div className="mt-4 grid gap-4 lg:grid-cols-2">
 			<ConversionCard
 				title={t("registrantToActive")}
 				conversion={data.conversions.devpost.registrantToActive}
@@ -261,17 +332,8 @@ const DevpostSection = ({
 				conversion={data.conversions.devpost.activeToSubmitter}
 				t={t}
 			/>
-			<ConversionCard
-				title={t("submittedToPublicProject")}
-				conversion={data.conversions.devpost.submittedToPublicProject}
-				t={t}
-			/>
-			<ConversionCard
-				title={t("publicToJudgingProject")}
-				conversion={data.conversions.devpost.publicToJudgingProject}
-				t={t}
-			/>
 		</div>
+		<p className="mt-4 font-rubik text-sm">{t("projectStatuses", data.externalMetrics.devpost?.payload)}</p>
 	</section>
 );
 
@@ -309,11 +371,7 @@ const DataQuality = ({
 							})
 				}
 			/>
-			<QualityMetric
-				label={t("sheetUnlinkedRows")}
-				value={quality.sheetUnlinkedRows}
-				attention={Boolean(quality.sheetUnlinkedRows)}
-			/>
+			<QualityMetric label={t("sheetUnlinkedRows")} value={quality.sheetUnlinkedRows} />
 			<QualityMetric
 				label={t("duplicateApplicationRows")}
 				value={quality.duplicateApplicationRows}
@@ -346,34 +404,10 @@ const QualityMetric = ({
 }) => (
 	<div>
 		<dt className="font-rubik text-sm text-dark-color">{label}</dt>
-		<dd className={`font-coolvetica text-2xl ${attention ? "text-red-800" : "text-green-800"}`}>{value ?? "—"}</dd>
+		<dd className={`font-coolvetica text-2xl ${attention ? "text-amber-900" : "text-dark-color"}`}>
+			{value ?? "—"}
+		</dd>
 	</div>
-);
-
-const CohortChart = ({
-	title,
-	data,
-	t,
-}: {
-	title: string;
-	data: Array<{ label: string; applicants: number; accepted: number; confirmed: number; attended: number }>;
-	t: ReturnType<typeof useTranslation>["t"];
-}) => (
-	<section className="ui-panel p-4">
-		<h3 className="font-coolvetica text-xl">{title}</h3>
-		<ResponsiveContainer width="100%" height={320}>
-			<BarChart data={data} margin={{ bottom: 70 }}>
-				<XAxis dataKey="label" stroke="black" angle={-30} textAnchor="end" interval={0} height={90} />
-				<YAxis stroke="black" allowDecimals={false} />
-				<Tooltip />
-				<Legend />
-				<Bar dataKey="applicants" name={t("applications")} fill="#9ca3af" />
-				<Bar dataKey="accepted" name={t("accepted")} fill="#2563eb" />
-				<Bar dataKey="confirmed" name={t("confirmed")} fill="#7c3aed" />
-				<Bar dataKey="attended" name={t("checkedIn")} fill="#e67300" />
-			</BarChart>
-		</ResponsiveContainer>
-	</section>
 );
 
 const AttendanceIntegrity = ({
@@ -397,19 +431,26 @@ const AttendanceIntegrity = ({
 			<p className={`mt-2 font-rubik ${healthy ? "text-green-800" : "text-red-800"}`}>
 				{healthy ? t("integrityHealthy") : t("integrityAttention")}
 			</p>
-			<dl className="mt-4 grid gap-3 sm:grid-cols-3">
-				<IntegrityCheck
-					label={t("issuedPassesWithoutCheckIn")}
-					value={integrity.issuedPassesWithoutCheckIn}
-					expected={0}
-				/>
-				<IntegrityCheck
-					label={t("positivePresenceWithoutCheckIn")}
-					value={integrity.positivePresenceWithoutCheckIn}
-					expected={0}
-				/>
-				<IntegrityCheck label={t("visibleCheckInEvents")} value={integrity.visibleCheckInEvents} expected={1} />
-			</dl>
+			<details open={!healthy} className="mt-4">
+				<summary className="cursor-pointer font-rubik">{t("integrityDetails")}</summary>
+				<dl className="mt-4 grid gap-3 sm:grid-cols-3">
+					<IntegrityCheck
+						label={t("issuedPassesWithoutCheckIn")}
+						value={integrity.issuedPassesWithoutCheckIn}
+						expected={0}
+					/>
+					<IntegrityCheck
+						label={t("positivePresenceWithoutCheckIn")}
+						value={integrity.positivePresenceWithoutCheckIn}
+						expected={0}
+					/>
+					<IntegrityCheck
+						label={t("visibleCheckInEvents")}
+						value={integrity.visibleCheckInEvents}
+						expected={1}
+					/>
+				</dl>
+			</details>
 		</section>
 	);
 };
@@ -439,16 +480,22 @@ const OperationalChart = ({
 	<section className="ui-panel p-4">
 		<h2 className="font-coolvetica text-xl">{title}</h2>
 		<p className="mt-1 font-rubik text-sm text-dark-color">{description}</p>
-		<ResponsiveContainer width="100%" height={280}>
-			<BarChart data={data}>
-				<XAxis dataKey={x} stroke="black" />
-				<YAxis stroke="black" />
-				<Tooltip />
-				<Bar dataKey={y} fill="#e67300" />
-			</BarChart>
-		</ResponsiveContainer>
+		<CountBars
+			rows={data.map(entry => ({
+				label: String(readChartValue(entry, x)),
+				value: Number(readChartValue(entry, y)),
+			}))}
+		/>
 	</section>
 );
+
+const readChartValue = (entry: object, path: string): unknown =>
+	path
+		.split(".")
+		.reduce<unknown>(
+			(value, key) => (value && typeof value === "object" ? Reflect.get(value, key) : undefined),
+			entry,
+		);
 
 export const getServerSideProps: GetServerSideProps = async ({ req, res, locale }) => {
 	const session = await getServerSession(req, res, getAuthOptions());

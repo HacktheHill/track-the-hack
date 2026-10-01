@@ -76,6 +76,42 @@ void test("attendance integrity counts only evidence missing a positive check-in
 	]);
 });
 
+void test("attendance outcomes count matched hackers rather than subtracting unrelated totals", async t => {
+	const count = t.mock.fn(() => Promise.resolve(5));
+	// Partial database mock exposes only the aggregate query exercised here.
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+	const prisma = { hacker: { count } } as unknown as Pick<
+		PrismaClient,
+		"event" | "hacker" | "presence" | "judgingRound" | "metricsSnapshot"
+	>;
+	const repository = createPrismaOperationalMetricsRepository(prisma);
+	await repository.countConfirmedCheckedIn();
+	await repository.countAttendedWalkIns();
+	await repository.countDeclined();
+	assert.deepEqual(
+		count.mock.calls.map(call => call.arguments),
+		[
+			[
+				{
+					where: {
+						confirmed: true,
+						presences: { some: { value: { gt: 0 }, event: { scannerWorkflow: ScannerWorkflow.CHECK_IN } } },
+					},
+				},
+			],
+			[
+				{
+					where: {
+						walkIn: true,
+						presences: { some: { value: { gt: 0 }, event: { scannerWorkflow: ScannerWorkflow.CHECK_IN } } },
+					},
+				},
+			],
+			[{ where: { confirmed: false, rsvpRespondedAt: { not: null } } }],
+		],
+	);
+});
+
 void test("operational metrics expose only aggregate database-derived values", async () => {
 	const hackerGroupings: string[][] = [];
 	let summedPresences = false;
@@ -84,6 +120,9 @@ void test("operational metrics expose only aggregate database-derived values", a
 		countConfirmed: () => Promise.resolve(8),
 		countWalkIns: () => Promise.resolve(2),
 		countCheckedIn: () => Promise.resolve(7),
+		countConfirmedCheckedIn: () => Promise.resolve(5),
+		countAttendedWalkIns: () => Promise.resolve(1),
+		countDeclined: () => Promise.resolve(1),
 		sumPresences: () => {
 			summedPresences = true;
 			return Promise.resolve(5);
@@ -127,7 +166,7 @@ void test("operational metrics expose only aggregate database-derived values", a
 						kind: "google-sheets",
 						rows: 12,
 						linkedRows: 10,
-						cohorts: { applicants: 12, accepted: 10, confirmed: 8, attended: 7 },
+						cohorts: { applicants: 12, accepted: 10, confirmed: 6, attended: 7 },
 						dimensions: {
 							preferredLanguage: [
 								{ label: "English", applicants: 9, accepted: 8, confirmed: 7, attended: 6 },
@@ -180,6 +219,13 @@ void test("operational metrics expose only aggregate database-derived values", a
 		walkIn: 2,
 		checkedIn: 7,
 		presences: 5,
+		attendanceOutcomes: {
+			confirmedAttended: 5,
+			confirmedAbsent: 3,
+			attendedWithoutConfirmation: 2,
+			attendedWalkIns: 1,
+		},
+		rsvp: { confirmed: 8, declined: 1, pending: 1 },
 		attendanceData: [
 			{ eventId: "event-1", label: "Check-In", uniqueParticipants: 2, recordedUnits: 3 },
 			{ eventId: "event-2", label: "Workshop", uniqueParticipants: 1, recordedUnits: 2 },
@@ -213,8 +259,8 @@ void test("operational metrics expose only aggregate database-derived values", a
 		conversions: {
 			participation: {
 				applicationToAccepted: { from: 12, to: 10, dropOff: 2, rate: 83.3 },
-				acceptedToConfirmed: { from: 10, to: 8, dropOff: 2, rate: 80 },
-				confirmedToAttended: { from: 8, to: 7, dropOff: 1, rate: 87.5 },
+				acceptedToConfirmed: { from: 10, to: 6, dropOff: 4, rate: 60 },
+				confirmedToAttended: { from: 8, to: 5, dropOff: 3, rate: 62.5 },
 			},
 			devpost: {
 				registrantToActive: { from: 9, to: 8, dropOff: 1, rate: 88.9 },
@@ -240,7 +286,7 @@ void test("operational metrics expose only aggregate database-derived values", a
 					kind: "google-sheets",
 					rows: 12,
 					linkedRows: 10,
-					cohorts: { applicants: 12, accepted: 10, confirmed: 8, attended: 7 },
+					cohorts: { applicants: 12, accepted: 10, confirmed: 6, attended: 7 },
 					dimensions: {
 						preferredLanguage: [
 							{ label: "English", applicants: 9, accepted: 8, confirmed: 7, attended: 6 },

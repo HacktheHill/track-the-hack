@@ -1,0 +1,61 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import test from "node:test";
+import { createElement } from "react";
+import { act, create, type ReactTestRenderer } from "react-test-renderer";
+import i18next from "i18next";
+import { z } from "zod";
+import { CohortExplorer } from "@/components/metrics/CohortExplorer";
+
+void test("cohort selection, expanded categories and display survive a data-only refresh", async t => {
+	const i18n = i18next.createInstance();
+	await i18n.init({ lng: "en", resources: { en: { translation: {} } } });
+	const dimensions = {
+		school: Array.from({ length: 12 }, (_, index) => ({
+			label: `School ${index}`,
+			applicants: 20,
+			accepted: 10,
+			confirmed: 6,
+			attended: index,
+		})),
+		country: [{ label: "Canada", applicants: 4, accepted: 3, confirmed: 2, attended: 1 }],
+	};
+	let renderer: ReactTestRenderer | undefined;
+	await act(() => {
+		renderer = create(createElement(CohortExplorer, { dimensions, t: i18n.t }));
+	});
+	assert.ok(renderer);
+	const rendered = renderer;
+	t.after(() => rendered.unmount());
+	assert.equal(rendered.root.findAllByType("select")[1]?.props.value, "attended");
+	assert.equal(rendered.root.findAllByType("li").length, 10);
+	const change = (index: number, value: string) =>
+		z
+			.function()
+			.args(z.object({ target: z.object({ value: z.string() }) }))
+			.returns(z.void())
+			.parse(rendered.root.findAllByType("select")[index]?.props.onChange)({ target: { value } });
+	await act(() => z.function().args().returns(z.void()).parse(rendered.root.findByType("button").props.onClick)());
+	await act(() => change(1, "accepted"));
+	await act(() =>
+		rendered.update(createElement(CohortExplorer, { dimensions: structuredClone(dimensions), t: i18n.t })),
+	);
+	assert.equal(rendered.root.findAllByType("select")[1]?.props.value, "accepted");
+	assert.equal(rendered.root.findAllByType("li").length, 12);
+	await act(() => change(2, "conversion"));
+	await act(() =>
+		rendered.update(createElement(CohortExplorer, { dimensions: structuredClone(dimensions), t: i18n.t })),
+	);
+	assert.equal(rendered.root.findAllByType("select")[2]?.props.value, "conversion");
+	assert.ok(JSON.stringify(rendered.toJSON()).includes("50% (10/20)"));
+	await act(() => change(0, "country"));
+	assert.ok(!JSON.stringify(rendered.toJSON()).includes("75%"), "small denominators are not given conversion rates");
+});
+
+void test("metrics refresh requests data without navigation or replacing the loaded dashboard", () => {
+	const source = readFileSync(new URL("../src/pages/metrics/index.tsx", import.meta.url), "utf8");
+	assert.match(source, /onClick=\{\(\) => void query\.refetch\(\)\}/);
+	assert.match(source, /refetchInterval: 30_000/);
+	assert.match(source, /!data && query\.isLoading/);
+	assert.doesNotMatch(source, /location\.|router\.(reload|replace|push)|key=\{query\.dataUpdatedAt/);
+});
