@@ -349,9 +349,7 @@ const synchronizeProjectRecusal = async (
 						assignment.recusedAt === null &&
 						assignment.assignmentReason?.startsWith("automatic recusal replacement for "),
 				)
-				.map(assignment =>
-					assignment.assignmentReason?.slice("automatic recusal replacement for ".length),
-				)
+				.map(assignment => assignment.assignmentReason?.slice("automatic recusal replacement for ".length))
 				.filter((id): id is string => Boolean(id)),
 		);
 		const missingCoverageIds = new Set(
@@ -439,16 +437,20 @@ const synchronizeProjectRecusal = async (
 			data: { assignmentVersion: { increment: 1 } },
 		});
 	}
-	await invalidateRankings(transaction, [
-		...sourceAssignments.map(assignment => ({
-			judgeId: input.judgeId,
-			categoryCode: assignment.categoryCode,
-		})),
-		...replacements.map(replacement => ({
-			judgeId: replacement.targetJudgeId,
-			categoryCode: sourceAssignments.find(item => item.id === replacement.sourceAssignmentId)?.categoryCode ?? "",
-		})),
-	].filter(pair => pair.categoryCode));
+	await invalidateRankings(
+		transaction,
+		[
+			...sourceAssignments.map(assignment => ({
+				judgeId: input.judgeId,
+				categoryCode: assignment.categoryCode,
+			})),
+			...replacements.map(replacement => ({
+				judgeId: replacement.targetJudgeId,
+				categoryCode:
+					sourceAssignments.find(item => item.id === replacement.sourceAssignmentId)?.categoryCode ?? "",
+			})),
+		].filter(pair => pair.categoryCode),
+	);
 	if (
 		input.reason &&
 		(!alreadyRecused || hadMissingCoverage || sourceAssignments.some(assignment => assignment.recusedAt === null))
@@ -1317,7 +1319,9 @@ export const judgingRouter = createTRPCRouter({
 							});
 						const excludedCategoryCodes = ALL_JUDGING_CATEGORY_CODES.filter(code => !allowed.has(code));
 						const existingExclusions = jsonStringArray(judge.exclusions);
-						const conflictingAllowed = request.allowedCategoryCodes.filter(code => existingExclusions.includes(code));
+						const conflictingAllowed = request.allowedCategoryCodes.filter(code =>
+							existingExclusions.includes(code),
+						);
 						if (conflictingAllowed.length)
 							throw new TRPCError({
 								code: "PRECONDITION_FAILED",
@@ -1818,9 +1822,10 @@ export const judgingRouter = createTRPCRouter({
 			});
 			if (!round) throw new TRPCError({ code: "NOT_FOUND" });
 			requireRoundState(round, "OPEN");
+			const projectMap = new Map(round.projects.map(p => [p.id, p]));
 			const resolutionFor = (assignment: (typeof round.assignments)[number]) =>
-				round.projects
-					.find(project => project.id === assignment.projectId)
+				projectMap
+					.get(assignment.projectId)
 					?.categories.find(category => category.code === assignment.categoryCode)?.eligibilityResolution;
 			const incomplete = round.assignments.filter(
 				assignment => !isAssignmentComplete(assignment, resolutionFor(assignment)),
@@ -1957,7 +1962,9 @@ export const judgingRouter = createTRPCRouter({
 					for (const assignments of groups.values()) {
 						const first = assignments[0];
 						if (!first) continue;
-						const reason = assignments.find(assignment => assignment.recusalReason?.trim())?.recusalReason?.trim();
+						const reason = assignments
+							.find(assignment => assignment.recusalReason?.trim())
+							?.recusalReason?.trim();
 						if (!reason)
 							throw new TRPCError({
 								code: "PRECONDITION_FAILED",
@@ -2783,8 +2790,9 @@ export const judgingRouter = createTRPCRouter({
 							.map(item => ({
 								tableNumber: item.project.tableNumber,
 								name: item.project.name,
-								removedAssignments: item.project.assignments.filter(assignment => !assignment.completedAt)
-									.length,
+								removedAssignments: item.project.assignments.filter(
+									assignment => !assignment.completedAt,
+								).length,
 							}))
 							.sort((a, b) => a.tableNumber - b.tableNumber),
 						insufficient,
@@ -2941,10 +2949,7 @@ export const judgingRouter = createTRPCRouter({
 							judgeId: ctx.judge.id,
 							projectId: assignment.projectId,
 							reason,
-							editedAt: clampJudgingEditTime(
-								patch.fieldEditedAt.recusalReason ?? patch.editedAt,
-								now,
-							),
+							editedAt: clampJudgingEditTime(patch.fieldEditedAt.recusalReason ?? patch.editedAt, now),
 							operationId: patch.fieldOperationIds.recusalReason ?? patch.operationId,
 							now,
 						});
@@ -3204,10 +3209,10 @@ export const judgingRouter = createTRPCRouter({
 			}),
 			ctx.prisma.judgingProject.findMany({ where: { roundId: input.roundId }, include: { categories: true } }),
 		]);
+		const projectMap = new Map(projects.map(p => [p.id, p]));
 		const resolutionFor = (assignment: (typeof assignments)[number]) =>
-			projects
-				.find(project => project.id === assignment.projectId)
-				?.categories.find(category => category.code === assignment.categoryCode)?.eligibilityResolution;
+			projectMap.get(assignment.projectId)?.categories.find(category => category.code === assignment.categoryCode)
+				?.eligibilityResolution;
 		const assessments = assignments.map(assignment => ({
 			projectId: assignment.projectId,
 			projectName: assignment.project.name,
@@ -3245,6 +3250,13 @@ export const judgingRouter = createTRPCRouter({
 				? assignment.miniScore
 				: null;
 		};
+		const assignmentsByProjectCategory = assignments.reduce((acc, a) => {
+			const key = `${a.projectId}:${a.categoryCode}`;
+			const group = acc.get(key) ?? [];
+			group.push(a);
+			acc.set(key, group);
+			return acc;
+		}, new Map<string, typeof assignments>());
 		const aggregates = projects.flatMap(project => {
 			const categoryCodes = [
 				...(project.mainTrack === "CGI" ? [] : [project.mainTrack]),
@@ -3252,11 +3264,8 @@ export const judgingRouter = createTRPCRouter({
 			];
 			return categoryCodes.map(categoryCode => {
 				const category = project.categories.find(item => item.code === categoryCode);
-				const relevant = assignments.filter(
-					assignment =>
-						assignment.projectId === project.id &&
-						assignment.categoryCode === categoryCode &&
-						isAssignmentComplete(assignment, category?.eligibilityResolution),
+				const relevant = (assignmentsByProjectCategory.get(`${project.id}:${categoryCode}`) ?? []).filter(
+					assignment => isAssignmentComplete(assignment, category?.eligibilityResolution),
 				);
 				const isMain = categoryCode === "GENERAL" || categoryCode === "CIVIC";
 				const opinions = new Set(relevant.map(item => item.miniEligibility).filter(Boolean));
@@ -3340,8 +3349,7 @@ export const judgingRouter = createTRPCRouter({
 				const position = scored.findIndex(candidate => candidate.projectId === item.projectId);
 				const tied = scored.some(
 					candidate =>
-						candidate.projectId !== item.projectId &&
-						candidate.numericAggregate === item.numericAggregate,
+						candidate.projectId !== item.projectId && candidate.numericAggregate === item.numericAggregate,
 				);
 				return {
 					...item,
@@ -3351,60 +3359,62 @@ export const judgingRouter = createTRPCRouter({
 				};
 			});
 		});
-		const benchmarks = [...Map.groupBy(assignments, assignment => assignment.judgeId).values()].map(
-			judgeAssignments => {
-				const judge = judgeAssignments[0]?.judge;
-				if (!judge) throw new Error("Judging benchmark group has no judge");
-				const scores = judgeAssignments
+		const benchmarks = [
+			...assignments
+				.reduce((acc, a) => {
+					const group = acc.get(a.judgeId) ?? [];
+					group.push(a);
+					acc.set(a.judgeId, group);
+					return acc;
+				}, new Map<string, typeof assignments>())
+				.values(),
+		].map(judgeAssignments => {
+			const judge = judgeAssignments[0]?.judge;
+			if (!judge) throw new Error("Judging benchmark group has no judge");
+			const scores = judgeAssignments
+				.map(numericForAssignment)
+				.filter((value): value is number => value !== null);
+			const sharedDifferences = judgeAssignments.flatMap(assignment => {
+				const score = numericForAssignment(assignment);
+				if (score === null) return [];
+				const peers = (
+					assignmentsByProjectCategory.get(`${assignment.projectId}:${assignment.categoryCode}`) ?? []
+				)
+					.filter(candidate => candidate.judgeId !== assignment.judgeId)
 					.map(numericForAssignment)
 					.filter((value): value is number => value !== null);
-				const sharedDifferences = judgeAssignments.flatMap(assignment => {
-					const score = numericForAssignment(assignment);
-					if (score === null) return [];
-					const peers = assignments
-						.filter(
-							candidate =>
-								candidate.judgeId !== assignment.judgeId &&
-								candidate.projectId === assignment.projectId &&
-								candidate.categoryCode === assignment.categoryCode,
-						)
-						.map(numericForAssignment)
-						.filter((value): value is number => value !== null);
-					return peers.length ? [score - peers.reduce((sum, value) => sum + value, 0) / peers.length] : [];
-				});
-				const main = judgeAssignments.filter(
-					assignment => assignment.isMain && isAssignmentComplete(assignment),
-				);
-				const mean = (values: number[]) =>
-					values.length
-						? Number((values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(2))
-						: null;
-				return {
-					judgeId: judge.id,
-					judgeName: judge.name,
-					projectCount: new Set(judgeAssignments.map(assignment => assignment.projectId)).size,
-					scopeCount: judgeAssignments.length,
-					completeCount: judgeAssignments.filter(assignment =>
-						isAssignmentComplete(assignment, resolutionFor(assignment)),
-					).length,
-					averageScore: mean(scores),
-					scoreSpread: scores.length ? Number((Math.max(...scores) - Math.min(...scores)).toFixed(2)) : null,
-					meanDifferenceFromCoJudges: mean(sharedDifferences),
-					mainCriterionTendencies: {
-						technical: mean(main.map(item => pointsForLevel(completedLevel(item.technicalLevel), 15))),
-						idea: mean(main.map(item => pointsForLevel(completedLevel(item.ideaLevel), 10))),
-						design: mean(main.map(item => pointsForLevel(completedLevel(item.designLevel), 10))),
-						learning: mean(main.map(item => pointsForLevel(completedLevel(item.learningLevel), 5))),
-						presentation: mean(main.map(item => pointsForLevel(completedLevel(item.presentationLevel), 5))),
-					},
-					expertiseMatches: judgeAssignments.filter(assignment => assignment.expertiseMatch).length,
-					fallbacks: judgeAssignments.filter(assignment => !assignment.isMain && !assignment.expertiseMatch)
-						.length,
-					sharedAssessments: sharedDifferences.length,
-					insufficientOverlap: sharedDifferences.length === 0,
-				};
-			},
-		);
+				return peers.length ? [score - peers.reduce((sum, value) => sum + value, 0) / peers.length] : [];
+			});
+			const main = judgeAssignments.filter(assignment => assignment.isMain && isAssignmentComplete(assignment));
+			const mean = (values: number[]) =>
+				values.length
+					? Number((values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(2))
+					: null;
+			return {
+				judgeId: judge.id,
+				judgeName: judge.name,
+				projectCount: new Set(judgeAssignments.map(assignment => assignment.projectId)).size,
+				scopeCount: judgeAssignments.length,
+				completeCount: judgeAssignments.filter(assignment =>
+					isAssignmentComplete(assignment, resolutionFor(assignment)),
+				).length,
+				averageScore: mean(scores),
+				scoreSpread: scores.length ? Number((Math.max(...scores) - Math.min(...scores)).toFixed(2)) : null,
+				meanDifferenceFromCoJudges: mean(sharedDifferences),
+				mainCriterionTendencies: {
+					technical: mean(main.map(item => pointsForLevel(completedLevel(item.technicalLevel), 15))),
+					idea: mean(main.map(item => pointsForLevel(completedLevel(item.ideaLevel), 10))),
+					design: mean(main.map(item => pointsForLevel(completedLevel(item.designLevel), 10))),
+					learning: mean(main.map(item => pointsForLevel(completedLevel(item.learningLevel), 5))),
+					presentation: mean(main.map(item => pointsForLevel(completedLevel(item.presentationLevel), 5))),
+				},
+				expertiseMatches: judgeAssignments.filter(assignment => assignment.expertiseMatch).length,
+				fallbacks: judgeAssignments.filter(assignment => !assignment.isMain && !assignment.expertiseMatch)
+					.length,
+				sharedAssessments: sharedDifferences.length,
+				insufficientOverlap: sharedDifferences.length === 0,
+			};
+		});
 		return {
 			assessments,
 			benchmarks,
