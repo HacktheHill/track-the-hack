@@ -11,6 +11,7 @@ import { CohortExplorer, CountBars } from "@/components/metrics/CohortExplorer";
 import { trpc, type RouterOutputs } from "@/server/api/api";
 import { organizerRedirect } from "@/server/lib/redirects";
 import { getAuthOptions } from "@/pages/api/auth/[...nextauth]";
+import styles from "./Metrics.module.css";
 
 const Metrics = () => {
 	const { t, i18n } = useTranslation("metrics");
@@ -18,7 +19,7 @@ const Metrics = () => {
 	const query = trpc.metrics.getMetrics.useQuery(undefined, { refetchInterval: 30_000 });
 	const { data } = query;
 	const lastUpdated = query.dataUpdatedAt
-		? new Intl.DateTimeFormat(i18n.language, { hour: "numeric", minute: "2-digit", second: "2-digit" }).format(
+		? new Intl.DateTimeFormat(i18n.language, { hour: "numeric", minute: "2-digit" }).format(
 				new Date(query.dataUpdatedAt),
 			)
 		: null;
@@ -40,8 +41,8 @@ const Metrics = () => {
 	const devpostSnapshot = data?.externalMetrics.devpost;
 
 	return (
-		<App className="overflow-y-auto bg-default-gradient" integrated title={t("title")}>
-			<div className="mx-auto flex max-w-6xl flex-col gap-8 p-8">
+		<App className={`overflow-y-auto ${styles.dashboard ?? ""}`} integrated title={t("title")}>
+			<div className="mx-auto flex max-w-6xl flex-col gap-6 p-4 sm:p-6">
 				<div className="flex flex-wrap items-end justify-between gap-4">
 					<div>
 						<h1 className="ui-page-title">{t("title")}</h1>
@@ -60,15 +61,9 @@ const Metrics = () => {
 				</div>
 				{!data && query.isLoading && <Loading />}
 				{query.isError && <Error message={t(data ? "refreshFailed" : "common:temporarily-unavailable")} />}
-				<nav className="flex flex-wrap gap-2" aria-label={t("viewsLabel")}>
+				<nav className={styles.tabs} aria-label={t("viewsLabel")}>
 					{["overview", "cohorts", "operations", "quality"].map(key => (
-						<button
-							key={key}
-							type="button"
-							className={`ui-button ${view === key ? "ring-2 ring-orange-700" : ""}`}
-							aria-pressed={view === key}
-							onClick={() => setView(key)}
-						>
+						<button key={key} type="button" aria-pressed={view === key} onClick={() => setView(key)}>
 							{t(`view.${key}`)}
 						</button>
 					))}
@@ -82,14 +77,13 @@ const Metrics = () => {
 						>
 							<section>
 								<h2 className="font-coolvetica text-2xl">{t("funnelTitle")}</h2>
-								<p className="mt-1 font-rubik text-sm text-dark-color">{t("funnelDescription")}</p>
 								<div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-									{funnel?.map(([key, value, descriptionKey]) => (
+									{funnel?.map(([key, value]) => (
 										<MetricCard
 											key={key}
 											title={t(key)}
 											value={value ?? t("unavailable")}
-											description={t(descriptionKey)}
+											description={t(`qualifier.${key}`)}
 										/>
 									))}
 								</div>
@@ -110,12 +104,22 @@ const Metrics = () => {
 										t={t}
 									/>
 								</div>
+								<details className="mt-4 font-rubik text-sm">
+									<summary className="cursor-pointer">{t("metricDefinitions")}</summary>
+									<p className="mt-3">{t("funnelDescription")}</p>
+									<dl className="mt-3 grid gap-3 sm:grid-cols-2">
+										{funnel?.map(([key, , descriptionKey]) => (
+											<div key={key}>
+												<dt className="font-medium">{t(key)}</dt>
+												<dd>{t(descriptionKey)}</dd>
+											</div>
+										))}
+									</dl>
+									<p className="mt-3">{t("attendanceOutcomesDescription")}</p>
+								</details>
 							</section>
 							<section className="ui-panel p-5">
 								<h2 className="font-coolvetica text-2xl">{t("attendanceOutcomesTitle")}</h2>
-								<p className="mt-1 font-rubik text-sm text-dark-color">
-									{t("attendanceOutcomesDescription")}
-								</p>
 								<dl className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 									{Object.entries(data.attendanceOutcomes).map(([key, value]) => (
 										<QualityMetric key={key} label={t(`outcome.${key}`)} value={value} />
@@ -141,6 +145,10 @@ const Metrics = () => {
 							className="flex flex-col gap-8"
 						>
 							<DataQuality quality={data.dataQuality} t={t} />
+							<section className="ui-panel p-5">
+								<QualityMetric label={t("judgingRosterProjects")} value={data.funnel.devpostProjects} />
+								<p className="mt-2 font-rubik text-sm">{t("devpostProjectsDescription")}</p>
+							</section>
 							<AttendanceIntegrity integrity={data.attendanceIntegrity} t={t} />
 							<section className="ui-panel p-5">
 								<h2 className="font-coolvetica text-xl">{t("sourceFreshness")}</h2>
@@ -233,10 +241,6 @@ const Metrics = () => {
 						<div hidden={view !== "cohorts"}>
 							{sheetSnapshot && (
 								<section>
-									<h2 className="font-coolvetica text-2xl">{t("demographicsTitle")}</h2>
-									<p className="mt-1 font-rubik text-sm text-dark-color">
-										{t("demographicsDescription")}
-									</p>
 									<CohortExplorer dimensions={sheetSnapshot.payload.dimensions} t={t} />
 								</section>
 							)}
@@ -250,9 +254,9 @@ const Metrics = () => {
 };
 
 const MetricCard = ({ title, value, description }: { title: string; value: number | string; description: string }) => (
-	<section className="ui-panel p-5">
+	<section className={`ui-panel p-4 ${styles.card ?? ""}`}>
 		<h2 className="font-rubik text-lg">{title}</h2>
-		<p className="font-coolvetica text-3xl">{value}</p>
+		<p className={styles.number}>{value}</p>
 		<p className="mt-2 font-rubik text-sm text-dark-color">{description}</p>
 	</section>
 );
@@ -268,9 +272,9 @@ const ConversionCard = ({
 	conversion: Conversion;
 	t: ReturnType<typeof useTranslation>["t"];
 }) => (
-	<section className="ui-panel p-5">
+	<section className={`ui-panel p-4 ${styles.card ?? ""}`}>
 		<h3 className="font-rubik text-lg">{title}</h3>
-		<p className="font-coolvetica text-3xl">
+		<p className={styles.number}>
 			{conversion.rate === null ? t("unavailable") : t("conversionRate", { rate: conversion.rate })}
 		</p>
 		<p className="mt-2 font-rubik text-sm text-dark-color">
@@ -294,39 +298,24 @@ const DevpostSection = ({
 }) => (
 	<section>
 		<h2 className="font-coolvetica text-2xl">{t("devpostTitle")}</h2>
-		<div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+		<div className="mt-4 grid gap-4 sm:grid-cols-3">
 			<MetricCard
 				title={t("devpostRegistrants")}
 				value={data.funnel.devpostRegistrants ?? 0}
-				description={t("devpostRegistrantsDescription")}
-			/>
-			<MetricCard
-				title={t("devpostActiveRegistrants")}
-				value={data.funnel.devpostActiveRegistrants ?? 0}
-				description={t("devpostActiveRegistrantsDescription")}
+				description={t("qualifier.people")}
 			/>
 			<MetricCard
 				title={t("devpostSubmitters")}
 				value={data.funnel.devpostSubmitters ?? 0}
-				description={t("devpostSubmittersDescription")}
+				description={t("qualifier.teamMembers")}
 			/>
 			<MetricCard
 				title={t("devpostSubmittedProjects")}
 				value={data.funnel.devpostSubmittedProjects ?? 0}
-				description={t("devpostSubmittedProjectsDescription")}
-			/>
-			<MetricCard
-				title={t("devpostProjects")}
-				value={data.funnel.devpostProjects}
-				description={t("devpostProjectsDescription")}
+				description={t("qualifier.submittedProjects")}
 			/>
 		</div>
-		<div className="mt-4 grid gap-4 lg:grid-cols-2">
-			<ConversionCard
-				title={t("registrantToActive")}
-				conversion={data.conversions.devpost.registrantToActive}
-				t={t}
-			/>
+		<div className="mt-4 grid gap-4 sm:grid-cols-2">
 			<ConversionCard
 				title={t("activeToSubmitter")}
 				conversion={data.conversions.devpost.activeToSubmitter}
@@ -334,6 +323,24 @@ const DevpostSection = ({
 			/>
 		</div>
 		<p className="mt-4 font-rubik text-sm">{t("projectStatuses", data.externalMetrics.devpost?.payload)}</p>
+		<details className="mt-4 font-rubik text-sm">
+			<summary className="cursor-pointer">{t("devpostDetails")}</summary>
+			<div className="mt-3 grid gap-4 sm:grid-cols-2">
+				<MetricCard
+					title={t("devpostActiveRegistrants")}
+					value={data.funnel.devpostActiveRegistrants ?? 0}
+					description={t("devpostActiveRegistrantsDescription")}
+				/>
+				<ConversionCard
+					title={t("registrantToActive")}
+					conversion={data.conversions.devpost.registrantToActive}
+					t={t}
+				/>
+			</div>
+			<p className="mt-3">
+				{t("devpostSubmittersDescription")} {t("devpostSubmittedProjectsDescription")}
+			</p>
+		</details>
 	</section>
 );
 

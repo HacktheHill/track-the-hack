@@ -59,3 +59,51 @@ void test("metrics refresh requests data without navigation or replacing the loa
 	assert.match(source, /!data && query\.isLoading/);
 	assert.doesNotMatch(source, /location\.|router\.(reload|replace|push)|key=\{query\.dataUpdatedAt/);
 });
+
+void test("cohort charts separate answer coverage and omit zeros without losing exact counts", async t => {
+	const i18n = i18next.createInstance();
+	await i18n.init({ lng: "en", resources: { en: { translation: {} } } });
+	const row = (label: string, attended: number) => ({ label, applicants: 20, accepted: 10, confirmed: 6, attended });
+	const dimensions = {
+		school: [row("School A", 8), row("School B", 0), row("Not provided", 7), row("Other / suppressed", 3)],
+	};
+	let renderer: ReactTestRenderer | undefined;
+	await act(() => {
+		renderer = create(createElement(CohortExplorer, { dimensions, t: i18n.t }));
+	});
+	assert.ok(renderer);
+	const rendered = renderer;
+	t.after(() => rendered.unmount());
+	assert.equal(rendered.root.findAllByType("li").length, 1);
+	assert.ok(
+		rendered.root
+			.findByType("li")
+			.findAllByType("span")
+			.some(span => span.children.includes("School A")),
+	);
+	assert.equal(rendered.root.findAllByType("aside").length, 1);
+	assert.equal(rendered.root.findByType("tbody").findAllByType("tr").length, 4);
+	assert.ok(
+		rendered.root
+			.findByType("tbody")
+			.findAllByType("th")
+			.some(cell => cell.children.includes("School B")),
+	);
+	await act(() =>
+		z
+			.function()
+			.args(z.object({ target: z.object({ value: z.string() }) }))
+			.returns(z.void())
+			.parse(rendered.root.findAllByType("select")[2]?.props.onChange)({ target: { value: "conversion" } }),
+	);
+	assert.ok(JSON.stringify(rendered.toJSON()).includes("50% (10/20)"));
+	const suppressed = rendered.root
+		.findByType("tbody")
+		.findAllByType("tr")
+		.find(entry => entry.findByType("th").children.includes("Other / suppressed"));
+	assert.ok(suppressed);
+	assert.deepEqual(
+		suppressed.findAllByType("td").map(cell => cell.children),
+		[["—"], ["—"], ["—"]],
+	);
+});
