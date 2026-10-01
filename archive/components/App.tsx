@@ -63,8 +63,8 @@ export default function ArchiveShell({ children, title, noIndex, integrated, ...
 					className="border-b border-dark-primary-color/20 bg-white/30 px-4 py-3 text-center text-sm"
 				>
 					{fr
-						? "Archives de Hack the Hill III — le hackathon est terminé. Les fonctions de l’événement ne sont pas disponibles ici."
-						: "Hack the Hill III archive — the hackathon has ended. Live event features are not available here."}
+						? "Hack the Hill III · 25–27 septembre 2026"
+						: "Hack the Hill III · September 25–27, 2026"}
 				</p>
 				<main {...rest} className={`min-w-0 flex-1 ${rest.className ?? ""}`}>
 					{children}
