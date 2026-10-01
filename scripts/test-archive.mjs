@@ -54,7 +54,7 @@ async function serve(req, res) {
 if (!remoteOrigin) await new Promise(resolve => server.listen(0, "127.0.0.1", () => resolve(undefined)));
 const address = server.address();
 if (!remoteOrigin && (!address || typeof address === "string")) throw new Error("Static test server did not start");
-const origin = remoteOrigin ?? `http://127.0.0.1:${typeof address === "object" ? address?.port : 0}`;
+const origin = remoteOrigin ?? `http://127.0.0.1:${typeof address === "object" ? (address?.port ?? 0) : 0}`;
 const browser = await chromium.launch();
 try {
 	const context = await browser.newContext();
