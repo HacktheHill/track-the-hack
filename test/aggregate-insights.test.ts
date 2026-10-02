@@ -1,5 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { createInstance } from "i18next";
+import { AggregateInsights } from "@/components/metrics/AggregateInsights";
+import en from "@root/public/locales/en/metrics.json";
+import fr from "@root/public/locales/fr/metrics.json";
 import { geographicRegion, outsideCanadaBounds, pooledInsight } from "@/components/metrics/aggregate-insights";
 
 void test("geographic classification does not infer countries from ambiguous cities or nonanswers", () => {
@@ -54,4 +60,41 @@ void test("suppressed-pool insights distinguish single-choice shares from overla
 		share: null,
 	});
 	assert.equal(pooledInsight([{ label: "Other / suppressed", value: 4 }], 100), null);
+});
+
+void test("bilingual insight cards preserve uncertainty and suppress small derived counts", async () => {
+	for (const language of ["en", "fr"]) {
+		const i18n = createInstance();
+		await i18n.init({
+			lng: language,
+			defaultNS: "metrics",
+			resources: { en: { metrics: en }, fr: { metrics: fr } },
+		});
+		const t = i18n.getFixedT(language, "metrics") as Parameters<typeof AggregateInsights>[0]["t"];
+		const render = (rows: { label: string; value: number }[], dimension = "country") =>
+			renderToStaticMarkup(createElement(AggregateInsights, { rows, total: 100, dimension, t }));
+		assert.match(
+			render([
+				{ label: "India", value: 8 },
+				{ label: "Other / suppressed", value: 6 },
+			]),
+			/8–14/,
+		);
+		assert.match(
+			render(
+				[
+					{ label: "India", value: 8 },
+					{ label: "Unclassified", value: 20 },
+				],
+				"travelOrigin",
+			),
+			language === "en" ? /At least 8/ : /Au moins 8/,
+		);
+		assert.match(render([{ label: "India", value: 2 }]), language === "en" ? /Fewer than 5/ : /Moins de 5/);
+		assert.match(render([{ label: "Canada", value: 100 }]), />0<\/p>/);
+		assert.match(
+			render([{ label: "Unclassified", value: 100 }], "travelOrigin"),
+			language === "en" ? /Not determinable/ : /Impossible à déterminer/,
+		);
+	}
 });
