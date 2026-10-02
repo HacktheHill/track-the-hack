@@ -73,7 +73,7 @@ void test("bilingual insight cards preserve uncertainty and suppress small deriv
 			defaultNS: "metrics",
 			resources: { en: { metrics: en }, fr: { metrics: fr } },
 		});
-		const t = i18n.getFixedT(language, "metrics") as Parameters<typeof AggregateInsights>[0]["t"];
+		const t = i18n.getFixedT(language, "metrics");
 		const render = (rows: { label: string; value: number }[], dimension = "country") =>
 			renderToStaticMarkup(createElement(AggregateInsights, { rows, total: 100, dimension, t }));
 		assert.match(
