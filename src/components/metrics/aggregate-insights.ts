@@ -6,6 +6,9 @@ for (const locale of ["en", "fr"]) {
 	for (const first of "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 		for (const second of "ABCDEFGHIJKLMNOPQRSTUVWXYZ") {
 			const code = first + second;
+			// ICU also names macroregions, pseudo-locales and an unknown-region
+			// sentinel. None is a usable country-of-residence answer.
+			if (["ZZ", "EU", "EZ", "UN", "QO", "XA", "XB"].includes(code)) continue;
 			const name = names.of(code);
 			if (name && name !== code) {
 				countries.set(normalize(name), code);

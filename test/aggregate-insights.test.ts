@@ -24,6 +24,9 @@ void test("geographic classification does not infer countries from ambiguous cit
 	assert.equal(geographicRegion("CA"), "canada");
 	assert.equal(geographicRegion("US"), "outside");
 	assert.equal(geographicRegion("États-Unis"), "outside");
+	assert.equal(geographicRegion("ZZ"), "unknown");
+	assert.equal(geographicRegion("Unknown Region"), "unknown");
+	assert.equal(geographicRegion("European Union"), "unknown");
 });
 void test("outside-Canada bounds never assume pooled answers are all international", () => {
 	assert.deepEqual(
