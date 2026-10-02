@@ -1,4 +1,16 @@
 {
+	"aggregateInsights": {
+		"outsideCanada": "À l’extérieur du Canada",
+		"atLeast": "Au moins {{count}}",
+		"travelUnknownNote": "{{count}} réponses fournies n’ont pas de pays classable avec certitude ou sont regroupées. Elles ne sont pas comptées comme canadiennes. Le nombre affiché est un minimum, pas le total international complet.",
+		"fewerThanFive": "Moins de 5",
+		"indeterminate": "Impossible à déterminer dans cet instantané",
+		"residenceNote": "Pays de résidence, distinct de l’origine du voyage et de la citoyenneté. Les réponses manquantes sont exclues.",
+		"travelNote": "Seuls les noms ou codes de pays explicites sont classés. Les villes seules et les réponses ambiguës ou manquantes ne sont pas présumées canadiennes ou internationales.",
+		"rangeNote": "La borne inférieure compte les réponses explicitement non canadiennes; la borne supérieure inclut aussi les réponses regroupées ou non classées. Les petits sous-groupes ne sont pas révélés.",
+		"pooled": "Autres réponses ou réponses masquées regroupées : {{value}} · {{share}} % de cette population. La taille globale du groupe est visible; ses catégories individuelles restent masquées.",
+		"pooledMentions": "{{value}} sélections de catégories regroupées. Ces mentions se chevauchent et ne représentent pas des personnes ou projets uniques."
+	},
 	"populationBase": "{{population}} · n={{count}}",
 	"coverageDetails": "Réponses manquantes, regroupement et couverture exacte",
 	"comparisonView": "Candidatures et présence",

@@ -55,6 +55,22 @@ GitHub release, or an artifact preview with public access.
 
 ## Analysis
 
+Country and travel views include an outside-Canada summary. Historical SQL is
+classified locally before suppression into Canada, outside Canada, or unclassified;
+only these aggregate counts enter the archive. An explicit country (including
+English/French country names or residence codes) is required; city-only and
+nonanswers remain unclassified. Residence is never substituted for travel origin.
+Existing snapshots without those broader aggregates display conservative bounds,
+not an assumption that every suppressed response is international. Travel uses a
+verified minimum with unclassified-response coverage; small derived totals remain
+masked. Re-importing historical SQL preserves existing Devpost aggregates.
+
+Across cohort and historical dimensions, a sufficiently large pooled group now
+has a population share. Multi-select pools show selection counts without a
+people/project percentage. Rare tags cannot yield unique-project totals after
+suppression, so these are not reconstructed. No suppressed category names or
+sensitive identity-group inferences are introduced.
+
 The archived dashboard reuses the live presentation and retains participation,
 SES-accepted messages, RSVP/attendance intersections, all demographic cohorts,
 event operations, service quantities, Devpost totals, source dates, linkage,

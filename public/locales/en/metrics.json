@@ -1,4 +1,16 @@
 {
+	"aggregateInsights": {
+		"outsideCanada": "Outside Canada",
+		"atLeast": "At least {{count}}",
+		"travelUnknownNote": "{{count}} provided responses have no safely classifiable country or are pooled. They are not counted as Canadian. The displayed count is a minimum, not the full international total.",
+		"fewerThanFive": "Fewer than 5",
+		"indeterminate": "Not determinable from this snapshot",
+		"residenceNote": "Country of residence, not travel origin or citizenship. Missing responses are excluded.",
+		"travelNote": "Only explicit country names/codes are classified. City-only, ambiguous and missing answers are not assumed to be Canadian or international.",
+		"rangeNote": "The lower bound counts explicit non-Canadian responses; the upper bound also includes pooled or unclassified answers. Small subgroups are not revealed.",
+		"pooled": "Pooled other/suppressed responses: {{value}} · {{share}}% of this population. The group’s overall size is visible; its individual categories remain hidden.",
+		"pooledMentions": "{{value}} pooled category selections. These are overlapping mentions, not unique people or projects."
+	},
 	"populationBase": "{{population}} · n={{count}}",
 	"coverageDetails": "Missing answers, suppression and exact coverage",
 	"comparisonView": "Applications vs attendees",

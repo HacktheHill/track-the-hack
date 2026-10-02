@@ -5,6 +5,7 @@ import { pathToFileURL } from "node:url";
 import { historicalArchiveSchema, type HistoricalEdition } from "@root/private-metrics/history";
 import { archiveDashboardSchema } from "@root/private-metrics/snapshot";
 import { readSqlTables, type SqlRow } from "./historical-sql.mts";
+import { geographicRegion } from "@/components/metrics/aggregate-insights";
 
 const text = (value: unknown) => String(value ?? "").trim();
 const yes = (value: unknown) => value === 1 || value === "1" || value === true;
@@ -247,6 +248,22 @@ export function aggregateHistoricalDump(sql: string, id: "i" | "ii"): Historical
 				["acquisitionChannel", "referralSource"],
 			])
 		if (key && column && key !== "acquisitionChannel") dimension(key, column);
+	// Classify before suppression, without retaining any individual locations.
+	// Unknown/free-form locations stay unknown; residence never fills travel gaps.
+	for (const [key, column] of id === "i"
+		? [["travelRegion", "attendanceLocation"]]
+		: [
+				["countryRegion", "country"],
+				["travelRegion", "travelOrigin"],
+			]) {
+		if (key && column)
+			dimension(key, column, "cohorts", value => {
+				const label = text(value);
+				if (!label) return "";
+				const region = geographicRegion(label, key === "travelRegion");
+				return region === "canada" ? "Canada" : region === "outside" ? "Outside Canada" : "Unclassified";
+			});
+	}
 	dimension("tShirtSize", id === "i" ? "shirtSize" : "tShirtSize", "operations");
 	const dietOptions = ["Halal", "Vegetarian", "Vegan", "Dairy Free", "Gluten Free", "Nut Allergy", "Kosher", "None"];
 	const dietCounts = new Map(dietOptions.map(option => [option, 0]));
@@ -557,7 +574,12 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
 		second.populations.anyScan !== 534
 	)
 		throw new Error("Historical source totals differ from the corrected reports. Review before importing.");
-	const aggregate = archiveDashboardSchema.parse({ ...JSON.parse(readFileSync(snapshotFile, "utf8")), history });
+	const previous = archiveDashboardSchema.parse(JSON.parse(readFileSync(snapshotFile, "utf8")));
+	for (const edition of history.editions) {
+		const devpost = previous.history?.editions.find(old => old.id === edition.id)?.devpost;
+		if (devpost) edition.devpost = devpost;
+	}
+	const aggregate = archiveDashboardSchema.parse({ ...previous, history });
 	writeFileSync(output, JSON.stringify(aggregate, null, 2) + "\n", { mode: 0o600, flag: "wx" });
 	console.log("Created a new aggregate-only archival snapshot; source SQL and original snapshot were not changed.");
 }
