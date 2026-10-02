@@ -138,6 +138,7 @@ export const CohortExplorer = ({ dimensions, t }: { dimensions: Record<string, B
 			</h2>
 			{selected === "acquisitionChannel" && <p className="mt-2 font-rubik text-sm">{t("multiSelectNote")}</p>}
 			<AggregateInsights
+				populationLabel={t(`cohort.${cohort}`)}
 				rows={entries.map(entry => ({ label: entry.label, value: entry[cohort] }))}
 				total={entries.reduce((sum, entry) => sum + entry[cohort], 0)}
 				dimension={selected}

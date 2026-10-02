@@ -6,12 +6,14 @@ export const AggregateInsights = ({
 	rows,
 	total,
 	dimension,
+	populationLabel,
 	multiSelect = false,
 	t,
 }: {
 	rows: AggregateRow[];
 	total: number;
 	dimension: string;
+	populationLabel?: string;
 	multiSelect?: boolean;
 	t: Translate;
 }) => {
@@ -34,6 +36,7 @@ export const AggregateInsights = ({
 	if (!pooled && !geography) return null;
 	return (
 		<aside className="mt-4 rounded border border-teal-200 bg-teal-50 p-3 font-rubik text-sm">
+			{populationLabel && <p className="mb-2 font-medium">{populationLabel}</p>}
 			{geography && (
 				<>
 					<h3 className="font-medium">{t("aggregateInsights.outsideCanada")}</h3>
