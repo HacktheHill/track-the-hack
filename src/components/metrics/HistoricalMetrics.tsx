@@ -6,6 +6,7 @@ import { CountBars } from "./CohortExplorer";
 import styles from "@/pages/metrics/Metrics.module.css";
 import { shirtSizeOrder } from "@root/private-metrics/operations";
 import { ProjectEditionComparison } from "./HistoricalProjectInsights";
+import { AggregateInsights } from "./AggregateInsights";
 
 type Translate = ReturnType<typeof useTranslation>["t"];
 const source = "https://github.com/HacktheHill/prev-hackathon-analysis/tree/main/corrected_version";
@@ -19,7 +20,8 @@ const Card = ({ label, value, note }: { label: string; value: number | string; n
 
 export const HistoricalMetrics = ({ edition, view, t }: { edition: HistoricalEdition; view: string; t: Translate }) => {
 	const dimensions = edition.dimensions.filter(
-		dimension => dimension.section === view && dimension.key !== "loginProviders",
+		dimension =>
+			dimension.section === view && !["loginProviders", "countryRegion", "travelRegion"].includes(dimension.key),
 	);
 	const [dimension, setDimension] = useState("");
 	const [showAll, setShowAll] = useState(false);
@@ -132,6 +134,23 @@ export const HistoricalMetrics = ({ edition, view, t }: { edition: HistoricalEdi
 						})}
 					</p>
 					{selected.multiSelect && <p className="mt-2 font-rubik text-sm">{t("history.overlapNote")}</p>}
+					<AggregateInsights
+						rows={
+							edition.dimensions.find(
+								row =>
+									row.key ===
+									(selected.key === "country"
+										? "countryRegion"
+										: selected.key === "travelOrigin"
+											? "travelRegion"
+											: ""),
+							)?.rows ?? selected.rows
+						}
+						total={selected.total}
+						dimension={selected.key}
+						multiSelect={selected.multiSelect}
+						t={t}
+					/>
 					{selected.key === "programmingLanguages" && (
 						<details className="mt-2 font-rubik text-sm">
 							<summary className="cursor-pointer">{t("history.languageMethodLabel")}</summary>

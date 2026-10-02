@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { useTranslation } from "next-i18next";
 import type { ProjectInsights } from "@root/private-metrics/project-insights";
+import { AggregateInsights } from "./AggregateInsights";
 
 type Translate = ReturnType<typeof useTranslation>["t"];
 const percentage = (value: number, total: number, locale: string) =>
@@ -87,6 +88,9 @@ export const HistoricalProjectInsights = ({
 					})}
 				</p>
 				{dimension !== "teamSizes" && <p className="mt-2 text-sm">{t("history.project.overlap")}</p>}
+				{dimension === "teamSizes" && (
+					<AggregateInsights rows={rows} total={data.submittedProjects} dimension={dimension} t={t} />
+				)}
 				<ul className="mt-5 space-y-4">
 					{(expanded ? rows : rows.slice(0, 10)).map(row => (
 						<li key={row.label}>

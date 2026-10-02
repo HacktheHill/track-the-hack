@@ -102,6 +102,8 @@ export const historicalArchiveSchema = z
 			"graduationYear",
 			"priorHackathonCount",
 			"country",
+			"countryRegion",
+			"travelRegion",
 			"racialOrEthnicBackground",
 			"acquisitionChannel",
 			"tShirtSize",
