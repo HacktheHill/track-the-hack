@@ -1,0 +1,3 @@
+## 2025-01-20 - O(N²) Lookups in Loops
+**Learning:** Found O(N²) nested loops in judging assignments/projects arrays, such as `projects.find(project => project.id === assignment.projectId)` being called repeatedly within a mapping over `assignments`. This can cause significant performance degradation when large sets of assignments and projects are processed together.
+**Action:** Always pre-compute a Hash Map (using `Map` or `Object.fromEntries()`, preferring `Map` in modern Node) using the loop condition as a key for O(1) lookups before large `.map` or `.filter` blocks, replacing `.find` entirely in the inner loops.
