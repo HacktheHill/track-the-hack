@@ -191,7 +191,7 @@ export const HistoricalMetrics = ({
 											? t(`history.profileLabel.${row.label}`, { defaultValue: row.label })
 											: row.label === "Other / suppressed"
 												? t("suppressedCategory")
-												: selected.key === "country"
+												: ["country", "travelCountry"].includes(selected.key)
 													? displayCountry(row.label, locale)
 													: selected.key === "missingWalkInAnswers"
 														? t(`dimension.${row.label}`, { defaultValue: row.label })
@@ -481,7 +481,7 @@ export const HistoricalMetrics = ({
 								...edition.dimensions.filter(
 									row =>
 										row.section === "cohorts" &&
-										!["countryRegion", "travelRegion"].includes(row.key),
+										!["countryRegion", "travelRegion", "travelCountry"].includes(row.key),
 								),
 							]
 								.sort((a, b) => (a.total - a.missing) / a.total - (b.total - b.missing) / b.total)

@@ -18,11 +18,39 @@ for (const locale of ["en", "fr"]) {
 }
 for (const alias of ["usa", "u.s.a.", "united states of america"]) countries.set(alias, "US");
 countries.set("uk", "GB");
+const travelNonanswers = ["no", "non", "none", "n/a", "na", "n.a.", "not applicable", "not provided", "in person"];
+// Several country codes are also US state abbreviations. A free-form travel
+// suffix is not enough to disambiguate them; use the full country name instead.
+const ambiguousTravelCodes = new Set([
+	"al",
+	"ar",
+	"az",
+	"ca",
+	"co",
+	"de",
+	"ga",
+	"id",
+	"il",
+	"in",
+	"ma",
+	"md",
+	"me",
+	"mo",
+	"ms",
+	"mt",
+	"ne",
+	"pa",
+	"sc",
+	"sd",
+	"tn",
+	"va",
+	"na",
+]);
 
 export const countryLabel = (label: string, travel = false): string | null => {
 	const normalized = normalize(label);
 	const part = travel ? (normalized.split(",").at(-1)?.trim() ?? "") : normalized;
-	if (travel && part === "ca") return null;
+	if (travel && (travelNonanswers.includes(normalized) || ambiguousTravelCodes.has(part))) return null;
 	const code = countries.get(part);
 	return code ? (new Intl.DisplayNames("en", { type: "region" }).of(code) ?? null) : null;
 };
@@ -42,7 +70,11 @@ export const geographicRegion = (label: string, travel = false): "canada" | "out
 		return "unknown";
 	const code = countries.get(travel ? (normalized.split(",").at(-1)?.trim() ?? "") : normalized);
 	// CA in free-form travel text can also mean California: require its full name.
-	if (travel && normalized.split(",").at(-1)?.trim() === "ca") return "unknown";
+	if (
+		travel &&
+		(travelNonanswers.includes(normalized) || ambiguousTravelCodes.has(normalized.split(",").at(-1)?.trim() ?? ""))
+	)
+		return "unknown";
 	return code ? (code === "CA" ? "canada" : "outside") : "unknown";
 };
 

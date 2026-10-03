@@ -125,6 +125,7 @@ export const historicalArchiveSchema = z
 			"country",
 			"countryRegion",
 			"travelRegion",
+			"travelCountry",
 			"racialOrEthnicBackground",
 			"acquisitionChannel",
 			"tShirtSize",

@@ -5,7 +5,7 @@ import { pathToFileURL } from "node:url";
 import { historicalArchiveSchema, type HistoricalEdition } from "@root/private-metrics/history";
 import { archiveDashboardSchema } from "@root/private-metrics/snapshot";
 import { readSqlTables, type SqlRow } from "./historical-sql.mts";
-import { geographicRegion } from "@/components/metrics/aggregate-insights";
+import { geographicRegion, countryLabel } from "@/components/metrics/aggregate-insights";
 import { minimumCategorySize } from "@root/private-metrics/disclosure";
 import { z } from "zod";
 
@@ -255,6 +255,10 @@ export function aggregateHistoricalDump(sql: string, id: "i" | "ii"): Historical
 			])
 		if (key && column && key !== "acquisitionChannel") dimension(key, column);
 	// Classify before suppression, without retaining any individual locations.
+	dimension("travelCountry", id === "i" ? "attendanceLocation" : "travelOrigin", "cohorts", value => {
+		const label = text(value);
+		return !label ? "" : (countryLabel(label, true) ?? "Unclassified");
+	});
 	// Unknown/free-form locations stay unknown; residence never fills travel gaps.
 	for (const [key, column] of id === "i"
 		? [["travelRegion", "attendanceLocation"]]
