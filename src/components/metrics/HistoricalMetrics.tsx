@@ -7,9 +7,29 @@ import styles from "@/pages/metrics/Metrics.module.css";
 import { shirtSizeOrder } from "@root/private-metrics/operations";
 import { ProjectEditionComparison } from "./HistoricalProjectInsights";
 import { AggregateInsights } from "./AggregateInsights";
+import { displayCountry } from "./aggregate-insights";
 
 type Translate = ReturnType<typeof useTranslation>["t"];
 const source = "https://github.com/HacktheHill/prev-hackathon-analysis/tree/main/corrected_version";
+const operationalStatKeys = [
+	"transportRequested",
+	"onlineOnly",
+	"accommodationResponses",
+	"scheduledEvents",
+	"foodPeople",
+	"confirmedAnyScan",
+	"walkInCheckIn",
+	"walkInAnyScan",
+];
+const platformStatKeys = [
+	"platformAccounts",
+	"staffPeople",
+	"staffAssignments",
+	"linkedPlatformAccounts",
+	"emailVerifiedAccounts",
+	"discordVerificationEvents",
+	"discordVerifiedAccounts",
+];
 const Card = ({ label, value, note }: { label: string; value: number | string; note?: string }) => (
 	<section className={`ui-panel p-4 ${styles.card ?? ""}`}>
 		<h2 className="font-rubik">{label}</h2>
@@ -18,7 +38,17 @@ const Card = ({ label, value, note }: { label: string; value: number | string; n
 	</section>
 );
 
-export const HistoricalMetrics = ({ edition, view, t }: { edition: HistoricalEdition; view: string; t: Translate }) => {
+export const HistoricalMetrics = ({
+	edition,
+	view,
+	t,
+	locale = "en",
+}: {
+	edition: HistoricalEdition;
+	view: string;
+	t: Translate;
+	locale?: string;
+}) => {
 	const dimensions = edition.dimensions.filter(
 		dimension =>
 			dimension.section === view && !["loginProviders", "countryRegion", "travelRegion"].includes(dimension.key),
@@ -34,19 +64,8 @@ export const HistoricalMetrics = ({ edition, view, t }: { edition: HistoricalEdi
 				: selected?.rows.slice().sort((a, b) => b.value - a.value);
 	const stats = edition.stats.filter(stat =>
 		view === "operations"
-			? ["transportRequested", "onlineOnly", "accommodationResponses", "scheduledEvents", "foodPeople"].includes(
-					stat.key,
-				)
-			: ![
-					"transportRequested",
-					"onlineOnly",
-					"accommodationResponses",
-					"scheduledEvents",
-					"foodPeople",
-					"platformAccounts",
-					"staffPeople",
-					"staffAssignments",
-				].includes(stat.key),
+			? operationalStatKeys.includes(stat.key)
+			: !operationalStatKeys.includes(stat.key) && !platformStatKeys.includes(stat.key),
 	);
 	return (
 		<div className="flex flex-col gap-6">
@@ -172,7 +191,11 @@ export const HistoricalMetrics = ({ edition, view, t }: { edition: HistoricalEdi
 											? t(`history.profileLabel.${row.label}`, { defaultValue: row.label })
 											: row.label === "Other / suppressed"
 												? t("suppressedCategory")
-												: row.label,
+												: selected.key === "country"
+													? displayCountry(row.label, locale)
+													: selected.key === "missingWalkInAnswers"
+														? t(`dimension.${row.label}`, { defaultValue: row.label })
+														: row.label,
 							})) ?? []
 						}
 						total={selected.multiSelect ? undefined : selected.total}
@@ -267,6 +290,45 @@ export const HistoricalMetrics = ({ edition, view, t }: { edition: HistoricalEdi
 					})}
 				</>
 			)}
+			{view === "operations" && edition.eventGroups && (
+				<section className="ui-panel p-5 font-rubik">
+					<h2 className="font-coolvetica text-xl">{t("history.activityTypes")}</h2>
+					<div className="mt-4 overflow-x-auto">
+						<table className="w-full text-left text-sm">
+							<thead>
+								<tr>
+									{[
+										"eventLabel",
+										"history.instances",
+										"history.scanRows",
+										"history.people",
+										"history.units",
+									].map(key => (
+										<th key={key} className="p-3">
+											{t(key)}
+										</th>
+									))}
+								</tr>
+							</thead>
+							<tbody>
+								{edition.eventGroups.map(row => (
+									<tr key={row.group} className="border-t border-gray-200">
+										<th className="p-3 font-normal">
+											{t(`history.eventGroup.${row.group}`, { defaultValue: row.group })}
+										</th>
+										{[row.instances, row.rows, row.people, row.units].map((value, index) => (
+											<td className="p-3 tabular-nums" key={index}>
+												{value}
+											</td>
+										))}
+									</tr>
+								))}
+							</tbody>
+						</table>
+					</div>
+					<p className="mt-3 text-sm">{t("history.activityTypesNote")}</p>
+				</section>
+			)}
 			{["operations", "insights"].includes(view) && stats.length > 0 && (
 				<section className="ui-panel p-5">
 					<h2 className="font-coolvetica text-xl">
@@ -335,7 +397,7 @@ export const HistoricalMetrics = ({ edition, view, t }: { edition: HistoricalEdi
 					<summary className="cursor-pointer">{t("history.platform")}</summary>
 					<dl className="mt-4 grid gap-5 sm:grid-cols-3">
 						{edition.stats
-							.filter(stat => ["platformAccounts", "staffPeople", "staffAssignments"].includes(stat.key))
+							.filter(stat => platformStatKeys.includes(stat.key))
 							.map(stat => (
 								<div key={stat.key}>
 									<dt className="text-sm">{t(`history.stat.${stat.key}`)}</dt>
@@ -351,6 +413,55 @@ export const HistoricalMetrics = ({ edition, view, t }: { edition: HistoricalEdi
 			)}
 			{view === "quality" && (
 				<>
+					{edition.sourceInventory && (
+						<details className="ui-panel p-5 font-rubik">
+							<summary className="cursor-pointer">{t("history.sourceInventory")}</summary>
+							<p className="mt-3 text-sm">{t("history.sourceInventoryNote")}</p>
+							<div className="mt-4 overflow-x-auto">
+								<table className="w-full text-left text-sm">
+									<thead>
+										<tr>
+											{["history.sourceTable", "history.sourceRows", "history.sourceColumns"].map(
+												key => (
+													<th className="p-3" key={key}>
+														{t(key)}
+													</th>
+												),
+											)}
+										</tr>
+									</thead>
+									<tbody>
+										{edition.sourceInventory.tables.map(row => (
+											<tr key={row.label} className="border-t border-gray-200">
+												<th className="p-3 font-normal">{row.label}</th>
+												<td className="p-3">{row.rows}</td>
+												<td className="p-3">{row.columns}</td>
+											</tr>
+										))}
+									</tbody>
+								</table>
+								<table className="mt-5 w-full text-left text-sm">
+									<thead>
+										<tr>
+											<th className="p-3">{t("history.sourceField")}</th>
+											<th className="p-3">{t("answerCoverage")}</th>
+										</tr>
+									</thead>
+									<tbody>
+										{edition.sourceInventory.fields.map(row => (
+											<tr key={row.label} className="border-t border-gray-200">
+												<th className="p-3 font-normal">{row.label}</th>
+												<td className="p-3">
+													{row.filled}/{row.total} ·{" "}
+													{row.total ? Math.round((row.filled / row.total) * 1000) / 10 : 0}%
+												</td>
+											</tr>
+										))}
+									</tbody>
+								</table>
+							</div>
+						</details>
+					)}
 					<section className="ui-panel p-5">
 						<h2 className="font-coolvetica text-xl">{t("dataQualityTitle")}</h2>
 						<dl className="mt-4 grid gap-5 sm:grid-cols-2">
@@ -366,7 +477,13 @@ export const HistoricalMetrics = ({ edition, view, t }: { edition: HistoricalEdi
 						<h2 className="font-coolvetica text-xl">{t("coverageByDimension")}</h2>
 						<CountBars
 							suffix="%"
-							rows={[...edition.dimensions.filter(row => row.section === "cohorts")]
+							rows={[
+								...edition.dimensions.filter(
+									row =>
+										row.section === "cohorts" &&
+										!["countryRegion", "travelRegion"].includes(row.key),
+								),
+							]
 								.sort((a, b) => (a.total - a.missing) / a.total - (b.total - b.missing) / b.total)
 								.map(row => ({
 									label: `${t(`history.dimension.${row.key}`, { defaultValue: t(`dimension.${row.key}`) })} · ${row.total - row.missing}/${row.total}`,

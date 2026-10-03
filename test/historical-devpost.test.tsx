@@ -69,7 +69,7 @@ void test("historical project aggregation deduplicates rows and tags, excludes d
 	assert.deepEqual(result.teamSizes, [
 		{ label: "2", value: 5 },
 		{ label: "3", value: 5 },
-		{ label: "Other / suppressed", value: 2 },
+		{ label: "6", value: 2 },
 	]);
 	assert.equal(result.teamMemberships, 37, "memberships are not the organizer's 20 unique submitters");
 	assert.equal(result.coverage.find(row => row.key === "tryItOut")?.answeredProjects, 9);
@@ -79,7 +79,7 @@ void test("historical project aggregation deduplicates rows and tags, excludes d
 	);
 });
 
-void test("rare tags are suppressed and missing team sizes are not invented as solo projects", () => {
+void test("rare public tags remain useful and missing team sizes are not invented as solo projects", () => {
 	const input = rows();
 	assert.ok(input[0]);
 	input[0] = {
@@ -89,11 +89,12 @@ void test("rare tags are suppressed and missing team sizes are not invented as s
 		"Additional Team Member Count": "",
 	};
 	const result = aggregateProjectInsights(input, options);
-	assert.equal(result.technologies.suppressedLabels, 1);
-	assert.equal(result.prizes.suppressedLabels, 1);
+	assert.equal(result.technologies.suppressedLabels, 0);
+	assert.equal(result.prizes.suppressedLabels, 0);
 	assert.equal(result.teamSizeAnsweredProjects, 11);
 	assert.equal(result.teamMemberships, 35);
-	assert.doesNotMatch(JSON.stringify(result), /Rare technology|Rare prize/);
+	assert.ok(result.technologies.rows.some(row => row.label === "rare technology" && row.value === 1));
+	assert.ok(result.prizes.rows.some(row => row.label === "Rare prize" && row.value === 1));
 });
 
 void test("URL-less drafts are counted without guessing identities or entering submitted-project charts", () => {
@@ -136,7 +137,7 @@ void test("project imports fail closed on source drift, unknown statuses, confli
 	);
 });
 
-void test("project snapshot schema rejects personal fields, small categories and incomplete coverage", () => {
+void test("project snapshot schema rejects personal fields, zero categories and incomplete coverage", () => {
 	const data = fixture();
 	assert.ok(projectInsightsSchema.safeParse(data).success);
 	assert.equal(projectInsightsSchema.safeParse({ ...data, participants: [] }).success, false);
@@ -146,7 +147,7 @@ void test("project snapshot schema rejects personal fields, small categories and
 	assert.equal(
 		projectInsightsSchema.safeParse({
 			...data,
-			technologies: { ...data.technologies, rows: [{ label: "Rare", value: 1 }] },
+			technologies: { ...data.technologies, rows: [{ label: "Rare", value: 0 }] },
 		}).success,
 		false,
 	);

@@ -63,7 +63,7 @@ export const projectInsightsSchema = z
 		for (const rows of [value.teamSizes, value.technologies.rows, value.prizes.rows]) {
 			if (new Set(rows.map(row => row.label.toLowerCase())).size !== rows.length)
 				fail("Duplicate project categories");
-			if (rows.some(row => row.value < 5 && row.label !== "Other / suppressed"))
+			if (rows.some(row => row.value < 1 && row.label !== "Other / suppressed"))
 				fail("Unsuppressed small project category");
 			if (rows.some(row => row.value > value.submittedProjects)) fail("Project category exceeds its population");
 		}
@@ -72,7 +72,7 @@ export const projectInsightsSchema = z
 		for (const selection of [value.technologies, value.prizes])
 			if (
 				selection.answeredProjects > value.submittedProjects ||
-				selection.rows.some(row => row.value > selection.answeredProjects || row.value < 5)
+				selection.rows.some(row => row.value > selection.answeredProjects || row.value < 1)
 			)
 				fail("Inconsistent project selection coverage");
 		if (

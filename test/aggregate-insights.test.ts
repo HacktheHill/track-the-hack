@@ -93,7 +93,11 @@ void test("bilingual insight cards preserve uncertainty and suppress small deriv
 			),
 			language === "en" ? /At least 8/ : /Au moins 8/,
 		);
-		assert.match(render([{ label: "India", value: 2 }]), language === "en" ? /Fewer than 5/ : /Moins de 5/);
+		assert.match(render([{ label: "India", value: 2 }]), />2<\/p>/);
+		assert.match(
+			render([{ label: "India", value: 2 }], "travelOrigin"),
+			language === "en" ? /Fewer than 5/ : /Moins de 5/,
+		);
 		assert.match(render([{ label: "Canada", value: 100 }]), />0<\/p>/);
 		assert.match(
 			render([{ label: "Unclassified", value: 100 }], "travelOrigin"),

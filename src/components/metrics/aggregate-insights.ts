@@ -19,6 +19,19 @@ for (const locale of ["en", "fr"]) {
 for (const alias of ["usa", "u.s.a.", "united states of america"]) countries.set(alias, "US");
 countries.set("uk", "GB");
 
+export const countryLabel = (label: string, travel = false): string | null => {
+	const normalized = normalize(label);
+	const part = travel ? (normalized.split(",").at(-1)?.trim() ?? "") : normalized;
+	if (travel && part === "ca") return null;
+	const code = countries.get(part);
+	return code ? (new Intl.DisplayNames("en", { type: "region" }).of(code) ?? null) : null;
+};
+
+export const displayCountry = (label: string, locale = "en") => {
+	const code = countries.get(normalize(label));
+	return code ? (new Intl.DisplayNames(locale, { type: "region" }).of(code) ?? label) : label;
+};
+
 // A city alone is not evidence of a country (e.g. London). Only an explicit
 // country name/code or a country-qualified final segment is classified.
 export const geographicRegion = (label: string, travel = false): "canada" | "outside" | "unknown" => {
