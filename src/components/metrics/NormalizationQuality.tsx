@@ -26,7 +26,7 @@ export const NormalizationQuality = ({
 						{rows.map(row => (
 							<tr className="border-t" key={row.key}>
 								<th scope="row" className="p-3 font-normal">
-									{t(`dimension.${row.key}`)}
+									{t(`history.dimension.${row.key}`, { defaultValue: t(`dimension.${row.key}`) })}
 								</th>
 								<td className="p-3">{row.answered}</td>
 								<td className="p-3">{row.recognized}</td>

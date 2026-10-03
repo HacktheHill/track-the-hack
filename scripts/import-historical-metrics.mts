@@ -9,7 +9,12 @@ import { geographicRegion, countryLabel } from "@/components/metrics/aggregate-i
 import { minimumCategorySize } from "@root/private-metrics/disclosure";
 import { z } from "zod";
 import { normalizationSchema } from "@root/private-metrics/normalization-schema";
-import { normalizeCategory, programDiscipline, normalizationSummary } from "@root/private-metrics/normalization";
+import {
+	normalizeCategory,
+	programDiscipline,
+	normalizationSummary,
+	categorySelections,
+} from "@root/private-metrics/normalization";
 
 const text = (value: unknown) => String(value ?? "").trim();
 const yes = (value: unknown) => value === 1 || value === "1" || value === true;
@@ -213,9 +218,7 @@ export function aggregateHistoricalDump(sql: string, id: "i" | "ii"): Historical
 				missing++;
 				continue;
 			}
-			const group = ["school", "studyLevel", "areaOfStudy", "transportSchools", "discipline"].includes(key)
-				? label.toLowerCase()
-				: label;
+			const group = label.toLowerCase();
 			labels.set(group, labels.get(group) ?? label);
 			grouped.set(group, (grouped.get(group) ?? 0) + 1);
 		}
@@ -261,13 +264,29 @@ export function aggregateHistoricalDump(sql: string, id: "i" | "ii"): Historical
 				["racialOrEthnicBackground", "raceEthnicity"],
 				["acquisitionChannel", "referralSource"],
 			])
-		if (key && column && key !== "acquisitionChannel") dimension(key, column);
+		if (key && column && key !== "acquisitionChannel")
+			dimension(
+				key,
+				column,
+				"cohorts",
+				key === "country" ? value => countryLabel(text(value)) ?? text(value) : text,
+			);
 	dimension("discipline", id === "i" ? "studyProgram" : "major", "cohorts", value => programDiscipline(text(value)));
 	result.normalization = normalizationSchema.parse(
 		[
 			["school", id === "i" ? "university" : "currentSchoolOrganization"],
 			["areaOfStudy", id === "i" ? "studyProgram" : "major"],
 			["studyLevel", id === "i" ? "studyLevel" : "educationLevel"],
+			["gender", "gender"],
+			["preferredLanguage", "preferredLanguage"],
+			["tShirtSize", id === "i" ? "shirtSize" : "tShirtSize"],
+			["dietaryRestrictions", "dietaryRestrictions"],
+			...(id === "ii"
+				? [
+						["racialOrEthnicBackground", "raceEthnicity"],
+						["acquisitionChannel", "referralSource"],
+					]
+				: [["attendanceMode", "attendanceType"]]),
 		].map(([key = "", column = ""]) =>
 			normalizationSummary(
 				key,
@@ -296,7 +315,17 @@ export function aggregateHistoricalDump(sql: string, id: "i" | "ii"): Historical
 			});
 	}
 	dimension("tShirtSize", id === "i" ? "shirtSize" : "tShirtSize", "operations");
-	const dietOptions = ["Halal", "Vegetarian", "Vegan", "Dairy Free", "Gluten Free", "Nut Allergy", "Kosher", "None"];
+	const dietOptions = [
+		"Halal",
+		"Vegetarian",
+		"Vegan",
+		"Dairy-free diet",
+		"Gluten-free diet",
+		"Nut allergy (unspecified)",
+		"Kosher",
+		"No restrictions reported",
+		"Not applicable",
+	];
 	const dietCounts = new Map(dietOptions.map(option => [option, 0]));
 	let dietMissing = 0;
 	for (const row of rows) {
@@ -305,15 +334,10 @@ export function aggregateHistoricalDump(sql: string, id: "i" | "ii"): Historical
 			dietMissing++;
 			continue;
 		}
-		const parts = value.split(",").map(part => part.trim());
-		let index = 0;
-		while (index < parts.length) {
-			const option = dietOptions.find(option => option.toLowerCase() === (parts[index] ?? "").toLowerCase());
-			if (!option) break;
+		const parts = categorySelections("dietaryRestrictions", value);
+		for (const option of parts.filter(option => dietOptions.includes(option)))
 			dietCounts.set(option, (dietCounts.get(option) ?? 0) + 1);
-			index++;
-		}
-		if (parts.slice(index).some(Boolean))
+		if (parts.some(option => !dietOptions.includes(option)))
 			dietCounts.set("Other / suppressed", (dietCounts.get("Other / suppressed") ?? 0) + 1);
 	}
 	let dietSuppressed = dietCounts.get("Other / suppressed") ?? 0;

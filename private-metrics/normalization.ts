@@ -1,6 +1,6 @@
 // Versioned, exact reviewed aliases only. No fuzzy matching or inferred campuses.
 // Source labels are never exported in diagnostics. Unmapped specifics survive.
-export const normalizationVersion = 1;
+export const normalizationVersion = 2;
 export const categoryKey = (value: string) =>
 	value
 		.normalize("NFKD")
@@ -193,12 +193,16 @@ const programs = [
 	),
 ];
 const levels = [
-	category("Undergraduate", "Premier cycle", ["University undergraduate program of three years or longer"]),
+	category("Undergraduate", "Premier cycle", [
+		"University undergraduate program of three years or longer",
+		"Études universitaires de premier cycle — programme de trois ans ou plus",
+	]),
 	category("Graduate / professional", "Études supérieures / professionnelles", [
 		"graduate",
 		"Graduate (Masters, PhD)",
 		"Supérieures",
 		"Graduate or professional program (master’s, professional degree, doctorate, etc.)",
+		"Études universitaires de cycles supérieurs — maîtrise, programme professionnel, doctorat, etc.",
 	]),
 	category("Secondary / high school", "Études secondaires", ["highSchool", "Secondary / High School", "Secondaire"]),
 	category("College / two-year undergraduate", "Collège / premier cycle de deux ans", [
@@ -209,9 +213,13 @@ const levels = [
 		"Cegep",
 		"Cégep",
 		"College",
+		"Études postsecondaires de premier cycle — programme de deux ans, collège communautaire ou équivalent",
 	]),
-	category("Below secondary / high school", "Avant les études secondaires", ["Less than secondary/high school"]),
-	category("Postdoctoral", "Postdoctorat", ["Postdoctoral program or fellowship"]),
+	category("Below secondary / high school", "Avant les études secondaires", [
+		"Less than secondary/high school",
+		"Moins que le niveau secondaire",
+	]),
+	category("Postdoctoral", "Postdoctorat", ["Postdoctoral program or fellowship", "Programme ou stage postdoctoral"]),
 	category("Not currently a student", "Pas actuellement aux études", [
 		"I'm not currently a student",
 		"Je ne suis pas actuellement aux études",
@@ -262,13 +270,128 @@ const channels = [
 	category("Major League Hacking (MLH)", "Major League Hacking (MLH)", ["MLH"]),
 	category("Search engine", "Moteur de recherche", [
 		"Search engine (e.g. Google or Bing)",
+		"Search engine (e.g., Google or Bing)",
 		"Moteur de recherche (p. ex. Google ou Bing)",
 	]),
 	category("AI assistant / chatbot", "Assistant d’IA / agent conversationnel", [
 		"AI assistant or chatbot (e.g. ChatGPT or Claude)",
+		"AI assistant or chatbot (e.g., ChatGPT or Claude)",
 		"Assistant d’IA ou agent conversationnel (p. ex. ChatGPT ou Claude)",
 	]),
 	category("Other", "Autre", ["Other (please specify)", "Autre (veuillez préciser)"]),
+];
+// Pronouns are not gender identities. Keep the historical pronoun question's
+// categories distinct rather than inferring Man/Woman from He/She.
+const genders = [
+	category("Man", "Homme", ["Men", "Hommes", "Male"]),
+	category("Woman", "Femme", ["Women", "Femmes", "Female"]),
+	category("Non-binary", "Non binaire", ["nonBinary", "nonbinary", "Non-binaire"]),
+	category("Two-Spirit", "Bispirituel·le", ["Two Spirit", "Bispirituel", "Bispirituelle"]),
+	category("Another gender identity", "Une autre identité de genre", [
+		"Another gender identity (please specify)",
+		"Une autre identité de genre (veuillez préciser)",
+	]),
+	category("Prefer not to answer", "Préfère ne pas répondre", [
+		"preferNotToAnswer",
+		"Prefer not to say",
+		"Je préfère ne pas répondre",
+		"Préfère ne pas le dire",
+	]),
+	category("He/him (pronouns)", "Il/lui (pronoms)", ["He/Him", "il/lui"]),
+	category("She/her (pronouns)", "Elle/elle (pronoms)", ["She/Her", "elle/elle"]),
+	category("They/them (pronouns)", "Iel (pronoms)", ["They/Them", "iel", "iel/iel"]),
+];
+const ethnicities = [
+	category("South Asian", "Origine sud-asiatique", ["southAsian", "Personne d’Asie du Sud", "Sud-asiatique"]),
+	category("East Asian", "Origine est-asiatique", ["eastAsian", "Personne d’Asie de l’Est", "Est-asiatique"]),
+	category("Southeast Asian", "Origine sud-est-asiatique", [
+		"southeastAsian",
+		"Personne d’Asie du Sud-Est",
+		"Sud-est-asiatique",
+	]),
+	category(
+		"Middle Eastern / North African / West Asian",
+		"Origine moyen-orientale / nord-africaine / ouest-asiatique",
+		["Personne du Moyen-Orient, d’Afrique du Nord ou d’Asie occidentale"],
+	),
+	category("Middle Eastern", "Origine moyen-orientale", ["middleEastern", "Moyen-Orient"]),
+	category("North African", "Origine nord-africaine", ["northAfrican", "Afrique du Nord"]),
+	category("African", "Origine africaine", ["african", "Africaine", "Africain"]),
+	category("Black or of African descent", "Personne noire ou d’ascendance africaine", ["Black or African descent"]),
+	category("White", "Personne blanche", ["caucasian", "Caucasian", "Blanc", "Blanche"]),
+	category("Latin American / Hispanic", "Origine latino-américaine / hispanique", [
+		"Personne d’Amérique latine ou d’origine hispanique",
+	]),
+	category("Hispanic", "Origine hispanique", ["hispanic", "Hispanique"]),
+	category(
+		"Indigenous, including First Nations, Métis and Inuit",
+		"Autochtone, y compris Premières Nations, Métis et Inuit",
+		["Personne autochtone, y compris des Premières Nations, métisse ou inuite"],
+	),
+	category("Another racial or ethnic background", "Une autre origine raciale ou ethnique", [
+		"Another racial or ethnic background (please specify)",
+		"Une autre origine raciale ou ethnique (veuillez préciser)",
+	]),
+	category("Prefer not to answer", "Préfère ne pas répondre", [
+		"preferNotToAnswer",
+		"Prefer not to say",
+		"Je préfère ne pas répondre",
+	]),
+];
+const diets = [
+	category("No restrictions reported", "Aucune restriction déclarée", [
+		"None",
+		"No",
+		"Non",
+		"Aucune",
+		"Aucun",
+		"No dietary restrictions",
+		"Aucune restriction alimentaire",
+	]),
+	category("Halal", "Alimentation halal"),
+	category("Vegetarian", "Régime végétarien", ["Végétarien", "Végétarienne"]),
+	category("Vegan", "Régime végétalien", ["Végétalien", "Végétalienne"]),
+	category("Kosher", "Alimentation casher", ["Casher"]),
+	category("Gluten-free diet", "Régime sans gluten", [
+		"Gluten Free",
+		"Gluten-free diet or celiac disease",
+		"Régime sans gluten ou maladie cœliaque",
+	]),
+	category("Dairy-free diet", "Régime sans produits laitiers", ["Dairy Free", "Dairy-free"]),
+	category("Lactose intolerance", "Intolérance au lactose", ["lactoseIntolerance"]),
+	category("Nut allergy (unspecified)", "Allergie aux noix (non précisée)", ["Nut Allergy", "nuts"]),
+	category("Peanut allergy", "Allergie aux arachides"),
+	category("Tree nut allergy", "Allergie aux noix autres que les arachides"),
+	category("Milk allergy", "Allergie au lait"),
+	category("Egg allergy", "Allergie aux œufs"),
+	category("Sesame allergy", "Allergie au sésame"),
+	category("Soy allergy", "Allergie au soya"),
+	category("Wheat allergy", "Allergie au blé"),
+	category("Mustard allergy", "Allergie à la moutarde"),
+	category("Fish allergy", "Allergie au poisson"),
+	category("Crustacean or mollusc allergy", "Allergie aux crustacés ou mollusques"),
+	category("Sulphite sensitivity", "Sensibilité aux sulfites"),
+	category("Other food allergy or dietary restriction", "Autre allergie ou restriction alimentaire"),
+	category("Not applicable", "Sans objet", ["N/A", "NA"]),
+];
+const preferredLanguages = [
+	category("English", "Anglais", ["EN"]),
+	category("French", "Français", ["FR", "Français", "Francais"]),
+	category("English and French", "Anglais et français", [
+		"Bilingual",
+		"Bilingue",
+		"English / French",
+		"Anglais / Français",
+	]),
+];
+const shirts = [
+	...["XS", "S", "M", "L", "XL", "XXL", "XXXL"].map(label => category(label, label)),
+	category("No T-shirt requested", "Aucun t-shirt demandé", [
+		"NONE",
+		"I do not want a T-shirt",
+		"Je ne souhaite pas de t-shirt",
+		"Je ne veux pas de t-shirt",
+	]),
 ];
 const dictionaries: Record<string, Category[]> = {
 	school: schools,
@@ -276,6 +399,21 @@ const dictionaries: Record<string, Category[]> = {
 	areaOfStudy: programs,
 	studyLevel: levels,
 	acquisitionChannel: channels,
+	gender: genders,
+	racialOrEthnicBackground: ethnicities,
+	dietaryRestrictions: diets,
+	dietaryWithCheckIn: diets,
+	dietaryWithAnyScan: diets,
+	preferredLanguage: preferredLanguages,
+	tShirtSize: shirts,
+	priorHackathon: [
+		category("Yes", "Oui", ["true", "1"]),
+		category("No", "Non", ["false", "0"]),
+		category("First-timer", "Première participation"),
+		category("Experienced", "Avec expérience"),
+	],
+	attendanceMode: [category("In person", "En personne", ["IN_PERSON"]), category("Online", "En ligne", ["ONLINE"])],
+	age: [category("Under 18", "Moins de 18 ans"), category("25+", "25 ans et plus")],
 };
 const technologies = [
 	category("next.js", "next.js", ["nextjs"]),
@@ -293,18 +431,74 @@ const technologies = [
 ];
 dictionaries.technologies = technologies;
 const indices = Object.fromEntries(
-	Object.entries(dictionaries).map(([key, entries]) => [
-		key,
-		new Map(
-			entries.flatMap(entry =>
-				[entry.en, entry.fr, ...entry.aliases].map(alias => [categoryKey(alias), entry] as const),
-			),
-		),
-	]),
+	Object.entries(dictionaries).map(([key, entries]) => {
+		const index = new Map<string, Category>();
+		for (const entry of entries)
+			for (const alias of [entry.en, entry.fr, ...entry.aliases]) {
+				const normalized = categoryKey(alias);
+				if (index.has(normalized) && index.get(normalized)?.en !== entry.en)
+					throw new Error(`Conflicting reviewed alias in ${key}`);
+				index.set(normalized, entry);
+			}
+		return [key, index];
+	}),
 );
+const combinationFields = new Set([
+	"gender",
+	"racialOrEthnicBackground",
+	"dietaryRestrictions",
+	"dietaryWithCheckIn",
+	"dietaryWithAnyScan",
+	"acquisitionChannel",
+]);
+export const normalizationFields = [
+	"school",
+	"areaOfStudy",
+	"studyLevel",
+	"gender",
+	"racialOrEthnicBackground",
+	"preferredLanguage",
+	"priorHackathon",
+	"tShirtSize",
+	"dietaryRestrictions",
+	"acquisitionChannel",
+	"attendanceMode",
+] as const;
+// Greedy reviewed phrases keep commas inside an option (e.g. Indigenous) intact.
+// Unknown fragments survive; no broad identity/health inference is performed.
+export const categorySelections = (key: string, value: string): string[] => {
+	const cleaned = value.normalize("NFC").trim().replace(/\s+/g, " ");
+	if (!cleaned) return [];
+	const exact = indices[key]?.get(categoryKey(cleaned));
+	if (exact) return [exact.en];
+	const parts = cleaned.split(/\s*[,;|]\s*|\s+\+\s+/);
+	const choices: string[] = [];
+	for (let start = 0; start < parts.length;) {
+		let matched = false;
+		for (let end = parts.length; end > start; end--) {
+			const entry = indices[key]?.get(categoryKey(parts.slice(start, end).join(", ")));
+			if (entry) {
+				choices.push(entry.en);
+				start = end;
+				matched = true;
+				break;
+			}
+		}
+		if (!matched) choices.push(parts[start++] ?? "");
+	}
+	return [...new Set(choices.filter(Boolean))].sort((a, b) => a.localeCompare(b));
+};
 export const normalizeCategory = (key: string, value: string) => {
 	const cleaned = value.normalize("NFC").trim().replace(/\s+/g, " ");
-	return indices[key]?.get(categoryKey(cleaned))?.en ?? cleaned;
+	const exact = indices[key]?.get(categoryKey(cleaned));
+	if (exact) return exact.en;
+	if (combinationFields.has(key)) {
+		const choices = categorySelections(key, cleaned);
+		// Preserve an ambiguous/free-form combination verbatim until reviewed.
+		if (choices.length && choices.every(choice => indices[key]?.has(categoryKey(choice))))
+			return choices.join(" + ");
+	}
+	return cleaned;
 };
 export const programDiscipline = (value: string) =>
 	!value.trim() ? "" : (indices.areaOfStudy?.get(categoryKey(value))?.discipline ?? "Unclassified discipline");
@@ -323,11 +517,17 @@ const disciplineLabels: Record<string, string> = {
 	"Unclassified discipline": "Domaine non classé",
 };
 export const displayCategory = (key: string, value: string, locale = "en") => {
+	const normalized = normalizeCategory(key, value);
 	if (locale.startsWith("fr"))
 		return key === "discipline"
 			? (disciplineLabels[value] ?? value)
-			: (indices[key]?.get(categoryKey(value))?.fr ?? value);
-	return normalizeCategory(key, value);
+			: combinationFields.has(key)
+				? normalized
+						.split(" + ")
+						.map(choice => indices[key]?.get(categoryKey(choice))?.fr ?? choice)
+						.join(" + ")
+				: (indices[key]?.get(categoryKey(normalized))?.fr ?? normalized);
+	return normalized;
 };
 export type NormalizationField = {
 	key: string;
@@ -342,7 +542,12 @@ export const normalizationSummary = (key: string, values: string[]): Normalizati
 	const provided = values.map(value => value.trim()).filter(Boolean);
 	const sourceCategories = new Set(provided).size;
 	const normalizedCategories = new Set(provided.map(value => normalizeCategory(key, value).toLowerCase())).size;
-	const recognized = provided.filter(value => indices[key]?.has(categoryKey(value))).length;
+	const recognized = provided.filter(
+		value =>
+			indices[key]?.has(categoryKey(value)) ||
+			(combinationFields.has(key) &&
+				categorySelections(key, value).every(choice => indices[key]?.has(categoryKey(choice)))),
+	).length;
 	return {
 		key,
 		answered: provided.length,

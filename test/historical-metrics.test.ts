@@ -93,6 +93,45 @@ void test("historical language mentions preserve report patterns and correct C++
 	assert.deepEqual(historicalLanguageMentions(""), []);
 });
 
+void test("historical bilingual categories normalize before pooling without inferring gender from pronouns", () => {
+	const columns = [
+		"submissionID",
+		"email",
+		"attendanceType",
+		"confirmed",
+		"walkIn",
+		"gender",
+		"preferredLanguage",
+		"dietaryRestrictions",
+	];
+	const rows = Array.from({ length: 10 }, (_, i) => [
+		`private-${i}`,
+		`fixture${i}@example.invalid`,
+		"IN_PERSON",
+		1,
+		0,
+		i < 3 ? "He/Him" : i < 6 ? "il/lui" : "Male",
+		i < 5 ? "EN" : "Français",
+		i < 5 ? "Halal, Alimentation halal" : "Régime végétarien",
+	]);
+	const sql = `CREATE TABLE \`HackerInfo\` (\n${columns.map(c => `\`${c}\` text`).join(",\n")}\n) ENGINE=InnoDB;\nINSERT INTO \`HackerInfo\` VALUES ${rows.map(r => `(${r.map(v => JSON.stringify(v)).join(",")})`).join(",")};`;
+	const aggregate = aggregateHistoricalDump(sql, "i");
+	assert.deepEqual(aggregate.dimensions.find(d => d.key === "gender")?.rows, [
+		{ label: "He/him (pronouns)", value: 6 },
+		{ label: "Other / suppressed", value: 4 },
+	]);
+	assert.deepEqual(aggregate.dimensions.find(d => d.key === "preferredLanguage")?.rows, [
+		{ label: "English", value: 5 },
+		{ label: "French", value: 5 },
+	]);
+	assert.deepEqual(aggregate.dimensions.find(d => d.key === "dietaryRestrictions")?.rows, [
+		{ label: "Halal", value: 5 },
+		{ label: "Vegetarian", value: 5 },
+	]);
+	assert.doesNotMatch(JSON.stringify(aggregate), /private-|@|Alimentation|Régime/);
+	assert.ok(aggregate.normalization?.some(r => r.key === "gender" && r.mergedVariants === 1));
+});
+
 void test("historical schema rejects participant fields, small categories and incompatible totals", () => {
 	const history = fixtureHistory();
 	assert.ok(historicalArchiveSchema.safeParse(history).success);

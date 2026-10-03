@@ -5,6 +5,7 @@ import {
 	programDiscipline,
 	displayCategory,
 	normalizationSummary,
+	categorySelections,
 } from "@root/private-metrics/normalization";
 import { normalizationSchema } from "@root/private-metrics/normalization-schema";
 import { aggregateSheetReport } from "@root/scripts/aggregate-sheet-report.mts";
@@ -38,6 +39,104 @@ void test("reviewed bilingual aliases normalize without fuzzy inference or campu
 	assert.notEqual(normalizeCategory("technologies", "react-native"), normalizeCategory("technologies", "react"));
 	assert.equal(normalizeCategory("technologies", "nextjs"), "next.js");
 	assert.equal(normalizeCategory("technologies", "next"), "next");
+});
+
+void test("demographic, language and logistics aliases preserve distinct identities and health meanings", () => {
+	for (const value of ["Men", "Man", "Homme", "Male"]) assert.equal(normalizeCategory("gender", value), "Man");
+	for (const value of ["Women", "Woman", "Femme", "Female"])
+		assert.equal(normalizeCategory("gender", value), "Woman");
+	assert.equal(normalizeCategory("gender", "il/lui"), "He/him (pronouns)");
+	assert.notEqual(normalizeCategory("gender", "He/Him"), normalizeCategory("gender", "Man"));
+	assert.equal(normalizeCategory("gender", "Woman, Non-binary"), normalizeCategory("gender", "Non binaire, Femme"));
+	assert.equal(displayCategory("gender", "Man", "fr"), "Homme");
+	assert.equal(
+		normalizeCategory("racialOrEthnicBackground", "White, East Asian"),
+		normalizeCategory("racialOrEthnicBackground", "eastAsian, Personne blanche"),
+	);
+	assert.equal(
+		normalizeCategory(
+			"racialOrEthnicBackground",
+			"Indigenous, including First Nations, Métis and Inuit, South Asian",
+		),
+		"Indigenous, including First Nations, Métis and Inuit + South Asian",
+	);
+	assert.notEqual(
+		normalizeCategory("racialOrEthnicBackground", "middleEastern"),
+		normalizeCategory("racialOrEthnicBackground", "Middle Eastern / North African / West Asian"),
+	);
+	assert.notEqual(
+		normalizeCategory("racialOrEthnicBackground", "african"),
+		normalizeCategory("racialOrEthnicBackground", "Black or of African descent"),
+	);
+	assert.equal(normalizeCategory("preferredLanguage", "FR"), normalizeCategory("preferredLanguage", "Français"));
+	assert.equal(displayCategory("preferredLanguage", "English", "fr"), "Anglais");
+	assert.equal(
+		normalizeCategory("studyLevel", "Études universitaires de premier cycle — programme de trois ans ou plus"),
+		"Undergraduate",
+	);
+	assert.equal(normalizeCategory("dietaryRestrictions", "Alimentation halal"), "Halal");
+	assert.equal(normalizeCategory("dietaryWithCheckIn", "none"), "No restrictions reported");
+	assert.notEqual(
+		normalizeCategory("dietaryRestrictions", "Intolérance au lactose"),
+		normalizeCategory("dietaryRestrictions", "Allergie au lait"),
+	);
+	assert.notEqual(
+		normalizeCategory("dietaryRestrictions", "nuts"),
+		normalizeCategory("dietaryRestrictions", "Peanut allergy"),
+	);
+	assert.deepEqual(categorySelections("dietaryRestrictions", "Halal, Alimentation halal, Vegetarian"), [
+		"Halal",
+		"Vegetarian",
+	]);
+	assert.equal(normalizeCategory("gender", "Unreviewed identity, Woman"), "Unreviewed identity, Woman");
+	assert.equal(normalizeCategory("attendanceMode", "IN_PERSON"), "In person");
+	assert.equal(displayCategory("priorHackathon", "First-timer", "fr"), "Première participation");
+});
+
+void test("Sheet full sweep combines cohorts before suppression and preserves nested option labels", () => {
+	const headers = [
+		"Submission ID",
+		"Admission status",
+		"RSVP Status",
+		"Attended",
+		"Gender identity",
+		"Identité de genre",
+		"How did you hear about Hack the Hill? Select all that apply. (Search engine (e.g., Google or Bing))",
+		"Comment avez-vous entendu parler de Hack the Hill? Sélectionnez toutes les réponses qui s’appliquent. (Moteur de recherche (p. ex. Google ou Bing))",
+		"Select all that apply. (Halal)",
+		"Si vous avez des restrictions alimentaires ou des allergies, sélectionnez-les ci-dessous: (Alimentation halal)",
+		"Quel établissement d’enseignement fréquentez-vous actuellement ou avez-vous fréquenté le plus récemment?",
+		"Si votre école ne figure pas dans la liste, indiquez-la ci-dessous:",
+	];
+	const rows = Array.from({ length: 6 }, (_, i) => [
+		`private-${i}`,
+		"Accepted",
+		"CONFIRMED",
+		true,
+		i < 3 ? "Man" : "",
+		i >= 3 ? "Homme" : "",
+		true,
+		true,
+		true,
+		true,
+		"École ou organisation non indiquée",
+		"Université d’Ottawa",
+	]);
+	const report = aggregateSheetReport(headers, rows, {
+		minimum: minimumCategorySize,
+		country: countryLabel,
+		languages: () => [],
+		normalize: normalizeCategory,
+		normalizationSummary,
+	});
+	assert.deepEqual(report.sheet.dimensions.gender, [
+		{ label: "Man", applicants: 6, accepted: 6, confirmed: 6, attended: 6 },
+	]);
+	assert.equal(report.sheet.dimensions.acquisitionChannel?.find(r => r.label === "Search engine")?.applicants, 6);
+	assert.equal(report.sheet.dimensions.dietaryRestrictions?.find(r => r.label === "Halal")?.applicants, 6);
+	assert.equal(report.sheet.dimensions.school?.find(r => r.label === "University of Ottawa")?.applicants, 6);
+	assert.ok(normalizationSchema.safeParse(report.background.normalization).success);
+	assert.doesNotMatch(JSON.stringify(report), /private-|e\.g\.|p\. ex\.|Homme/);
 });
 
 void test("Sheet normalization precedes suppression, uses follow-ups and deduplicates bilingual selections", () => {
