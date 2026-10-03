@@ -1,6 +1,9 @@
 import { z } from "zod";
 import { MealCategory, TShirtSize } from "@prisma/client";
 import { historicalArchiveSchema } from "./history";
+import { participantBackgroundSchema } from "./background";
+import { projectInsightsSchema } from "./project-insights";
+import { minimumCategorySize } from "./disclosure";
 import {
 	sheetMetricsSnapshotSchema,
 	communicationsMetricsSnapshotSchema,
@@ -25,6 +28,8 @@ export const archiveDashboardSchema = z
 	.object({
 		formatVersion: z.literal(1),
 		capturedAt: z.string().datetime(),
+		participantBackground: participantBackgroundSchema.optional(),
+		projectInsights: projectInsightsSchema.optional(),
 		history: historicalArchiveSchema.optional(),
 		metrics: z
 			.object({
@@ -137,7 +142,35 @@ export const archiveDashboardSchema = z
 			})
 			.strict(),
 	})
-	.strict();
+	.strict()
+	.superRefine((value, context) => {
+		const sheet = value.metrics.externalMetrics.sheet?.payload;
+		const fail = (message: string) => context.addIssue({ code: z.ZodIssueCode.custom, message });
+		if (sheet) {
+			for (const [key, rows] of Object.entries(sheet.dimensions))
+				for (const row of rows) {
+					if (/@|https?:\/\//i.test(row.label)) fail("Contact details are not aggregate labels");
+					if (
+						!["Not provided", "Other / suppressed"].includes(row.label) &&
+						row.applicants > 0 &&
+						row.applicants < minimumCategorySize(key)
+					)
+						fail("Category below reviewed metric threshold");
+					if (
+						row.applicants > sheet.cohorts.applicants ||
+						row.accepted > sheet.cohorts.accepted ||
+						row.confirmed > sheet.cohorts.confirmed ||
+						row.attended > sheet.cohorts.attended ||
+						row.accepted > row.applicants ||
+						row.confirmed > row.accepted ||
+						row.attended > row.accepted
+					)
+						fail("Category exceeds its cohort");
+				}
+			if (value.participantBackground?.ageStats.some(row => row.answered > sheet.cohorts[row.cohort]))
+				fail("Age summary exceeds its cohort");
+		}
+	});
 
 export type ArchiveDashboard = z.infer<typeof archiveDashboardSchema>;
 export type DashboardData = Omit<ArchiveDashboard["metrics"], "externalMetrics" | "engagementData"> & {

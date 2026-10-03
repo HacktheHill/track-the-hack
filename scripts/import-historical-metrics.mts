@@ -5,7 +5,9 @@ import { pathToFileURL } from "node:url";
 import { historicalArchiveSchema, type HistoricalEdition } from "@root/private-metrics/history";
 import { archiveDashboardSchema } from "@root/private-metrics/snapshot";
 import { readSqlTables, type SqlRow } from "./historical-sql.mts";
-import { geographicRegion } from "@/components/metrics/aggregate-insights";
+import { geographicRegion, countryLabel } from "@/components/metrics/aggregate-insights";
+import { minimumCategorySize } from "@root/private-metrics/disclosure";
+import { z } from "zod";
 
 const text = (value: unknown) => String(value ?? "").trim();
 const yes = (value: unknown) => value === 1 || value === "1" || value === true;
@@ -64,6 +66,7 @@ export function aggregateHistoricalDump(sql: string, id: "i" | "ii"): Historical
 						"linkLinkedin",
 						"linkPersonalSite",
 						"linkResume",
+						"lookingForwardTo",
 						"formStartDate",
 						"formEndDate",
 						"confirmed",
@@ -99,6 +102,8 @@ export function aggregateHistoricalDump(sql: string, id: "i" | "ii"): Historical
 						"github",
 						"linkedin",
 						"personalWebsite",
+						"userId",
+						"acceptanceReason",
 					],
 					Presence: ["label", "hackerId", "value", "createdAt", "updatedAt"],
 					Event: ["name", "type", "start", "hidden"],
@@ -106,7 +111,8 @@ export function aggregateHistoricalDump(sql: string, id: "i" | "ii"): Historical
 					Role: ["id", "name"],
 					_RoleToUser: ["A", "B"],
 					Account: ["userId", "provider"],
-					User: ["id"],
+					User: ["id", "emailVerified"],
+					Log: ["action", "sourceId"],
 				},
 	);
 	const table = (name: string) => tables[name] ?? [];
@@ -209,7 +215,7 @@ export function aggregateHistoricalDump(sql: string, id: "i" | "ii"): Historical
 		let suppressed = 0;
 		const values: Array<{ label: string; value: number }> = [];
 		for (const [label, value] of grouped) {
-			if (value < 5 || !safeLabel(label)) suppressed += value;
+			if (value < minimumCategorySize(key) || !safeLabel(label)) suppressed += value;
 			else values.push({ label, value });
 		}
 		if (suppressed) values.push({ label: "Other / suppressed", value: suppressed });
@@ -249,6 +255,10 @@ export function aggregateHistoricalDump(sql: string, id: "i" | "ii"): Historical
 			])
 		if (key && column && key !== "acquisitionChannel") dimension(key, column);
 	// Classify before suppression, without retaining any individual locations.
+	dimension("travelCountry", id === "i" ? "attendanceLocation" : "travelOrigin", "cohorts", value => {
+		const label = text(value);
+		return !label ? "" : (countryLabel(label, true) ?? "Unclassified");
+	});
 	// Unknown/free-form locations stay unknown; residence never fills travel gaps.
 	for (const [key, column] of id === "i"
 		? [["travelRegion", "attendanceLocation"]]
@@ -329,7 +339,7 @@ export function aggregateHistoricalDump(sql: string, id: "i" | "ii"): Historical
 				referrals.set(label, (referrals.get(label) ?? 0) + 1);
 		let small = 0;
 		const categories = [...referrals].flatMap(([label, value]) => {
-			if (value < 5 || !safeLabel(label)) {
+			if (value < minimumCategorySize("acquisitionChannel") || !safeLabel(label)) {
 				small += value;
 				return [];
 			}
@@ -378,6 +388,38 @@ export function aggregateHistoricalDump(sql: string, id: "i" | "ii"): Historical
 	});
 	if (id === "i") {
 		dimension("attendanceMode", "attendanceType", "operations");
+		for (const [key, mode] of [
+			["inPersonOrigins", "IN_PERSON"],
+			["onlineOrigins", "ONLINE"],
+		] as const)
+			dimension(
+				key,
+				"attendanceLocation",
+				"operations",
+				text,
+				rows.filter(row => row.attendanceType === mode),
+			);
+		const walkIns = rows.filter(row => !pre.includes(row));
+		result.dimensions.push({
+			key: "missingWalkInAnswers",
+			section: "insights",
+			total: walkIns.length,
+			missing: 0,
+			multiSelect: true,
+			rows: (
+				[
+					["gender", "gender"],
+					["school", "university"],
+					["studyLevel", "studyLevel"],
+					["areaOfStudy", "studyProgram"],
+					["travelOrigin", "attendanceLocation"],
+				] as const
+			).map(([label, column]) => ({ label, value: count(walkIns, row => !text(row[column])) })),
+		});
+		stat(
+			"lookingForwardResponses",
+			count(rows, row => Boolean(text(row.lookingForwardTo))),
+		);
 		stat(
 			"transportRequested",
 			count(rows, row => yes(row.transportationRequired)),
@@ -437,6 +479,37 @@ export function aggregateHistoricalDump(sql: string, id: "i" | "ii"): Historical
 		const ages = rows.map(row => Number(row.age)).filter(value => value > 0 && Number.isFinite(value));
 		stat("ageMean", ages.reduce((sum, age) => sum + age, 0) / ages.length, "years");
 		stat("ageMedian", quantile(ages, 0.5), "years");
+		const mean = ages.reduce((sum, age) => sum + age, 0) / ages.length;
+		stat(
+			"ageStdDev",
+			Math.sqrt(ages.reduce((sum, age) => sum + (age - mean) ** 2, 0) / (ages.length - 1)),
+			"years",
+		);
+		stat("ageMinimum", Math.min(...ages), "years");
+		stat("ageMaximum", Math.max(...ages), "years");
+		stat("ageUnder22", ages.filter(age => age < 22).length);
+		stat(
+			"confirmedAnyScan",
+			count(confirmed, row => anyIds.has(text(row.id))),
+		);
+		const walkIns = rows.filter(row => yes(row.walkIn));
+		stat(
+			"walkInCheckIn",
+			count(walkIns, row => checkIds.has(text(row.id))),
+		);
+		stat(
+			"walkInAnyScan",
+			count(walkIns, row => anyIds.has(text(row.id))),
+		);
+		stat("linkedPlatformAccounts", unique(rows, "userId"));
+		stat(
+			"emailVerifiedAccounts",
+			count(table("User"), row => Boolean(text(row.emailVerified))),
+		);
+		const verified = table("Log").filter(row => row.action === "verifyDiscord");
+		stat("discordVerificationEvents", verified.length);
+		stat("discordVerifiedAccounts", unique(verified, "sourceId"));
+		dimension("acceptanceReason", "acceptanceReason", "insights");
 		const members = new Map<string, number>();
 		for (const row of rows) if (row.teamId) members.set(text(row.teamId), (members.get(text(row.teamId)) ?? 0) + 1);
 		const sizes = new Map<number, number>();
@@ -468,7 +541,9 @@ export function aggregateHistoricalDump(sql: string, id: "i" | "ii"): Historical
 			total: rows.length,
 			missing: count(rows, row => !text(row.programmingLanguagesTechnologies)),
 			multiSelect: true,
-			rows: [...languageCounts].map(([label, value]) => ({ label, value })).filter(row => row.value >= 5),
+			rows: [...languageCounts]
+				.map(([label, value]) => ({ label, value }))
+				.filter(row => row.value >= minimumCategorySize("programmingLanguages")),
 		});
 		const events = table("Event").filter(row => text(row.start) > "2000-01-01" && !yes(row.hidden));
 		const eventNames = new Map<string, { group: string; instances: number }>();
@@ -477,6 +552,18 @@ export function aggregateHistoricalDump(sql: string, id: "i" | "ii"): Historical
 			const prior = eventNames.get(name);
 			eventNames.set(name, { group: text(row.type), instances: (prior?.instances ?? 0) + 1 });
 		}
+		result.eventGroups = [...new Set(events.map(row => text(row.type)))].map(group => {
+			if (!["ALL", "CAREER_FAIR", "FOOD", "SOCIAL", "WORKSHOP"].includes(group))
+				throw new Error("Unknown event type");
+			const scans = presence.filter(row => eventNames.get(text(row.label))?.group === group);
+			return {
+				group: z.enum(["ALL", "CAREER_FAIR", "FOOD", "SOCIAL", "WORKSHOP"]).parse(group),
+				instances: events.filter(row => text(row.type) === group).length,
+				rows: scans.length,
+				people: unique(scans, "hackerId"),
+				units: scans.reduce((sum, row) => sum + Number(row.value), 0),
+			};
+		});
 		for (const label of new Set(presence.map(row => text(row.label)))) {
 			if (label === "Check-In") continue;
 			const scans = presence.filter(row => row.label === label);
@@ -536,6 +623,22 @@ export function aggregateHistoricalDump(sql: string, id: "i" | "ii"): Historical
 				.map(row => row.id),
 		);
 		const staff = table("_RoleToUser").filter(row => staffRoles.has(row.A));
+		result.dimensions.push({
+			key: "staffRoles",
+			section: "insights",
+			total: table("User").length,
+			missing: 0,
+			multiSelect: true,
+			rows: table("Role")
+				.map(role => ({
+					label: text(role.name),
+					value: unique(
+						table("_RoleToUser").filter(row => row.A === role.id),
+						"B",
+					),
+				}))
+				.filter(row => row.value > 0),
+		});
 		stat("staffAssignments", staff.length);
 		stat("staffPeople", unique(staff, "B"));
 		stat("platformAccounts", table("User").length);
@@ -545,6 +648,30 @@ export function aggregateHistoricalDump(sql: string, id: "i" | "ii"): Historical
 			count(confirmed, row => !anyIds.has(text(row.id))),
 		);
 	}
+	const tableColumns = new Map(
+		[...sql.matchAll(/CREATE TABLE `([^`]+)` \(([\s\S]*?)\) ENGINE/g)].map(match => [
+			match[1] ?? "",
+			[...(match[2] ?? "").matchAll(/^\s*`([^`]+)`/gm)].map(field => field[1] ?? ""),
+		]),
+	);
+	const inventory = readSqlTables(sql, Object.fromEntries([...tableColumns.keys()].map(name => [name, []])));
+	const sourceRows = table(id === "i" ? "HackerInfo" : "Hacker");
+	// Field coverage uses original raw-table counts, matching the report's
+	// structural appendix. Only analytical fields; no credential/contact fields.
+	const excludedFields = new Set(["id", "submissionID", "email", "userId", "teamId"]);
+	const fields = Object.keys(sourceRows[0] ?? {}).filter(field => !excludedFields.has(field));
+	result.sourceInventory = {
+		tables: [...tableColumns].map(([label, columns]) => ({
+			label,
+			columns: columns.length,
+			rows: inventory[label]?.length ?? 0,
+		})),
+		fields: fields.map(label => ({
+			label,
+			filled: count(sourceRows, row => Boolean(text(row[label]))),
+			total: sourceRows.length,
+		})),
+	};
 	const validated = historicalArchiveSchema.parse({ formatVersion: 1, editions: [result] }).editions[0];
 	if (!validated) throw new Error("Historical edition is missing");
 	return validated;

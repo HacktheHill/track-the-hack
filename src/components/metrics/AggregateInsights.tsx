@@ -1,5 +1,6 @@
 import type { useTranslation } from "next-i18next";
 import { outsideCanadaBounds, pooledInsight, type AggregateRow } from "./aggregate-insights";
+import { minimumCategorySize } from "@root/private-metrics/disclosure";
 
 type Translate = ReturnType<typeof useTranslation>["t"];
 export const AggregateInsights = ({
@@ -18,18 +19,27 @@ export const AggregateInsights = ({
 	t: Translate;
 }) => {
 	const pooled = pooledInsight(rows, total, multiSelect);
-	const geography = ["country", "travelOrigin", "transportOrigins"].includes(dimension);
-	const bounds = geography ? outsideCanadaBounds(rows, dimension !== "country") : null;
+	const country = ["country", "travelCountry"].includes(dimension);
+	const geography = [
+		"country",
+		"travelCountry",
+		"travelOrigin",
+		"transportOrigins",
+		"inPersonOrigins",
+		"onlineOrigins",
+	].includes(dimension);
+	const bounds = geography ? outsideCanadaBounds(rows, !country) : null;
+	const minimum = minimumCategorySize(dimension);
 	const number = bounds
-		? bounds.upper < 5
+		? bounds.upper < minimum
 			? bounds.upper === 0
 				? "0"
 				: t("aggregateInsights.fewerThanFive")
 			: bounds.lower === bounds.upper
 				? String(bounds.lower)
-				: bounds.lower < 5
+				: bounds.lower < minimum
 					? t("aggregateInsights.indeterminate")
-					: dimension !== "country"
+					: !country
 						? t("aggregateInsights.atLeast", { count: bounds.lower })
 						: `${bounds.lower}–${bounds.upper}`
 		: "";

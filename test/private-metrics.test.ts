@@ -39,7 +39,7 @@ void test("private static entry point contains no live auth, polling or API depe
 	const page = readFileSync(new URL("../private-metrics/pages/[[...path]].tsx", import.meta.url), "utf8");
 	const app = readFileSync(new URL("../private-metrics/pages/_app.tsx", import.meta.url), "utf8");
 	assert.match(page, /archiveDashboardSchema.parse/);
-	assert.match(page, /MetricsDashboard.*archived/);
+	assert.match(page, /<MetricsDashboard[\s\S]*?\barchived\b/);
 	assert.doesNotMatch(page + app, /getServerSession|SessionProvider|withTRPC|useQuery|refetchInterval|serviceWorker/);
 	const headers = readFileSync(new URL("../private-metrics/hosting-assets/_headers", import.meta.url), "utf8");
 	assert.match(headers, /Cache-Control: private, no-store/);

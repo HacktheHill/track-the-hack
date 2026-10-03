@@ -43,8 +43,8 @@
 			"base": "Submitted projects n={{total}} · {{answered}} supplied this field · {{missing}} missing",
 			"overlap": "Projects can select several categories. Percentages use all submitted projects and need not sum to 100%.",
 			"other": "Other / suppressed",
-			"noCategories": "No categories with at least five submitted projects.",
-			"suppression": "{{count}} category labels with fewer than five projects are omitted.",
+			"noCategories": "No categories supplied in this source.",
+			"suppression": "{{count}} category labels were omitted in this older source aggregate; the original details have not been recovered.",
 			"completeness": "Submission completeness",
 			"completenessNote": "Nonblank fields on submitted projects, not checks that links work or content is complete.",
 			"coverage": {
@@ -58,7 +58,7 @@
 			},
 			"definitions": "Source and counting definitions",
 			"teamNote": "{{memberships}} team memberships across {{answered}} projects with a supplied team size; Devpost reports {{people}} submitters. Memberships are not unique people. Team size is one project creator plus the additional-member count.",
-			"method": "Drafts are excluded from charts. Technology tags are case-normalized and counted once per project, without merging spelling aliases. Prize selections overlap and indicate interest, not eligibility or awards. Rare team sizes are pooled.",
+			"method": "Drafts are excluded from charts. Tags are case-normalized and counted once per project; spelling aliases are not merged. Prize selections indicate interest, not eligibility or awards. Public project tags and team sizes include counts of one when recovered from source.",
 			"source": "Organizer totals and project export captured {{date}} · {{requests}} team-up requests · {{duplicates}} duplicate export rows removed.",
 			"comparison": "Devpost project participation across editions",
 			"metric": "Metric",
@@ -103,7 +103,9 @@
 			"FOOD": "Meals and refreshments",
 			"WORKSHOP": "Workshops",
 			"SOCIAL": "Social activities",
-			"OTHER": "Other recorded activities"
+			"OTHER": "Other recorded activities",
+			"ALL": "General activities",
+			"CAREER_FAIR": "Career fair"
 		},
 		"people": "Unique people",
 		"units": "Recorded units / portions",
@@ -116,7 +118,7 @@
 		"insightNote": "Team membership is platform registration, not proof of a submitted Devpost project. Profile counts indicate supplied fields, not validated links. Form duration describes elapsed submission time, not time actively filling it out.",
 		"platform": "Platform and staffing appendix",
 		"staffNote": "Users may hold several staff roles and login providers. Role assignments are not distinct staff members; provider counts overlap.",
-		"privacyNote": "Only aggregate data is retained. Raw answers, contact details, profile links, audit text and credentials are excluded. Categories below five are pooled; accommodation text is not displayed.",
+		"privacyNote": "Only aggregates are retained. Countries and public project tags may appear from one response; education categories from two. Sensitive answers and precise locations require five. Accommodation narratives, identities and credentials are excluded.",
 		"dimension": {
 			"graduationYear": "Graduation year",
 			"priorHackathonCount": "Number of previous hackathons",
@@ -131,7 +133,12 @@
 			"dietaryWithCheckIn": "Dietary choices — explicit check-in",
 			"dietaryWithAnyScan": "Dietary choices — any scan",
 			"transportSchools": "Transport requests by school",
-			"transportOrigins": "Transport requests by origin"
+			"transportOrigins": "Transport requests by origin",
+			"inPersonOrigins": "In-person registration origins",
+			"onlineOrigins": "Online registration origins",
+			"staffRoles": "People by platform role",
+			"missingWalkInAnswers": "Missing answers among walk-ins",
+			"acceptanceReason": "Admission decision reason"
 		},
 		"stat": {
 			"accommodationResponses": "Nonblank accommodation responses",
@@ -154,7 +161,19 @@
 			"staffPeople": "Distinct staff members",
 			"platformAccounts": "Platform user accounts",
 			"longFormMedian": "Median elapsed time, sessions >1 hour",
-			"longFormMax": "Maximum elapsed time, sessions >1 hour"
+			"longFormMax": "Maximum elapsed time, sessions >1 hour",
+			"lookingForwardResponses": "Nonblank event-expectation responses",
+			"ageStdDev": "Age standard deviation",
+			"ageMinimum": "Minimum reported age",
+			"ageMaximum": "Maximum reported age",
+			"ageUnder22": "Valid ages under 22",
+			"confirmedAnyScan": "Confirmed pre-registrants with any scan",
+			"walkInCheckIn": "Walk-ins with an explicit check-in",
+			"walkInAnyScan": "Walk-ins with any scan",
+			"linkedPlatformAccounts": "Distinct linked platform accounts",
+			"emailVerifiedAccounts": "Email-verified platform accounts",
+			"discordVerificationEvents": "Discord verification log events",
+			"discordVerifiedAccounts": "Distinct Discord-verification source accounts"
 		},
 		"quality": {
 			"excludedHackHers": "HackHers registrations excluded",
@@ -198,7 +217,16 @@
 		"mealBoundsNote": "Bounds transcribed from printed page 33 of the corrected HTH II PDF; service totals match the SQL aggregates. Floating portions may belong to either sitting. The ranges are correlated: do not add both lower bounds or both upper bounds.",
 		"firstSitting": "First sitting",
 		"secondSitting": "Second sitting",
-		"floating": "Floating portions"
+		"floating": "Floating portions",
+		"activityTypes": "Participation by activity type",
+		"scanRows": "Scan records",
+		"activityTypesNote": "Unique people within each type, not a sum across events. People can appear in several types. Recorded units count repeated scans/portions; scheduled instances include activities without scans.",
+		"sourceInventory": "Source structure and field completeness",
+		"sourceInventoryNote": "Raw source-table counts, before event exclusions. Field completeness counts non-null/nonblank values, including zeros; it does not validate answers. Contact and credential fields are excluded.",
+		"sourceTable": "Source table",
+		"sourceRows": "Rows",
+		"sourceColumns": "Columns",
+		"sourceField": "Analytical field"
 	},
 	"coverageByDimension": "Application answer coverage",
 	"coverageByDimensionNote": "Coverage uses all application rows. A range means missing answers may be pooled in suppressed categories. Acquisition-channel counts may overlap.",
@@ -213,7 +241,7 @@
 	"uniqueApplicationEmails": "Distinct application email addresses",
 	"analysisGuide": "Reading the cohorts",
 	"analysisGuideNote": "Compare category size with acceptance and attendance rates, not counts alone. Explore schools, geography, prior hackathon experience, language, and acquisition channels in the cohort explorer. Event operations separates unique people from repeatable service activity.",
-	"analysisUnavailable": "The HTH III aggregate snapshot has no exact-age averages, team-size distribution or post-event survey results. Historical editions have separate sources and definitions.",
+	"analysisUnavailable": "No post-event survey results are available. Project team sizes are Devpost memberships, not Tracker registration teams. Historical editions retain their own definitions.",
 	"correctedAnalysis": "Corrected HTH I / II analysis",
 	"archivedSnapshot": "Archived snapshot · {{date}}",
 	"metricDefinitions": "Metric definitions and denominators",
@@ -236,11 +264,13 @@
 	"refreshFailed": "Refresh failed. The last successfully loaded metrics are still displayed.",
 	"viewsLabel": "Metrics views",
 	"view": {
-		"insights": "Project insights",
+		"insights": "Summary and linkage",
 		"overview": "Overview",
 		"cohorts": "Cohort explorer",
 		"operations": "Event operations",
-		"quality": "Data quality"
+		"quality": "Data quality",
+		"background": "Participant background",
+		"projects": "Devpost projects"
 	},
 	"attendanceOutcomesTitle": "RSVP and attendance outcomes",
 	"attendanceOutcomesDescription": "Matched Tracker records, not the difference between total RSVPs and total attendees. Attended walk-ins are a subset of attendees, not an additional total.",
@@ -267,7 +297,9 @@
 		"demographics": "Demographics",
 		"education": "Education",
 		"geography": "Geography",
-		"acquisition": "Acquisition"
+		"acquisition": "Acquisition",
+		"background": "Participant background",
+		"logistics": "Logistics"
 	},
 	"cohort": {
 		"applicants": "Application rows",
@@ -278,7 +310,7 @@
 	"countView": "Counts",
 	"conversionView": "Conversion rates",
 	"acceptedToAttended": "Acceptance → attendance",
-	"multiSelectNote": "Applicants could select multiple channels. Counts overlap and are not exclusive attribution.",
+	"multiSelectNote": "Multiple selections or fields can contribute for one applicant. Counts overlap and are not exclusive attribution.",
 	"cohortConversionNote": "Rates show the numerator and denominator for each category. Rates with fewer than five starting rows, or pooled suppressed categories, are not shown. Attendance is compared with acceptance because attendance is not necessarily a subset of confirmed RSVPs.",
 	"showTop": "Show top 10",
 	"showAll": "Show all {{count}} categories",
@@ -331,7 +363,7 @@
 	"submittedToPublicProject": "Submitted → public project",
 	"publicToJudgingProject": "Public → judging roster",
 	"demographicsTitle": "Application demographics and conversion",
-	"demographicsDescription": "Categories with fewer than five applicants are combined as Other / suppressed.",
+	"demographicsDescription": "Minimum category size is reviewed by metric: 1 for countries and broad nonsensitive choices, 2 for education, 5 for sensitive attributes and precise locations. Smaller categories are pooled.",
 	"dimension": {
 		"preferredLanguage": "Preferred language",
 		"country": "Country of residence",
@@ -343,7 +375,13 @@
 		"areaOfStudy": "Area of study",
 		"priorHackathon": "Prior hackathon experience",
 		"travelOrigin": "Travel origin",
-		"acquisitionChannel": "How applicants heard about Hack the Hill"
+		"acquisitionChannel": "How applicants heard about Hack the Hill",
+		"travelCountry": "Travel origin — country",
+		"exactAge": "Exact age",
+		"programmingLanguages": "Programming languages mentioned",
+		"profileAvailability": "Profile and résumé fields supplied",
+		"tShirtSize": "T-shirt preferences",
+		"dietaryRestrictions": "Dietary selections"
 	},
 	"dataQualityTitle": "Data quality and linkage",
 	"dataQualityDescription": "Coverage and reconciliation checks identify where funnel counts may be incomplete or where source systems disagree.",
@@ -376,5 +414,44 @@
 	"mealCategory": "Meal categories",
 	"mealCategoryDescription": "All provisioned participants; this is not limited to people currently known to have attended.",
 	"tShirtSize": "T-shirt sizes",
-	"tShirtSizeDescription": "All provisioned participants; this is not limited to people currently known to have attended."
+	"tShirtSizeDescription": "All provisioned participants; this is not limited to people currently known to have attended.",
+	"background": {
+		"ageSummary": "Age by application cohort",
+		"validAges": "Valid age responses",
+		"ageNote": "Whole-number ages from 10 to 100; invalid and missing answers are excluded. Exact-age categories use a minimum of five applications. Ages are self-reported, not verified; extreme responses may be entry errors.",
+		"accommodationNote": "Nonblank answers, including “none” responses—not the number of people needing accommodations. Narratives are excluded.",
+		"cohortNote": "Skills/language mentions, profile-field coverage, shirt preferences and dietary selections are available in Cohorts. Language mentions are keyword matches, not proficiency.",
+		"ageRange": "Reported age range"
+	},
+	"reportCoverage": {
+		"title": "Report coverage across all three events",
+		"topic": "Topic",
+		"note": "Topic-level coverage checked against the corrected reports and the recovered sources. Available does not mean identical collection methods, complete answers, or unsuppressed categories.",
+		"limits": "HtH I’s activity data cannot be safely separated from later HackHers records. Its platform join is unreliable. HtH III platform/staff aggregates have not been recovered. HtH I project tags remain partially pooled in the older source snapshot. No timing charts, credentials, personal records or accommodation narratives are included.",
+		"status": {
+			"available": "Available",
+			"notCollected": "Not collected",
+			"notRecovered": "Not recovered",
+			"excluded": "Excluded by choice"
+		},
+		"topics": {
+			"education": "Schools, study level and programme",
+			"geography": "Residence/travel geography",
+			"gender": "Gender / pronouns",
+			"experience": "Previous hackathons",
+			"logistics": "Shirts, dietary selections and accommodations",
+			"profiles": "Profile/résumé field coverage",
+			"age": "Age distribution and summary",
+			"race": "Racial/ethnic background",
+			"channels": "Acquisition channels",
+			"skills": "Programming-language mentions",
+			"graduation": "Graduation year",
+			"transport": "Transport requests and origins",
+			"formDuration": "Form completion duration",
+			"activity": "Activities and meals",
+			"projects": "Devpost projects, teams and technologies",
+			"platform": "Platform accounts and roles",
+			"timing": "Application time-series"
+		}
+	}
 }

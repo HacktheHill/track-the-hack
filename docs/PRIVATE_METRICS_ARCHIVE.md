@@ -15,7 +15,8 @@ PRIVATE_METRICS_FILE=/absolute/path/to/aggregate-snapshot.json npm run build:pri
 The exporter prints JSON to stdout and performs only read-only database queries.
 Capture that output in a secure location, never in the public archive or Git.
 The strict snapshot schema rejects unexpected participant-shaped fields.
-Existing small-cell suppression is retained; hidden categories are not reconstructed.
+Disclosure thresholds are reviewed by metric in `private-metrics/disclosure.ts`.
+Counts already pooled in old snapshots are never reconstructed without original sources.
 Generated private data and exports are ignored by Git.
 
 The build strips inherited live credentials. Only HTML, CSS, JavaScript, fonts,
@@ -94,7 +95,8 @@ The importer parses selected dump columns without executing SQL or restoring
 credentials. It preserves the source files and original snapshot, creates a new
 mode-600 output (refusing overwrite), and exports aggregate results only. SQL,
 contacts, profile URLs, audit text and accommodation answers never enter the site.
-Demographic/logistics categories below five are pooled. Unknown historical fields,
+Thresholds are one for countries, public project tags and broad nonsensitive choices;
+two for education categories; five for sensitive attributes and precise locations. Unknown historical fields,
 small unpooled categories and inconsistent totals fail validation.
 
 HTH I/II have separate edition views and source definitions. The HTH I audit-log
@@ -148,9 +150,8 @@ for an incremental import; its existing history is preserved unchanged.
 Historical **Project insights** adds registration-to-submitted-team conversion,
 public/hidden/draft totals, submitted-project technology tags, team sizes,
 prize-track interest and field completeness. Technologies are case-normalized,
-deduplicated per project, but spelling aliases are not merged. Multi-select
-technology/prize labels with fewer than five projects are omitted; rare team
-sizes are pooled. Prize interest is not an award or eligibility result. Coverage
+deduplicated per project, but spelling aliases are not merged. Recovered public technology/prize tags and team sizes include counts of one.
+Previously pooled page aggregates remain pooled until original details are recovered. Prize interest is not an award or eligibility result. Coverage
 counts nonblank fields, not validated links. Drafts never enter these charts.
 
 Team size is one creator plus the additional-member count. Summed memberships
@@ -226,7 +227,41 @@ totals, aggregate linkage checks and source dates. Email provider acceptance is
 not inbox delivery. Project-source gaps are not participant drop-off.
 
 The edition comparison labels the different populations rather than treating them
-as a single longitudinal funnel. Exact HTH III ages, registered team-size
-distribution and post-event survey results remain unavailable in this snapshot.
+as a single longitudinal funnel. HTH III now includes numeric age distributions and cohort summaries, controlled
+language-keyword mentions, profile-field availability, shirt preferences, dietary
+selections and nonblank accommodation-response counts from bounded Sheet reads.
+Submitted project team sizes and all recovered technology/prize tags come from
+local Devpost exports. Tracker registered-team sizes and post-event surveys are
+not available in this retained snapshot.
 Further historical stage-conversion cards, shareable filter URLs and additional
 HTH III matched outcome analyses are optional follow-up work, not release blockers.
+
+## Expanded report coverage (October 2026)
+
+The Data quality view has an edition-wide coverage matrix distinguishing available,
+not collected, not recovered, and deliberately excluded topics. Availability is
+not a claim of identical populations, exhaustive answers or a cell-for-cell PDF copy.
+
+The expanded import adds HTH I locations by attendance mode, missing answers among
+walk-ins and event-expectation response coverage. HTH II includes activity-type
+scheduled/scan/person/unit totals, role distributions, confirmed-any-scan and
+walk-in intersections, age spread/range/under-22 summaries, linked accounts,
+email verification and distinct Discord-verification source accounts. Original
+report inconsistencies are resolved using source SQL and matching population bases.
+The collapsed source appendix includes original table row/column counts and
+nonblank analytical-field coverage, before event exclusions. Credential/contact
+fields and framework credential internals have no dashboard insight and are excluded.
+
+The earlier checklist's partial entries for those recovered figures are superseded
+by this expansion. Application time-series remain intentionally excluded. HTH I
+meal/event records and platform joins remain unreliable; HTH III platform/staff
+aggregates and HTH I rare project tags are still not recovered. No unavailable
+figure is replaced by zero or inferred from a different event.
+
+`aggregate-sheet-report.mts` is a pure local reducer for bounded header-grounded
+reads. Its raw input must never be saved. `enrich-archive-report.mts` combines a
+reviewed aggregate capture with local II/III Devpost exports and writes a new
+mode-600 snapshot, refusing overwrite. The III PII export's variable-length member
+suffix is discarded; only fixed project fields contribute to aggregate counts.
+Profiles and narratives contribute only field-presence or controlled-keyword counts.
+Dates remain source-specific, and raw exports stay outside Git and the site.

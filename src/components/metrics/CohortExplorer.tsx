@@ -1,15 +1,24 @@
 import { useState } from "react";
 import type { useTranslation } from "next-i18next";
 import { AggregateInsights } from "./AggregateInsights";
+import { displayCountry } from "./aggregate-insights";
 
 type Breakdown = { label: string; applicants: number; accepted: number; confirmed: number; attended: number };
 type Translate = ReturnType<typeof useTranslation>["t"];
 const cohorts = ["applicants", "accepted", "confirmed", "attended"] as const;
+const multiSelectDimensions = [
+	"acquisitionChannel",
+	"programmingLanguages",
+	"profileAvailability",
+	"dietaryRestrictions",
+];
 const groups = {
 	demographics: ["preferredLanguage", "age", "gender", "racialOrEthnicBackground", "priorHackathon"],
 	education: ["studyLevel", "school", "areaOfStudy"],
-	geography: ["country", "travelOrigin"],
+	geography: ["country", "travelOrigin", "travelCountry"],
 	acquisition: ["acquisitionChannel"],
+	background: ["exactAge", "programmingLanguages", "profileAvailability"],
+	logistics: ["tShirtSize", "dietaryRestrictions"],
 };
 
 // Native bars keep long labels readable on small screens and avoid chart
@@ -50,13 +59,22 @@ export const CountBars = ({
 	);
 };
 
-export const CohortExplorer = ({ dimensions, t }: { dimensions: Record<string, Breakdown[]>; t: Translate }) => {
+export const CohortExplorer = ({
+	dimensions,
+	t,
+	locale = "en",
+}: {
+	dimensions: Record<string, Breakdown[]>;
+	t: Translate;
+	locale?: string;
+}) => {
 	const keys = Object.keys(dimensions);
 	const [dimension, setDimension] = useState(keys[0] ?? "");
 	const [cohort, setCohort] = useState<(typeof cohorts)[number]>("attended");
 	const [showAll, setShowAll] = useState(false);
 	const [mode, setMode] = useState("counts");
 	const selected = keys.includes(dimension) ? dimension : (keys[0] ?? "");
+	const multiSelect = multiSelectDimensions.includes(selected);
 	const entries = [...(dimensions[selected] ?? [])].sort(
 		(a, b) => b[cohort] - a[cohort] || a.label.localeCompare(b.label),
 	);
@@ -77,7 +95,8 @@ export const CohortExplorer = ({ dimensions, t }: { dimensions: Record<string, B
 						value={selected}
 						onChange={event => {
 							setDimension(event.target.value);
-							if (event.target.value === "acquisitionChannel" && mode === "comparison") setMode("counts");
+							if (multiSelectDimensions.includes(event.target.value) && mode === "comparison")
+								setMode("counts");
 							setShowAll(false);
 						}}
 					>
@@ -129,33 +148,37 @@ export const CohortExplorer = ({ dimensions, t }: { dimensions: Record<string, B
 					>
 						<option value="counts">{t("countView")}</option>
 						<option value="conversion">{t("conversionView")}</option>
-						{selected !== "acquisitionChannel" && <option value="comparison">{t("comparisonView")}</option>}
+						{!multiSelect && <option value="comparison">{t("comparisonView")}</option>}
 					</select>
 				</label>
 			</div>
 			<h2 className="mt-5 font-coolvetica text-xl">
 				{t(`dimension.${selected}`)} · {t(mode === "comparison" ? "comparisonView" : `cohort.${cohort}`)}
 			</h2>
-			{selected === "acquisitionChannel" && <p className="mt-2 font-rubik text-sm">{t("multiSelectNote")}</p>}
+			{multiSelect && <p className="mt-2 font-rubik text-sm">{t("multiSelectNote")}</p>}
 			<AggregateInsights
 				populationLabel={t(`cohort.${cohort}`)}
 				rows={entries.map(entry => ({ label: entry.label, value: entry[cohort] }))}
 				total={entries.reduce((sum, entry) => sum + entry[cohort], 0)}
 				dimension={selected}
-				multiSelect={selected === "acquisitionChannel"}
+				multiSelect={multiSelect}
 				t={t}
 			/>
 			{mode === "counts" && (
 				<CountBars
-					rows={visible.map(entry => ({ label: entry.label, value: entry[cohort] }))}
-					total={
-						selected === "acquisitionChannel"
-							? undefined
-							: entries.reduce((sum, entry) => sum + entry[cohort], 0)
-					}
+					rows={visible.map(entry => ({
+						label:
+							selected === "profileAvailability"
+								? t(`history.profileLabel.${entry.label}`, { defaultValue: entry.label })
+								: ["country", "travelCountry"].includes(selected)
+									? displayCountry(entry.label, locale)
+									: entry.label,
+						value: entry[cohort],
+					}))}
+					total={multiSelect ? undefined : entries.reduce((sum, entry) => sum + entry[cohort], 0)}
 				/>
 			)}
-			{mode === "comparison" && selected !== "acquisitionChannel" && (
+			{mode === "comparison" && !multiSelect && (
 				<ComparisonBars
 					rows={visible}
 					totals={{

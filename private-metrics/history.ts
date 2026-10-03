@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { projectInsightsSchema } from "./project-insights";
+import { minimumCategorySize } from "./disclosure";
 
 const count = z.number().int().nonnegative();
 const label = z
@@ -16,6 +17,13 @@ export const historicalArchiveSchema = z
 					.object({
 						id: z.enum(["i", "ii"]),
 						devpost: projectInsightsSchema.optional(),
+						sourceInventory: z
+							.object({
+								tables: z.array(z.object({ label, rows: count, columns: count }).strict()),
+								fields: z.array(z.object({ label, filled: count, total: count }).strict()),
+							})
+							.strict()
+							.optional(),
 						year: z.number().int(),
 						sourceDigest: z.string().regex(/^[a-f0-9]{64}$/),
 						populations: z
@@ -62,6 +70,19 @@ export const historicalArchiveSchema = z
 								})
 								.strict(),
 						),
+						eventGroups: z
+							.array(
+								z
+									.object({
+										group: z.enum(["ALL", "CAREER_FAIR", "FOOD", "SOCIAL", "WORKSHOP"]),
+										instances: count,
+										rows: count,
+										people: count,
+										units: count,
+									})
+									.strict(),
+							)
+							.optional(),
 						stats: z.array(
 							z
 								.object({
@@ -104,6 +125,7 @@ export const historicalArchiveSchema = z
 			"country",
 			"countryRegion",
 			"travelRegion",
+			"travelCountry",
 			"racialOrEthnicBackground",
 			"acquisitionChannel",
 			"tShirtSize",
@@ -119,6 +141,11 @@ export const historicalArchiveSchema = z
 			"teamSizes",
 			"programmingLanguages",
 			"loginProviders",
+			"staffRoles",
+			"inPersonOrigins",
+			"onlineOrigins",
+			"missingWalkInAnswers",
+			"acceptanceReason",
 		];
 		const allowedStats = [
 			"accommodationResponses",
@@ -142,6 +169,18 @@ export const historicalArchiveSchema = z
 			"staffAssignments",
 			"staffPeople",
 			"platformAccounts",
+			"lookingForwardResponses",
+			"ageStdDev",
+			"ageMinimum",
+			"ageMaximum",
+			"ageUnder22",
+			"confirmedAnyScan",
+			"walkInCheckIn",
+			"walkInAnyScan",
+			"linkedPlatformAccounts",
+			"emailVerifiedAccounts",
+			"discordVerificationEvents",
+			"discordVerifiedAccounts",
 		];
 		const allowedQuality = [
 			"excludedHackHers",
@@ -155,6 +194,10 @@ export const historicalArchiveSchema = z
 		if (new Set(archive.editions.map(edition => edition.id)).size !== archive.editions.length)
 			fail("Duplicate historical editions");
 		for (const edition of archive.editions) {
+			if (edition.sourceInventory?.fields.some(field => field.filled > field.total))
+				fail("Inconsistent source-field coverage");
+			if (edition.eventGroups?.some(group => group.people > group.rows))
+				fail("Inconsistent activity-type counts");
 			if (
 				edition.populations.preEvent + edition.populations.walkIns !== edition.populations.registrations ||
 				edition.turnout.to > edition.turnout.from
@@ -167,7 +210,14 @@ export const historicalArchiveSchema = z
 					dimension.rows.reduce((sum, row) => sum + row.value, dimension.missing) !== dimension.total
 				)
 					fail("Inconsistent dimension totals");
-				if (dimension.rows.some(row => row.value > 0 && row.value < 5 && row.label !== "Other / suppressed"))
+				if (
+					dimension.rows.some(
+						row =>
+							row.value > 0 &&
+							row.value < minimumCategorySize(dimension.key) &&
+							row.label !== "Other / suppressed",
+					)
+				)
 					fail("Unsuppressed small category");
 			}
 			if (

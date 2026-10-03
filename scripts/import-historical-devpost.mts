@@ -80,9 +80,9 @@ export const aggregateProjectInsights = (input: CsvRow[], options: Options): Pro
 		}
 		return {
 			answeredProjects,
-			suppressedLabels: [...counts.values()].filter(value => value < 5).length,
+			suppressedLabels: 0,
 			rows: [...counts]
-				.filter(([, value]) => value >= 5)
+				.filter(([, value]) => value >= 1)
 				.map(([label, value]) => ({ label, value }))
 				.sort((a, b) => b.value - a.value || a.label.localeCompare(b.label)),
 		};
@@ -100,11 +100,9 @@ export const aggregateProjectInsights = (input: CsvRow[], options: Options): Pro
 		teamCounts.set(String(size), (teamCounts.get(String(size)) ?? 0) + 1);
 	}
 	const teamSizes = [...teamCounts]
-		.filter(([, value]) => value >= 5)
+		.filter(([, value]) => value >= 1)
 		.map(([label, value]) => ({ label, value }))
 		.sort((a, b) => Number(a.label) - Number(b.label));
-	const pooled = [...teamCounts.values()].filter(value => value < 5).reduce((sum, value) => sum + value, 0);
-	if (pooled) teamSizes.push({ label: "Other / suppressed", value: pooled });
 	return projectInsightsSchema.parse({
 		kind: "devpost-project-insights",
 		...options,

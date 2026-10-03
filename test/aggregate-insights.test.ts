@@ -6,7 +6,26 @@ import { createInstance } from "i18next";
 import { AggregateInsights } from "@/components/metrics/AggregateInsights";
 import en from "@root/public/locales/en/metrics.json";
 import fr from "@root/public/locales/fr/metrics.json";
-import { geographicRegion, outsideCanadaBounds, pooledInsight } from "@/components/metrics/aggregate-insights";
+import {
+	geographicRegion,
+	outsideCanadaBounds,
+	pooledInsight,
+	countryLabel,
+	displayCountry,
+} from "@/components/metrics/aggregate-insights";
+
+void test("country labels expose explicit geography, never inferred cities, with readable translations", () => {
+	assert.equal(countryLabel("Paris, France", true), "France");
+	assert.equal(countryLabel("Paris", true), null);
+	assert.equal(countryLabel("San Jose, CA", true), null);
+	for (const label of ["No", "NA", "N/A", "Indianapolis, IN", "Portland, ME"]) {
+		assert.equal(countryLabel(label, true), null);
+		assert.equal(geographicRegion(label, true), "unknown");
+	}
+	assert.equal(countryLabel("Toronto, Canada", true), "Canada");
+	assert.equal(displayCountry("CN", "en"), "China");
+	assert.equal(displayCountry("CN", "fr"), "Chine");
+});
 
 void test("geographic classification does not infer countries from ambiguous cities or nonanswers", () => {
 	for (const label of [
@@ -93,7 +112,11 @@ void test("bilingual insight cards preserve uncertainty and suppress small deriv
 			),
 			language === "en" ? /At least 8/ : /Au moins 8/,
 		);
-		assert.match(render([{ label: "India", value: 2 }]), language === "en" ? /Fewer than 5/ : /Moins de 5/);
+		assert.match(render([{ label: "India", value: 2 }]), />2<\/p>/);
+		assert.match(
+			render([{ label: "India", value: 2 }], "travelOrigin"),
+			language === "en" ? /Fewer than 5/ : /Moins de 5/,
+		);
 		assert.match(render([{ label: "Canada", value: 100 }]), />0<\/p>/);
 		assert.match(
 			render([{ label: "Unclassified", value: 100 }], "travelOrigin"),

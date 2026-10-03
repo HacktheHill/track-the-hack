@@ -9,6 +9,10 @@ import { AnswerCoverage } from "@/components/metrics/AnswerCoverage";
 import { HistoricalMetrics, EditionComparison } from "@/components/metrics/HistoricalMetrics";
 import { HistoricalProjectInsights } from "@/components/metrics/HistoricalProjectInsights";
 import type { HistoricalArchive } from "@root/private-metrics/history";
+import type { ParticipantBackground } from "@root/private-metrics/background";
+import type { ProjectInsights } from "@root/private-metrics/project-insights";
+import { ParticipantBackgroundView } from "./ParticipantBackgroundView";
+import { ReportCoverage } from "./ReportCoverage";
 import { operationalEvents, shirtSizeOrder } from "@root/private-metrics/operations";
 import type { DashboardData } from "@root/private-metrics/snapshot";
 import styles from "@/pages/metrics/Metrics.module.css";
@@ -22,6 +26,8 @@ export const MetricsDashboard = ({
 	onRefresh,
 	archived = false,
 	history,
+	participantBackground,
+	projectInsights,
 }: {
 	data?: DashboardData;
 	updatedAt: number;
@@ -31,6 +37,8 @@ export const MetricsDashboard = ({
 	onRefresh?: () => void;
 	archived?: boolean;
 	history?: HistoricalArchive;
+	participantBackground?: ParticipantBackground;
+	projectInsights?: ProjectInsights;
 }) => {
 	const { t, i18n } = useTranslation("metrics");
 	const [view, setView] = useState("overview");
@@ -96,9 +104,12 @@ export const MetricsDashboard = ({
 								value={edition}
 								onChange={event => {
 									setEdition(event.target.value);
+									if (view === "background" && event.target.value !== "iii") setView("insights");
 									if (
 										view === "projects" &&
-										!history.editions.find(item => item.id === event.target.value)?.devpost
+										!(event.target.value === "iii"
+											? projectInsights
+											: history.editions.find(item => item.id === event.target.value)?.devpost)
 									)
 										setView("insights");
 								}}
@@ -128,12 +139,13 @@ export const MetricsDashboard = ({
 						"operations",
 						"quality",
 						...(archived ? ["insights"] : []),
-						...(selectedEdition?.devpost ? ["projects"] : []),
+						...(selectedEdition?.devpost || (edition === "iii" && projectInsights) ? ["projects"] : []),
+						...(edition === "iii" && participantBackground ? ["background"] : []),
 					].map(key => (
 						<button key={key} type="button" aria-pressed={view === key} onClick={() => setView(key)}>
 							{t(
 								key === "projects"
-									? "view.insights"
+									? "view.projects"
 									: selectedEdition && key === "insights"
 										? "history.insightsLabel"
 										: `view.${key}`,
@@ -141,7 +153,15 @@ export const MetricsDashboard = ({
 						</button>
 					))}
 				</nav>
-				{selectedEdition && <HistoricalMetrics edition={selectedEdition} view={view} t={t} />}
+				{archived && data && view === "quality" && (
+					<ReportCoverage
+						snapshot={{ metrics: data, history, participantBackground, projectInsights }}
+						t={t}
+					/>
+				)}
+				{selectedEdition && (
+					<HistoricalMetrics edition={selectedEdition} view={view} t={t} locale={i18n.language} />
+				)}
 				{selectedEdition?.devpost && view === "projects" && (
 					<HistoricalProjectInsights
 						key={selectedEdition.id}
@@ -155,6 +175,12 @@ export const MetricsDashboard = ({
 				)}
 				{data && edition === "iii" && (
 					<>
+						{view === "background" && participantBackground && (
+							<ParticipantBackgroundView data={participantBackground} t={t} />
+						)}
+						{view === "projects" && projectInsights && (
+							<HistoricalProjectInsights data={projectInsights} t={t} locale={i18n.language} />
+						)}
 						<div
 							hidden={view !== "overview"}
 							style={view !== "overview" ? { display: "none" } : undefined}
@@ -344,7 +370,11 @@ export const MetricsDashboard = ({
 						<div hidden={view !== "cohorts"}>
 							{sheetSnapshot && (
 								<section>
-									<CohortExplorer dimensions={sheetSnapshot.payload.dimensions} t={t} />
+									<CohortExplorer
+										dimensions={sheetSnapshot.payload.dimensions}
+										t={t}
+										locale={i18n.language}
+									/>
 								</section>
 							)}
 							{!sheetSnapshot && <p>{t("unavailable")}</p>}
