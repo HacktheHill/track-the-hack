@@ -12,6 +12,7 @@ import {
 } from "@root/private-metrics/project-insights";
 import { archiveDashboardSchema } from "@root/private-metrics/snapshot";
 import type { CsvRow } from "@/server/services/devpost-metrics-import";
+import { normalizeCategory } from "@root/private-metrics/normalization";
 
 type Options = {
 	registrants: number;
@@ -70,7 +71,7 @@ export const aggregateProjectInsights = (input: CsvRow[], options: Options): Pro
 					.split(",")
 					.map(value => text(value).normalize("NFKC"))
 					.filter(Boolean)
-					.map(value => (foldCase ? value.toLowerCase() : value)),
+					.map(value => (foldCase ? normalizeCategory("technologies", value.toLowerCase()) : value)),
 			);
 			if (choices.size) answeredProjects++;
 			for (const choice of choices) {

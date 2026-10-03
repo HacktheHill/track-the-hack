@@ -12,6 +12,20 @@ export function aggregateSheetReport(
 		minimum: (key: string) => number;
 		country: (label: string, travel?: boolean) => string | null;
 		languages: (text: string) => string[];
+		normalize?: (key: string, value: string) => string;
+		discipline?: (value: string) => string;
+		normalizationSummary?: (
+			key: string,
+			values: string[],
+		) => {
+			key: string;
+			answered: number;
+			recognized: number;
+			unmapped: number;
+			sourceCategories: number;
+			normalizedCategories: number;
+			mergedVariants: number;
+		};
 	},
 ) {
 	const at = (name: string) => headers.indexOf(name);
@@ -46,7 +60,14 @@ export function aggregateSheetReport(
 			{ label: string; applicants: number; accepted: number; confirmed: number; attended: number }
 		>();
 		for (const row of rows) {
-			const labels = [...new Set(choices(row).map(text).filter(Boolean))];
+			const labels = [
+				...new Set(
+					choices(row)
+						.map(text)
+						.map(value => policy.normalize?.(key, value) ?? value)
+						.filter(Boolean),
+				),
+			];
 			for (const label of labels.length ? labels : ["Not provided"]) {
 				const current = counts.get(label.toLowerCase()) ?? { label, ...blank() };
 				for (const cohort of keys) if (flags(row)[cohort]) current[cohort]++;
@@ -87,21 +108,41 @@ export function aggregateSheetReport(
 		],
 		tShirtSize: ["What unisex T-shirt size would you prefer?", "Quelle taille de t-shirt unisexe préférez-vous?"],
 	};
+	const educationValue = (row: unknown[], key: string, names: string[]) => {
+		const value = cell(row, ...names);
+		if (
+			key === "school" &&
+			/^(school\/organization not listed|autre|other|école.*liste|établissement.*liste)$/i.test(value)
+		)
+			return (
+				cell(
+					row,
+					"If your school isn't on the list, please enter it below:",
+					"Si votre école ne figure pas dans la liste, indiquez-la ci-dessous:",
+				) || value
+			);
+		if (key === "studyLevel" && /^(other|autre)(?:.*)$/i.test(value))
+			return cell(row, "Please specify your level of study.", "Indiquez votre niveau d’études.") || value;
+		return value;
+	};
 	for (const [key, names] of Object.entries(fields))
 		dimension(key, row => {
-			let value = cell(row, ...names);
+			let value = educationValue(row, key, names);
 			if (key === "country") value = policy.country(value) ?? (value ? "Unclassified" : "");
 			if (key === "priorHackathon")
 				value = /^(yes|oui)$/i.test(value) ? "Yes" : /^(no|non)$/i.test(value) ? "No" : value;
 			if (
+				!policy.normalize &&
 				key === "school" &&
 				/^(university of ottawa|université d['’]ottawa|universite d['’]ottawa|uottawa)$/i.test(value)
 			)
 				value = "University of Ottawa / Université d’Ottawa";
-			if (key === "areaOfStudy" && /^(computer science|informatique)$/i.test(value))
+			if (!policy.normalize && key === "areaOfStudy" && /^(computer science|informatique)$/i.test(value))
 				value = "Computer Science / Informatique";
 			return [value];
 		});
+	const discipline = policy.discipline;
+	if (discipline) dimension("discipline", row => [discipline(cell(row, ...fields.areaOfStudy))]);
 	const age = (row: unknown[]) => {
 		const value = cell(row, "Age at the start of Hack the Hill III", "Âge au début de Hack the Hill III");
 		return /^\d+$/.test(value) && Number(value) >= 10 && Number(value) <= 100 ? Number(value) : null;
@@ -213,6 +254,8 @@ export function aggregateSheetReport(
 			"Y a-t-il des mesures d’accessibilité ou d’adaptation qui vous aideraient à participer pleinement à l’événement? Si oui, veuillez les décrire.",
 		),
 	).length;
+	const summarize = policy.normalizationSummary;
+	const normalizedFields: Array<"school" | "areaOfStudy" | "studyLevel"> = ["school", "areaOfStudy", "studyLevel"];
 	return {
 		sheet: {
 			kind: "google-sheets" as const,
@@ -221,6 +264,19 @@ export function aggregateSheetReport(
 			cohorts,
 			dimensions,
 		},
-		background: { ageStats, accommodationResponses },
+		background: {
+			ageStats,
+			accommodationResponses,
+			...(summarize
+				? {
+						normalization: normalizedFields.map(key =>
+							summarize(
+								key,
+								rows.map(row => educationValue(row, key, fields[key])),
+							),
+						),
+					}
+				: {}),
+		},
 	};
 }

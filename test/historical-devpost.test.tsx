@@ -42,6 +42,21 @@ const fixture = () => {
 	return structuredClone(data);
 };
 
+void test("technology aliases are combined once per project without merging related products", () => {
+	const input = rows().map(row => ({
+		...row,
+		"Built With": "next.js, nextjs, react, react-native, tailwind, tailwind-css",
+	}));
+	const result = aggregateProjectInsights(input, options);
+	assert.deepEqual(result.technologies.rows, [
+		{ label: "next.js", value: 12 },
+		{ label: "react", value: 12 },
+		{ label: "react-native", value: 12 },
+		{ label: "tailwindcss", value: 12 },
+	]);
+	assert.equal(result.technologies.answeredProjects, 12);
+});
+
 void test("historical project aggregation deduplicates rows and tags, excludes drafts and retains no project records", () => {
 	const input = rows();
 	const result = aggregateProjectInsights(

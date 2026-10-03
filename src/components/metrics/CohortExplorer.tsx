@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { useTranslation } from "next-i18next";
 import { AggregateInsights } from "./AggregateInsights";
 import { displayCountry } from "./aggregate-insights";
+import { displayCategory } from "@root/private-metrics/normalization";
 
 type Breakdown = { label: string; applicants: number; accepted: number; confirmed: number; attended: number };
 type Translate = ReturnType<typeof useTranslation>["t"];
@@ -14,7 +15,7 @@ const multiSelectDimensions = [
 ];
 const groups = {
 	demographics: ["preferredLanguage", "age", "gender", "racialOrEthnicBackground", "priorHackathon"],
-	education: ["studyLevel", "school", "areaOfStudy"],
+	education: ["studyLevel", "school", "areaOfStudy", "discipline"],
 	geography: ["country", "travelOrigin", "travelCountry"],
 	acquisition: ["acquisitionChannel"],
 	background: ["exactAge", "programmingLanguages", "profileAvailability"],
@@ -75,9 +76,9 @@ export const CohortExplorer = ({
 	const [mode, setMode] = useState("counts");
 	const selected = keys.includes(dimension) ? dimension : (keys[0] ?? "");
 	const multiSelect = multiSelectDimensions.includes(selected);
-	const entries = [...(dimensions[selected] ?? [])].sort(
-		(a, b) => b[cohort] - a[cohort] || a.label.localeCompare(b.label),
-	);
+	const entries = (dimensions[selected] ?? [])
+		.map(row => ({ ...row, label: displayCategory(selected, row.label, locale) }))
+		.sort((a, b) => b[cohort] - a[cohort] || a.label.localeCompare(b.label));
 	const coverage = entries.filter(entry => ["Not provided", "Other / suppressed"].includes(entry.label));
 	const ranked = entries.filter(
 		entry => !coverage.includes(entry) && (mode === "comparison" ? entry.applicants > 0 : entry[cohort] > 0),

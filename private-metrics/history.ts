@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { projectInsightsSchema } from "./project-insights";
 import { minimumCategorySize } from "./disclosure";
+import { normalizationSchema } from "./normalization-schema";
 
 const count = z.number().int().nonnegative();
 const label = z
@@ -16,6 +17,7 @@ export const historicalArchiveSchema = z
 				z
 					.object({
 						id: z.enum(["i", "ii"]),
+						normalization: normalizationSchema.optional(),
 						devpost: projectInsightsSchema.optional(),
 						sourceInventory: z
 							.object({
@@ -118,6 +120,7 @@ export const historicalArchiveSchema = z
 			"school",
 			"studyLevel",
 			"areaOfStudy",
+			"discipline",
 			"preferredLanguage",
 			"travelOrigin",
 			"graduationYear",
