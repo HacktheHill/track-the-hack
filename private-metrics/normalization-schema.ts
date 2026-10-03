@@ -1,10 +1,11 @@
 import { z } from "zod";
+import { normalizationFields } from "./normalization";
 const count = z.number().int().nonnegative();
 export const normalizationSchema = z
 	.array(
 		z
 			.object({
-				key: z.enum(["school", "areaOfStudy", "studyLevel"]),
+				key: z.enum(normalizationFields),
 				answered: count,
 				recognized: count,
 				unmapped: count,
@@ -14,10 +15,12 @@ export const normalizationSchema = z
 			})
 			.strict(),
 	)
-	.length(3)
+	.min(3)
+	.max(normalizationFields.length)
 	.superRefine((rows, ctx) => {
 		if (
-			new Set(rows.map(row => row.key)).size !== 3 ||
+			new Set(rows.map(row => row.key)).size !== rows.length ||
+			!["school", "areaOfStudy", "studyLevel"].every(key => rows.some(row => row.key === key)) ||
 			rows.some(
 				row =>
 					row.recognized + row.unmapped !== row.answered ||

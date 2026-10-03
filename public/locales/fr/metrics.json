@@ -106,7 +106,7 @@
 			"personalWebsite": "Site personnel",
 			"resume": "CV"
 		},
-		"rawCategoryNote": "Les variantes enregistrées sont conservées, sans fusion implicite. Les petites catégories sont regroupées.",
+		"rawCategoryNote": "Les équivalents anglais et français vérifiés sont combinés. Les réponses non reconnues et les sens distincts restent séparés; les petites catégories sont regroupées.",
 		"coverageNote": "Les barres représentent le pourcentage de réponses. Les valeurs manquantes sont distinctes des petites catégories regroupées.",
 		"eventBase": "Au moins un scan : n={{any}} · accueil explicite : n={{check}}. Chaque pourcentage utilise la population correspondante.",
 		"eventGroup": {

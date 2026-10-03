@@ -150,7 +150,7 @@ for an incremental import; its existing history is preserved unchanged.
 Historical **Project insights** adds registration-to-submitted-team conversion,
 public/hidden/draft totals, submitted-project technology tags, team sizes,
 prize-track interest and field completeness. Technologies are case-normalized,
-deduplicated per project, but spelling aliases are not merged. Recovered public technology/prize tags and team sizes include counts of one.
+deduplicated per project after reviewed spelling aliases are combined. Recovered public technology/prize tags and team sizes include counts of one.
 Previously pooled page aggregates remain pooled until original details are recovered. Prize interest is not an award or eligibility result. Coverage
 counts nonblank fields, not validated links. Drafts never enter these charts.
 
@@ -241,19 +241,38 @@ HTH III matched outcome analyses are optional follow-up work, not release blocke
 ### Shared category normalization
 
 `private-metrics/normalization.ts` owns reviewed bilingual aliases for schools,
-specific programs, study levels, acquisition channels and technologies. Imports
+specific programs, study levels, gender/pronouns, racial/ethnic backgrounds,
+language preferences, prior participation, shirts, dietary choices, acquisition
+channels, attendance modes and technologies. Imports
 normalize before aggregation and small-category pooling. Case/whitespace variants
 combine; no fuzzy matching or city/campus inference is used. Original source files
 remain unchanged. Toronto Mississauga/Scarborough and joint programs remain distinct.
 The additional `discipline` dimension groups reviewed programs without replacing
 specific-program detail; unknown disciplines are explicitly unclassified.
 
-HTH III school/study-level "other" selections use the matching follow-up answer
+HTH III school/study-level "other" selections (including the French "École ou
+organisation non indiquée" selector) use the matching follow-up answer
 when supplied. Unknown specifics remain subject to existing label safety and
 suppression. Diagnostics contain only answered/matched/unmapped and category counts,
 never original answer labels. Devpost aliases deduplicate per project, not by
 summing already aggregated tags. HTH I's existing page-based project snapshot is
 preserved because per-project tag overlaps cannot be recovered from its aggregates.
+
+The October 3 full sweep supersedes the older checklist's raw-spelling notes.
+Diagnostics now cover all collected reviewed categorical fields, not just education.
+Multi-identity combinations retain their meaning, but equivalent option ordering
+and bilingual labels combine. Historical pronouns are never converted into inferred
+gender identities. Broad ethnicity options do not absorb narrower options from a
+different form. Lactose intolerance, milk allergy and dairy-free diets remain distinct,
+as do unspecified nut, peanut and tree-nut allergies. Original geographic strings,
+ambiguous study-year numbers and unrecovered categories are not guessed.
+Country codes and English/French country names use the existing explicit-country
+classifier. Numeric ages/team sizes, technical status enums, named prize tracks and
+repeated event instances do not need bilingual category merging; events remain separate.
+The Sheet option parser preserves nested parenthetical examples, and multi-select
+checkbox aliases are deduplicated per application row before counting. Historical
+dietary option lists are similarly deduplicated before counting; free-text additions
+remain pooled. All disclosure thresholds are unchanged.
 
 Reviewed institution-name aliases include [Ryerson / Toronto Metropolitan](https://www.torontomu.ca/media/releases/2022/04/ryerson-university-changing-its-name-to-toronto-metropolitan-uni/)
 and [UOIT / Ontario Tech](https://brand.ontariotechu.ca/guidelines/writing/editorial-style-guide/style-guidelines/university-name.php).

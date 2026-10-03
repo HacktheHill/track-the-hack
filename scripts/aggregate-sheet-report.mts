@@ -112,7 +112,9 @@ export function aggregateSheetReport(
 		const value = cell(row, ...names);
 		if (
 			key === "school" &&
-			/^(school\/organization not listed|autre|other|école.*liste|établissement.*liste)$/i.test(value)
+			/^(school\/organization not listed|école ou organisation non indiquée|autre|other|école.*liste|établissement.*liste)$/i.test(
+				value,
+			)
 		)
 			return (
 				cell(
@@ -157,11 +159,10 @@ export function aggregateSheetReport(
 		return [policy.country(value, true) ?? (value ? "Unclassified" : "")];
 	});
 	const options = (prefixes: string[]) =>
-		headers.flatMap((header, index) =>
-			prefixes.some(prefix => header.startsWith(prefix)) && header.endsWith(")")
-				? [{ index, label: header.slice(header.lastIndexOf(" (") + 2, -1) }]
-				: [],
-		);
+		headers.flatMap((header, index) => {
+			const prefix = prefixes.find(prefix => header.startsWith(prefix));
+			return prefix && header.endsWith(")") ? [{ index, label: header.slice(prefix.length, -1) }] : [];
+		});
 	const multiFields: Array<[string, string[]]> = [
 		[
 			"acquisitionChannel",
@@ -255,7 +256,16 @@ export function aggregateSheetReport(
 		),
 	).length;
 	const summarize = policy.normalizationSummary;
-	const normalizedFields: Array<"school" | "areaOfStudy" | "studyLevel"> = ["school", "areaOfStudy", "studyLevel"];
+	const normalizedFields = [
+		"school",
+		"areaOfStudy",
+		"studyLevel",
+		"gender",
+		"racialOrEthnicBackground",
+		"preferredLanguage",
+		"priorHackathon",
+		"tShirtSize",
+	] as const;
 	return {
 		sheet: {
 			kind: "google-sheets" as const,
@@ -269,12 +279,41 @@ export function aggregateSheetReport(
 			accommodationResponses,
 			...(summarize
 				? {
-						normalization: normalizedFields.map(key =>
-							summarize(
-								key,
-								rows.map(row => educationValue(row, key, fields[key])),
+						normalization: [
+							...normalizedFields.map(key =>
+								summarize(
+									key,
+									rows.map(row => educationValue(row, key, fields[key])),
+								),
 							),
-						),
+							...multiFields.map(([key, prefixes]) =>
+								summarize(
+									key,
+									rows.map(row => {
+										const choices = options(prefixes)
+											.filter(
+												option =>
+													text(row[option.index]) &&
+													!/^(false|no|non|0)$/i.test(text(row[option.index])),
+											)
+											.map(option => option.label);
+										if (
+											key === "dietaryRestrictions" &&
+											!choices.length &&
+											/^(no|non)$/i.test(
+												cell(
+													row,
+													"Do you have any dietary restrictions or food allergies?",
+													"Avez-vous des restrictions alimentaires ou des allergies alimentaires?",
+												),
+											)
+										)
+											return "No restrictions reported";
+										return choices.join(" + ");
+									}),
+								),
+							),
+						],
 					}
 				: {}),
 		},

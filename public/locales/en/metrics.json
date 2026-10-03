@@ -106,7 +106,7 @@
 			"personalWebsite": "Personal website",
 			"resume": "Résumé"
 		},
-		"rawCategoryNote": "Stored category spellings are retained. Variants have not been silently merged; small categories are pooled.",
+		"rawCategoryNote": "Reviewed English/French equivalents are combined. Unmapped answers and distinct meanings stay separate; small categories are pooled.",
 		"coverageNote": "Bars show percent answered. Missing values are counted separately from pooled small categories.",
 		"eventBase": "Any-scan population n={{any}} · explicit check-in population n={{check}}. Each percentage uses its matching population.",
 		"eventGroup": {
