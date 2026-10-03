@@ -8,6 +8,7 @@ import { shirtSizeOrder } from "@root/private-metrics/operations";
 import { ProjectEditionComparison } from "./HistoricalProjectInsights";
 import { AggregateInsights } from "./AggregateInsights";
 import { displayCountry } from "./aggregate-insights";
+import { displayCategory } from "@root/private-metrics/normalization";
 
 type Translate = ReturnType<typeof useTranslation>["t"];
 const source = "https://github.com/HacktheHill/prev-hackathon-analysis/tree/main/corrected_version";
@@ -195,7 +196,7 @@ export const HistoricalMetrics = ({
 													? displayCountry(row.label, locale)
 													: selected.key === "missingWalkInAnswers"
 														? t(`dimension.${row.label}`, { defaultValue: row.label })
-														: row.label,
+														: displayCategory(selected.key, row.label, locale),
 							})) ?? []
 						}
 						total={selected.multiSelect ? undefined : selected.total}
@@ -481,7 +482,7 @@ export const HistoricalMetrics = ({
 								...edition.dimensions.filter(
 									row =>
 										row.section === "cohorts" &&
-										!["countryRegion", "travelRegion", "travelCountry"].includes(row.key),
+										!["countryRegion", "travelRegion", "travelCountry", "discipline"].includes(row.key),
 								),
 							]
 								.sort((a, b) => (a.total - a.missing) / a.total - (b.total - b.missing) / b.total)

@@ -8,6 +8,8 @@ import { readSqlTables, type SqlRow } from "./historical-sql.mts";
 import { geographicRegion, countryLabel } from "@/components/metrics/aggregate-insights";
 import { minimumCategorySize } from "@root/private-metrics/disclosure";
 import { z } from "zod";
+import { normalizationSchema } from "@root/private-metrics/normalization-schema";
+import { normalizeCategory, programDiscipline, normalizationSummary } from "@root/private-metrics/normalization";
 
 const text = (value: unknown) => String(value ?? "").trim();
 const yes = (value: unknown) => value === 1 || value === "1" || value === true;
@@ -203,18 +205,24 @@ export function aggregateHistoricalDump(sql: string, id: "i" | "ii"): Historical
 		population = rows,
 	) => {
 		const grouped = new Map<string, number>();
+		const labels = new Map<string, string>();
 		let missing = 0;
 		for (const row of population) {
-			const label = transform(row[column]);
+			const label = normalizeCategory(key, transform(row[column]));
 			if (!label) {
 				missing++;
 				continue;
 			}
-			grouped.set(label, (grouped.get(label) ?? 0) + 1);
+			const group = ["school", "studyLevel", "areaOfStudy", "transportSchools", "discipline"].includes(key)
+				? label.toLowerCase()
+				: label;
+			labels.set(group, labels.get(group) ?? label);
+			grouped.set(group, (grouped.get(group) ?? 0) + 1);
 		}
 		let suppressed = 0;
 		const values: Array<{ label: string; value: number }> = [];
-		for (const [label, value] of grouped) {
+		for (const [group, value] of grouped) {
+			const label = labels.get(group) ?? group;
 			if (value < minimumCategorySize(key) || !safeLabel(label)) suppressed += value;
 			else values.push({ label, value });
 		}
@@ -254,6 +262,19 @@ export function aggregateHistoricalDump(sql: string, id: "i" | "ii"): Historical
 				["acquisitionChannel", "referralSource"],
 			])
 		if (key && column && key !== "acquisitionChannel") dimension(key, column);
+	dimension("discipline", id === "i" ? "studyProgram" : "major", "cohorts", value => programDiscipline(text(value)));
+	result.normalization = normalizationSchema.parse(
+		[
+			["school", id === "i" ? "university" : "currentSchoolOrganization"],
+			["areaOfStudy", id === "i" ? "studyProgram" : "major"],
+			["studyLevel", id === "i" ? "studyLevel" : "educationLevel"],
+		].map(([key = "", column = ""]) =>
+			normalizationSummary(
+				key,
+				rows.map(row => text(row[column])),
+			),
+		),
+	);
 	// Classify before suppression, without retaining any individual locations.
 	dimension("travelCountry", id === "i" ? "attendanceLocation" : "travelOrigin", "cohorts", value => {
 		const label = text(value);
@@ -332,10 +353,12 @@ export function aggregateHistoricalDump(sql: string, id: "i" | "ii"): Historical
 		);
 		const referrals = new Map<string, number>();
 		for (const row of rows)
-			for (const label of text(row.referralSource)
-				.split(",")
-				.map(value => value.trim())
-				.filter(Boolean))
+			for (const label of new Set(
+				text(row.referralSource)
+					.split(",")
+					.map(value => normalizeCategory("acquisitionChannel", value))
+					.filter(Boolean),
+			))
 				referrals.set(label, (referrals.get(label) ?? 0) + 1);
 		let small = 0;
 		const categories = [...referrals].flatMap(([label, value]) => {

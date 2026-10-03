@@ -25,6 +25,6 @@ export const minimumCategorySize = (key: string): number => {
 		].includes(key)
 	)
 		return 1;
-	if (["school", "studyLevel", "areaOfStudy", "transportSchools"].includes(key)) return 2;
+	if (["school", "studyLevel", "areaOfStudy", "discipline", "transportSchools"].includes(key)) return 2;
 	return 5;
 };

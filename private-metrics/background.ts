@@ -1,8 +1,10 @@
 import { z } from "zod";
+import { normalizationSchema } from "./normalization-schema";
 const count = z.number().int().nonnegative();
 export const participantBackgroundSchema = z
 	.object({
 		capturedAt: z.string().datetime(),
+		normalization: normalizationSchema.optional(),
 		ageStats: z
 			.array(
 				z

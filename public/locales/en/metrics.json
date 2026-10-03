@@ -1,4 +1,14 @@
 {
+	"normalization": {
+		"title": "Category normalization",
+		"note": "Reviewed English/French aliases are combined before counting and suppression. Unmapped specific answers are retained, not guessed. Joint programs and distinct campuses stay separate. Category counts here are before suppression; no original answer labels are included.",
+		"field": "Field",
+		"answered": "Answered",
+		"recognized": "Reviewed matches",
+		"unmapped": "Unmapped answers",
+		"categories": "Categories before / after",
+		"merged": "Variants consolidated"
+	},
 	"aggregateInsights": {
 		"outsideCanada": "Outside Canada",
 		"atLeast": "At least {{count}}",
@@ -58,7 +68,7 @@
 			},
 			"definitions": "Source and counting definitions",
 			"teamNote": "{{memberships}} team memberships across {{answered}} projects with a supplied team size; Devpost reports {{people}} submitters. Memberships are not unique people. Team size is one project creator plus the additional-member count.",
-			"method": "Drafts are excluded from charts. Tags are case-normalized and counted once per project; spelling aliases are not merged. Prize selections indicate interest, not eligibility or awards. Public project tags and team sizes include counts of one when recovered from source.",
+			"method": "Drafts are excluded from charts. Reviewed technology aliases are normalized and counted once per project; ambiguous tags remain separate. Prize selections indicate interest, not eligibility or awards. Historical page-based imports may retain their original pooled categories.",
 			"source": "Organizer totals and project export captured {{date}} · {{requests}} team-up requests · {{duplicates}} duplicate export rows removed.",
 			"comparison": "Devpost project participation across editions",
 			"metric": "Metric",
@@ -373,6 +383,7 @@
 		"studyLevel": "Level of study",
 		"school": "School",
 		"areaOfStudy": "Area of study",
+		"discipline": "Broad discipline",
 		"priorHackathon": "Prior hackathon experience",
 		"travelOrigin": "Travel origin",
 		"acquisitionChannel": "How applicants heard about Hack the Hill",

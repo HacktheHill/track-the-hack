@@ -11,6 +11,7 @@ export const AnswerCoverage = ({
 	t: ReturnType<typeof useTranslation>["t"];
 }) => {
 	const rows = Object.entries(dimensions)
+		.filter(([key]) => key !== "discipline")
 		.map(([key, values]) => ({ key, ...answerCoverage(values, total) }))
 		.sort((a, b) => parseFloat(a.rate) - parseFloat(b.rate));
 	return (

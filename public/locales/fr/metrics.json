@@ -1,4 +1,14 @@
 {
+	"normalization": {
+		"title": "Normalisation des catégories",
+		"note": "Les variantes françaises et anglaises vérifiées sont fusionnées avant le comptage et le masquage. Les réponses précises non reconnues sont conservées, sans supposition. Les programmes conjoints et campus distincts restent séparés. Ces nombres de catégories précèdent le masquage; aucun libellé de réponse d’origine n’est inclus.",
+		"field": "Champ",
+		"answered": "Réponses",
+		"recognized": "Correspondances vérifiées",
+		"unmapped": "Réponses non reconnues",
+		"categories": "Catégories avant / après",
+		"merged": "Variantes regroupées"
+	},
 	"aggregateInsights": {
 		"outsideCanada": "À l’extérieur du Canada",
 		"atLeast": "Au moins {{count}}",
@@ -58,7 +68,7 @@
 			},
 			"definitions": "Source et définitions de décompte",
 			"teamNote": "{{memberships}} appartenances à une équipe pour {{answered}} projets avec taille renseignée; Devpost indique {{people}} membres d’équipes ayant soumis. Les appartenances ne sont pas des personnes uniques. La taille comprend le créateur et le nombre de membres supplémentaires.",
-			"method": "Les brouillons sont exclus des graphiques. Les mots-clés sont normalisés sans fusionner les variantes et comptés une fois par projet. Les prix sélectionnés indiquent un intérêt, pas l’admissibilité ou des récompenses. Les mots-clés publics et tailles d’équipe incluent les effectifs de un récupérés à la source.",
+			"method": "Les brouillons sont exclus des graphiques. Les variantes technologiques vérifiées sont normalisées et comptées une fois par projet; les mots-clés ambigus restent distincts. Les prix sélectionnés indiquent un intérêt, pas l’admissibilité ou des récompenses. Les anciennes importations par pages peuvent conserver leurs catégories regroupées d’origine.",
 			"source": "Totaux d’organisation et export de projets relevés le {{date}} · {{requests}} demandes de formation d’équipe · {{duplicates}} lignes en double retirées.",
 			"comparison": "Participation aux projets Devpost par édition",
 			"metric": "Indicateur",
@@ -373,6 +383,7 @@
 		"studyLevel": "Niveau d’études",
 		"school": "Établissement d’enseignement",
 		"areaOfStudy": "Domaine d’études",
+		"discipline": "Grand domaine d’études",
 		"priorHackathon": "Expérience antérieure de hackathon",
 		"travelOrigin": "Lieu de provenance",
 		"acquisitionChannel": "Comment les personnes candidates ont découvert Hack the Hill",

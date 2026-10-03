@@ -238,6 +238,26 @@ HTH III matched outcome analyses are optional follow-up work, not release blocke
 
 ## Expanded report coverage (October 2026)
 
+### Shared category normalization
+
+`private-metrics/normalization.ts` owns reviewed bilingual aliases for schools,
+specific programs, study levels, acquisition channels and technologies. Imports
+normalize before aggregation and small-category pooling. Case/whitespace variants
+combine; no fuzzy matching or city/campus inference is used. Original source files
+remain unchanged. Toronto Mississauga/Scarborough and joint programs remain distinct.
+The additional `discipline` dimension groups reviewed programs without replacing
+specific-program detail; unknown disciplines are explicitly unclassified.
+
+HTH III school/study-level "other" selections use the matching follow-up answer
+when supplied. Unknown specifics remain subject to existing label safety and
+suppression. Diagnostics contain only answered/matched/unmapped and category counts,
+never original answer labels. Devpost aliases deduplicate per project, not by
+summing already aggregated tags. HTH I's existing page-based project snapshot is
+preserved because per-project tag overlaps cannot be recovered from its aggregates.
+
+Reviewed institution-name aliases include [Ryerson / Toronto Metropolitan](https://www.torontomu.ca/media/releases/2022/04/ryerson-university-changing-its-name-to-toronto-metropolitan-uni/)
+and [UOIT / Ontario Tech](https://brand.ontariotechu.ca/guidelines/writing/editorial-style-guide/style-guidelines/university-name.php).
+
 The Data quality view has an edition-wide coverage matrix distinguishing available,
 not collected, not recovered, and deliberately excluded topics. Availability is
 not a claim of identical populations, exhaustive answers or a cell-for-cell PDF copy.

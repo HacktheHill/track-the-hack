@@ -13,6 +13,7 @@ import type { ParticipantBackground } from "@root/private-metrics/background";
 import type { ProjectInsights } from "@root/private-metrics/project-insights";
 import { ParticipantBackgroundView } from "./ParticipantBackgroundView";
 import { ReportCoverage } from "./ReportCoverage";
+import { NormalizationQuality } from "./NormalizationQuality";
 import { operationalEvents, shirtSizeOrder } from "@root/private-metrics/operations";
 import type { DashboardData } from "@root/private-metrics/snapshot";
 import styles from "@/pages/metrics/Metrics.module.css";
@@ -161,6 +162,15 @@ export const MetricsDashboard = ({
 				)}
 				{selectedEdition && (
 					<HistoricalMetrics edition={selectedEdition} view={view} t={t} locale={i18n.language} />
+				)}
+				{view === "quality" && edition !== "comparison" && (
+					<NormalizationQuality
+						rows={
+							selectedEdition?.normalization ??
+							(edition === "iii" ? participantBackground?.normalization : undefined)
+						}
+						t={t}
+					/>
 				)}
 				{selectedEdition?.devpost && view === "projects" && (
 					<HistoricalProjectInsights
