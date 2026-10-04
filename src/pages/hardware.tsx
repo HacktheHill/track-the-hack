@@ -18,6 +18,7 @@ export default function HardwareCatalogue() {
 			<div className="ui-form-layout space-y-5">
 				<h1 className="ui-page-title">{t("catalogue")}</h1>
 				<input
+					type="search"
 					className="ui-field w-full"
 					value={search}
 					onChange={event => setSearch(event.target.value)}
