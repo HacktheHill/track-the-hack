@@ -684,8 +684,44 @@ export const judgingRouter = createTRPCRouter({
 			},
 		});
 		if (!round) return null;
+
+		// ⚡ Bolt: Pre-compute Hash Maps for O(1) lookups to avoid O(N^2) array searches inside the .map() and .flatMap() loops
+		// Expected impact: Significantly reduces CPU time during admin overview generation by eliminating redundant array iterations.
+		const assignmentsByJudgeId = round.assignments.reduce((acc, assignment) => {
+			const list = acc.get(assignment.judgeId);
+			if (list) {
+				list.push(assignment);
+			} else {
+				acc.set(assignment.judgeId, [assignment]);
+			}
+			return acc;
+		}, new Map<string, typeof round.assignments>());
+
+		const assignmentsByProjectAndCategory = round.assignments.reduce((acc, assignment) => {
+			const key = `${assignment.projectId}:${assignment.categoryCode}`;
+			const list = acc.get(key);
+			if (list) {
+				list.push(assignment);
+			} else {
+				acc.set(key, [assignment]);
+			}
+			return acc;
+		}, new Map<string, typeof round.assignments>());
+
+		const activeAssignmentsByCategory = round.assignments.reduce((acc, assignment) => {
+			if (!assignment.recusedAt) {
+				const list = acc.get(assignment.categoryCode);
+				if (list) {
+					list.push(assignment);
+				} else {
+					acc.set(assignment.categoryCode, [assignment]);
+				}
+			}
+			return acc;
+		}, new Map<string, typeof round.assignments>());
+
 		const judgeLoads = round.judges.map(judge => {
-			const assignments = round.assignments.filter(assignment => assignment.judgeId === judge.id);
+			const assignments = assignmentsByJudgeId.get(judge.id) || [];
 			const visits = [
 				...new Map(assignments.map(assignment => [assignment.projectId, assignment.project])).values(),
 			]
@@ -730,9 +766,7 @@ export const judgingRouter = createTRPCRouter({
 				...project.categories.map(category => category.code),
 			];
 			return categoryCodes.map(categoryCode => {
-				const assignments = round.assignments.filter(
-					assignment => assignment.projectId === project.id && assignment.categoryCode === categoryCode,
-				);
+				const assignments = assignmentsByProjectAndCategory.get(`${project.id}:${categoryCode}`) || [];
 				const activeAssignments = assignments.filter(assignment => !assignment.recusedAt);
 				return {
 					projectId: project.id,
@@ -748,9 +782,7 @@ export const judgingRouter = createTRPCRouter({
 			});
 		});
 		const categoryCohorts = [...new Set(coverage.map(item => item.categoryCode))].sort().map(categoryCode => {
-			const assignments = round.assignments.filter(
-				assignment => assignment.categoryCode === categoryCode && !assignment.recusedAt,
-			);
+			const assignments = activeAssignmentsByCategory.get(categoryCode) || [];
 			const sharedProjects = new Set(
 				coverage
 					.filter(item => item.categoryCode === categoryCode && item.count > 1)
