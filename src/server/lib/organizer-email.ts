@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { z } from "zod";
 import type { SendVerificationRequestParams } from "next-auth/providers/email";
 import { prisma } from "@/server/db";
 import { normalizeOrganizerEmail } from "@/server/lib/organizer-auth";
@@ -7,6 +8,14 @@ import { createOrganizerEmailConfirmationUrl } from "@/server/lib/organizer-emai
 
 const escapeHtml = (value: string) =>
 	value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+
+const smtpServerSchema = z
+	.object({
+		host: z.string(),
+		port: z.number().int().min(1).max(65535),
+		auth: z.object({ user: z.string(), pass: z.string() }),
+	})
+	.passthrough();
 
 export const failedOrganizerEmailRecipients = (result: {
 	rejected?: readonly unknown[];
@@ -25,7 +34,10 @@ export const sendOrganizerVerificationRequest = async ({
 
 	const host = new URL(url).host;
 	const confirmationUrl = createOrganizerEmailConfirmationUrl(url);
-	const transport = nodemailer.createTransport(provider.server);
+	// NextAuth v4's legacy Nodemailer subpath types resolve to any with Nodemailer 10.
+	// Validate the configured SMTP options at that boundary; URLs remain supported.
+	const server: unknown = provider.server;
+	const transport = nodemailer.createTransport(typeof server === "string" ? server : smtpServerSchema.parse(server));
 	const result = await transport.sendMail({
 		to: email,
 		from: provider.from,
