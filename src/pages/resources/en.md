@@ -94,11 +94,11 @@ Only eligible, registered, checked-in competitors listed on the winning team's f
 
 ## Main-Track Awards
 
-| Main track                           |  1st |  2nd |  3rd | Additional first-place award                                                                                         |
-| ------------------------------------ | ---: | ---: | ---: | -------------------------------------------------------------------------------------------------------------------- |
-| **CGI — The Northwind Brief**        | $500 | $300 | $200 | —                                                                                                                    |
-| **Civic Technology**                 | $500 | $300 | $200 | —                                                                                                                    |
-| **General Challenge — Best Overall** | $500 | $300 | $200 | Three months of ElevenLabs Pro per team member—$297 value per person, with 600,000 credits per month                 |
+| Main track                           |  1st |  2nd |  3rd |
+| ------------------------------------ | ---: | ---: | ---: |
+| **CGI — The Northwind Brief**        | $500 | $300 | $200 |
+| **Civic Technology**                 | $500 | $300 | $200 |
+| **General Challenge — Best Overall** | $500 | $300 | $200 |
 
 ## Mini-Challenge Awards
 
@@ -124,12 +124,13 @@ Only eligible, registered, checked-in competitors listed on the winning team's f
 
 See the [official MLH prize page](https://www.mlh.com/events/hack-the-hill-30/prizes) for sponsor links, claim codes, complete requirements, and updates.
 
-## Participant Benefits — Not Judged Prizes
+## Participant Benefits
 
-| Benefit                    | Who receives it  | How to claim                                                                                                                                                                         |
-| -------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **ElevenLabs Creator**     | All participants | One free month—normally $22/month—with 131,000 credits. Follow the Discord redemption instructions in the ElevenLabs challenge section below.                                        |
-| **Backboard developer credits** | All participants | Redeem **$10 in developer credits** with code **`HTH2026`** at [app.backboard.io/hackathon](https://app.backboard.io/hackathon) by **September 28, 2026**. Credits work across Backboard's Unified API, Studio, R-CLI, and Terminal Bench. |
+| Benefit                         | Who receives it                                                            | Details                                                                                                                                                                                                                                    |
+| ------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **ElevenLabs Pro**              | All members of the first-place teams in General, CGI, and Civic Technology | Three free months, a $297 value per person, with 600,000 credits per month.                                                                                                                                                                |
+| **ElevenLabs Creator**          | All participants                                                           | One free month, normally $22 per month, with 131,000 credits. Follow the Discord redemption instructions in the ElevenLabs challenge section below.                                                                                        |
+| **Backboard developer credits** | All participants                                                           | Redeem **$10 in developer credits** with code **`HTH2026`** at [app.backboard.io/hackathon](https://app.backboard.io/hackathon) by **September 28, 2026**. Credits work across Backboard's Unified API, Studio, R-CLI, and Terminal Bench. |
 
 # CGI Challenge — The Northwind Brief
 
