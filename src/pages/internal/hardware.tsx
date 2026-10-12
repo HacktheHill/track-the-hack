@@ -61,6 +61,7 @@ export default function HardwareDesk() {
 						placeholder={t("search")}
 						value={search}
 						onChange={event => setSearch(event.target.value)}
+						type="search"
 					/>
 					<div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
 						{visible.map(item => {
@@ -248,6 +249,7 @@ export default function HardwareDesk() {
 						aria-label={t("find-loan")}
 						value={loanSearch}
 						onChange={event => setLoanSearch(event.target.value)}
+						type="search"
 					/>
 					<div className="space-y-3">
 						{[
