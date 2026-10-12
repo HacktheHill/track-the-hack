@@ -23,6 +23,7 @@ export default function HardwareCatalogue() {
 					onChange={event => setSearch(event.target.value)}
 					placeholder={t("search")}
 					aria-label={t("search")}
+					type="search"
 				/>
 				{query.isError && <p role="alert">{t("error")}</p>}
 				<div className="grid gap-4 sm:grid-cols-2">
