@@ -2126,9 +2126,10 @@ export const judgingRouter = createTRPCRouter({
 			});
 			if (duplicate)
 				throw new TRPCError({ code: "CONFLICT", message: "This judge already has that scoring scope." });
+			// ⚡ Bolt Optimization: Use Prisma's distinct to compute unique count efficiently at the database level instead of in memory
 			const projectCount = await ctx.prisma.judgingAssignment
-				.findMany({ where: { judgeId: judge.id }, select: { projectId: true } })
-				.then(rows => new Set(rows.map(row => row.projectId)).size);
+				.findMany({ where: { judgeId: judge.id }, distinct: ["projectId"], select: { projectId: true } })
+				.then(rows => rows.length);
 			const alreadyVisits = await ctx.prisma.judgingAssignment.count({
 				where: { judgeId: judge.id, projectId: assignment.projectId },
 			});
