@@ -2127,8 +2127,9 @@ export const judgingRouter = createTRPCRouter({
 			if (duplicate)
 				throw new TRPCError({ code: "CONFLICT", message: "This judge already has that scoring scope." });
 			const projectCount = await ctx.prisma.judgingAssignment
-				.findMany({ where: { judgeId: judge.id }, select: { projectId: true } })
-				.then(rows => new Set(rows.map(row => row.projectId)).size);
+				// ⚡ Bolt: Pushed distinct counting to database level to prevent O(N) array allocation/deduplication in memory
+				.findMany({ where: { judgeId: judge.id }, distinct: ["projectId"], select: { projectId: true } })
+				.then(rows => rows.length);
 			const alreadyVisits = await ctx.prisma.judgingAssignment.count({
 				where: { judgeId: judge.id, projectId: assignment.projectId },
 			});
@@ -2523,13 +2524,15 @@ export const judgingRouter = createTRPCRouter({
 				throw new TRPCError({ code: "CONFLICT", message: "This judge already has that scoring scope." });
 			if (jsonStringArray(judge.exclusions).includes(input.categoryCode))
 				throw new TRPCError({ code: "BAD_REQUEST", message: "This judge is excluded from that category." });
+			// ⚡ Bolt: Pushed distinct counting to database level to prevent O(N) array allocation/deduplication in memory
 			const visits = await ctx.prisma.judgingAssignment.findMany({
 				where: { judgeId: judge.id },
+				distinct: ["projectId"],
 				select: { projectId: true },
 			});
 			if (
 				!visits.some(visit => visit.projectId === project.id) &&
-				new Set(visits.map(visit => visit.projectId)).size >= round.effectiveProjectLimit
+				visits.length >= round.effectiveProjectLimit
 			)
 				throw new TRPCError({
 					code: "PRECONDITION_FAILED",
