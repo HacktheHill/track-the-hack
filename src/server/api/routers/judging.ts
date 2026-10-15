@@ -349,9 +349,7 @@ const synchronizeProjectRecusal = async (
 						assignment.recusedAt === null &&
 						assignment.assignmentReason?.startsWith("automatic recusal replacement for "),
 				)
-				.map(assignment =>
-					assignment.assignmentReason?.slice("automatic recusal replacement for ".length),
-				)
+				.map(assignment => assignment.assignmentReason?.slice("automatic recusal replacement for ".length))
 				.filter((id): id is string => Boolean(id)),
 		);
 		const missingCoverageIds = new Set(
@@ -439,16 +437,20 @@ const synchronizeProjectRecusal = async (
 			data: { assignmentVersion: { increment: 1 } },
 		});
 	}
-	await invalidateRankings(transaction, [
-		...sourceAssignments.map(assignment => ({
-			judgeId: input.judgeId,
-			categoryCode: assignment.categoryCode,
-		})),
-		...replacements.map(replacement => ({
-			judgeId: replacement.targetJudgeId,
-			categoryCode: sourceAssignments.find(item => item.id === replacement.sourceAssignmentId)?.categoryCode ?? "",
-		})),
-	].filter(pair => pair.categoryCode));
+	await invalidateRankings(
+		transaction,
+		[
+			...sourceAssignments.map(assignment => ({
+				judgeId: input.judgeId,
+				categoryCode: assignment.categoryCode,
+			})),
+			...replacements.map(replacement => ({
+				judgeId: replacement.targetJudgeId,
+				categoryCode:
+					sourceAssignments.find(item => item.id === replacement.sourceAssignmentId)?.categoryCode ?? "",
+			})),
+		].filter(pair => pair.categoryCode),
+	);
 	if (
 		input.reason &&
 		(!alreadyRecused || hadMissingCoverage || sourceAssignments.some(assignment => assignment.recusedAt === null))
@@ -1317,7 +1319,9 @@ export const judgingRouter = createTRPCRouter({
 							});
 						const excludedCategoryCodes = ALL_JUDGING_CATEGORY_CODES.filter(code => !allowed.has(code));
 						const existingExclusions = jsonStringArray(judge.exclusions);
-						const conflictingAllowed = request.allowedCategoryCodes.filter(code => existingExclusions.includes(code));
+						const conflictingAllowed = request.allowedCategoryCodes.filter(code =>
+							existingExclusions.includes(code),
+						);
 						if (conflictingAllowed.length)
 							throw new TRPCError({
 								code: "PRECONDITION_FAILED",
@@ -1957,7 +1961,9 @@ export const judgingRouter = createTRPCRouter({
 					for (const assignments of groups.values()) {
 						const first = assignments[0];
 						if (!first) continue;
-						const reason = assignments.find(assignment => assignment.recusalReason?.trim())?.recusalReason?.trim();
+						const reason = assignments
+							.find(assignment => assignment.recusalReason?.trim())
+							?.recusalReason?.trim();
 						if (!reason)
 							throw new TRPCError({
 								code: "PRECONDITION_FAILED",
@@ -2127,8 +2133,8 @@ export const judgingRouter = createTRPCRouter({
 			if (duplicate)
 				throw new TRPCError({ code: "CONFLICT", message: "This judge already has that scoring scope." });
 			const projectCount = await ctx.prisma.judgingAssignment
-				.findMany({ where: { judgeId: judge.id }, select: { projectId: true } })
-				.then(rows => new Set(rows.map(row => row.projectId)).size);
+				.findMany({ where: { judgeId: judge.id }, distinct: ["projectId"], select: { projectId: true } })
+				.then(rows => rows.length); // ⚡ Bolt: Push deduplication to the database to reduce memory usage and avoid O(N) array mapping
 			const alreadyVisits = await ctx.prisma.judgingAssignment.count({
 				where: { judgeId: judge.id, projectId: assignment.projectId },
 			});
@@ -2525,12 +2531,10 @@ export const judgingRouter = createTRPCRouter({
 				throw new TRPCError({ code: "BAD_REQUEST", message: "This judge is excluded from that category." });
 			const visits = await ctx.prisma.judgingAssignment.findMany({
 				where: { judgeId: judge.id },
+				distinct: ["projectId"], // ⚡ Bolt: Push deduplication to the database to reduce data transfer
 				select: { projectId: true },
 			});
-			if (
-				!visits.some(visit => visit.projectId === project.id) &&
-				new Set(visits.map(visit => visit.projectId)).size >= round.effectiveProjectLimit
-			)
+			if (!visits.some(visit => visit.projectId === project.id) && visits.length >= round.effectiveProjectLimit)
 				throw new TRPCError({
 					code: "PRECONDITION_FAILED",
 					message: "This assignment would exceed the approved project limit.",
@@ -2783,8 +2787,9 @@ export const judgingRouter = createTRPCRouter({
 							.map(item => ({
 								tableNumber: item.project.tableNumber,
 								name: item.project.name,
-								removedAssignments: item.project.assignments.filter(assignment => !assignment.completedAt)
-									.length,
+								removedAssignments: item.project.assignments.filter(
+									assignment => !assignment.completedAt,
+								).length,
 							}))
 							.sort((a, b) => a.tableNumber - b.tableNumber),
 						insufficient,
@@ -2941,10 +2946,7 @@ export const judgingRouter = createTRPCRouter({
 							judgeId: ctx.judge.id,
 							projectId: assignment.projectId,
 							reason,
-							editedAt: clampJudgingEditTime(
-								patch.fieldEditedAt.recusalReason ?? patch.editedAt,
-								now,
-							),
+							editedAt: clampJudgingEditTime(patch.fieldEditedAt.recusalReason ?? patch.editedAt, now),
 							operationId: patch.fieldOperationIds.recusalReason ?? patch.operationId,
 							now,
 						});
@@ -3340,8 +3342,7 @@ export const judgingRouter = createTRPCRouter({
 				const position = scored.findIndex(candidate => candidate.projectId === item.projectId);
 				const tied = scored.some(
 					candidate =>
-						candidate.projectId !== item.projectId &&
-						candidate.numericAggregate === item.numericAggregate,
+						candidate.projectId !== item.projectId && candidate.numericAggregate === item.numericAggregate,
 				);
 				return {
 					...item,
