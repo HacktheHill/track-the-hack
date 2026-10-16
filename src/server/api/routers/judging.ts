@@ -2126,9 +2126,13 @@ export const judgingRouter = createTRPCRouter({
 			});
 			if (duplicate)
 				throw new TRPCError({ code: "CONFLICT", message: "This judge already has that scoring scope." });
+			// ⚡ Bolt: Push deduplication to the database to improve performance
+			// What: Use Prisma's `distinct: ["projectId"]` and `.length` instead of JS `new Set(...).size`
+			// Why: Reduces memory consumption and array allocation overhead for large datasets.
+			// Impact: O(1) JavaScript processing time, minimizing the data sent from the DB to JS.
 			const projectCount = await ctx.prisma.judgingAssignment
-				.findMany({ where: { judgeId: judge.id }, select: { projectId: true } })
-				.then(rows => new Set(rows.map(row => row.projectId)).size);
+				.findMany({ where: { judgeId: judge.id }, select: { projectId: true }, distinct: ["projectId"] })
+				.then(rows => rows.length);
 			const alreadyVisits = await ctx.prisma.judgingAssignment.count({
 				where: { judgeId: judge.id, projectId: assignment.projectId },
 			});
@@ -2523,13 +2527,18 @@ export const judgingRouter = createTRPCRouter({
 				throw new TRPCError({ code: "CONFLICT", message: "This judge already has that scoring scope." });
 			if (jsonStringArray(judge.exclusions).includes(input.categoryCode))
 				throw new TRPCError({ code: "BAD_REQUEST", message: "This judge is excluded from that category." });
+			// ⚡ Bolt: Push deduplication to the database to improve performance
+			// What: Use Prisma's `distinct: ["projectId"]` and `.length` instead of JS `new Set(...).size`
+			// Why: Reduces memory consumption and array allocation overhead for large datasets.
+			// Impact: O(1) JavaScript processing time, minimizing the data sent from the DB to JS.
 			const visits = await ctx.prisma.judgingAssignment.findMany({
 				where: { judgeId: judge.id },
 				select: { projectId: true },
+				distinct: ["projectId"],
 			});
 			if (
 				!visits.some(visit => visit.projectId === project.id) &&
-				new Set(visits.map(visit => visit.projectId)).size >= round.effectiveProjectLimit
+				visits.length >= round.effectiveProjectLimit
 			)
 				throw new TRPCError({
 					code: "PRECONDITION_FAILED",
