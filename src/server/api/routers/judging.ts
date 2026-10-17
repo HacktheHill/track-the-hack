@@ -349,9 +349,7 @@ const synchronizeProjectRecusal = async (
 						assignment.recusedAt === null &&
 						assignment.assignmentReason?.startsWith("automatic recusal replacement for "),
 				)
-				.map(assignment =>
-					assignment.assignmentReason?.slice("automatic recusal replacement for ".length),
-				)
+				.map(assignment => assignment.assignmentReason?.slice("automatic recusal replacement for ".length))
 				.filter((id): id is string => Boolean(id)),
 		);
 		const missingCoverageIds = new Set(
@@ -439,16 +437,20 @@ const synchronizeProjectRecusal = async (
 			data: { assignmentVersion: { increment: 1 } },
 		});
 	}
-	await invalidateRankings(transaction, [
-		...sourceAssignments.map(assignment => ({
-			judgeId: input.judgeId,
-			categoryCode: assignment.categoryCode,
-		})),
-		...replacements.map(replacement => ({
-			judgeId: replacement.targetJudgeId,
-			categoryCode: sourceAssignments.find(item => item.id === replacement.sourceAssignmentId)?.categoryCode ?? "",
-		})),
-	].filter(pair => pair.categoryCode));
+	await invalidateRankings(
+		transaction,
+		[
+			...sourceAssignments.map(assignment => ({
+				judgeId: input.judgeId,
+				categoryCode: assignment.categoryCode,
+			})),
+			...replacements.map(replacement => ({
+				judgeId: replacement.targetJudgeId,
+				categoryCode:
+					sourceAssignments.find(item => item.id === replacement.sourceAssignmentId)?.categoryCode ?? "",
+			})),
+		].filter(pair => pair.categoryCode),
+	);
 	if (
 		input.reason &&
 		(!alreadyRecused || hadMissingCoverage || sourceAssignments.some(assignment => assignment.recusedAt === null))
@@ -1317,7 +1319,9 @@ export const judgingRouter = createTRPCRouter({
 							});
 						const excludedCategoryCodes = ALL_JUDGING_CATEGORY_CODES.filter(code => !allowed.has(code));
 						const existingExclusions = jsonStringArray(judge.exclusions);
-						const conflictingAllowed = request.allowedCategoryCodes.filter(code => existingExclusions.includes(code));
+						const conflictingAllowed = request.allowedCategoryCodes.filter(code =>
+							existingExclusions.includes(code),
+						);
 						if (conflictingAllowed.length)
 							throw new TRPCError({
 								code: "PRECONDITION_FAILED",
@@ -1818,9 +1822,13 @@ export const judgingRouter = createTRPCRouter({
 			});
 			if (!round) throw new TRPCError({ code: "NOT_FOUND" });
 			requireRoundState(round, "OPEN");
+
+			// ⚡ Bolt: optimize O(N) array search inside mapping by pre-computing hash map for O(1) lookups
+			const projectsById = new Map(round.projects.map(project => [project.id, project]));
+
 			const resolutionFor = (assignment: (typeof round.assignments)[number]) =>
-				round.projects
-					.find(project => project.id === assignment.projectId)
+				projectsById
+					.get(assignment.projectId)
 					?.categories.find(category => category.code === assignment.categoryCode)?.eligibilityResolution;
 			const incomplete = round.assignments.filter(
 				assignment => !isAssignmentComplete(assignment, resolutionFor(assignment)),
@@ -1957,7 +1965,9 @@ export const judgingRouter = createTRPCRouter({
 					for (const assignments of groups.values()) {
 						const first = assignments[0];
 						if (!first) continue;
-						const reason = assignments.find(assignment => assignment.recusalReason?.trim())?.recusalReason?.trim();
+						const reason = assignments
+							.find(assignment => assignment.recusalReason?.trim())
+							?.recusalReason?.trim();
 						if (!reason)
 							throw new TRPCError({
 								code: "PRECONDITION_FAILED",
@@ -2783,8 +2793,9 @@ export const judgingRouter = createTRPCRouter({
 							.map(item => ({
 								tableNumber: item.project.tableNumber,
 								name: item.project.name,
-								removedAssignments: item.project.assignments.filter(assignment => !assignment.completedAt)
-									.length,
+								removedAssignments: item.project.assignments.filter(
+									assignment => !assignment.completedAt,
+								).length,
 							}))
 							.sort((a, b) => a.tableNumber - b.tableNumber),
 						insufficient,
@@ -2941,10 +2952,7 @@ export const judgingRouter = createTRPCRouter({
 							judgeId: ctx.judge.id,
 							projectId: assignment.projectId,
 							reason,
-							editedAt: clampJudgingEditTime(
-								patch.fieldEditedAt.recusalReason ?? patch.editedAt,
-								now,
-							),
+							editedAt: clampJudgingEditTime(patch.fieldEditedAt.recusalReason ?? patch.editedAt, now),
 							operationId: patch.fieldOperationIds.recusalReason ?? patch.operationId,
 							now,
 						});
@@ -3204,9 +3212,13 @@ export const judgingRouter = createTRPCRouter({
 			}),
 			ctx.prisma.judgingProject.findMany({ where: { roundId: input.roundId }, include: { categories: true } }),
 		]);
+
+		// ⚡ Bolt: optimize O(N) array search inside mapping by pre-computing hash map for O(1) lookups
+		const projectsById = new Map(projects.map(project => [project.id, project]));
+
 		const resolutionFor = (assignment: (typeof assignments)[number]) =>
-			projects
-				.find(project => project.id === assignment.projectId)
+			projectsById
+				.get(assignment.projectId)
 				?.categories.find(category => category.code === assignment.categoryCode)?.eligibilityResolution;
 		const assessments = assignments.map(assignment => ({
 			projectId: assignment.projectId,
@@ -3340,8 +3352,7 @@ export const judgingRouter = createTRPCRouter({
 				const position = scored.findIndex(candidate => candidate.projectId === item.projectId);
 				const tied = scored.some(
 					candidate =>
-						candidate.projectId !== item.projectId &&
-						candidate.numericAggregate === item.numericAggregate,
+						candidate.projectId !== item.projectId && candidate.numericAggregate === item.numericAggregate,
 				);
 				return {
 					...item,
@@ -3351,6 +3362,16 @@ export const judgingRouter = createTRPCRouter({
 				};
 			});
 		});
+		// ⚡ Bolt: optimize O(A^2 * P) benchmark calculation down to O(A) by pre-computing peer lookups.
+		// We group assignments by scope, then when evaluating a single assignment's peers we can just grab from the map in O(1)
+		const assignmentsByScope = assignments.reduce((acc, assignment) => {
+			const key = `${assignment.projectId}:${assignment.categoryCode}`;
+			const existing = acc.get(key) ?? [];
+			existing.push(assignment);
+			acc.set(key, existing);
+			return acc;
+		}, new Map<string, typeof assignments>());
+
 		const benchmarks = [...Map.groupBy(assignments, assignment => assignment.judgeId).values()].map(
 			judgeAssignments => {
 				const judge = judgeAssignments[0]?.judge;
@@ -3361,13 +3382,8 @@ export const judgingRouter = createTRPCRouter({
 				const sharedDifferences = judgeAssignments.flatMap(assignment => {
 					const score = numericForAssignment(assignment);
 					if (score === null) return [];
-					const peers = assignments
-						.filter(
-							candidate =>
-								candidate.judgeId !== assignment.judgeId &&
-								candidate.projectId === assignment.projectId &&
-								candidate.categoryCode === assignment.categoryCode,
-						)
+					const peers = (assignmentsByScope.get(`${assignment.projectId}:${assignment.categoryCode}`) ?? [])
+						.filter(candidate => candidate.judgeId !== assignment.judgeId)
 						.map(numericForAssignment)
 						.filter((value): value is number => value !== null);
 					return peers.length ? [score - peers.reduce((sum, value) => sum + value, 0) / peers.length] : [];
