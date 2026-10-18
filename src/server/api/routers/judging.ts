@@ -2126,9 +2126,12 @@ export const judgingRouter = createTRPCRouter({
 			});
 			if (duplicate)
 				throw new TRPCError({ code: "CONFLICT", message: "This judge already has that scoring scope." });
+			// ⚡ Bolt: Push deduplication to the DB using `distinct` and `.length` instead of fetching everything and making a JS Set.
+			// Why: `findMany` + mapping to JS arrays and Sets takes more memory and compute time for large sets.
+			// Impact: Avoids fetching duplicate rows, avoids Set allocations, and lowers latency (O(1) JS side with smaller arrays).
 			const projectCount = await ctx.prisma.judgingAssignment
-				.findMany({ where: { judgeId: judge.id }, select: { projectId: true } })
-				.then(rows => new Set(rows.map(row => row.projectId)).size);
+				.findMany({ where: { judgeId: judge.id }, distinct: ["projectId"], select: { projectId: true } })
+				.then(rows => rows.length);
 			const alreadyVisits = await ctx.prisma.judgingAssignment.count({
 				where: { judgeId: judge.id, projectId: assignment.projectId },
 			});
