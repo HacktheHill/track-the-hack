@@ -1,0 +1,3 @@
+## 2023-10-20 - [Pushing Unique Counts to DB]
+**Learning:** In-memory deduplication with JavaScript arrays (e.g., `new Set(rows.map(row => row.id)).size`) requires fetching potentially thousands of duplicated row structures across the network and then iterating over them which consumes memory and causes GC pauses. Using Prisma's `distinct: ["field"]` option and relying on `.length` instead pushes that processing to the database level with a O(U) size data transfer, where U is the number of unique projects.
+**Action:** Always prefer Prisma's `distinct` counting options over returning large dataset properties to the server logic for unique sizing purposes.
