@@ -2126,9 +2126,11 @@ export const judgingRouter = createTRPCRouter({
 			});
 			if (duplicate)
 				throw new TRPCError({ code: "CONFLICT", message: "This judge already has that scoring scope." });
+			// ⚡ Bolt: Pushing deduplication to the database to reduce memory and network overhead.
+			// Expected impact: Faster database query and reduced Node.js memory footprint.
 			const projectCount = await ctx.prisma.judgingAssignment
-				.findMany({ where: { judgeId: judge.id }, select: { projectId: true } })
-				.then(rows => new Set(rows.map(row => row.projectId)).size);
+				.findMany({ where: { judgeId: judge.id }, distinct: ["projectId"], select: { projectId: true } })
+				.then(rows => rows.length);
 			const alreadyVisits = await ctx.prisma.judgingAssignment.count({
 				where: { judgeId: judge.id, projectId: assignment.projectId },
 			});
