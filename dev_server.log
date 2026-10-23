@@ -1,0 +1,106 @@
+
+> track-the-hack@0.1.0 dev
+> next dev --webpack --hostname 127.0.0.1
+
+▲ Next.js 16.4.0 (webpack)
+- Local:         http://127.0.0.1:3000
+- Network:       http://127.0.0.1:3000
+- Environments: .env
+✓ Ready in 585ms
+⚠ React 18 support is deprecated in Next.js 16 and will be removed in Next.js 17. Please upgrade to React 19. Learn more: https://nextjs.org/docs/messages/react-version
+✓ Running next.config.js took 1020ms
+> [PWA] PWA support is disabled
+> [PWA] PWA support is disabled
+- Experiments (use with caution):
+  ⨯ useTypeScriptCli
+
+prisma:error
+Invalid `prisma.notificationDelivery.findMany()` invocation:
+
+
+Can't reach database server at `127.0.0.1:3306`
+
+Please make sure your database server is running at `127.0.0.1:3306`.
+Participant notification delivery failed; pending deliveries will be retried.
+○ Compiling /hardware ...
+prisma:error
+Invalid `prisma.notificationDelivery.findMany()` invocation:
+
+
+Can't reach database server at `127.0.0.1:3306`
+
+Please make sure your database server is running at `127.0.0.1:3306`.
+Participant notification delivery failed; pending deliveries will be retried.
+ GET /hardware 200 in 551ms (next.js: 458ms, application-code: 93ms)
+prisma:error
+Invalid `prisma.notificationDelivery.findMany()` invocation:
+
+
+Can't reach database server at `127.0.0.1:3306`
+
+Please make sure your database server is running at `127.0.0.1:3306`.
+Participant notification delivery failed; pending deliveries will be retried.
+prisma:error
+Invalid `prisma.notificationDelivery.findMany()` invocation:
+
+
+Can't reach database server at `127.0.0.1:3306`
+
+Please make sure your database server is running at `127.0.0.1:3306`.
+Participant notification delivery failed; pending deliveries will be retried.
+prisma:error
+Invalid `prisma.notificationDelivery.findMany()` invocation:
+
+
+Can't reach database server at `127.0.0.1:3306`
+
+Please make sure your database server is running at `127.0.0.1:3306`.
+Participant notification delivery failed; pending deliveries will be retried.
+prisma:error
+Invalid `prisma.notificationDelivery.findMany()` invocation:
+
+
+Can't reach database server at `127.0.0.1:3306`
+
+Please make sure your database server is running at `127.0.0.1:3306`.
+Participant notification delivery failed; pending deliveries will be retried.
+prisma:error
+Invalid `prisma.notificationDelivery.findMany()` invocation:
+
+
+Can't reach database server at `127.0.0.1:3306`
+
+Please make sure your database server is running at `127.0.0.1:3306`.
+Participant notification delivery failed; pending deliveries will be retried.
+prisma:error
+Invalid `prisma.notificationDelivery.findMany()` invocation:
+
+
+Can't reach database server at `127.0.0.1:3306`
+
+Please make sure your database server is running at `127.0.0.1:3306`.
+Participant notification delivery failed; pending deliveries will be retried.
+prisma:error
+Invalid `prisma.notificationDelivery.findMany()` invocation:
+
+
+Can't reach database server at `127.0.0.1:3306`
+
+Please make sure your database server is running at `127.0.0.1:3306`.
+Participant notification delivery failed; pending deliveries will be retried.
+prisma:error
+Invalid `prisma.notificationDelivery.findMany()` invocation:
+
+
+Can't reach database server at `127.0.0.1:3306`
+
+Please make sure your database server is running at `127.0.0.1:3306`.
+Participant notification delivery failed; pending deliveries will be retried.
+prisma:error
+Invalid `prisma.notificationDelivery.findMany()` invocation:
+
+
+Can't reach database server at `127.0.0.1:3306`
+
+Please make sure your database server is running at `127.0.0.1:3306`.
+Participant notification delivery failed; pending deliveries will be retried.
