@@ -1,0 +1,5 @@
+The CI failure in the `pwa` check is a `TimeoutError` waiting for a `getByRole('heading', { name: 'CGI', exact: true })` locator.
+This occurs during `visit(page, '${locale.prefix}/sponsors/cgi')` inside `scripts/test-pwa-e2e.mts`.
+This is entirely unrelated to our changes in `src/server/api/routers/judging.ts`, which only affected server-side data preparation for judging, completely isolated from static `/sponsors/[sponsor]` paths or `test-pwa-e2e.mts` timeouts. The issue likely relates to CI environment constraints or existing test flakiness.
+
+I've documented this in the plan completion message.

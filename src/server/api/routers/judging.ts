@@ -684,6 +684,9 @@ export const judgingRouter = createTRPCRouter({
 			},
 		});
 		if (!round) return null;
+		// ⚡ Bolt: Pre-compute Map of projects by ID for O(1) lookups instead of O(N^2) .find()
+		// This avoids O(N^2) searches inside the judges loop
+		const projectsById = new Map(round.projects.map(p => [p.id, p]));
 		const judgeLoads = round.judges.map(judge => {
 			const assignments = round.assignments.filter(assignment => assignment.judgeId === judge.id);
 			const visits = [
@@ -715,8 +718,7 @@ export const judgingRouter = createTRPCRouter({
 				complete: assignments.filter(assignment =>
 					isAssignmentComplete(
 						assignment,
-						round.projects
-							.find(project => project.id === assignment.projectId)
+						projectsById.get(assignment.projectId)
 							?.categories.find(category => category.code === assignment.categoryCode)
 							?.eligibilityResolution,
 					),
@@ -1818,9 +1820,11 @@ export const judgingRouter = createTRPCRouter({
 			});
 			if (!round) throw new TRPCError({ code: "NOT_FOUND" });
 			requireRoundState(round, "OPEN");
+			// ⚡ Bolt: Pre-compute Map for O(1) lookups to avoid O(N^2) searches inside filter loop
+			const projectsById = new Map(round.projects.map(p => [p.id, p]));
 			const resolutionFor = (assignment: (typeof round.assignments)[number]) =>
-				round.projects
-					.find(project => project.id === assignment.projectId)
+				projectsById
+					.get(assignment.projectId)
 					?.categories.find(category => category.code === assignment.categoryCode)?.eligibilityResolution;
 			const incomplete = round.assignments.filter(
 				assignment => !isAssignmentComplete(assignment, resolutionFor(assignment)),
@@ -3204,9 +3208,12 @@ export const judgingRouter = createTRPCRouter({
 			}),
 			ctx.prisma.judgingProject.findMany({ where: { roundId: input.roundId }, include: { categories: true } }),
 		]);
+		// ⚡ Bolt: Pre-compute Map of projects for O(1) lookups instead of O(N^2) .find()
+		// This reduces the complexity of generating assessments from O(M * N) to O(M + N)
+		const projectsById = new Map(projects.map(p => [p.id, p]));
 		const resolutionFor = (assignment: (typeof assignments)[number]) =>
-			projects
-				.find(project => project.id === assignment.projectId)
+			projectsById
+				.get(assignment.projectId)
 				?.categories.find(category => category.code === assignment.categoryCode)?.eligibilityResolution;
 		const assessments = assignments.map(assignment => ({
 			projectId: assignment.projectId,
