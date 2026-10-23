@@ -684,8 +684,22 @@ export const judgingRouter = createTRPCRouter({
 			},
 		});
 		if (!round) return null;
+
+		// ⚡ BOLT: Pre-compute assignments by judge to change O(J*A) to O(A)
+		// This significantly speeds up judge load calculations for large datasets.
+		const assignmentsByJudgeId = Map.groupBy(round.assignments, a => a.judgeId);
+
+		// ⚡ BOLT: Pre-compute eligibility resolution to replace nested `.find()` operations in loops
+		// Replaces O(A*P*C) with O(P*C) setup and O(1) lookups
+		const resolutionMap = new Map<string, string | null>();
+		for (const project of round.projects) {
+			for (const category of project.categories) {
+				resolutionMap.set(`${project.id}:${category.code}`, category.eligibilityResolution);
+			}
+		}
+
 		const judgeLoads = round.judges.map(judge => {
-			const assignments = round.assignments.filter(assignment => assignment.judgeId === judge.id);
+			const assignments = assignmentsByJudgeId.get(judge.id) ?? [];
 			const visits = [
 				...new Map(assignments.map(assignment => [assignment.projectId, assignment.project])).values(),
 			]
@@ -715,24 +729,25 @@ export const judgingRouter = createTRPCRouter({
 				complete: assignments.filter(assignment =>
 					isAssignmentComplete(
 						assignment,
-						round.projects
-							.find(project => project.id === assignment.projectId)
-							?.categories.find(category => category.code === assignment.categoryCode)
-							?.eligibilityResolution,
+						resolutionMap.get(`${assignment.projectId}:${assignment.categoryCode}`),
 					),
 				).length,
 				lastSyncAt: judge.lastSyncAt,
 			};
 		});
+		// ⚡ BOLT: Pre-compute assignments by project and category to change O(P*C*A) to O(A)
+		const assignmentsByProjectAndCategory = Map.groupBy(
+			round.assignments,
+			a => `${a.projectId}:${a.categoryCode}`
+		);
+
 		const coverage = round.projects.flatMap(project => {
 			const categoryCodes = [
 				...(project.mainTrack === "CGI" ? [] : [project.mainTrack]),
 				...project.categories.map(category => category.code),
 			];
 			return categoryCodes.map(categoryCode => {
-				const assignments = round.assignments.filter(
-					assignment => assignment.projectId === project.id && assignment.categoryCode === categoryCode,
-				);
+				const assignments = assignmentsByProjectAndCategory.get(`${project.id}:${categoryCode}`) ?? [];
 				const activeAssignments = assignments.filter(assignment => !assignment.recusedAt);
 				return {
 					projectId: project.id,
@@ -747,19 +762,25 @@ export const judgingRouter = createTRPCRouter({
 				};
 			});
 		});
+		// ⚡ BOLT: Pre-compute active assignments by category to change O(C*A) to O(A)
+		const activeAssignmentsByCategory = Map.groupBy(
+			round.assignments.filter(a => !a.recusedAt),
+			a => a.categoryCode
+		);
+		const coverageByCategory = Map.groupBy(coverage, item => item.categoryCode);
+
 		const categoryCohorts = [...new Set(coverage.map(item => item.categoryCode))].sort().map(categoryCode => {
-			const assignments = round.assignments.filter(
-				assignment => assignment.categoryCode === categoryCode && !assignment.recusedAt,
-			);
+			const assignments = activeAssignmentsByCategory.get(categoryCode) ?? [];
+			const itemsForCategory = coverageByCategory.get(categoryCode) ?? [];
 			const sharedProjects = new Set(
-				coverage
-					.filter(item => item.categoryCode === categoryCode && item.count > 1)
+				itemsForCategory
+					.filter(item => item.count > 1)
 					.map(item => item.projectId),
 			);
 			return {
 				categoryCode,
 				judgeIds: [...new Set(assignments.map(assignment => assignment.judgeId))],
-				projectCount: coverage.filter(item => item.categoryCode === categoryCode).length,
+				projectCount: itemsForCategory.length,
 				assignmentCount: assignments.length,
 				sharedProjectCount: sharedProjects.size,
 				insufficientOverlap:
@@ -1818,10 +1839,17 @@ export const judgingRouter = createTRPCRouter({
 			});
 			if (!round) throw new TRPCError({ code: "NOT_FOUND" });
 			requireRoundState(round, "OPEN");
+		// ⚡ BOLT: Pre-compute eligibility resolution to avoid O(A*P*C) lookups
+		// Replaces O(N²) array lookups with O(P*C) setup and O(1) reads
+		const resolutionMap = new Map<string, string | null>();
+		for (const project of round.projects) {
+			for (const category of project.categories) {
+				resolutionMap.set(`${project.id}:${category.code}`, category.eligibilityResolution);
+			}
+		}
+
 			const resolutionFor = (assignment: (typeof round.assignments)[number]) =>
-				round.projects
-					.find(project => project.id === assignment.projectId)
-					?.categories.find(category => category.code === assignment.categoryCode)?.eligibilityResolution;
+			resolutionMap.get(`${assignment.projectId}:${assignment.categoryCode}`);
 			const incomplete = round.assignments.filter(
 				assignment => !isAssignmentComplete(assignment, resolutionFor(assignment)),
 			).length;
@@ -3204,10 +3232,16 @@ export const judgingRouter = createTRPCRouter({
 			}),
 			ctx.prisma.judgingProject.findMany({ where: { roundId: input.roundId }, include: { categories: true } }),
 		]);
+		// ⚡ BOLT: Pre-compute eligibility resolution to avoid O(A*P*C) lookups
+		// Replaces O(N²) array lookups with O(P*C) setup and O(1) reads
+		const resolutionMap = new Map<string, string | null>();
+		for (const project of projects) {
+			for (const category of project.categories) {
+				resolutionMap.set(`${project.id}:${category.code}`, category.eligibilityResolution);
+			}
+		}
 		const resolutionFor = (assignment: (typeof assignments)[number]) =>
-			projects
-				.find(project => project.id === assignment.projectId)
-				?.categories.find(category => category.code === assignment.categoryCode)?.eligibilityResolution;
+			resolutionMap.get(`${assignment.projectId}:${assignment.categoryCode}`);
 		const assessments = assignments.map(assignment => ({
 			projectId: assignment.projectId,
 			projectName: assignment.project.name,
