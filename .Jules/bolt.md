@@ -1,0 +1,3 @@
+## 2024-10-23 - Optimize nested array lookups in tRPC routers
+**Learning:** Found O(N²) and O(N*M) nested array searches (like `.find` inside `.map` loops or `.filter` in `.flatMap`) in heavily used tRPC routers, specifically `adminOverview` in `judging.ts`. This pattern can become a severe performance bottleneck when dealing with large datasets (hundreds of projects and assignments).
+**Action:** Always pre-compute a Hash Map (using `Map` or `Map.groupBy` in Node.js 24) before loops for O(1) lookups to significantly improve execution performance, replacing synchronous array traversal during each loop iteration.
