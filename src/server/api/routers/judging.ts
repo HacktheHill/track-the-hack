@@ -691,7 +691,7 @@ export const judgingRouter = createTRPCRouter({
 
 		// ⚡ BOLT: Pre-compute eligibility resolution to replace nested `.find()` operations in loops
 		// Replaces O(A*P*C) with O(P*C) setup and O(1) lookups
-		const resolutionMap = new Map<string, string | null>();
+		const resolutionMap = new Map<string, "ELIGIBLE" | "UNSURE" | "INELIGIBLE" | null>();
 		for (const project of round.projects) {
 			for (const category of project.categories) {
 				resolutionMap.set(`${project.id}:${category.code}`, category.eligibilityResolution);
@@ -1841,7 +1841,7 @@ export const judgingRouter = createTRPCRouter({
 			requireRoundState(round, "OPEN");
 		// ⚡ BOLT: Pre-compute eligibility resolution to avoid O(A*P*C) lookups
 		// Replaces O(N²) array lookups with O(P*C) setup and O(1) reads
-		const resolutionMap = new Map<string, string | null>();
+		const resolutionMap = new Map<string, "ELIGIBLE" | "UNSURE" | "INELIGIBLE" | null>();
 		for (const project of round.projects) {
 			for (const category of project.categories) {
 				resolutionMap.set(`${project.id}:${category.code}`, category.eligibilityResolution);
@@ -3234,7 +3234,7 @@ export const judgingRouter = createTRPCRouter({
 		]);
 		// ⚡ BOLT: Pre-compute eligibility resolution to avoid O(A*P*C) lookups
 		// Replaces O(N²) array lookups with O(P*C) setup and O(1) reads
-		const resolutionMap = new Map<string, string | null>();
+		const resolutionMap = new Map<string, "ELIGIBLE" | "UNSURE" | "INELIGIBLE" | null>();
 		for (const project of projects) {
 			for (const category of project.categories) {
 				resolutionMap.set(`${project.id}:${category.code}`, category.eligibilityResolution);
